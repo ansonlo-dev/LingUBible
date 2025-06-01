@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,12 +26,20 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: 'rgb(227, 31, 38)',
+					foreground: 'hsl(var(--primary-foreground))',
+					50: 'rgb(254, 242, 242)',
+					100: 'rgb(254, 226, 226)',
+					500: 'rgb(227, 31, 38)',
+					600: 'rgb(204, 28, 34)',
+					700: 'rgb(181, 25, 30)',
+					800: 'rgb(159, 22, 27)',
+					900: 'rgb(136, 19, 23)'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: 'rgb(188, 190, 192)',
+					foreground: 'hsl(var(--secondary-foreground))',
+					dark: 'rgb(128, 130, 133)'
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -84,11 +93,38 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'slide-up': {
+					'0%': {
+						transform: 'translateY(100%)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateY(0)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.6s ease-out',
+				'slide-up': 'slide-up 0.6s ease-out'
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'gradient-primary': 'linear-gradient(135deg, rgb(227, 31, 38) 0%, rgb(204, 28, 34) 100%)',
+				'gradient-secondary': 'linear-gradient(135deg, rgb(188, 190, 192) 0%, rgb(158, 160, 163) 100%)'
 			}
 		}
 	},

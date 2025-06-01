@@ -1,0 +1,28 @@
+
+{
+  "name": "LingUBible - Course & Lecturer Reviews",
+  "short_name": "LingUBible",
+  "description": "Platform for college students to review courses and lecturers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e31f26",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "social"],
+  "lang": "en",
+  "dir": "ltr"
+}
