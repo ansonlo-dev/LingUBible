@@ -78,6 +78,10 @@ const Index = () => {
     }
   ];
 
+  // Get the actions as an array directly from the translation
+  const actions = t('hero.actions');
+  const actionTexts = Array.isArray(actions) ? actions : [actions];
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 space-y-8">
@@ -94,7 +98,7 @@ const Index = () => {
           <div className="text-lg mb-8 max-w-2xl mx-auto">
             <span className="text-foreground">Come here to </span>
             <RollingText 
-              texts={t('hero.actions').split(',')} 
+              texts={actionTexts} 
               interval={2000}
             />
           </div>

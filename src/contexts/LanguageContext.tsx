@@ -5,14 +5,14 @@ import { Language } from '@/components/LanguageSwitcher';
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => string;
+  t: (key: string) => any;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const translations = {
   en: {
-    'hero.title': 'Welcome to LingUBible',
+    'hero.title': 'Welcome to',
     'hero.subtitle': 'Your platform for honest course and lecturer reviews. Help fellow students make informed decisions.',
     'hero.action': 'comment',
     'hero.actions': ['comment', 'vote', 'ask questions', 'answer questions'],
@@ -33,7 +33,7 @@ const translations = {
     'footer.disclaimer': 'The website is not affiliated with Lingnan University',
   },
   'zh-TW': {
-    'hero.title': '歡迎來到 LingUBible',
+    'hero.title': '歡迎來到',
     'hero.subtitle': '您誠實的課程和講師評價平台。幫助同學們做出明智的決定。',
     'hero.action': '評論',
     'hero.actions': ['評論', '投票', '提出問題', '回答問題'],
@@ -54,7 +54,7 @@ const translations = {
     'footer.disclaimer': '本網站與嶺南大學無關',
   },
   'zh-CN': {
-    'hero.title': '欢迎来到 LingUBible',
+    'hero.title': '欢迎来到',
     'hero.subtitle': '您诚实的课程和讲师评价平台。帮助同学们做出明智的决定。',
     'hero.action': '评论',
     'hero.actions': ['评论', '投票', '提出问题', '回答问题'],
@@ -83,7 +83,7 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguage] = useState<Language>('en');
 
-  const t = (key: string): string => {
+  const t = (key: string): any => {
     return translations[language][key] || key;
   };
 
