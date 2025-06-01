@@ -76,7 +76,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Hero Section */}
         <div className="text-center py-12 animate-fade-in">
@@ -100,7 +100,7 @@ const Index = () => {
             </div>
           </div>
           
-          <Button size="lg" className="bg-gradient-primary hover:opacity-90 text-white font-medium px-8">
+          <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-medium px-8">
             Get Started
           </Button>
         </div>

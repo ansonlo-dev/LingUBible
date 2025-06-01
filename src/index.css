@@ -83,6 +83,10 @@
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
+  }
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, rgb(227, 31, 38) 0%, rgb(204, 28, 34) 100%);
   }
 }
