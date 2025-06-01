@@ -23,12 +23,12 @@ export function RollingText({ texts, interval = 2000 }: RollingTextProps) {
         <span
           key={text}
           className={`rolling-text-item ${
-            index === currentIndex
-              ? 'active'
-              : index === (currentIndex + 1) % texts.length
-              ? 'next'
-              : 'prev'
+            index === currentIndex ? 'active' : ''
           }`}
+          style={{
+            transform: index === currentIndex ? 'translateY(0)' : 'translateY(100%)',
+            opacity: index === currentIndex ? 1 : 0,
+          }}
         >
           {text}
         </span>

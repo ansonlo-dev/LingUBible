@@ -13,7 +13,7 @@
     --popover-foreground: 0 0 0;
     --primary: 227 31 38;
     --primary-foreground: 255 255 255;
-    --secondary: 188 190 192;
+    --secondary: 156 163 175;
     --secondary-foreground: 0 0 0;
     --muted: 245 245 245;
     --muted-foreground: 115 115 115;
@@ -44,7 +44,7 @@
     --popover-foreground: 255 255 255;
     --primary: 227 31 38;
     --primary-foreground: 255 255 255;
-    --secondary: 128 130 133;
+    --secondary: 107 114 128;
     --secondary-foreground: 255 255 255;
     --muted: 64 64 64;
     --muted-foreground: 163 163 163;
@@ -92,21 +92,14 @@
 
   .rolling-text {
     @apply inline-block relative h-8 overflow-hidden;
+    width: auto;
+    min-width: 120px;
   }
 
   .rolling-text-item {
-    @apply absolute inset-0 flex items-center justify-start transition-all duration-500 ease-in-out;
-  }
-
-  .rolling-text-item.active {
-    @apply transform translate-y-0 opacity-100;
-  }
-
-  .rolling-text-item.next {
-    @apply transform translate-y-8 opacity-0;
-  }
-
-  .rolling-text-item.prev {
-    @apply transform -translate-y-8 opacity-0;
+    @apply absolute top-0 left-0 w-full flex items-center justify-start;
+    transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    color: rgb(227, 31, 38);
+    font-weight: 600;
   }
 }
