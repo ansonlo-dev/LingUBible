@@ -1,36 +1,21 @@
 
-import { BookOpen, Search, Menu } from 'lucide-react';
+import { BookOpen, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from './ThemeToggle';
 import { useState } from 'react';
 
-interface HeaderProps {
-  onMenuClick: () => void;
-}
-
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMenuClick}
-            className="md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-bold text-xl gradient-text">LingUBible</span>
+      <div className="flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+            <BookOpen className="h-5 w-5 text-white" />
           </div>
+          <span className="font-bold text-xl gradient-text">LingUBible</span>
         </div>
 
         <div className="flex-1 max-w-lg mx-4 hidden md:block">
