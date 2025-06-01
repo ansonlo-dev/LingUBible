@@ -3,10 +3,13 @@ import { BookOpen, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from './ThemeToggle';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,9 +34,10 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher onLanguageChange={setLanguage} currentLanguage={language} />
           <ThemeToggle />
-          <Button className="bg-gradient-primary hover:opacity-90 text-white font-medium">
-            Sign In
+          <Button className="gradient-primary hover:opacity-90 text-white font-medium">
+            {t('nav.signIn')}
           </Button>
         </div>
       </div>

@@ -3,13 +3,16 @@ import { useState } from 'react';
 import { CourseCard } from '@/components/CourseCard';
 import { LecturerCard } from '@/components/LecturerCard';
 import { StatsCard } from '@/components/StatsCard';
+import { RollingText } from '@/components/RollingText';
 import { BookOpen, Users, Star, TrendingUp, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { t } = useLanguage();
 
   // Mock data
   const courses = [
@@ -81,11 +84,20 @@ const Index = () => {
         {/* Hero Section */}
         <div className="text-center py-12 animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            Welcome to <span className="gradient-text">LingUBible</span>
+            {t('hero.title')} <span className="gradient-text">LingUBible</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Your platform for honest course and lecturer reviews. Help fellow students make informed decisions.
+          <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+            {t('hero.subtitle')}
           </p>
+          
+          {/* Rolling Text Animation */}
+          <div className="text-lg mb-8 max-w-2xl mx-auto">
+            <span className="text-foreground">Come here to </span>
+            <RollingText 
+              texts={t('hero.actions').split(',')} 
+              interval={2000}
+            />
+          </div>
           
           {/* Mobile Search */}
           <div className="md:hidden max-w-md mx-auto mb-8">
@@ -101,35 +113,35 @@ const Index = () => {
           </div>
           
           <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-medium px-8">
-            Get Started
+            {t('hero.getStarted')}
           </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
           <StatsCard
-            title="Total Courses"
+            title={t('stats.totalCourses')}
             value="1,247"
             change="+12% this month"
             icon={BookOpen}
             trend="up"
           />
           <StatsCard
-            title="Lecturers"
+            title={t('stats.lecturers')}
             value="342"
             change="+5% this month"
             icon={Users}
             trend="up"
           />
           <StatsCard
-            title="Reviews"
+            title={t('stats.reviews')}
             value="8,943"
             change="+23% this month"
             icon={Star}
             trend="up"
           />
           <StatsCard
-            title="Active Students"
+            title={t('stats.activeStudents')}
             value="2,156"
             change="+8% this month"
             icon={TrendingUp}
@@ -142,17 +154,17 @@ const Index = () => {
           <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Popular Courses
+              {t('tabs.popularCourses')}
             </TabsTrigger>
             <TabsTrigger value="lecturers" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Top Lecturers
+              {t('tabs.topLecturers')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="courses" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Popular Courses</h2>
+              <h2 className="text-2xl font-bold">{t('tabs.popularCourses')}</h2>
               <Button variant="outline">View All</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -166,7 +178,7 @@ const Index = () => {
 
           <TabsContent value="lecturers" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Top Rated Lecturers</h2>
+              <h2 className="text-2xl font-bold">{t('tabs.topLecturers')}</h2>
               <Button variant="outline">View All</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
