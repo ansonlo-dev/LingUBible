@@ -1,4 +1,3 @@
-
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -13,8 +12,8 @@ interface StatsCardProps {
 export function StatsCard({ title, value, change, icon: Icon, trend = 'neutral' }: StatsCardProps) {
   const getTrendColor = () => {
     switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
+      case 'up': return 'text-green-600 dark:text-green-400';
+      case 'down': return 'text-red-600 dark:text-red-400';
       default: return 'text-muted-foreground';
     }
   };

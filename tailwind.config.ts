@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -20,10 +19,10 @@ export default {
 		},
 		extend: {
 			colors: {
-				border: 'hsl(var(--border))',
+				border: 'rgb(var(--border) / <alpha-value>)',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
+				background: 'rgb(var(--background) / <alpha-value>)',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'rgb(227, 31, 38)',
@@ -116,10 +115,10 @@ export default {
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.6s ease-out',
-				'slide-up': 'slide-up 0.6s ease-out'
+				'accordion-down': 'accordion-down 0.1s ease-out',
+				'accordion-up': 'accordion-up 0.1s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'slide-up': 'slide-up 0.3s ease-out'
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

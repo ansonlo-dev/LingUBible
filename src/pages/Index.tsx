@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CourseCard } from '@/components/CourseCard';
 import { LecturerCard } from '@/components/LecturerCard';
@@ -95,7 +94,7 @@ const Index = () => {
           </p>
           
           {/* Rolling Text Animation */}
-          <div className="text-lg mb-8 max-w-2xl mx-auto">
+          <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center gap-1">
             <span className="text-foreground">Come here to </span>
             <RollingText 
               texts={actionTexts} 

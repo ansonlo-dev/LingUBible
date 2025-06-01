@@ -1,4 +1,3 @@
-
 import { BookOpen, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,17 +6,22 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { AuthModal } from './AuthModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserMenu } from '@/components/UserMenu';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const { user } = useAuth();
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-background" style={{ position: 'sticky' }}>
         <div className="flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
+            <SidebarTrigger className="md:hidden" />
             <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
@@ -39,12 +43,16 @@ export function Header() {
           <div className="flex items-center gap-2">
             <LanguageSwitcher onLanguageChange={setLanguage} currentLanguage={language} />
             <ThemeToggle />
+            {user ? (
+              <UserMenu />
+            ) : (
             <Button 
               onClick={() => setIsAuthModalOpen(true)}
               className="gradient-primary hover:opacity-90 text-white font-medium"
             >
               {t('nav.signIn')}
             </Button>
+            )}
           </div>
         </div>
       </header>

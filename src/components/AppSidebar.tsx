@@ -1,11 +1,9 @@
-
 import { Home, BookOpen, Users, Star, TrendingUp, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -26,13 +24,15 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild isActive={item.current}>
-                    <a href={item.href}>
+                  <SidebarMenuButton asChild isActive={item.current} size="lg">
+                    <a
+                      href={item.href}
+                      className="flex items-center gap-3 text-base font-semibold transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5"
+                    >
                       <item.icon />
                       <span>{item.name}</span>
                     </a>
@@ -43,22 +43,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
-      <SidebarFooter>
-        <div className="glass-card rounded-lg p-4">
-          <h3 className="font-semibold text-sm mb-2">Quick Stats</h3>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex justify-between">
-              <span>Reviews Written:</span>
-              <span className="font-medium text-primary">12</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Helpful Votes:</span>
-              <span className="font-medium text-primary">45</span>
-            </div>
-          </div>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 }

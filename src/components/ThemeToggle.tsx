@@ -1,20 +1,59 @@
-
+import { useState, useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTheme } from './ThemeProvider';
+
+// 主題切換函數
+function setTheme(isDark: boolean) {
+  const root = document.documentElement;
+  if (isDark) {
+    root.classList.add('dark');
+    document.body.style.backgroundColor = 'rgb(0, 0, 0)';
+    document.body.style.color = 'rgb(255, 255, 255)';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    root.classList.remove('dark');
+    document.body.style.backgroundColor = 'rgb(255, 255, 255)';
+    document.body.style.color = 'rgb(0, 0, 0)';
+    localStorage.setItem('theme', 'light');
+  }
+}
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // 初始化時檢查當前主題
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setIsDark(isDarkMode);
+    
+    // 監聽 dark class 變化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const newIsDark = document.documentElement.classList.contains('dark');
+          setIsDark(newIsDark);
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    setTheme(newTheme);
+  };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-      className="relative h-9 w-9 rounded-lg hover:bg-secondary/80 transition-colors"
-    >
-      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+      {isDark ? (
+        <Moon className="h-[1.2rem] w-[1.2rem]" />
+      ) : (
+        <Sun className="h-[1.2rem] w-[1.2rem]" />
+      )}
       <span className="sr-only">Toggle theme</span>
     </Button>
   );

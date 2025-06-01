@@ -19,8 +19,8 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+const SIDEBAR_WIDTH = "12rem"
+const SIDEBAR_WIDTH_MOBILE = "14rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -196,7 +196,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden backdrop-blur-md"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -261,22 +261,43 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, state, isMobile } = useSidebar()
 
   return (
     <Button
       ref={ref}
       data-sidebar="trigger"
+      data-state={state}
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      className={cn(
+        isMobile 
+          ? "relative h-8 w-8 rounded-md hover:bg-accent" 
+          : "fixed top-1/2 -translate-y-1/2 z-50 h-8 w-8 rounded-full bg-sidebar-accent border border-sidebar-border hover:bg-sidebar-accent/80 shadow-md",
+        !isMobile && (state === "expanded" ? "left-[calc(12rem-2.5rem)]" : "left-2"),
+        className
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      <PanelLeft />
+      {isMobile ? (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      ) : (
+        state === "expanded" ? (
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        ) : (
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )
+      )}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )

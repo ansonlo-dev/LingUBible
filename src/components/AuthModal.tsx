@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   Dialog,
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,12 +22,26 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { t } = useLanguage();
+  const { login, register } = useAuth();
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual authentication logic
-    console.log('Form submitted:', { email, password, isSignUp });
+    setError('');
+    try {
+      if (isSignUp) {
+        if (password !== confirmPassword) {
+          setError('兩次密碼不一致');
+          return;
+        }
+        await register(email, password, email);
+      } else {
+        await login(email, password);
+      }
     onClose();
+    } catch (err: any) {
+      setError('認證失敗，請檢查資料');
+    }
   };
 
   return (
@@ -77,6 +91,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               />
             </div>
           )}
+          
+          {error && <div className="text-red-500 text-center">{error}</div>}
           
           <Button type="submit" className="w-full gradient-primary hover:opacity-90 text-white">
             {isSignUp ? 'Sign Up' : 'Sign In'}
