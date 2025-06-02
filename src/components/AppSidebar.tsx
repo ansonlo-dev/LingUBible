@@ -9,17 +9,20 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-
-const navigation = [
-  { name: 'Dashboard', href: '#', icon: Home, current: true },
-  { name: 'Courses', href: '#', icon: BookOpen, current: false },
-  { name: 'Lecturers', href: '#', icon: Users, current: false },
-  { name: 'My Reviews', href: '#', icon: Star, current: false },
-  { name: 'Trending', href: '#', icon: TrendingUp, current: false },
-  { name: 'Settings', href: '#', icon: Settings, current: false },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function AppSidebar() {
+  const { t } = useLanguage();
+  
+  const navigation = [
+    { name: t('nav.home'), href: '#', icon: Home, current: true },
+    { name: t('nav.courses'), href: '#', icon: BookOpen, current: false },
+    { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
+    { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
+    { name: t('sidebar.trending'), href: '#', icon: TrendingUp, current: false },
+    { name: t('sidebar.settings'), href: '#', icon: Settings, current: false },
+  ];
+
   return (
     <Sidebar>
       <SidebarContent>

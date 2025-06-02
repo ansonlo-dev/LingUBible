@@ -1,8 +1,8 @@
-
 import { Star, Users, MessageSquare, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CourseCardProps {
   title: string;
@@ -12,7 +12,7 @@ interface CourseCardProps {
   reviewCount: number;
   studentCount: number;
   department: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
+  difficulty: string;
 }
 
 export function CourseCard({
@@ -25,12 +25,18 @@ export function CourseCard({
   department,
   difficulty
 }: CourseCardProps) {
+  const { t } = useLanguage();
+  
   const getDifficultyColor = (diff: string) => {
+    const easyText = t('difficulty.easy');
+    const mediumText = t('difficulty.medium');
+    const hardText = t('difficulty.hard');
+    
     switch (diff) {
-      case 'Easy': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'Hard': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      case easyText: return 'bg-green-100 text-green-800';
+      case mediumText: return 'bg-yellow-100 text-yellow-800';
+      case hardText: return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -43,7 +49,7 @@ export function CourseCard({
               {title}
             </CardTitle>
             <p className="text-sm text-muted-foreground font-mono">{code}</p>
-            <p className="text-sm text-muted-foreground mt-1">Prof. {lecturer}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('card.prof')} {lecturer}</p>
           </div>
           <Badge variant="outline" className={getDifficultyColor(difficulty)}>
             {difficulty}
@@ -57,11 +63,11 @@ export function CourseCard({
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
-              <span>({reviewCount} reviews)</span>
+              <span>({reviewCount} {t('card.reviews')})</span>
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              <span>{studentCount} students</span>
+              <span>{studentCount} {t('card.students')}</span>
             </div>
           </div>
           
@@ -73,10 +79,10 @@ export function CourseCard({
           <div className="flex gap-2 pt-2">
             <Button size="sm" className="flex-1 bg-gradient-primary hover:opacity-90">
               <MessageSquare className="h-4 w-4 mr-1" />
-              Review
+              {t('button.review')}
             </Button>
             <Button size="sm" variant="outline" className="flex-1">
-              View Details
+              {t('button.viewDetails')}
             </Button>
           </div>
         </div>

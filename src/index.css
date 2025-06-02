@@ -69,12 +69,22 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: inherit !important;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-sm bg-gray-50 dark:bg-gray-900/80 border border-gray-100 dark:border-gray-700/20;
+    @apply border border-gray-200 dark:border-gray-700 relative z-30;
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  
+  .dark .glass-card {
+    background: rgba(17, 24, 39, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
   }
   
   .gradient-text {
@@ -109,6 +119,89 @@
     font-weight: 600;
     height: 1.75rem; /* 與容器高度匹配 */
   }
+
+  /* 浮動光暈動畫 */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translate(-50%, -50%) translateY(0px) scale(1);
+      filter: blur(16px) brightness(1);
+    }
+    25% {
+      transform: translate(-50%, -50%) translateY(-20px) scale(1.1);
+      filter: blur(12px) brightness(1.2);
+    }
+    50% {
+      transform: translate(-50%, -50%) translateY(-10px) scale(0.9);
+      filter: blur(20px) brightness(0.8);
+    }
+    75% {
+      transform: translate(-50%, -50%) translateY(-30px) scale(1.05);
+      filter: blur(14px) brightness(1.1);
+    }
+  }
+
+  /* 徑向漸變背景 */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
+  /* 增強光暈效果 */
+  .floating-glare-enhanced {
+    box-shadow: 
+      0 0 20px rgba(239, 68, 68, 0.3),
+      0 0 40px rgba(239, 68, 68, 0.2),
+      0 0 60px rgba(239, 68, 68, 0.1);
+  }
+
+  .dark .floating-glare-enhanced {
+    box-shadow: 
+      0 0 25px rgba(248, 113, 113, 0.4),
+      0 0 50px rgba(248, 113, 113, 0.3),
+      0 0 75px rgba(248, 113, 113, 0.2);
+  }
+
+  /* Tabs 玻璃效果 */
+  [role="tablist"] {
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .dark [role="tablist"] {
+    background: rgba(17, 24, 39, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  [role="tab"] {
+    background: transparent !important;
+    transition: all 0.3s ease !important;
+    border: 1px solid transparent !important;
+  }
+
+  [role="tab"][data-state="active"] {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .dark [role="tab"] {
+    border: 1px solid transparent !important;
+  }
+
+  .dark [role="tab"][data-state="active"] {
+    background: rgba(17, 24, 39, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
 }
 
 /* 確保 sticky 定位正常工作 */
@@ -121,55 +214,389 @@ header {
 
 /* 確保 SidebarTrigger 始終可見 */
 [data-sidebar="trigger"] {
-  position: fixed !important;
-  z-index: 100 !important;
-  transition: left 0.3s ease !important;
+  z-index: 40 !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 當 Dialog 開啟時，確保 SidebarTrigger 在遮罩層下方 */
+body:has([data-radix-dialog-overlay]) [data-sidebar="trigger"],
+body:has([role="dialog"]) [data-sidebar="trigger"] {
+  z-index: 30 !important;
+}
+
+/* 桌面版側邊欄觸發按鈕的半圓效果 */
+[data-sidebar="trigger"][data-state="collapsed"]:not([class*="relative"]) {
+  border-radius: 0 9999px 9999px 0 !important;
+  clip-path: none !important;
+  transform: translateY(-50%) !important;
+  width: 24px !important;
+}
+
+[data-sidebar="trigger"][data-state="expanded"]:not([class*="relative"]) {
+  clip-path: none !important;
+  transform: translateY(-50%) !important;
+}
+
+/* 確保按鈕內的圖示始終保持白色 */
+[data-sidebar="trigger"]:not([class*="relative"]) svg {
+  color: white !important;
 }
 
 /* 強制所有主要容器區域都跟隨主題 */
 html {
-  background-color: rgb(255, 255, 255);
-  color: rgb(0, 0, 0);
+  background-color: rgb(255, 255, 255) !important;
+  color: rgb(0, 0, 0) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html.dark {
-  background-color: rgb(0, 0, 0);
-  color: rgb(255, 255, 255);
+  background-color: rgb(0, 0, 0) !important;
+  color: rgb(255, 255, 255) !important;
 }
 
 body, 
 #root, 
 .min-h-screen, 
 main,
-[class*="bg-background"] {
+[class*="bg-background"]:not([role="dialog"]) {
   transition: background-color 0.3s ease, color 0.3s ease;
+  color: inherit !important;
+}
+
+body {
+  background-color: inherit !important;
+  color: inherit !important;
 }
 
 .dark body, 
 .dark #root, 
 .dark .min-h-screen, 
 .dark main,
-.dark [class*="bg-background"] {
-  background-color: rgb(0, 0, 0);
-}
-
-/* 強制黑暗模式下文字顏色，但保留特定顏色類別 */
-.dark h1, 
-.dark h2, 
-.dark h3, 
-.dark h4, 
-.dark h5, 
-.dark h6, 
-.dark p:not([class*="text-green-"]):not([class*="text-red-"]), 
-.dark span:not([class*="text-"]):not(.gradient-text), 
-.dark div:not([class*="text-"]) > span:not(.gradient-text), 
-.dark a:not([class*="text-"]), 
-.dark label, 
-.dark button:not([class*="text-"]):not([class*="gradient-primary"]):not([class*="bg-gradient-primary"]) {
-  color: rgb(255, 255, 255);
-}
-
-/* 明確重設一些可能會被覆蓋的元素 */
-.dark [class*="text-foreground"] {
+.dark [class*="bg-background"]:not([role="dialog"]) {
+  background-color: rgb(0, 0, 0) !important;
   color: rgb(255, 255, 255) !important;
+}
+
+/* 確保所有文字元素在黑暗模式下使用白色 */
+.dark,
+.dark * {
+  /* color: rgb(255, 255, 255) !important; */
+}
+
+/* 只針對特定的文字元素變白色 */
+.dark h1,
+.dark h2, 
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark p,
+.dark span:not([class*="text-"]):not([class*="bg-"]),
+.dark div:not([class*="text-"]):not([class*="bg-"]),
+.dark .text-foreground,
+.dark .text-muted-foreground,
+.dark [class*="text-muted"] {
+  color: rgb(255, 255, 255) !important;
+}
+
+/* 確保 Footer 中的 BETA、版本號和導航連結在黑暗模式下保持白色 */
+.dark footer .text-muted-foreground,
+.dark footer a,
+.dark footer span {
+  color: rgb(255, 255, 255) !important;
+}
+
+/* 確保 BETA 徽章在黑暗模式下有深灰色背景 */
+.dark .bg-gray-100 {
+  background-color: rgb(55, 65, 81) !important;
+}
+
+.dark .dark\:bg-gray-800 {
+  background-color: rgb(55, 65, 81) !important;
+}
+
+/* 改變黑暗模式下的邊框顏色為淺灰色並使其更細 */
+.dark .border,
+.dark .border-t,
+.dark .border-border,
+.dark [class*="border"] {
+  border-color: rgb(75, 85, 99) !important;
+  border-width: 1px !important;
+}
+
+/* 確保 footer 中的水平分隔線在明亮模式下是淺灰色 */
+footer hr,
+footer .border-t {
+  border-color: rgb(229, 231, 235) !important;
+}
+
+/* 保留特定顏色的元素 */
+.dark [class*="text-primary"],
+.dark [class*="text-red-"],
+.dark [class*="text-green-"],
+.dark [class*="text-blue-"],
+.dark [class*="text-yellow-"],
+.dark [class*="text-purple-"],
+.dark [class*="text-pink-"],
+.dark [class*="text-indigo-"],
+.dark .rolling-text-item,
+.dark .text-primary {
+  color: rgb(220, 38, 38) !important;
+}
+
+/* 確保 gradient-text 在黑暗模式下保持漸變效果 */
+.dark .gradient-text {
+  background: linear-gradient(to right, rgb(220, 38, 38), rgba(220, 38, 38, 0.8)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* 確保按鈕文字正確 */
+.dark .gradient-primary,
+.dark .bg-gradient-primary,
+.dark .gradient-primary *,
+.dark .bg-gradient-primary * {
+  color: white !important;
+}
+
+/* 確保 muted 文字在黑暗模式下有適當的對比度 */
+.dark [class*="text-muted-foreground"] {
+  color: rgb(156, 163, 175) !important;
+}
+
+/* 覆蓋 Tailwind 的 dark: 前綴類別，確保標籤顏色保持一致 */
+/* 使用更高優先級的選擇器來覆蓋 Tailwind 的 dark: 類別 */
+.dark .bg-green-100,
+.dark .dark\:bg-green-900\/20 {
+  background-color: rgb(220, 252, 231) !important;
+}
+
+.dark .text-green-800,
+.dark .dark\:text-green-400 {
+  color: rgb(22, 101, 52) !important;
+}
+
+.dark .bg-yellow-100,
+.dark .dark\:bg-yellow-900\/20 {
+  background-color: rgb(254, 249, 195) !important;
+}
+
+.dark .text-yellow-800,
+.dark .dark\:text-yellow-400 {
+  color: rgb(133, 77, 14) !important;
+}
+
+.dark .bg-red-100,
+.dark .dark\:bg-red-900\/20 {
+  background-color: rgb(254, 226, 226) !important;
+}
+
+.dark .text-red-800,
+.dark .dark\:text-red-400 {
+  color: rgb(153, 27, 27) !important;
+}
+
+.dark .bg-blue-100,
+.dark .dark\:bg-blue-900\/20 {
+  background-color: rgb(219, 234, 254) !important;
+}
+
+.dark .text-blue-800,
+.dark .dark\:text-blue-400 {
+  color: rgb(30, 64, 175) !important;
+}
+
+.dark .text-gray-800,
+.dark .dark\:text-gray-400 {
+  color: rgb(31, 41, 55) !important;
+}
+
+/* 保留 StatsCard 中的趨勢顏色 */
+.dark .text-green-600,
+.dark .dark\:text-green-400 {
+  color: rgb(34, 197, 94) !important;
+}
+
+.dark .text-red-600,
+.dark .dark\:text-red-400 {
+  color: rgb(239, 68, 68) !important;
+}
+
+/* 保留 department badge 的顏色 (secondary variant) */
+.dark .bg-secondary.text-secondary-foreground,
+.dark .bg-secondary {
+  background-color: rgb(var(--secondary)) !important;
+}
+
+.dark .text-secondary-foreground,
+.dark .bg-secondary * {
+  color: rgb(var(--secondary-foreground)) !important;
+}
+
+/* 保留 StatsCard 圖示背景色 */
+.dark [class*="bg-primary"] {
+  background-color: rgba(220, 38, 38, 0.1) !important;
+}
+
+/* 手機版側邊欄使用實心背景，移除透明效果 */
+[data-mobile="true"][data-sidebar="sidebar"] {
+  backdrop-filter: none !important;
+  background-color: rgb(var(--sidebar-background)) !important;
+}
+
+/* 當側邊欄展開時，為主要內容添加玻璃效果 */
+.group\/sidebar-wrapper:has([data-mobile="true"][data-state="open"]) [data-sidebar="inset"] {
+  backdrop-filter: blur(8px) !important;
+  background-color: rgba(var(--background), 0.8) !important;
+}
+
+/* Dialog 彈窗背景修正 */
+[data-radix-dialog-content],
+[role="dialog"],
+.bg-background[role="dialog"] {
+  background-color: rgb(255, 255, 255) !important;
+  border: 1px solid rgb(229, 231, 235) !important;
+}
+
+.dark [data-radix-dialog-content],
+.dark [role="dialog"],
+.dark .bg-background[role="dialog"] {
+  background-color: rgb(17, 24, 39) !important;
+  border: 1px solid rgb(75, 85, 99) !important;
+}
+
+/* 更具體的 Dialog 選擇器 */
+[role="dialog"] {
+  background-color: rgb(255, 255, 255) !important;
+  border: 1px solid rgb(229, 231, 235) !important;
+}
+
+.dark [role="dialog"] {
+  background-color: rgb(17, 24, 39) !important;
+  border: 1px solid rgb(75, 85, 99) !important;
+}
+
+/* 針對 Tailwind 的 bg-background 類別 */
+.bg-background {
+  background-color: rgb(255, 255, 255) !important;
+}
+
+.dark .bg-background {
+  background-color: rgb(17, 24, 39) !important;
+}
+
+/* 自定義滾動條樣式 */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(243, 244, 246);
+  border-radius: 6px;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 50%, rgb(153, 27, 27) 100%);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 50%, rgb(185, 28, 28) 100%);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+  transform: scale(1.05);
+}
+
+::-webkit-scrollbar-corner {
+  background: rgb(243, 244, 246);
+}
+
+/* 黑暗主題滾動條 */
+.dark ::-webkit-scrollbar-track {
+  background: rgb(55, 65, 81);
+  box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(248, 113, 113) 0%, rgb(220, 38, 38) 50%, rgb(185, 28, 28) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(248, 113, 113, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgb(252, 165, 165) 0%, rgb(248, 113, 113) 50%, rgb(220, 38, 38) 100%);
+  box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: rgb(55, 65, 81);
+}
+
+/* Firefox 滾動條樣式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(220, 38, 38) rgb(243, 244, 246);
+}
+
+.dark * {
+  scrollbar-color: rgb(248, 113, 113) rgb(55, 65, 81);
+}
+
+/* 自定義游標樣式 */
+body {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23dc2626" stroke="%23ffffff" stroke-width="1"/></svg>'), auto;
+}
+
+a, button, [role="button"], .cursor-pointer {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 3l4 8 5-5-8-4z" fill="%23dc2626" stroke="%23ffffff" stroke-width="1"/><circle cx="12" cy="12" r="2" fill="%23dc2626"/></svg>'), pointer;
+}
+
+input, textarea, [contenteditable] {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="11" y="4" width="2" height="16" fill="%23dc2626"/><rect x="8" y="4" width="8" height="2" fill="%23dc2626"/><rect x="8" y="18" width="8" height="2" fill="%23dc2626"/></svg>'), text;
+}
+
+.cursor-grab {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23dc2626" stroke-width="2" stroke-linecap="round"/></svg>'), grab;
+}
+
+.cursor-grabbing {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23dc2626" stroke-width="3" stroke-linecap="round"/></svg>'), grabbing;
+}
+
+/* 黑暗主題自定義游標 */
+.dark body {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23f87171" stroke="%23000000" stroke-width="1"/></svg>'), auto;
+}
+
+.dark a, .dark button, .dark [role="button"], .dark .cursor-pointer {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 3l4 8 5-5-8-4z" fill="%23f87171" stroke="%23000000" stroke-width="1"/><circle cx="12" cy="12" r="2" fill="%23f87171"/></svg>'), pointer;
+}
+
+.dark input, .dark textarea, .dark [contenteditable] {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="11" y="4" width="2" height="16" fill="%23f87171"/><rect x="8" y="4" width="8" height="2" fill="%23f87171"/><rect x="8" y="18" width="8" height="2" fill="%23f87171"/></svg>'), text;
+}
+
+.dark .cursor-grab {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23f87171" stroke-width="2" stroke-linecap="round"/></svg>'), grab;
+}
+
+.dark .cursor-grabbing {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23f87171" stroke-width="3" stroke-linecap="round"/></svg>'), grabbing;
+}
+
+/* 選擇文字時的顏色 */
+::selection {
+  background-color: rgba(220, 38, 38, 0.3);
+  color: rgb(0, 0, 0);
+}
+
+.dark ::selection {
+  background-color: rgba(248, 113, 113, 0.3);
+  color: rgb(255, 255, 255);
 }

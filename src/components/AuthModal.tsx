@@ -31,7 +31,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       if (isSignUp) {
         if (password !== confirmPassword) {
-          setError('兩次密碼不一致');
+          setError(t('auth.passwordMismatch'));
           return;
         }
         await register(email, password, email);
@@ -40,7 +40,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }
     onClose();
     } catch (err: any) {
-      setError('認證失敗，請檢查資料');
+      setError(t('auth.authFailed'));
     }
   };
 
@@ -49,44 +49,44 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
-            {isSignUp ? 'Sign Up' : 'Sign In'}
+            {isSignUp ? t('auth.signUp') : t('auth.signIn')}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder={t('auth.enterEmail')}
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('auth.enterPassword')}
               required
             />
           </div>
           
           {isSignUp && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
                 required
               />
             </div>
@@ -95,7 +95,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           {error && <div className="text-red-500 text-center">{error}</div>}
           
           <Button type="submit" className="w-full gradient-primary hover:opacity-90 text-white">
-            {isSignUp ? 'Sign Up' : 'Sign In'}
+            {isSignUp ? t('auth.signUp') : t('auth.signIn')}
           </Button>
           
           <div className="text-center">
@@ -105,8 +105,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               className="text-sm text-muted-foreground hover:text-primary"
             >
               {isSignUp 
-                ? 'Already have an account? Sign in' 
-                : "Don't have an account? Sign up"
+                ? t('auth.alreadyHaveAccount')
+                : t('auth.dontHaveAccount')
               }
             </button>
           </div>

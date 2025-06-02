@@ -21,7 +21,7 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b bg-background" style={{ position: 'sticky' }}>
         <div className="flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden" />
+            <SidebarTrigger className="md:hidden mr-2" />
             <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
@@ -32,7 +32,7 @@ export function Header() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search courses, lecturers..."
+                placeholder={t('search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"

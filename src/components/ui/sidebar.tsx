@@ -273,8 +273,11 @@ const SidebarTrigger = React.forwardRef<
       className={cn(
         isMobile 
           ? "relative h-8 w-8 rounded-md hover:bg-accent" 
-          : "fixed top-1/2 -translate-y-1/2 z-50 h-8 w-8 rounded-full bg-sidebar-accent border border-sidebar-border hover:bg-sidebar-accent/80 shadow-md",
-        !isMobile && (state === "expanded" ? "left-[calc(12rem-2.5rem)]" : "left-2"),
+          : "fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-200",
+        !isMobile && (state === "expanded" 
+          ? "left-[calc(12rem-1.5rem)] h-12 w-6 bg-red-500/50 hover:bg-red-600 text-white hover:text-white rounded-l-full border-l border-t border-b border-red-600/50 hover:border-red-600" 
+          : "left-0 h-12 w-6 bg-red-500/50 hover:bg-red-600 text-white hover:text-white rounded-r-full border-r border-t border-b border-red-600/50 hover:border-red-600"
+        ),
         className
       )}
       onClick={(event) => {
@@ -289,11 +292,11 @@ const SidebarTrigger = React.forwardRef<
         </svg>
       ) : (
         state === "expanded" ? (
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-6 w-6 text-white mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         ) : (
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-6 w-6 text-white ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         )

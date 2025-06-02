@@ -31,7 +31,7 @@ export function StatsCard({ title, value, change, icon: Icon, trend = 'neutral' 
               </p>
             )}
           </div>
-          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="h-12 w-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(220, 38, 38, 0.1)' }}>
             <Icon className="h-6 w-6 text-primary" />
           </div>
         </div>

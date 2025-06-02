@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 interface RollingTextProps {
@@ -18,7 +17,7 @@ export function RollingText({ texts, interval = 2000 }: RollingTextProps) {
   }, [texts.length, interval]);
 
   return (
-    <span className="rolling-text">
+    <span className="rolling-text ml-1">
       {texts.map((text, index) => (
         <span
           key={text}

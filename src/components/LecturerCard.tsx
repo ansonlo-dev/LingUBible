@@ -1,9 +1,9 @@
-
 import { Star, Users, MessageSquare, GraduationCap, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface LecturerCardProps {
   name: string;
@@ -24,6 +24,7 @@ export function LecturerCard({
   courseCount,
   specialties
 }: LecturerCardProps) {
+  const { t } = useLanguage();
   const initials = name.split(' ').map(n => n[0]).join('');
 
   return (
@@ -46,11 +47,11 @@ export function LecturerCard({
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                 <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
-                <span>({reviewCount} reviews)</span>
+                <span>({reviewCount} {t('card.reviews')})</span>
               </div>
               <div className="flex items-center gap-1">
                 <GraduationCap className="h-4 w-4" />
-                <span>{courseCount} courses</span>
+                <span>{courseCount} {t('card.courses')}</span>
               </div>
             </div>
           </div>
@@ -62,7 +63,7 @@ export function LecturerCard({
           <div>
             <p className="text-sm font-medium mb-2 flex items-center gap-1">
               <Award className="h-4 w-4" />
-              Specialties
+              {t('card.specialties')}
             </p>
             <div className="flex flex-wrap gap-1">
               {specialties.slice(0, 3).map((specialty) => (
@@ -72,7 +73,7 @@ export function LecturerCard({
               ))}
               {specialties.length > 3 && (
                 <Badge variant="secondary" className="text-xs">
-                  +{specialties.length - 3} more
+                  +{specialties.length - 3} {t('card.more')}
                 </Badge>
               )}
             </div>
@@ -81,10 +82,10 @@ export function LecturerCard({
           <div className="flex gap-2 pt-2">
             <Button size="sm" className="flex-1 bg-gradient-primary hover:opacity-90">
               <MessageSquare className="h-4 w-4 mr-1" />
-              Review
+              {t('button.review')}
             </Button>
             <Button size="sm" variant="outline" className="flex-1">
-              View Profile
+              {t('button.viewProfile')}
             </Button>
           </div>
         </div>

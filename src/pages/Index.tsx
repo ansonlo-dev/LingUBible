@@ -3,6 +3,7 @@ import { CourseCard } from '@/components/CourseCard';
 import { LecturerCard } from '@/components/LecturerCard';
 import { StatsCard } from '@/components/StatsCard';
 import { RollingText } from '@/components/RollingText';
+import { FloatingGlare } from '@/components/FloatingGlare';
 import { BookOpen, Users, Star, TrendingUp, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,64 +17,64 @@ const Index = () => {
   // Mock data
   const courses = [
     {
-      title: "Introduction to Computer Science",
+      title: t('course.introCS'),
       code: "CS101",
       lecturer: "Dr. Sarah Johnson",
       rating: 4.5,
       reviewCount: 24,
       studentCount: 156,
-      department: "Computer Science",
-      difficulty: "Medium" as const
+      department: t('department.computerScience'),
+      difficulty: t('difficulty.medium')
     },
     {
-      title: "Advanced Mathematics",
+      title: t('course.advancedMath'),
       code: "MATH301",
       lecturer: "Prof. Michael Chen",
       rating: 4.2,
       reviewCount: 18,
       studentCount: 89,
-      department: "Mathematics",
-      difficulty: "Hard" as const
+      department: t('department.mathematics'),
+      difficulty: t('difficulty.hard')
     },
     {
-      title: "English Literature",
+      title: t('course.englishLit'),
       code: "ENG201",
       lecturer: "Dr. Emily Davis",
       rating: 4.8,
       reviewCount: 32,
       studentCount: 203,
-      department: "English",
-      difficulty: "Easy" as const
+      department: t('department.english'),
+      difficulty: t('difficulty.easy')
     }
   ];
 
   const lecturers = [
     {
       name: "Sarah Johnson",
-      department: "Computer Science",
-      title: "Dr.",
+      department: t('department.computerScience'),
+      title: t('card.prof'),
       rating: 4.6,
       reviewCount: 45,
       courseCount: 3,
-      specialties: ["Programming", "Data Structures", "Algorithms", "Machine Learning"]
+      specialties: [t('specialty.programming'), t('specialty.dataStructures'), t('specialty.algorithms'), t('specialty.machineLearning')]
     },
     {
       name: "Michael Chen",
-      department: "Mathematics",
-      title: "Prof.",
+      department: t('department.mathematics'),
+      title: t('card.prof'),
       rating: 4.3,
       reviewCount: 28,
       courseCount: 4,
-      specialties: ["Calculus", "Linear Algebra", "Statistics"]
+      specialties: [t('specialty.calculus'), t('specialty.linearAlgebra'), t('specialty.statistics')]
     },
     {
       name: "Emily Davis",
-      department: "English",
-      title: "Dr.",
+      department: t('department.english'),
+      title: t('card.prof'),
       rating: 4.7,
       reviewCount: 52,
       courseCount: 5,
-      specialties: ["Literature", "Creative Writing", "Poetry", "Drama"]
+      specialties: [t('specialty.literature'), t('specialty.creativeWriting'), t('specialty.poetry'), t('specialty.drama')]
     }
   ];
 
@@ -82,20 +83,26 @@ const Index = () => {
   const actionTexts = Array.isArray(actions) ? actions : [actions];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="min-h-screen bg-background relative">
+      <FloatingGlare count={4} className="fixed inset-0 top-16 z-0" />
+      <div className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Hero Section */}
         <div className="text-center py-12 animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             {t('hero.title')} <span className="gradient-text">LingUBible</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-            {t('hero.subtitle')}
+            <span className="inline md:block">
+              {t('hero.subtitle').split('. ')[0]}.
+            </span>
+            <span className="inline md:block md:ml-0 ml-1">
+              {t('hero.subtitle').split('. ')[1]}
+            </span>
           </p>
           
           {/* Rolling Text Animation */}
-          <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center gap-1">
-            <span className="text-foreground">Come here to </span>
+          <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center gap-0">
+            <span className="text-foreground">{t('hero.comeHereTo')}</span>
             <RollingText 
               texts={actionTexts} 
               interval={2000}
@@ -107,7 +114,7 @@ const Index = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search courses, lecturers..."
+                placeholder={t('search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
@@ -121,39 +128,39 @@ const Index = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up relative z-20">
           <StatsCard
             title={t('stats.totalCourses')}
             value="1,247"
-            change="+12% this month"
+            change={`+12% ${t('stats.thisMonth')}`}
             icon={BookOpen}
             trend="up"
           />
           <StatsCard
             title={t('stats.lecturers')}
             value="342"
-            change="+5% this month"
+            change={`+5% ${t('stats.thisMonth')}`}
             icon={Users}
             trend="up"
           />
           <StatsCard
             title={t('stats.reviews')}
             value="8,943"
-            change="+23% this month"
+            change={`+23% ${t('stats.thisMonth')}`}
             icon={Star}
             trend="up"
           />
           <StatsCard
             title={t('stats.activeStudents')}
             value="2,156"
-            change="+8% this month"
+            change={`+8% ${t('stats.thisMonth')}`}
             icon={TrendingUp}
             trend="up"
           />
         </div>
 
         {/* Content Tabs */}
-        <Tabs defaultValue="courses" className="space-y-6">
+        <Tabs defaultValue="courses" className="space-y-6 relative z-20">
           <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
@@ -168,7 +175,7 @@ const Index = () => {
           <TabsContent value="courses" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">{t('tabs.popularCourses')}</h2>
-              <Button variant="outline">View All</Button>
+              <Button variant="outline">{t('button.viewAll')}</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course, index) => (
@@ -182,7 +189,7 @@ const Index = () => {
           <TabsContent value="lecturers" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">{t('tabs.topLecturers')}</h2>
-              <Button variant="outline">View All</Button>
+              <Button variant="outline">{t('button.viewAll')}</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lecturers.map((lecturer, index) => (
