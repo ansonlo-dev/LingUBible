@@ -1,18 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CourseCard } from '@/components/CourseCard';
 import { LecturerCard } from '@/components/LecturerCard';
 import { StatsCard } from '@/components/StatsCard';
 import { RollingText } from '@/components/RollingText';
 import { FloatingGlare } from '@/components/FloatingGlare';
-import { BookOpen, Users, Star, TrendingUp, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { FloatingCircles } from '@/components/FloatingCircles';
+import { BookOpen, Users, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
-  const [searchQuery, setSearchQuery] = useState('');
   const { t } = useLanguage();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // Mock data
   const courses = [
@@ -83,17 +96,21 @@ const Index = () => {
   const actionTexts = Array.isArray(actions) ? actions : [actions];
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <FloatingGlare count={4} className="fixed inset-0 top-16 z-0" />
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
+      <FloatingCircles zIndex={0} />
+      {/* 在桌面版顯示 FloatingGlare，手機版跳過以減少重疊 */}
+      {!isMobile && <FloatingGlare count={3} className="fixed inset-0 top-16 z-0" />}
       <div className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Hero Section */}
-        <div className="text-center py-12 animate-fade-in">
+        <div className="text-center py-12 animate-fade-in relative overflow-visible">
+          {/* 在桌面版才顯示額外的 FloatingCircles */}
+          {!isMobile && <FloatingCircles zIndex={0} className="absolute inset-0 w-full h-full" />}
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             {t('hero.title')} <span className="gradient-text">LingUBible</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
             <span className="inline md:block">
-              {t('hero.subtitle').split('. ')[0]}.
+              {t('hero.subtitle').split('. ')[0]}
             </span>
             <span className="inline md:block md:ml-0 ml-1">
               {t('hero.subtitle').split('. ')[1]}
@@ -107,19 +124,6 @@ const Index = () => {
               texts={actionTexts} 
               interval={2000}
             />
-          </div>
-          
-          {/* Mobile Search */}
-          <div className="md:hidden max-w-md mx-auto mb-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('search.placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
-              />
-            </div>
           </div>
           
           <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-medium px-8">

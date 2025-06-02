@@ -39,7 +39,7 @@ export function FloatingGlare({ count = 6, className = '' }: FloatingGlareProps)
   }, [count]);
 
   return (
-    <div className={`absolute inset-0 pointer-events-none ${className}`}>
+    <div className={`absolute inset-0 pointer-events-none ${className}`} style={{ contain: 'layout style', transform: 'translateZ(0)' }}>
       {glares.map((glare) => (
         <div
           key={glare.id}
@@ -52,7 +52,8 @@ export function FloatingGlare({ count = 6, className = '' }: FloatingGlareProps)
             opacity: glare.opacity,
             animationDuration: `${glare.duration}s`,
             animationDelay: `${glare.delay}s`,
-            transform: 'translate(-50%, -50%)',
+            transform: 'translate(-50%, -50%) translateZ(0)',
+            willChange: 'transform, opacity',
           }}
         />
       ))}
@@ -60,11 +61,11 @@ export function FloatingGlare({ count = 6, className = '' }: FloatingGlareProps)
       {/* 額外的大型背景光暈 */}
       <div 
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-radial from-red-500/10 via-red-400/5 to-transparent rounded-full blur-3xl animate-pulse dark:from-red-400/20 dark:via-red-300/10"
-        style={{ animationDuration: '12s' }}
+        style={{ animationDuration: '12s', transform: 'translateZ(0)', willChange: 'opacity' }}
       />
       <div 
         className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-radial from-red-600/10 via-red-500/5 to-transparent rounded-full blur-3xl animate-pulse dark:from-red-500/20 dark:via-red-400/10"
-        style={{ animationDuration: '15s', animationDelay: '3s' }}
+        style={{ animationDuration: '15s', animationDelay: '3s', transform: 'translateZ(0)', willChange: 'opacity' }}
       />
     </div>
   );

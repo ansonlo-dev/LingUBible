@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,9 +16,9 @@ interface LanguageSwitcherProps {
 }
 
 const languages = {
-  en: 'English',
   'zh-TW': '繁體中文',
   'zh-CN': '简体中文',
+  en: 'English',
 };
 
 export function LanguageSwitcher({ onLanguageChange, currentLanguage }: LanguageSwitcherProps) {

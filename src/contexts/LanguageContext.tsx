@@ -49,7 +49,7 @@ const getInitialLanguage = (): Language => {
 const translations = {
   en: {
     'hero.title': 'Welcome to',
-    'hero.subtitle': 'Your platform for honest course and lecturer reviews. Help fellow students make informed decisions.',
+    'hero.subtitle': 'Your platform for honest course and lecturer reviews. Help fellow students make informed decisions',
     'hero.action': 'comment',
     'hero.actions': ['comment', 'vote', 'ask', 'answer'],
     'hero.getStarted': 'Get Started',
@@ -219,7 +219,7 @@ const translations = {
   },
   'zh-CN': {
     'hero.title': '欢迎来到',
-    'hero.subtitle': '您诚实的课程和讲师评价平台。帮助同学们做出明智的决定',
+    'hero.subtitle': '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定',
     'hero.action': '评论',
     'hero.actions': ['评论', '投票', '提出问题', '回答问题'],
     'hero.getStarted': '开始使用',

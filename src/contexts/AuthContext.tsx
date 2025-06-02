@@ -21,8 +21,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkUser = async () => {
         try {
-            const currentUser = await authService.getCurrentUser();
-            setUser(currentUser);
+            if (authService.hasLocalSession()) {
+                const currentUser = await authService.getCurrentUser();
+                setUser(currentUser);
+            } else {
+                setUser(null);
+            }
         } catch (error) {
             setUser(null);
         } finally {

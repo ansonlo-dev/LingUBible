@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from '@/components/UserMenu';
@@ -100,25 +101,38 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <SidebarProvider>
-              <div className="min-h-screen flex w-full bg-background">
-              <AppSidebar />
-                {/* Desktop sidebar trigger */}
-                <SidebarTrigger className="hidden md:block" />
-                <SidebarInset className="flex flex-col bg-background">
-                <Header />
-                  <main className="flex-1 bg-background">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </SidebarInset>
-            </div>
-          </SidebarProvider>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
+          <Routes>
+            {/* 登入頁面使用獨立佈局 */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* 其他頁面使用主要佈局 */}
+            <Route path="/*" element={
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full bg-background">
+                  <AppSidebar />
+                  {/* Desktop sidebar trigger */}
+                  <SidebarTrigger className="hidden md:block" />
+                  <SidebarInset className="flex flex-col bg-background">
+                    <Header />
+                    <main className="flex-1 bg-background">
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </main>
+                    <Footer />
+                  </SidebarInset>
+                </div>
+              </SidebarProvider>
+            } />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>
