@@ -4,15 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import { useAuth } from '@/contexts/AuthContext';
-import { UserMenu } from '@/components/UserMenu';
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
 
@@ -69,8 +66,10 @@ function initializeTheme() {
 const initialIsDark = initializeTheme();
 
 const App = () => {
-  // const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(initialIsDark);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     // 強制應用正確的主題，確保與存儲同步
@@ -80,64 +79,109 @@ const App = () => {
     // 強制設定主題，確保與 DOM 同步
     setTheme(shouldUseDark);
     setIsDark(shouldUseDark);
-    
-    // Loading screen - 已移除
-    // const timer = setTimeout(() => setLoading(false), 500);
-    // return () => clearTimeout(timer);
   }, []);
 
-  // 移除載入畫面檢查
-  // if (loading) {
-  //   return (
-  //     <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDark ? 'bg-black text-white' : 'bg-white text-black'}`}>
-  //       <div className={`animate-spin rounded-full h-16 w-16 border-4 ${isDark ? 'border-gray-700 border-t-red-400' : 'border-gray-200 border-t-primary'}`}></div>
-  //     </div>
-  //   );
-  // }
+  // 監聽視窗大小變化
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // 當從手機版切換到桌面版時，關閉手機版側邊欄
+      if (!mobile && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobileSidebarOpen]);
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
+  // 統一的側邊欄切換函數，根據設備類型選擇正確的行為
+  const handleSidebarToggle = () => {
+    if (isMobile) {
+      toggleMobileSidebar();
+    } else {
+      toggleSidebar();
+    }
+  };
 
   return (
-  <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true
-          }}
-        >
-          <Routes>
-            {/* 登入頁面使用獨立佈局 */}
-            <Route path="/login" element={<Login />} />
-            
-            {/* 其他頁面使用主要佈局 */}
-            <Route path="/*" element={
-              <SidebarProvider>
-                <div className="min-h-screen flex w-full bg-background">
-                  <AppSidebar />
-                  {/* Desktop sidebar trigger */}
-                  <SidebarTrigger className="hidden md:block" />
-                  <SidebarInset className="flex flex-col bg-background">
-                    <Header />
-                    <main className="flex-1 bg-background">
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}
+          >
+            <Routes>
+              {/* 登入頁面使用獨立佈局 */}
+              <Route path="/login" element={<Login />} />
+              
+              {/* 其他頁面使用主要佈局 */}
+              <Route path="/*" element={
+                <div className="app-layout">
+                  {/* 左側邊欄 - 固定定位 */}
+                  <aside className={`
+                    sidebar-container 
+                    ${isSidebarCollapsed ? 'collapsed' : ''} 
+                    ${isMobileSidebarOpen ? 'mobile-open' : ''}
+                  `}>
+                    <AppSidebar 
+                      isCollapsed={isSidebarCollapsed}
+                      onToggle={handleSidebarToggle}
+                      isMobileOpen={isMobileSidebarOpen}
+                      onMobileToggle={toggleMobileSidebar}
+                    />
+                  </aside>
+                  
+                  {/* 手機版遮罩 */}
+                  {isMobileSidebarOpen && (
+                    <div 
+                      className="md:hidden fixed inset-0 z-20 bg-black/50"
+                      onClick={() => setIsMobileSidebarOpen(false)}
+                    />
+                  )}
+                  
+                  {/* 主要內容區域 */}
+                  <div className={`main-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+                    {/* 頂部 Header - sticky */}
+                    <Header 
+                      onToggleSidebar={handleSidebarToggle}
+                      isSidebarCollapsed={isSidebarCollapsed}
+                    />
+                    
+                    {/* 頁面內容 */}
+                    <main className="content-area">
                       <Routes>
                         <Route path="/" element={<Index />} />
-                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </main>
+                    
+                    {/* Footer */}
                     <Footer />
-                  </SidebarInset>
+                  </div>
                 </div>
-              </SidebarProvider>
-            } />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
+              } />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
+  );
 };
 
 export default App;

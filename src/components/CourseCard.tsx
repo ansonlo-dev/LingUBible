@@ -41,7 +41,7 @@ export function CourseCard({
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 glass-card">
+    <Card className="group glass-card enhanced-card animated-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -77,7 +77,7 @@ export function CourseCard({
           </Badge>
           
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1 bg-gradient-primary hover:opacity-90">
+            <Button size="sm" className="flex-1 bg-gradient-primary hover:opacity-90 text-white">
               <MessageSquare className="h-4 w-4 mr-1" />
               {t('button.review')}
             </Button>

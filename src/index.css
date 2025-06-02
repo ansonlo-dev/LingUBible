@@ -32,6 +32,10 @@
     --sidebar-accent-foreground: 33, 33, 33;
     --sidebar-border: 209, 213, 219;
     --sidebar-ring: 220, 38, 38;
+    
+    /* 佈局變數 */
+    --sidebar-width: 11.5rem;
+    --header-height: 4rem;
   }
 
   .dark {
@@ -64,105 +68,204 @@
     --sidebar-ring: 220, 38, 38;
   }
 
-  /* 平滑滾動配置 */
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 4rem; /* 為 sticky header 預留空間 */
+    scroll-padding-top: var(--header-height);
+    height: 100%;
   }
 
-  /* 針對支援的瀏覽器啟用更進階的滾動效果 */
-  @supports (scroll-behavior: smooth) {
-    html {
-      scroll-behavior: smooth;
-    }
-  }
-
-  /* 為所有可滾動元素添加平滑滾動 */
-  * {
-    scroll-behavior: smooth;
-  }
-
-  /* 防止水平滾動 */
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
+    height: 100%;
   }
 
-  /* 改善滾動性能的額外配置 */
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background-color: inherit !important;
-    /* 滾動和性能優化 */
-    overscroll-behavior: contain;
-    scroll-behavior: smooth;
-    transform: translateZ(0);
-    -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
-    max-width: 100vw;
-  }
-
-  /* 為動畫元素啟用硬體加速 */
-  .animate-fade-in,
-  .animate-slide-up,
-  .rolling-text,
-  .rolling-text-item {
-    will-change: transform, opacity;
-    transform: translateZ(0);
-  }
-
-  /* 優化 sticky 元素的性能 */
-  header[class*="sticky"] {
-    will-change: transform, background-color, backdrop-filter;
-    transform: translateZ(0);
-  }
-}
-
-@layer base {
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    background-color: inherit !important;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
   }
 }
 
 @layer components {
+  /* 新的佈局系統 */
+  .app-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background: rgb(var(--background));
+    overflow: visible;
+  }
+
+  .sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    z-index: 40;
+    background: rgb(var(--sidebar-background));
+    border-right: 1px solid rgb(var(--sidebar-border));
+    overflow-y: auto;
+    overflow-x: visible;
+    transform: translateX(0);
+    transition: width 0.3s ease, transform 0.3s ease;
+  }
+
+  /* 摺疊狀態 */
+  .sidebar-container.collapsed {
+    width: 4rem;
+  }
+
+  /* 手機版隱藏側邊欄 */
+  @media (max-width: 768px) {
+    .sidebar-container {
+      transform: translateX(-100%);
+      top: var(--header-height);
+      height: calc(100vh - var(--header-height));
+      z-index: 50;
+    }
+    
+    .sidebar-container.mobile-open {
+      transform: translateX(0);
+    }
+
+    /* 手機版不支援摺疊 */
+    .sidebar-container.collapsed {
+      width: var(--sidebar-width);
+    }
+  }
+
+  .main-container {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: rgb(var(--background));
+    transition: margin-left 0.3s ease;
+    position: relative;
+    overflow: visible;
+  }
+
+  /* 摺疊狀態下的主容器 */
+  .main-container.sidebar-collapsed {
+    margin-left: 4rem;
+  }
+
+  /* 手機版主容器 */
+  @media (max-width: 768px) {
+    .main-container,
+    .main-container.sidebar-collapsed {
+      margin-left: 0;
+    }
+  }
+
+  /* Header sticky 樣式 */
+  .header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    padding: 0 1rem;
+    background: rgb(var(--background));
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgb(var(--border));
+    transition: all 0.2s ease;
+    overflow: visible;
+  }
+
+  .content-area {
+    flex: 1;
+    min-height: calc(100vh - var(--header-height));
+    background: rgb(var(--background));
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 玻璃卡片效果 */
   .glass-card {
-    @apply border border-gray-200 dark:border-gray-700 relative z-30;
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    pointer-events: none;
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      0 6px 20px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    transform: translateY(-2px);
   }
   
   .dark .glass-card {
-    background: rgba(17, 24, 39, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    background: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass-card::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  }
+
+  .dark .glass-card:hover {
+    background: rgba(17, 24, 39, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      0 6px 20px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
   
+  /* 漸變樣式 */
   .gradient-text {
     @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
   
-  .gradient-primary,
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%) !important;
-    color: white !important;
+  .gradient-primary {
+    background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%);
+    color: white;
   }
 
-  /* 確保在黑暗模式下也使用相同的紅色 */
-  .dark .gradient-primary,
-  .dark .bg-gradient-primary {
-    background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%) !important;
-    color: white !important;
-  }
-
+  /* 滾動文字動畫 */
   .rolling-text {
     @apply inline-block relative overflow-hidden;
-    height: 1.75rem; /* 與 text-lg 的 line-height 匹配 */
+    height: 1.75rem;
     width: auto;
     min-width: 120px;
-    vertical-align: baseline; /* 確保與前面的文字對齊 */
+    vertical-align: baseline;
   }
 
   .rolling-text-item {
@@ -170,993 +273,176 @@
     transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
     color: rgb(220, 38, 38);
     font-weight: 600;
-    height: 1.75rem; /* 與容器高度匹配 */
+    height: 1.75rem;
   }
 
-  /* 浮動光暈動畫 */
+  /* 浮動動畫 */
   .animate-float {
     animation: float 6s ease-in-out infinite;
-    /* 確保不影響佈局 */
-    will-change: transform, opacity;
-    transform: translateZ(0);
-    contain: layout style;
   }
 
   @keyframes float {
     0%, 100% {
-      transform: translate(-50%, -50%) translateY(0px) scale(1) translateZ(0);
+      transform: translate(-50%, -50%) translateY(0px) scale(1);
       filter: blur(16px) brightness(1);
     }
     25% {
-      transform: translate(-50%, -50%) translateY(-20px) scale(1.1) translateZ(0);
+      transform: translate(-50%, -50%) translateY(-20px) scale(1.1);
       filter: blur(12px) brightness(1.2);
     }
     50% {
-      transform: translate(-50%, -50%) translateY(-10px) scale(0.9) translateZ(0);
+      transform: translate(-50%, -50%) translateY(-10px) scale(0.9);
       filter: blur(20px) brightness(0.8);
     }
     75% {
-      transform: translate(-50%, -50%) translateY(-30px) scale(1.05) translateZ(0);
+      transform: translate(-50%, -50%) translateY(-30px) scale(1.05);
       filter: blur(14px) brightness(1.1);
     }
   }
 
-  /* 徑向漸變背景 */
-  .bg-gradient-radial {
-    background: radial-gradient(circle, var(--tw-gradient-stops));
+  /* 浮動圓圈 */
+  .floating-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.3) 0%, rgba(220, 38, 38, 0.1) 50%, transparent 100%);
+    filter: blur(8px);
+    animation: floatCircle 8s ease-in-out infinite;
+    pointer-events: none;
   }
 
-  /* 增強光暈效果 */
-  .floating-glare-enhanced {
-    box-shadow: 
-      0 0 20px rgba(239, 68, 68, 0.3),
-      0 0 40px rgba(239, 68, 68, 0.2),
-      0 0 60px rgba(239, 68, 68, 0.1);
-  }
-
-  .dark .floating-glare-enhanced {
-    box-shadow: 
-      0 0 25px rgba(248, 113, 113, 0.4),
-      0 0 50px rgba(248, 113, 113, 0.3),
-      0 0 75px rgba(248, 113, 113, 0.2);
-  }
-
-  /* Tabs 玻璃效果 */
-  [role="tablist"] {
-    background: rgba(255, 255, 255, 0.6) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  }
-
-  .dark [role="tablist"] {
-    background: rgba(17, 24, 39, 0.6) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-
-  [role="tab"] {
-    background: transparent !important;
-    transition: all 0.3s ease !important;
-    border: 1px solid transparent !important;
-  }
-
-  [role="tab"][data-state="active"] {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  }
-
-  .dark [role="tab"] {
-    border: 1px solid transparent !important;
-  }
-
-  .dark [role="tab"][data-state="active"] {
-    background: rgba(17, 24, 39, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  }
-
-  /* Header 透明度過渡優化 */
-  .header-transparent {
-    transition: 
-      background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      backdrop-filter 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* 確保對話框覆蓋層也是固定定位 */
-  [data-radix-dialog-overlay] {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 9998 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
-  }
-
-  .dark [data-radix-dialog-overlay] {
-    background-color: rgba(0, 0, 0, 0.7) !important;
-  }
-
-  /* 搜尋對話框內容 */
-  [role="dialog"][data-radix-dialog-content] {
-    max-width: 640px !important;
-    width: 90vw !important;
-    max-height: 80vh !important;
-    border-radius: 12px !important;
-    box-shadow: 
-      0 25px 50px -12px rgba(0, 0, 0, 0.25),
-      0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  }
-
-  .dark [role="dialog"][data-radix-dialog-content] {
-    box-shadow: 
-      0 25px 50px -12px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  }
-
-  /* CommandDialog 特定樣式 - 強制固定定位 */
-  [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
-    position: fixed !important;
-    left: 50% !important;
-    top: 15vh !important;
-    transform: translateX(-50%) !important;
-    margin: 0 !important;
-    z-index: 9999 !important;
-    /* 確保不受任何父元素影響 */
-    right: auto !important;
-    bottom: auto !important;
-  }
-
-  /* 覆蓋任何可能的 Radix 預設樣式 */
-  [data-radix-dialog-content][role="dialog"]:has([cmdk-root])[data-state="open"],
-  [data-radix-dialog-content][role="dialog"]:has([cmdk-root])[data-state="closed"] {
-    position: fixed !important;
-    left: 50% !important;
-    top: 15vh !important;
-    transform: translateX(-50%) !important;
-  }
-
-  /* 手機版搜尋對話框定位修正 */
-  @media (max-width: 767px) {
-    [data-radix-dialog-content][role="dialog"]:has([cmdk-root]),
-    [data-radix-dialog-content][role="dialog"]:has([cmdk-root])[data-state="open"],
-    [data-radix-dialog-content][role="dialog"]:has([cmdk-root])[data-state="closed"] {
-      position: fixed !important;
-      left: 50% !important;
-      top: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      margin: 0 !important;
-      z-index: 9999 !important;
-      width: 90vw !important;
-      max-width: 400px !important;
-      max-height: 70vh !important;
-      right: auto !important;
-      bottom: auto !important;
+  @keyframes floatCircle {
+    0%, 100% {
+      transform: translateY(0px) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translateY(-30px) scale(1.1);
+      opacity: 0.8;
     }
   }
 
-
-  /* 搜尋輸入框樣式 */
-  [cmdk-input] {
-    font-size: 16px !important;
-    padding: 16px !important;
-    border: none !important;
-    outline: none !important;
-    background: transparent !important;
-  }
-
-  /* 搜尋結果項目樣式 */
-  [cmdk-item] {
-    border-radius: 8px !important;
-    margin: 2px 8px !important;
-    padding: 12px !important;
-    transition: all 0.2s ease !important;
-  }
-
-  [cmdk-item][data-selected="true"] {
-    background-color: rgb(var(--accent)) !important;
-    color: rgb(var(--accent-foreground)) !important;
-  }
-
-  /* 搜尋群組標題樣式 */
-  [cmdk-group-heading] {
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    color: rgb(var(--muted-foreground)) !important;
-    padding: 8px 16px 4px 16px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-  }
-
-  /* 鍵盤快捷鍵樣式 */
-  kbd {
-    background: rgb(var(--muted)) !important;
-    border: 1px solid rgb(var(--border)) !important;
-    border-radius: 4px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-    color: rgb(var(--muted-foreground)) !important;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace !important;
-    font-size: 10px !important;
-    font-weight: 500 !important;
-    line-height: 1 !important;
-    padding: 2px 6px !important;
-    text-transform: uppercase !important;
-  }
-
-  .dark kbd {
-    background: rgb(var(--muted)) !important;
-    border-color: rgb(var(--border)) !important;
-    color: rgb(var(--muted-foreground)) !important;
-  }
-
-  /* 搜尋對話框動畫 - 不影響定位 */
-  [data-radix-dialog-content][role="dialog"]:has([cmdk-root])[data-state="open"] {
-    animation: searchDialogFadeIn 0.2s ease-out !important;
-  }
-
-  [data-radix-dialog-content][role="dialog"]:has([cmdk-root])[data-state="closed"] {
-    animation: searchDialogFadeOut 0.2s ease-in !important;
-  }
-
-  @keyframes searchDialogFadeIn {
-    from {
-      opacity: 0;
-      scale: 0.95;
-    }
-    to {
-      opacity: 1;
-      scale: 1;
-    }
-  }
-
-  @keyframes searchDialogFadeOut {
-    from {
-      opacity: 1;
-      scale: 1;
-    }
-    to {
-      opacity: 0;
-      scale: 0.95;
-    }
-  }
-
-/* 確保 sticky 定位正常工作 */
-header {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 50 !important;
-  background-color: rgb(var(--background)) !important;
-}
-
-/* 側邊欄固定定位修正 - 確保不受滾動影響 */
-[data-sidebar="sidebar"] {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  height: 100vh !important;
-  z-index: 40 !important;
-  border-right: 1px solid rgb(var(--sidebar-border)) !important;
-  background-color: rgb(var(--sidebar-background)) !important;
-  transform: none !important;
-  will-change: auto !important;
-  transition: width 0.2s ease-linear !important;
-}
-
-/* 確保側邊欄內容不受滾動影響 */
-[data-sidebar="sidebar"] * {
-  position: relative !important;
-  transform: none !important;
-}
-
-/* 桌面版側邊欄容器 */
-.group.peer.hidden.md\\:block {
-  position: relative !important;
-}
-
-.group.peer.hidden.md\\:block .fixed.inset-y-0 {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  height: 100vh !important;
-  z-index: 40 !important;
-  border-right: 1px solid rgb(var(--sidebar-border)) !important;
-  transition: width 0.2s ease-linear, left 0.2s ease-linear !important;
-}
-
-/* 更具體的側邊欄樣式 */
-.group\/sidebar-wrapper [data-sidebar="sidebar"] {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  height: 100vh !important;
-  z-index: 40 !important;
-  border-right: 1px solid rgb(var(--sidebar-border)) !important;
-  background-color: rgb(var(--sidebar-background)) !important;
-  transition: width 0.2s ease-linear !important;
-}
-
-/* 確保側邊欄在所有狀態下都是固定的 */
-.md\\:flex.fixed.inset-y-0 {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  height: 100vh !important;
-  z-index: 40 !important;
-  border-right: 1px solid rgb(var(--sidebar-border)) !important;
-  background-color: rgb(var(--sidebar-background)) !important;
-  transition: width 0.2s ease-linear, left 0.2s ease-linear !important;
-}
-
-/* 摺疊狀態下的側邊欄樣式 */
-.group\/sidebar-wrapper[data-state="collapsed"] [data-sidebar="sidebar"] {
-  width: var(--sidebar-width-icon) !important;
-}
-
-.group\/sidebar-wrapper[data-state="expanded"] [data-sidebar="sidebar"] {
-  width: var(--sidebar-width) !important;
-}
-
-/* 摺疊狀態下隱藏文字 */
-.group-data-[collapsible=icon]:group-data-[state=collapsed] .group-data-[collapsible=icon]\\:hidden {
-  display: none !important;
-}
-
-/* 確保摺疊按鈕在正確位置 */
-[data-sidebar="trigger"] {
-  position: fixed !important;
-  z-index: 50 !important;
-  transition: all 0.3s ease !important;
-}
-
-/* 桌面版摺疊按鈕位置 */
-.group\/sidebar-wrapper[data-state="expanded"] [data-sidebar="trigger"]:not(.md\\:hidden) {
-  left: calc(var(--sidebar-width) - 1.5rem) !important;
-}
-
-.group\/sidebar-wrapper[data-state="collapsed"] [data-sidebar="trigger"]:not(.md\\:hidden) {
-  left: calc(var(--sidebar-width-icon) - 1.5rem) !important;
-}
-
-/* 黑暗模式下的側邊欄 */
-.dark [data-sidebar="sidebar"],
-.dark .md\\:flex.fixed.inset-y-0 {
-  background-color: rgb(var(--sidebar-background)) !important;
-  border-right: 1px solid rgb(var(--sidebar-border)) !important;
-}
-
-/* 側邊欄活躍項目的粗體樣式 */
-[data-sidebar="menu-button"][data-active="true"] {
-  font-weight: 700 !important;
-}
-
-[data-sidebar="menu-button"][data-active="true"] span {
-  font-weight: 700 !important;
-}
-
-[data-sidebar="menu-button"][data-active="true"] a {
-  font-weight: 700 !important;
-}
-
-[data-sidebar="menu-button"][data-active="true"] a span {
-  font-weight: 700 !important;
-}
-
-/* 確保首頁項目在活躍狀態下是粗體 */
-.font-bold {
-  font-weight: 700 !important;
-}
-
-/* 強制所有主要容器區域都跟隨主題 */
-html {
-  background-color: rgb(255, 255, 255) !important;
-  color: rgb(0, 0, 0) !important;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-html.dark {
-  background-color: rgb(0, 0, 0) !important;
-  color: rgb(255, 255, 255) !important;
-}
-
-body, 
-#root, 
-.min-h-screen, 
-main,
-[class*="bg-background"]:not([role="dialog"]) {
-  transition: background-color 0.3s ease, color 0.3s ease;
-  color: inherit !important;
-}
-
-body {
-  background-color: inherit !important;
-  color: inherit !important;
-}
-
-.dark body, 
-.dark #root, 
-.dark .min-h-screen, 
-.dark main,
-.dark [class*="bg-background"]:not([role="dialog"]) {
-  background-color: rgb(0, 0, 0) !important;
-  color: rgb(255, 255, 255) !important;
-}
-
-/* 確保所有文字元素在黑暗模式下使用白色 */
-.dark,
-.dark * {
-  /* color: rgb(255, 255, 255) !important; */
-}
-
-/* 只針對特定的文字元素變白色 */
-.dark h1,
-.dark h2, 
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6,
-.dark p,
-.dark span:not([class*="text-"]):not([class*="bg-"]),
-.dark div:not([class*="text-"]):not([class*="bg-"]),
-.dark .text-foreground,
-.dark .text-muted-foreground,
-.dark [class*="text-muted"] {
-  color: rgb(255, 255, 255) !important;
-}
-
-/* 確保 Footer 中的 BETA、版本號和導航連結在黑暗模式下保持白色 */
-.dark footer .text-muted-foreground,
-.dark footer a,
-.dark footer span {
-  color: rgb(255, 255, 255) !important;
-}
-
-/* 確保 BETA 徽章在黑暗模式下有深灰色背景 */
-.dark .bg-gray-100 {
-  background-color: rgb(55, 65, 81) !important;
-}
-
-.dark .dark\:bg-gray-800 {
-  background-color: rgb(55, 65, 81) !important;
-}
-
-/* 改變黑暗模式下的邊框顏色為淺灰色並使其更細 */
-.dark .border,
-.dark .border-t,
-.dark .border-border,
-.dark [class*="border"] {
-  border-color: rgb(75, 85, 99) !important;
-  border-width: 1px !important;
-}
-
-/* 確保 footer 中的水平分隔線在明亮模式下是淺灰色 */
-footer hr,
-footer .border-t {
-  border-color: rgb(229, 231, 235) !important;
-}
-
-/* 保留特定顏色的元素 */
-.dark [class*="text-primary"],
-.dark [class*="text-red-"],
-.dark [class*="text-green-"],
-.dark [class*="text-blue-"],
-.dark [class*="text-yellow-"],
-.dark [class*="text-purple-"],
-.dark [class*="text-pink-"],
-.dark [class*="text-indigo-"],
-.dark .rolling-text-item,
-.dark .text-primary {
-  color: rgb(220, 38, 38) !important;
-}
-
-/* 確保 gradient-text 在黑暗模式下保持漸變效果 */
-.dark .gradient-text {
-  background: linear-gradient(to right, rgb(220, 38, 38), rgba(220, 38, 38, 0.8)) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
-}
-
-/* 確保按鈕文字正確 */
-.dark .gradient-primary,
-.dark .bg-gradient-primary,
-.dark .gradient-primary *,
-.dark .bg-gradient-primary * {
-  color: white !important;
-}
-
-/* 確保 muted 文字在黑暗模式下有適當的對比度 */
-.dark [class*="text-muted-foreground"] {
-  color: rgb(156, 163, 175) !important;
-}
-
-/* 覆蓋 Tailwind 的 dark: 前綴類別，確保標籤顏色保持一致 */
-/* 使用更高優先級的選擇器來覆蓋 Tailwind 的 dark: 類別 */
-.dark .bg-green-100,
-.dark .dark\:bg-green-900\/20 {
-  background-color: rgb(220, 252, 231) !important;
-}
-
-.dark .text-green-800,
-.dark .dark\:text-green-400 {
-  color: rgb(22, 101, 52) !important;
-}
-
-.dark .bg-yellow-100,
-.dark .dark\:bg-yellow-900\/20 {
-  background-color: rgb(254, 249, 195) !important;
-}
-
-.dark .text-yellow-800,
-.dark .dark\:text-yellow-400 {
-  color: rgb(133, 77, 14) !important;
-}
-
-.dark .bg-red-100,
-.dark .dark\:bg-red-900\/20 {
-  background-color: rgb(254, 226, 226) !important;
-}
-
-.dark .text-red-800,
-.dark .dark\:text-red-400 {
-  color: rgb(153, 27, 27) !important;
-}
-
-.dark .bg-blue-100,
-.dark .dark\:bg-blue-900\/20 {
-  background-color: rgb(219, 234, 254) !important;
-}
-
-.dark .text-blue-800,
-.dark .dark\:text-blue-400 {
-  color: rgb(30, 64, 175) !important;
-}
-
-.dark .text-gray-800,
-.dark .dark\:text-gray-400 {
-  color: rgb(31, 41, 55) !important;
-}
-
-/* 保留 StatsCard 中的趨勢顏色 */
-.dark .text-green-600,
-.dark .dark\:text-green-400 {
-  color: rgb(34, 197, 94) !important;
-}
-
-.dark .text-red-600,
-.dark .dark\:text-red-400 {
-  color: rgb(239, 68, 68) !important;
-}
-
-/* 保留 department badge 的顏色 (secondary variant) */
-.dark .bg-secondary.text-secondary-foreground,
-.dark .bg-secondary {
-  background-color: rgb(var(--secondary)) !important;
-}
-
-.dark .text-secondary-foreground,
-.dark .bg-secondary * {
-  color: rgb(var(--secondary-foreground)) !important;
-}
-
-/* 保留 StatsCard 圖示背景色 */
-.dark [class*="bg-primary"] {
-  background-color: rgba(220, 38, 38, 0.1) !important;
-}
-
-/* 手機版側邊欄使用實心背景，移除透明效果 */
-[data-mobile="true"][data-sidebar="sidebar"] {
-  backdrop-filter: none !important;
-  background-color: rgb(var(--sidebar-background)) !important;
-}
-
-/* 當側邊欄展開時，為主要內容添加玻璃效果 */
-.group\/sidebar-wrapper:has([data-mobile="true"][data-state="open"]) [data-sidebar="inset"] {
-  backdrop-filter: blur(8px) !important;
-  background-color: rgba(var(--background), 0.8) !important;
-}
-
-/* Dialog 彈窗背景修正 */
-[data-radix-dialog-content],
-[role="dialog"],
-.bg-background[role="dialog"] {
-  background-color: rgb(255, 255, 255) !important;
-  border: 1px solid rgb(229, 231, 235) !important;
-}
-
-.dark [data-radix-dialog-content],
-.dark [role="dialog"],
-.dark .bg-background[role="dialog"] {
-  background-color: rgb(17, 24, 39) !important;
-  border: 1px solid rgb(75, 85, 99) !important;
-}
-
-/* 更具體的 Dialog 選擇器 */
-[role="dialog"] {
-  background-color: rgb(255, 255, 255) !important;
-  border: 1px solid rgb(229, 231, 235) !important;
-}
-
-.dark [role="dialog"] {
-  background-color: rgb(17, 24, 39) !important;
-  border: 1px solid rgb(75, 85, 99) !important;
-}
-
-/* 針對 Tailwind 的 bg-background 類別 */
-.bg-background {
-  background-color: rgb(255, 255, 255) !important;
-}
-
-.dark .bg-background {
-  background-color: rgb(17, 24, 39) !important;
-}
-
-/* 自定義滾動條樣式 */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgb(243, 244, 246);
-  border-radius: 6px;
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 50%, rgb(153, 27, 27) 100%);
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 50%, rgb(185, 28, 28) 100%);
-  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
-  transform: scale(1.05);
-}
-
-::-webkit-scrollbar-corner {
-  background: rgb(243, 244, 246);
-}
-
-/* 黑暗主題滾動條 */
-.dark ::-webkit-scrollbar-track {
-  background: rgb(55, 65, 81);
-  box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.1);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgb(248, 113, 113) 0%, rgb(220, 38, 38) 50%, rgb(185, 28, 28) 100%);
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 4px rgba(248, 113, 113, 0.3);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgb(252, 165, 165) 0%, rgb(248, 113, 113) 50%, rgb(220, 38, 38) 100%);
-  box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
-}
-
-.dark ::-webkit-scrollbar-corner {
-  background: rgb(55, 65, 81);
-}
-
-/* Firefox 滾動條樣式 */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(220, 38, 38) rgb(243, 244, 246);
-}
-
-.dark * {
-  scrollbar-color: rgb(248, 113, 113) rgb(55, 65, 81);
-}
-
-/* 自定義游標樣式 */
-body {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23dc2626" stroke="%23ffffff" stroke-width="1"/></svg>'), auto;
-}
-
-a, button, [role="button"], .cursor-pointer {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 3l4 8 5-5-8-4z" fill="%23dc2626" stroke="%23ffffff" stroke-width="1"/><circle cx="12" cy="12" r="2" fill="%23dc2626"/></svg>'), pointer;
-}
-
-input, textarea, [contenteditable] {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="11" y="4" width="2" height="16" fill="%23dc2626"/><rect x="8" y="4" width="8" height="2" fill="%23dc2626"/><rect x="8" y="18" width="8" height="2" fill="%23dc2626"/></svg>'), text;
-}
-
-.cursor-grab {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23dc2626" stroke-width="2" stroke-linecap="round"/></svg>'), grab;
-}
-
-.cursor-grabbing {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23dc2626" stroke-width="3" stroke-linecap="round"/></svg>'), grabbing;
-}
-
-/* 黑暗主題自定義游標 */
-.dark body {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23f87171" stroke="%23000000" stroke-width="1"/></svg>'), auto;
-}
-
-.dark a, .dark button, .dark [role="button"], .dark .cursor-pointer {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 3l4 8 5-5-8-4z" fill="%23f87171" stroke="%23000000" stroke-width="1"/><circle cx="12" cy="12" r="2" fill="%23f87171"/></svg>'), pointer;
-}
-
-.dark input, .dark textarea, .dark [contenteditable] {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="11" y="4" width="2" height="16" fill="%23f87171"/><rect x="8" y="4" width="8" height="2" fill="%23f87171"/><rect x="8" y="18" width="8" height="2" fill="%23f87171"/></svg>'), text;
-}
-
-.dark .cursor-grab {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23f87171" stroke-width="2" stroke-linecap="round"/></svg>'), grab;
-}
-
-.dark .cursor-grabbing {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4m0 0v4m0-4h4m-4 0H4m12-4v4m0 0v4m0-4h4m-4 0h-4" stroke="%23f87171" stroke-width="3" stroke-linecap="round"/></svg>'), grabbing;
-}
-
-/* 選擇文字時的顏色 */
-::selection {
-  background-color: rgba(220, 38, 38, 0.3);
-  color: rgb(0, 0, 0);
-}
-
-.dark ::selection {
-  background-color: rgba(248, 113, 113, 0.3);
-  color: rgb(255, 255, 255);
-}
-
-/* 當 Dialog 開啟時，確保 SidebarTrigger 在遮罩層下方 */
-body:has([data-radix-dialog-overlay]) [data-sidebar="trigger"],
-body:has([role="dialog"]) [data-sidebar="trigger"] {
-  z-index: 30 !important;
-}
-
-/* 桌面版側邊欄觸發按鈕的半圓效果 */
-[data-sidebar="trigger"][data-state="collapsed"]:not([class*="relative"]) {
-  border-radius: 0 9999px 9999px 0 !important;
-  clip-path: none !important;
-  transform: translateY(-50%) !important;
-  width: 24px !important;
-}
-
-[data-sidebar="trigger"][data-state="expanded"]:not([class*="relative"]) {
-  clip-path: none !important;
-  transform: translateY(-50%) !important;
-}
-
-/* 確保按鈕內的圖示始終保持白色 */
-[data-sidebar="trigger"]:not([class*="relative"]) svg {
-  color: white !important;
-}
-
-/* 主內容區域根據側邊欄狀態調整 */
-.group\/sidebar-wrapper[data-state="expanded"] [data-sidebar="inset"] {
-  margin-left: var(--sidebar-width) !important;
-  transition: margin-left 0.2s ease-linear !important;
-  /* 確保佈局穩定 */
-  contain: layout;
-  transform: translateZ(0);
-}
-
-.group\/sidebar-wrapper[data-state="collapsed"] [data-sidebar="inset"] {
-  margin-left: var(--sidebar-width-icon) !important;
-  transition: margin-left 0.2s ease-linear !important;
-  /* 確保佈局穩定 */
-  contain: layout;
-  transform: translateZ(0);
-}
-
-/* 確保側邊欄在摺疊狀態下正確顯示 */
-.group\/sidebar-wrapper[data-state="collapsed"] .group-data-[collapsible=icon]\\:hidden {
-  display: none !important;
-}
-
-/* 摺疊狀態下的選單按鈕樣式 */
-.group-data-[collapsible=icon] [data-sidebar="menu-button"] {
-  justify-content: center !important;
-  padding: 0.5rem !important;
-}
-
-.group-data-[state=collapsed] [data-sidebar="menu-button"] {
-  justify-content: center !important;
-  padding: 0.5rem !important;
-}
-
-/* 確保工具提示在摺疊狀態下顯示 */
-.group-data-[state=collapsed] [data-sidebar="menu-button"] [role="tooltip"] {
-  display: block !important;
-}
-
-/* 浮動圓圈動畫 */
-.floating-circle {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-  opacity: 0.7;
-  animation: floatCircle 18s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-  filter: blur(2px);
-  transition: opacity 0.3s;
-  /* 確保圓圈不會超出容器邊界 */
-  max-width: 100%;
-  max-height: 100%;
-  contain: layout style;
-  /* 明亮模式下的預設樣式 */
-  background: radial-gradient(circle, rgba(220,38,38,0.15) 0%, rgba(185,28,28,0.08) 70%, transparent 100%);
-  /* 防止影響佈局 */
-  transform: translateZ(0);
-}
-
-@keyframes floatCircle {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 0.7;
-  }
-  25% {
-    transform: translateY(-20px) scale(1.05);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translateY(10px) scale(0.98);
-    opacity: 0.6;
-  }
-  75% {
-    transform: translateY(-15px) scale(1.02);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.7;
-  }
-}
-
-/* 黑暗模式下增強的浮動圓圈效果 */
-.dark .floating-circle {
-  background: rgba(248,113,113,0.3) !important;
-  border: none !important;
-  box-shadow: 
-    0 0 50px rgba(248,113,113,0.5),
-    0 0 100px rgba(248,113,113,0.3),
-    0 0 150px rgba(220,38,38,0.25),
-    0 0 200px rgba(220,38,38,0.15) !important;
-  filter: blur(0px) brightness(1) !important;
-  opacity: 0.9 !important;
-}
-
-/* 手機版黑暗模式下減少光暈強度 */
-@media (max-width: 767px) {
   .dark .floating-circle {
-    background: rgba(248,113,113,0.2) !important;
-    box-shadow: 
-      0 0 30px rgba(248,113,113,0.3),
-      0 0 60px rgba(248,113,113,0.2),
-      0 0 90px rgba(220,38,38,0.15),
-      0 0 120px rgba(220,38,38,0.1) !important;
-    opacity: 0.6 !important;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.4) 0%, rgba(220, 38, 38, 0.2) 50%, transparent 100%);
   }
-}
 
-/* 黑暗模式下的動畫增強 */
-.dark .floating-circle {
-  animation: floatCircleDark 18s ease-in-out infinite alternate !important;
-}
-
-@keyframes floatCircleDark {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 0.9;
-    box-shadow: 
-      0 0 50px rgba(248,113,113,0.5),
-      0 0 100px rgba(248,113,113,0.3),
-      0 0 150px rgba(220,38,38,0.25),
-      0 0 200px rgba(220,38,38,0.15);
+  /* 搜尋對話框樣式 */
+  [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
+    position: fixed;
+    left: 50%;
+    top: 15vh;
+    transform: translateX(-50%);
+    width: 90vw;
+    max-width: 640px;
+    max-height: 70vh;
+    background: rgb(var(--background));
+    border: 1px solid rgb(var(--border));
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    z-index: 50;
   }
-  25% {
-    transform: translateY(-20px) scale(1.05);
-    opacity: 1;
-    box-shadow: 
-      0 0 70px rgba(248,113,113,0.6),
-      0 0 130px rgba(248,113,113,0.4),
-      0 0 180px rgba(220,38,38,0.3),
-      0 0 250px rgba(220,38,38,0.2);
+
+  @media (max-width: 767px) {
+    [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 90vw;
+      max-width: 400px;
+      max-height: 70vh;
+    }
   }
-  50% {
-    transform: translateY(10px) scale(0.98);
-    opacity: 0.8;
-    box-shadow: 
-      0 0 40px rgba(248,113,113,0.4),
-      0 0 80px rgba(248,113,113,0.25),
-      0 0 120px rgba(220,38,38,0.2),
-      0 0 160px rgba(220,38,38,0.12);
+
+  /* 滾動條樣式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
-  75% {
-    transform: translateY(-15px) scale(1.02);
-    opacity: 0.95;
-    box-shadow: 
-      0 0 60px rgba(248,113,113,0.55),
-      0 0 115px rgba(248,113,113,0.35),
-      0 0 165px rgba(220,38,38,0.27),
-      0 0 220px rgba(220,38,38,0.17);
+
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--muted));
+    border-radius: 4px;
   }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.9;
-    box-shadow: 
-      0 0 50px rgba(248,113,113,0.5),
-      0 0 100px rgba(248,113,113,0.3),
-      0 0 150px rgba(220,38,38,0.25),
-      0 0 200px rgba(220,38,38,0.15);
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--muted-foreground));
+    border-radius: 4px;
+    border: 2px solid rgb(var(--muted));
   }
-}
 
-/* 強制移除手機版 Sidebar 的所有背景模糊效果 */
-[data-radix-dialog-overlay] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* 移除 Sheet 組件的模糊效果 */
-.fixed.inset-0.z-50 {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* 確保手機版 Sidebar 沒有任何模糊效果 */
-[data-sidebar="sidebar"][data-mobile="true"] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* 移除所有可能的 backdrop-blur 類別 */
-.backdrop-blur-sm,
-.backdrop-blur-md,
-.backdrop-blur-lg {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* 強制移除手機版 Sidebar 的所有背景陰影和遮罩 */
-[data-radix-dialog-overlay],
-.fixed.inset-0.z-50,
-[data-sidebar="sidebar"][data-mobile="true"] ~ [data-radix-dialog-overlay] {
-  background-color: transparent !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-
-/* 移除 Sheet 相關的所有背景效果 */
-[role="dialog"] + [data-radix-dialog-overlay],
-[data-state="open"] [data-radix-dialog-overlay] {
-  background-color: transparent !important;
-  background: transparent !important;
-}
-
-/* 確保所有浮動動畫元素不影響佈局 */
-.floating-circle,
-.animate-float,
-[class*="animate-"] {
-  contain: layout style !important;
-  transform: translateZ(0) !important;
-  will-change: transform, opacity !important;
-}
-
-/* 手機版搜尋對話框居中修復 */
-@media (max-width: 767px) {
-  [role="dialog"]:has([cmdk-root]) {
-    position: fixed !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 90vw !important;
-    max-width: 400px !important;
-    max-height: 70vh !important;
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--primary));
   }
-}
+
+  /* 選擇文字樣式 */
+  ::selection {
+    background: rgba(var(--primary), 0.2);
+    color: rgb(var(--primary-foreground));
+  }
+
+  /* 增強卡片樣式 */
+  .enhanced-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .enhanced-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: rotate(45deg);
+    transition: all 0.6s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .enhanced-card:hover::after {
+    animation: shimmer 1.5s ease-in-out;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%) translateY(100%) rotate(45deg);
+      opacity: 0;
+    }
+  }
+
+  /* 卡片邊框動畫 */
+  .animated-border {
+    position: relative;
+    background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)) padding-box,
+                linear-gradient(45deg, rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.3)) border-box;
+    border: 1px solid transparent;
+  }
+
+  .dark .animated-border {
+    background: linear-gradient(rgba(17, 24, 39, 0.8), rgba(17, 24, 39, 0.8)) padding-box,
+                linear-gradient(45deg, rgba(220, 38, 38, 0.4), rgba(220, 38, 38, 0.2), rgba(220, 38, 38, 0.4)) border-box;
+  }
+
+  .animated-border:hover {
+    background: linear-gradient(rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98)) padding-box,
+                linear-gradient(45deg, rgba(220, 38, 38, 0.5), rgba(220, 38, 38, 0.2), rgba(220, 38, 38, 0.5)) border-box;
+  }
+
+  .dark .animated-border:hover {
+    background: linear-gradient(rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 0.9)) padding-box,
+                linear-gradient(45deg, rgba(220, 38, 38, 0.6), rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0.6)) border-box;
+  }
 }

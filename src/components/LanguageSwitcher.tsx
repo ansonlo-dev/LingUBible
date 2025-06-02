@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,35 @@ const languages = {
 };
 
 export function LanguageSwitcher({ onLanguageChange, currentLanguage }: LanguageSwitcherProps) {
+  const [isDark, setIsDark] = useState(false);
+
+  // 監聽主題變化
+  useEffect(() => {
+    // 初始檢測
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkTheme();
+
+    // 創建 MutationObserver 來監聽 class 變化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          checkTheme();
+        }
+      });
+    });
+
+    // 開始觀察 html 元素的 class 屬性變化
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -34,7 +63,15 @@ export function LanguageSwitcher({ onLanguageChange, currentLanguage }: Language
           <span className="sr-only">Switch language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent 
+        align="end"
+        className="bg-background border-2 border-primary shadow-lg backdrop-blur-none"
+        style={{ 
+          backgroundColor: isDark ? '#000000' : '#ffffff',
+          backdropFilter: 'none',
+          borderColor: isDark ? 'rgb(63, 63, 70)' : 'rgb(220, 38, 38)'
+        }}
+      >
         {Object.entries(languages).map(([code, name]) => (
           <DropdownMenuItem
             key={code}

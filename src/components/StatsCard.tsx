@@ -19,7 +19,7 @@ export function StatsCard({ title, value, change, icon: Icon, trend = 'neutral' 
   };
 
   return (
-    <Card className="glass-card hover:shadow-md transition-shadow">
+    <Card className="glass-card enhanced-card animated-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>

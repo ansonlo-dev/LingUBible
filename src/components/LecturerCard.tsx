@@ -28,7 +28,7 @@ export function LecturerCard({
   const initials = name.split(' ').map(n => n[0]).join('');
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 glass-card">
+    <Card className="group glass-card enhanced-card animated-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-4">
           <Avatar className="h-16 w-16 border-2 border-primary/20">
@@ -80,7 +80,7 @@ export function LecturerCard({
           </div>
           
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1 bg-gradient-primary hover:opacity-90">
+            <Button size="sm" className="flex-1 bg-gradient-primary hover:opacity-90 text-white">
               <MessageSquare className="h-4 w-4 mr-1" />
               {t('button.review')}
             </Button>

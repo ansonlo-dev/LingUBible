@@ -6,7 +6,7 @@ export function Footer() {
 
   return (
     <footer className="border-t bg-background">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-3">
         {/* Desktop Layout */}
         <div className="hidden md:block">
           {/* Single row layout with three sections */}
@@ -19,7 +19,7 @@ export function Footer() {
                   alt="CC BY-SA 4.0" 
                   className="h-4"
                 />
-                <span className="text-xs text-muted-foreground">© 2025 LingUBible</span>
+                <span className="text-xs text-muted-foreground">2025 LingUBible</span>
               </div>
               <div className="flex items-center space-x-2">
                 <a 
@@ -44,7 +44,7 @@ export function Footer() {
             </div>
             
             {/* Center - Built with and disclaimer */}
-            <div className="text-center space-y-1">
+            <div className="text-center">
               <div className="text-sm text-muted-foreground">
                 {t('footer.builtWithTools')}{' '}
                 <a 
@@ -84,7 +84,7 @@ export function Footer() {
         </div>
 
         {/* Mobile Layout */}
-        <div className="md:hidden flex flex-col space-y-2">
+        <div className="md:hidden flex flex-col space-y-1">
           {/* Links with BETA and Version on the left */}
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center space-x-2">
@@ -138,7 +138,7 @@ export function Footer() {
                 alt="CC BY-SA 4.0" 
                 className="h-4"
               />
-              <span className="text-xs text-muted-foreground">© 2025 LingUBible</span>
+              <span className="text-xs text-muted-foreground">2025 LingUBible</span>
             </div>
             <div className="flex items-center space-x-2">
               <a 

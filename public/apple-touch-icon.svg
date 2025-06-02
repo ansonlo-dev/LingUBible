@@ -1,0 +1,16 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 圓角紅色背景 -->
+  <rect x="15" y="15" width="150" height="150" rx="30" fill="#dc2626"/>
+  
+  <!-- 書本圖示 (白色) -->
+  <g transform="translate(45, 55)">
+    <!-- 左頁 -->
+    <path d="M0 8 C0 4 4 0 8 0 L37 0 C41 0 45 4 45 8 L45 62 C45 66 41 70 37 70 L8 70 C4 70 0 66 0 62 Z" fill="white"/>
+    <!-- 右頁 -->
+    <path d="M45 8 C45 4 49 0 53 0 L82 0 C86 0 90 4 90 8 L90 62 C90 66 86 70 82 70 L53 70 C49 70 45 66 45 62 Z" fill="white"/>
+    <!-- 中間裝訂線 -->
+    <line x1="45" y1="8" x2="45" y2="70" stroke="#dc2626" stroke-width="2.5"/>
+    <!-- 書籤 -->
+    <path d="M40 70 L40 90 L45 85 L50 90 L50 70" fill="#dc2626"/>
+  </g>
+</svg> 

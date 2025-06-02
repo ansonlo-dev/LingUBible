@@ -1,21 +1,36 @@
-import { Home, BookOpen, Users, Star, TrendingUp, Settings } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-} from '@/components/ui/sidebar';
+import { Home, BookOpen, Users, Star, TrendingUp, Settings, Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export function AppSidebar() {
+// 自定義 Home 圖示組件
+const HomeIcon = ({ className }: { className?: string }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24" 
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
+    />
+  </svg>
+);
+
+interface AppSidebarProps {
+  isCollapsed?: boolean;
+  onToggle?: () => void;
+  isMobileOpen?: boolean;
+  onMobileToggle?: () => void;
+}
+
+export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileToggle }: AppSidebarProps) {
   const { t } = useLanguage();
   
   const navigation = [
-    { name: t('nav.home'), href: '#', icon: Home, current: true },
+    { name: t('nav.home'), href: '#', icon: HomeIcon, current: true },
     { name: t('nav.courses'), href: '#', icon: BookOpen, current: false },
     { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
     { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
@@ -24,51 +39,38 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <a 
-          href="/" 
-          className="flex items-center gap-2 px-2 py-2 hover:opacity-80 transition-opacity"
-          title="回到首頁"
-        >
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-            <BookOpen className="h-5 w-5 text-white" />
-          </div>
-          <span className="font-bold text-lg text-primary group-data-[collapsible=icon]:hidden">
-            LingUBible
-          </span>
-        </a>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={item.current} 
-                    size="lg"
-                    tooltip={item.name}
+    <>
+      {/* 側邊欄內容 - 直接使用 flex 佈局，不再包裝額外的 div */}
+      <div className="flex flex-col h-full">
+        {/* 導航選單 */}
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className={`
+                      flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
+                      ${isCollapsed ? 'justify-center' : ''}
+                      ${item.current 
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      }
+                    `}
+                    onClick={() => onMobileToggle && onMobileToggle()}
+                    title={isCollapsed ? item.name : undefined}
                   >
-                    <a
-                      href={item.href}
-                      className={`flex items-center gap-3 text-base transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5 ${
-                        item.current ? 'font-bold' : 'font-semibold'
-                      }`}
-                    >
-                      <item.icon />
-                      <span className={item.current ? 'font-bold' : 'font-semibold'}>
-                        {item.name}
-                      </span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+                    <Icon className="h-6 w-6 flex-shrink-0 text-current" />
+                    {!isCollapsed && <span className="text-current font-bold">{item.name}</span>}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+    </>
   );
 }

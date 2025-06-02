@@ -66,7 +66,6 @@ const translations = {
     'stats.thisMonth': 'this month',
     'tabs.popularCourses': 'Popular Courses',
     'tabs.topLecturers': 'Top Lecturers',
-    'footer.copyright': 'Copyleft, 2025@LingUBible, All rights reserved to the contributors',
     'footer.builtWith': 'Built with 💝 by ansonlo.dev',
     'footer.disclaimer': 'The website is not affiliated with Lingnan University',
     // Footer additional
@@ -136,7 +135,7 @@ const translations = {
     'hero.title': '歡迎來到',
     'hero.subtitle': '真實可靠的Reg科聖經，幫助同學們作出明智的選擇',
     'hero.action': '評論',
-    'hero.actions': ['評論', '投票', '提出問題', '回答問題'],
+    'hero.actions': ['發表評價', '投票', '提出問題', '回答問題'],
     'hero.getStarted': '開始使用',
     'hero.comeHereTo': '來這裡',
     'nav.home': '首頁',
@@ -151,7 +150,6 @@ const translations = {
     'stats.thisMonth': '本月',
     'tabs.popularCourses': '熱門課程',
     'tabs.topLecturers': '頂級講師',
-    'footer.copyright': 'Copyleft, 2025@LingUBible, 所有權利歸貢獻者所有',
     'footer.builtWith': '由 ansonlo.dev 用 💝 製作',
     'footer.disclaimer': '本網站與嶺南大學沒有任何關係',
     // Footer additional
@@ -236,7 +234,6 @@ const translations = {
     'stats.thisMonth': '本月',
     'tabs.popularCourses': '热门课程',
     'tabs.topLecturers': '顶级讲师',
-    'footer.copyright': 'Copyleft, 2025@LingUBible, 所有权利归贡献者所有',
     'footer.builtWith': '由 ansonlo.dev 用 💝 制作',
     'footer.disclaimer': '本网站与岭南大学没有关系',
     // Footer additional
