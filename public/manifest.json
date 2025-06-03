@@ -3,10 +3,13 @@
   "short_name": "LingUBible",
   "description": "Platform for college students to review courses and lecturers",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#dc2626",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon.svg?v=2",
@@ -57,7 +60,64 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "social"],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop view of LingUBible"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile view of LingUBible"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Courses",
+      "short_name": "Search",
+      "description": "Search for courses and reviews",
+      "url": "/?action=search",
+      "icons": [
+        {
+          "src": "/icon-search.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Reviews",
+      "short_name": "Reviews",
+      "description": "View my course reviews",
+      "url": "/?action=reviews",
+      "icons": [
+        {
+          "src": "/icon-reviews.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "categories": ["education", "social", "productivity"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+lingubible",
+      "url": "/?handler=%s"
+    }
+  ]
 }

@@ -63,7 +63,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                     title={isCollapsed ? item.name : undefined}
                   >
                     <Icon className="h-6 w-6 flex-shrink-0 text-current" />
-                    {!isCollapsed && <span className="text-current font-bold">{item.name}</span>}
+                    {!isCollapsed && <span className="text-current font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
                   </a>
                 </li>
               );

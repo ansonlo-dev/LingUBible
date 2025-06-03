@@ -19,7 +19,7 @@ export function Footer() {
                   alt="CC BY-SA 4.0" 
                   className="h-4"
                 />
-                <span className="text-xs text-muted-foreground">2025 LingUBible</span>
+                <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
               </div>
               <div className="flex items-center space-x-2">
                 <a 
@@ -45,7 +45,7 @@ export function Footer() {
             
             {/* Center - Built with and disclaimer */}
             <div className="text-center">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-gray-600 dark:text-muted-foreground">
                 {t('footer.builtWithTools')}{' '}
                 <a 
                   href="https://ansonlo.dev/" 
@@ -57,17 +57,17 @@ export function Footer() {
                 </a>{' '}
                 💝
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-gray-500 dark:text-muted-foreground">
                 {t('footer.disclaimer')}
               </div>
             </div>
             
             {/* Right side - Navigation Links (Appwrite style) */}
             <div className="flex items-center space-x-6 text-sm">
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-muted-foreground text-xs rounded font-medium">
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-muted-foreground text-xs rounded font-medium">
                 {t('footer.beta')}
               </span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-gray-600 dark:text-muted-foreground text-xs">
                 {t('footer.version')}
               </span>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -88,10 +88,10 @@ export function Footer() {
           {/* Links with BETA and Version on the left */}
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center space-x-2">
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-muted-foreground text-xs rounded font-medium">
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-muted-foreground text-xs rounded font-medium">
                 {t('footer.beta')}
               </span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-gray-600 dark:text-muted-foreground text-xs">
                 {t('footer.version')}
               </span>
             </div>
@@ -109,7 +109,7 @@ export function Footer() {
           </div>
           
           {/* Built with love */}
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-gray-600 dark:text-muted-foreground">
             {t('footer.builtWithTools')}{' '}
             <a 
               href="https://ansonlo.dev/" 
@@ -123,7 +123,7 @@ export function Footer() {
           </div>
           
           {/* Disclaimer */}
-          <div className="text-center text-xs text-muted-foreground">
+          <div className="text-center text-xs text-gray-500 dark:text-muted-foreground">
             {t('footer.disclaimer')}
           </div>
           
@@ -138,7 +138,7 @@ export function Footer() {
                 alt="CC BY-SA 4.0" 
                 className="h-4"
               />
-              <span className="text-xs text-muted-foreground">2025 LingUBible</span>
+              <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
             </div>
             <div className="flex items-center space-x-2">
               <a 

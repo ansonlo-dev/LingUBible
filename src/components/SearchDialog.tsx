@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 interface SearchDropdownProps {
   isOpen: boolean;
   onClose: () => void;
+  isDesktop?: boolean; // 新增 prop 來明確標識桌面模式
 }
 
-export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
+export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDropdownProps) {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -20,10 +21,13 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Check if this is desktop mode (always open)
-  const isDesktopMode = isOpen && onClose.toString() === '() => {}';
+  const isDesktopMode = isDesktop;
   
   // 檢查是否是初始載入（桌面版在初始載入時不應該自動獲得焦點）
   const isInitialLoad = isDesktopMode && !isInitialized;
+
+  // 檢測操作系統以顯示正確的快捷鍵提示
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
   // Mock search results data
   const searchResults = [
@@ -121,18 +125,13 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
   };
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // 檢查是否是真正的用戶互動
-    // 如果組件剛掛載且未初始化，或者是初始載入，則阻止焦點
-    if (!isMounted || isInitialLoad || (!isInitialized && !e.target.matches(':focus-visible'))) {
-      console.log('Preventing automatic focus on mount'); // 調試用
-      e.target.blur();
-      return;
-    }
+    console.log('Input focused, isInitialized:', isInitialized, 'isInitialLoad:', isInitialLoad); // 調試用
     
-    // 只有在已經初始化且用戶真正互動時才顯示結果
-    if (isInitialized && !isInitialLoad) {
-      setShowResults(true);
+    // 簡化邏輯：只要獲得焦點就顯示結果
+    if (!isInitialized) {
+      setIsInitialized(true);
     }
+    setShowResults(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,28 +150,12 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
 
   // 添加一個處理用戶點擊的函數
   const handleInputClick = () => {
-    // 如果是初始載入狀態，啟用輸入框
-    if (isInitialLoad) {
-      setIsInitialized(true);
-      // 延遲一點時間讓 disabled 屬性更新，然後聚焦
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          // 聚焦後再顯示結果
-          setShowResults(true);
-        }
-      }, 10);
-      return; // 提前返回，不執行下面的邏輯
-    }
+    console.log('Input clicked'); // 調試用
     
     if (!isInitialized) {
       setIsInitialized(true);
     }
-    
-    // 只有在非初始載入時才立即顯示結果
-    if (!isInitialLoad) {
-      setShowResults(true);
-    }
+    setShowResults(true);
   };
 
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -225,31 +208,37 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
   // 處理全域鍵盤快捷鍵
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // 只在桌面版且不是初始載入時處理 Ctrl+K
-      if (isDesktopMode && !isInitialLoad && (e.metaKey || e.ctrlKey) && e.key === 'k') {
+      // 處理 Ctrl+K 或 Cmd+K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        if (!isInitialized) {
+        console.log('Ctrl+K pressed, isDesktopMode:', isDesktopMode); // 調試用
+        
+        // 如果是桌面版，聚焦搜索框並顯示結果
+        if (isDesktopMode) {
+          console.log('Activating search for desktop mode'); // 調試用
           setIsInitialized(true);
-        }
-        setShowResults(true);
-        // 聚焦到搜尋框
-        if (inputRef.current) {
-          inputRef.current.focus();
+          setShowResults(true);
+          
+          // 聚焦到搜尋框
+          if (inputRef.current) {
+            console.log('Focusing input'); // 調試用
+            inputRef.current.focus();
+          } else {
+            console.log('Input ref is null'); // 調試用
+          }
         }
       }
     };
 
-    // 只有在非初始載入狀態時才添加監聽器
-    if (isDesktopMode && !isInitialLoad) {
-      document.addEventListener('keydown', handleGlobalKeyDown);
-    }
+    // 添加全局鍵盤監聽器
+    console.log('Adding global keydown listener, isDesktopMode:', isDesktopMode); // 調試用
+    document.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
-      if (isDesktopMode) {
-        document.removeEventListener('keydown', handleGlobalKeyDown);
-      }
+      console.log('Removing global keydown listener'); // 調試用
+      document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isDesktopMode, isInitialized, isInitialLoad]);
+  }, [isDesktopMode]);
 
   // Focus input when opened (mobile mode)
   useEffect(() => {
@@ -354,33 +343,25 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
     <div ref={searchRef} className="relative w-full max-w-2xl mx-auto z-[99999]" style={{ overflow: 'visible' }}>
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <div 
-          onClick={isInitialLoad ? handleInputClick : undefined}
-          className={isInitialLoad ? 'cursor-text' : ''}
-        >
-          <Input
-            ref={inputRefCallback}
-            type="text"
-            placeholder={`${t('search.placeholder')}...`}
-            value={searchQuery}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-            onClick={!isInitialLoad ? handleInputClick : undefined}
-            autoFocus={false}
-            autoComplete="off"
-            tabIndex={isMounted && !isInitialLoad ? 0 : -1}
-            disabled={isInitialLoad}
-            className={`pl-10 h-12 text-base transition-all ${
-              isDesktopMode 
-                ? 'border-2 border-muted-foreground/20 focus:border-primary pr-10' 
-                : 'border-2 border-primary/20 focus:border-primary pr-10'
-            } ${isInitialLoad ? 'cursor-text' : ''}`}
-            style={isInitialLoad ? { pointerEvents: 'auto', opacity: 1, cursor: 'text' } : {}}
-          />
-        </div>
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 dark:text-muted-foreground" />
+        <Input
+          ref={inputRef}
+          type="text"
+          placeholder={`${t('search.placeholder')}...`}
+          value={searchQuery}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onClick={handleInputClick}
+          autoFocus={false}
+          autoComplete="off"
+          className={`pl-10 h-12 text-base transition-all ${
+            isDesktopMode 
+              ? 'border-2 border-muted-foreground/20 focus:border-primary pr-10' 
+              : 'border-2 border-primary/20 focus:border-primary pr-10'
+          }`}
+        />
         {/* Clear/Close button - show for both desktop and mobile */}
         {(searchQuery.trim() !== '' || !isDesktopMode) && (
           <Button
@@ -392,9 +373,12 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
             <X className="h-4 w-4" />
           </Button>
         )}
+        {/* Ctrl+K 提示 - 只在桌面版且搜索框為空時顯示 */}
         {isDesktopMode && searchQuery.trim() === '' && (
           <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            CTRL K
+            <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>
+            <span>+</span>
+            <span>K</span>
           </kbd>
         )}
       </div>
@@ -402,10 +386,13 @@ export function SearchDropdown({ isOpen, onClose }: SearchDropdownProps) {
       {/* Search Results Dropdown */}
       {shouldShowResults && (
         <div 
-          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[99999] dark:bg-black bg-white"
-          style={{ 
-            backgroundColor: document.documentElement.classList.contains('dark') ? '#000000' : '#ffffff',
-            backdropFilter: 'none'
+          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999]"
+          style={{
+            backgroundColor: document.documentElement.classList.contains('dark') 
+              ? '#0a0a0a' 
+              : '#ffffff',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none'
           }}
         >
           {filteredResults.length === 0 ? (

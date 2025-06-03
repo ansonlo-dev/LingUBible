@@ -69,7 +69,7 @@ export function LanguageSwitcher({ onLanguageChange, currentLanguage }: Language
         style={{ 
           backgroundColor: isDark ? '#000000' : '#ffffff',
           backdropFilter: 'none',
-          borderColor: isDark ? 'rgb(63, 63, 70)' : 'rgb(220, 38, 38)'
+          borderColor: isDark ? 'rgb(63, 63, 70)' : 'rgb(248, 113, 113)'
         }}
       >
         {Object.entries(languages).map(([code, name]) => (
