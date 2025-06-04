@@ -247,32 +247,6 @@ export default function Register() {
                       {t('auth.schoolPasswordReminder')}
                     </AlertDescription>
                   </Alert>
-
-                  {/* 條款同意提示 */}
-                  <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
-                    <p className="text-sm text-muted-foreground text-center">
-                      {t('auth.agreementNotice')}
-                    </p>
-                    <div className="flex justify-center gap-4 mt-2">
-                      <Link 
-                        to="/terms" 
-                        className="text-sm text-primary hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t('auth.termsLink')}
-                      </Link>
-                      <span className="text-muted-foreground">•</span>
-                      <Link 
-                        to="/privacy" 
-                        className="text-sm text-primary hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t('auth.privacyLink')}
-                      </Link>
-                    </div>
-                  </div>
                 </div>
               </div>
 
