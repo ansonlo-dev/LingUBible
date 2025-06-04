@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { Client, Databases, Query, ID, Users } from 'node-appwrite';
+import { generateEmailTemplate } from './email-template.js';
 
 export default async ({ req, res, log, error }) => {
   try {
@@ -336,213 +337,18 @@ async function sendEmail(email, code, language, apiKey, log, error) {
   try {
     const resend = new Resend(apiKey);
 
-    // 多語言翻譯
-    const translations = {
-      'en': {
-        subject: '【LingUBible】Your Student Verification Code - Do Not Reply',
-        title: 'Student Account Verification',
-        greeting: 'Dear Student,',
-        thankYou: 'Thank you for registering for a LingUBible student account. To ensure account security, please use the following verification code to complete the registration process:',
-        importantReminder: 'Important Reminder:',
-        expiry: 'This verification code will expire in 10 minutes',
-        noShare: 'Do not share the verification code with others',
-        ignoreEmail: 'If you did not request this verification code, please ignore this email',
-        notice: 'Notice: Only Lingnan University students with @ln.edu.hk or @ln.hk email addresses can register for LingUBible.',
-        support: 'If you have any questions, please contact our technical support team.',
-        platform: 'LingUBible - Lingnan University Course & Lecturer Review Platform',
-        license: 'Licensed under CC BY-SA',
-        textGreeting: 'Dear Student,',
-        textThankYou: 'Thank you for registering for a LingUBible student account. Please use the following verification code to complete registration:',
-        textCode: 'Verification Code:',
-        textReminder: 'Important Reminder:',
-        textExpiry: '- This verification code will expire in 10 minutes',
-        textNoShare: '- Do not share the verification code with others',
-        textIgnore: '- If you did not request this verification code, please ignore this email',
-        textNotice: 'Notice: Only Lingnan University students with @ln.edu.hk or @ln.hk email addresses can register.',
-        textSupport: 'If you have any questions, please contact technical support.',
-        textTeam: 'LingUBible Team'
-      },
-      'zh-TW': {
-        subject: '【LingUBible】您的學生驗證碼 - 請勿回覆',
-        title: '學生帳戶驗證',
-        greeting: '親愛的同學，您好！',
-        thankYou: '感謝您註冊 LingUBible 學生帳戶。為了確保帳戶安全，請使用以下驗證碼完成註冊程序：',
-        importantReminder: '重要提醒：',
-        expiry: '此驗證碼將在 10 分鐘後過期',
-        noShare: '請勿將驗證碼分享給他人',
-        ignoreEmail: '如果您沒有請求此驗證碼，請忽略此郵件',
-        notice: '注意事項：只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南大學學生才能註冊 LingUBible。',
-        support: '如有任何問題，請聯繫我們的技術支援團隊。',
-        platform: 'LingUBible - 嶺南大學課程與講師評價平台',
-        license: '採用 CC BY-SA 授權',
-        textGreeting: '親愛的同學，您好！',
-        textThankYou: '感謝您註冊 LingUBible 學生帳戶。請使用以下驗證碼完成註冊：',
-        textCode: '驗證碼：',
-        textReminder: '重要提醒：',
-        textExpiry: '- 此驗證碼將在 10 分鐘後過期',
-        textNoShare: '- 請勿將驗證碼分享給他人',
-        textIgnore: '- 如果您沒有請求此驗證碼，請忽略此郵件',
-        textNotice: '注意：只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南大學學生才能註冊。',
-        textSupport: '如有問題，請聯繫技術支援。',
-        textTeam: 'LingUBible 團隊'
-      },
-      'zh-CN': {
-        subject: '【LingUBible】您的学生验证码 - 请勿回复',
-        title: '学生账户验证',
-        greeting: '亲爱的同学，您好！',
-        thankYou: '感谢您注册 LingUBible 学生账户。为了确保账户安全，请使用以下验证码完成注册程序：',
-        importantReminder: '重要提醒：',
-        expiry: '此验证码将在 10 分钟后过期',
-        noShare: '请勿将验证码分享给他人',
-        ignoreEmail: '如果您没有请求此验证码，请忽略此邮件',
-        notice: '注意事项：只有使用 @ln.edu.hk 或 @ln.hk 邮件地址的岭南大学学生才能注册 LingUBible。',
-        support: '如有任何问题，请联系我们的技术支持团队。',
-        platform: 'LingUBible - 岭南大学课程与讲师评价平台',
-        license: '采用 CC BY-SA 授权',
-        textGreeting: '亲爱的同学，您好！',
-        textThankYou: '感谢您注册 LingUBible 学生账户。请使用以下验证码完成注册：',
-        textCode: '验证码：',
-        textReminder: '重要提醒：',
-        textExpiry: '- 此验证码将在 10 分钟后过期',
-        textNoShare: '- 请勿将验证码分享给他人',
-        textIgnore: '- 如果您没有请求此验证码，请忽略此邮件',
-        textNotice: '注意：只有使用 @ln.edu.hk 或 @ln.hk 邮件地址的岭南大学学生才能注册。',
-        textSupport: '如有问题，请联系技术支持。',
-        textTeam: 'LingUBible 团队'
-      }
-    };
+    // 使用新的郵件模板生成器
+    log('🎨 使用改進的郵件模板生成器');
+    const emailTemplate = generateEmailTemplate(code, language);
 
-    const t = translations[language] || translations['zh-TW'];
-
-    // LingUBible SVG 標誌的 base64 編碼
-    const logoSvgBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPCEtLSDlnJbop5LnuIXoibLohJnmma8gLS0+CiAgPHJlY3QgeD0iMzIiIHk9IjMyIiB3aWR0aD0iNDQ4IiBoZWlnaHQ9IjQ0OCIgcng9IjgwIiBmaWxsPSIjZGMyNjI2Ii8+CiAgCiAgPCEtLSDmm7jmnKzlnJbnpLsgKOeZveiJsikgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTI4LCAxNjApIj4KICAgIDwhLS0g5bem6aCBIC0tPgogICAgPHBhdGggZD0iTTAgMjQgQzAgMTIgMTIgMCAyNCAwIEwxMDQgMCBDMTE2IDAgMTI4IDEyIDEyOCAyNCBMMTI4IDE3NiBDMTI4IDE4OCAxMTYgMjAwIDEwNCAyMDAgTDI0IDIwMCBDMTIgMjAwIDAgMTg4IDAgMTc2IFoiIGZpbGw9IndoaXRlIi8+CiAgICA8IS0tIOWPs+mggSAtLT4KICAgIDxwYXRoIGQ9Ik0xMjggMjQgQzEyOCAxMiAxNDAgMCAxNTIgMCBMMjMyIDAgQzI0NCAwIDI1NiAxMiAyNTYgMjQgTDI1NiAxNzYgQzI1NiAxODggMjQ0IDIwMCAyMzIgMjAwIEwxNTIgMjAwIEMxNDAgMjAwIDEyOCAxODggMTI4IDE3NiBaIiBmaWxsPSJ3aGl0ZSIvPgogICAgPCEtLSDkuK3plpPoo5Xoqofoq5sgLS0+CiAgICA8bGluZSB4MT0iMTI4IiB5MT0iMjQiIHgyPSIxMjgiIHkyPSIyMDAiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSI2Ii8+CiAgICA8IS0tIOabuOewiSAtLT4KICAgIDxwYXRoIGQ9Ik0xMTYgMjAwIEwxMTYgMjU2IEwxMjggMjQ0IEwxNDAgMjU2IEwxNDAgMjAwIiBmaWxsPSIjZGMyNjI2Ii8+CiAgPC9nPgo8L3N2Zz4=';
-
-    // HTML 郵件模板
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html lang="${language === 'en' ? 'en' : language === 'zh-CN' ? 'zh-CN' : 'zh-HK'}">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>LingUBible ${t.title}</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, 'Microsoft JhengHei', sans-serif; background-color: #f6f9fc; line-height: 1.6;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-          <tr>
-            <td style="padding: 20px 0;">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                
-                <!-- Header -->
-                <tr>
-                  <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #eee;">
-                    <a href="https://lingubible.com" style="text-decoration: none; color: inherit; display: inline-block;">
-                      <div style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
-                        <img src="${logoSvgBase64}" alt="LingUBible Logo" style="width: 48px; height: 48px; vertical-align: middle;" />
-                        <h1 style="margin: 0; color: #dc2626; font-size: 28px; font-weight: bold; vertical-align: middle;">LingUBible</h1>
-                      </div>
-                    </a>
-                    <p style="margin: 5px 0 0; color: #666; font-size: 14px;">${t.platform}</p>
-                  </td>
-                </tr>
-                
-                <!-- Content -->
-                <tr>
-                  <td style="padding: 40px;">
-                    <h2 style="margin: 0 0 30px; color: #333; text-align: center; font-size: 24px;">${t.title}</h2>
-                    
-                    <p style="margin: 0 0 30px; color: #333; font-size: 16px;">
-                      ${t.greeting}
-                    </p>
-                    
-                    <p style="margin: 0 0 30px; color: #333; font-size: 16px;">
-                      ${t.thankYou}
-                    </p>
-                    
-                    <!-- Verification Code Box -->
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                      <tr>
-                        <td style="text-align: center; padding: 30px 0;">
-                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto; background: #f8f9fa; border: 2px solid #dc2626; border-radius: 8px;">
-                            <tr>
-                              <td style="padding: 20px 40px; text-align: center;">
-                                <div style="color: #dc2626; font-family: 'Courier New', monospace; font-size: 32px; font-weight: bold; letter-spacing: 6px;">
-                                  ${code}
-                                </div>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                    
-                    <p style="margin: 0 0 20px; color: #333; font-size: 16px;">
-                      <strong>${t.importantReminder}</strong>
-                    </p>
-                    
-                    <ul style="margin: 0 0 30px; color: #333; font-size: 16px; padding-left: 20px;">
-                      <li>${t.expiry}</li>
-                      <li>${t.noShare}</li>
-                      <li>${t.ignoreEmail}</li>
-                    </ul>
-                    
-                    <p style="margin: 0 0 30px; color: #333; font-size: 16px;">
-                      <strong>${t.notice}</strong>
-                    </p>
-                    
-                    <p style="margin: 0; color: #333; font-size: 16px;">
-                      ${t.support}
-                    </p>
-                  </td>
-                </tr>
-                
-                <!-- Footer -->
-                <tr>
-                  <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #eee; text-align: center; border-radius: 0 0 8px 8px;">
-                    <p style="margin: 0 0 10px; color: #8898aa; font-size: 12px;">
-                      <a href="https://lingubible.com" style="color: #8898aa; text-decoration: none;">LingUBible</a> - ${t.platform.replace('LingUBible - ', '')}
-                    </p>
-                    <p style="margin: 0; color: #8898aa; font-size: 12px;">
-                      ${t.license}
-                    </p>
-                  </td>
-                </tr>
-                
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
-
-    // 純文字版本
-    const emailText = `
-${t.textGreeting}
-
-${t.textThankYou}
-
-${t.textCode} ${code}
-
-${t.textReminder}
-${t.textExpiry}
-${t.textNoShare}
-${t.textIgnore}
-
-${t.textNotice}
-
-${t.textSupport}
-
-${t.textTeam}
-    `;
-
-    log('📬 準備發送郵件:', { to: email, subject: t.subject });
+    log('📬 準備發送郵件:', { to: email, subject: emailTemplate.subject });
 
     const result = await resend.emails.send({
       from: 'LingUBible <noreply@lingubible.com>',
       to: [email],
-      subject: t.subject,
-      html: emailHtml,
-      text: emailText,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
       headers: {
         'X-Entity-Ref-ID': `lingubible-verification-${Date.now()}`,
         'X-Priority': '1',
