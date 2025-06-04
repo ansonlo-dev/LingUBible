@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface StudentVerificationInputProps {
   email: string;
   onSendCode: (email: string) => Promise<{ success: boolean; message: string }>;
-  onVerifyCode: (email: string, code: string) => { success: boolean; message: string };
+  onVerifyCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
   getRemainingTime: (email: string) => number;
   onCodeVerified: () => void;
   disabled?: boolean;

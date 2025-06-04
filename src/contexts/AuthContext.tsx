@@ -9,8 +9,8 @@ interface AuthContextType {
     register: (email: string, password: string, name: string) => Promise<void>;
     logout: () => Promise<void>;
     sendStudentVerificationCode: (email: string) => Promise<{ success: boolean; message: string }>;
-    verifyStudentCode: (email: string, code: string) => { success: boolean; message: string };
-    isStudentEmailVerified: (email: string) => boolean;
+    verifyStudentCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
+    isStudentEmailVerified: (email: string) => Promise<boolean>;
     getVerificationRemainingTime: (email: string) => number;
 }
 
@@ -97,11 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return await authService.sendStudentVerificationCode(email);
     };
 
-    const verifyStudentCode = (email: string, code: string) => {
-        return authService.verifyStudentCode(email, code);
+    const verifyStudentCode = async (email: string, code: string) => {
+        return await authService.verifyStudentCode(email, code);
     };
 
-    const isStudentEmailVerified = (email: string) => {
+    const isStudentEmailVerified = async (email: string) => {
         return authService.isStudentEmailVerified(email);
     };
 

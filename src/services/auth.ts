@@ -31,9 +31,9 @@ export const authService = {
     },
 
     // 驗證學生驗證碼
-    verifyStudentCode(email: string, code: string) {
+    async verifyStudentCode(email: string, code: string): Promise<{ success: boolean; message: string }> {
         try {
-            return studentVerificationService.verifyCode(email, code);
+            return await studentVerificationService.verifyCode(email, code);
         } catch (error) {
             console.error('驗證驗證碼錯誤:', error);
             return {
