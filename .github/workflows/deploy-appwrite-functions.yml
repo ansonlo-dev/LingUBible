@@ -35,7 +35,7 @@ jobs:
       
     - name: Deploy Functions
       run: |
-        appwrite deploy function --functionId send-verification
+        appwrite push functions --function-id send-verification --async
         
     - name: Notify deployment status
       if: always()
