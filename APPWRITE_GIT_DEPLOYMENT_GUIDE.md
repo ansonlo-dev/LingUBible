@@ -19,7 +19,7 @@
 9. 選擇包含您函數代碼的儲存庫
 10. 設置以下配置：
     - **Production Branch**: `main` 或 `master`
-    - **Root Directory**: `functions/Send Verification Email`（根據您的函數路徑）
+    - **Root Directory**: `functions/send-verification-email`（注意：使用不含空格的目錄名稱）
     - **Entry Point**: `src/main.js`
 
 ### 步驟 2: 配置函數結構
@@ -27,12 +27,18 @@
 確保您的函數目錄結構如下：
 ```
 functions/
-└── Send Verification Email/
-    ├── src/
-    │   └── main.js          # 入口點文件
-    ├── package.json         # 依賴配置
-    └── package-lock.json    # 鎖定版本
+├── send-verification-email/     # 發送驗證郵件函數
+│   ├── src/
+│   │   └── main.js             # 入口點文件
+│   ├── package.json            # 依賴配置
+│   └── package-lock.json       # 鎖定版本
+├── verify-student-code/         # 驗證學生代碼函數
+│   └── ...
+└── cleanup-expired-codes/       # 清理過期代碼函數
+    └── ...
 ```
+
+**重要提醒**: Appwrite 不支援包含空格的目錄名稱，請確保所有函數目錄名稱都使用連字符（-）而不是空格。
 
 ### 步驟 3: 測試自動部署
 

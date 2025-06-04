@@ -53,7 +53,7 @@
             "entrypoint": "src/main.js",
             "commands": "",
             "specification": "s-0.5vcpu-512mb",
-            "path": "functions/Send Verification Email"
+            "path": "functions/send-verification-email"
         }
     ],
     "databases": [
