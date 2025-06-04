@@ -1,0 +1,48 @@
+name: Deploy Appwrite Functions
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'functions/**'
+      - 'appwrite.json'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'functions/**'
+      - 'appwrite.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install Appwrite CLI
+      run: npm install -g appwrite-cli
+      
+    - name: Login to Appwrite
+      run: |
+        appwrite login --endpoint ${{ secrets.APPWRITE_ENDPOINT }} --email ${{ secrets.APPWRITE_EMAIL }} --password ${{ secrets.APPWRITE_PASSWORD }}
+      
+    - name: Deploy Functions
+      run: |
+        appwrite deploy function --functionId send-verification
+        
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✅ Appwrite functions deployed successfully!"
+        else
+          echo "❌ Appwrite functions deployment failed!"
+          exit 1
+        fi 

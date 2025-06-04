@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie 語言測試 - 簡化版</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🍪 Cookie 語言測試</h1>
+        <p>這是一個簡化的測試頁面，用來快速驗證 Cookie 彈窗的語言修復。</p>
+        
+        <div class="status">
+            <strong>當前瀏覽器語言：</strong><span id="browser-lang"></span><br>
+            <strong>應該檢測為：</strong><span id="detected-lang"></span>
+        </div>
+        
+        <h3>測試步驟：</h3>
+        <ol>
+            <li>點擊「清除 Cookie 同意」按鈕</li>
+            <li>前往主應用 (<a href="/" target="_blank">http://localhost:8081/</a>)</li>
+            <li>檢查 Cookie 彈窗是否以正確語言顯示</li>
+            <li>檢查瀏覽器控制台的調試信息</li>
+        </ol>
+        
+        <div>
+            <button class="button" onclick="clearCookieConsent()">清除 Cookie 同意</button>
+            <button class="button" onclick="clearAllData()">清除所有數據</button>
+            <button class="button" onclick="openMainApp()">打開主應用</button>
+        </div>
+        
+        <div class="card">
+            <h3>預期結果：</h3>
+            <ul>
+                <li><strong>英文瀏覽器：</strong>Cookie Consent / This website uses cookies... / Accept / Learn More</li>
+                <li><strong>繁體中文：</strong>Cookie 使用同意 / 本網站使用 Cookie... / 我了解 / 了解更多</li>
+                <li><strong>簡體中文：</strong>Cookie 使用同意 / 本网站使用 Cookie... / 我了解 / 了解更多</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h3>如何測試不同語言：</h3>
+            <p>在瀏覽器設定中修改語言偏好：</p>
+            <ul>
+                <li><strong>Chrome：</strong>設定 → 進階 → 語言</li>
+                <li><strong>Firefox：</strong>設定 → 一般 → 語言</li>
+                <li><strong>Safari：</strong>偏好設定 → 進階 → 語言</li>
+            </ul>
+            <p>修改後重新載入頁面並清除數據重新測試。</p>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus() {
+            const browserLang = navigator.language || navigator.languages?.[0] || 'unknown';
+            document.getElementById('browser-lang').textContent = browserLang;
+            
+            let detectedLang = 'en (English)';
+            if (browserLang) {
+                if (browserLang.startsWith('zh-TW') || 
+                    browserLang.startsWith('zh-Hant') || 
+                    browserLang === 'zh-HK' || 
+                    browserLang === 'zh-MO') {
+                    detectedLang = 'zh-TW (繁體中文)';
+                } else if (browserLang.startsWith('zh-CN') || 
+                           browserLang.startsWith('zh-Hans') || 
+                           browserLang.startsWith('zh-SG') || 
+                           browserLang === 'zh') {
+                    detectedLang = 'zh-CN (簡體中文)';
+                } else if (browserLang.startsWith('en')) {
+                    detectedLang = 'en (English)';
+                }
+            }
+            document.getElementById('detected-lang').textContent = detectedLang;
+        }
+        
+        function clearCookieConsent() {
+            localStorage.removeItem('cookieConsent');
+            alert('已清除 Cookie 同意狀態。現在可以前往主應用測試 Cookie 彈窗。');
+        }
+        
+        function clearAllData() {
+            localStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            alert('已清除所有本地數據。現在可以前往主應用測試首次訪問的語言檢測。');
+        }
+        
+        function openMainApp() {
+            window.open('/', '_blank');
+        }
+        
+        // 初始化
+        updateStatus();
+    </script>
+</body>
+</html> 

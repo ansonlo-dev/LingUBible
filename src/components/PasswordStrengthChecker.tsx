@@ -2,33 +2,38 @@ import { useState, useEffect } from 'react';
 import { Check, X, AlertTriangle, Shield } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+interface ValidationRule {
+  id: string;
+  label: string;
+  isValid: boolean;
+  type: 'requirement' | 'warning' | 'info';
+}
+
 interface PasswordStrengthCheckerProps {
   password: string;
   email?: string;
   onValidationChange: (isValid: boolean) => void;
 }
 
-// 常用密碼列表（前100個最常用的密碼）
-const COMMON_PASSWORDS = [
-  '123456', 'password', '12345678', 'qwerty', '123456789', '12345', '1234',
-  '111111', '1234567', 'dragon', '123123', 'baseball', 'abc123', 'football',
-  'monkey', 'letmein', '696969', 'shadow', 'master', '666666', 'qwertyuiop',
-  '123321', 'mustang', '1234567890', 'michael', '654321', 'pussy', 'superman',
-  '1qaz2wsx', '7777777', 'fuckyou', '121212', '000000', 'qazwsx', '123qwe',
-  'killer', 'trustno1', 'jordan', 'jennifer', 'zxcvbnm', 'asdfgh', 'hunter',
-  'buster', 'soccer', 'harley', 'batman', 'andrew', 'tigger', 'sunshine',
-  'iloveyou', 'fuckme', '2000', 'charlie', 'robert', 'thomas', 'hockey',
-  'ranger', 'daniel', 'starwars', 'klaster', '112233', 'george', 'asshole',
-  'computer', 'michelle', 'jessica', 'pepper', '1111', 'zxcvbn', '555555',
-  '11111111', '131313', 'freedom', '777777', 'pass', 'fuck', 'maggie',
-  '159753', 'aaaaaa', 'ginger', 'princess', 'joshua', 'cheese', 'amanda',
-  'summer', 'love', 'ashley', '6969', 'nicole', 'chelsea', 'biteme',
-  'matthew', 'access', 'yankees', '987654321', 'dallas', 'austin', 'thunder',
-  'taylor', 'matrix', 'william', 'corvette', 'hello', 'martin', 'heather'
+// 檢查郵件是否為有效的學生郵件
+const isValidStudentEmail = (email: string): boolean => {
+  const emailLower = email.toLowerCase();
+  // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  return validEmailPattern.test(emailLower);
+};
+
+// 常見密碼列表（簡化版）
+const commonPasswords = [
+  'password', '123456', '123456789', 'qwerty', 'abc123', 'password123',
+  'admin', 'letmein', 'welcome', 'monkey', '1234567890', 'password1',
+  'qwerty123', 'dragon', 'master', 'hello', 'login', 'admin123',
+  'root', 'pass', 'test', 'guest', 'user', 'demo', 'sample',
+  'lingnan', 'student', 'university', 'college', 'school'
 ];
 
-// 洩露密碼模式檢測
-const LEAKED_PATTERNS = [
+// 已知洩露密碼模式（簡化版）
+const leakedPasswordPatterns = [
   /^password\d*$/i,
   /^123456\d*$/,
   /^qwerty\d*$/i,
@@ -38,15 +43,14 @@ const LEAKED_PATTERNS = [
   /^monkey\d*$/i,
   /^dragon\d*$/i,
   /^master\d*$/i,
-  /^sunshine\d*$/i
+  /^hello\d*$/i,
+  /^login\d*$/i,
+  /^root\d*$/i,
+  /^guest\d*$/i,
+  /^test\d*$/i,
+  /^demo\d*$/i,
+  /^sample\d*$/i
 ];
-
-interface ValidationRule {
-  id: string;
-  label: string;
-  isValid: boolean;
-  type: 'requirement' | 'warning' | 'error';
-}
 
 export function PasswordStrengthChecker({ password, email, onValidationChange }: PasswordStrengthCheckerProps) {
   const [rules, setRules] = useState<ValidationRule[]>([]);
@@ -54,53 +58,41 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
   const { t } = useLanguage();
 
   useEffect(() => {
-    const newRules = validatePassword(password, email);
-    setRules(newRules);
-    
-    // 計算密碼強度
-    const requiredRules = newRules.filter(rule => rule.type === 'requirement');
-    const validRequiredRules = requiredRules.filter(rule => rule.isValid);
-    const warningRules = newRules.filter(rule => rule.type === 'warning' && !rule.isValid);
-    const errorRules = newRules.filter(rule => rule.type === 'error' && !rule.isValid);
-    
-    // 檢查是否所有必需規則都滿足且沒有錯誤
-    const allRequiredValid = validRequiredRules.length === requiredRules.length;
-    const hasErrors = errorRules.length > 0;
-    const hasWarnings = warningRules.length > 0;
-    
-    // 更細緻的強度計算
-    let newStrength: 'weak' | 'fair' | 'good' | 'strong' = 'weak';
-    
-    if (hasErrors || !allRequiredValid) {
-      // 有錯誤或必需要求未滿足 = 弱
-      newStrength = 'weak';
-    } else if (allRequiredValid && !hasErrors) {
-      // 所有必需要求滿足且無錯誤
-      if (password.length >= 12 && !hasWarnings) {
-        // 長度充足且無警告 = 強
-        newStrength = 'strong';
-      } else if (password.length >= 10 && !hasWarnings) {
-        // 長度適中且無警告 = 良好
-        newStrength = 'good';
-      } else if (!hasWarnings) {
-        // 無警告但長度較短 = 中等
-        newStrength = 'fair';
-      } else {
-        // 有警告 = 中等
-        newStrength = 'fair';
-      }
+    if (!password) {
+      setRules([]);
+      setStrength('weak');
+      onValidationChange(false);
+      return;
     }
-    
+
+    const validationRules = validatePassword(password, email);
+    setRules(validationRules);
+
+    // 計算密碼強度
+    const requiredRules = validationRules.filter(rule => rule.type === 'requirement');
+    const validRequiredRules = requiredRules.filter(rule => rule.isValid);
+    const validPercentage = validRequiredRules.length / requiredRules.length;
+
+    let newStrength: 'weak' | 'fair' | 'good' | 'strong' = 'weak';
+    if (validPercentage >= 1) {
+      newStrength = 'strong';
+    } else if (validPercentage >= 0.8) {
+      newStrength = 'good';
+    } else if (validPercentage >= 0.6) {
+      newStrength = 'fair';
+    }
+
     setStrength(newStrength);
-    
-    // 通知父組件驗證結果
-    onValidationChange(allRequiredValid && !hasErrors);
+
+    // 檢查是否所有必需規則都通過
+    const allRequiredValid = requiredRules.every(rule => rule.isValid);
+    onValidationChange(allRequiredValid);
   }, [password, email, onValidationChange, t]);
 
   const validatePassword = (pwd: string, userEmail?: string): ValidationRule[] => {
     const rules: ValidationRule[] = [];
 
-    // 長度檢查 (8-40字符)
+    // 長度檢查
     rules.push({
       id: 'length',
       label: t('password.length'),
@@ -108,7 +100,7 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
       type: 'requirement'
     });
 
-    // 大寫字母檢查
+    // 大寫字母
     rules.push({
       id: 'uppercase',
       label: t('password.uppercase'),
@@ -116,7 +108,7 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
       type: 'requirement'
     });
 
-    // 小寫字母檢查
+    // 小寫字母
     rules.push({
       id: 'lowercase',
       label: t('password.lowercase'),
@@ -124,7 +116,7 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
       type: 'requirement'
     });
 
-    // 特殊符號檢查
+    // 特殊字符
     rules.push({
       id: 'special',
       label: t('password.special'),
@@ -132,7 +124,7 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
       type: 'requirement'
     });
 
-    // 數字檢查（改為必需要求）
+    // 數字
     rules.push({
       id: 'number',
       label: t('password.number'),
@@ -140,26 +132,31 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
       type: 'requirement'
     });
 
-    // 常用密碼檢查
-    const isCommonPassword = COMMON_PASSWORDS.includes(pwd.toLowerCase());
+    // 常見密碼檢查
+    const isCommon = commonPasswords.some(common => 
+      pwd.toLowerCase().includes(common.toLowerCase()) || 
+      common.toLowerCase().includes(pwd.toLowerCase())
+    );
+    
     rules.push({
       id: 'common',
       label: t('password.notCommon'),
-      isValid: !isCommonPassword,
-      type: 'error'
+      isValid: !isCommon,
+      type: 'requirement'
     });
 
-    // 洩露密碼模式檢查
-    const isLeakedPattern = LEAKED_PATTERNS.some(pattern => pattern.test(pwd));
+    // 洩露密碼檢查
+    const isLeaked = leakedPasswordPatterns.some(pattern => pattern.test(pwd));
+    
     rules.push({
       id: 'leaked',
       label: t('password.notLeaked'),
-      isValid: !isLeakedPattern,
-      type: 'error'
+      isValid: !isLeaked,
+      type: 'requirement'
     });
 
     // 學校郵件密碼檢查
-    if (userEmail && (userEmail.includes('@ln.edu.hk') || userEmail.includes('@ln.hk'))) {
+    if (userEmail && isValidStudentEmail(userEmail)) {
       // 檢查密碼是否包含郵件地址的部分
       const emailPrefix = userEmail.split('@')[0].toLowerCase();
       const containsEmailPart = pwd.toLowerCase().includes(emailPrefix) || 
@@ -219,18 +216,21 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
   if (!password) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4 border border-border rounded-lg bg-card">
+      <div className="flex items-center space-x-2">
+        <Shield className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium">{t('password.strength')}</span>
+      </div>
+
       {/* 密碼強度指示器 */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('password.strength')}
-          </span>
+          <span className="text-sm text-muted-foreground">{t('password.strengthLabel')}</span>
           <span className={`text-sm font-medium ${
-            strength === 'strong' ? 'text-green-600' :
-            strength === 'good' ? 'text-blue-600' :
-            strength === 'fair' ? 'text-yellow-600' :
-            'text-red-600'
+            strength === 'strong' ? 'text-green-600 dark:text-green-400' :
+            strength === 'good' ? 'text-blue-600 dark:text-blue-400' :
+            strength === 'fair' ? 'text-yellow-600 dark:text-yellow-400' :
+            'text-red-600 dark:text-red-400'
           }`}>
             {getStrengthText()}
           </span>
@@ -243,43 +243,21 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
         </div>
       </div>
 
-      {/* 密碼要求列表 */}
+      {/* 密碼要求 */}
       <div className="space-y-2">
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {t('password.requirements')}
-        </h4>
+        <h4 className="text-sm font-medium">{t('password.requirements')}</h4>
         <div className="space-y-1">
-          {rules.map((rule) => (
+          {rules.filter(rule => rule.type === 'requirement').map((rule) => (
             <div key={rule.id} className="flex items-center space-x-2">
-              {rule.type === 'requirement' && (
-                rule.isValid ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <X className="h-4 w-4 text-red-500" />
-                )
-              )}
-              {rule.type === 'warning' && (
-                rule.isValid ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                )
-              )}
-              {rule.type === 'error' && (
-                rule.isValid ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <X className="h-4 w-4 text-red-500" />
-                )
+              {rule.isValid ? (
+                <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+              ) : (
+                <X className="h-4 w-4 text-red-600 dark:text-red-400" />
               )}
               <span className={`text-sm ${
                 rule.isValid 
                   ? 'text-green-600 dark:text-green-400' 
-                  : rule.type === 'error' 
-                    ? 'text-red-600 dark:text-red-400'
-                    : rule.type === 'warning'
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : 'text-gray-600 dark:text-gray-400'
+                  : 'text-red-600 dark:text-red-400'
               }`}>
                 {rule.label}
               </span>
@@ -288,8 +266,25 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
         </div>
       </div>
 
-      {/* 學校郵件提醒 - 始終顯示給學校郵件用戶 */}
-      {email && (email.includes('@ln.edu.hk') || email.includes('@ln.hk')) && (
+      {/* 警告和建議 */}
+      {rules.some(rule => rule.type === 'warning' && !rule.isValid) && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-yellow-600 dark:text-yellow-400">建議：</h4>
+          <div className="space-y-1">
+            {rules.filter(rule => rule.type === 'warning' && !rule.isValid).map((rule) => (
+              <div key={rule.id} className="flex items-center space-x-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <span className="text-sm text-yellow-600 dark:text-yellow-400">
+                  {rule.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 學校郵件安全提醒 */}
+      {email && isValidStudentEmail(email) && (
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
           <div className="flex items-start space-x-2">
             <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />

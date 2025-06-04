@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, CheckCircle, AlertCircle, Clock, Code } from 'lucide-react';
+import { Mail, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { studentVerificationService } from '@/services/studentVerificationService';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface StudentVerificationInputProps {
   email: string;
@@ -13,6 +14,14 @@ interface StudentVerificationInputProps {
   onCodeVerified: () => void;
   disabled?: boolean;
 }
+
+// 檢查郵件是否為有效的學生郵件
+const isValidStudentEmail = (email: string): boolean => {
+  const emailLower = email.toLowerCase();
+  // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  return validEmailPattern.test(emailLower);
+};
 
 export function StudentVerificationInput({
   email,
@@ -30,9 +39,8 @@ export function StudentVerificationInput({
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [countdown, setCountdown] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
-  const [developmentCode, setDevelopmentCode] = useState('');
 
-  const isDevelopmentMode = studentVerificationService.isDevelopmentMode();
+  const { t, language } = useLanguage();
 
   // 倒數計時器
   useEffect(() => {
@@ -60,18 +68,23 @@ export function StudentVerificationInput({
     if (!email || isSending) return;
 
     // 檢查郵件格式
-    if (!email.endsWith('@ln.edu.hk') && !email.endsWith('@ln.hk')) {
-      setMessage('只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊');
+    if (!isValidStudentEmail(email)) {
+      setMessage(t('verification.onlyStudentEmails'));
       setMessageType('error');
       return;
     }
 
     setIsSending(true);
-    setMessage('');
-    setDevelopmentCode('');
+    setMessage(t('verification.sendingCode'));
+    setMessageType('info');
 
     try {
-      const result = await onSendCode(email);
+      console.log('🔄 開始發送驗證碼流程:', { email, language });
+      
+      // 使用多語言支援的發送函數
+      const result = await studentVerificationService.sendVerificationCode(email, language);
+      
+      console.log('📬 發送結果:', result);
       
       if (result.success) {
         setIsCodeSent(true);
@@ -79,19 +92,16 @@ export function StudentVerificationInput({
         setMessage(result.message);
         setMessageType('success');
         
-        // 在開發模式下提取驗證碼
-        if (isDevelopmentMode && result.message.includes('開發模式：')) {
-          const codeMatch = result.message.match(/開發模式：(\d{6})/);
-          if (codeMatch) {
-            setDevelopmentCode(codeMatch[1]);
-          }
-        }
+        // 額外的成功提示
+        console.log('✅ 驗證碼發送成功');
       } else {
         setMessage(result.message);
         setMessageType('error');
+        console.error('❌ 發送失敗:', result.message);
       }
     } catch (error: any) {
-      setMessage(error.message || '發送驗證碼失敗');
+      console.error('💥 發送過程中發生異常:', error);
+      setMessage(`發送失敗: ${error.message || '未知錯誤'}`);
       setMessageType('error');
     } finally {
       setIsSending(false);
@@ -105,20 +115,21 @@ export function StudentVerificationInput({
     setMessage('');
 
     try {
-      const result = onVerifyCode(email, verificationCode);
+      // 使用新的異步後端驗證方法
+      const result = await studentVerificationService.verifyCode(email, verificationCode);
       
       if (result.success) {
         setIsVerified(true);
         setMessage(result.message);
         setMessageType('success');
-        setDevelopmentCode(''); // 清除開發模式顯示的驗證碼
         onCodeVerified();
       } else {
         setMessage(result.message);
         setMessageType('error');
       }
     } catch (error: any) {
-      setMessage(error.message || '驗證失敗');
+      console.error('驗證過程中發生錯誤:', error);
+      setMessage(error.message || t('verification.verifyFailed'));
       setMessageType('error');
     } finally {
       setIsVerifying(false);
@@ -138,64 +149,56 @@ export function StudentVerificationInput({
     <div className="space-y-4 p-4 border border-border rounded-lg bg-card">
       <div className="flex items-center space-x-2">
         <Mail className="h-4 w-4 text-primary" />
-        <Label className="text-sm font-medium">學生郵件驗證</Label>
-        {isDevelopmentMode && (
-          <div className="flex items-center space-x-1 text-xs text-orange-600 dark:text-orange-400">
-            <Code className="h-3 w-3" />
-            <span>開發模式</span>
-          </div>
-        )}
+        <Label className="text-sm font-medium">{t('verification.title')}</Label>
       </div>
 
-      {/* 開發模式提示 */}
-      {isDevelopmentMode && (
-        <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md">
-          <div className="flex items-start space-x-2">
-            <Code className="h-4 w-4 text-orange-600 dark:text-orange-400 mt-0.5" />
-            <div className="text-sm text-orange-600 dark:text-orange-400">
-              <p className="font-medium">開發模式</p>
-              <p>未設定 VITE_RESEND_API_KEY，使用模擬郵件發送</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 發送驗證碼按鈕 */}
-      <div className="space-y-2">
+      {!isCodeSent && !isVerified && (
         <Button
           type="button"
           onClick={handleSendCode}
           disabled={disabled || !canSendCode}
           className="w-full"
-          variant={isCodeSent ? "outline" : "default"}
         >
-          {isSending ? (
-            '發送中...'
-          ) : countdown > 0 ? (
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4" />
-              <span>重新發送 ({formatTime(countdown)})</span>
-            </div>
-          ) : isVerified ? (
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4" />
-              <span>已驗證</span>
-            </div>
-          ) : (
-            `發送驗證碼到 ${email}`
-          )}
+          {isSending ? t('auth.sending') : t('verification.sendCode')}
         </Button>
-      </div>
+      )}
 
-      {/* 開發模式：顯示驗證碼 */}
-      {isDevelopmentMode && developmentCode && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-          <div className="flex items-center space-x-2">
-            <Code className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <div className="text-sm text-blue-600 dark:text-blue-400">
-              <p className="font-medium">開發模式驗證碼：</p>
-              <p className="font-mono text-lg font-bold tracking-widest">{developmentCode}</p>
-              <p className="text-xs mt-1">請複製此驗證碼到下方輸入框</p>
+      {/* 重新發送按鈕 */}
+      {isCodeSent && !isVerified && countdown === 0 && (
+        <Button
+          type="button"
+          onClick={handleSendCode}
+          disabled={disabled || isSending}
+          variant="outline"
+          className="w-full"
+        >
+          {isSending ? t('verification.sendingCode') : `${t('verification.resend')}${t('verification.sendCode')}`}
+        </Button>
+      )}
+
+      {/* 倒數計時 */}
+      {countdown > 0 && !isVerified && (
+        <div className="text-center text-sm text-muted-foreground">
+          {formatTime(countdown)} {t('verification.resendAfter')}
+        </div>
+      )}
+
+      {/* 郵件提醒框 */}
+      {isCodeSent && !isVerified && (
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                {t('email.reminder.title')}
+              </h4>
+              <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                <p>{t('email.reminder.checkSpam')}</p>
+                <p>{t('email.reminder.whitelist')}</p>
+                <p>{t('email.reminder.deliveryTime')}</p>
+                <p>{t('email.reminder.contactSupport')}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -205,7 +208,7 @@ export function StudentVerificationInput({
       {isCodeSent && !isVerified && (
         <div className="space-y-2">
           <Label htmlFor="verificationCode" className="text-sm">
-            請輸入 6 位數驗證碼
+            {t('verification.enterCode')}
           </Label>
           <div className="flex space-x-2">
             <Input
@@ -227,21 +230,9 @@ export function StudentVerificationInput({
               disabled={disabled || !canVerifyCode}
               className="px-6"
             >
-              {isVerifying ? '驗證中...' : '驗證'}
+              {isVerifying ? t('verification.verifying') : t('verification.verify')}
             </Button>
           </div>
-          {/* 開發模式：快速填入按鈕 */}
-          {isDevelopmentMode && developmentCode && (
-            <Button
-              type="button"
-              onClick={() => setVerificationCode(developmentCode)}
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-            >
-              快速填入驗證碼
-            </Button>
-          )}
         </div>
       )}
 
@@ -274,14 +265,9 @@ export function StudentVerificationInput({
       {/* 提示信息 */}
       {!isCodeSent && (
         <div className="text-xs text-muted-foreground">
-          <p>• 只有 @ln.edu.hk 或 @ln.hk 郵件地址才能註冊</p>
-          <p>• 驗證碼有效期為 10 分鐘</p>
-          <p>• 最多可嘗試驗證 3 次</p>
-          {isDevelopmentMode && (
-            <p className="text-orange-600 dark:text-orange-400 mt-1">
-              • 開發模式：驗證碼將顯示在頁面上
-            </p>
-          )}
+          <p>• {t('verification.onlyStudentEmails')}</p>
+          <p>• {t('verification.codeExpiry')}</p>
+          <p>• {t('verification.maxAttempts')}</p>
         </div>
       )}
     </div>

@@ -51,12 +51,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         }
         
         if (!isStudentVerified) {
-          setError('請先驗證您的學生郵件地址');
+          setError(t('auth.pleaseVerifyStudentEmail'));
           return;
         }
 
         if (!isPasswordValid) {
-          setError('密碼不符合安全要求，請檢查密碼強度指示器');
+          setError(t('auth.passwordNotSecure'));
           return;
         }
         
@@ -71,7 +71,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       
       // 處理不同類型的錯誤
       if (err?.message?.includes('請先驗證您的學生郵件地址')) {
-        setError('請先驗證您的學生郵件地址');
+        setError(t('auth.pleaseVerifyStudentEmail'));
       } else if (err?.message?.includes('Invalid credentials')) {
         setError('郵件地址或密碼錯誤');
       } else if (err?.message?.includes('user with the same email already exists')) {
@@ -129,10 +129,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               type="email"
               value={email}
               onChange={(e) => {
-                setEmail(e.target.value);
+                setEmail(e.target.value.toLowerCase());
                 setIsStudentVerified(false); // 重置驗證狀態當郵件改變時
               }}
-              placeholder={isSignUp ? "student@ln.edu.hk 或 student@ln.hk" : t('auth.enterEmail')}
+              placeholder={isSignUp ? t('auth.emailPlaceholder') : t('auth.enterEmail')}
               required
               disabled={loading}
             />
@@ -156,7 +156,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  學生郵件驗證成功！現在可以設定密碼完成註冊
+                  {t('auth.studentVerificationSuccess')}
                 </p>
               </div>
             </div>
@@ -199,12 +199,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               {/* 密碼確認檢查 */}
               {confirmPassword && password !== confirmPassword && (
                 <p className="text-sm text-red-600 dark:text-red-400">
-                  密碼確認不匹配
+                  {t('auth.passwordMismatch')}
                 </p>
               )}
               {confirmPassword && password === confirmPassword && (
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  密碼確認匹配
+                  {t('auth.passwordMatch')}
                 </p>
               )}
             </div>
@@ -221,7 +221,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             className="w-full gradient-primary hover:opacity-90 text-white"
             disabled={loading || (isSignUp && (!isStudentVerified || !isPasswordValid || password !== confirmPassword))}
           >
-            {loading ? '處理中...' : (isSignUp ? t('auth.signUp') : t('auth.signIn'))}
+            {loading ? t('auth.processing') : (isSignUp ? t('auth.signUp') : t('auth.signIn'))}
           </Button>
           
           <div className="text-center">

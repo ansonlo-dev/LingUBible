@@ -23,7 +23,7 @@ const setCookie = (name: string, value: string, days: number = 365) => {
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
 
-// Get initial language from cookie or default to 'en'
+// Get initial language from cookie or detect from system
 const getInitialLanguage = (): Language => {
   if (typeof window === 'undefined') return 'en'; // SSR safety
   
@@ -32,22 +32,45 @@ const getInitialLanguage = (): Language => {
     return savedLanguage as Language;
   }
   
-  // Fallback to browser language detection
+  // 如果沒有保存的語言，檢測系統語言
   const browserLang = navigator.language || navigator.languages?.[0];
+  let detectedLanguage: Language = 'en'; // 默認英文
+  
   if (browserLang) {
-    if (browserLang.startsWith('zh-TW') || browserLang.startsWith('zh-Hant')) {
-      return 'zh-TW';
-    }
-    if (browserLang.startsWith('zh-CN') || browserLang.startsWith('zh-Hans') || browserLang.startsWith('zh')) {
-      return 'zh-CN';
+    console.log('檢測到的瀏覽器語言:', browserLang);
+    
+    if (browserLang.startsWith('zh-TW') || 
+        browserLang.startsWith('zh-Hant') || 
+        browserLang === 'zh-HK' || 
+        browserLang === 'zh-MO') {
+      detectedLanguage = 'zh-TW';
+    } else if (browserLang.startsWith('zh-CN') || 
+               browserLang.startsWith('zh-Hans') || 
+               browserLang.startsWith('zh-SG') || 
+               browserLang === 'zh') {
+      detectedLanguage = 'zh-CN';
+    } else if (browserLang.startsWith('en')) {
+      detectedLanguage = 'en';
+    } else {
+      // 對於其他語言，默認使用英文
+      detectedLanguage = 'en';
     }
   }
   
-  return 'en';
+  console.log('自動檢測語言設定為:', detectedLanguage);
+  
+  // 自動保存檢測到的語言到 cookie
+  setCookie('language', detectedLanguage);
+  
+  return detectedLanguage;
 };
 
 const translations = {
   en: {
+    // Site metadata
+    'site.name': 'LingUBible',
+    'site.title': 'LingUBible - Course & Lecturer Reviews',
+    'site.description': 'Platform for college students to review courses and lecturers',
     'hero.title': 'Welcome to',
     'hero.subtitle': 'Your platform for honest course and lecturer reviews. Help fellow students make informed decisions',
     'hero.action': 'comment',
@@ -90,12 +113,15 @@ const translations = {
     'auth.passwordMatch': 'Passwords match',
     'auth.rememberMe': 'Remember me',
     'auth.authFailed': 'Authentication failed, please check your information',
+    'auth.pleaseVerifyStudentEmail': 'Please verify your student email address first',
+    'auth.passwordNotSecure': 'Password does not meet security requirements, please check the password strength indicator',
     'auth.secureConnection': 'Your credentials will be encrypted and sent in a secure connection.',
-    'auth.schoolPasswordReminder': 'Please do not use the same password as your school email account. For account security, we recommend using different passwords for each service.',
+    'auth.schoolPasswordReminder': 'Please do not use the same password as your university webmail account. For account security, we recommend using different passwords for each service.',
     'auth.forgotPassword': 'Forgot password?',
     'auth.resetPassword': 'Reset Password',
     'auth.sendResetEmail': 'Send Reset Email',
     'auth.resetEmailSent': 'Password reset email has been sent to your email address.',
+    'auth.studentVerificationSuccess': 'Student email verification successful! You can now set up your password to complete registration.',
     'auth.backToLogin': 'Back to Login',
     'auth.backToHome': 'Back to Home',
     'auth.noAccount': "Don't have an account?",
@@ -171,7 +197,7 @@ const translations = {
     'password.good': 'Good',
     'password.strong': 'Strong',
     'password.securityReminder': 'Security Reminder:',
-    'password.schoolEmailWarning': 'Please do not use the same password as your school email account. For account security, we recommend using different passwords for each service.',
+    'password.schoolEmailWarning': 'Please do not use the same password as your university webmail account. For account security, we recommend using different passwords for each service.',
     'password.commonPasswordDanger': 'Danger:',
     'password.commonPasswordMessage': 'You are using a common password that is easily cracked. Please choose a more secure password.',
     'password.leakedPasswordRisk': 'High Risk:',
@@ -189,16 +215,93 @@ const translations = {
     'auth.sending': 'Sending...',
     'auth.securityReminder': 'Security Reminder',
     'auth.resetLinkExpiry': 'The reset link will expire in 24 hours. If you did not request a password reset, please ignore this email.',
+    'auth.resetLinkWillExpire': 'Reset link will expire in 24 hours',
+    'auth.checkEmailInbox': 'Please check your inbox:',
+    'auth.canRetryReset': 'You can retry sending reset email',
+    'auth.resendReset': 'Resend',
+    'auth.sendResetLink': 'Send Reset Link',
+    'auth.studentEmailAddress': 'Student Email Address',
+    'auth.resetPasswordDescription': 'Enter your student email address and we will send you a reset link',
+    'auth.emailNotRegistered': 'This email address is not registered. Please register first or check your email address.',
+    'auth.checkingEmailExists': 'Checking if email is registered...',
+    'auth.emailRegistered': 'Email address is registered',
+    'auth.invalidCredentials': 'Invalid email or password. Please check and try again.',
+    'auth.registrationFailed': 'Registration failed. Please check your information and try again.',
+    // Processing
+    'auth.processing': 'Processing...',
+    // Email placeholder
+    'auth.emailPlaceholder': 'student@ln.edu.hk or student@ln.hk',
+    // Email validation
+    'auth.invalidStudentEmail': 'This email address is not a valid student email address. Please use a valid @ln.edu.hk or @ln.hk email address.',
+    // Email checking status
+    'auth.checkingEmail': 'Checking email availability...',
+    'auth.checkingAccount': 'Checking account...',
+    'auth.emailAvailable': 'Email address available',
+    // Student verification
+    'verification.title': 'Student Email Verification',
+    'verification.sendCode': 'Send Verification Code',
+    'verification.onlyStudentEmails': 'Only @ln.edu.hk or @ln.hk email addresses can register',
+    'verification.codeExpiry': 'Verification code valid for 10 minutes',
+    'verification.maxAttempts': 'Maximum attempts to verify 3 times',
+    'verification.resendAfter': 'Can resend after',
+    'verification.enterCode': 'Enter 6-digit verification code',
+    'verification.verifying': 'Verifying...',
+    'verification.verify': 'Verify',
+    'verification.resend': 'Resend',
+    'verification.sendingCode': 'Sending verification code...',
+    'verification.codeSent': 'Verification code has been sent to your email address, please check your inbox',
+    'verification.verifyFailed': 'Verification failed',
+    // Email reminder
+    'email.reminder.title': '📧 Email Delivery Reminder',
+    'email.reminder.checkSpam': 'If you don\'t receive the email, please check your spam/junk folder',
+    'email.reminder.whitelist': 'Consider adding noreply@lingubible.com to your email whitelist',
+    'email.reminder.deliveryTime': 'Email delivery may take 1-2 minutes',
+    'email.reminder.contactSupport': 'If you still don\'t receive the email after 5 minutes, please contact support',
+    // Password strength
+    'password.strengthLabel': 'Strength:',
     // Swipe hint
     'swipe.hint': 'Swipe right anywhere on screen to open menu',
     'swipe.dismissHint': 'Scroll to dismiss hint',
     // Cookie consent
-    'cookie.title': 'Cookie 使用同意',
-    'cookie.description': '本網站使用 Cookie 來確保您獲得最佳的瀏覽體驗。',
-    'cookie.accept': '我了解',
-    'cookie.learnMore': '了解更多',
+    'cookie.title': 'Cookie Consent',
+    'cookie.description': 'This website uses cookies to ensure you get the best browsing experience.',
+    'cookie.accept': 'Accept',
+    'cookie.learnMore': 'Learn More',
+    // PWA Install
+    'pwa.installAvailable': 'App Available',
+    'pwa.installDescription': 'Install LingUBible for a better experience',
+    'pwa.installBenefits': 'Faster loading, offline access, and native app experience',
+    'pwa.install': 'Install',
+    'pwa.installApp': 'Install App',
+    'pwa.howToInstall': 'How to Install',
+    'pwa.notNow': 'Not Now',
+    'pwa.dismiss': 'Dismiss',
+    'pwa.gotIt': 'Got It',
+    'pwa.installSuccess': 'App installed successfully!',
+    'pwa.installFailed': 'Installation failed. Please try again.',
+    'pwa.alreadyInstalled': 'App is already installed',
+    'pwa.updateAvailable': 'App update available',
+    'pwa.updateNow': 'Update Now',
+    'pwa.updateLater': 'Update Later',
+    // User Stats
+    'stats.onlineUsers': 'Online Users',
+    'stats.totalRegistered': 'Total Registered',
+    'stats.todayLogins': 'Today Logins',
+    'stats.thisMonthLogins': 'This Month',
+    'stats.usersOnline': 'users online',
+    'stats.loading': 'Loading...',
+    // OpenStatus
+    'status.operational': 'Operational',
+    'status.degraded': 'Degraded',
+    'status.down': 'Down',
+    'status.checking': 'Checking',
+    'status.poweredBy': 'Powered by OpenStatus',
   },
   'zh-TW': {
+    // Site metadata
+    'site.name': 'LingUBible',
+    'site.title': 'LingUBible - 課程與講師評價平台',
+    'site.description': '真實可靠的Reg科聖經，幫助同學們作出明智的選擇',
     'hero.title': '歡迎來到',
     'hero.subtitle': '真實可靠的Reg科聖經，幫助同學們作出明智的選擇',
     'hero.action': '評論',
@@ -241,12 +344,15 @@ const translations = {
     'auth.passwordMatch': '兩次密碼一致',
     'auth.rememberMe': '記住我',
     'auth.authFailed': '認證失敗，請檢查資料',
+    'auth.pleaseVerifyStudentEmail': '請先驗證您的學生電子郵件地址',
+    'auth.passwordNotSecure': '密碼不符合安全要求，請檢查密碼強度指示器',
     'auth.secureConnection': '您的憑證將會被加密並在安全的連接中發送。',
     'auth.schoolPasswordReminder': '請不要使用與您的學校郵件帳戶相同的密碼。為了保護您的帳戶安全，建議為每個服務使用不同的密碼。',
     'auth.forgotPassword': '忘記密碼？',
     'auth.resetPassword': '重置密碼',
     'auth.sendResetEmail': '發送重置郵件',
     'auth.resetEmailSent': '密碼重置郵件已發送到您的電子郵件地址。',
+    'auth.studentVerificationSuccess': '學生郵件驗證成功！您現在可以設置密碼以完成註冊。',
     'auth.backToLogin': '返回登入',
     'auth.backToHome': '返回首頁',
     'auth.noAccount': '沒有帳戶？',
@@ -339,7 +445,51 @@ const translations = {
     'auth.sendResetFailed': '發送重置郵件失敗，請稍後再試',
     'auth.sending': '發送中...',
     'auth.securityReminder': '安全提醒',
-    'auth.resetLinkExpiry': '重置連結將在 24 小時後過期。如果您沒有請求重置密碼，請忽略此郵件。',
+    'auth.resetLinkExpiry': '重置連結將在 24 小時後過期',
+    'auth.resetLinkWillExpire': '重設連結將在 24 小時後過期',
+    'auth.checkEmailInbox': '請檢查您的信箱：',
+    'auth.canRetryReset': '您可以重新嘗試發送重設郵件',
+    'auth.resendReset': '重新發送',
+    'auth.sendResetLink': '發送重設連結',
+    'auth.studentEmailAddress': '學生郵件地址',
+    'auth.resetPasswordDescription': '輸入您的學生郵件地址，我們將發送重設密碼的連結給您',
+    'auth.emailNotRegistered': '此郵件地址尚未註冊。請先註冊或檢查您的郵件地址。',
+    'auth.checkingEmailExists': '檢查郵件是否已註冊...',
+    'auth.emailRegistered': '郵件地址已註冊',
+    'auth.invalidCredentials': '郵件地址或密碼錯誤，請檢查後重試',
+    'auth.registrationFailed': '註冊失敗，請檢查資料後重試',
+    // Processing
+    'auth.processing': '處理中...',
+    // Email placeholder
+    'auth.emailPlaceholder': 'student@ln.edu.hk 或 student@ln.hk',
+    // Email validation
+    'auth.invalidStudentEmail': '此郵件地址不是有效的學生郵件地址。請使用有效的 @ln.edu.hk 或 @ln.hk 郵件地址。',
+    // Email checking status
+    'auth.checkingEmail': '檢查郵件是否可用...',
+    'auth.checkingAccount': '檢查帳戶...',
+    'auth.emailAvailable': '郵件地址可用',
+    // Student verification
+    'verification.title': '學生郵件驗證',
+    'verification.sendCode': '發送驗證碼',
+    'verification.onlyStudentEmails': '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊',
+    'verification.codeExpiry': '驗證碼有效期為 10 分鐘',
+    'verification.maxAttempts': '最多可嘗試驗證 3 次',
+    'verification.resendAfter': '後可重新發送',
+    'verification.enterCode': '請輸入 6 位數驗證碼',
+    'verification.verifying': '驗證中...',
+    'verification.verify': '驗證',
+    'verification.resend': '重新',
+    'verification.sendingCode': '正在發送驗證碼...',
+    'verification.codeSent': '驗證碼已發送到您的郵件地址，請檢查您的信箱',
+    'verification.verifyFailed': '驗證失敗',
+    // Email reminder
+    'email.reminder.title': '📧 郵件發送提醒',
+    'email.reminder.checkSpam': '如果您沒有收到郵件，請檢查垃圾郵件資料夾',
+    'email.reminder.whitelist': '建議將 noreply@lingubible.com 加入您的郵件白名單',
+    'email.reminder.deliveryTime': '郵件發送可能需要 1-2 分鐘',
+    'email.reminder.contactSupport': '如果 5 分鐘後仍未收到郵件，請聯繫技術支援',
+    // Password strength
+    'password.strengthLabel': '強度：',
     // Swipe hint
     'swipe.hint': '在屏幕任意位置向右滑動展開選單',
     'swipe.dismissHint': '滾動頁面關閉提示',
@@ -348,8 +498,41 @@ const translations = {
     'cookie.description': '本網站使用 Cookie 來確保您獲得最佳的瀏覽體驗。',
     'cookie.accept': '我了解',
     'cookie.learnMore': '了解更多',
+    // PWA Install
+    'pwa.installAvailable': '應用程式可安裝',
+    'pwa.installDescription': '安裝 LingUBible 獲得更好的使用體驗',
+    'pwa.installBenefits': '更快載入、離線存取和原生應用體驗',
+    'pwa.install': '安裝',
+    'pwa.installApp': '安裝應用',
+    'pwa.howToInstall': '安裝方法',
+    'pwa.notNow': '稍後再說',
+    'pwa.dismiss': '關閉',
+    'pwa.gotIt': '我知道了',
+    'pwa.installSuccess': '應用安裝成功！',
+    'pwa.installFailed': '安裝失敗，請重試。',
+    'pwa.alreadyInstalled': '應用已安裝',
+    'pwa.updateAvailable': '應用更新可用',
+    'pwa.updateNow': '立即更新',
+    'pwa.updateLater': '稍後更新',
+    // User Stats
+    'stats.onlineUsers': '在線用戶',
+    'stats.totalRegistered': '總註冊數',
+    'stats.todayLogins': '今日登入',
+    'stats.thisMonthLogins': '本月登入',
+    'stats.usersOnline': '位用戶在線',
+    'stats.loading': '載入中...',
+    // OpenStatus
+    'status.operational': 'Operational',
+    'status.degraded': 'Degraded',
+    'status.down': 'Down',
+    'status.checking': 'Checking',
+    'status.poweredBy': 'Powered by OpenStatus',
   },
   'zh-CN': {
+    // Site metadata
+    'site.name': 'LingUBible',
+    'site.title': 'LingUBible - 课程与讲师评价平台',
+    'site.description': '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定',
     'hero.title': '欢迎来到',
     'hero.subtitle': '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定',
     'hero.action': '评论',
@@ -392,12 +575,15 @@ const translations = {
     'auth.passwordMatch': '两次密码一致',
     'auth.rememberMe': '记住我',
     'auth.authFailed': '认证失败，请检查资料',
+    'auth.pleaseVerifyStudentEmail': '请先验证您的学生电子邮件地址',
+    'auth.passwordNotSecure': '密码不符合安全要求，请检查密码强度指示器',
     'auth.secureConnection': '您的凭证将会被加密并在安全的连接中发送。',
     'auth.schoolPasswordReminder': '请不要使用与您的学校邮件账户相同的密码。为了保护您的账户安全，建议为每个服务使用不同的密码。',
     'auth.forgotPassword': '忘记密码？',
     'auth.resetPassword': '重置密码',
     'auth.sendResetEmail': '发送重置邮件',
     'auth.resetEmailSent': '密码重置邮件已发送至您的电子邮箱。',
+    'auth.studentVerificationSuccess': '学生邮件验证成功！您现在可以设置密码以完成注册。',
     'auth.backToLogin': '返回登录',
     'auth.backToHome': '返回首页',
     'auth.noAccount': '没有账户？',
@@ -491,6 +677,50 @@ const translations = {
     'auth.sending': '发送中...',
     'auth.securityReminder': '安全提醒',
     'auth.resetLinkExpiry': '重置链接将在 24 小时后过期。如果您没有请求重置密码，请忽略此邮件。',
+    'auth.resetLinkWillExpire': '重置链接将在 24 小时后过期',
+    'auth.checkEmailInbox': '请检查您的邮箱：',
+    'auth.canRetryReset': '您可以重新尝试发送重置邮件',
+    'auth.resendReset': '重新发送',
+    'auth.sendResetLink': '发送重置链接',
+    'auth.studentEmailAddress': '学生邮件地址',
+    'auth.resetPasswordDescription': '输入您的学生邮件地址，我们将发送重置密码的链接给您',
+    'auth.emailNotRegistered': '此邮件地址尚未注册。请先注册或检查您的邮件地址。',
+    'auth.checkingEmailExists': '检查邮件是否已注册...',
+    'auth.emailRegistered': '邮件地址已注册',
+    'auth.invalidCredentials': '邮件地址或密码错误，请检查后重试',
+    'auth.registrationFailed': '注册失败，请检查资料后重试',
+    // Processing
+    'auth.processing': '处理中...',
+    // Email placeholder
+    'auth.emailPlaceholder': 'student@ln.edu.hk 或 student@ln.hk',
+    // Email validation
+    'auth.invalidStudentEmail': '此邮件地址不是有效的学生邮件地址。请使用有效的 @ln.edu.hk 或 @ln.hk 邮件地址。',
+    // Email checking status
+    'auth.checkingEmail': '检查邮件是否可用...',
+    'auth.checkingAccount': '检查账户...',
+    'auth.emailAvailable': '邮件地址可用',
+    // Student verification
+    'verification.title': '学生邮件验证',
+    'verification.sendCode': '发送验证码',
+    'verification.onlyStudentEmails': '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册',
+    'verification.codeExpiry': '验证码有效期为 10 分钟',
+    'verification.maxAttempts': '最多可尝试验证 3 次',
+    'verification.resendAfter': '后可重新发送',
+    'verification.enterCode': '请输入 6 位数验证码',
+    'verification.verifying': '验证中...',
+    'verification.verify': '验证',
+    'verification.resend': '重新',
+    'verification.sendingCode': '正在发送验证码...',
+    'verification.codeSent': '验证码已发送到您的邮件地址，请检查您的信箱',
+    'verification.verifyFailed': '验证失败',
+    // Email reminder
+    'email.reminder.title': '📧 邮件发送提醒',
+    'email.reminder.checkSpam': '如果您没有收到邮件，请检查垃圾邮件文件夹',
+    'email.reminder.whitelist': '建议将 noreply@lingubible.com 加入您的邮件白名单',
+    'email.reminder.deliveryTime': '邮件发送可能需要 1-2 分钟',
+    'email.reminder.contactSupport': '如果 5 分钟后仍未收到邮件，请联系技术支持',
+    // Password strength
+    'password.strengthLabel': '强度：',
     // Swipe hint
     'swipe.hint': '在屏幕任意位置向右滑动展开菜单',
     'swipe.dismissHint': '滚动页面关闭提示',
@@ -499,6 +729,35 @@ const translations = {
     'cookie.description': '本网站使用 Cookie 来确保您获得最佳的浏览体验。',
     'cookie.accept': '我了解',
     'cookie.learnMore': '了解更多',
+    // PWA Install
+    'pwa.installAvailable': '应用程序可安装',
+    'pwa.installDescription': '安装 LingUBible 获得更好的使用体验',
+    'pwa.installBenefits': '更快加载、离线访问和原生应用体验',
+    'pwa.install': '安装',
+    'pwa.installApp': '安装应用',
+    'pwa.howToInstall': '安装方法',
+    'pwa.notNow': '稍后再说',
+    'pwa.dismiss': '关闭',
+    'pwa.gotIt': '我知道了',
+    'pwa.installSuccess': '应用安装成功！',
+    'pwa.installFailed': '安装失败，请重试。',
+    'pwa.alreadyInstalled': '应用已安装',
+    'pwa.updateAvailable': '应用更新可用',
+    'pwa.updateNow': '立即更新',
+    'pwa.updateLater': '稍后更新',
+    // User Stats
+    'stats.onlineUsers': '在线用户',
+    'stats.totalRegistered': '总注册数',
+    'stats.todayLogins': '今日登录',
+    'stats.thisMonthLogins': '本月登录',
+    'stats.usersOnline': '位用户在线',
+    'stats.loading': '加载中...',
+    // OpenStatus
+    'status.operational': 'Operational',
+    'status.degraded': 'Degraded',
+    'status.down': 'Down',
+    'status.checking': 'Checking',
+    'status.poweredBy': 'Powered by OpenStatus',
   },
 };
 
@@ -511,9 +770,36 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Update language and save to cookie
   const setLanguage = (newLanguage: Language) => {
+    console.log('切換語言到:', newLanguage);
     setLanguageState(newLanguage);
     setCookie('language', newLanguage);
+    
+    // 觸發 PWA manifest 更新
+    if (typeof window !== 'undefined' && window.updatePWAManifest) {
+      setTimeout(() => {
+        window.updatePWAManifest();
+      }, 100); // 稍微延遲確保 cookie 已設置
+    }
   };
+
+  // 監聽系統語言變化（可選功能）
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      // 只有在沒有手動設置語言時才響應系統語言變化
+      const savedLanguage = getCookie('language');
+      if (!savedLanguage) {
+        const newLanguage = getInitialLanguage();
+        setLanguageState(newLanguage);
+      }
+    };
+
+    // 監聽語言變化事件（某些瀏覽器支持）
+    window.addEventListener('languagechange', handleLanguageChange);
+    
+    return () => {
+      window.removeEventListener('languagechange', handleLanguageChange);
+    };
+  }, []);
 
   const t = (key: string): any => {
     return translations[language][key] || key;

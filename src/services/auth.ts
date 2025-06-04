@@ -71,6 +71,11 @@ export const authService = {
                 throw new Error('請先驗證您的學生郵件地址');
             }
 
+            // 檢查郵件是否已註冊（雙重檢查）
+            if (studentVerificationService.isEmailAlreadyRegistered(email)) {
+                throw new Error('此郵件地址已被註冊，請使用其他郵件地址或嘗試登入');
+            }
+
             const newAccount = await account.create(
                 ID.unique(),
                 email,

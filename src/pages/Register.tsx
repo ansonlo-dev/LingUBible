@@ -11,6 +11,14 @@ import { BookOpen, CheckCircle, Lock, AlertTriangle, Info } from 'lucide-react';
 import { StudentVerificationInput } from '@/components/StudentVerificationInput';
 import { PasswordStrengthChecker } from '@/components/PasswordStrengthChecker';
 
+// 檢查郵件是否為有效的學生郵件
+const isValidStudentEmail = (email: string): boolean => {
+  const emailLower = email.toLowerCase();
+  // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  return validEmailPattern.test(emailLower);
+};
+
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +27,6 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [isStudentVerified, setIsStudentVerified] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
-  const [emailCheckStatus, setEmailCheckStatus] = useState<'checking' | 'available' | 'taken' | 'error' | null>(null);
   
   const { t } = useLanguage();
   const { 
@@ -30,81 +37,24 @@ export default function Register() {
   } = useAuth();
   const navigate = useNavigate();
 
-  // 檢查郵件是否已註冊的函數
-  const checkEmailAvailability = async (emailToCheck: string) => {
-    if (!emailToCheck || !emailToCheck.includes('@')) {
-      setEmailCheckStatus(null);
-      return;
-    }
-
-    setEmailCheckStatus('checking');
-    
-    try {
-      // 模擬 API 調用檢查郵件是否已註冊
-      // 在實際應用中，這應該是一個真實的 API 調用
-      const response = await fetch('/api/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: emailToCheck }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setEmailCheckStatus(data.exists ? 'taken' : 'available');
-      } else {
-        // 如果 API 不存在，我們可以模擬一些已知的註冊郵件
-        const knownEmails = [
-          'test@ln.edu.hk',
-          'admin@ln.edu.hk',
-          'student@ln.edu.hk',
-          'demo@ln.hk'
-        ];
-        
-        setEmailCheckStatus(knownEmails.includes(emailToCheck.toLowerCase()) ? 'taken' : 'available');
-      }
-    } catch (error) {
-      console.error('Error checking email:', error);
-      // 如果檢查失敗，假設郵件可用但顯示警告
-      setEmailCheckStatus('available');
-    }
-  };
-
-  // 使用 useEffect 來延遲檢查郵件（防抖）
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (email) {
-        checkEmailAvailability(email);
-      }
-    }, 1000); // 1秒延遲
-
-    return () => clearTimeout(timeoutId);
-  }, [email]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     
     try {
-      if (emailCheckStatus === 'taken') {
-        setError('此郵件地址已被註冊，請使用其他郵件地址或前往登入頁面');
-        return;
-      }
-
       if (password !== confirmPassword) {
         setError(t('auth.passwordMismatch'));
         return;
       }
       
       if (!isStudentVerified) {
-        setError('請先驗證您的學生郵件地址');
+        setError(t('auth.pleaseVerifyStudentEmail'));
         return;
       }
 
       if (!isPasswordValid) {
-        setError('密碼不符合安全要求，請檢查密碼強度指示器');
+        setError(t('auth.passwordNotSecure'));
         return;
       }
       
@@ -113,13 +63,11 @@ export default function Register() {
     } catch (err: any) {
       console.error('Auth error:', err);
       
-      // 處理不同類型的錯誤
+      // 使用通用的錯誤訊息，不透露郵件是否已存在
       if (err?.message?.includes('請先驗證您的學生郵件地址')) {
-        setError('請先驗證您的學生郵件地址');
-      } else if (err?.message?.includes('user with the same email already exists')) {
-        setError('此郵件地址已被註冊');
+        setError(t('auth.pleaseVerifyStudentEmail'));
       } else {
-        setError(err?.message || '註冊失敗');
+        setError(t('auth.registrationFailed'));
       }
     } finally {
       setLoading(false);
@@ -127,10 +75,9 @@ export default function Register() {
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
+    const newEmail = e.target.value.toLowerCase();
     setEmail(newEmail);
     setIsStudentVerified(false);
-    setEmailCheckStatus(null);
   };
 
   const handleStudentVerified = () => {
@@ -179,53 +126,21 @@ export default function Register() {
                       type="email"
                       value={email}
                       onChange={handleEmailChange}
-                      placeholder="student@ln.edu.hk 或 student@ln.hk"
+                      placeholder={t('auth.emailPlaceholder')}
                       required
                       disabled={loading}
-                      className={
-                        emailCheckStatus === 'taken' ? 'border-red-500 focus:border-red-500' :
-                        emailCheckStatus === 'available' ? 'border-green-500 focus:border-green-500' :
-                        ''
-                      }
                     />
-                    
-                    {/* 郵件檢查狀態顯示 */}
-                    {emailCheckStatus === 'checking' && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
-                        <span>檢查郵件是否可用...</span>
-                      </div>
-                    )}
-                    
-                    {emailCheckStatus === 'taken' && (
-                      <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-                        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        <AlertDescription className="text-red-600 dark:text-red-400">
-                          此郵件地址已被註冊。如果這是您的帳戶，請前往{' '}
-                          <Link to="/login" className="underline font-medium hover:no-underline">
-                            登入頁面
-                          </Link>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {emailCheckStatus === 'available' && (
-                      <div className="flex items-center space-x-2 text-sm text-green-600 dark:text-green-400">
-                        <CheckCircle className="h-3 w-3" />
-                        <span>郵件地址可用</span>
-                      </div>
-                    )}
                   </div>
                   
                   {/* 學生驗證 */}
-                  {email && emailCheckStatus !== 'taken' && (
+                  {email && (
                     <StudentVerificationInput
                       email={email}
                       onSendCode={sendStudentVerificationCode}
                       onVerifyCode={verifyStudentCode}
                       getRemainingTime={getVerificationRemainingTime}
                       onCodeVerified={handleStudentVerified}
-                      disabled={loading || emailCheckStatus === 'checking'}
+                      disabled={loading}
                     />
                   )}
                   
@@ -235,7 +150,7 @@ export default function Register() {
                       <div className="flex items-center space-x-2">
                         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <p className="text-sm text-green-600 dark:text-green-400">
-                          學生郵件驗證成功！現在可以設定密碼完成註冊
+                          {t('auth.studentVerificationSuccess')}
                         </p>
                       </div>
                     </div>
@@ -317,9 +232,9 @@ export default function Register() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={loading || !isStudentVerified || !isPasswordValid || emailCheckStatus === 'taken'}
+                  disabled={loading || !isStudentVerified || !isPasswordValid}
                 >
-                  {loading ? '註冊中...' : t('auth.signUp')}
+                  {loading ? t('auth.processing') : t('auth.signUp')}
                 </Button>
                 
                 <p className="text-center text-sm text-muted-foreground">

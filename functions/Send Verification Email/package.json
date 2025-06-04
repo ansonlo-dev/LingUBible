@@ -1,0 +1,17 @@
+{
+  "name": "send-verification-email",
+  "version": "1.0.0",
+  "description": "Send verification email to students with secure backend storage",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "resend": "^3.2.0",
+    "node-appwrite": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

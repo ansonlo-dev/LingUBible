@@ -5,35 +5,68 @@ import { X } from 'lucide-react';
 
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
+    console.log('CookieConsent: 組件初始化，當前語言:', language);
+    
     // 檢查是否已經同意過 cookies
     const hasConsented = localStorage.getItem('cookieConsent');
-    if (!hasConsented) {
-      // 延遲顯示，讓頁面先載入
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (hasConsented) {
+      console.log('CookieConsent: 用戶已同意 Cookie，不顯示彈窗');
+      return;
     }
-  }, []);
+
+    // 確保語言上下文已經初始化
+    // 通過檢查翻譯函數是否返回正確的值來判斷
+    const checkLanguageInitialized = () => {
+      const testTranslation = t('cookie.title');
+      console.log('CookieConsent: 測試翻譯結果:', testTranslation, '語言:', language);
+      // 如果翻譯返回的不是 key 本身，說明語言已經初始化
+      return testTranslation !== 'cookie.title' && testTranslation.length > 0;
+    };
+
+    // 等待語言初始化完成
+    const waitForLanguage = () => {
+      if (checkLanguageInitialized()) {
+        console.log('CookieConsent: 語言已初始化，準備顯示彈窗');
+        // 語言已初始化，延遲顯示 Cookie 同意
+        setTimeout(() => {
+          console.log('CookieConsent: 顯示 Cookie 彈窗，語言:', language);
+          setIsVisible(true);
+        }, 1000);
+      } else {
+        console.log('CookieConsent: 語言還未初始化，繼續等待...');
+        // 語言還沒初始化，繼續等待
+        setTimeout(waitForLanguage, 100);
+      }
+    };
+
+    // 開始等待語言初始化
+    waitForLanguage();
+  }, [t, language]);
 
   const handleAccept = () => {
+    console.log('CookieConsent: 用戶接受 Cookie');
     localStorage.setItem('cookieConsent', 'accepted');
     setIsVisible(false);
   };
 
   const handleDecline = () => {
+    console.log('CookieConsent: 用戶拒絕 Cookie');
     localStorage.setItem('cookieConsent', 'declined');
     setIsVisible(false);
   };
 
   const handleClose = () => {
+    console.log('CookieConsent: 用戶關閉 Cookie 彈窗');
     setIsVisible(false);
   };
 
   if (!isVisible) return null;
+
+  // 在渲染時也記錄當前語言和翻譯
+  console.log('CookieConsent: 渲染彈窗，語言:', language, '標題翻譯:', t('cookie.title'));
 
   return (
     <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-md z-[100000]">

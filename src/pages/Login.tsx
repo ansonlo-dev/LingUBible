@@ -8,7 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Lock, AlertTriangle, UserPlus } from 'lucide-react';
+import { BookOpen, Lock, AlertTriangle } from 'lucide-react';
+
+// 檢查郵件是否為有效的學生郵件
+const isValidStudentEmail = (email: string): boolean => {
+  const emailLower = email.toLowerCase();
+  // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  return validEmailPattern.test(emailLower);
+};
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,62 +24,10 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [emailCheckStatus, setEmailCheckStatus] = useState<'checking' | 'exists' | 'not-found' | null>(null);
   
   const { t } = useLanguage();
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  // 檢查郵件是否已註冊的函數
-  const checkEmailExists = async (emailToCheck: string) => {
-    if (!emailToCheck || !emailToCheck.includes('@')) {
-      setEmailCheckStatus(null);
-      return;
-    }
-
-    setEmailCheckStatus('checking');
-    
-    try {
-      // 模擬 API 調用檢查郵件是否已註冊
-      const response = await fetch('/api/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: emailToCheck }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setEmailCheckStatus(data.exists ? 'exists' : 'not-found');
-      } else {
-        // 如果 API 不存在，我們可以模擬一些已知的註冊郵件
-        const knownEmails = [
-          'test@ln.edu.hk',
-          'admin@ln.edu.hk',
-          'student@ln.edu.hk',
-          'demo@ln.hk'
-        ];
-        
-        setEmailCheckStatus(knownEmails.includes(emailToCheck.toLowerCase()) ? 'exists' : 'not-found');
-      }
-    } catch (error) {
-      console.error('Error checking email:', error);
-      // 如果檢查失敗，不顯示任何狀態
-      setEmailCheckStatus(null);
-    }
-  };
-
-  // 使用 useEffect 來延遲檢查郵件（防抖）
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (email) {
-        checkEmailExists(email);
-      }
-    }, 1000); // 1秒延遲
-
-    return () => clearTimeout(timeoutId);
-  }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,34 +35,22 @@ export default function Login() {
     setLoading(true);
     
     try {
-      if (emailCheckStatus === 'not-found') {
-        setError('此郵件地址尚未註冊，請先註冊帳戶');
-        return;
-      }
-
       await login(email, password, rememberMe);
       
       navigate('/'); // 登入成功後導向首頁
     } catch (err: any) {
       console.error('Auth error:', err);
       
-      // 處理不同類型的錯誤
-      if (err?.message?.includes('Invalid credentials')) {
-        setError('郵件地址或密碼錯誤');
-      } else if (err?.message?.includes('User not found')) {
-        setError('此郵件地址尚未註冊');
-      } else {
-        setError(err?.message || '登入失敗');
-      }
+      // 使用通用的錯誤訊息，不透露郵件是否存在
+      setError(t('auth.invalidCredentials'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
+    const newEmail = e.target.value.toLowerCase();
     setEmail(newEmail);
-    setEmailCheckStatus(null);
     setError('');
   };
 
@@ -152,32 +96,7 @@ export default function Login() {
                   placeholder={t('auth.enterEmail')}
                   required
                   disabled={loading}
-                  className={
-                    emailCheckStatus === 'not-found' ? 'border-orange-500 focus:border-orange-500' :
-                    emailCheckStatus === 'exists' ? 'border-green-500 focus:border-green-500' :
-                    ''
-                  }
                 />
-                
-                {/* 郵件檢查狀態顯示 */}
-                {emailCheckStatus === 'checking' && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
-                    <span>檢查帳戶...</span>
-                  </div>
-                )}
-                
-                {emailCheckStatus === 'not-found' && (
-                  <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800">
-                    <UserPlus className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    <AlertDescription className="text-orange-600 dark:text-orange-400">
-                      此郵件地址尚未註冊。{' '}
-                      <Link to="/register" className="underline font-medium hover:no-underline">
-                        立即註冊
-                      </Link>
-                    </AlertDescription>
-                  </Alert>
-                )}
               </div>
               
               <div className="space-y-2">
@@ -221,7 +140,7 @@ export default function Login() {
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={loading || emailCheckStatus === 'not-found'}
+                disabled={loading}
               >
                 {loading ? '登入中...' : t('auth.signIn')}
               </Button>

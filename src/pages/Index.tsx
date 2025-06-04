@@ -9,6 +9,7 @@ import { BookOpen, Users, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const { t } = useLanguage();
@@ -126,8 +127,10 @@ const Index = () => {
             />
           </div>
           
-          <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-medium px-8">
-            {t('hero.getStarted')}
+          <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-medium px-8" asChild>
+            <Link to="/register">
+              {t('hero.getStarted')}
+            </Link>
           </Button>
         </div>
 

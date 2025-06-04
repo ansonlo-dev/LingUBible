@@ -8,8 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { DevelopmentBanner } from "@/components/DevelopmentBanner";
 import { CookieConsent } from "@/components/CookieConsent";
+import { DocumentHead } from "@/components/DocumentHead";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,6 +20,7 @@ import { theme } from '@/lib/utils';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 import { swipeHintCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 const queryClient = new QueryClient();
 
@@ -234,8 +235,15 @@ const AppContent = () => {
         v7_relativeSplatPath: true
       }}
     >
-      {/* 開發模式橫幅 */}
-      <DevelopmentBanner />
+      {/* 動態文檔標題和元數據 */}
+      <DocumentHead />
+      
+      {/* PWA 安裝橫幅 */}
+      <PWAInstallBanner 
+        variant="floating"
+        showDelay={5000}
+        autoHide={false}
+      />
       
       <Routes>
         {/* 登入和註冊頁面使用獨立佈局 */}
@@ -244,92 +252,95 @@ const AppContent = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         
         {/* 其他頁面使用主要佈局 */}
-        <Route path="/*" element={
-          <div className="app-layout">
-            {/* 左側邊欄 - 固定定位 */}
-            <aside className={`
-              sidebar-container 
-              ${isSidebarCollapsed ? 'collapsed' : ''} 
-              ${isMobileSidebarOpen ? 'mobile-open' : ''}
-            `}>
-              <AppSidebar 
-                isCollapsed={isSidebarCollapsed}
-                onToggle={handleSidebarToggle}
-                isMobileOpen={isMobileSidebarOpen}
-                onMobileToggle={toggleMobileSidebar}
-              />
-            </aside>
-            
-            {/* 手機版遮罩 */}
-            {isMobileSidebarOpen && (
+        <Route 
+          path="*" 
+          element={
+            <div className="app-layout">
+              {/* 左側邊欄 - 固定定位 */}
+              <aside className={`
+                sidebar-container 
+                ${isSidebarCollapsed ? 'collapsed' : ''} 
+                ${isMobileSidebarOpen ? 'mobile-open' : ''}
+              `}>
+                <AppSidebar 
+                  isCollapsed={isSidebarCollapsed}
+                  onToggle={handleSidebarToggle}
+                  isMobileOpen={isMobileSidebarOpen}
+                  onMobileToggle={toggleMobileSidebar}
+                />
+              </aside>
+              
+              {/* 手機版遮罩 */}
+              {isMobileSidebarOpen && (
+                <div 
+                  className="md:hidden fixed inset-0 z-[45] bg-black/50"
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                />
+              )}
+              
+              {/* 主要內容區域 */}
               <div 
-                className="md:hidden fixed inset-0 z-20 bg-black/50"
-                onClick={() => setIsMobileSidebarOpen(false)}
-              />
-            )}
-            
-            {/* 主要內容區域 */}
-            <div 
-              ref={swipeRef}
-              className={`main-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}
-            >
-              {/* 手機版透明滾動方向動畫指示器 */}
-              {isInitialized && isMobile && !isMobileSidebarOpen && showSwipeHint && (
-                <div className="fixed inset-0 z-30 pointer-events-none">
-                  {/* 透明覆蓋層 */}
-                  <div className="absolute inset-0 bg-black/20 backdrop-blur-sm swipe-overlay-animation" />
-                  
-                  {/* 滾動方向指示器 */}
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="swipe-direction-indicator">
-                      {/* 箭頭動畫 */}
-                      <div className="flex items-center gap-2 text-white">
-                        <div className="swipe-arrow-container">
-                          <svg className="w-8 h-8 swipe-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                          <svg className="w-8 h-8 swipe-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                          <svg className="w-8 h-8 swipe-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
+                ref={swipeRef}
+                className={`main-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}
+              >
+                {/* 手機版透明滾動方向動畫指示器 */}
+                {isInitialized && isMobile && !isMobileSidebarOpen && showSwipeHint && (
+                  <div className="fixed inset-0 z-30 pointer-events-none">
+                    {/* 透明覆蓋層 */}
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm swipe-overlay-animation" />
+                    
+                    {/* 滾動方向指示器 */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                      <div className="swipe-direction-indicator">
+                        {/* 箭頭動畫 */}
+                        <div className="flex items-center gap-2 text-white">
+                          <div className="swipe-arrow-container">
+                            <svg className="w-8 h-8 swipe-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                            <svg className="w-8 h-8 swipe-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                            <svg className="w-8 h-8 swipe-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                          </div>
                         </div>
-                      </div>
-                      
-                      {/* 文字提示 */}
-                      <div className="text-center mt-4">
-                        <p className="text-white text-lg font-medium swipe-text-animation">
-                          {t('swipe.hint')}
-                        </p>
-                        <p className="text-white/70 text-sm mt-2">
-                          {t('swipe.dismissHint')}
-                        </p>
+                        
+                        {/* 文字提示 */}
+                        <div className="text-center mt-4">
+                          <p className="text-white text-lg font-medium swipe-text-animation">
+                            {t('swipe.hint')}
+                          </p>
+                          <p className="text-white/70 text-sm mt-2">
+                            {t('swipe.dismissHint')}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
-              {/* 頂部 Header - sticky */}
-              <Header 
-                onToggleSidebar={handleSidebarToggle}
-                isSidebarCollapsed={isSidebarCollapsed}
-              />
-              
-              {/* 頁面內容 */}
-              <main className="content-area">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-              
-              {/* Footer */}
-              <Footer />
+                )}
+                
+                {/* 頂部 Header - sticky */}
+                <Header 
+                  onToggleSidebar={handleSidebarToggle}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                />
+                
+                {/* 頁面內容 */}
+                <main className="content-area">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+                
+                {/* Footer */}
+                <Footer />
+              </div>
             </div>
-          </div>
-        } />
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -65,11 +65,11 @@ export function LanguageSwitcher({ onLanguageChange, currentLanguage }: Language
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end"
-        className="bg-background border-2 border-primary shadow-lg backdrop-blur-none"
+        className="bg-background border shadow-lg backdrop-blur-none"
         style={{ 
           backgroundColor: isDark ? '#000000' : '#ffffff',
           backdropFilter: 'none',
-          borderColor: isDark ? 'rgb(63, 63, 70)' : 'rgb(248, 113, 113)'
+          borderColor: isDark ? 'rgb(63, 63, 70)' : 'rgb(229, 231, 235)'
         }}
       >
         {Object.entries(languages).map(([code, name]) => (

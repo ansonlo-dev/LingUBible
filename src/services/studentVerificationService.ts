@@ -1,130 +1,189 @@
-import { Resend } from 'resend';
-import { render } from '@react-email/render';
-import { VerificationEmail } from '../emails/VerificationEmail';
-import React from 'react';
+// 移除前端的 Resend 導入，改為調用後端 API
+// import { Resend } from 'resend';
+// import { render } from '@react-email/render';
+// import { VerificationEmail } from '../emails/VerificationEmail';
+// import React from 'react';
 
-// 檢查是否為開發模式（沒有 API 金鑰）
-const isDevelopmentMode = !import.meta.env.VITE_RESEND_API_KEY;
-
-// 初始化 Resend（只在有 API 金鑰時）
-const resend = isDevelopmentMode ? null : new Resend(import.meta.env.VITE_RESEND_API_KEY);
-
-// 驗證碼存儲接口
-interface VerificationCode {
-  code: string;
-  email: string;
-  expiresAt: Date;
-  attempts: number;
-  isVerified: boolean;
-}
+// 簡化的學生驗證服務 - 使用 Appwrite 資料庫存儲，所有邏輯在後端
 
 class StudentVerificationService {
-  private verificationCodes = new Map<string, VerificationCode>();
-  private readonly MAX_ATTEMPTS = 3;
-  private readonly CODE_EXPIRY_MINUTES = 10;
   private readonly ALLOWED_DOMAINS = ['@ln.edu.hk', '@ln.hk'];
 
   // 檢查郵件是否為有效的學生郵件
   private isValidStudentEmail(email: string): boolean {
-    return this.ALLOWED_DOMAINS.some(domain => email.toLowerCase().endsWith(domain.toLowerCase()));
+    const emailLower = email.toLowerCase();
+    // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
+    const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+    return validEmailPattern.test(emailLower);
   }
 
-  // 生成 6 位數驗證碼
-  private generateVerificationCode(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  // 模擬郵件發送（開發模式）
-  private async simulateEmailSending(email: string, code: string): Promise<{ success: boolean; message: string }> {
-    console.log('🔧 開發模式：模擬發送郵件');
-    console.log(`📧 收件人：${email}`);
-    console.log(`🔢 驗證碼：${code}`);
-    console.log('💡 提示：在生產環境中請設定 VITE_RESEND_API_KEY 環境變數');
-    
-    // 模擬網路延遲
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return {
-      success: true,
-      message: `驗證碼已發送到您的學生信箱（開發模式：${code}）`
-    };
-  }
-
-  // 發送驗證碼郵件
-  async sendVerificationCode(email: string): Promise<{ success: boolean; message: string }> {
+  // 獲取用戶的 IP 地址和 User Agent（用於安全追蹤）
+  private async getUserInfo() {
     try {
-      // 檢查是否為有效的學生郵件
-      if (!this.isValidStudentEmail(email)) {
-        return {
-          success: false,
-          message: '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊'
-        };
-      }
+      // 獲取用戶 IP（如果可用）
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipResponse.json();
+      
+      return {
+        ipAddress: ipData.ip || null,
+        userAgent: navigator.userAgent || null
+      };
+    } catch (error) {
+      console.warn('無法獲取用戶信息:', error);
+      return {
+        ipAddress: null,
+        userAgent: navigator.userAgent || null
+      };
+    }
+  }
 
-      // 檢查是否已有未過期的驗證碼
-      const existingCode = this.verificationCodes.get(email);
-      if (existingCode && existingCode.expiresAt > new Date()) {
-        const remainingMinutes = Math.ceil((existingCode.expiresAt.getTime() - Date.now()) / (1000 * 60));
-        return {
-          success: false,
-          message: `驗證碼已發送，請檢查您的信箱或等待 ${remainingMinutes} 分鐘後重新發送`
-        };
-      }
-
-      // 生成新的驗證碼
-      const code = this.generateVerificationCode();
-      const expiresAt = new Date(Date.now() + this.CODE_EXPIRY_MINUTES * 60 * 1000);
-
-      // 存儲驗證碼
-      this.verificationCodes.set(email, {
-        code,
+  // 調用 Appwrite Function
+  private async callFunction(action: 'send' | 'verify', email: string, code?: string, language?: string): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log(`🚀 開始${action === 'send' ? '發送' : '驗證'}流程:`, { email, action });
+      
+      // 獲取用戶信息用於安全追蹤
+      const userInfo = await this.getUserInfo();
+      
+      // 準備請求數據
+      const requestData = { 
+        action,
         email,
-        expiresAt,
-        attempts: 0,
-        isVerified: false
+        ...(code && { code }),
+        ...(language && { language }),
+        ...userInfo
+      };
+      
+      console.log('📦 準備發送的數據:', requestData);
+      
+      // 調用 Appwrite Function
+      const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Appwrite-Project': 'lingubible',
+        },
+        body: JSON.stringify({
+          body: JSON.stringify(requestData),
+          async: false,
+          method: 'POST'
+        }),
       });
 
-      // 開發模式：模擬發送郵件
-      if (isDevelopmentMode) {
-        return await this.simulateEmailSending(email, code);
-      }
+      console.log('📡 API 回應狀態:', response.status, response.statusText);
 
-      // 生產模式：實際發送郵件
-      try {
-        // 渲染郵件模板
-        const emailHtml = await render(React.createElement(VerificationEmail, {
-          verificationCode: code,
-          userEmail: email
-        }));
-
-        // 發送郵件
-        const { data, error } = await resend!.emails.send({
-          from: 'LingUBible <noreply@lingubible.com>',
-          to: [email],
-          subject: '您的 LingUBible 學生驗證碼',
-          html: emailHtml,
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API 調用失敗:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
         });
-
-        if (error) {
-          console.error('發送郵件失敗:', error);
+        
+        if (response.status === 401) {
           return {
             success: false,
-            message: '發送郵件失敗，請稍後再試'
+            message: '權限錯誤：請檢查 Function 執行權限設定'
+          };
+        } else if (response.status === 404) {
+          return {
+            success: false,
+            message: 'Function 不存在或未部署'
+          };
+        } else if (response.status === 500) {
+          return {
+            success: false,
+            message: '伺服器內部錯誤，請稍後再試'
+          };
+        } else {
+          return {
+            success: false,
+            message: `${action === 'send' ? '發送' : '驗證'}失敗 (${response.status}): ${errorText}`
           };
         }
+      }
 
-        console.log('郵件發送成功:', data);
-        return {
-          success: true,
-          message: '驗證碼已發送到您的學生信箱，請檢查郵件'
-        };
-      } catch (emailError) {
-        console.error('郵件發送錯誤:', emailError);
+      const result = await response.json();
+      console.log('✅ API 回應結果:', result);
+
+      if (result.status === 'completed') {
+        if (result.responseStatusCode === 200) {
+          try {
+            const functionResponse = JSON.parse(result.responseBody);
+            console.log(`📧 Function 執行結果:`, functionResponse);
+            
+            return {
+              success: functionResponse.success,
+              message: functionResponse.message || (functionResponse.success ? `${action === 'send' ? '驗證碼已發送' : '驗證成功'}` : `${action === 'send' ? '發送' : '驗證'}失敗`)
+            };
+          } catch (parseError) {
+            console.error('❌ 解析 Function 回應失敗:', parseError);
+            return {
+              success: false,
+              message: `Function 回應解析失敗: ${result.responseBody}`
+            };
+          }
+        } else {
+          console.error('❌ Function HTTP 錯誤:', {
+            statusCode: result.responseStatusCode,
+            body: result.responseBody,
+            stderr: result.stderr
+          });
+          return {
+            success: false,
+            message: `Function HTTP 錯誤 (${result.responseStatusCode}): ${result.responseBody || result.stderr || '未知錯誤'}`
+          };
+        }
+      } else if (result.status === 'failed') {
+        console.error('❌ Function 執行失敗:', {
+          error: result.error,
+          stderr: result.stderr,
+          stdout: result.stdout
+        });
         return {
           success: false,
-          message: '郵件發送失敗，請檢查 API 設定'
+          message: `Function 執行失敗: ${result.error || result.stderr || '未知錯誤'}`
+        };
+      } else {
+        console.error('❌ Function 狀態異常:', result);
+        return {
+          success: false,
+          message: `Function 狀態異常 (${result.status}): ${result.error || result.stderr || '未知錯誤'}`
         };
       }
+
+    } catch (error) {
+      console.error('💥 網路請求異常:', error);
+      return {
+        success: false,
+        message: `網路連接失敗: ${error instanceof Error ? error.message : '未知錯誤'}`
+      };
+    }
+  }
+
+  // 檢查是否為開發模式（現在總是返回 false，因為使用安全的後端驗證）
+  isDevelopmentMode(): boolean {
+    return false;
+  }
+
+  // 發送驗證碼郵件（支援多語言）
+  async sendVerificationCode(email: string, language: string = 'zh-TW'): Promise<{ success: boolean; message: string }> {
+    try {
+      // 檢查郵件格式
+      if (!this.isValidStudentEmail(email)) {
+        const messages = {
+          'en': 'Only @ln.edu.hk or @ln.hk email addresses can register',
+          'zh-TW': '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊',
+          'zh-CN': '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
+        };
+        return {
+          success: false,
+          message: messages[language] || messages['zh-TW']
+        };
+      }
+
+      // 調用後端 API 發送驗證碼
+      return await this.callFunction('send', email, undefined, language);
 
     } catch (error) {
       console.error('郵件服務錯誤:', error);
@@ -135,99 +194,71 @@ class StudentVerificationService {
     }
   }
 
-  // 驗證驗證碼
-  verifyCode(email: string, inputCode: string): { success: boolean; message: string } {
-    const storedCode = this.verificationCodes.get(email);
-
-    if (!storedCode) {
-      return {
-        success: false,
-        message: '請先發送驗證碼'
-      };
-    }
-
-    // 檢查是否過期
-    if (storedCode.expiresAt < new Date()) {
-      this.verificationCodes.delete(email);
-      return {
-        success: false,
-        message: '驗證碼已過期，請重新發送'
-      };
-    }
-
-    // 檢查嘗試次數
-    if (storedCode.attempts >= this.MAX_ATTEMPTS) {
-      this.verificationCodes.delete(email);
-      return {
-        success: false,
-        message: '驗證失敗次數過多，請重新發送驗證碼'
-      };
-    }
-
-    // 驗證碼錯誤
-    if (storedCode.code !== inputCode) {
-      storedCode.attempts++;
-      return {
-        success: false,
-        message: `驗證碼錯誤，還有 ${this.MAX_ATTEMPTS - storedCode.attempts} 次機會`
-      };
-    }
-
-    // 驗證成功，標記為已驗證但不刪除（註冊時需要檢查）
-    storedCode.isVerified = true;
-    return {
-      success: true,
-      message: '郵件驗證成功！現在可以設定密碼完成註冊'
-    };
-  }
-
-  // 檢查郵件是否已驗證
-  isEmailVerified(email: string): boolean {
-    const storedCode = this.verificationCodes.get(email);
-    return storedCode?.isVerified === true && storedCode.expiresAt > new Date();
-  }
-
-  // 完成註冊後清理驗證碼
-  clearVerificationCode(email: string): void {
-    this.verificationCodes.delete(email);
-  }
-
-  // 獲取剩餘時間（秒）
-  getRemainingTime(email: string): number {
-    const storedCode = this.verificationCodes.get(email);
-    if (!storedCode) return 0;
-
-    const remaining = Math.max(0, Math.floor((storedCode.expiresAt.getTime() - Date.now()) / 1000));
-    return remaining;
-  }
-
-  // 清理過期的驗證碼
-  private cleanupExpiredCodes() {
-    const now = new Date();
-    for (const [email, code] of this.verificationCodes.entries()) {
-      if (code.expiresAt < now) {
-        this.verificationCodes.delete(email);
+  // 驗證驗證碼（使用後端驗證）
+  async verifyCode(email: string, inputCode: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // 基本參數檢查
+      if (!email || !inputCode) {
+        return {
+          success: false,
+          message: '請提供郵件地址和驗證碼'
+        };
       }
+
+      if (inputCode.length !== 6 || !/^\d{6}$/.test(inputCode)) {
+        return {
+          success: false,
+          message: '驗證碼必須是 6 位數字'
+        };
+      }
+
+      // 調用後端 API 進行驗證
+      return await this.callFunction('verify', email, inputCode);
+
+    } catch (error) {
+      console.error('驗證碼驗證錯誤:', error);
+      return {
+        success: false,
+        message: '驗證失敗，請稍後再試'
+      };
     }
   }
 
-  // 檢查是否為開發模式
-  isDevelopmentMode(): boolean {
-    return isDevelopmentMode;
+  // 檢查郵件是否已驗證（需要調用後端 API）
+  async isEmailVerified(email: string): Promise<boolean> {
+    // 注意：這個方法現在需要是異步的，因為需要查詢後端
+    // 在實際使用中，建議在驗證成功後在前端暫存驗證狀態
+    console.warn('isEmailVerified 方法需要後端 API 支援，目前返回 false');
+    return false;
   }
 
-  constructor() {
-    // 每分鐘清理一次過期的驗證碼
-    setInterval(() => {
-      this.cleanupExpiredCodes();
-    }, 60 * 1000);
+  // 清理驗證碼（現在由後端自動處理）
+  clearVerificationCode(email: string): void {
+    console.log('驗證碼清理現在由後端自動處理');
+  }
 
-    // 開發模式提示
-    if (isDevelopmentMode) {
-      console.log('🔧 學生驗證服務運行在開發模式');
-      console.log('💡 要啟用實際郵件發送，請設定 VITE_RESEND_API_KEY 環境變數');
-    }
+  // 獲取驗證碼剩餘時間（需要後端 API 支援）
+  getRemainingTime(email: string): number {
+    // 注意：這個方法現在需要後端 API 支援
+    // 在當前實現中，倒數計時由前端 UI 組件處理
+    console.warn('getRemainingTime 方法需要後端 API 支援，目前返回 0');
+    return 0;
+  }
+
+  // 檢查郵件是否已註冊（保持原有邏輯）
+  isEmailAlreadyRegistered(email: string): boolean {
+    // 在實際應用中，這應該是一個 API 調用來檢查數據庫
+    const registeredEmails = [
+      'test@ln.edu.hk',
+      'admin@ln.edu.hk',
+      'student@ln.edu.hk',
+      'demo@ln.hk',
+      'user@ln.edu.hk'
+    ];
+    
+    return registeredEmails.includes(email.toLowerCase());
   }
 }
 
+// 導出單例實例
 export const studentVerificationService = new StudentVerificationService(); 

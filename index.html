@@ -15,8 +15,8 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <link rel="mask-icon" href="/logo.svg?v=2" color="#dc2626" />
     
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- PWA - 動態 manifest -->
+    <link rel="manifest" href="/manifest.json" id="manifest-link" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -36,6 +36,78 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 動態 manifest 腳本 - 必須在主題腳本之前 -->
+    <script>
+      (function() {
+        // 檢測用戶語言偏好
+        function detectUserLanguage() {
+          // 1. 檢查 URL 參數
+          const urlParams = new URLSearchParams(window.location.search);
+          const langParam = urlParams.get('lang');
+          if (langParam && ['en', 'zh-TW', 'zh-CN'].includes(langParam)) {
+            return langParam;
+          }
+
+          // 2. 檢查 Cookie
+          function getCookie(name) {
+            const value = "; " + document.cookie;
+            const parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+            return null;
+          }
+          
+          const savedLanguage = getCookie('language');
+          if (savedLanguage && ['en', 'zh-TW', 'zh-CN'].includes(savedLanguage)) {
+            return savedLanguage;
+          }
+
+          // 3. 檢查瀏覽器語言
+          const browserLang = navigator.language || navigator.languages?.[0];
+          if (browserLang) {
+            if (browserLang.startsWith('zh-TW') || 
+                browserLang.startsWith('zh-Hant') || 
+                browserLang === 'zh-HK' || 
+                browserLang === 'zh-MO') {
+              return 'zh-TW';
+            } else if (browserLang.startsWith('zh-CN') || 
+                       browserLang.startsWith('zh-Hans') || 
+                       browserLang.startsWith('zh-SG') || 
+                       browserLang === 'zh') {
+              return 'zh-CN';
+            } else if (browserLang.startsWith('en')) {
+              return 'en';
+            }
+          }
+
+          // 4. 默認英文
+          return 'en';
+        }
+
+        // 更新 manifest 連結
+        function updateManifestLink() {
+          const language = detectUserLanguage();
+          const manifestLink = document.getElementById('manifest-link');
+          
+          if (manifestLink) {
+            // 更新 manifest URL 包含語言參數和時間戳避免緩存
+            manifestLink.href = `/manifest.json?lang=${language}&t=${Date.now()}`;
+          }
+        }
+
+        // 立即更新 manifest
+        updateManifestLink();
+        
+        // 當 DOM 載入後再次確保更新
+        document.addEventListener('DOMContentLoaded', updateManifestLink);
+        
+        // 監聽語言變化事件
+        window.addEventListener('languagechange', updateManifestLink);
+        
+        // 全局函數供其他腳本使用
+        window.updatePWAManifest = updateManifestLink;
+      })();
+    </script>
     
     <!-- 主題初始化腳本 - 必須在頁面載入前執行 -->
     <script>

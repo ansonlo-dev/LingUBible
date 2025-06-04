@@ -142,8 +142,8 @@
   @media (max-width: 768px) {
     .sidebar-container {
       transform: translateX(-100%);
-      top: var(--header-height);
-      height: calc(100vh - var(--header-height));
+      top: 0;
+      height: 100vh;
       z-index: 50;
     }
     

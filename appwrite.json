@@ -1,0 +1,166 @@
+{
+    "projectId": "lingubible",
+    "projectName": "LingUBible",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "sites": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": 0,
+                "sessionsLimit": 10,
+                "passwordHistory": 0,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
+    },
+    "functions": [
+        {
+            "$id": "send-verification",
+            "execute": ["any"],
+            "name": "Send Verification Email",
+            "enabled": true,
+            "logging": true,
+            "runtime": "node-18.0",
+            "scopes": ["databases.read", "databases.write"],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.js",
+            "commands": "",
+            "specification": "s-0.5vcpu-512mb",
+            "path": "functions/Send Verification Email"
+        }
+    ],
+    "databases": [
+        {
+            "$id": "student_comments",
+            "name": "student_comments",
+            "enabled": true
+        },
+        {
+            "$id": "verification_system",
+            "name": "verification_system",
+            "enabled": true
+        }
+    ],
+    "collections": [
+        {
+            "$id": "verification_codes",
+            "databaseId": "verification_system",
+            "name": "verification_codes",
+            "enabled": true,
+            "documentSecurity": true,
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "attributes": [
+                {
+                    "key": "email",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null
+                },
+                {
+                    "key": "code",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 6,
+                    "default": null
+                },
+                {
+                    "key": "expiresAt",
+                    "type": "datetime",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "attempts",
+                    "type": "integer",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "min": 0,
+                    "max": 10,
+                    "default": 0
+                },
+                {
+                    "key": "isVerified",
+                    "type": "boolean",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "default": false
+                },
+                {
+                    "key": "ipAddress",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 45,
+                    "default": null
+                },
+                {
+                    "key": "userAgent",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 500,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "email_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": ["email"],
+                    "orders": ["ASC"]
+                },
+                {
+                    "key": "expires_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": ["expiresAt"],
+                    "orders": ["ASC"]
+                }
+            ]
+        }
+    ]
+}

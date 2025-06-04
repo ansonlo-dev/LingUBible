@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { SearchDropdown } from './SearchDialog';
+import { PWAStatusIndicator } from './PWAStatusIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,6 +67,9 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
             </Button>
           </div>
           
+          {/* PWA 狀態指示器 - 只在桌面版顯示文字 */}
+          <PWAStatusIndicator showText={false} className="hidden sm:flex" />
+          
           {/* 語言切換器 - 手機版較小 */}
           <div className="scale-90 md:scale-100">
             <LanguageSwitcher onLanguageChange={setLanguage} currentLanguage={language} />
@@ -85,7 +89,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
             >
               <Link to="/login">
                 <span className="hidden sm:inline">{t('nav.signIn')}</span>
-                <span className="sm:hidden">登入</span>
+                <span className="sm:hidden">{t('nav.signIn')}</span>
               </Link>
             </Button>
           )}

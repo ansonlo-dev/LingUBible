@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用戶統計功能測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.success:hover {
+            background: #218838;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .online-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>👥 用戶統計功能測試</h1>
+        <p>這個頁面用來測試用戶統計功能，包括登入用戶數量追蹤和顯示。</p>
+        
+        <div class="status">
+            <strong>功能說明：</strong><br>
+            • 追蹤在線用戶數量（30分鐘無活動視為離線）<br>
+            • 統計總註冊用戶數<br>
+            • 記錄今日和本月登入次數<br>
+            • 在 Footer 中顯示實時統計數據<br>
+            • 數據保存在 localStorage 中
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📊 當前統計數據</h3>
+        <div class="stats-grid" id="stats-grid">
+            <!-- 統計數據將在這裡顯示 -->
+        </div>
+        
+        <div class="status" id="debug-info">
+            <!-- 調試信息將在這裡顯示 -->
+        </div>
+        
+        <div>
+            <button class="button success" onclick="refreshStats()">🔄 刷新統計</button>
+            <button class="button" onclick="simulateLogin()">👤 模擬用戶登入</button>
+            <button class="button" onclick="simulateLogout()">🚪 模擬用戶登出</button>
+            <button class="button" onclick="simulateActivity()">⚡ 模擬用戶活動</button>
+            <button class="button danger" onclick="resetStats()">🗑️ 重置統計</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎮 測試控制</h3>
+        <div>
+            <button class="button" onclick="addMultipleUsers()">👥 添加多個用戶</button>
+            <button class="button" onclick="simulateRealisticActivity()">🎯 模擬真實活動</button>
+            <button class="button" onclick="toggleAutoSimulation()">🔄 切換自動模擬</button>
+            <button class="button danger" onclick="clearAllData()">🗑️ 清除所有數據</button>
+        </div>
+        
+        <div class="status">
+            <strong>自動模擬狀態：</strong><span id="auto-status">關閉</span><br>
+            <strong>活躍會話數：</strong><span id="session-count">0</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📝 操作日誌</h3>
+        <div class="log" id="log">
+            <!-- 日誌將在這裡顯示 -->
+        </div>
+        <button class="button" onclick="clearLog()">清除日誌</button>
+    </div>
+
+    <div class="card">
+        <h3>🔗 測試連結</h3>
+        <p>在新分頁中打開主應用來查看 Footer 中的用戶統計顯示：</p>
+        <button class="button" onclick="openMainApp()">🏠 打開主應用</button>
+        <p><small>統計數據會在主應用的 Footer 中顯示，包括在線用戶數量。</small></p>
+    </div>
+
+    <script>
+        let autoSimulation = false;
+        let autoInterval = null;
+        let userCounter = 1;
+
+        // 模擬 UserStatsService 的基本功能
+        class MockUserStatsService {
+            constructor() {
+                this.stats = this.loadStatsFromStorage();
+                this.sessions = new Map();
+                this.loadSessionsFromStorage();
+            }
+
+            loadStatsFromStorage() {
+                try {
+                    const stored = localStorage.getItem('userStats');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        const today = new Date().toDateString();
+                        const lastUpdated = new Date(parsed.lastUpdated).toDateString();
+                        
+                        if (today !== lastUpdated) {
+                            parsed.todayLogins = 0;
+                        }
+                        
+                        return parsed;
+                    }
+                } catch (error) {
+                    console.error('載入用戶統計失敗:', error);
+                }
+                
+                return {
+                    totalUsers: 0,
+                    onlineUsers: 0,
+                    todayLogins: 0,
+                    thisMonthLogins: 0,
+                    lastUpdated: new Date().toISOString()
+                };
+            }
+
+            loadSessionsFromStorage() {
+                try {
+                    const stored = localStorage.getItem('userSessions');
+                    if (stored) {
+                        const sessions = JSON.parse(stored);
+                        const now = Date.now();
+                        
+                        Object.entries(sessions).forEach(([sessionId, session]) => {
+                            if (now - session.lastActivity < 30 * 60 * 1000) {
+                                this.sessions.set(sessionId, session);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('載入會話數據失敗:', error);
+                }
+            }
+
+            saveStatsToStorage() {
+                try {
+                    localStorage.setItem('userStats', JSON.stringify(this.stats));
+                } catch (error) {
+                    console.error('保存用戶統計失敗:', error);
+                }
+            }
+
+            saveSessionsToStorage() {
+                try {
+                    const sessionsObj = Object.fromEntries(this.sessions);
+                    localStorage.setItem('userSessions', JSON.stringify(sessionsObj));
+                } catch (error) {
+                    console.error('保存會話數據失敗:', error);
+                }
+            }
+
+            userLogin(userId) {
+                const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const now = Date.now();
+                
+                const existingSession = Array.from(this.sessions.values())
+                    .find(session => session.userId === userId && now - session.lastActivity < 30 * 60 * 1000);
+                
+                if (!existingSession) {
+                    this.stats.todayLogins++;
+                    this.stats.thisMonthLogins++;
+                    
+                    if (!this.hasUserLoggedInBefore(userId)) {
+                        this.stats.totalUsers++;
+                    }
+                }
+                
+                this.sessions.set(sessionId, {
+                    userId,
+                    loginTime: now,
+                    lastActivity: now,
+                    sessionId
+                });
+                
+                this.updateOnlineUsers();
+                this.saveStatsToStorage();
+                this.saveSessionsToStorage();
+                
+                log(`用戶 ${userId} 登入，會話 ID: ${sessionId}`);
+                return sessionId;
+            }
+
+            userLogout(sessionId) {
+                if (this.sessions.has(sessionId)) {
+                    const session = this.sessions.get(sessionId);
+                    this.sessions.delete(sessionId);
+                    this.updateOnlineUsers();
+                    this.saveSessionsToStorage();
+                    log(`用戶 ${session?.userId} 登出，會話 ID: ${sessionId}`);
+                }
+            }
+
+            updateUserActivity(sessionId) {
+                const session = this.sessions.get(sessionId);
+                if (session) {
+                    session.lastActivity = Date.now();
+                    this.saveSessionsToStorage();
+                    log(`更新用戶 ${session.userId} 活動`);
+                }
+            }
+
+            getStats() {
+                this.updateOnlineUsers();
+                return { ...this.stats };
+            }
+
+            updateOnlineUsers() {
+                const now = Date.now();
+                const activeSessions = Array.from(this.sessions.values())
+                    .filter(session => now - session.lastActivity < 30 * 60 * 1000);
+                
+                this.sessions.clear();
+                activeSessions.forEach(session => {
+                    this.sessions.set(session.sessionId, session);
+                });
+                
+                this.stats.onlineUsers = activeSessions.length;
+                this.stats.lastUpdated = new Date().toISOString();
+            }
+
+            hasUserLoggedInBefore(userId) {
+                try {
+                    const loggedUsers = JSON.parse(localStorage.getItem('loggedUsers') || '[]');
+                    if (loggedUsers.includes(userId)) {
+                        return true;
+                    }
+                    loggedUsers.push(userId);
+                    localStorage.setItem('loggedUsers', JSON.stringify(loggedUsers));
+                    return false;
+                } catch {
+                    return false;
+                }
+            }
+
+            getActiveSessions() {
+                return Array.from(this.sessions.values());
+            }
+        }
+
+        const userStatsService = new MockUserStatsService();
+
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function refreshStats() {
+            const stats = userStatsService.getStats();
+            const sessions = userStatsService.getActiveSessions();
+            
+            document.getElementById('stats-grid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">
+                        <span class="online-indicator"></span>
+                        ${stats.onlineUsers}
+                    </div>
+                    <div class="stat-label">在線用戶</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalUsers}</div>
+                    <div class="stat-label">總註冊用戶</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.todayLogins}</div>
+                    <div class="stat-label">今日登入</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.thisMonthLogins}</div>
+                    <div class="stat-label">本月登入</div>
+                </div>
+            `;
+            
+            // 顯示詳細調試信息
+            const now = Date.now();
+            const activeSessionsDetails = sessions.map(session => {
+                const idleTime = Math.floor((now - session.lastActivity) / 1000);
+                return `${session.userId} (閒置 ${idleTime}s)`;
+            }).join(', ');
+            
+            document.getElementById('debug-info').innerHTML = `
+                <strong>調試信息：</strong><br>
+                <strong>會話 Map 大小：</strong>${userStatsService.sessions.size}<br>
+                <strong>活躍會話數：</strong>${sessions.length}<br>
+                <strong>活躍會話：</strong>${activeSessionsDetails || '無'}<br>
+                <strong>最後更新：</strong>${new Date(stats.lastUpdated).toLocaleTimeString()}<br>
+                <strong>localStorage 統計：</strong>${localStorage.getItem('userStats') ? '存在' : '不存在'}<br>
+                <strong>localStorage 會話：</strong>${localStorage.getItem('userSessions') ? '存在' : '不存在'}
+            `;
+            
+            document.getElementById('session-count').textContent = sessions.length;
+            log(`統計數據已刷新 - 在線用戶: ${stats.onlineUsers}, 會話數: ${sessions.length}`);
+        }
+
+        function simulateLogin() {
+            const userId = `test_user_${userCounter++}`;
+            userStatsService.userLogin(userId);
+            refreshStats();
+        }
+
+        function simulateLogout() {
+            const sessions = userStatsService.getActiveSessions();
+            if (sessions.length > 0) {
+                const randomSession = sessions[Math.floor(Math.random() * sessions.length)];
+                userStatsService.userLogout(randomSession.sessionId);
+                refreshStats();
+            } else {
+                log('沒有活躍會話可以登出');
+            }
+        }
+
+        function simulateActivity() {
+            const sessions = userStatsService.getActiveSessions();
+            if (sessions.length > 0) {
+                const randomSession = sessions[Math.floor(Math.random() * sessions.length)];
+                userStatsService.updateUserActivity(randomSession.sessionId);
+                refreshStats();
+            } else {
+                log('沒有活躍會話可以更新活動');
+            }
+        }
+
+        function addMultipleUsers() {
+            const count = Math.floor(Math.random() * 5) + 3; // 3-7 個用戶
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    simulateLogin();
+                }, i * 200);
+            }
+            log(`正在添加 ${count} 個用戶...`);
+        }
+
+        function simulateRealisticActivity() {
+            // 模擬真實的用戶行為
+            const actions = [
+                () => simulateLogin(),
+                () => simulateActivity(),
+                () => simulateActivity(),
+                () => simulateLogout()
+            ];
+            
+            const actionCount = Math.floor(Math.random() * 8) + 3;
+            for (let i = 0; i < actionCount; i++) {
+                setTimeout(() => {
+                    const randomAction = actions[Math.floor(Math.random() * actions.length)];
+                    randomAction();
+                }, i * 500);
+            }
+            log(`正在執行 ${actionCount} 個隨機操作...`);
+        }
+
+        function toggleAutoSimulation() {
+            autoSimulation = !autoSimulation;
+            const statusElement = document.getElementById('auto-status');
+            
+            if (autoSimulation) {
+                statusElement.textContent = '開啟';
+                statusElement.style.color = '#28a745';
+                autoInterval = setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        simulateRealisticActivity();
+                    }
+                }, 3000);
+                log('自動模擬已開啟');
+            } else {
+                statusElement.textContent = '關閉';
+                statusElement.style.color = '#666';
+                if (autoInterval) {
+                    clearInterval(autoInterval);
+                    autoInterval = null;
+                }
+                log('自動模擬已關閉');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('確定要清除所有用戶統計數據嗎？')) {
+                localStorage.removeItem('userStats');
+                localStorage.removeItem('userSessions');
+                localStorage.removeItem('loggedUsers');
+                
+                // 重新初始化服務
+                userStatsService.stats = userStatsService.loadStatsFromStorage();
+                userStatsService.sessions.clear();
+                
+                refreshStats();
+                log('所有數據已清除');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function openMainApp() {
+            window.open('/', '_blank');
+            log('已打開主應用，請檢查 Footer 中的用戶統計顯示');
+        }
+
+        function resetStats() {
+            if (confirm('確定要重置所有統計數據嗎？')) {
+                localStorage.removeItem('userStats');
+                localStorage.removeItem('userSessions');
+                localStorage.removeItem('loggedUsers');
+                
+                // 重新初始化服務
+                userStatsService.stats = userStatsService.loadStatsFromStorage();
+                userStatsService.sessions.clear();
+                
+                refreshStats();
+                log('所有數據已重置');
+            }
+        }
+
+        // 初始化
+        refreshStats();
+        log('用戶統計測試頁面已載入');
+        
+        // 定期刷新統計
+        setInterval(refreshStats, 5000);
+    </script>
+</body>
+</html> 
