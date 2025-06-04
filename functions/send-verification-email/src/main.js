@@ -428,10 +428,12 @@ async function sendEmail(email, code, language, apiKey, log, error) {
                 <!-- Header -->
                 <tr>
                   <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #eee;">
-                    <div style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
-                      <img src="${logoSvgBase64}" alt="LingUBible Logo" style="width: 48px; height: 48px; vertical-align: middle;" />
-                      <h1 style="margin: 0; color: #dc2626; font-size: 28px; font-weight: bold; vertical-align: middle;">LingUBible</h1>
-                    </div>
+                    <a href="https://lingubible.com" style="text-decoration: none; color: inherit; display: inline-block;">
+                      <div style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
+                        <img src="${logoSvgBase64}" alt="LingUBible Logo" style="width: 48px; height: 48px; vertical-align: middle;" />
+                        <h1 style="margin: 0; color: #dc2626; font-size: 28px; font-weight: bold; vertical-align: middle;">LingUBible</h1>
+                      </div>
+                    </a>
                     <p style="margin: 5px 0 0; color: #666; font-size: 14px;">${t.platform}</p>
                   </td>
                 </tr>
@@ -490,7 +492,7 @@ async function sendEmail(email, code, language, apiKey, log, error) {
                 <tr>
                   <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #eee; text-align: center; border-radius: 0 0 8px 8px;">
                     <p style="margin: 0 0 10px; color: #8898aa; font-size: 12px;">
-                      ${t.platform}
+                      <a href="https://lingubible.com" style="color: #8898aa; text-decoration: none;">LingUBible</a> - ${t.platform.replace('LingUBible - ', '')}
                     </p>
                     <p style="margin: 0; color: #8898aa; font-size: 12px;">
                       ${t.license}
