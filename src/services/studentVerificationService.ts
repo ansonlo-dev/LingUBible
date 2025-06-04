@@ -129,9 +129,24 @@ class StudentVerificationService {
             body: result.responseBody,
             stderr: result.stderr
           });
+          
+          // 嘗試解析 responseBody 中的錯誤訊息
+          let errorMessage = '未知錯誤';
+          try {
+            if (result.responseBody) {
+              const errorResponse = JSON.parse(result.responseBody);
+              errorMessage = errorResponse.message || result.responseBody;
+            } else {
+              errorMessage = result.stderr || '未知錯誤';
+            }
+          } catch (parseError) {
+            // 如果解析失敗，使用原始內容
+            errorMessage = result.responseBody || result.stderr || '未知錯誤';
+          }
+          
           return {
             success: false,
-            message: `Function HTTP 錯誤 (${result.responseStatusCode}): ${result.responseBody || result.stderr || '未知錯誤'}`
+            message: errorMessage
           };
         }
       } else if (result.status === 'failed') {
