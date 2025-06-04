@@ -44,9 +44,9 @@ export const authService = {
     },
 
     // 檢查學生郵件是否已驗證
-    isStudentEmailVerified(email: string): boolean {
+    async isStudentEmailVerified(email: string): Promise<boolean> {
         try {
-            return studentVerificationService.isEmailVerified(email);
+            return await studentVerificationService.isEmailVerified(email);
         } catch (error) {
             console.error('檢查驗證狀態錯誤:', error);
             return false;
@@ -66,36 +66,16 @@ export const authService = {
     // 註冊新用戶（需要先驗證學生郵件）
     async createAccount(email: string, password: string, name: string) {
         try {
-            // 檢查是否已驗證學生郵件
-            if (!this.isStudentEmailVerified(email)) {
-                throw new Error('請先驗證您的學生郵件地址');
-            }
-
-            // 檢查郵件是否已註冊（雙重檢查）
-            if (studentVerificationService.isEmailAlreadyRegistered(email)) {
-                throw new Error('此郵件地址已被註冊，請使用其他郵件地址或嘗試登入');
-            }
-
-            const newAccount = await account.create(
-                ID.unique(),
-                email,
-                password,
-                name
-            );
+            // 使用後端 API 創建已驗證的帳戶
+            const result = await studentVerificationService.createVerifiedAccount(email, password, name);
             
-            if (newAccount) {
-                // 清理驗證碼
-                try {
-                    studentVerificationService.clearVerificationCode(email);
-                } catch (error) {
-                    console.warn('清理驗證碼失敗:', error);
-                }
-                
-                // 登入新創建的帳戶
-                return await this.login(email, password);
-            } else {
-                throw new Error('帳戶創建失敗');
+            if (!result.success) {
+                throw new Error(result.message);
             }
+            
+            // 帳戶創建成功後自動登入
+            return await this.login(email, password);
+            
         } catch (error) {
             throw error;
         }

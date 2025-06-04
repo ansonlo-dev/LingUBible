@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { Client, Databases, Query, ID } from 'node-appwrite';
+import { Client, Databases, Query, ID, Users } from 'node-appwrite';
 
 export default async ({ req, res, log, error }) => {
   try {
@@ -45,13 +45,17 @@ export default async ({ req, res, log, error }) => {
       .setKey(process.env.APPWRITE_API_KEY);
 
     const databases = new Databases(client);
+    const users = new Users(client);
 
-    // 根據 action 參數決定執行發送還是驗證
-    const { action = 'send', email, code, language = 'zh-TW', ipAddress, userAgent } = requestData;
+    // 根據 action 參數決定執行發送、驗證或創建帳戶
+    const { action = 'send', email, code, password, name, language = 'zh-TW', ipAddress, userAgent } = requestData;
 
     if (action === 'verify') {
       // 驗證驗證碼
       return await verifyCode(databases, email, code, ipAddress, userAgent, log, error, res);
+    } else if (action === 'createAccount') {
+      // 創建帳戶並自動設置為已驗證
+      return await createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
@@ -569,5 +573,124 @@ ${t.textTeam}
       success: false,
       message: `郵件發送失敗: ${err.message || '請稍後再試'}`
     };
+  }
+}
+
+// 創建帳戶並自動設置為已驗證
+async function createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, log, error, res) {
+  try {
+    log('🚀 開始創建已驗證的帳戶:', { email, name });
+
+    // 驗證參數
+    if (!email || !password || !name) {
+      return res.json({
+        success: false,
+        message: '缺少必要參數'
+      }, 400);
+    }
+
+    // 驗證學生郵件格式
+    const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+    if (!validEmailPattern.test(email.toLowerCase())) {
+      log('❌ 郵件格式驗證失敗:', email);
+      return res.json({
+        success: false,
+        message: '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊'
+      }, 400);
+    }
+
+    // 檢查郵件是否已通過驗證
+    log('🔍 檢查郵件驗證狀態');
+    const verificationRecords = await databases.listDocuments(
+      'verification_system',
+      'verification_codes',
+      [
+        Query.equal('email', email),
+        Query.equal('isVerified', true),
+        Query.orderDesc('$createdAt'),
+        Query.limit(1)
+      ]
+    );
+
+    if (verificationRecords.documents.length === 0) {
+      log('❌ 郵件未通過驗證');
+      return res.json({
+        success: false,
+        message: '請先驗證您的學生郵件地址'
+      }, 400);
+    }
+
+    const verificationRecord = verificationRecords.documents[0];
+    log('✅ 找到已驗證的郵件記錄:', verificationRecord.$id);
+
+    // 檢查驗證記錄是否仍然有效（24小時內）
+    const verifiedAt = new Date(verificationRecord.$updatedAt);
+    const now = new Date();
+    const hoursSinceVerification = (now.getTime() - verifiedAt.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceVerification > 24) {
+      log('⏰ 驗證記錄已過期');
+      return res.json({
+        success: false,
+        message: '郵件驗證已過期，請重新驗證'
+      }, 400);
+    }
+
+    try {
+      // 創建 Appwrite 帳戶
+      log('👤 創建 Appwrite 帳戶');
+      const newUser = await users.create(
+        ID.unique(),
+        email,
+        undefined, // phone
+        password,
+        name
+      );
+
+      log('✅ 帳戶創建成功:', newUser.$id);
+
+      // 自動設置帳戶為已驗證狀態
+      log('🔐 設置帳戶為已驗證狀態');
+      await users.updateEmailVerification(newUser.$id, true);
+
+      log('✅ 帳戶已設置為已驗證狀態');
+
+      // 清理驗證記錄
+      log('🧹 清理驗證記錄');
+      await databases.deleteDocument(
+        'verification_system',
+        'verification_codes',
+        verificationRecord.$id
+      );
+
+      return res.json({
+        success: true,
+        message: '帳戶創建成功！您的學生郵件已自動驗證',
+        userId: newUser.$id
+      });
+
+    } catch (createError) {
+      error('❌ 創建帳戶失敗:', createError);
+      
+      // 處理常見錯誤
+      if (createError.message && createError.message.includes('user with the same email already exists')) {
+        return res.json({
+          success: false,
+          message: '此郵件地址已被註冊'
+        }, 400);
+      }
+
+      return res.json({
+        success: false,
+        message: `創建帳戶失敗: ${createError.message || '請稍後再試'}`
+      }, 500);
+    }
+
+  } catch (err) {
+    error('💥 創建已驗證帳戶異常:', err);
+    return res.json({
+      success: false,
+      message: `創建帳戶失敗: ${err.message || '請稍後再試'}`
+    }, 500);
   }
 } 

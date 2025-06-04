@@ -239,6 +239,142 @@ class StudentVerificationService {
     }
   }
 
+  // 創建已驗證的帳戶（使用後端 API）
+  async createVerifiedAccount(email: string, password: string, name: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // 基本參數檢查
+      if (!email || !password || !name) {
+        return {
+          success: false,
+          message: '請提供所有必要資訊'
+        };
+      }
+
+      // 檢查郵件格式
+      if (!this.isValidStudentEmail(email)) {
+        return {
+          success: false,
+          message: '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊'
+        };
+      }
+
+      // 獲取用戶信息用於安全追蹤
+      const userInfo = await this.getUserInfo();
+      
+      // 準備請求數據
+      const requestData = { 
+        action: 'createAccount',
+        email,
+        password,
+        name,
+        ...userInfo
+      };
+      
+      console.log('📦 準備創建帳戶的數據:', { ...requestData, password: '***' });
+      
+      // 調用 Appwrite Function
+      const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Appwrite-Project': 'lingubible',
+        },
+        body: JSON.stringify({
+          body: JSON.stringify(requestData),
+          async: false,
+          method: 'POST'
+        }),
+      });
+
+      console.log('📡 創建帳戶 API 回應狀態:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 創建帳戶 API 調用失敗:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        
+        return {
+          success: false,
+          message: `創建帳戶失敗 (${response.status}): ${errorText}`
+        };
+      }
+
+      const result = await response.json();
+      console.log('✅ 創建帳戶 API 回應結果:', result);
+
+      if (result.status === 'completed') {
+        if (result.responseStatusCode === 200) {
+          try {
+            const functionResponse = JSON.parse(result.responseBody);
+            console.log(`📧 創建帳戶執行結果:`, functionResponse);
+            
+            return {
+              success: functionResponse.success,
+              message: functionResponse.message || (functionResponse.success ? '帳戶創建成功' : '創建帳戶失敗')
+            };
+          } catch (parseError) {
+            console.error('❌ 解析創建帳戶回應失敗:', parseError);
+            return {
+              success: false,
+              message: `創建帳戶回應解析失敗: ${result.responseBody}`
+            };
+          }
+        } else {
+          console.error('❌ 創建帳戶 HTTP 錯誤:', {
+            statusCode: result.responseStatusCode,
+            body: result.responseBody,
+            stderr: result.stderr
+          });
+          
+          // 嘗試解析 responseBody 中的錯誤訊息
+          let errorMessage = '創建帳戶失敗';
+          try {
+            if (result.responseBody) {
+              const errorResponse = JSON.parse(result.responseBody);
+              errorMessage = errorResponse.message || result.responseBody;
+            } else {
+              errorMessage = result.stderr || '創建帳戶失敗';
+            }
+          } catch (parseError) {
+            // 如果解析失敗，使用原始內容
+            errorMessage = result.responseBody || result.stderr || '創建帳戶失敗';
+          }
+          
+          return {
+            success: false,
+            message: errorMessage
+          };
+        }
+      } else if (result.status === 'failed') {
+        console.error('❌ 創建帳戶執行失敗:', {
+          error: result.error,
+          stderr: result.stderr,
+          stdout: result.stdout
+        });
+        return {
+          success: false,
+          message: `創建帳戶失敗: ${result.error || result.stderr || '未知錯誤'}`
+        };
+      } else {
+        console.error('❌ 創建帳戶狀態異常:', result);
+        return {
+          success: false,
+          message: `創建帳戶狀態異常 (${result.status}): ${result.error || result.stderr || '未知錯誤'}`
+        };
+      }
+
+    } catch (error) {
+      console.error('💥 創建帳戶網路請求異常:', error);
+      return {
+        success: false,
+        message: `網路連接失敗: ${error instanceof Error ? error.message : '未知錯誤'}`
+      };
+    }
+  }
+
   // 檢查郵件是否已驗證（需要調用後端 API）
   async isEmailVerified(email: string): Promise<boolean> {
     // 注意：這個方法現在需要是異步的，因為需要查詢後端
