@@ -54,6 +54,22 @@
             "commands": "npm install",
             "specification": "s-0.5vcpu-512mb",
             "path": "functions/send-verification-email"
+        },
+        {
+            "$id": "cleanup-expired-codes",
+            "execute": ["any"],
+            "name": "Cleanup Expired Codes",
+            "enabled": true,
+            "logging": true,
+            "runtime": "node-18.0",
+            "scopes": ["databases.read", "databases.write"],
+            "events": [],
+            "schedule": "0 */6 * * *",
+            "timeout": 30,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "specification": "s-0.5vcpu-512mb",
+            "path": "functions/cleanup-expired-codes"
         }
     ],
     "databases": [
@@ -65,7 +81,12 @@
         {
             "$id": "verification_system",
             "name": "verification_system",
-            "enabled": true
+            "enabled": true,
+            "backup": {
+                "enabled": true,
+                "frequency": "daily",
+                "retention": 7
+            }
         }
     ],
     "collections": [

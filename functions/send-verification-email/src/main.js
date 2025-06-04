@@ -134,6 +134,7 @@ async function sendVerificationCode(databases, email, language, ipAddress, userA
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 分鐘後過期
 
     log('🔢 生成新驗證碼:', code.substring(0, 2) + '****');
+    log('⏰ 過期時間:', expiresAt.toISOString());
 
     // 檢查 Resend API 金鑰
     const apiKey = process.env.RESEND_API_KEY;
@@ -154,19 +155,23 @@ async function sendVerificationCode(databases, email, language, ipAddress, userA
 
     // 郵件發送成功，將驗證碼存儲到資料庫
     log('💾 將驗證碼存儲到資料庫');
+    const documentData = {
+      email: email,
+      code: code,
+      expiresAt: expiresAt.toISOString(),
+      attempts: 0,
+      isVerified: false,
+      ipAddress: ipAddress || null,
+      userAgent: userAgent || null
+    };
+    
+    log('📝 文檔數據:', documentData);
+    
     await databases.createDocument(
       'verification_system',
       'verification_codes',
       ID.unique(),
-      {
-        email: email,
-        code: code,
-        expiresAt: expiresAt.toISOString(),
-        attempts: 0,
-        isVerified: false,
-        ipAddress: ipAddress || null,
-        userAgent: userAgent || null
-      }
+      documentData
     );
 
     log('✅ 驗證碼已安全存儲到資料庫');

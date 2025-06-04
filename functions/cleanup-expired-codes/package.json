@@ -1,0 +1,16 @@
+{
+  "name": "cleanup-expired-codes",
+  "version": "1.0.0",
+  "description": "Cleanup expired verification codes",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
