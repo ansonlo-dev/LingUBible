@@ -49,6 +49,9 @@ export default async ({ req, res, log, error }) => {
 
     // 根據 action 參數決定執行發送、驗證或創建帳戶
     const { action = 'send', email, code, password, name, language = 'zh-TW', ipAddress, userAgent } = requestData;
+    
+    log('🎯 Action 參數:', action);
+    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, language });
 
     if (action === 'verify') {
       // 驗證驗證碼
