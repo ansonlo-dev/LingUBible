@@ -88,8 +88,7 @@
                     "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255,
-                    "default": null
+                    "size": 255
                 },
                 {
                     "key": "code",
@@ -97,22 +96,20 @@
                     "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 6,
-                    "default": null
+                    "size": 6
                 },
                 {
                     "key": "expiresAt",
                     "type": "datetime",
                     "status": "available",
                     "required": true,
-                    "array": false,
-                    "default": null
+                    "array": false
                 },
                 {
                     "key": "attempts",
                     "type": "integer",
                     "status": "available",
-                    "required": true,
+                    "required": false,
                     "array": false,
                     "min": 0,
                     "max": 10,
@@ -122,7 +119,7 @@
                     "key": "isVerified",
                     "type": "boolean",
                     "status": "available",
-                    "required": true,
+                    "required": false,
                     "array": false,
                     "default": false
                 },
