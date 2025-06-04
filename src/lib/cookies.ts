@@ -33,6 +33,9 @@ export const cookies = {
 // 滑動提示相關的 cookie 常量
 export const SWIPE_HINT_COOKIE = 'campus-comment-verse-swipe-used';
 
+// 側邊欄狀態相關的 cookie 常量
+export const SIDEBAR_STATE_COOKIE = 'campus-comment-verse-sidebar-collapsed';
+
 // 滑動提示 cookie 操作
 export const swipeHintCookie = {
   // 標記用戶已使用滑動功能
@@ -48,5 +51,28 @@ export const swipeHintCookie = {
   // 重置滑動提示（用於測試或重置功能）
   reset: () => {
     cookies.remove(SWIPE_HINT_COOKIE);
+  }
+};
+
+// 側邊欄狀態 cookie 操作
+export const sidebarStateCookie = {
+  // 保存側邊欄狀態
+  saveState: (isCollapsed: boolean) => {
+    cookies.set(SIDEBAR_STATE_COOKIE, isCollapsed ? 'true' : 'false', 365); // 保存一年
+  },
+
+  // 獲取側邊欄狀態，首次訪問默認為展開（false）
+  getState: (): boolean => {
+    const state = cookies.get(SIDEBAR_STATE_COOKIE);
+    if (state === null) {
+      // 首次訪問，默認展開
+      return false;
+    }
+    return state === 'true';
+  },
+
+  // 重置側邊欄狀態（用於測試或重置功能）
+  reset: () => {
+    cookies.remove(SIDEBAR_STATE_COOKIE);
   }
 }; 

@@ -4,7 +4,7 @@ import { Language } from '@/components/LanguageSwitcher';
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => any;
+  t: (key: string, params?: Record<string, any>) => any;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -113,7 +113,7 @@ const translations = {
     'auth.passwordMatch': 'Passwords match',
     'auth.rememberMe': 'Remember me',
     'auth.authFailed': 'Authentication failed, please check your information',
-    'auth.pleaseVerifyStudentEmail': 'Please verify your student email address first',
+    'auth.pleaseVerifyStudentEmail': 'Please verify your Lingnanians email address first',
     'auth.passwordNotSecure': 'Password does not meet security requirements, please check the password strength indicator',
     'auth.secureConnection': 'Your credentials will be encrypted and sent in a secure connection.',
     'auth.schoolPasswordReminder': 'Please do not use the same password as your university webmail account. For account security, we recommend using different passwords for each service.',
@@ -121,7 +121,7 @@ const translations = {
     'auth.resetPassword': 'Reset Password',
     'auth.sendResetEmail': 'Send Reset Email',
     'auth.resetEmailSent': 'Password reset email has been sent to your email address.',
-    'auth.studentVerificationSuccess': 'Student email verification successful! You can now set up your password to complete registration.',
+    'auth.studentVerificationSuccess': 'Lingnanians email verification successful! You can now set up your password to complete registration.',
     'auth.backToLogin': 'Back to Login',
     'auth.backToHome': 'Back to Home',
     'auth.noAccount': "Don't have an account?",
@@ -132,12 +132,13 @@ const translations = {
     'auth.help': 'Help Center',
     // Auth page titles and descriptions
     'auth.welcomeBack': 'Welcome back',
-    'auth.createStudentAccount': 'Create your student account',
-    'auth.fillInfoToCreate': 'Fill in the following information to create your student account',
-    'auth.studentInfoVerification': 'Student Information Verification',
+    'auth.createStudentAccount': 'Create your Lingnanians account',
+    'auth.fillInfoToCreate': 'Fill in the following information to create your Lingnanians account',
+    'auth.studentInfoVerification': 'Lingnanians Information Verification',
     'auth.passwordSetup': 'Password Setup',
     'auth.enterAccountInfo': 'Enter your account information to sign in',
     'auth.resetYourPassword': 'Reset your password',
+    'auth.signOut': 'Sign Out',
     // Search
     'search.placeholder': 'Search courses, lecturers...',
     // Buttons
@@ -220,8 +221,8 @@ const translations = {
     'auth.canRetryReset': 'You can retry sending reset email',
     'auth.resendReset': 'Resend',
     'auth.sendResetLink': 'Send Reset Link',
-    'auth.studentEmailAddress': 'Student Email Address',
-    'auth.resetPasswordDescription': 'Enter your student email address and we will send you a reset link',
+    'auth.studentEmailAddress': 'Lingnanians Email Address',
+    'auth.resetPasswordDescription': 'Enter your Lingnanians email address and we will send you a reset link',
     'auth.emailNotRegistered': 'This email address is not registered. Please register first or check your email address.',
     'auth.checkingEmailExists': 'Checking if email is registered...',
     'auth.emailRegistered': 'Email address is registered',
@@ -232,13 +233,13 @@ const translations = {
     // Email placeholder
     'auth.emailPlaceholder': 'student@ln.edu.hk or student@ln.hk',
     // Email validation
-    'auth.invalidStudentEmail': 'This email address is not a valid student email address. Please use a valid @ln.edu.hk or @ln.hk email address.',
+    'auth.invalidStudentEmail': 'This email address is not a valid Lingnanians email address. Please use a valid @ln.edu.hk or @ln.hk email address.',
     // Email checking status
     'auth.checkingEmail': 'Checking email availability...',
     'auth.checkingAccount': 'Checking account...',
     'auth.emailAvailable': 'Email address available',
     // Student verification
-    'verification.title': 'Student Email Verification',
+    'verification.title': 'Lingnanians Email Verification',
     'verification.sendCode': 'Send Verification Code',
     'verification.onlyStudentEmails': 'Only @ln.edu.hk or @ln.hk email addresses can register',
     'verification.codeExpiry': 'Verification code valid for 10 minutes',
@@ -267,6 +268,27 @@ const translations = {
     'cookie.description': 'This website uses cookies to ensure you get the best browsing experience.',
     'cookie.accept': 'Accept',
     'cookie.learnMore': 'Learn More',
+    'cookie.decline': 'Decline',
+    'cookie.close': 'Close',
+    // Cookie policy details
+    'cookie.policy.title': 'How We Use Cookies',
+    'cookie.policy.intro': 'We use cookies to enhance your browsing experience and improve our services. Here\'s how:',
+    'cookie.policy.essential.title': 'Essential Cookies',
+    'cookie.policy.essential.desc': 'These cookies are necessary for the website to function properly. They enable basic features like page navigation, user authentication, and security.',
+    'cookie.policy.functional.title': 'Functional Cookies',
+    'cookie.policy.functional.desc': 'These cookies remember your preferences (like language settings, theme, and sidebar state) to provide a personalized experience.',
+    'cookie.policy.analytics.title': 'Analytics Cookies',
+    'cookie.policy.analytics.desc': 'We use these cookies to understand how visitors interact with our website, helping us improve performance and user experience.',
+    'cookie.policy.types': 'Types of cookies we use:',
+    'cookie.policy.type1': '• Authentication cookies to keep you logged in',
+    'cookie.policy.type2': '• Language preference cookies',
+    'cookie.policy.type3': '• Theme and layout preference cookies',
+    'cookie.policy.type4': '• Anonymous usage analytics',
+    'cookie.policy.retention': 'Cookie Retention',
+    'cookie.policy.retention.desc': 'Most cookies are stored for up to 1 year, while session cookies are deleted when you close your browser.',
+    'cookie.policy.control': 'Your Control',
+    'cookie.policy.control.desc': 'You can control cookies through your browser settings. However, disabling certain cookies may affect website functionality.',
+    'cookie.policy.contact': 'If you have questions about our cookie policy, please contact us.',
     // PWA Install
     'pwa.installAvailable': 'App Available',
     'pwa.installDescription': 'Install LingUBible for a better experience',
@@ -296,6 +318,46 @@ const translations = {
     'status.down': 'Down',
     'status.checking': 'Checking',
     'status.poweredBy': 'Powered by OpenStatus',
+    // Avatar
+    'avatar.customize': 'Customize Avatar',
+    'avatar.combinations': 'combinations',
+    'avatar.preview': 'Preview',
+    'avatar.randomize': 'Randomize',
+    'avatar.save': 'Save Avatar',
+    'avatar.saving': 'Saving...',
+    'avatar.resetToDefault': 'Reset to Default',
+    'avatar.animals': 'Animals',
+    'avatar.backgrounds': 'Backgrounds',
+    'avatar.totalStats': 'Total {animals} animals × {backgrounds} backgrounds = {total} combinations',
+    'avatar.saveSuccess': 'Avatar Saved',
+    'avatar.saveSuccessDesc': 'Your custom avatar has been successfully saved to the cloud',
+    'avatar.saveFailed': 'Save Failed',
+    'avatar.saveFailedDesc': 'Unable to save avatar, please try again later',
+    'avatar.resetSuccess': 'Avatar Reset',
+    'avatar.resetSuccessDesc': 'Restored to system default avatar',
+    'avatar.deleteFailed': 'Delete Failed',
+    'avatar.deleteFailedDesc': 'Unable to delete avatar, please try again later',
+    // Background colors
+    'background.sunset': 'Sunset',
+    'background.peach': 'Peach',
+    'background.coral': 'Coral',
+    'background.rose': 'Rose',
+    'background.ocean': 'Ocean',
+    'background.sky': 'Sky',
+    'background.mint': 'Mint',
+    'background.forest': 'Forest',
+    'background.lavender': 'Lavender',
+    'background.grape': 'Grape',
+    'background.plum': 'Plum',
+    'background.cloud': 'Cloud',
+    'background.stone': 'Stone',
+    'background.warm': 'Warm',
+    'background.rainbow': 'Rainbow',
+    'background.aurora': 'Aurora',
+    'background.cosmic': 'Cosmic',
+    'background.tropical': 'Tropical',
+    'background.fire': 'Fire',
+    'background.ice': 'Ice',
   },
   'zh-TW': {
     // Site metadata
@@ -344,7 +406,7 @@ const translations = {
     'auth.passwordMatch': '兩次密碼一致',
     'auth.rememberMe': '記住我',
     'auth.authFailed': '認證失敗，請檢查資料',
-    'auth.pleaseVerifyStudentEmail': '請先驗證您的學生電子郵件地址',
+    'auth.pleaseVerifyStudentEmail': '請先驗證您的嶺南人電子郵件地址',
     'auth.passwordNotSecure': '密碼不符合安全要求，請檢查密碼強度指示器',
     'auth.secureConnection': '您的憑證將會被加密並在安全的連接中發送。',
     'auth.schoolPasswordReminder': '請不要使用與您的學校郵件帳戶相同的密碼。為了保護您的帳戶安全，建議為每個服務使用不同的密碼。',
@@ -352,7 +414,7 @@ const translations = {
     'auth.resetPassword': '重置密碼',
     'auth.sendResetEmail': '發送重置郵件',
     'auth.resetEmailSent': '密碼重置郵件已發送到您的電子郵件地址。',
-    'auth.studentVerificationSuccess': '學生郵件驗證成功！您現在可以設置密碼以完成註冊。',
+    'auth.studentVerificationSuccess': '嶺南人郵件驗證成功！您現在可以設置密碼以完成註冊。',
     'auth.backToLogin': '返回登入',
     'auth.backToHome': '返回首頁',
     'auth.noAccount': '沒有帳戶？',
@@ -363,12 +425,13 @@ const translations = {
     'auth.help': '幫助中心',
     // Auth page titles and descriptions
     'auth.welcomeBack': '歡迎回來',
-    'auth.createStudentAccount': '創建您的學生帳戶',
-    'auth.fillInfoToCreate': '填寫以下資訊來創建您的學生帳戶',
-    'auth.studentInfoVerification': '學生資訊驗證',
+    'auth.createStudentAccount': '創建您的嶺南人帳戶',
+    'auth.fillInfoToCreate': '填寫以下資訊來創建您的嶺南人帳戶',
+    'auth.studentInfoVerification': '嶺南人資訊驗證',
     'auth.passwordSetup': '密碼設定',
     'auth.enterAccountInfo': '輸入您的帳戶資訊來登入',
     'auth.resetYourPassword': 'Reset your password',
+    'auth.signOut': '登出',
     // Search
     'search.placeholder': '搜尋課程、講師...',
     // Buttons
@@ -451,8 +514,8 @@ const translations = {
     'auth.canRetryReset': '您可以重新嘗試發送重設郵件',
     'auth.resendReset': '重新發送',
     'auth.sendResetLink': '發送重設連結',
-    'auth.studentEmailAddress': '學生郵件地址',
-    'auth.resetPasswordDescription': '輸入您的學生郵件地址，我們將發送重設密碼的連結給您',
+    'auth.studentEmailAddress': '嶺南人郵件地址',
+    'auth.resetPasswordDescription': '輸入您的嶺南人郵件地址，我們將發送重設密碼的連結給您',
     'auth.emailNotRegistered': '此郵件地址尚未註冊。請先註冊或檢查您的郵件地址。',
     'auth.checkingEmailExists': '檢查郵件是否已註冊...',
     'auth.emailRegistered': '郵件地址已註冊',
@@ -463,15 +526,15 @@ const translations = {
     // Email placeholder
     'auth.emailPlaceholder': 'student@ln.edu.hk 或 student@ln.hk',
     // Email validation
-    'auth.invalidStudentEmail': '此郵件地址不是有效的學生郵件地址。請使用有效的 @ln.edu.hk 或 @ln.hk 郵件地址。',
+    'auth.invalidStudentEmail': '此郵件地址不是有效的嶺南人郵件地址。請使用有效的 @ln.edu.hk 或 @ln.hk 郵件地址。',
     // Email checking status
     'auth.checkingEmail': '檢查郵件是否可用...',
     'auth.checkingAccount': '檢查帳戶...',
     'auth.emailAvailable': '郵件地址可用',
     // Student verification
-    'verification.title': '學生郵件驗證',
+    'verification.title': '嶺南人郵件驗證',
     'verification.sendCode': '發送驗證碼',
-    'verification.onlyStudentEmails': '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊',
+    'verification.onlyStudentEmails': '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊',
     'verification.codeExpiry': '驗證碼有效期為 10 分鐘',
     'verification.maxAttempts': '最多可嘗試驗證 3 次',
     'verification.resendAfter': '後可重新發送',
@@ -498,6 +561,27 @@ const translations = {
     'cookie.description': '本網站使用 Cookie 來確保您獲得最佳的瀏覽體驗。',
     'cookie.accept': '我了解',
     'cookie.learnMore': '了解更多',
+    'cookie.decline': '拒絕',
+    'cookie.close': '關閉',
+    // Cookie policy details
+    'cookie.policy.title': '我們如何使用 Cookie',
+    'cookie.policy.intro': '我們使用 Cookie 來提升您的瀏覽體驗並改善我們的服務。具體如下：',
+    'cookie.policy.essential.title': '必要 Cookie',
+    'cookie.policy.essential.desc': '這些 Cookie 是網站正常運作所必需的。它們啟用基本功能，如頁面導航、用戶認證和安全性。',
+    'cookie.policy.functional.title': '功能性 Cookie',
+    'cookie.policy.functional.desc': '這些 Cookie 會記住您的偏好設定（如語言設定、主題和側邊欄狀態），以提供個人化體驗。',
+    'cookie.policy.analytics.title': '分析 Cookie',
+    'cookie.policy.analytics.desc': '我們使用這些 Cookie 來了解訪客如何與我們的網站互動，幫助我們改善性能和用戶體驗。',
+    'cookie.policy.types': '我們使用的 Cookie 類型：',
+    'cookie.policy.type1': '• 身份驗證 Cookie，保持您的登入狀態',
+    'cookie.policy.type2': '• 語言偏好 Cookie',
+    'cookie.policy.type3': '• 主題和佈局偏好 Cookie',
+    'cookie.policy.type4': '• 匿名使用分析',
+    'cookie.policy.retention': 'Cookie 保存期限',
+    'cookie.policy.retention.desc': '大多數 Cookie 會保存最多 1 年，而會話 Cookie 會在您關閉瀏覽器時刪除。',
+    'cookie.policy.control': '您的控制權',
+    'cookie.policy.control.desc': '您可以通過瀏覽器設定來控制 Cookie。但是，禁用某些 Cookie 可能會影響網站功能。',
+    'cookie.policy.contact': '如果您對我們的 Cookie 政策有疑問，請聯繫我們。',
     // PWA Install
     'pwa.installAvailable': '應用程式可安裝',
     'pwa.installDescription': '安裝 LingUBible 獲得更好的使用體驗',
@@ -527,6 +611,46 @@ const translations = {
     'status.down': 'Down',
     'status.checking': 'Checking',
     'status.poweredBy': 'Powered by OpenStatus',
+    // Avatar
+    'avatar.customize': '自定義頭像',
+    'avatar.combinations': '種組合',
+    'avatar.preview': '預覽效果',
+    'avatar.randomize': '隨機生成',
+    'avatar.save': '保存頭像',
+    'avatar.saving': '保存中...',
+    'avatar.resetToDefault': '重置為默認',
+    'avatar.animals': '動物',
+    'avatar.backgrounds': '背景',
+    'avatar.totalStats': '共有 {animals} 種動物 × {backgrounds} 種背景 = {total} 種組合',
+    'avatar.saveSuccess': '頭像已保存',
+    'avatar.saveSuccessDesc': '您的自定義頭像已成功保存到雲端',
+    'avatar.saveFailed': '保存失敗',
+    'avatar.saveFailedDesc': '無法保存頭像，請稍後再試',
+    'avatar.resetSuccess': '頭像已重置',
+    'avatar.resetSuccessDesc': '已恢復為系統默認頭像',
+    'avatar.deleteFailed': '刪除失敗',
+    'avatar.deleteFailedDesc': '無法刪除頭像，請稍後再試',
+    // Background colors
+    'background.sunset': '夕陽',
+    'background.peach': '蜜桃',
+    'background.coral': '珊瑚',
+    'background.rose': '玫瑰',
+    'background.ocean': '海洋',
+    'background.sky': '天空',
+    'background.mint': '薄荷',
+    'background.forest': '森林',
+    'background.lavender': '薰衣草',
+    'background.grape': '葡萄',
+    'background.plum': '梅子',
+    'background.cloud': '雲朵',
+    'background.stone': '石頭',
+    'background.warm': '暖陽',
+    'background.rainbow': '彩虹',
+    'background.aurora': '極光',
+    'background.cosmic': '宇宙',
+    'background.tropical': '熱帶',
+    'background.fire': '火焰',
+    'background.ice': '冰雪',
   },
   'zh-CN': {
     // Site metadata
@@ -575,7 +699,7 @@ const translations = {
     'auth.passwordMatch': '两次密码一致',
     'auth.rememberMe': '记住我',
     'auth.authFailed': '认证失败，请检查资料',
-    'auth.pleaseVerifyStudentEmail': '请先验证您的学生电子邮件地址',
+    'auth.pleaseVerifyStudentEmail': '请先验证您的岭南人电子邮件地址',
     'auth.passwordNotSecure': '密码不符合安全要求，请检查密码强度指示器',
     'auth.secureConnection': '您的凭证将会被加密并在安全的连接中发送。',
     'auth.schoolPasswordReminder': '请不要使用与您的学校邮件账户相同的密码。为了保护您的账户安全，建议为每个服务使用不同的密码。',
@@ -583,7 +707,7 @@ const translations = {
     'auth.resetPassword': '重置密码',
     'auth.sendResetEmail': '发送重置邮件',
     'auth.resetEmailSent': '密码重置邮件已发送至您的电子邮箱。',
-    'auth.studentVerificationSuccess': '学生邮件验证成功！您现在可以设置密码以完成注册。',
+    'auth.studentVerificationSuccess': '岭南人邮件验证成功！您现在可以设置密码以完成注册。',
     'auth.backToLogin': '返回登录',
     'auth.backToHome': '返回首页',
     'auth.noAccount': '没有账户？',
@@ -594,12 +718,13 @@ const translations = {
     'auth.help': '帮助中心',
     // Auth page titles and descriptions
     'auth.welcomeBack': '欢迎回来',
-    'auth.createStudentAccount': '创建您的学生账户',
-    'auth.fillInfoToCreate': '填写以下信息来创建您的学生账户',
-    'auth.studentInfoVerification': '学生信息验证',
+    'auth.createStudentAccount': '创建您的岭南人账户',
+    'auth.fillInfoToCreate': '填写以下信息来创建您的岭南人账户',
+    'auth.studentInfoVerification': '岭南人信息验证',
     'auth.passwordSetup': '密码设置',
     'auth.enterAccountInfo': '输入您的账户信息来登录',
     'auth.resetYourPassword': '重置您的密码',
+    'auth.signOut': '登出',
     // Search
     'search.placeholder': '搜索课程、讲师...',
     // Buttons
@@ -682,8 +807,8 @@ const translations = {
     'auth.canRetryReset': '您可以重新尝试发送重置邮件',
     'auth.resendReset': '重新发送',
     'auth.sendResetLink': '发送重置链接',
-    'auth.studentEmailAddress': '学生邮件地址',
-    'auth.resetPasswordDescription': '输入您的学生邮件地址，我们将发送重置密码的链接给您',
+    'auth.studentEmailAddress': '岭南人邮件地址',
+    'auth.resetPasswordDescription': '输入您的岭南人邮件地址，我们将发送重置密码的链接给您',
     'auth.emailNotRegistered': '此邮件地址尚未注册。请先注册或检查您的邮件地址。',
     'auth.checkingEmailExists': '检查邮件是否已注册...',
     'auth.emailRegistered': '邮件地址已注册',
@@ -694,15 +819,15 @@ const translations = {
     // Email placeholder
     'auth.emailPlaceholder': 'student@ln.edu.hk 或 student@ln.hk',
     // Email validation
-    'auth.invalidStudentEmail': '此邮件地址不是有效的学生邮件地址。请使用有效的 @ln.edu.hk 或 @ln.hk 邮件地址。',
+    'auth.invalidStudentEmail': '此邮件地址不是有效的岭南人邮件地址。请使用有效的 @ln.edu.hk 或 @ln.hk 邮件地址。',
     // Email checking status
     'auth.checkingEmail': '检查邮件是否可用...',
     'auth.checkingAccount': '检查账户...',
     'auth.emailAvailable': '邮件地址可用',
     // Student verification
-    'verification.title': '学生邮件验证',
+    'verification.title': '岭南人邮件验证',
     'verification.sendCode': '发送验证码',
-    'verification.onlyStudentEmails': '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册',
+    'verification.onlyStudentEmails': '只有 @ln.edu.hk 或 @ln.hk 邮件地址的岭南人才能注册',
     'verification.codeExpiry': '验证码有效期为 10 分钟',
     'verification.maxAttempts': '最多可尝试验证 3 次',
     'verification.resendAfter': '后可重新发送',
@@ -729,6 +854,27 @@ const translations = {
     'cookie.description': '本网站使用 Cookie 来确保您获得最佳的浏览体验。',
     'cookie.accept': '我了解',
     'cookie.learnMore': '了解更多',
+    'cookie.decline': '拒绝',
+    'cookie.close': '关闭',
+    // Cookie policy details
+    'cookie.policy.title': '我们如何使用 Cookie',
+    'cookie.policy.intro': '我们使用 Cookie 来提升您的浏览体验并改善我们的服务。具体如下：',
+    'cookie.policy.essential.title': '必要 Cookie',
+    'cookie.policy.essential.desc': '这些 Cookie 是网站正常运作所必需的。它们启用基本功能，如页面导航、用户认证和安全性。',
+    'cookie.policy.functional.title': '功能性 Cookie',
+    'cookie.policy.functional.desc': '这些 Cookie 会记住您的偏好设置（如语言设置、主题和侧边栏状态），以提供个性化体验。',
+    'cookie.policy.analytics.title': '分析 Cookie',
+    'cookie.policy.analytics.desc': '我们使用这些 Cookie 来了解访客如何与我们网站互动，帮助我们改善性能和用户体验。',
+    'cookie.policy.types': '我们使用的 Cookie 类型：',
+    'cookie.policy.type1': '• 身份验证 Cookie，保持您的登录状态',
+    'cookie.policy.type2': '• 语言偏好 Cookie',
+    'cookie.policy.type3': '• 主题和布局偏好 Cookie',
+    'cookie.policy.type4': '• 匿名使用分析',
+    'cookie.policy.retention': 'Cookie 保存期限',
+    'cookie.policy.retention.desc': '大多数 Cookie 会保存最多 1 年，而会话 Cookie 会在您关闭浏览器时删除。',
+    'cookie.policy.control': '您的控制权',
+    'cookie.policy.control.desc': '您可以通过浏览器设置来控制 Cookie。但是，禁用某些 Cookie 可能会影响网站功能。',
+    'cookie.policy.contact': '如果您对我们的 Cookie 政策有疑问，请联系我们。',
     // PWA Install
     'pwa.installAvailable': '应用程序可安装',
     'pwa.installDescription': '安装 LingUBible 获得更好的使用体验',
@@ -758,6 +904,46 @@ const translations = {
     'status.down': 'Down',
     'status.checking': 'Checking',
     'status.poweredBy': 'Powered by OpenStatus',
+    // Avatar
+    'avatar.customize': '自定义头像',
+    'avatar.combinations': '种组合',
+    'avatar.preview': '预览效果',
+    'avatar.randomize': '随机生成',
+    'avatar.save': '保存头像',
+    'avatar.saving': '保存中...',
+    'avatar.resetToDefault': '重置为默认',
+    'avatar.animals': '动物',
+    'avatar.backgrounds': '背景',
+    'avatar.totalStats': '共有 {animals} 种动物 × {backgrounds} 种背景 = {total} 种组合',
+    'avatar.saveSuccess': '头像已保存',
+    'avatar.saveSuccessDesc': '您的自定义头像已成功保存到云端',
+    'avatar.saveFailed': '保存失败',
+    'avatar.saveFailedDesc': '无法保存头像，请稍后再试',
+    'avatar.resetSuccess': '头像已重置',
+    'avatar.resetSuccessDesc': '已恢复为系统默认头像',
+    'avatar.deleteFailed': '删除失败',
+    'avatar.deleteFailedDesc': '无法删除头像，请稍后再试',
+    // Background colors
+    'background.sunset': '夕阳',
+    'background.peach': '蜜桃',
+    'background.coral': '珊瑚',
+    'background.rose': '玫瑰',
+    'background.ocean': '海洋',
+    'background.sky': '天空',
+    'background.mint': '薄荷',
+    'background.forest': '森林',
+    'background.lavender': '薰衣草',
+    'background.grape': '葡萄',
+    'background.plum': '梅子',
+    'background.cloud': '云朵',
+    'background.stone': '石头',
+    'background.warm': '暖阳',
+    'background.rainbow': '彩虹',
+    'background.aurora': '极光',
+    'background.cosmic': '宇宙',
+    'background.tropical': '热带',
+    'background.fire': '火焰',
+    'background.ice': '冰雪',
   },
 };
 
@@ -801,8 +987,18 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     };
   }, []);
 
-  const t = (key: string): any => {
-    return translations[language][key] || key;
+  const t = (key: string, params?: Record<string, any>): any => {
+    let translation = translations[language][key] || key;
+    
+    // 如果有參數，進行字符串替換
+    if (params && typeof translation === 'string') {
+      Object.keys(params).forEach(paramKey => {
+        const placeholder = `{${paramKey}}`;
+        translation = translation.replace(new RegExp(placeholder, 'g'), params[paramKey]);
+      });
+    }
+    
+    return translation;
   };
 
   return (

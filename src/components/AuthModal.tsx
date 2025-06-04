@@ -70,7 +70,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       console.error('Auth error:', err);
       
       // 處理不同類型的錯誤
-      if (err?.message?.includes('請先驗證您的學生郵件地址')) {
+      if (err?.message?.includes('請先驗證您的嶺南人郵件地址')) {
         setError(t('auth.pleaseVerifyStudentEmail'));
       } else if (err?.message?.includes('Invalid credentials')) {
         setError('郵件地址或密碼錯誤');
@@ -138,7 +138,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             />
           </div>
           
-          {/* 註冊時顯示學生驗證 */}
+          {/* 註冊時顯示嶺南人驗證 */}
           {isSignUp && email && (
             <StudentVerificationInput
               email={email}

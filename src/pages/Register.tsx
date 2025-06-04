@@ -10,8 +10,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, CheckCircle, Lock, AlertTriangle, Info } from 'lucide-react';
 import { StudentVerificationInput } from '@/components/StudentVerificationInput';
 import { PasswordStrengthChecker } from '@/components/PasswordStrengthChecker';
+import { isValidEmailForRegistration, getEmailType, DEV_MODE } from '@/config/devMode';
 
-// 檢查郵件是否為有效的學生郵件
+// 檢查郵件是否為有效的學生郵件（保留以兼容性）
 const isValidStudentEmail = (email: string): boolean => {
   const emailLower = email.toLowerCase();
   // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
@@ -39,14 +40,44 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-    
-    try {
-      if (password !== confirmPassword) {
-        setError(t('auth.passwordMismatch'));
-        return;
+    if (loading) return;
+
+    // 基本驗證
+    if (!email || !password || !confirmPassword) {
+      setError(t('auth.fillAllFields'));
+      return;
+    }
+
+    // 使用新的開發模式郵件驗證
+    if (!isValidEmailForRegistration(email)) {
+      if (DEV_MODE.enabled) {
+        setError('請輸入有效的郵件地址格式');
+      } else {
+        setError(t('auth.invalidStudentEmail'));
       }
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError(t('auth.passwordMismatch'));
+      return;
+    }
+    
+    if (!isStudentVerified) {
+      setError(t('auth.pleaseVerifyStudentEmail'));
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setError(t('auth.passwordNotSecure'));
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+
+    try {
+      console.log('🚀 開始註冊流程:', { email, hasPassword: !!password });
       
       if (!isStudentVerified) {
         setError(t('auth.pleaseVerifyStudentEmail'));
@@ -64,7 +95,7 @@ export default function Register() {
       console.error('Auth error:', err);
       
       // 使用通用的錯誤訊息，不透露郵件是否已存在
-      if (err?.message?.includes('請先驗證您的學生郵件地址')) {
+      if (err?.message?.includes('請先驗證您的嶺南人郵件地址')) {
         setError(t('auth.pleaseVerifyStudentEmail'));
       } else {
         setError(t('auth.registrationFailed'));
@@ -132,7 +163,7 @@ export default function Register() {
                     />
                   </div>
                   
-                  {/* 學生驗證 */}
+                  {/* 嶺南人驗證 */}
                   {email && (
                     <StudentVerificationInput
                       email={email}
@@ -216,6 +247,32 @@ export default function Register() {
                       {t('auth.schoolPasswordReminder')}
                     </AlertDescription>
                   </Alert>
+
+                  {/* 條款同意提示 */}
+                  <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
+                    <p className="text-sm text-muted-foreground text-center">
+                      {t('auth.agreementNotice')}
+                    </p>
+                    <div className="flex justify-center gap-4 mt-2">
+                      <Link 
+                        to="/terms" 
+                        className="text-sm text-primary hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('auth.termsLink')}
+                      </Link>
+                      <span className="text-muted-foreground">•</span>
+                      <Link 
+                        to="/privacy" 
+                        className="text-sm text-primary hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('auth.privacyLink')}
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -41,12 +41,17 @@
     "functions": [
         {
             "$id": "send-verification",
-            "execute": ["any"],
+            "execute": [
+                "any"
+            ],
             "name": "Send Verification Email",
             "enabled": true,
             "logging": true,
             "runtime": "node-18.0",
-            "scopes": ["databases.read", "databases.write"],
+            "scopes": [
+                "databases.read",
+                "databases.write"
+            ],
             "events": [],
             "schedule": "",
             "timeout": 15,
@@ -57,12 +62,17 @@
         },
         {
             "$id": "cleanup-expired-codes",
-            "execute": ["any"],
+            "execute": [
+                "any"
+            ],
             "name": "Cleanup Expired Codes",
             "enabled": true,
             "logging": true,
             "runtime": "node-18.0",
-            "scopes": ["databases.read", "databases.write"],
+            "scopes": [
+                "databases.read",
+                "databases.write"
+            ],
             "events": [],
             "schedule": "0 */6 * * *",
             "timeout": 30,
@@ -168,15 +178,23 @@
                     "key": "email_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": ["email"],
-                    "orders": ["ASC"]
+                    "attributes": [
+                        "email"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
                 },
                 {
                     "key": "expires_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": ["expiresAt"],
-                    "orders": ["ASC"]
+                    "attributes": [
+                        "expiresAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
                 }
             ]
         }

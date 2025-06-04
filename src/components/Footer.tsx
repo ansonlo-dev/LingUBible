@@ -2,6 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Github } from 'lucide-react';
 import { UserStatsDisplay } from './UserStatsDisplay';
 import { OpenStatusWidget } from './OpenStatusWidget';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   const { t } = useLanguage();
@@ -71,15 +72,17 @@ export function Footer() {
               <span className="text-gray-600 dark:text-muted-foreground text-xs">
                 {t('footer.version')}
               </span>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.contact')}
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.terms')}
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.privacy')}
-              </a>
+              <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+                <a href="mailto:contact@lingubible.com" className="hover:text-foreground transition-colors">
+                  {t('footer.contact')}
+                </a>
+                <Link to="/terms" className="hover:text-foreground transition-colors">
+                  {t('footer.terms')}
+                </Link>
+                <Link to="/privacy" className="hover:text-foreground transition-colors">
+                  {t('footer.privacy')}
+                </Link>
+              </div>
             </div>
           </div>
         </div>

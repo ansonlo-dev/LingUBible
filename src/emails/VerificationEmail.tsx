@@ -20,42 +20,108 @@ export const VerificationEmail = ({
   userEmail = 'student@ln.edu.hk',
 }: VerificationEmailProps) => (
   <Html>
-    <Head />
-    <Preview>您的 LingUBible 學生驗證碼</Preview>
-    <Body style={main}>
-      <Container style={container}>
+    <Head>
+      <style>{`
+        /* 深色主題支援 */
+        @media (prefers-color-scheme: dark) {
+          body {
+            background-color: #1a1a1a !important;
+          }
+          
+          .container {
+            background-color: #2d2d2d !important;
+          }
+          
+          .title {
+            color: #f0f0f0 !important;
+          }
+          
+          .text {
+            color: #e0e0e0 !important;
+          }
+          
+          .logo {
+            color: #ef4444 !important;
+          }
+          
+          .code-container {
+            background: #1f1f1f !important;
+            border-color: #ef4444 !important;
+          }
+          
+          .code {
+            color: #ef4444 !important;
+          }
+          
+          .footer {
+            color: #a0a0a0 !important;
+          }
+        }
+        
+        /* Outlook 深色主題支援 */
+        [data-ogsc] body {
+          background-color: #1a1a1a !important;
+        }
+        
+        [data-ogsc] .container {
+          background-color: #2d2d2d !important;
+        }
+        
+        [data-ogsc] .title,
+        [data-ogsc] .text {
+          color: #e0e0e0 !important;
+        }
+        
+        [data-ogsc] .logo,
+        [data-ogsc] .code {
+          color: #ef4444 !important;
+        }
+        
+        [data-ogsc] .footer {
+          color: #a0a0a0 !important;
+        }
+        
+        [data-ogsc] .code-container {
+          background: #1f1f1f !important;
+          border-color: #ef4444 !important;
+        }
+      `}</style>
+    </Head>
+    <Preview>您的 LingUBible 嶺南人驗證碼</Preview>
+    <Body style={main} className="body">
+      <Container style={container} className="container">
         <Section style={logoContainer}>
-          <Text style={logo}>📚 LingUBible</Text>
+          <Text style={logo} className="logo">📚 LingUBible</Text>
         </Section>
         
-        <Heading style={h1}>學生帳戶驗證</Heading>
+        <Heading style={h1} className="title">嶺南人帳戶驗證</Heading>
         
-        <Text style={text}>
-          您好！感謝您註冊 LingUBible 學生帳戶。請使用以下驗證碼來完成您的帳戶註冊：
+        <Text style={text} className="text">
+          您好！感謝您註冊 LingUBible 嶺南人帳戶。請使用以下驗證碼來完成您的帳戶註冊：
         </Text>
         
-        <Section style={codeContainer}>
-          <Text style={code}>{verificationCode}</Text>
+        <Section style={codeContainer} className="code-container">
+          <Text style={code} className="code">{verificationCode}</Text>
         </Section>
         
-        <Text style={text}>
+        <Text style={text} className="text">
           此驗證碼將在 <strong>10 分鐘</strong> 後過期。如果您沒有請求此驗證碼，請忽略此郵件。
         </Text>
         
-        <Text style={text}>
-          <strong>注意：</strong>只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊 LingUBible。
+        <Text style={text} className="text">
+          <strong>注意：</strong>只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊 LingUBible。
         </Text>
         
-        <Text style={text}>
+        <Text style={text} className="text">
           如果您有任何問題，請聯繫我們的支援團隊。
         </Text>
         
-        <Text style={footer}>
+        <Text style={footer} className="footer">
           此郵件發送給 {userEmail}
           <br />
           LingUBible - 課程與講師評價平台
           <br />
-          僅限 Lingnan University 學生使用
+          僅限 Lingnan University 嶺南人使用
         </Text>
       </Container>
     </Body>
@@ -113,6 +179,7 @@ const codeContainer = {
   padding: '24px',
   textAlign: 'center' as const,
   width: 'fit-content',
+  border: '2px solid #dc2626',
 };
 
 const code = {

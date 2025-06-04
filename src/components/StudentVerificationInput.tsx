@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, Clock, AlertTriangle, Mail, Settings, Info, AlertCircle, Zap } from 'lucide-react';
 import { studentVerificationService } from '@/services/studentVerificationService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { DEV_MODE, isValidEmailForRegistration, getEmailType, getDevModeMessage, isDisposableEmail } from '@/config/devMode';
 
 interface StudentVerificationInputProps {
   email: string;
@@ -67,9 +69,13 @@ export function StudentVerificationInput({
   const handleSendCode = async () => {
     if (!email || isSending) return;
 
-    // 檢查郵件格式
-    if (!isValidStudentEmail(email)) {
-      setMessage(t('verification.onlyStudentEmails'));
+    // 使用新的開發模式郵件驗證
+    if (!isValidEmailForRegistration(email)) {
+      if (DEV_MODE.enabled) {
+        setMessage('請輸入有效的郵件地址格式');
+      } else {
+        setMessage(t('verification.onlyStudentEmails'));
+      }
       setMessageType('error');
       return;
     }
@@ -150,7 +156,65 @@ export function StudentVerificationInput({
       <div className="flex items-center space-x-2">
         <Mail className="h-4 w-4 text-primary" />
         <Label className="text-sm font-medium">{t('verification.title')}</Label>
+        {DEV_MODE.enabled && (
+          <div className="flex items-center space-x-1">
+            <Settings className="h-3 w-3 text-orange-500" />
+            <span className="text-xs text-orange-600 dark:text-orange-400">DEV</span>
+          </div>
+        )}
       </div>
+
+      {/* 開發模式提示 */}
+      {DEV_MODE.enabled && (
+        <div className="space-y-2">
+          <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-900/20">
+            <Settings className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              {getDevModeMessage('devModeEnabled', language)}
+            </AlertDescription>
+          </Alert>
+          
+          {/* 一次性郵件提示 */}
+          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+            <Zap className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              {getDevModeMessage('disposableEmailTip', language)}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* 郵件類型提示 */}
+      {email && DEV_MODE.enabled && (
+        <div className="text-xs">
+          {(() => {
+            const emailType = getEmailType(email);
+            if (emailType === 'student') {
+              return (
+                <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>嶺南人郵件地址</span>
+                </div>
+              );
+            } else if (emailType === 'disposable') {
+              return (
+                <div className="flex items-center space-x-1 text-purple-600 dark:text-purple-400">
+                  <Zap className="h-3 w-3" />
+                  <span>一次性郵件地址 - 適合測試使用</span>
+                </div>
+              );
+            } else if (emailType === 'test') {
+              return (
+                <div className="flex items-center space-x-1 text-orange-600 dark:text-orange-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>{getDevModeMessage('testEmailWarning', language)}</span>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      )}
 
       {/* 發送驗證碼按鈕 */}
       {!isCodeSent && !isVerified && (

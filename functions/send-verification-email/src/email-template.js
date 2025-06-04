@@ -4,14 +4,14 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
   const translations = {
     'en': {
       preview: 'Your LingUBible verification code',
-      title: 'Student Account Verification',
-      greeting: 'Dear Student,',
-      thankYou: 'Thank you for registering for a LingUBible student account. To ensure account security, please use the following verification code to complete the registration process:',
+      title: 'Lingnanians Account Verification',
+      greeting: 'Dear Lingnanians,',
+      thankYou: 'Thank you for registering for a LingUBible Lingnanians account. To ensure account security, please use the following verification code to complete the registration process:',
       importantReminder: 'Important Reminder:',
       expiry: 'This verification code will expire in 10 minutes',
       noShare: 'Do not share the verification code with others',
       ignoreEmail: 'If you did not request this verification code, please ignore this email',
-      notice: 'Notice: Only Lingnan University students with @ln.edu.hk or @ln.hk email addresses can register for LingUBible.',
+      notice: 'Notice: Only Lingnan University Lingnanians with @ln.edu.hk or @ln.hk email addresses can register for LingUBible.',
       support: 'If you have any questions, please contact our technical support team.',
       platform: 'Lingnan University Course & Lecturer Review Platform',
       license: 'Licensed under CC BY-SA',
@@ -19,14 +19,14 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
     },
     'zh-TW': {
       preview: '您的 LingUBible 驗證碼',
-      title: '學生帳戶驗證',
-      greeting: '親愛的同學，您好！',
-      thankYou: '感謝您註冊 LingUBible 學生帳戶。為了確保帳戶安全，請使用以下驗證碼完成註冊程序：',
+      title: '嶺南人帳戶驗證',
+      greeting: '親愛的嶺南人，您好！',
+      thankYou: '感謝您註冊 LingUBible 嶺南人帳戶。為了確保帳戶安全，請使用以下驗證碼完成註冊程序：',
       importantReminder: '重要提醒：',
       expiry: '此驗證碼將在 10 分鐘後過期',
       noShare: '請勿將驗證碼分享給他人',
       ignoreEmail: '如果您沒有請求此驗證碼，請忽略此郵件',
-      notice: '注意事項：只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南大學學生才能註冊 LingUBible。',
+      notice: '注意事項：只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南大學嶺南人才能註冊 LingUBible。',
       support: '如有任何問題，請聯繫我們的技術支援團隊。',
       platform: '嶺南大學課程與講師評價平台',
       license: '採用 CC BY-SA 授權',
@@ -34,14 +34,14 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
     },
     'zh-CN': {
       preview: '您的 LingUBible 验证码',
-      title: '学生账户验证',
-      greeting: '亲爱的同学，您好！',
-      thankYou: '感谢您注册 LingUBible 学生账户。为了确保账户安全，请使用以下验证码完成注册程序：',
+      title: '岭南人账户验证',
+      greeting: '亲爱的岭南人，您好！',
+      thankYou: '感谢您注册 LingUBible 岭南人账户。为了确保账户安全，请使用以下验证码完成注册程序：',
       importantReminder: '重要提醒：',
       expiry: '此验证码将在 10 分钟后过期',
       noShare: '请勿将验证码分享给他人',
       ignoreEmail: '如果您没有请求此验证码，请忽略此邮件',
-      notice: '注意事项：只有使用 @ln.edu.hk 或 @ln.hk 邮件地址的岭南大学学生才能注册 LingUBible。',
+      notice: '注意事项：只有使用 @ln.edu.hk 或 @ln.hk 邮件地址的岭南大学岭南人才能注册 LingUBible。',
       support: '如有任何问题，请联系我们的技术支持团队。',
       platform: '岭南大学课程与讲师评价平台',
       license: '采用 CC BY-SA 授权',
@@ -201,6 +201,113 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
           text-decoration: none;
         }
         
+        /* 深色主題支援 */
+        @media (prefers-color-scheme: dark) {
+          body {
+            background-color: #1a1a1a !important;
+          }
+          
+          .container {
+            background-color: #2d2d2d !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+          }
+          
+          .header {
+            border-bottom: 1px solid #404040 !important;
+          }
+          
+          .brand-name {
+            color: #ef4444 !important;
+          }
+          
+          .platform-text {
+            color: #a0a0a0 !important;
+          }
+          
+          .title {
+            color: #f0f0f0 !important;
+          }
+          
+          .text {
+            color: #e0e0e0 !important;
+          }
+          
+          .code-container {
+            background: #1f1f1f !important;
+            border: 2px solid #ef4444 !important;
+          }
+          
+          .code-text {
+            color: #ef4444 !important;
+          }
+          
+          .reminder-title {
+            color: #f0f0f0 !important;
+          }
+          
+          .reminder-list {
+            color: #e0e0e0 !important;
+          }
+          
+          .notice {
+            color: #f0f0f0 !important;
+          }
+          
+          .footer {
+            background-color: #1f1f1f !important;
+            border-top: 1px solid #404040 !important;
+          }
+          
+          .footer-text {
+            color: #a0a0a0 !important;
+          }
+          
+          .footer-link {
+            color: #a0a0a0 !important;
+          }
+        }
+        
+        /* Outlook 深色主題支援 */
+        [data-ogsc] body {
+          background-color: #1a1a1a !important;
+        }
+        
+        [data-ogsc] .container {
+          background-color: #2d2d2d !important;
+        }
+        
+        [data-ogsc] .title,
+        [data-ogsc] .text,
+        [data-ogsc] .reminder-title,
+        [data-ogsc] .reminder-list,
+        [data-ogsc] .notice {
+          color: #e0e0e0 !important;
+        }
+        
+        [data-ogsc] .brand-name,
+        [data-ogsc] .code-text {
+          color: #ef4444 !important;
+        }
+        
+        [data-ogsc] .platform-text,
+        [data-ogsc] .footer-text,
+        [data-ogsc] .footer-link {
+          color: #a0a0a0 !important;
+        }
+        
+        [data-ogsc] .code-container {
+          background: #1f1f1f !important;
+          border-color: #ef4444 !important;
+        }
+        
+        [data-ogsc] .footer {
+          background-color: #1f1f1f !important;
+        }
+        
+        [data-ogsc] .header {
+          border-bottom-color: #404040 !important;
+        }
+        
         @media (max-width: 600px) {
           .container {
             width: 100%;
@@ -302,9 +409,9 @@ ${t.team}
     html: htmlTemplate,
     text: textTemplate.trim(),
     subject: language === 'en' 
-      ? '【LingUBible】Your Student Verification Code - Do Not Reply'
+      ? '【LingUBible】Your Lingnanians Verification Code - Do Not Reply'
       : language === 'zh-CN'
-      ? '【LingUBible】您的学生验证码 - 请勿回复'
-      : '【LingUBible】您的學生驗證碼 - 請勿回覆'
+      ? '【LingUBible】您的岭南人验证码 - 请勿回复'
+      : '【LingUBible】您的嶺南人驗證碼 - 請勿回覆'
   };
 } 

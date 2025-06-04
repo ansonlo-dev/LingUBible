@@ -2,6 +2,98 @@ import { Resend } from 'resend';
 import { Client, Databases, Query, ID, Users } from 'node-appwrite';
 import { generateEmailTemplate } from './email-template.js';
 
+// 開發模式配置
+const DEV_MODE = {
+  // 從環境變數讀取開發模式設置
+  enabled: process.env.DEV_MODE === 'true',
+  
+  // 開發模式下允許的測試郵件域名（現在允許所有域名）
+  allowedTestDomains: [
+    // 常見郵件服務
+    '@gmail.com',
+    '@outlook.com', 
+    '@hotmail.com',
+    '@yahoo.com',
+    '@test.com',
+    '@example.com',
+    // 一次性郵件服務
+    '@10minutemail.com',
+    '@guerrillamail.com',
+    '@mailinator.com',
+    '@tempmail.org',
+    '@yopmail.com',
+    '@maildrop.cc',
+    '@throwaway.email',
+    '@temp-mail.org',
+    // 開發模式下實際上允許任何域名
+    '*' // 通配符表示允許所有域名
+  ]
+};
+
+// 檢查郵件是否為有效的學生郵件或開發模式下的測試郵件
+const isValidEmailForRegistration = (email) => {
+  const emailLower = email.toLowerCase();
+  
+  // 學生郵件格式檢查
+  const validStudentEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const isStudentEmail = validStudentEmailPattern.test(emailLower);
+  
+  // 如果是學生郵件，直接返回 true
+  if (isStudentEmail) {
+    return true;
+  }
+  
+  // 如果開發模式未啟用，只允許學生郵件
+  if (!DEV_MODE.enabled) {
+    return false;
+  }
+  
+  // 開發模式下，允許任何有效的郵件格式（包括一次性郵件）
+  const generalEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return generalEmailPattern.test(emailLower);
+};
+
+// 檢查是否為學生郵件
+const isStudentEmail = (email) => {
+  const emailLower = email.toLowerCase();
+  const validStudentEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  return validStudentEmailPattern.test(emailLower);
+};
+
+// 檢查是否為一次性郵件
+const isDisposableEmail = (email) => {
+  const emailLower = email.toLowerCase();
+  const disposableDomains = [
+    '10minutemail.com',
+    'guerrillamail.com',
+    'mailinator.com',
+    'tempmail.org',
+    'yopmail.com',
+    'maildrop.cc',
+    'throwaway.email',
+    'temp-mail.org',
+    'sharklasers.com',
+    'grr.la',
+    'guerrillamailblock.com',
+    'pokemail.net',
+    'spam4.me',
+    'bccto.me',
+    'chacuo.net',
+    'dispostable.com',
+    'fakeinbox.com',
+    'mailnesia.com',
+    'mytrashmail.com',
+    'sogetthis.com',
+    'spamgourmet.com',
+    'suremail.info',
+    'trbvm.com',
+    'vpn.st',
+    'zetmail.com'
+  ];
+  
+  return disposableDomains.some(domain => emailLower.endsWith(`@${domain}`));
+};
+
 export default async ({ req, res, log, error }) => {
   try {
     log('🚀 Function 開始執行');
@@ -77,7 +169,7 @@ export default async ({ req, res, log, error }) => {
 // 發送驗證碼函數
 async function sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res) {
   try {
-    log('📧 開始發送驗證碼流程:', { email, language });
+    log('📧 開始發送驗證碼流程:', { email, language, devMode: DEV_MODE.enabled });
 
     // 驗證參數
     if (!email) {
@@ -87,19 +179,33 @@ async function sendVerificationCode(databases, email, language, ipAddress, userA
       }, 400);
     }
 
-    // 驗證學生郵件
-    const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
-    if (!validEmailPattern.test(email.toLowerCase())) {
-      log('❌ 郵件格式驗證失敗:', email);
+    // 使用新的開發模式郵件驗證
+    if (!isValidEmailForRegistration(email)) {
+      log('❌ 郵件格式驗證失敗:', email, '開發模式:', DEV_MODE.enabled);
       const errorMessages = {
-        'en': 'Only @ln.edu.hk or @ln.hk email addresses can register',
-        'zh-TW': '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊',
-        'zh-CN': '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
+        'en': DEV_MODE.enabled 
+          ? 'Please enter a valid email address format'
+          : 'Only @ln.edu.hk or @ln.hk email addresses can register',
+        'zh-TW': DEV_MODE.enabled 
+          ? '請輸入有效的郵件地址格式'
+          : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊',
+        'zh-CN': DEV_MODE.enabled 
+          ? '请输入有效的邮件地址格式'
+          : '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
       };
       return res.json({
         success: false,
         message: errorMessages[language] || errorMessages['zh-TW']
       }, 400);
+    }
+
+    // 開發模式提示
+    if (DEV_MODE.enabled && !isStudentEmail(email)) {
+      if (isDisposableEmail(email)) {
+        log('🔧 開發模式：允許一次性郵件地址', email);
+      } else {
+        log('🔧 開發模式：允許測試郵件地址', email);
+      }
     }
 
     // 檢查是否已有未過期的驗證碼
@@ -185,7 +291,7 @@ async function sendVerificationCode(databases, email, language, ipAddress, userA
     log('✅ 驗證碼已安全存儲到資料庫');
     return res.json({
       success: true,
-      message: '驗證碼已發送到您的學生信箱，請檢查郵件（包括垃圾郵件資料夾）'
+      message: '驗證碼已發送到您的嶺南人信箱，請檢查郵件（包括垃圾郵件資料夾）'
     });
 
   } catch (err) {
@@ -388,7 +494,7 @@ async function sendEmail(email, code, language, apiKey, log, error) {
 // 創建帳戶並自動設置為已驗證
 async function createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, log, error, res) {
   try {
-    log('🚀 開始創建已驗證的帳戶:', { email, name });
+    log('🚀 開始創建已驗證的帳戶:', { email, name, devMode: DEV_MODE.enabled });
 
     // 驗證參數
     if (!email || !password || !name) {
@@ -398,14 +504,24 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
       }, 400);
     }
 
-    // 驗證學生郵件格式
-    const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
-    if (!validEmailPattern.test(email.toLowerCase())) {
-      log('❌ 郵件格式驗證失敗:', email);
+    // 使用新的開發模式郵件驗證
+    if (!isValidEmailForRegistration(email)) {
+      log('❌ 郵件格式驗證失敗:', email, '開發模式:', DEV_MODE.enabled);
       return res.json({
         success: false,
-        message: '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊'
+        message: DEV_MODE.enabled 
+          ? '請輸入有效的郵件地址格式'
+          : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊'
       }, 400);
+    }
+
+    // 開發模式提示
+    if (DEV_MODE.enabled && !isStudentEmail(email)) {
+      if (isDisposableEmail(email)) {
+        log('🔧 開發模式：允許一次性郵件地址', email);
+      } else {
+        log('🔧 開發模式：允許測試郵件地址', email);
+      }
     }
 
     // 檢查郵件是否已通過驗證
@@ -425,7 +541,7 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
       log('❌ 郵件未通過驗證');
       return res.json({
         success: false,
-        message: '請先驗證您的學生郵件地址'
+        message: '請先驗證您的嶺南人郵件地址'
       }, 400);
     }
 
@@ -474,7 +590,7 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
 
       return res.json({
         success: true,
-        message: '帳戶創建成功！您的學生郵件已自動驗證',
+        message: '帳戶創建成功！您的嶺南人郵件已自動驗證',
         userId: newUser.$id
       });
 

@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,9 +10,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { SmartAvatar } from '@/components/ui/smart-avatar';
+import { AvatarCustomizer } from '@/components/AvatarCustomizer';
+import { useCustomAvatar } from '@/hooks/useCustomAvatar';
+import { Palette, LogOut } from 'lucide-react';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
+  const { customAvatar } = useCustomAvatar();
   const [isDark, setIsDark] = useState(false);
 
   // 監聽主題變化
@@ -49,17 +56,27 @@ export function UserMenu() {
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full w-10 h-10 bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+          className="rounded-full p-0 hover:bg-secondary/80 transition-colors"
           title={user.email}
         >
-          <span className="text-lg font-bold text-foreground">
-            {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
-          </span>
+          <SmartAvatar
+            userId={user.$id}
+            name={user.name}
+            email={user.email}
+            customAvatar={customAvatar}
+            config={{
+              showPersonalAvatar: true,
+              showAnonymousAvatar: false,
+              size: 'md',
+              context: 'menu'
+            }}
+            className="border-2 border-primary/20"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end"
-        className="bg-background border shadow-lg backdrop-blur-none w-40"
+        className="bg-background border shadow-lg backdrop-blur-none w-48"
         style={{ 
           backgroundColor: isDark ? '#000000' : '#ffffff',
           backdropFilter: 'none',
@@ -70,13 +87,28 @@ export function UserMenu() {
           {user.email}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        
+        {/* 自定義頭像選項 */}
+        <AvatarCustomizer>
+          <DropdownMenuItem 
+            className="px-4 py-2 text-sm cursor-pointer"
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Palette className="h-4 w-4 mr-2" />
+            {t('avatar.customize')}
+          </DropdownMenuItem>
+        </AvatarCustomizer>
+        
+        <DropdownMenuSeparator />
+        
         <DropdownMenuItem
           onClick={async () => {
             await logout();
           }}
           className="px-4 py-2 text-sm"
         >
-          登出
+          <LogOut className="h-4 w-4 mr-2" />
+          {t('auth.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

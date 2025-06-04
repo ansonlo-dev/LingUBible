@@ -4,12 +4,13 @@
 // import { VerificationEmail } from '../emails/VerificationEmail';
 // import React from 'react';
 
-// 簡化的學生驗證服務 - 使用 Appwrite 資料庫存儲，所有邏輯在後端
+// 簡化的嶺南人驗證服務 - 使用 Appwrite 資料庫存儲，所有邏輯在後端
+import { isValidEmailForRegistration, isStudentEmail, DEV_MODE } from '@/config/devMode';
 
 class StudentVerificationService {
   private readonly ALLOWED_DOMAINS = ['@ln.edu.hk', '@ln.hk'];
 
-  // 檢查郵件是否為有效的學生郵件
+  // 檢查郵件是否為有效的學生郵件（保留以兼容性）
   private isValidStudentEmail(email: string): boolean {
     const emailLower = email.toLowerCase();
     // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
@@ -184,12 +185,18 @@ class StudentVerificationService {
   // 發送驗證碼郵件（支援多語言）
   async sendVerificationCode(email: string, language: string = 'zh-TW'): Promise<{ success: boolean; message: string }> {
     try {
-      // 檢查郵件格式
-      if (!this.isValidStudentEmail(email)) {
+      // 使用新的開發模式郵件驗證
+      if (!isValidEmailForRegistration(email)) {
         const messages = {
-          'en': 'Only @ln.edu.hk or @ln.hk email addresses can register',
-          'zh-TW': '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊',
-          'zh-CN': '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
+          'en': DEV_MODE.enabled 
+            ? 'Please enter a valid email address format'
+            : 'Only @ln.edu.hk or @ln.hk email addresses can register',
+          'zh-TW': DEV_MODE.enabled 
+            ? '請輸入有效的郵件地址格式'
+            : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊',
+          'zh-CN': DEV_MODE.enabled 
+            ? '请输入有效的邮件地址格式'
+            : '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
         };
         return {
           success: false,
@@ -250,11 +257,13 @@ class StudentVerificationService {
         };
       }
 
-      // 檢查郵件格式
-      if (!this.isValidStudentEmail(email)) {
+      // 使用新的開發模式郵件驗證
+      if (!isValidEmailForRegistration(email)) {
         return {
           success: false,
-          message: '只有 @ln.edu.hk 或 @ln.hk 郵件地址的學生才能註冊'
+          message: DEV_MODE.enabled 
+            ? '請輸入有效的郵件地址格式'
+            : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊'
         };
       }
 

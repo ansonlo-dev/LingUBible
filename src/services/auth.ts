@@ -17,7 +17,7 @@ export const authService = {
         }
     },
 
-    // 發送學生驗證碼
+    // 發送嶺南人驗證碼
     async sendStudentVerificationCode(email: string) {
         try {
             return await studentVerificationService.sendVerificationCode(email);
@@ -30,7 +30,7 @@ export const authService = {
         }
     },
 
-    // 驗證學生驗證碼
+    // 驗證嶺南人驗證碼
     async verifyStudentCode(email: string, code: string): Promise<{ success: boolean; message: string }> {
         try {
             return await studentVerificationService.verifyCode(email, code);
@@ -43,7 +43,7 @@ export const authService = {
         }
     },
 
-    // 檢查學生郵件是否已驗證
+    // 檢查嶺南人郵件是否已驗證
     async isStudentEmailVerified(email: string): Promise<boolean> {
         try {
             return await studentVerificationService.isEmailVerified(email);
@@ -63,7 +63,7 @@ export const authService = {
         }
     },
 
-    // 註冊新用戶（需要先驗證學生郵件）
+    // 註冊新用戶（需要先驗證嶺南人郵件）
     async createAccount(email: string, password: string, name: string) {
         try {
             // 使用後端 API 創建已驗證的帳戶

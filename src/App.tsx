@@ -14,11 +14,13 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import AvatarDemo from "./pages/AvatarDemo";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 import { swipeHintCookie } from '@/lib/cookies';
+import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
@@ -78,7 +80,15 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    // 只在桌面版時從 cookie 讀取狀態
+    if (window.innerWidth >= 768) {
+      return sidebarStateCookie.getState();
+    }
+    // 手機版默認收縮
+    return false;
+  });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
@@ -177,20 +187,31 @@ const AppContent = () => {
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
+      const wasMobile = isMobile;
       setIsMobile(mobile);
       
-      // 當從手機版切換到桌面版時，關閉手機版側邊欄
-      if (!mobile && isMobileSidebarOpen) {
+      // 當從手機版切換到桌面版時
+      if (wasMobile && !mobile) {
+        // 關閉手機版側邊欄
         setIsMobileSidebarOpen(false);
+        // 從 cookie 讀取桌面版側邊欄狀態
+        setIsSidebarCollapsed(sidebarStateCookie.getState());
       }
+      // 當從桌面版切換到手機版時，不需要特殊處理
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isMobileSidebarOpen]);
+  }, [isMobile, isMobileSidebarOpen]);
 
   const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    const newCollapsedState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newCollapsedState);
+    
+    // 只在桌面版時保存狀態到 cookie
+    if (!isMobile) {
+      sidebarStateCookie.saveState(newCollapsedState);
+    }
   };
 
   const toggleMobileSidebar = () => {
@@ -331,6 +352,7 @@ const AppContent = () => {
                 <main className="content-area">
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/avatar-demo" element={<AvatarDemo />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

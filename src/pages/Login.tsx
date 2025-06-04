@@ -182,6 +182,22 @@ export default function Login() {
             <Link to="/privacy" className="hover:underline">{t('auth.privacy')}</Link>
           </div>
         </div>
+
+        {/* Footer Links */}
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+          <a href="mailto:contact@lingubible.com" className="hover:text-foreground transition-colors">
+            {t('auth.contact')}
+          </a>
+          <Link to="/terms" className="hover:text-foreground transition-colors">
+            {t('auth.termsLink')}
+          </Link>
+          <Link to="/privacy" className="hover:text-foreground transition-colors">
+            {t('auth.privacyLink')}
+          </Link>
+          <a href="#" className="hover:text-foreground transition-colors">
+            {t('auth.help')}
+          </a>
+        </div>
       </div>
     </div>
   );
