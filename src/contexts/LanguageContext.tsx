@@ -152,6 +152,13 @@ const translations = {
     'auth.enterAccountInfo': 'Enter your account information to sign in',
     'auth.resetYourPassword': 'Reset your password',
     'auth.signOut': 'Sign Out',
+    // Toast messages
+    'toast.loginSuccess': 'Login Successful!',
+    'toast.welcomeBack': 'Welcome back, {username}!',
+    'toast.registerSuccess': 'Registration Successful!',
+    'toast.welcomeToApp': 'Welcome to LingUBible, {username}!',
+    'toast.logoutSuccess': 'Logout Successful',
+    'toast.goodbye': 'Goodbye, {username}! Looking forward to your next visit.',
     // Search
     'search.placeholder': 'Search courses, lecturers...',
     // Buttons
@@ -454,6 +461,11 @@ const translations = {
     'privacy.changes.content': 'We may update this privacy policy from time to time. Major changes will be announced through website notifications.',
     'privacy.contact.title': '8. Contact Us',
     'privacy.contact.content': 'If you have any questions about this privacy policy or need to exercise your rights, please contact us through the website contact feature.',
+    // Privacy badges and labels
+    'privacy.important': 'Important',
+    'privacy.days30': '30 days',
+    'privacy.days90': '90 days',
+    'privacy.anytime': 'Anytime',
     // Common
     'common.backToHome': 'Back to Home',
     'common.lastUpdated': 'Last updated',
@@ -540,8 +552,6 @@ const translations = {
     'settings.deleteAccount.successDesc': 'Your account has been temporarily disabled. You can re-enable it by logging in again.',
     'settings.deleteAccount.failed': 'Disabling Failed',
     'settings.deleteAccount.failedDesc': 'Failed to disable account, please try again later.',
-    'auth.passwordTooShort': 'Password must be between 8 and 256 characters long',
-    'auth.rateLimitExceeded': 'Rate limit exceeded. Please try again after some time',
     'auth.showPassword': 'Show password',
     'auth.hidePassword': 'Hide password',
   },
@@ -631,6 +641,13 @@ const translations = {
     'auth.enterAccountInfo': '輸入您的帳戶資訊來登入',
     'auth.resetYourPassword': '重置您的密碼',
     'auth.signOut': '登出',
+    // Toast messages
+    'toast.loginSuccess': '登入成功！',
+    'toast.welcomeBack': '歡迎回來，{username}！',
+    'toast.registerSuccess': '註冊成功！',
+    'toast.welcomeToApp': '歡迎來到 LingUBible，{username}！',
+    'toast.logoutSuccess': '登出成功',
+    'toast.goodbye': '再見，{username}！期待您的下次造訪。',
     // Search
     'search.placeholder': '搜尋課程、講師...',
     // Buttons
@@ -933,6 +950,11 @@ const translations = {
     'privacy.changes.content': '我們可能會不時更新此隱私政策。重大變更將通過網站公告通知用戶。',
     'privacy.contact.title': '8. 聯繫我們',
     'privacy.contact.content': '如果您對此隱私政策有任何疑問或需要行使您的權利，請通過網站聯繫功能與我們聯繫。',
+    // Privacy badges and labels
+    'privacy.important': '重要',
+    'privacy.days30': '30 天',
+    'privacy.days90': '90 天',
+    'privacy.anytime': '隨時',
     // Common
     'common.backToHome': '返回首頁',
     'common.lastUpdated': '最後更新',
@@ -1108,6 +1130,13 @@ const translations = {
     'auth.enterAccountInfo': '输入您的账户信息来登录',
     'auth.resetYourPassword': '重置您的密码',
     'auth.signOut': '登出',
+    // Toast messages
+    'toast.loginSuccess': '登录成功！',
+    'toast.welcomeBack': '欢迎回来，{username}！',
+    'toast.registerSuccess': '注册成功！',
+    'toast.welcomeToApp': '欢迎来到 LingUBible，{username}！',
+    'toast.logoutSuccess': '退出成功',
+    'toast.goodbye': '再见，{username}！期待您的下次造访。',
     // Search
     'search.placeholder': '搜索课程、讲师...',
     // Buttons
@@ -1403,6 +1432,11 @@ const translations = {
     'privacy.changes.content': '我们可能会不时更新此隐私政策。重大变更将通过网站公告通知用户。',
     'privacy.contact.title': '8. 联系我们',
     'privacy.contact.content': '如果您对此隐私政策有任何疑问或需要行使您的权利，请通过网站联系功能与我们联系。',
+    // Privacy badges and labels
+    'privacy.important': '重要',
+    'privacy.days30': '30 天',
+    'privacy.days90': '90 天',
+    'privacy.anytime': '随时',
     // Common
     'common.backToHome': '返回首页',
     'common.lastUpdated': '最后更新',
@@ -1489,10 +1523,8 @@ const translations = {
     'settings.deleteAccount.successDesc': '您的账户已暂时禁用。您可以通过重新登录来重新启用。',
     'settings.deleteAccount.failed': '禁用失败',
     'settings.deleteAccount.failedDesc': '禁用账户失败，请稍后再试。',
-    'auth.passwordTooShort': 'Password must be between 8 and 256 characters long',
-    'auth.rateLimitExceeded': 'Rate limit exceeded. Please try again after some time',
-    'auth.showPassword': 'Show password',
-    'auth.hidePassword': 'Hide password',
+    'auth.showPassword': '显示密码',
+    'auth.hidePassword': '隐藏密码',
   },
 };
 

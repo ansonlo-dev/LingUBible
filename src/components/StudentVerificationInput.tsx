@@ -100,6 +100,17 @@ export function StudentVerificationInput({
         
         // 額外的成功提示
         console.log('✅ 驗證碼發送成功');
+        
+        // 開發模式下自動完成驗證
+        if (DEV_MODE.enabled) {
+          console.log('🔧 開發模式：自動完成驗證');
+          setTimeout(() => {
+            setIsVerified(true);
+            setMessage('開發模式：驗證已自動完成');
+            setMessageType('success');
+            onCodeVerified();
+          }, 500); // 短暫延遲以顯示發送成功訊息
+        }
       } else {
         setMessage(result.message);
         setMessageType('error');

@@ -97,7 +97,10 @@ export default function Register() {
         setError('此電子郵件地址已被註冊');
       } else if (error?.message?.includes('Password must be between 8 and 256 characters') || 
                  error?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
-        setError(t('auth.passwordTooShort'));
+        // 在開發模式下跳過密碼長度錯誤，因為後端會自動使用預設密碼
+        if (!DEV_MODE.enabled || !DEV_MODE.bypassPassword) {
+          setError(t('auth.passwordTooShort'));
+        }
       } else if (error?.message?.includes('Rate limit') || 
                  error?.message?.includes('Too many requests') ||
                  error?.message?.includes('Rate limit for the current endpoint has been exceeded')) {
@@ -144,6 +147,23 @@ export default function Register() {
   const handlePasswordValidationChange = (isValid: boolean) => {
     setIsPasswordValid(isValid);
   };
+
+  // 開發模式下的自動驗證效果
+  useEffect(() => {
+    if (DEV_MODE.enabled && DEV_MODE.bypassPassword && password) {
+      console.log('🔧 開發模式：自動設置密碼為有效');
+      setIsPasswordValid(true);
+    }
+  }, [password]);
+
+  // 開發模式下的用戶名自動驗證
+  useEffect(() => {
+    if (DEV_MODE.enabled && username && username.length >= 3) {
+      console.log('🔧 開發模式：自動設置用戶名為有效');
+      setIsUsernameValid(true);
+      setUsernameError('');
+    }
+  }, [username]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">

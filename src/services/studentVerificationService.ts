@@ -182,9 +182,33 @@ class StudentVerificationService {
     return false;
   }
 
+  // 標記郵件為已驗證（開發模式用）
+  private markEmailAsVerified(email: string): void {
+    if (DEV_MODE.enabled) {
+      console.log(`🔧 開發模式：標記 ${email} 為已驗證`);
+      // 在開發模式下，我們可以在 localStorage 中暫存驗證狀態
+      const verifiedEmails = JSON.parse(localStorage.getItem('dev_verified_emails') || '[]');
+      if (!verifiedEmails.includes(email)) {
+        verifiedEmails.push(email);
+        localStorage.setItem('dev_verified_emails', JSON.stringify(verifiedEmails));
+      }
+    }
+  }
+
   // 發送驗證碼郵件（支援多語言）
   async sendVerificationCode(email: string, language: string = 'zh-TW'): Promise<{ success: boolean; message: string }> {
     try {
+      // 開發模式繞過驗證
+      if (DEV_MODE.enabled) {
+        console.log('🔧 開發模式：繞過郵件驗證');
+        // 在開發模式下，直接標記為已驗證
+        this.markEmailAsVerified(email);
+        return {
+          success: true,
+          message: '開發模式：驗證碼已自動通過'
+        };
+      }
+
       // 使用新的開發模式郵件驗證
       if (!isValidEmailForRegistration(email)) {
         const messages = {
@@ -216,9 +240,19 @@ class StudentVerificationService {
     }
   }
 
-  // 驗證驗證碼（使用後端驗證）
+  // 驗證驗證碼
   async verifyCode(email: string, inputCode: string): Promise<{ success: boolean; message: string }> {
     try {
+      // 開發模式繞過驗證
+      if (DEV_MODE.enabled) {
+        console.log('🔧 開發模式：繞過驗證碼檢查');
+        this.markEmailAsVerified(email);
+        return {
+          success: true,
+          message: '開發模式：驗證碼已自動通過'
+        };
+      }
+
       // 基本參數檢查
       if (!email || !inputCode) {
         return {
@@ -386,6 +420,12 @@ class StudentVerificationService {
 
   // 檢查郵件是否已驗證（需要調用後端 API）
   async isEmailVerified(email: string): Promise<boolean> {
+    // 開發模式檢查
+    if (DEV_MODE.enabled) {
+      const verifiedEmails = JSON.parse(localStorage.getItem('dev_verified_emails') || '[]');
+      return verifiedEmails.includes(email);
+    }
+
     // 注意：這個方法現在需要是異步的，因為需要查詢後端
     // 在實際使用中，建議在驗證成功後在前端暫存驗證狀態
     console.warn('isEmailVerified 方法需要後端 API 支援，目前返回 false');

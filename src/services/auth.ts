@@ -1,6 +1,7 @@
 import { account, ID } from '../lib/appwrite';
 import { Models } from 'appwrite';
 import { studentVerificationService } from './studentVerificationService';
+import { DEV_MODE } from '../config/devMode';
 
 export interface AuthUser extends Models.User<Models.Preferences> {}
 
@@ -97,7 +98,31 @@ export const authService = {
             }
 
             // 創建新的 session
-            const session = await account.createEmailPasswordSession(email, password);
+            let session;
+            try {
+                session = await account.createEmailPasswordSession(email, password);
+            } catch (loginError: any) {
+                // 在開發模式下，如果是密碼相關錯誤，嘗試使用預設密碼
+                if (DEV_MODE.enabled && loginError?.message && (
+                    loginError.message.includes('Invalid credentials') ||
+                    loginError.message.includes('Invalid `password` param') ||
+                    loginError.message.includes('Password must be between 8 and 256 characters') ||
+                    loginError.message.includes('password') ||
+                    loginError.code === 400
+                )) {
+                    console.log('🔧 開發模式：原密碼登入失敗，嘗試使用預設密碼');
+                    console.log('🔍 原始錯誤:', loginError.message);
+                    try {
+                        session = await account.createEmailPasswordSession(email, 'DevMode123!@#');
+                        console.log('✅ 開發模式：預設密碼登入成功');
+                    } catch (devPasswordError) {
+                        console.log('❌ 開發模式：預設密碼登入也失敗');
+                        throw loginError; // 拋出原始錯誤
+                    }
+                } else {
+                    throw loginError;
+                }
+            }
             
             // 如果不選擇記住我，設置 session 為瀏覽器關閉時過期
             if (!rememberMe) {

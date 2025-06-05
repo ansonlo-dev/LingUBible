@@ -297,6 +297,52 @@ export const getTotalCombinations = (): number => {
   return CUTE_AVATARS.length * BACKGROUND_COLORS.length;
 };
 
+// 獲取隨機頭像組合
+export const getRandomAvatarCombination = (): { animal: string; background: typeof BACKGROUND_COLORS[0]; animalIndex: number; backgroundIndex: number } => {
+  const animalIndex = Math.floor(Math.random() * CUTE_AVATARS.length);
+  const backgroundIndex = Math.floor(Math.random() * BACKGROUND_COLORS.length);
+  
+  return {
+    animal: CUTE_AVATARS[animalIndex],
+    background: BACKGROUND_COLORS[backgroundIndex],
+    animalIndex,
+    backgroundIndex
+  };
+};
+
+// 獲取所有可能的頭像組合（分頁）
+export const getAllAvatarCombinations = (page: number = 0, pageSize: number = 100): Array<{ animal: string; background: typeof BACKGROUND_COLORS[0]; animalIndex: number; backgroundIndex: number }> => {
+  const combinations: Array<{ animal: string; background: typeof BACKGROUND_COLORS[0]; animalIndex: number; backgroundIndex: number }> = [];
+  
+  for (let animalIndex = 0; animalIndex < CUTE_AVATARS.length; animalIndex++) {
+    for (let backgroundIndex = 0; backgroundIndex < BACKGROUND_COLORS.length; backgroundIndex++) {
+      combinations.push({
+        animal: CUTE_AVATARS[animalIndex],
+        background: BACKGROUND_COLORS[backgroundIndex],
+        animalIndex,
+        backgroundIndex
+      });
+    }
+  }
+  
+  const startIndex = page * pageSize;
+  const endIndex = startIndex + pageSize;
+  return combinations.slice(startIndex, endIndex);
+};
+
+// 隨機打亂所有組合
+export const getShuffledAvatarCombinations = (): Array<{ animal: string; background: typeof BACKGROUND_COLORS[0]; animalIndex: number; backgroundIndex: number }> => {
+  const combinations = getAllAvatarCombinations(0, getTotalCombinations());
+  
+  // Fisher-Yates 洗牌算法
+  for (let i = combinations.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combinations[i], combinations[j]] = [combinations[j], combinations[i]];
+  }
+  
+  return combinations;
+};
+
 // 獲取本地化的背景名稱
 export const getLocalizedBackgroundName = (backgroundKey: string, t: (key: string) => string): string => {
   return t(backgroundKey);

@@ -99,7 +99,7 @@ export default function Privacy() {
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-green-600" />
                 {t('privacy.anonymity.title')}
-                <Badge variant="secondary" className="ml-2 bg-gray-700 text-white hover:bg-gray-600">重要</Badge>
+                <Badge variant="secondary" className="ml-2 bg-gray-700 text-white hover:bg-gray-600">{t('privacy.important')}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -157,17 +157,17 @@ export default function Privacy() {
               <div className="bg-muted/50 rounded-lg p-2 space-y-1">
                 <div className="flex items-center gap-3 px-2 py-1">
                   <span className="text-sm text-muted-foreground flex-1">{t('privacy.dataRetention.sessionData')}</span>
-                  <Badge variant="outline">30 天</Badge>
+                  <Badge variant="outline">{t('privacy.days30')}</Badge>
                 </div>
                 
                 <div className="flex items-center gap-3 px-2 py-1">
                   <span className="text-sm text-muted-foreground flex-1">{t('privacy.dataRetention.logData')}</span>
-                  <Badge variant="outline">90 天</Badge>
+                  <Badge variant="outline">{t('privacy.days90')}</Badge>
                 </div>
                 
                 <div className="flex items-center gap-3 px-2 py-1">
                   <span className="text-sm text-muted-foreground flex-1">{t('privacy.dataRetention.userContent')}</span>
-                  <Badge variant="outline">隨時</Badge>
+                  <Badge variant="outline">{t('privacy.anytime')}</Badge>
                 </div>
               </div>
             </CardContent>

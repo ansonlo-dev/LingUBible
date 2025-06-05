@@ -9,13 +9,22 @@ import { useAvatarPreferences } from '@/hooks/useAvatarPreferences';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Users, MessageSquare, Palette, Sparkles, BarChart3 } from 'lucide-react';
-import { getTotalCombinations, getAllAnimals, getAllBackgrounds } from '@/utils/avatarUtils';
+import { RefreshCw, Users, MessageSquare, Palette, Sparkles, BarChart3, Shuffle, Grid3X3 } from 'lucide-react';
+import { 
+  getTotalCombinations, 
+  getAllAnimals, 
+  getAllBackgrounds,
+  getRandomAvatarCombination,
+  getAllAvatarCombinations,
+  getShuffledAvatarCombinations
+} from '@/utils/avatarUtils';
 
 export default function AvatarDemo() {
   const { user } = useAuth();
   const { preferences } = useAvatarPreferences();
   const { customAvatar, isInitialLoading } = useCustomAvatar();
+  const [randomCombinations, setRandomCombinations] = useState<Array<{ animal: string; background: any; animalIndex: number; backgroundIndex: number }>>([]);
+  const [showingAllCombinations, setShowingAllCombinations] = useState(false);
   const [demoReviews, setDemoReviews] = useState([
     {
       reviewId: 'demo-review-1',
@@ -68,6 +77,29 @@ export default function AvatarDemo() {
   const totalBackgrounds = getAllBackgrounds().length;
   const totalCombinations = getTotalCombinations();
 
+  // 生成隨機組合
+  const generateRandomCombinations = (count: number = 20) => {
+    const combinations = [];
+    for (let i = 0; i < count; i++) {
+      combinations.push(getRandomAvatarCombination());
+    }
+    setRandomCombinations(combinations);
+  };
+
+  // 顯示所有組合（前100個）
+  const showAllCombinations = () => {
+    const allCombinations = getAllAvatarCombinations(0, 100);
+    setRandomCombinations(allCombinations);
+    setShowingAllCombinations(true);
+  };
+
+  // 隨機打亂所有組合（前50個）
+  const shuffleAllCombinations = () => {
+    const shuffled = getShuffledAvatarCombinations().slice(0, 50);
+    setRandomCombinations(shuffled);
+    setShowingAllCombinations(false);
+  };
+
   // 重新生成評論頭像
   const regenerateReviews = () => {
     setDemoReviews(prev => prev.map(review => ({
@@ -97,9 +129,10 @@ export default function AvatarDemo() {
       </div>
 
       <Tabs defaultValue="demo" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="demo">頭像展示</TabsTrigger>
           <TabsTrigger value="customizer">自定義頭像</TabsTrigger>
+          <TabsTrigger value="combinations">隨機組合</TabsTrigger>
           <TabsTrigger value="reviews">評論演示</TabsTrigger>
           <TabsTrigger value="settings">設置</TabsTrigger>
         </TabsList>
@@ -286,6 +319,75 @@ export default function AvatarDemo() {
                   <li>• 隨時可以重置為系統默認</li>
                 </ul>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="combinations" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Grid3X3 className="h-5 w-5" />
+                隨機頭像組合生成器
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                探索所有 {totalCombinations.toLocaleString()} 種頭像組合的可能性
+              </p>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => generateRandomCombinations(20)} variant="outline">
+                  <Shuffle className="h-4 w-4 mr-2" />
+                  生成 20 個隨機組合
+                </Button>
+                <Button onClick={() => generateRandomCombinations(50)} variant="outline">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  生成 50 個隨機組合
+                </Button>
+                <Button onClick={showAllCombinations} variant="outline">
+                  <Grid3X3 className="h-4 w-4 mr-2" />
+                  顯示前 100 個組合
+                </Button>
+                <Button onClick={shuffleAllCombinations} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  隨機打亂 50 個組合
+                </Button>
+              </div>
+
+              {randomCombinations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">
+                      {showingAllCombinations ? '前 100 個組合' : `隨機生成的 ${randomCombinations.length} 個組合`}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      點擊任意頭像查看詳細信息
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4">
+                    {randomCombinations.map((combo, index) => (
+                      <div key={index} className="text-center space-y-2">
+                        <div 
+                          className={`
+                            w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl
+                            bg-gradient-to-br ${combo.background.light} dark:${combo.background.dark}
+                            hover:scale-110 transition-transform duration-200 cursor-pointer
+                            border-2 border-transparent hover:border-primary/50
+                          `}
+                          title={`${combo.animal} + ${combo.background.name}`}
+                        >
+                          {combo.animal}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          #{combo.animalIndex + 1}-{combo.backgroundIndex + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

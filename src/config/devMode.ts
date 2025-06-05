@@ -3,6 +3,9 @@ export const DEV_MODE = {
   // 是否啟用開發模式
   enabled: import.meta.env.VITE_DEV_MODE === 'true',
   
+  // 是否繞過密碼強度要求（僅開發模式）
+  bypassPassword: import.meta.env.VITE_DEV_BYPASS_PASSWORD === 'true',
+  
   // 開發模式下允許的測試郵件域名（現在允許所有域名）
   allowedTestDomains: [
     // 常見郵件服務
@@ -31,19 +34,25 @@ export const DEV_MODE = {
       devModeEnabled: '🔧 開發模式已啟用 - 允許任何郵件地址註冊（包括一次性郵件）',
       testEmailWarning: '⚠️ 這是測試郵件地址，僅在開發模式下可用',
       productionWarning: '🚨 生產環境請關閉開發模式',
-      disposableEmailTip: '💡 提示：您可以使用一次性郵件服務如 10minutemail.com, tempmail.org 等'
+      disposableEmailTip: '💡 提示：您可以使用一次性郵件服務如 10minutemail.com, tempmail.org 等',
+      passwordBypassEnabled: '🔓 密碼強度檢查已繞過 - 開發模式',
+      passwordBypassWarning: '⚠️ 生產環境請啟用密碼強度檢查'
     },
     'zh-CN': {
       devModeEnabled: '🔧 开发模式已启用 - 允许任何邮件地址注册（包括一次性邮件）',
       testEmailWarning: '⚠️ 这是测试邮件地址，仅在开发模式下可用',
       productionWarning: '🚨 生产环境请关闭开发模式',
-      disposableEmailTip: '💡 提示：您可以使用一次性邮件服务如 10minutemail.com, tempmail.org 等'
+      disposableEmailTip: '💡 提示：您可以使用一次性邮件服务如 10minutemail.com, tempmail.org 等',
+      passwordBypassEnabled: '🔓 密码强度检查已绕过 - 开发模式',
+      passwordBypassWarning: '⚠️ 生产环境请启用密码强度检查'
     },
     'en': {
       devModeEnabled: '🔧 Dev Mode Enabled - Any email address allowed (including disposable emails)',
       testEmailWarning: '⚠️ This is a test email address, only available in dev mode',
       productionWarning: '🚨 Please disable dev mode in production',
-      disposableEmailTip: '💡 Tip: You can use disposable email services like 10minutemail.com, tempmail.org etc.'
+      disposableEmailTip: '💡 Tip: You can use disposable email services like 10minutemail.com, tempmail.org etc.',
+      passwordBypassEnabled: '🔓 Password strength check bypassed - Dev Mode',
+      passwordBypassWarning: '⚠️ Please enable password strength check in production'
     }
   }
 };

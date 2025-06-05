@@ -3,6 +3,7 @@ import { authService, AuthUser } from '../services/auth';
 import { toast } from '@/components/ui/use-toast';
 import { getAvatarContent } from '@/utils/avatarUtils';
 import { avatarService } from '@/services/avatarService';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -34,6 +35,7 @@ const getUserDisplayName = (user: AuthUser | null): string => {
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         checkUser();
@@ -111,8 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             toast({
                 variant: "success",
-                title: `${userAvatar}🎉 登入成功！`,
-                description: `歡迎回來，${username}！`,
+                title: `${userAvatar}🎉 ${t('toast.loginSuccess')}`,
+                description: t('toast.welcomeBack', { username }),
                 duration: 4000,
             });
         } catch (error) {
@@ -162,8 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             toast({
                 variant: "success",
-                title: `${userAvatar}🎊 註冊成功！`,
-                description: `歡迎加入 LingUBible，${username}！`,
+                title: `${userAvatar}🎊 ${t('toast.registerSuccess')}`,
+                description: t('toast.welcomeToApp', { username }),
                 duration: 4000,
             });
         } catch (error) {
@@ -230,8 +232,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             toast({
                 variant: "success",
-                title: `${userAvatar}👋 登出成功`,
-                description: `再見，${username}！期待您的下次造訪。`,
+                title: `${userAvatar}👋 ${t('toast.logoutSuccess')}`,
+                description: t('toast.goodbye', { username }),
                 duration: 4000,
             });
         } catch (error) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Check, X, AlertTriangle, Shield } from 'lucide-react';
+import { Check, X, AlertTriangle, Shield, Info } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { DEV_MODE, getDevModeMessage } from '@/config/devMode';
 
 interface ValidationRule {
   id: string;
@@ -62,6 +63,14 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
       setRules([]);
       setStrength('weak');
       onValidationChange(false);
+      return;
+    }
+
+    // 開發模式密碼繞過
+    if (DEV_MODE.enabled && DEV_MODE.bypassPassword) {
+      setRules([]);
+      setStrength('strong');
+      onValidationChange(true);
       return;
     }
 
@@ -214,6 +223,42 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
   };
 
   if (!password) return null;
+
+  // 開發模式密碼繞過提示
+  if (DEV_MODE.enabled && DEV_MODE.bypassPassword) {
+    return (
+      <div className="space-y-4 p-4 border border-border rounded-lg bg-card">
+        <div className="flex items-center space-x-2">
+          <Shield className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">{t('password.strength')}</span>
+        </div>
+
+        {/* 開發模式繞過提示 */}
+        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+          <div className="flex items-start space-x-2">
+            <Info className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5" />
+            <div className="text-sm text-green-600 dark:text-green-400">
+              <p className="font-medium">🔓 密碼強度檢查已繞過 - 開發模式</p>
+              <p>⚠️ 生產環境請啟用密碼強度檢查</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 簡化的強度指示器 */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">{t('password.strengthLabel')}</span>
+            <span className="text-sm font-medium text-green-600 dark:text-green-400">
+              {t('password.strong')} (開發模式)
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div className="h-2 rounded-full transition-all duration-300 bg-green-500 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4 border border-border rounded-lg bg-card">
