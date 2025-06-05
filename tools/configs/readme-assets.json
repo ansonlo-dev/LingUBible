@@ -1,0 +1,22 @@
+{
+  "previews": {
+    "lightTheme": "https://via.placeholder.com/800x500/f8fafc/1e293b?text=Campus%20Comment%20Verse%20-%20Light%20Theme",
+    "darkTheme": "https://via.placeholder.com/800x500/0f172a/e2e8f0?text=Campus%20Comment%20Verse%20-%20Dark%20Theme",
+    "responsive": "https://via.placeholder.com/1200x300/3b82f6/ffffff?text=Responsive%20Design%20%7C%20Desktop%20%7C%20Tablet%20%7C%20Mobile"
+  },
+  "features": {
+    "courseReview": "https://via.placeholder.com/600x400/f8fafc/1e293b?text=Course%20Review%20System",
+    "lecturerRating": "https://via.placeholder.com/600x400/f8fafc/1e293b?text=Lecturer%20Rating%20System",
+    "smartSearch": "https://via.placeholder.com/600x400/f8fafc/1e293b?text=Smart%20Search%20Function",
+    "multilingual": "https://via.placeholder.com/600x400/f8fafc/1e293b?text=Multilingual%20Support"
+  },
+  "architecture": {
+    "techStack": "https://via.placeholder.com/800x600/ffffff/1e293b?text=Technology%20Stack%20Architecture",
+    "projectStructure": "https://via.placeholder.com/800x600/ffffff/1e293b?text=Project%20Structure%20Diagram"
+  },
+  "mobile": {
+    "homepage": "https://via.placeholder.com/300x600/f8fafc/1e293b?text=Mobile%20Homepage",
+    "menu": "https://via.placeholder.com/300x600/f8fafc/1e293b?text=Mobile%20Menu",
+    "review": "https://via.placeholder.com/300x600/f8fafc/1e293b?text=Mobile%20Review"
+  }
+}

@@ -16,7 +16,9 @@
     "refactor:update-imports": "node tools/scripts/refactor/update-imports.js",
     "refactor:check": "npm run build && echo '✅ Refactoring check passed!'",
     "project:structure": "tree src/ -I 'node_modules|*.backup' -L 3",
-    "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2"
+    "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2",
+    "readme:generate-assets": "node tools/scripts/build/generate-readme-assets.js",
+    "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/campus-comment-verse'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
