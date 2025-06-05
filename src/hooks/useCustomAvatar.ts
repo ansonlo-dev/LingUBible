@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { avatarService } from '@/services/avatarService';
-import { CustomAvatar, preloadAvatar } from '@/utils/avatarUtils';
+import { avatarService } from "@/services/api/avatar";
+import { CustomAvatar, preloadAvatar } from "@/utils/ui/avatarUtils";
 
 // 創建全局事件系統
 const AVATAR_UPDATE_EVENT = 'avatar-updated';

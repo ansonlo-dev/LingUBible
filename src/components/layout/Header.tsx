@@ -1,13 +1,13 @@
 import { BookOpen, Search, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from './ThemeToggle';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { SearchDropdown } from './SearchDialog';
-import { PWAStatusIndicator } from './PWAStatusIndicator';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { SearchDropdown } from '@/components/common/SearchDialog';
+import { PWAStatusIndicator } from '@/components/features/pwa/PWAStatusIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserMenu } from '@/components/UserMenu';
+import { UserMenu } from "@/components/user/UserMenu";
 import { Link } from 'react-router-dom';
 
 interface HeaderProps {

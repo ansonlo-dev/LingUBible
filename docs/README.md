@@ -1,73 +1,69 @@
-# Welcome to your Lovable project
+# 📚 LingUBible Documentation
 
-## Project info
+[![English](https://img.shields.io/badge/Language-English-blue)](README.md)
+[![繁體中文](https://img.shields.io/badge/Language-繁體中文-red)](zh-TW/README.md)
+[![简体中文](https://img.shields.io/badge/Language-简体中文-green)](zh-CN/README.md)
 
-**URL**: https://lovable.dev/projects/ad7d3e96-8c80-45e9-a20a-722d360d56ca
+Welcome to the LingUBible project documentation! This folder contains comprehensive technical documentation organized by functionality.
 
-## How can I edit this code?
+## 🌍 Language / 語言
 
-There are several ways of editing your application.
+- **English** - [Documentation](.)
+- **繁體中文** - [文檔](zh-TW/)
+- **简体中文** - [文档](zh-CN/)
 
-**Use Lovable**
+## 📁 文檔結構
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ad7d3e96-8c80-45e9-a20a-722d360d56ca) and start prompting.
+### 🔧 [setup/](./setup/) - 設置與配置
+專案初始設置和環境配置相關文檔：
+- [DEV_MODE_SETUP.md](./setup/DEV_MODE_SETUP.md) - 開發模式設置指南
+- [APPWRITE_DEV_MODE_SETUP.md](./setup/APPWRITE_DEV_MODE_SETUP.md) - Appwrite 開發環境設置
+- [ENVIRONMENT_VARIABLES_SETUP.md](./setup/ENVIRONMENT_VARIABLES_SETUP.md) - 環境變數配置
+- [AUTO_VERIFICATION_SETUP.md](./setup/AUTO_VERIFICATION_SETUP.md) - 自動驗證系統設置
+- [STUDENT_EMAIL_VERIFICATION_SETUP.md](./setup/STUDENT_EMAIL_VERIFICATION_SETUP.md) - 學生郵箱驗證設置
+- [CLEANUP_FUNCTION_SETUP.md](./setup/CLEANUP_FUNCTION_SETUP.md) - 清理功能設置
 
-Changes made via Lovable will be committed automatically to this repo.
+### ⚡ [features/](./features/) - 功能說明
+系統功能和特性的詳細說明：
+- [AVATAR_SYSTEM.md](./features/AVATAR_SYSTEM.md) - 頭像系統設計與實現
+- [EMAIL_TEMPLATE_SYSTEM.md](./features/EMAIL_TEMPLATE_SYSTEM.md) - 郵件模板系統
+- [PASSWORD_SECURITY_FEATURES.md](./features/PASSWORD_SECURITY_FEATURES.md) - 密碼安全功能
+- [MULTILINGUAL_IMPLEMENTATION.md](./features/MULTILINGUAL_IMPLEMENTATION.md) - 多語言實現
+- [OPENSTATUS_BADGE_USAGE.md](./features/OPENSTATUS_BADGE_USAGE.md) - OpenStatus 徽章使用
+- [AVATAR_FLICKER_FIX.md](./features/AVATAR_FLICKER_FIX.md) - 頭像閃爍修復
+- [VERIFICATION_SECURITY.md](./features/VERIFICATION_SECURITY.md) - 驗證安全機制
 
-**Use your preferred IDE**
+### 🚀 [deployment/](./deployment/) - 部署指南
+專案部署相關文檔：
+- [APPWRITE_GIT_DEPLOYMENT_GUIDE.md](./deployment/APPWRITE_GIT_DEPLOYMENT_GUIDE.md) - Appwrite Git 部署指南
+- [DEPLOYMENT_SUCCESS_GUIDE.md](./deployment/DEPLOYMENT_SUCCESS_GUIDE.md) - 部署成功指南
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🧪 [testing/](./testing/) - 測試文檔
+測試相關文檔和工具：
+- [DEV_MODE_TESTING_GUIDE.md](./testing/DEV_MODE_TESTING_GUIDE.md) - 開發模式測試指南
+- [test-dev-mode.html](./testing/test-dev-mode.html) - 開發模式測試頁面
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📋 其他文檔
 
-Follow these steps:
+- [INDEX.md](./INDEX.md) - 專案索引和概覽
+- [appwrite-collections.md](./appwrite-collections.md) - Appwrite 集合配置
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🔍 快速導航
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 新手入門
+1. 首先閱讀 [DEV_MODE_SETUP.md](./setup/DEV_MODE_SETUP.md)
+2. 配置環境變數 [ENVIRONMENT_VARIABLES_SETUP.md](./setup/ENVIRONMENT_VARIABLES_SETUP.md)
+3. 設置 Appwrite [APPWRITE_DEV_MODE_SETUP.md](./setup/APPWRITE_DEV_MODE_SETUP.md)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 功能開發
+- 了解頭像系統：[AVATAR_SYSTEM.md](./features/AVATAR_SYSTEM.md)
+- 郵件功能：[EMAIL_TEMPLATE_SYSTEM.md](./features/EMAIL_TEMPLATE_SYSTEM.md)
+- 安全功能：[PASSWORD_SECURITY_FEATURES.md](./features/PASSWORD_SECURITY_FEATURES.md)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### 部署上線
+1. 參考 [APPWRITE_GIT_DEPLOYMENT_GUIDE.md](./deployment/APPWRITE_GIT_DEPLOYMENT_GUIDE.md)
+2. 檢查 [DEPLOYMENT_SUCCESS_GUIDE.md](./deployment/DEPLOYMENT_SUCCESS_GUIDE.md)
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/ad7d3e96-8c80-45e9-a20a-722d360d56ca) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+📝 **注意**：所有文檔都會持續更新，請確保查看最新版本。如有問題，請參考相關文檔或聯繫開發團隊。

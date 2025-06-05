@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { CourseCard } from '@/components/CourseCard';
-import { LecturerCard } from '@/components/LecturerCard';
-import { StatsCard } from '@/components/StatsCard';
-import { RollingText } from '@/components/RollingText';
-import { FloatingGlare } from '@/components/FloatingGlare';
-import { FloatingCircles } from '@/components/FloatingCircles';
+import { CourseCard } from "@/components/features/reviews/CourseCard";
+import { LecturerCard } from "@/components/features/reviews/LecturerCard";
+import { StatsCard } from "@/components/features/reviews/StatsCard";
+import { RollingText } from "@/components/features/animations/RollingText";
+import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
+import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
 import { BookOpen, Users, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { SmartAvatar } from '@/components/ui/smart-avatar';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
-import { getAllAnimals, getAllBackgrounds, getTotalCombinations } from '@/utils/avatarUtils';
+import { getAllAnimals, getAllBackgrounds, getTotalCombinations } from "@/utils/ui/avatarUtils";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Palette, Shuffle, Save, Trash2, Sparkles } from 'lucide-react';

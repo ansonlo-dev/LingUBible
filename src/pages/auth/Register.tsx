@@ -10,10 +10,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, CheckCircle, Lock, AlertTriangle, Info, User, Lightbulb, Shield, Mail } from 'lucide-react';
-import { StudentVerificationInput } from '@/components/StudentVerificationInput';
-import { PasswordStrengthChecker } from '@/components/PasswordStrengthChecker';
+import { StudentVerificationInput } from "@/components/auth/StudentVerificationInput";
+import { PasswordStrengthChecker } from "@/components/auth/PasswordStrengthChecker";
 import { isValidEmailForRegistration, getEmailType, DEV_MODE } from '@/config/devMode';
-import { UsernameValidator } from '@/utils/usernameValidator';
+import { UsernameValidator } from "@/utils/auth/usernameValidator";
 
 // 檢查郵件是否為有效的學生郵件（保留以兼容性）
 const isValidStudentEmail = (email: string): boolean => {

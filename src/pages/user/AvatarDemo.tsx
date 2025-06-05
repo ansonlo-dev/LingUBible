@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AvatarSettings } from '@/components/AvatarSettings';
-import { AvatarCustomizer } from '@/components/AvatarCustomizer';
-import { ReviewCard } from '@/components/ReviewCard';
+import { AvatarSettings } from "@/components/user/AvatarSettings";
+import { AvatarCustomizer } from "@/components/user/AvatarCustomizer";
+import { ReviewCard } from "@/components/features/reviews/ReviewCard";
 import { SmartAvatar } from '@/components/ui/smart-avatar';
 import { useAvatarPreferences } from '@/hooks/useAvatarPreferences';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
@@ -17,7 +17,7 @@ import {
   getRandomAvatarCombination,
   getAllAvatarCombinations,
   getShuffledAvatarCombinations
-} from '@/utils/avatarUtils';
+} from "@/utils/ui/avatarUtils";
 
 export default function AvatarDemo() {
   const { user } = useAuth();

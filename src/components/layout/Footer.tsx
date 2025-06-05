@@ -1,7 +1,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Github } from 'lucide-react';
-import { UserStatsDisplay } from './UserStatsDisplay';
-import { OpenStatusWidget } from './OpenStatusWidget';
+import { UserStatsDisplay } from '@/components/user/UserStatsDisplay';
+import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';
 import { Link } from 'react-router-dom';
 
 export function Footer() {

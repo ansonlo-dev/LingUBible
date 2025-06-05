@@ -5,7 +5,7 @@ import {
   getLecturerAvatarContent, 
   getLecturerAvatarSizeClass,
   LecturerAvatarConfig
-} from "@/utils/avatarUtils"
+} from "@/utils/ui/avatarUtils"
 
 interface LecturerAvatarProps extends LecturerAvatarConfig {
   // 講師基本信息

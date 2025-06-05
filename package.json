@@ -8,7 +8,15 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs:setup": "node tools/scripts/docs/create-multilingual-docs.js",
+    "docs:create-english": "node tools/scripts/docs/create-english-docs.js",
+    "docs:check": "echo '🔍 Checking documentation structure...' && find docs -name '*.md' | wc -l && echo 'Total markdown files found'",
+    "docs:structure": "tree docs/ -I 'node_modules|*.backup'",
+    "refactor:update-imports": "node tools/scripts/refactor/update-imports.js",
+    "refactor:check": "npm run build && echo '✅ Refactoring check passed!'",
+    "project:structure": "tree src/ -I 'node_modules|*.backup' -L 3",
+    "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

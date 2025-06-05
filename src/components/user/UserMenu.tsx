@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { SmartAvatar } from '@/components/ui/smart-avatar';
-import { AvatarCustomizer } from '@/components/AvatarCustomizer';
+import { AvatarCustomizer } from "@/components/user/AvatarCustomizer";
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
 import { Palette, LogOut, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';

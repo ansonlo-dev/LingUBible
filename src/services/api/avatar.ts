@@ -1,5 +1,5 @@
 import { databases, ID } from '@/lib/appwrite';
-import { CustomAvatar } from '@/utils/avatarUtils';
+import { CustomAvatar } from "@/utils/ui/avatarUtils";
 import { Query } from 'appwrite';
 
 const DATABASE_ID = 'lingubible';

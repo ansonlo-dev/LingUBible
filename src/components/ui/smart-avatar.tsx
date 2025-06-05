@@ -7,7 +7,7 @@ import {
   getAvatarSizeClass, 
   AvatarConfig,
   CustomAvatar
-} from "@/utils/avatarUtils"
+} from "@/utils/ui/avatarUtils"
 
 interface SmartAvatarProps {
   // 用戶數據

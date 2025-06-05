@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentVerificationInput } from './StudentVerificationInput';
 import { PasswordStrengthChecker } from './PasswordStrengthChecker';
-import { UsernameValidator } from '@/utils/usernameValidator';
+import { UsernameValidator } from "@/utils/auth/usernameValidator";
 
 interface AuthModalProps {
   isOpen: boolean;

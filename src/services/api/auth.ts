@@ -1,7 +1,7 @@
-import { account, ID } from '../lib/appwrite';
+import { account, ID } from '@/lib/appwrite';
 import { Models } from 'appwrite';
-import { studentVerificationService } from './studentVerificationService';
-import { DEV_MODE } from '../config/devMode';
+import { studentVerificationService } from '@/services/external/studentVerification';
+import { DEV_MODE } from '@/config/devMode';
 
 export interface AuthUser extends Models.User<Models.Preferences> {}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import UserStatsService from '@/services/UserStatsService';
+import UserStatsService from "@/services/api/userStats";
 
 interface UserStats {
   totalUsers: number;

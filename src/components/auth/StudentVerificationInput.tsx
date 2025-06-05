@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, Clock, AlertTriangle, Mail, Settings, Info, AlertCircle, Zap } from 'lucide-react';
-import { studentVerificationService } from '@/services/studentVerificationService';
+import { studentVerificationService } from "@/services/external/studentVerification";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DEV_MODE, isValidEmailForRegistration, getEmailType, getDevModeMessage, isDisposableEmail } from '@/config/devMode';
 

@@ -19,8 +19,8 @@ import {
 } from '@/components/ui/dialog';
 import { User, Mail, CheckCircle, AlertTriangle, Save, ArrowLeft, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { UsernameValidator } from '@/utils/usernameValidator';
-import { authService } from '@/services/auth';
+import { UsernameValidator } from "@/utils/auth/usernameValidator";
+import { authService } from "@/services/api/auth";
 
 export default function UserSettings() {
   const { user } = useAuth();

@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authService, AuthUser } from '../services/auth';
+import { authService, AuthUser } from '@/services/api/auth';
 import { toast } from '@/components/ui/use-toast';
-import { getAvatarContent } from '@/utils/avatarUtils';
-import { avatarService } from '@/services/avatarService';
+import { getAvatarContent } from "@/utils/ui/avatarUtils";
+import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AuthContextType {
@@ -113,8 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             toast({
                 variant: "success",
-                title: `${userAvatar}🎉 ${t('toast.loginSuccess')}`,
-                description: t('toast.welcomeBack', { username }),
+                title: `🎉 ${t('toast.loginSuccess')}`,
+                description: t('toast.welcomeBack', { username: `${userAvatar}${username}` }),
                 duration: 4000,
             });
         } catch (error) {
@@ -164,8 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             toast({
                 variant: "success",
-                title: `${userAvatar}🎊 ${t('toast.registerSuccess')}`,
-                description: t('toast.welcomeToApp', { username }),
+                title: `🎊 ${t('toast.registerSuccess')}`,
+                description: t('toast.welcomeToApp', { username: `${userAvatar}${username}` }),
                 duration: 4000,
             });
         } catch (error) {
@@ -232,8 +232,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             toast({
                 variant: "success",
-                title: `${userAvatar}👋 ${t('toast.logoutSuccess')}`,
-                description: t('toast.goodbye', { username }),
+                title: `👋 ${t('toast.logoutSuccess')}`,
+                description: t('toast.goodbye', { username: `${userAvatar}${username}` }),
                 duration: 4000,
             });
         } catch (error) {

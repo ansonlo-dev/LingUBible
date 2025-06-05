@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language } from '@/components/LanguageSwitcher';
+import { Language } from "@/components/common/LanguageSwitcher";
 
 interface LanguageContextType {
   language: Language;
