@@ -152,6 +152,9 @@ export default async ({ req, res, log, error }) => {
     } else if (action === 'createAccount') {
       // 創建帳戶並自動設置為已驗證
       return await createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, log, error, res);
+    } else if (action === 'reactivateAccount') {
+      // 重新啟用被禁用的帳戶
+      return await reactivateAccount(users, email, password, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
@@ -185,13 +188,13 @@ async function sendVerificationCode(databases, email, language, ipAddress, userA
       const errorMessages = {
         'en': DEV_MODE.enabled 
           ? 'Please enter a valid email address format'
-          : 'Only @ln.edu.hk or @ln.hk email addresses can register',
+          : 'Only @ln.hk or @ln.edu.hk email addresses can register',
         'zh-TW': DEV_MODE.enabled 
           ? '請輸入有效的郵件地址格式'
-          : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊',
+          : '只有 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南人才能註冊',
         'zh-CN': DEV_MODE.enabled 
           ? '请输入有效的邮件地址格式'
-          : '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
+          : '只有 @ln.hk 或 @ln.edu.hk 邮件地址的学生才能注册'
       };
       return res.json({
         success: false,
@@ -511,7 +514,7 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
         success: false,
         message: DEV_MODE.enabled 
           ? '請輸入有效的郵件地址格式'
-          : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊'
+          : '只有 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南人才能註冊'
       }, 400);
     }
 
@@ -616,6 +619,139 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
     return res.json({
       success: false,
       message: `創建帳戶失敗: ${err.message || '請稍後再試'}`
+    }, 500);
+  }
+}
+
+// 重新啟用被禁用的帳戶
+async function reactivateAccount(users, email, password, log, error, res) {
+  try {
+    log('🚀 開始重新啟用被禁用的帳戶:', { email });
+
+    // 驗證參數
+    if (!email || !password) {
+      return res.json({
+        success: false,
+        message: '缺少必要參數'
+      }, 400);
+    }
+
+    try {
+      // 首先嘗試通過郵件查找用戶
+      log('🔍 查找用戶');
+      const usersList = await users.list([
+        Query.equal('email', email),
+        Query.limit(1)
+      ]);
+
+      if (usersList.users.length === 0) {
+        log('❌ 找不到用戶');
+        return res.json({
+          success: false,
+          message: '找不到對應的用戶帳戶'
+        }, 400);
+      }
+
+      const user = usersList.users[0];
+      log('✅ 找到用戶:', user.$id, '狀態:', user.status);
+
+      // 檢查用戶狀態
+      if (user.status === true) {
+        log('ℹ️ 用戶帳戶已經是啟用狀態');
+        return res.json({
+          success: false,
+          message: '您的帳戶已經是啟用狀態，無需重新啟用'
+        }, 400);
+      }
+
+      // 驗證密碼 - 創建一個臨時客戶端來測試憑證
+      log('🔐 驗證用戶憑證');
+      const { Client, Account } = await import('node-appwrite');
+      
+      const tempClient = new Client()
+        .setEndpoint('https://fra.cloud.appwrite.io/v1')
+        .setProject('lingubible');
+      
+      const tempAccount = new Account(tempClient);
+      
+      try {
+        // 嘗試創建 session 來驗證憑證
+        // 這會失敗因為帳戶被禁用，但我們可以從錯誤類型判斷密碼是否正確
+        await tempAccount.createEmailPasswordSession(email, password);
+        
+        // 如果到這裡，說明帳戶沒有被禁用，不應該執行重新啟用
+        log('⚠️ 帳戶似乎沒有被禁用');
+        return res.json({
+          success: false,
+          message: '您的帳戶狀態正常，無需重新啟用'
+        }, 400);
+        
+      } catch (authError) {
+        log('🔍 驗證憑證錯誤:', authError.message, 'Code:', authError.code);
+        
+        // 首先檢查是否是帳戶被禁用的錯誤（優先級最高）
+        if (authError.message && (
+          authError.message.includes('user is blocked') ||
+          authError.message.includes('user is disabled') ||
+          authError.message.includes('account is disabled') ||
+          authError.message.includes('User account is blocked') ||
+          authError.message.includes('The current user has been blocked')
+        )) {
+          log('✅ 確認帳戶被禁用，密碼正確，可以重新啟用');
+          // 繼續執行重新啟用邏輯
+        } else if (authError.message && (
+          authError.message.includes('Invalid credentials') ||
+          authError.message.includes('Invalid email or password') ||
+          authError.message.includes('user with the requested ID could not be found')
+        )) {
+          log('❌ 密碼錯誤');
+          return res.json({
+            success: false,
+            message: '郵件地址或密碼錯誤'
+          }, 401);
+        } else {
+          // 其他未知錯誤
+          log('❌ 未知驗證錯誤:', authError);
+          return res.json({
+            success: false,
+            message: '驗證失敗，請稍後再試'
+          }, 500);
+        }
+      }
+
+      // 重新啟用帳戶
+      log('🔓 重新啟用帳戶');
+      await users.updateStatus(user.$id, true);
+
+      log('✅ 帳戶已重新啟用');
+
+      return res.json({
+        success: true,
+        message: '帳戶已成功重新啟用，您現在可以正常登入了'
+      });
+
+    } catch (reactivateError) {
+      error('❌ 重新啟用帳戶失敗:', reactivateError);
+      
+      // 處理常見錯誤
+      if (reactivateError.message && reactivateError.message.includes('User not found')) {
+        return res.json({
+          success: false,
+          message: '找不到對應的用戶帳戶'
+        }, 400);
+      }
+
+      return res.json({
+        success: false,
+        message: `重新啟用帳戶失敗: ${reactivateError.message || '請稍後再試'}`
+      }, 500);
+    }
+
+  } catch (err) {
+    error('💥 重新啟用帳戶異常:', err);
+    return res.json({
+      success: false,
+      message: `重新啟用帳戶失敗: ${err.message || '請稍後再試'}`
     }, 500);
   }
 } 

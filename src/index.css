@@ -968,4 +968,27 @@
   .animate-cookie-crumb {
     animation: cookie-crumb-float 2s ease-in-out infinite;
   }
+
+  /* 覆蓋 Tailwind 的 shadow-sm 類別 */
+  .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  /* 確保 Dialog 背景透明度正確顯示 */
+  [data-radix-dialog-overlay] {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  /* 確保 Dialog 內容有正確的背景 */
+  [data-radix-dialog-content] {
+    background-color: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* 暗色主題下的 Dialog 內容背景 */
+  .dark [data-radix-dialog-content] {
+    background-color: rgb(24, 24, 27) !important;
+    border: 1px solid rgb(63, 63, 70) !important;
+  }
 }

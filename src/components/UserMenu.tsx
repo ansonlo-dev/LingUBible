@@ -13,12 +13,13 @@ import {
 import { SmartAvatar } from '@/components/ui/smart-avatar';
 import { AvatarCustomizer } from '@/components/AvatarCustomizer';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
-import { Palette, LogOut } from 'lucide-react';
+import { Palette, LogOut, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
-  const { customAvatar } = useCustomAvatar();
+  const { customAvatar, isInitialLoading } = useCustomAvatar();
   const [isDark, setIsDark] = useState(false);
 
   // 監聽主題變化
@@ -50,6 +51,16 @@ export function UserMenu() {
 
   if (!user) return null;
 
+  // 獲取顯示名稱：優先使用用戶名，否則使用郵箱前綴
+  const getDisplayName = () => {
+    if (user.name && user.name !== user.email) {
+      return user.name;
+    }
+    return user.email?.split('@')[0] || '用戶';
+  };
+
+  const displayName = getDisplayName();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -57,13 +68,14 @@ export function UserMenu() {
           variant="ghost"
           size="icon"
           className="rounded-full p-0 hover:bg-secondary/80 transition-colors"
-          title={user.email}
+          title={`${displayName} (${user.email})`}
         >
           <SmartAvatar
             userId={user.$id}
             name={user.name}
             email={user.email}
             customAvatar={customAvatar}
+            isLoading={isInitialLoading}
             config={{
               showPersonalAvatar: true,
               showAnonymousAvatar: false,
@@ -84,7 +96,10 @@ export function UserMenu() {
         }}
       >
         <DropdownMenuLabel className="px-4 py-2 text-sm">
-          {user.email}
+          <div className="flex flex-col">
+            <span className="font-medium">{displayName}</span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         

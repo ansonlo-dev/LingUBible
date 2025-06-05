@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import { BookOpen, Lock, AlertTriangle } from 'lucide-react';
 const isValidStudentEmail = (email: string): boolean => {
   const emailLower = email.toLowerCase();
   // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
-  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.hk|ln\.edu\.hk)$/;
   return validEmailPattern.test(emailLower);
 };
 
@@ -41,8 +42,32 @@ export default function Login() {
     } catch (err: any) {
       console.error('Auth error:', err);
       
-      // 使用通用的錯誤訊息，不透露郵件是否存在
-      setError(t('auth.invalidCredentials'));
+      // 提供更詳細的錯誤處理
+      if (err?.message?.includes('Invalid credentials')) {
+        setError('郵件地址或密碼錯誤，請檢查後重試');
+      } else if (err?.message?.includes('Password must be between 8 and 256 characters') || 
+                 err?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
+        setError(t('auth.passwordTooShort'));
+      } else if (err?.message?.includes('Rate limit') || 
+                 err?.message?.includes('Too many requests') ||
+                 err?.message?.includes('Rate limit for the current endpoint has been exceeded')) {
+        setError(t('auth.rateLimitExceeded'));
+      } else if (err?.message?.includes('session is active') || err?.message?.includes('session is prohibited')) {
+        setError('檢測到現有登入狀態，正在嘗試重新登入...');
+        // 稍後自動重試
+        setTimeout(() => {
+          setError('');
+          handleSubmit(e);
+        }, 1500);
+        return;
+      } else if (err?.message?.includes('User (role: guests) missing scope')) {
+        setError('帳戶權限不足，請聯繫管理員');
+      } else if (err?.message?.includes('Network')) {
+        setError('網絡連接錯誤，請檢查網絡後重試');
+      } else {
+        // 使用通用的錯誤訊息
+        setError(err?.message || '登入失敗，請稍後再試');
+      }
     } finally {
       setLoading(false);
     }
@@ -94,6 +119,7 @@ export default function Login() {
                   value={email}
                   onChange={handleEmailChange}
                   placeholder={t('auth.enterEmail')}
+                  autoComplete="email"
                   required
                   disabled={loading}
                 />
@@ -101,12 +127,12 @@ export default function Login() {
               
               <div className="space-y-2">
                 <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t('auth.enterPassword')}
+                  autoComplete="current-password"
                   required
                   disabled={loading}
                 />

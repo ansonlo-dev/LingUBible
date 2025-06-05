@@ -7,7 +7,7 @@
 ## 🔄 工作流程
 
 ### 1. 學生驗證流程
-1. **郵件驗證**：學生輸入 @ln.edu.hk 或 @ln.hk 郵件地址
+1. **郵件驗證**：學生輸入 @ln.hk 或 @ln.edu.hk 郵件地址
 2. **發送驗證碼**：系統發送 6 位數驗證碼到學生郵箱
 3. **驗證碼確認**：學生輸入正確的驗證碼
 4. **驗證成功**：系統標記該郵件為已驗證狀態
@@ -96,7 +96,7 @@ async createVerifiedAccount(email: string, password: string, name: string): Prom
 - 防止重複註冊
 
 ### 2. 郵件格式驗證
-- 嚴格限制只允許 @ln.edu.hk 和 @ln.hk 域名
+- 嚴格限制只允許 @ln.hk 和 @ln.edu.hk 域名
 - 前後端雙重驗證
 
 ### 3. 錯誤處理
@@ -170,7 +170,7 @@ curl -X POST https://fra.cloud.appwrite.io/v1/functions/send-verification/execut
   -H "Content-Type: application/json" \
   -H "X-Appwrite-Project: lingubible" \
   -d '{
-    "body": "{\"action\":\"createAccount\",\"email\":\"student@ln.edu.hk\",\"password\":\"securePassword\",\"name\":\"Student Name\"}",
+    "body": "{\"action\":\"createAccount\",\"email\":\"student@ln.hk\",\"password\":\"securePassword\",\"name\":\"Student Name\"}",
     "async": false,
     "method": "POST"
   }'

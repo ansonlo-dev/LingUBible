@@ -2,6 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Github } from 'lucide-react';
 import { UserStatsDisplay } from './UserStatsDisplay';
 import { OpenStatusWidget } from './OpenStatusWidget';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   const { t } = useLanguage();
@@ -27,7 +28,7 @@ export function Footer() {
               {/* Social Icons */}
               <div className="flex items-center space-x-2">
                 <a 
-                  href="https://github.com/ansonlo/campus-comment-verse" 
+                  href="https://github.com/ansonlo-dev/campus-comment-verse" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
@@ -71,15 +72,15 @@ export function Footer() {
               <span className="text-gray-600 dark:text-muted-foreground text-xs">
                 {t('footer.version')}
               </span>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.contact')}
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.terms')}
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.privacy')}
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -103,15 +104,15 @@ export function Footer() {
               </span>
             </div>
             <div className="flex space-x-6">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-bold">
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors font-bold">
                 {t('footer.contact')}
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-bold">
+              </Link>
+              <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors font-bold">
                 {t('footer.terms')}
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors font-bold">
+              </Link>
+              <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors font-bold">
                 {t('footer.privacy')}
-              </a>
+              </Link>
             </div>
           </div>
           
@@ -148,7 +149,7 @@ export function Footer() {
               <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
             </div>
             <a 
-              href="https://github.com/ansonlo/campus-comment-verse" 
+              href="https://github.com/ansonlo-dev/campus-comment-verse" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"

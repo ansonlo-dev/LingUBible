@@ -17,7 +17,7 @@ interface VerificationEmailProps {
 
 export const VerificationEmail = ({
   verificationCode = '123456',
-  userEmail = 'student@ln.edu.hk',
+  userEmail = 'student@ln.hk',
 }: VerificationEmailProps) => (
   <Html>
     <Head>
@@ -109,7 +109,7 @@ export const VerificationEmail = ({
         </Text>
         
         <Text style={text} className="text">
-          <strong>注意：</strong>只有使用 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊 LingUBible。
+          <strong>注意：</strong>只有使用 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南人才能註冊 LingUBible。
         </Text>
         
         <Text style={text} className="text">

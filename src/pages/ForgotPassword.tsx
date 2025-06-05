@@ -5,14 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Mail, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Mail, CheckCircle, AlertTriangle, BookOpen, Lock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // 檢查郵件是否為有效的學生郵件
 const isValidStudentEmail = (email: string): boolean => {
   const emailLower = email.toLowerCase();
   // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
-  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.hk|ln\.edu\.hk)$/;
   return validEmailPattern.test(emailLower);
 };
 
@@ -55,109 +55,158 @@ export default function ForgotPassword() {
 
   if (isEmailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+        <div className="w-full max-w-md">
+          {/* Logo and Title */}
+          <div className="text-center mb-8">
+            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
+              <BookOpen className="h-8 w-8" />
+              LingUBible
+            </Link>
+            <p className="text-muted-foreground mt-2">{t('auth.checkYourEmail')}</p>
+          </div>
+
+          <Card className="glass-card">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <CardTitle className="text-2xl">{t('auth.emailSent')}</CardTitle>
+              <CardDescription>
+                {t('auth.resetLinkSent')} {email} {t('auth.resetLinkSentComplete')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center text-sm text-muted-foreground">
+                <p>{t('auth.checkEmailInbox')}</p>
+                <p className="font-medium text-foreground">{email}</p>
+              </div>
+              
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>• {t('auth.resetLinkWillExpire')}</p>
+                <p>• {t('auth.checkSpamFolder')}</p>
+                <p>• {t('auth.canRetryReset')}</p>
+              </div>
+
+              <div className="flex flex-col space-y-2">
+                <Button
+                  onClick={() => {
+                    setIsEmailSent(false);
+                    setEmail('');
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {t('auth.resendReset')}
+                </Button>
+                
+                <Button asChild variant="ghost" className="w-full">
+                  <Link to="/login" className="flex items-center justify-center">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('auth.backToLogin')}
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 安全連接頁腳 */}
+          <div className="mt-8 text-center">
+            <div className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300">
+              <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>{t('auth.secureConnection')}</span>
             </div>
-            <CardTitle className="text-2xl">{t('auth.emailSent')}</CardTitle>
+            <div className="mt-4 space-x-4 text-xs text-muted-foreground">
+              <Link to="/contact" className="hover:underline">{t('auth.contact')}</Link>
+              <Link to="/terms" className="hover:underline">{t('auth.terms')}</Link>
+              <Link to="/privacy" className="hover:underline">{t('auth.privacy')}</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+      <div className="w-full max-w-md">
+        {/* Logo and Title */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
+            <BookOpen className="h-8 w-8" />
+            LingUBible
+          </Link>
+          <p className="text-muted-foreground mt-2">{t('auth.resetPassword')}</p>
+        </div>
+
+        <Card className="glass-card">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+              <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <CardTitle className="text-2xl">{t('auth.resetPassword')}</CardTitle>
             <CardDescription>
-              {t('auth.resetLinkSent')} {email} {t('auth.resetLinkSentComplete')}
+              {t('auth.resetPasswordDescription')}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center text-sm text-muted-foreground">
-              <p>{t('auth.checkEmailInbox')}</p>
-              <p className="font-medium text-foreground">{email}</p>
-            </div>
-            
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p>• {t('auth.resetLinkWillExpire')}</p>
-              <p>• {t('auth.checkSpamFolder')}</p>
-              <p>• {t('auth.canRetryReset')}</p>
-            </div>
+          
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">{t('auth.studentEmailAddress')}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  placeholder={t('auth.schoolEmailPlaceholder')}
+                  autoComplete="email"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
 
-            <div className="flex flex-col space-y-2">
-              <Button
-                onClick={() => {
-                  setIsEmailSent(false);
-                  setEmail('');
-                }}
-                variant="outline"
-                className="w-full"
-              >
-                {t('auth.resendReset')}
+              {error && (
+                <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <AlertDescription className="text-red-600 dark:text-red-400">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="text-xs text-muted-foreground">
+                <p>• {t('auth.useSchoolEmail')}</p>
+                <p>• {t('auth.resetLinkWillExpire')}</p>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? t('auth.sending') : t('auth.sendResetLink')}
               </Button>
-              
+
               <Button asChild variant="ghost" className="w-full">
                 <Link to="/login" className="flex items-center justify-center">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   {t('auth.backToLogin')}
                 </Link>
               </Button>
-            </div>
+            </form>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-            <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+        {/* 安全連接頁腳 */}
+        <div className="mt-8 text-center">
+          <div className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300">
+            <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <span>{t('auth.secureConnection')}</span>
           </div>
-          <CardTitle className="text-2xl">{t('auth.resetPassword')}</CardTitle>
-          <CardDescription>
-            {t('auth.resetPasswordDescription')}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.studentEmailAddress')}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder={t('auth.schoolEmailPlaceholder')}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            {error && (
-              <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                <AlertDescription className="text-red-600 dark:text-red-400">
-                  {error}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="text-xs text-muted-foreground">
-              <p>• {t('auth.useSchoolEmail')}</p>
-              <p>• {t('auth.resetLinkWillExpire')}</p>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? t('auth.sending') : t('auth.sendResetLink')}
-            </Button>
-
-            <Button asChild variant="ghost" className="w-full">
-              <Link to="/login" className="flex items-center justify-center">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {t('auth.backToLogin')}
-              </Link>
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <div className="mt-4 space-x-4 text-xs text-muted-foreground">
+            <Link to="/contact" className="hover:underline">{t('auth.contact')}</Link>
+            <Link to="/terms" className="hover:underline">{t('auth.terms')}</Link>
+            <Link to="/privacy" className="hover:underline">{t('auth.privacy')}</Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 

@@ -71,45 +71,138 @@ export const getConsistentRandomIndex = (seed: string, arrayLength: number): num
   return Math.abs(hash) % arrayLength;
 };
 
+// 頭像快取
+const avatarCache = new Map<string, { animal: string; background: typeof BACKGROUND_COLORS[0] }>();
+
+// 清除快取
+export const clearAvatarCache = () => {
+  avatarCache.clear();
+};
+
 // 獲取用戶的個人頭像（基於用戶ID的一致性隨機頭像）
 export const getPersonalAvatar = (userId: string): { animal: string; background: typeof BACKGROUND_COLORS[0] } => {
+  const cacheKey = `personal_${userId}`;
+  
+  if (avatarCache.has(cacheKey)) {
+    return avatarCache.get(cacheKey)!;
+  }
+  
   const animalIndex = getConsistentRandomIndex(userId, CUTE_AVATARS.length);
   const backgroundIndex = getConsistentRandomIndex(userId + '_bg', BACKGROUND_COLORS.length);
   
-  return {
+  const result = {
     animal: CUTE_AVATARS[animalIndex],
     background: BACKGROUND_COLORS[backgroundIndex]
   };
+  
+  avatarCache.set(cacheKey, result);
+  return result;
 };
 
 // 獲取匿名頭像（基於評論ID的隨機頭像）
 export const getAnonymousAvatar = (reviewId: string): { animal: string; background: typeof BACKGROUND_COLORS[0] } => {
+  const cacheKey = `anonymous_${reviewId}`;
+  
+  if (avatarCache.has(cacheKey)) {
+    return avatarCache.get(cacheKey)!;
+  }
+  
   const animalIndex = getConsistentRandomIndex(reviewId, CUTE_AVATARS.length);
   const backgroundIndex = getConsistentRandomIndex(reviewId + '_bg', BACKGROUND_COLORS.length);
   
-  return {
+  const result = {
     animal: CUTE_AVATARS[animalIndex],
     background: BACKGROUND_COLORS[backgroundIndex]
   };
+  
+  avatarCache.set(cacheKey, result);
+  return result;
 };
 
 // 獲取自定義頭像
 export const getCustomAvatar = (customData: CustomAvatar): { animal: string; background: typeof BACKGROUND_COLORS[0] } => {
-  return {
+  const cacheKey = `custom_${customData.animal}_${customData.backgroundIndex}`;
+  
+  if (avatarCache.has(cacheKey)) {
+    return avatarCache.get(cacheKey)!;
+  }
+  
+  const result = {
     animal: customData.animal,
     background: BACKGROUND_COLORS[customData.backgroundIndex] || BACKGROUND_COLORS[0]
   };
+  
+  avatarCache.set(cacheKey, result);
+  return result;
 };
 
-// 獲取文字首字母
-export const getInitials = (name: string, email?: string): string => {
-  if (name && name.trim()) {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+// 獲取姓名首字母
+export const getInitials = (firstName: string = '', lastName: string = '', email: string = ''): string => {
+  // 如果有名和姓，使用名和姓的首字母
+  if (firstName && lastName) {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   }
+  
+  // 如果只有一個名字，使用前兩個字符
+  if (firstName) {
+    return firstName.length >= 2 
+      ? `${firstName.charAt(0)}${firstName.charAt(1)}`.toUpperCase()
+      : firstName.charAt(0).toUpperCase();
+  }
+  
+  // 如果只有 lastName，使用前兩個字符
+  if (lastName) {
+    return lastName.length >= 2 
+      ? `${lastName.charAt(0)}${lastName.charAt(1)}`.toUpperCase()
+      : lastName.charAt(0).toUpperCase();
+  }
+  
+  // 最後使用 email 的首字母
   if (email) {
-    return email[0].toUpperCase();
+    const emailName = email.split('@')[0];
+    return emailName.length >= 2 
+      ? `${emailName.charAt(0)}${emailName.charAt(1)}`.toUpperCase()
+      : emailName.charAt(0).toUpperCase();
   }
-  return 'U';
+  
+  return '??';
+};
+
+// 講師頭像配置
+export interface LecturerAvatarConfig {
+  size: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+}
+
+// 獲取講師頭像內容
+export const getLecturerAvatarContent = (
+  firstName: string = '', 
+  lastName: string = '', 
+  email: string = ''
+): { initials: string; bgClass: string; textClass: string } => {
+  const initials = getInitials(firstName, lastName, email);
+  
+  return {
+    initials,
+    bgClass: 'bg-red-600 dark:bg-red-700', // 統一使用紅色主題
+    textClass: 'text-white font-semibold'
+  };
+};
+
+// 獲取講師頭像尺寸類名
+export const getLecturerAvatarSizeClass = (size: 'sm' | 'md' | 'lg' | 'xl'): string => {
+  switch (size) {
+    case 'sm':
+      return 'h-8 w-8 text-sm';
+    case 'md':
+      return 'h-10 w-10 text-base';
+    case 'lg':
+      return 'h-16 w-16 text-lg';
+    case 'xl':
+      return 'h-20 w-20 text-xl';
+    default:
+      return 'h-10 w-10 text-base';
+  }
 };
 
 // 根據配置獲取頭像內容
@@ -164,14 +257,14 @@ export const getAvatarContent = (config: AvatarConfig, userData: {
     // 降級到文字首字母
     return {
       type: 'text',
-      content: getInitials(name || '', email)
+      content: getInitials(name || '', '', email || '')
     };
   }
 
   // 默認情況
   return {
     type: 'text',
-    content: getInitials(name || '', email)
+    content: getInitials(name || '', '', email || '')
   };
 };
 
@@ -207,4 +300,19 @@ export const getTotalCombinations = (): number => {
 // 獲取本地化的背景名稱
 export const getLocalizedBackgroundName = (backgroundKey: string, t: (key: string) => string): string => {
   return t(backgroundKey);
+};
+
+// 預載入頭像數據
+export const preloadAvatar = (userId: string, customAvatar?: CustomAvatar) => {
+  if (!userId) return;
+  
+  const cacheKey = customAvatar ? `custom_${userId}` : `personal_${userId}`;
+  
+  if (!avatarCache.has(cacheKey)) {
+    if (customAvatar) {
+      avatarCache.set(cacheKey, getCustomAvatar(customAvatar));
+    } else {
+      avatarCache.set(cacheKey, getPersonalAvatar(userId));
+    }
+  }
 }; 

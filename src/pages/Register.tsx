@@ -2,32 +2,40 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, CheckCircle, Lock, AlertTriangle, Info } from 'lucide-react';
+import { BookOpen, CheckCircle, Lock, AlertTriangle, Info, User, Lightbulb, Shield, Mail } from 'lucide-react';
 import { StudentVerificationInput } from '@/components/StudentVerificationInput';
 import { PasswordStrengthChecker } from '@/components/PasswordStrengthChecker';
 import { isValidEmailForRegistration, getEmailType, DEV_MODE } from '@/config/devMode';
+import { UsernameValidator } from '@/utils/usernameValidator';
 
 // 檢查郵件是否為有效的學生郵件（保留以兼容性）
 const isValidStudentEmail = (email: string): boolean => {
   const emailLower = email.toLowerCase();
   // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
-  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.hk|ln\.edu\.hk)$/;
   return validEmailPattern.test(emailLower);
 };
 
 export default function Register() {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isStudentVerified, setIsStudentVerified] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isUsernameValid, setIsUsernameValid] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameSuggestion, setUsernameSuggestion] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   const { t } = useLanguage();
   const { 
@@ -38,28 +46,19 @@ export default function Register() {
   } = useAuth();
   const navigate = useNavigate();
 
+  // 當郵箱改變時生成用戶名建議
+  useEffect(() => {
+    if (email && !username) {
+      const suggestion = UsernameValidator.generateSuggestion(email);
+      setUsernameSuggestion(suggestion);
+    }
+  }, [email, username]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
-
-    // 基本驗證
-    if (!email || !password || !confirmPassword) {
-      setError(t('auth.fillAllFields'));
-      return;
-    }
-
-    // 使用新的開發模式郵件驗證
-    if (!isValidEmailForRegistration(email)) {
-      if (DEV_MODE.enabled) {
-        setError('請輸入有效的郵件地址格式');
-      } else {
-        setError(t('auth.invalidStudentEmail'));
-      }
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError(t('auth.passwordMismatch'));
+    
+    if (!termsAccepted) {
+      setError(t('auth.mustAgreeTerms'));
       return;
     }
     
@@ -68,35 +67,41 @@ export default function Register() {
       return;
     }
 
+    if (!isUsernameValid) {
+      setError('請輸入有效的用戶名');
+      return;
+    }
+
     if (!isPasswordValid) {
       setError(t('auth.passwordNotSecure'));
       return;
     }
-    
+
+    if (password !== confirmPassword) {
+      setError(t('auth.passwordMismatch'));
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      console.log('🚀 開始註冊流程:', { email, hasPassword: !!password });
+      // 創建帳戶並登入，使用用戶名作為 name
+      await register(email, password, username);
       
-      if (!isStudentVerified) {
-        setError(t('auth.pleaseVerifyStudentEmail'));
-        return;
-      }
-
-      if (!isPasswordValid) {
-        setError(t('auth.passwordNotSecure'));
-        return;
-      }
-      
-      await register(email, password, email);
-      navigate('/'); // 註冊成功後導向首頁
-    } catch (err: any) {
-      console.error('Auth error:', err);
-      
-      // 使用通用的錯誤訊息，不透露郵件是否已存在
-      if (err?.message?.includes('請先驗證您的嶺南人郵件地址')) {
-        setError(t('auth.pleaseVerifyStudentEmail'));
+      // 重定向到首頁
+      navigate('/');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      if (error.code === 409) {
+        setError('此電子郵件地址已被註冊');
+      } else if (error?.message?.includes('Password must be between 8 and 256 characters') || 
+                 error?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
+        setError(t('auth.passwordTooShort'));
+      } else if (error?.message?.includes('Rate limit') || 
+                 error?.message?.includes('Too many requests') ||
+                 error?.message?.includes('Rate limit for the current endpoint has been exceeded')) {
+        setError(t('auth.rateLimitExceeded'));
       } else {
         setError(t('auth.registrationFailed'));
       }
@@ -111,6 +116,26 @@ export default function Register() {
     setIsStudentVerified(false);
   };
 
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setUsername(newUsername);
+    
+    // 驗證用戶名
+    const validation = UsernameValidator.validate(newUsername);
+    setIsUsernameValid(validation.isValid);
+    setUsernameError(validation.error || '');
+  };
+
+  const handleUseSuggestion = () => {
+    if (usernameSuggestion) {
+      setUsername(usernameSuggestion);
+      const validation = UsernameValidator.validate(usernameSuggestion);
+      setIsUsernameValid(validation.isValid);
+      setUsernameError(validation.error || '');
+      setUsernameSuggestion('');
+    }
+  };
+
   const handleStudentVerified = () => {
     setIsStudentVerified(true);
     setError('');
@@ -121,10 +146,10 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+      <div className="w-full max-w-6xl">
         {/* Logo and Title */}
-        <div className="text-center mb-8 pt-8">
+        <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
             <BookOpen className="h-8 w-8" />
             LingUBible
@@ -142,11 +167,12 @@ export default function Register() {
           
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 兩列佈局 */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 三列佈局 */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 左列：基本資訊和驗證 */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
                     {t('auth.studentInfoVerification')}
                   </h3>
                   
@@ -158,6 +184,7 @@ export default function Register() {
                       value={email}
                       onChange={handleEmailChange}
                       placeholder={t('auth.emailPlaceholder')}
+                      autoComplete="email"
                       required
                       disabled={loading}
                     />
@@ -188,20 +215,96 @@ export default function Register() {
                   )}
                 </div>
 
+                {/* 中列：用戶名設定 */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    {t('auth.usernameSetup')}
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="username">{t('auth.username')}</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      value={username}
+                      onChange={handleUsernameChange}
+                      placeholder={t('auth.usernamePlaceholder')}
+                      autoComplete="username"
+                      required
+                      disabled={loading}
+                      className={usernameError ? 'border-red-500' : isUsernameValid && username ? 'border-green-500' : ''}
+                    />
+                    
+                    {/* 用戶名驗證提示 */}
+                    {usernameError && (
+                      <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {usernameError}
+                      </p>
+                    )}
+                    
+                    {isUsernameValid && username && (
+                      <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        {t('auth.usernameAvailable')}
+                      </p>
+                    )}
+                    
+                    {/* 用戶名建議 */}
+                    {usernameSuggestion && !username && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm text-blue-600 dark:text-blue-400">
+                              {t('auth.usernameSuggestion')}<strong>{usernameSuggestion}</strong>
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleUseSuggestion}
+                            className="text-xs"
+                          >
+                            {t('auth.useSuggestion')}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 用戶名規則說明 */}
+                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+                    <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertDescription className="text-blue-600 dark:text-blue-400 text-xs">
+                      <div className="space-y-1">
+                        <div>{t('auth.usernameRules')}</div>
+                        <div>{t('auth.usernameLength')}</div>
+                        <div>{t('auth.usernameSupported')}</div>
+                        <div>{t('auth.usernameDisplay')}</div>
+                        <div>{t('auth.usernameModifiable')}</div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+
                 {/* 右列：密碼設定 */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
                     {t('auth.passwordSetup')}
                   </h3>
                   
                   <div className="space-y-2">
                     <Label htmlFor="password">{t('auth.password')}</Label>
-                    <Input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t('auth.enterPassword')}
+                      autoComplete="new-password"
                       required
                       disabled={loading}
                     />
@@ -209,12 +312,12 @@ export default function Register() {
 
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-                    <Input
+                    <PasswordInput
                       id="confirmPassword"
-                      type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder={t('auth.confirmPasswordPlaceholder')}
+                      autoComplete="new-password"
                       required
                       disabled={loading}
                     />
@@ -259,11 +362,33 @@ export default function Register() {
                 </Alert>
               )}
 
+              {/* Terms Agreement Checkbox */}
+              <div className="flex items-center justify-center space-x-2">
+                <Checkbox
+                  id="termsAccepted"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                />
+                <Label 
+                  htmlFor="termsAccepted" 
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {t('auth.termsCheckbox')}{' '}
+                  <Link to="/terms" className="text-primary hover:underline">
+                    {t('auth.termsOfService')}
+                  </Link>{' '}
+                  {t('auth.and')}{' '}
+                  <Link to="/privacy" className="text-primary hover:underline">
+                    {t('auth.privacyPolicy')}
+                  </Link>
+                </Label>
+              </div>
+
               <div className="flex flex-col space-y-4">
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={loading || !isStudentVerified || !isPasswordValid}
+                  disabled={loading || !isStudentVerified || !isUsernameValid || !isPasswordValid || !termsAccepted}
                 >
                   {loading ? t('auth.processing') : t('auth.signUp')}
                 </Button>

@@ -35,7 +35,7 @@ LingUBible 使用基於 Appwrite 資料庫的安全驗證系統，確保學生�
 - ✅ 自動清理過期記錄
 
 ### 4. **郵件安全**
-- ✅ 只允許 `@ln.edu.hk` 和 `@ln.hk` 域名
+- ✅ 只允許 `@ln.hk` 和 `@ln.edu.hk` 域名
 - ✅ 嚴格的郵件格式驗證
 - ✅ 多語言支援的安全郵件模板
 
@@ -80,7 +80,7 @@ LingUBible 使用基於 Appwrite 資料庫的安全驗證系統，確保學生�
 ### 發送驗證碼
 ```javascript
 const result = await studentVerificationService.sendVerificationCode(
-  'student@ln.edu.hk',
+  'student@ln.hk',
   'zh-TW'
 );
 ```
@@ -88,7 +88,7 @@ const result = await studentVerificationService.sendVerificationCode(
 ### 驗證驗證碼
 ```javascript
 const result = await studentVerificationService.verifyCode(
-  'student@ln.edu.hk',
+  'student@ln.hk',
   '123456'
 );
 ```

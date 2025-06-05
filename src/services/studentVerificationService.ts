@@ -8,7 +8,7 @@
 import { isValidEmailForRegistration, isStudentEmail, DEV_MODE } from '@/config/devMode';
 
 class StudentVerificationService {
-  private readonly ALLOWED_DOMAINS = ['@ln.edu.hk', '@ln.hk'];
+  private readonly ALLOWED_DOMAINS = ['@ln.hk', '@ln.edu.hk'];
 
   // 檢查郵件是否為有效的學生郵件（保留以兼容性）
   private isValidStudentEmail(email: string): boolean {
@@ -190,13 +190,13 @@ class StudentVerificationService {
         const messages = {
           'en': DEV_MODE.enabled 
             ? 'Please enter a valid email address format'
-            : 'Only @ln.edu.hk or @ln.hk email addresses can register',
+            : 'Only @ln.hk or @ln.edu.hk email addresses can register',
           'zh-TW': DEV_MODE.enabled 
             ? '請輸入有效的郵件地址格式'
-            : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊',
+            : '只有 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南人才能註冊',
           'zh-CN': DEV_MODE.enabled 
             ? '请输入有效的邮件地址格式'
-            : '只有 @ln.edu.hk 或 @ln.hk 邮件地址的学生才能注册'
+            : '只有 @ln.hk 或 @ln.edu.hk 邮件地址的学生才能注册'
         };
         return {
           success: false,
@@ -263,7 +263,7 @@ class StudentVerificationService {
           success: false,
           message: DEV_MODE.enabled 
             ? '請輸入有效的郵件地址格式'
-            : '只有 @ln.edu.hk 或 @ln.hk 郵件地址的嶺南人才能註冊'
+            : '只有 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南人才能註冊'
         };
       }
 
@@ -411,7 +411,7 @@ class StudentVerificationService {
     const registeredEmails = [
       'test@ln.edu.hk',
       'admin@ln.edu.hk',
-      'student@ln.edu.hk',
+      'student@ln.hk',
       'demo@ln.hk',
       'user@ln.edu.hk'
     ];

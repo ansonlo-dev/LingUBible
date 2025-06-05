@@ -51,6 +51,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       toast({
         title: t('avatar.saveSuccess'),
         description: t('avatar.saveSuccessDesc'),
+        variant: "success",
       });
       setIsOpen(false);
     } else {
@@ -69,6 +70,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       toast({
         title: t('avatar.resetSuccess'),
         description: t('avatar.resetSuccessDesc'),
+        variant: "success",
       });
       setIsOpen(false);
     } else {

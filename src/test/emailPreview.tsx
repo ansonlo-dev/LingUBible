@@ -30,7 +30,7 @@ export const testEmailRender = async () => {
 // 測試不同的驗證碼
 export const testDifferentCodes = async () => {
   const testCases = [
-    { code: '123456', email: 'student@ln.edu.hk' },
+    { code: '123456', email: 'student@ln.hk' },
     { code: '789012', email: 'test@ln.hk' },
     { code: '345678', email: 'user@ln.edu.hk' }
   ];

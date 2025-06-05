@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { PasswordStrengthChecker } from './PasswordStrengthChecker';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export function PasswordDemo() {
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('student@ln.edu.hk');
+  const [email, setEmail] = useState('student@ln.hk');
   const [isValid, setIsValid] = useState(false);
   const { t } = useLanguage();
 
@@ -39,18 +40,19 @@ export function PasswordDemo() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="student@ln.edu.hk"
+              placeholder="student@ln.hk"
+              autoComplete="email"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">密碼</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="輸入密碼來測試強度"
+              autoComplete="new-password"
             />
           </div>
 
@@ -89,7 +91,7 @@ export function PasswordDemo() {
               <div className="mt-2 text-xs text-gray-500">
                 <p>新要求：數字現在是必需的，不再是建議</p>
                 <p>支援多語言：英文、繁體中文、簡體中文</p>
-                <p>學校郵件提醒：對 @ln.edu.hk 和 @ln.hk 用戶始終顯示</p>
+                <p>學校郵件提醒：對 @ln.hk 和 @ln.edu.hk 用戶始終顯示</p>
               </div>
             </div>
           )}

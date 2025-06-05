@@ -152,6 +152,13 @@ const translations = {
     'auth.enterAccountInfo': 'Enter your account information to sign in',
     'auth.resetYourPassword': 'Reset your password',
     'auth.signOut': 'Sign Out',
+    // Toast messages
+    'toast.loginSuccess': 'Login Successful!',
+    'toast.welcomeBack': 'Welcome back, {username}!',
+    'toast.registerSuccess': 'Registration Successful!',
+    'toast.welcomeToApp': 'Welcome to LingUBible, {username}!',
+    'toast.logoutSuccess': 'Logout Successful',
+    'toast.goodbye': 'Goodbye, {username}! Looking forward to your next visit.',
     // Search
     'search.placeholder': 'Search courses, lecturers...',
     // Buttons
@@ -631,6 +638,13 @@ const translations = {
     'auth.enterAccountInfo': '輸入您的帳戶資訊來登入',
     'auth.resetYourPassword': '重置您的密碼',
     'auth.signOut': '登出',
+    // Toast messages
+    'toast.loginSuccess': '登入成功！',
+    'toast.welcomeBack': '歡迎回來，{username}！',
+    'toast.registerSuccess': '註冊成功！',
+    'toast.welcomeToApp': '歡迎來到 LingUBible，{username}！',
+    'toast.logoutSuccess': '登出成功',
+    'toast.goodbye': '再見，{username}！期待您的下次造訪。',
     // Search
     'search.placeholder': '搜尋課程、講師...',
     // Buttons
@@ -1108,6 +1122,13 @@ const translations = {
     'auth.enterAccountInfo': '输入您的账户信息来登录',
     'auth.resetYourPassword': '重置您的密码',
     'auth.signOut': '登出',
+    // Toast messages
+    'toast.loginSuccess': '登录成功！',
+    'toast.welcomeBack': '欢迎回来，{username}！',
+    'toast.registerSuccess': '注册成功！',
+    'toast.welcomeToApp': '欢迎来到 LingUBible，{username}！',
+    'toast.logoutSuccess': '登出成功',
+    'toast.goodbye': '再见，{username}！期待您的下次造访。',
     // Search
     'search.placeholder': '搜索课程、讲师...',
     // Buttons
@@ -1489,10 +1510,10 @@ const translations = {
     'settings.deleteAccount.successDesc': '您的账户已暂时禁用。您可以通过重新登录来重新启用。',
     'settings.deleteAccount.failed': '禁用失败',
     'settings.deleteAccount.failedDesc': '禁用账户失败，请稍后再试。',
-    'auth.passwordTooShort': 'Password must be between 8 and 256 characters long',
-    'auth.rateLimitExceeded': 'Rate limit exceeded. Please try again after some time',
-    'auth.showPassword': 'Show password',
-    'auth.hidePassword': 'Hide password',
+    'auth.passwordTooShort': '密码必须在 8 到 256 个字符之间',
+    'auth.rateLimitExceeded': '请求过于频繁，请稍后再试',
+    'auth.showPassword': '显示密码',
+    'auth.hidePassword': '隐藏密码',
   },
 };
 

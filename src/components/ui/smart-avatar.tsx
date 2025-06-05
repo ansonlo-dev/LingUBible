@@ -20,6 +20,9 @@ interface SmartAvatarProps {
   // 頭像配置
   config: AvatarConfig;
   
+  // 載入狀態
+  isLoading?: boolean;
+  
   // 樣式相關
   className?: string;
   fallbackClassName?: string;
@@ -38,6 +41,7 @@ export const SmartAvatar = React.forwardRef<
   reviewId, 
   customAvatar,
   config, 
+  isLoading = false,
   className, 
   fallbackClassName,
   ...props 
@@ -87,6 +91,10 @@ export const SmartAvatar = React.forwardRef<
 
   // 獲取背景樣式
   const getBackgroundClass = () => {
+    if (isLoading) {
+      return "bg-muted animate-pulse";
+    }
+    
     if (avatarContent.type === 'emoji' && avatarContent.background) {
       const bgClass = isDark ? avatarContent.background.dark : avatarContent.background.light;
       return `bg-gradient-to-br ${bgClass}`;
@@ -106,15 +114,18 @@ export const SmartAvatar = React.forwardRef<
     >
       <AvatarFallback 
         className={cn(
-          "flex h-full w-full items-center justify-center rounded-full",
+          "flex h-full w-full items-center justify-center rounded-full transition-all duration-200",
           getBackgroundClass(),
           fallbackClassName
         )}
       >
-        {avatarContent.type === 'emoji' ? (
+        {isLoading ? (
+          // 載入狀態顯示骨架屏
+          <div className="w-full h-full bg-muted-foreground/20 rounded-full animate-pulse" />
+        ) : avatarContent.type === 'emoji' ? (
           <span 
             className={cn(
-              "select-none",
+              "select-none transition-opacity duration-200",
               config.size === 'sm' ? "text-lg" : 
               config.size === 'md' ? "text-2xl" : "text-3xl"
             )} 
@@ -124,7 +135,7 @@ export const SmartAvatar = React.forwardRef<
             {avatarContent.content}
           </span>
         ) : (
-          <span className="font-semibold text-muted-foreground">
+          <span className="font-semibold text-muted-foreground transition-opacity duration-200">
             {avatarContent.content}
           </span>
         )}

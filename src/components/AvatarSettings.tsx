@@ -7,6 +7,7 @@ import { SmartAvatar } from '@/components/ui/smart-avatar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAvatarPreferences } from '@/hooks/useAvatarPreferences';
+import { useCustomAvatar } from '@/hooks/useCustomAvatar';
 import { Separator } from '@/components/ui/separator';
 import { Info, RefreshCw } from 'lucide-react';
 
@@ -14,6 +15,7 @@ export function AvatarSettings() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { preferences, updatePreferences, isLoaded } = useAvatarPreferences();
+  const { customAvatar, isInitialLoading } = useCustomAvatar();
   const [previewReviewId, setPreviewReviewId] = useState('preview-review-123');
 
   // 重新生成預覽頭像
@@ -58,6 +60,8 @@ export function AvatarSettings() {
               userId={user.$id}
               name={user.name}
               email={user.email}
+              customAvatar={customAvatar}
+              isLoading={isInitialLoading}
               config={{
                 showPersonalAvatar: preferences.showPersonalAvatar,
                 showAnonymousAvatar: false,

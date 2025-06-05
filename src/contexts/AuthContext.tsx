@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authService, AuthUser } from '../services/auth';
 import { toast } from '@/components/ui/use-toast';
+import { getAvatarContent } from '@/utils/avatarUtils';
+import { avatarService } from '@/services/avatarService';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -15,6 +17,19 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// 獲取用戶顯示名稱的輔助函數
+const getUserDisplayName = (user: AuthUser | null): string => {
+    if (!user) return '用戶';
+    
+    // 如果 name 存在且不等於 email，則使用 name（用戶名）
+    if (user.name && user.name !== user.email) {
+        return user.name;
+    }
+    
+    // 否則使用郵箱前綴
+    return user.email?.split('@')[0] || '用戶';
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -61,11 +76,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // 顯示登入成功 toast
             const currentUser = await authService.getCurrentUser();
-            const username = currentUser?.name || currentUser?.email?.split('@')[0] || '用戶';
+            const username = getUserDisplayName(currentUser);
+            
+            // 獲取用戶頭像
+            let userAvatar = '';
+            if (currentUser?.$id) {
+                try {
+                    // 嘗試獲取自定義頭像
+                    const customAvatar = await avatarService.getUserAvatar(currentUser.$id);
+                    
+                    // 獲取頭像內容
+                    const avatarContent = getAvatarContent(
+                        {
+                            showPersonalAvatar: true,
+                            showAnonymousAvatar: false,
+                            size: 'md',
+                            context: 'profile'
+                        },
+                        {
+                            userId: currentUser.$id,
+                            name: currentUser.name,
+                            email: currentUser.email,
+                            customAvatar: customAvatar || undefined
+                        }
+                    );
+                    
+                    if (avatarContent.type === 'emoji') {
+                        userAvatar = avatarContent.content + ' ';
+                    }
+                } catch (error) {
+                    console.error('獲取用戶頭像失敗:', error);
+                }
+            }
             
             toast({
                 variant: "success",
-                title: "🎉 登入成功！",
+                title: `${userAvatar}🎉 登入成功！`,
                 description: `歡迎回來，${username}！`,
                 duration: 4000,
             });
@@ -79,12 +125,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await authService.createAccount(email, password, name);
             await checkUser();
             
-            // 顯示註冊成功 toast
+            // 顯示註冊成功 toast，使用傳入的用戶名
             const username = name || email?.split('@')[0] || '用戶';
+            
+            // 獲取用戶頭像
+            let userAvatar = '';
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser?.$id) {
+                try {
+                    // 嘗試獲取自定義頭像
+                    const customAvatar = await avatarService.getUserAvatar(currentUser.$id);
+                    
+                    // 獲取頭像內容
+                    const avatarContent = getAvatarContent(
+                        {
+                            showPersonalAvatar: true,
+                            showAnonymousAvatar: false,
+                            size: 'md',
+                            context: 'profile'
+                        },
+                        {
+                            userId: currentUser.$id,
+                            name: currentUser.name,
+                            email: currentUser.email,
+                            customAvatar: customAvatar || undefined
+                        }
+                    );
+                    
+                    if (avatarContent.type === 'emoji') {
+                        userAvatar = avatarContent.content + ' ';
+                    }
+                } catch (error) {
+                    console.error('獲取用戶頭像失敗:', error);
+                }
+            }
             
             toast({
                 variant: "success",
-                title: "🎊 註冊成功！",
+                title: `${userAvatar}🎊 註冊成功！`,
                 description: `歡迎加入 LingUBible，${username}！`,
                 duration: 4000,
             });
@@ -112,15 +190,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             const currentUser = user;
+            
+            // 獲取用戶頭像（在登出前）
+            let userAvatar = '';
+            if (currentUser?.$id) {
+                try {
+                    // 嘗試獲取自定義頭像
+                    const customAvatar = await avatarService.getUserAvatar(currentUser.$id);
+                    
+                    // 獲取頭像內容
+                    const avatarContent = getAvatarContent(
+                        {
+                            showPersonalAvatar: true,
+                            showAnonymousAvatar: false,
+                            size: 'md',
+                            context: 'profile'
+                        },
+                        {
+                            userId: currentUser.$id,
+                            name: currentUser.name,
+                            email: currentUser.email,
+                            customAvatar: customAvatar || undefined
+                        }
+                    );
+                    
+                    if (avatarContent.type === 'emoji') {
+                        userAvatar = avatarContent.content + ' ';
+                    }
+                } catch (error) {
+                    console.error('獲取用戶頭像失敗:', error);
+                }
+            }
+            
             await authService.logout();
             setUser(null);
             
             // 顯示登出成功 toast
-            const username = currentUser?.name || currentUser?.email?.split('@')[0] || '用戶';
+            const username = getUserDisplayName(currentUser);
             
             toast({
                 variant: "success",
-                title: "👋 登出成功",
+                title: `${userAvatar}👋 登出成功`,
                 description: `再見，${username}！期待您的下次造訪。`,
                 duration: 4000,
             });

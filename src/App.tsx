@@ -14,8 +14,13 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import UserSettings from "./pages/UserSettings";
 import AvatarDemo from "./pages/AvatarDemo";
+import LecturerDemo from "./pages/LecturerDemo";
 import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Contact from "./pages/Contact";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
@@ -352,7 +357,12 @@ const AppContent = () => {
                 <main className="content-area">
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/settings" element={<UserSettings />} />
                     <Route path="/avatar-demo" element={<AvatarDemo />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/lecturer-demo" element={<LecturerDemo />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

@@ -21,7 +21,7 @@ interface StudentVerificationInputProps {
 const isValidStudentEmail = (email: string): boolean => {
   const emailLower = email.toLowerCase();
   // 使用正則表達式確保完全匹配，防止像 abc@ln.edsf.hk 這樣的郵件通過
-  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const validEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.hk|ln\.edu\.hk)$/;
   return validEmailPattern.test(emailLower);
 };
 
