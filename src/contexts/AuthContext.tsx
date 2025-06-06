@@ -11,6 +11,7 @@ interface AuthContextType {
     login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
     register: (email: string, password: string, name: string) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
     sendStudentVerificationCode: (email: string) => Promise<{ success: boolean; message: string }>;
     verifyStudentCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
     isStudentEmailVerified: (email: string) => Promise<boolean>;
@@ -241,12 +242,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const refreshUser = async () => {
+        try {
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+        } catch (error) {
+            console.error('刷新用戶資料失敗:', error);
+            // 如果刷新失敗，可能是 session 過期，設置為 null
+            setUser(null);
+        }
+    };
+
     const value = {
         user,
         loading,
         login,
         register,
         logout,
+        refreshUser,
         sendStudentVerificationCode,
         verifyStudentCode,
         isStudentEmailVerified,

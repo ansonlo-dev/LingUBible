@@ -23,7 +23,7 @@ import { UsernameValidator } from "@/utils/auth/usernameValidator";
 import { authService } from "@/services/api/auth";
 
 export default function UserSettings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [originalUsername, setOriginalUsername] = useState('');
@@ -85,6 +85,9 @@ export default function UserSettings() {
     try {
       // 更新用戶名
       await authService.updateUserName(nameToSave);
+      
+      // 刷新用戶資料以更新 AuthContext 中的用戶狀態
+      await refreshUser();
       
       setOriginalUsername(username);
       

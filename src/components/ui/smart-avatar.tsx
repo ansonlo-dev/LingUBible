@@ -1,5 +1,4 @@
 import * as React from "react"
-import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { 
@@ -46,33 +45,6 @@ export const SmartAvatar = React.forwardRef<
   fallbackClassName,
   ...props 
 }, ref) => {
-  const [isDark, setIsDark] = useState(false);
-
-  // 監聽主題變化
-  useEffect(() => {
-    const checkTheme = () => {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    };
-    
-    checkTheme();
-
-    // 創建 MutationObserver 來監聽 class 變化
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          checkTheme();
-        }
-      });
-    });
-
-    // 開始觀察 html 元素的 class 屬性變化
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   const avatarContent = getAvatarContent(config, {
     userId,
@@ -96,7 +68,8 @@ export const SmartAvatar = React.forwardRef<
     }
     
     if (avatarContent.type === 'emoji' && avatarContent.background) {
-      const bgClass = isDark ? avatarContent.background.dark : avatarContent.background.light;
+      // 頭像背景始終使用亮色模式，不隨深色模式改變
+      const bgClass = avatarContent.background.light;
       return `bg-gradient-to-br ${bgClass}`;
     }
     return "bg-muted";

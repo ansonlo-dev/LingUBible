@@ -91,7 +91,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
     setSearchQuery('');
     setSelectedIndex(-1);
     setShowResults(false);
-    console.log('Navigate to:', href);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -126,8 +125,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   };
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    console.log('Input focused, isInitialized:', isInitialized, 'isInitialLoad:', isInitialLoad); // 調試用
-    
     // 簡化邏輯：只要獲得焦點就顯示結果
     if (!isInitialized) {
       setIsInitialized(true);
@@ -151,8 +148,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
 
   // 添加一個處理用戶點擊的函數
   const handleInputClick = () => {
-    console.log('Input clicked'); // 調試用
-    
     if (!isInitialized) {
       setIsInitialized(true);
     }
@@ -160,23 +155,17 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   };
 
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    console.log('handleInputBlur called, isDesktopMode:', isDesktopMode); // 調試用
-    
     // 檢查焦點是否移動到搜尋結果容器內
     const relatedTarget = e.relatedTarget as HTMLElement;
     const searchContainer = searchRef.current;
     
     // 如果焦點移動到搜尋容器內的元素，不隱藏結果
     if (searchContainer && relatedTarget && searchContainer.contains(relatedTarget)) {
-      console.log('Focus moved within search container, not hiding results'); // 調試用
       return;
     }
     
-    console.log('Focus moved outside, hiding results in 150ms'); // 調試用
-    
     // 延遲隱藏結果，以便點擊結果項目時有時間處理
     setTimeout(() => {
-      console.log('Setting showResults to false'); // 調試用
       setShowResults(false);
     }, 150);
   };
@@ -194,7 +183,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
 
   // 使用 useCallback 創建穩定的關閉函數
   const handleCloseResults = useCallback(() => {
-    console.log('handleCloseResults called, isDesktopMode:', isDesktopMode);
     if (isDesktopMode) {
       setShowResults(false);
       // 強制失去焦點
@@ -212,48 +200,36 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       // 處理 Ctrl+K 或 Cmd+K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        console.log('Ctrl+K pressed, isDesktopMode:', isDesktopMode); // 調試用
         
         // 如果是桌面版，聚焦搜索框並顯示結果
         if (isDesktopMode) {
-          console.log('Activating search for desktop mode'); // 調試用
           setIsInitialized(true);
           setShowResults(true);
           
           // 聚焦到搜尋框
           if (inputRef.current) {
-            console.log('Focusing input'); // 調試用
             inputRef.current.focus();
-          } else {
-            console.log('Input ref is null'); // 調試用
           }
         }
       }
     };
 
     // 添加全局鍵盤監聽器
-    console.log('Adding global keydown listener, isDesktopMode:', isDesktopMode); // 調試用
     document.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
-      console.log('Removing global keydown listener'); // 調試用
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, [isDesktopMode]);
 
   // Focus input when opened (mobile mode)
   useEffect(() => {
-    // 只有在手機版且用戶明確打開搜尋時才自動獲得焦點
+    // 手機版不自動獲得焦點，也不自動顯示搜尋結果
+    // 只有當用戶明確點擊或聚焦搜尋框時才顯示結果
     if (isOpen && !isDesktopMode && inputRef.current) {
-      // 延遲一點時間確保 DOM 已經渲染
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          // 手機版打開時標記為已初始化並顯示搜尋結果
-          setIsInitialized(true);
-          setShowResults(true);
-        }
-      }, 100);
+      // 確保手機版初始狀態不顯示搜尋結果
+      setShowResults(false);
+      setIsInitialized(false);
     }
   }, [isOpen, isDesktopMode]);
 
@@ -264,8 +240,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       
       // 檢查點擊是否在搜尋容器外部
       if (searchRef.current && !searchRef.current.contains(target)) {
-        console.log('Clicked outside search container, calling handleCloseResults'); // 調試用
-        
         // 手機版：關閉整個搜尋對話框
         if (!isDesktopMode) {
           onClose();
@@ -290,15 +264,15 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   useEffect(() => {
     setIsMounted(true);
     
-    // 確保初始狀態正確
-    if (isInitialLoad) {
+    // 確保初始狀態正確 - 手機版和桌面版都不應該在初始載入時顯示搜尋結果
+    if (isInitialLoad || !isDesktopMode) {
       setShowResults(false);
+      setIsInitialized(false);
     }
     
     // 確保輸入框不會自動獲得焦點
     const checkAndRemoveFocus = () => {
       if (inputRef.current && document.activeElement === inputRef.current && !isInitialized) {
-        console.log('Removing unwanted focus from search input'); // 調試用
         inputRef.current.blur();
       }
     };
@@ -317,7 +291,7 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
     return () => {
       timeouts.forEach(timeout => clearTimeout(timeout));
     };
-  }, [isInitialized, isInitialLoad]);
+  }, [isInitialized, isInitialLoad, isDesktopMode]);
 
   // 創建一個 ref 回調來處理 Input 掛載
   const inputRefCallback = useCallback((element: HTMLInputElement | null) => {
@@ -325,7 +299,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
     
     // 如果是初始載入且元素獲得了焦點，立即移除焦點
     if (element && isInitialLoad && document.activeElement === element) {
-      console.log('Removing focus from input on mount'); // 調試用
       element.blur();
     }
   }, [isInitialLoad]);
@@ -334,11 +307,10 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
 
   // 重新設計邏輯：
   // 1. 必須已初始化且 showResults 為 true 才顯示
-  // 2. 絕對不在初始載入時顯示
-  // 3. 內容根據搜尋文字過濾，但總是顯示一些結果
-  const shouldShowResults = isInitialized && showResults && !isInitialLoad;
-
-  console.log('shouldShowResults:', shouldShowResults, 'showResults:', showResults, 'searchQuery:', searchQuery, 'isDesktopMode:', isDesktopMode); // 調試用
+  // 2. 桌面版：絕對不在初始載入時顯示
+  // 3. 手機版：只有在用戶明確聚焦搜尋框後才顯示
+  // 4. 內容根據搜尋文字過濾，但總是顯示一些結果
+  const shouldShowResults = isInitialized && showResults && (isDesktopMode ? !isInitialLoad : true);
 
   return (
     <div ref={searchRef} className="relative w-full max-w-2xl mx-auto z-[99999]" style={{ overflow: 'visible' }}>

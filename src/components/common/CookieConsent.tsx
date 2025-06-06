@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { X, Info, Shield, Settings, BarChart3 } from 'lucide-react';
+import { swipeHintCookie } from '@/lib/cookies';
 
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -18,6 +19,9 @@ export function CookieConsent() {
       return;
     }
 
+    // 檢查是否為手機版
+    const isMobile = window.innerWidth < 768;
+    
     // 確保語言上下文已經初始化
     // 通過檢查翻譯函數是否返回正確的值來判斷
     const checkLanguageInitialized = () => {
@@ -27,24 +31,39 @@ export function CookieConsent() {
       return testTranslation !== 'cookie.title' && testTranslation.length > 0;
     };
 
-    // 等待語言初始化完成
-    const waitForLanguage = () => {
-      if (checkLanguageInitialized()) {
-        console.log('CookieConsent: 語言已初始化，準備顯示彈窗');
-        // 語言已初始化，延遲顯示 Cookie 同意
+    // 檢查滑動提示是否已經關閉（只在手機版檢查）
+    const checkSwipeHintClosed = () => {
+      if (!isMobile) {
+        // 桌面版不需要等待滑動提示
+        return true;
+      }
+      // 手機版需要等待滑動提示關閉
+      return swipeHintCookie.hasBeenUsed();
+    };
+
+    // 等待語言初始化和滑動提示關閉
+    const waitForConditions = () => {
+      const languageReady = checkLanguageInitialized();
+      const swipeHintClosed = checkSwipeHintClosed();
+      
+      console.log('CookieConsent: 條件檢查 - 語言準備:', languageReady, '滑動提示已關閉:', swipeHintClosed, '是否手機版:', isMobile);
+      
+      if (languageReady && swipeHintClosed) {
+        console.log('CookieConsent: 所有條件滿足，準備顯示彈窗');
+        // 所有條件都滿足，延遲顯示 Cookie 同意
         setTimeout(() => {
           console.log('CookieConsent: 顯示 Cookie 彈窗，語言:', language);
           setIsVisible(true);
         }, 1000);
       } else {
-        console.log('CookieConsent: 語言還未初始化，繼續等待...');
-        // 語言還沒初始化，繼續等待
-        setTimeout(waitForLanguage, 100);
+        console.log('CookieConsent: 條件未滿足，繼續等待...');
+        // 條件未滿足，繼續等待
+        setTimeout(waitForConditions, 100);
       }
     };
 
-    // 開始等待語言初始化
-    waitForLanguage();
+    // 開始等待條件滿足
+    waitForConditions();
   }, [t, language]);
 
   const handleAccept = () => {
