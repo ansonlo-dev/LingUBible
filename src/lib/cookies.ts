@@ -31,10 +31,10 @@ export const cookies = {
 };
 
 // 滑動提示相關的 cookie 常量
-export const SWIPE_HINT_COOKIE = 'campus-comment-verse-swipe-used';
+export const SWIPE_HINT_COOKIE = 'LingUBible-swipe-used';
 
 // 側邊欄狀態相關的 cookie 常量
-export const SIDEBAR_STATE_COOKIE = 'campus-comment-verse-sidebar-collapsed';
+export const SIDEBAR_STATE_COOKIE = 'LingUBible-sidebar-collapsed';
 
 // 滑動提示 cookie 操作
 export const swipeHintCookie = {

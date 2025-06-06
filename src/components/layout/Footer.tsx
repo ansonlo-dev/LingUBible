@@ -26,7 +26,7 @@ export function Footer() {
               {/* Social Icons */}
               <div className="flex items-center space-x-2">
                 <a 
-                  href="https://github.com/ansonlo-dev/campus-comment-verse" 
+                  href="https://github.com/ansonlo-dev/LingUBible" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
@@ -156,7 +156,7 @@ export function Footer() {
             
             {/* GitHub link */}
             <a 
-              href="https://github.com/ansonlo-dev/campus-comment-verse" 
+              href="https://github.com/ansonlo-dev/LingUBible" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center space-x-2 text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors group"

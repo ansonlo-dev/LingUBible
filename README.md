@@ -18,7 +18,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo/campus-comment-verse/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo/LingUBible/graphs/commit-activity)
 
 ---
 
@@ -254,8 +254,8 @@ graph TD
 
 ```bash
 # 1️⃣ Clone the project
-git clone https://github.com/ansonlo/campus-comment-verse.git
-cd campus-comment-verse
+git clone https://github.com/ansonlo/LingUBible.git
+cd LingUBible
 
 # 2️⃣ Install dependencies
 npm install
@@ -365,7 +365,7 @@ npm run readme:generate-assets  # Generate README assets
 
 We welcome all forms of contributions, whether it's code, documentation, design, or idea sharing.
 
-[![Contributors](https://contrib.rocks/image?repo=ansonlo/campus-comment-verse)](https://github.com/ansonlo/campus-comment-verse/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=ansonlo/LingUBible)](https://github.com/ansonlo/LingUBible/graphs/contributors)
 
 </div>
 
@@ -398,16 +398,16 @@ We welcome all forms of contributions, whether it's code, documentation, design,
 
 <div align="center">
 
-![GitHub stars](https://img.shields.io/github/stars/ansonlo/campus-comment-verse?style=social)
-![GitHub forks](https://img.shields.io/github/forks/ansonlo/campus-comment-verse?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/ansonlo/campus-comment-verse?style=social)
+![GitHub stars](https://img.shields.io/github/stars/ansonlo/LingUBible?style=social)
+![GitHub forks](https://img.shields.io/github/forks/ansonlo/LingUBible?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/ansonlo/LingUBible?style=social)
 
-![GitHub issues](https://img.shields.io/github/issues/ansonlo/campus-comment-verse?style=flat-square)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/ansonlo/campus-comment-verse?style=flat-square)
-![GitHub last commit](https://img.shields.io/github/last-commit/ansonlo/campus-comment-verse?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/ansonlo/LingUBible?style=flat-square)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/ansonlo/LingUBible?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/ansonlo/LingUBible?style=flat-square)
 
-![Lines of code](https://img.shields.io/tokei/lines/github/ansonlo/campus-comment-verse?style=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo/campus-comment-verse?style=flat-square)
+![Lines of code](https://img.shields.io/tokei/lines/github/ansonlo/LingUBible?style=flat-square)
+![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo/LingUBible?style=flat-square)
 
 </div>
 
@@ -473,16 +473,16 @@ copies or substantial portions of the Software.
 
 **⭐ If this project helps you, please give us a Star!**
 
-[![GitHub stars](https://img.shields.io/github/stars/ansonlo/campus-comment-verse?style=for-the-badge&logo=github)](https://github.com/ansonlo/campus-comment-verse/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/ansonlo/LingUBible?style=for-the-badge&logo=github)](https://github.com/ansonlo/LingUBible/stargazers)
 
 ---
 
 **🔗 Related Links**
 
-[🌐 Official Website](https://lingubible.vercel.app) • 
+[🌐 Official Website](https://lingubible.com) • 
 [📧 Contact Us](mailto:contact@ansonlo.dev) • 
-[💬 Discussions](https://github.com/ansonlo/campus-comment-verse/discussions) • 
-[🐛 Issue Reports](https://github.com/ansonlo/campus-comment-verse/issues)
+[💬 Discussions](https://github.com/ansonlo/LingUBible/discussions) • 
+[🐛 Issue Reports](https://github.com/ansonlo/LingUBible/issues)
 
 ---
 

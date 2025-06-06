@@ -49,12 +49,12 @@ export default function Contact() {
                   <div>
                     <p className="font-medium text-foreground">{t('contact.github')}</p>
                     <a 
-                      href="https://github.com/ansonlo-dev/campus-comment-verse" 
+                      href="https://github.com/ansonlo-dev/LingUBible" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-sm text-primary hover:underline"
                     >
-                      github.com/ansonlo-dev/campus-comment-verse
+                                              github.com/ansonlo-dev/LingUBible
                     </a>
                   </div>
                 </div>

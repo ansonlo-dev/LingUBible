@@ -21,7 +21,7 @@
     "pwa:build-test": "npm run build && npm run pwa:test",
     "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2",
     "readme:generate-assets": "node tools/scripts/build/generate-readme-assets.js",
-    "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/campus-comment-verse'",
+    "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/LingUBible'",
     "functions:cleanup": "bash tools/scripts/build/cleanup-functions.sh",
     "functions:status": "echo '📊 Functions Status:' && ls -la functions/ && echo '' && echo '⚙️ Configured in appwrite.json:' && grep -A 1 '\"name\":' appwrite.json | grep '\"name\":'"
   },

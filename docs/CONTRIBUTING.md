@@ -74,8 +74,8 @@ When creating new documentation:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/campus-comment-verse.git
-   cd campus-comment-verse
+   git clone https://github.com/your-username/LingUBible.git
+   cd LingUBible
    ```
 
 2. **Create documentation structure** (if needed)

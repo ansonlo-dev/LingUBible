@@ -66,7 +66,7 @@ functions/
 4. 點擊 "Connect Git"
 5. 選擇 GitHub 並授權
 6. 配置設置：
-   - Repository: `ansonlo-dev/campus-comment-verse`
+   - Repository: `ansonlo-dev/LingUBible`
    - Production Branch: `main`
    - Root Directory: `functions/send-verification-email`
    - Entry Point: `src/main.js`
