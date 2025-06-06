@@ -355,6 +355,111 @@
   .gradient-text {
     @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
+
+  /* 極輕微霓虹燈效果 - 保持原有文字顏色 */
+  .neon-glow-text {
+    position: relative;
+    display: inline-block;
+    color: inherit; /* 保持原有顏色 */
+    text-shadow: 
+      0 0 1px currentColor,
+      0 0 2px currentColor;
+    animation: very-subtle-neon-flicker 4s ease-in-out infinite alternate;
+  }
+
+  /* 極輕微紅色霓虹燈效果 - 專門為 LingUBible */
+  .red-neon-glow-text {
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 
+      0 0 1px rgb(220, 38, 38),
+      0 0 2px rgb(220, 38, 38);
+    animation: very-subtle-red-neon-flicker 4s ease-in-out infinite alternate;
+  }
+
+  /* 暗色主題下的極輕微霓虹燈效果 */
+  .dark .neon-glow-text {
+    text-shadow: 
+      0 0 2px currentColor,
+      0 0 4px currentColor;
+  }
+
+  /* 暗色主題下的極輕微紅色霓虹燈效果 */
+  .dark .red-neon-glow-text {
+    text-shadow: 
+      0 0 2px rgb(220, 38, 38),
+      0 0 4px rgb(220, 38, 38);
+  }
+
+  /* 極輕微霓虹燈閃爍動畫 */
+  @keyframes very-subtle-neon-flicker {
+    0%, 100% {
+      text-shadow: 
+        0 0 1px currentColor,
+        0 0 2px currentColor;
+    }
+    50% {
+      text-shadow: 
+        0 0 0.5px currentColor,
+        0 0 1px currentColor;
+    }
+  }
+
+  /* 極輕微紅色霓虹燈閃爍動畫 */
+  @keyframes very-subtle-red-neon-flicker {
+    0%, 100% {
+      text-shadow: 
+        0 0 1px rgb(220, 38, 38),
+        0 0 2px rgb(220, 38, 38);
+    }
+    50% {
+      text-shadow: 
+        0 0 0.5px rgb(220, 38, 38),
+        0 0 1px rgb(220, 38, 38);
+    }
+  }
+
+  /* 暗色主題下的極輕微霓虹燈閃爍動畫 */
+  .dark .neon-glow-text {
+    animation: very-subtle-neon-flicker-dark 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes very-subtle-neon-flicker-dark {
+    0%, 100% {
+      text-shadow: 
+        0 0 2px currentColor,
+        0 0 4px currentColor;
+    }
+    50% {
+      text-shadow: 
+        0 0 1px currentColor,
+        0 0 2px currentColor;
+    }
+  }
+
+  /* 暗色主題下的極輕微紅色霓虹燈閃爍動畫 */
+  .dark .red-neon-glow-text {
+    animation: very-subtle-red-neon-flicker-dark 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes very-subtle-red-neon-flicker-dark {
+    0%, 100% {
+      text-shadow: 
+        0 0 2px rgb(220, 38, 38),
+        0 0 4px rgb(220, 38, 38);
+    }
+    50% {
+      text-shadow: 
+        0 0 1px rgb(220, 38, 38),
+        0 0 2px rgb(220, 38, 38);
+    }
+  }
+
+
   
   .gradient-primary {
     background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%);
@@ -1076,10 +1181,7 @@
   }
 
   .pwa-install-button:hover {
-    transform: translateY(-2px) scale(1.05) !important;
-    box-shadow: 
-      0 8px 25px rgba(220, 38, 38, 0.4),
-      0 0 30px rgba(220, 38, 38, 0.3) !important;
+    /* 移除懸停效果，與登入按鈕保持一致 */
   }
 
   .pwa-install-button:active {
@@ -1142,9 +1244,7 @@
   }
 
   .dark .pwa-install-button:hover {
-    box-shadow: 
-      0 8px 25px rgba(220, 38, 38, 0.6),
-      0 0 40px rgba(220, 38, 38, 0.5) !important;
+    /* 移除暗色主題下的懸停效果 */
   }
 
   /* 登入、註冊、開始使用按鈕粗體樣式 */
@@ -1166,5 +1266,213 @@
   button:has-text("注册"),
   button:has-text("开始使用") {
     font-weight: 700 !important;
+  }
+
+  /* Winged Button Styles */
+  .winged-button-container {
+    @apply relative inline-block;
+    /* 防止閃爍 */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .wing {
+    @apply absolute top-1/2 transform -translate-y-1/2 pointer-events-none;
+    @apply opacity-0 transition-all duration-700 ease-out;
+    z-index: 1;
+    /* 防止閃爍 */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: opacity, transform;
+  }
+
+  .wing-left {
+    @apply -left-12;
+    transform: translateY(-70%) translateX(-15px) scale(0.7) rotate(-10deg);
+    transform-origin: right center;
+  }
+
+  .wing-right {
+    @apply -right-12;
+    transform: translateY(-70%) translateX(15px) scale(0.7) rotate(10deg);
+    transform-origin: left center;
+  }
+
+  .wing-svg {
+    @apply w-20 h-12;
+  }
+
+  .wing-path {
+    @apply fill-current;
+  }
+
+  .wing-feather {
+    @apply fill-current;
+  }
+
+  /* 懸停時顯示翅膀 */
+  .winged-button-container:hover .wing {
+    @apply opacity-100;
+    animation-duration: 2s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  .winged-button-container:hover .wing-left {
+    transform: translateY(-70%) translateX(-5px) scale(1) rotate(-15deg);
+  }
+
+  .winged-button-container:hover .wing-right {
+    transform: translateY(-70%) translateX(5px) scale(1) rotate(15deg);
+  }
+
+  .winged-button-container:hover .winged-button {
+    transform: scale(1.05);
+    box-shadow: 
+      0 10px 30px rgba(220, 38, 38, 0.3),
+      0 0 40px rgba(220, 38, 38, 0.2);
+  }
+
+  /* 確保非懸停狀態穩定 */
+  .winged-button-container:not(:hover) .wing {
+    animation: none !important;
+  }
+
+  .winged-button-container:not(:hover) .winged-button {
+    transform: scale(1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* 禁用翅膀按鈕的霓虹燈效果 */
+  .winged-button-container .winged-button,
+  .winged-button-container .winged-button * {
+    animation: none !important;
+    text-shadow: none !important;
+  }
+
+  /* 只在懸停時允許翅膀按鈕有自己的效果 */
+  .winged-button-container:hover .winged-button {
+    animation: none !important;
+    text-shadow: none !important;
+  }
+
+  /* 天使翅膀拍打動畫 */
+
+  /* 左翅膀特定動畫 */
+  .wing-left {
+    animation-name: angel-wing-flap-left;
+  }
+
+  @keyframes angel-wing-flap-left {
+    0%, 100% {
+      transform: translateY(-70%) translateX(-5px) scale(1) rotate(-15deg);
+    }
+    25% {
+      transform: translateY(-70%) translateX(-3px) scale(1.02) rotate(-20deg);
+    }
+    50% {
+      transform: translateY(-70%) translateX(-7px) scale(0.98) rotate(-10deg);
+    }
+    75% {
+      transform: translateY(-70%) translateX(-3px) scale(1.02) rotate(-18deg);
+    }
+  }
+
+  /* 右翅膀特定動畫 */
+  .wing-right {
+    animation-name: angel-wing-flap-right;
+    animation-delay: 0.15s;
+  }
+
+  @keyframes angel-wing-flap-right {
+    0%, 100% {
+      transform: translateY(-70%) translateX(5px) scale(1) rotate(15deg);
+    }
+    25% {
+      transform: translateY(-70%) translateX(3px) scale(1.02) rotate(20deg);
+    }
+    50% {
+      transform: translateY(-70%) translateX(7px) scale(0.98) rotate(10deg);
+    }
+    75% {
+      transform: translateY(-70%) translateX(3px) scale(1.02) rotate(18deg);
+    }
+  }
+
+  /* 亮色主題 - 增強白色翅膀的可見度 */
+  .wing-svg {
+    color: white;
+    filter: 
+      drop-shadow(0 3px 12px rgba(0, 0, 0, 0.4))
+      drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
+  }
+
+  /* 暗色主題調整 */
+  .dark .wing-svg {
+    color: rgba(255, 255, 255, 0.9);
+    filter: 
+      drop-shadow(0 3px 12px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8))
+      drop-shadow(0 0 8px rgba(248, 113, 113, 0.3));
+  }
+
+  .dark .winged-button-container:hover .winged-button {
+    box-shadow: 
+      0 10px 30px rgba(248, 113, 113, 0.4),
+      0 0 40px rgba(248, 113, 113, 0.3);
+  }
+
+  /* 響應式設計 */
+  @media (max-width: 768px) {
+    .wing {
+      @apply hidden;
+    }
+    
+    .winged-button-container:hover .winged-button {
+      @apply scale-105;
+      box-shadow: 
+        0 8px 25px rgba(220, 38, 38, 0.3),
+        0 0 30px rgba(220, 38, 38, 0.2);
+    }
+  }
+
+  /* 天使光環效果 */
+  .winged-button-container::before {
+    content: '';
+    @apply absolute -top-4 left-1/2 transform -translate-x-1/2;
+    @apply w-24 h-2 rounded-full opacity-0 transition-all duration-500;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(220, 38, 38, 0.8) 20%,
+      rgba(255, 215, 0, 0.6) 50%,
+      rgba(220, 38, 38, 0.8) 80%,
+      transparent 100%);
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .winged-button-container:hover::before {
+    @apply opacity-100;
+    animation: halo-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes halo-glow {
+    0%, 100% {
+      opacity: 0.6;
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.1);
+    }
+  }
+
+  .dark .winged-button-container::before {
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(248, 113, 113, 0.7) 50%, 
+      transparent 100%);
   }
 }

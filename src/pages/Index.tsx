@@ -5,15 +5,19 @@ import { StatsCard } from "@/components/features/reviews/StatsCard";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
+
 import { BookOpen, Users, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { WingedButton } from '@/components/ui/winged-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
 import { Link } from 'react-router-dom';
 
 const Index = () => {
   const { t } = useLanguage();
   const [isMobile, setIsMobile] = useState(false);
+  const { stats: registeredUsersStats, loading: registeredUsersLoading } = useRegisteredUsers();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -107,7 +111,8 @@ const Index = () => {
           {/* 在桌面版才顯示額外的 FloatingCircles */}
           {!isMobile && <FloatingCircles zIndex={0} className="absolute inset-0 w-full h-full" />}
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {t('hero.title')} <span className="gradient-text">LingUBible</span>
+            <span className="neon-glow-text">{t('hero.title')}</span>{' '}
+            <span className="red-neon-glow-text">LingUBible</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
             <span className="inline md:block">
@@ -127,11 +132,11 @@ const Index = () => {
             />
           </div>
           
-          <Button size="lg" className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8" asChild>
+          <WingedButton size="lg" className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8" asChild>
             <Link to="/register">
               {t('hero.getStarted')}
             </Link>
-          </Button>
+          </WingedButton>
         </div>
 
         {/* Stats */}
@@ -158,9 +163,9 @@ const Index = () => {
             trend="up"
           />
           <StatsCard
-            title={t('stats.activeStudents')}
-            value="2,156"
-            change={`+8% ${t('stats.thisMonth')}`}
+            title={t('stats.registeredStudents')}
+            value={registeredUsersLoading ? "載入中..." : registeredUsersStats.totalRegisteredUsers.toLocaleString()}
+            change={registeredUsersLoading ? "" : `${registeredUsersStats.verifiedUsers} ${t('stats.verified')}`}
             icon={TrendingUp}
             trend="up"
           />

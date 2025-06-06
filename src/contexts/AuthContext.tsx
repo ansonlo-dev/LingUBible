@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/contexts/LanguageContext';
+import AppwriteUserStatsService from '@/services/api/appwriteUserStats';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -77,8 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await authService.login(email, password, rememberMe);
             await checkUser();
             
-            // 顯示登入成功 toast
+            // 記錄用戶登入到統計系統
             const currentUser = await authService.getCurrentUser();
+            if (currentUser?.$id) {
+                try {
+                    const userStatsService = AppwriteUserStatsService.getInstance();
+                    await userStatsService.userLogin(currentUser.$id);
+                    console.log('用戶統計: 登入記錄成功');
+                } catch (error) {
+                    console.error('用戶統計: 登入記錄失敗', error);
+                }
+            }
+            
+            // 顯示登入成功 toast
             const username = getUserDisplayName(currentUser, t);
             
             // 獲取用戶頭像
@@ -128,12 +140,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await authService.createAccount(email, password, name);
             await checkUser();
             
+            // 記錄用戶註冊到統計系統
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser?.$id) {
+                try {
+                    const userStatsService = AppwriteUserStatsService.getInstance();
+                    await userStatsService.userLogin(currentUser.$id);
+                    console.log('用戶統計: 註冊記錄成功');
+                } catch (error) {
+                    console.error('用戶統計: 註冊記錄失敗', error);
+                }
+            }
+            
             // 顯示註冊成功 toast，使用傳入的用戶名
             const username = name || email?.split('@')[0] || t('common.user');
             
             // 獲取用戶頭像
             let userAvatar = '';
-            const currentUser = await authService.getCurrentUser();
             if (currentUser?.$id) {
                 try {
                     // 嘗試獲取自定義頭像
@@ -193,6 +216,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             const currentUser = user;
+            
+            // 記錄用戶登出到統計系統
+            if (currentUser?.$id) {
+                try {
+                    const userStatsService = AppwriteUserStatsService.getInstance();
+                    await userStatsService.userLogout();
+                    console.log('用戶統計: 登出記錄成功');
+                } catch (error) {
+                    console.error('用戶統計: 登出記錄失敗', error);
+                }
+            }
             
             // 獲取用戶頭像（在登出前）
             let userAvatar = '';

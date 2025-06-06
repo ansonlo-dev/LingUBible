@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import UserStatsService from "@/services/api/userStats";
+import AppwriteUserStatsService from "@/services/api/appwriteUserStats";
 
 interface UserStats {
   totalUsers: number;
@@ -20,12 +20,12 @@ export function useUserStats() {
   const [isLoading, setIsLoading] = useState(true);
   const isInitializedRef = useRef(false);
 
-  const userStatsService = UserStatsService.getInstance();
+  const userStatsService = AppwriteUserStatsService.getInstance();
 
   // 更新統計數據
-  const updateStats = useCallback(() => {
+  const updateStats = useCallback(async () => {
     try {
-      const newStats = userStatsService.refreshStats(); // 使用 refreshStats 而不是 getStats
+      const newStats = await userStatsService.getStats();
       setStats(newStats);
       setIsLoading(false);
       console.log('Hook: 統計數據已更新', newStats);
@@ -36,39 +36,36 @@ export function useUserStats() {
   }, [userStatsService]);
 
   // 用戶登入
-  const handleUserLogin = useCallback((userId: string): string => {
-    const sessionId = userStatsService.userLogin(userId);
-    updateStats();
-    return sessionId;
+  const handleUserLogin = useCallback(async (userId: string): Promise<string> => {
+    try {
+      const sessionId = await userStatsService.userLogin(userId);
+      await updateStats();
+      return sessionId;
+    } catch (error) {
+      console.error('用戶登入失敗:', error);
+      throw error;
+    }
   }, [userStatsService, updateStats]);
 
   // 用戶登出
-  const handleUserLogout = useCallback((sessionId: string) => {
-    userStatsService.userLogout(sessionId);
-    updateStats();
+  const handleUserLogout = useCallback(async (sessionId: string) => {
+    try {
+      await userStatsService.userLogout(sessionId);
+      await updateStats();
+    } catch (error) {
+      console.error('用戶登出失敗:', error);
+    }
   }, [userStatsService, updateStats]);
 
-  // 更新用戶活動
-  const updateUserActivity = useCallback((sessionId: string) => {
-    userStatsService.updateUserActivity(sessionId);
+  // 發送 ping
+  const sendPing = useCallback(async (sessionId?: string) => {
+    try {
+      return await userStatsService.sendPing(sessionId);
+    } catch (error) {
+      console.error('發送 ping 失敗:', error);
+      return false;
+    }
   }, [userStatsService]);
-
-  // 模擬用戶活動（用於演示）
-  const simulateActivity = useCallback(() => {
-    userStatsService.simulateUserActivity();
-    updateStats();
-  }, [userStatsService, updateStats]);
-
-  // 獲取詳細統計信息（用於調試）
-  const getDetailedStats = useCallback(() => {
-    return userStatsService.getDetailedStats();
-  }, [userStatsService]);
-
-  // 重置所有數據
-  const resetAllData = useCallback(() => {
-    userStatsService.resetAllData();
-    updateStats();
-  }, [userStatsService, updateStats]);
 
   // 初始化和定期更新
   useEffect(() => {
@@ -81,7 +78,7 @@ export function useUserStats() {
     const interval = setInterval(() => {
       console.log('Hook: 定期更新統計數據');
       updateStats();
-    }, 30000); // 每30秒更新一次
+    }, 60 * 1000); // 每1分鐘更新一次（Pro 方案優化）
 
     // 清理函數
     return () => {
@@ -90,36 +87,20 @@ export function useUserStats() {
     };
   }, [updateStats]);
 
-  // 移除自動模擬用戶創建，只保留標記初始化完成
+  // 標記初始化完成
   useEffect(() => {
     if (!isInitializedRef.current && !isLoading) {
-      console.log('Hook: 初始化完成，不創建模擬用戶');
+      console.log('Hook: 初始化完成');
       isInitializedRef.current = true;
     }
   }, [isLoading]);
-
-  // 大幅降低模擬活動頻率，幾乎不觸發
-  useEffect(() => {
-    const simulationInterval = setInterval(() => {
-      // 只有在有現有用戶時才偶爾觸發模擬活動，且機率極低
-      if (stats.onlineUsers > 0 && Math.random() > 0.98) { // 只有 2% 機率觸發
-        console.log('Hook: 觸發輕微模擬活動');
-        simulateActivity();
-      }
-    }, 60000); // 每60秒檢查一次
-
-    return () => clearInterval(simulationInterval);
-  }, [simulateActivity, stats.onlineUsers]);
 
   return {
     stats,
     isLoading,
     handleUserLogin,
     handleUserLogout,
-    updateUserActivity,
-    simulateActivity,
-    updateStats,
-    getDetailedStats,
-    resetAllData
+    sendPing,
+    updateStats
   };
 } 

@@ -7,7 +7,8 @@ export const PWAInstallIcon = () => {
   const { 
     canInstall, 
     deferredPrompt,
-    promptInstall
+    promptInstall,
+    isInstalled
   } = usePWA();
   const { t } = useLanguage();
 

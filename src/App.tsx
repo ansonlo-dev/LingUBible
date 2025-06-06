@@ -30,6 +30,7 @@ import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
 import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePingSystem } from '@/hooks/usePingSystem';
 
 
 const queryClient = new QueryClient();
@@ -88,6 +89,13 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
+
+  // 啟動 ping 系統來追蹤用戶在線狀態
+  usePingSystem({
+    enabled: true,
+    pingInterval: 2 * 60 * 1000, // 每 2 分鐘 ping 一次（Pro 方案優化）
+    activityEvents: ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
+  });
   // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     // 只在桌面版時從 cookie 讀取狀態

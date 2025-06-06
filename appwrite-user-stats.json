@@ -1,0 +1,214 @@
+{
+  "projectId": "user-stats-system",
+  "projectName": "User Statistics System",
+  "databases": [
+    {
+      "databaseId": "user-stats-db",
+      "name": "User Statistics Database",
+      "collections": [
+        {
+          "collectionId": "user-sessions",
+          "name": "User Sessions",
+          "permissions": [
+            "read(\"users\")",
+            "create(\"users\")",
+            "update(\"users\")",
+            "delete(\"users\")"
+          ],
+          "documentSecurity": true,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "userId",
+              "type": "string",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "size": 255,
+              "default": null
+            },
+            {
+              "key": "sessionId",
+              "type": "string",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "size": 255,
+              "default": null
+            },
+            {
+              "key": "loginTime",
+              "type": "datetime",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "default": null,
+              "format": "datetime"
+            },
+            {
+              "key": "lastPing",
+              "type": "datetime",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "default": null,
+              "format": "datetime"
+            },
+            {
+              "key": "deviceInfo",
+              "type": "string",
+              "status": "available",
+              "error": "",
+              "required": false,
+              "array": false,
+              "size": 1000,
+              "default": null
+            },
+            {
+              "key": "ipAddress",
+              "type": "string",
+              "status": "available",
+              "error": "",
+              "required": false,
+              "array": false,
+              "size": 45,
+              "default": null
+            }
+          ],
+          "indexes": [
+            {
+              "key": "userId_index",
+              "type": "key",
+              "status": "available",
+              "error": "",
+              "attributes": ["userId"],
+              "orders": ["ASC"]
+            },
+            {
+              "key": "sessionId_index",
+              "type": "key",
+              "status": "available",
+              "error": "",
+              "attributes": ["sessionId"],
+              "orders": ["ASC"]
+            },
+            {
+              "key": "lastPing_index",
+              "type": "key",
+              "status": "available",
+              "error": "",
+              "attributes": ["lastPing"],
+              "orders": ["DESC"]
+            }
+          ]
+        },
+        {
+          "collectionId": "user-stats",
+          "name": "User Statistics",
+          "permissions": [
+            "read(\"users\")",
+            "create(\"users\")",
+            "update(\"users\")",
+            "delete(\"users\")"
+          ],
+          "documentSecurity": true,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "totalUsers",
+              "type": "integer",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "min": 0,
+              "max": 2147483647,
+              "default": 0
+            },
+            {
+              "key": "todayLogins",
+              "type": "integer",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "min": 0,
+              "max": 2147483647,
+              "default": 0
+            },
+            {
+              "key": "thisMonthLogins",
+              "type": "integer",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "min": 0,
+              "max": 2147483647,
+              "default": 0
+            },
+            {
+              "key": "lastUpdated",
+              "type": "datetime",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "default": null,
+              "format": "datetime"
+            }
+          ],
+          "indexes": []
+        },
+        {
+          "collectionId": "logged-users",
+          "name": "Logged Users",
+          "permissions": [
+            "read(\"users\")",
+            "create(\"users\")",
+            "update(\"users\")",
+            "delete(\"users\")"
+          ],
+          "documentSecurity": true,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "userId",
+              "type": "string",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "size": 255,
+              "default": null
+            },
+            {
+              "key": "firstLogin",
+              "type": "datetime",
+              "status": "available",
+              "error": "",
+              "required": true,
+              "array": false,
+              "default": null,
+              "format": "datetime"
+            }
+          ],
+          "indexes": [
+            {
+              "key": "userId_unique",
+              "type": "unique",
+              "status": "available",
+              "error": "",
+              "attributes": ["userId"],
+              "orders": ["ASC"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+} 

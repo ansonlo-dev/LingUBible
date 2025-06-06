@@ -9,7 +9,7 @@ interface UserStats {
 interface UserSession {
   userId: string;
   loginTime: number;
-  lastActivity: number;
+  lastPing: number;
   sessionId: string;
 }
 
@@ -18,17 +18,21 @@ class UserStatsService {
   private stats: UserStats;
   private sessions: Map<string, UserSession> = new Map();
   private updateInterval: NodeJS.Timeout | null = null;
-  private readonly SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分鐘無活動視為離線
-  private readonly UPDATE_INTERVAL = 60 * 1000; // 每分鐘更新一次統計
+  private pingInterval: NodeJS.Timeout | null = null;
+  private readonly SESSION_TIMEOUT = 2 * 60 * 1000; // 2 分鐘無 ping 視為離線（更短的超時時間）
+  private readonly UPDATE_INTERVAL = 30 * 1000; // 每 30 秒更新一次統計
+  private readonly PING_INTERVAL = 60 * 1000; // 每 60 秒發送一次 ping
   private isInitialized = false;
+  private currentSessionId: string | null = null;
 
   private constructor() {
     this.stats = this.loadStatsFromStorage();
     this.loadSessionsFromStorage();
     this.startPeriodicUpdate();
+    this.startPingSystem();
     this.setupBeforeUnloadHandler();
     this.isInitialized = true;
-    console.log('UserStatsService 初始化完成');
+    console.log('UserStatsService 初始化完成 (基於 Ping 系統)');
   }
 
   public static getInstance(): UserStatsService {
@@ -44,20 +48,20 @@ class UserStatsService {
       const stored = localStorage.getItem('userStats');
       if (stored) {
         const parsed = JSON.parse(stored);
-        // 檢查是否是今天的數據
+        
+        // 檢查是否需要重置今日統計
         const today = new Date().toDateString();
         const lastUpdated = new Date(parsed.lastUpdated).toDateString();
         
         if (today !== lastUpdated) {
-          // 新的一天，重置今日登入數
           parsed.todayLogins = 0;
-          console.log('新的一天，重置今日登入數');
+          console.log('新的一天，重置今日登入統計');
         }
         
         return parsed;
       }
     } catch (error) {
-      console.error('載入用戶統計失敗:', error);
+      console.error('載入統計數據失敗:', error);
     }
     
     return {
@@ -78,9 +82,9 @@ class UserStatsService {
         const now = Date.now();
         let loadedCount = 0;
         
-        // 清理過期會話
+        // 清理過期會話（基於 lastPing）
         Object.entries(sessions).forEach(([sessionId, session]: [string, any]) => {
-          if (now - session.lastActivity < this.SESSION_TIMEOUT) {
+          if (now - session.lastPing < this.SESSION_TIMEOUT) {
             this.sessions.set(sessionId, session);
             loadedCount++;
           }
@@ -99,7 +103,7 @@ class UserStatsService {
     try {
       localStorage.setItem('userStats', JSON.stringify(this.stats));
     } catch (error) {
-      console.error('保存用戶統計失敗:', error);
+      console.error('保存統計數據失敗:', error);
     }
   }
 
@@ -113,26 +117,28 @@ class UserStatsService {
     }
   }
 
-  // 用戶登入
+  // 用戶登入 - 創建會話並開始 ping
   public userLogin(userId: string): string {
     const now = Date.now();
     
     // 檢查是否已有活躍會話
     const existingSession = Array.from(this.sessions.values())
-      .find(session => session.userId === userId && now - session.lastActivity < this.SESSION_TIMEOUT);
+      .find(session => session.userId === userId && now - session.lastPing < this.SESSION_TIMEOUT);
     
     if (existingSession) {
-      // 更新現有會話的活動時間
-      existingSession.lastActivity = now;
+      // 更新現有會話的 ping 時間
+      existingSession.lastPing = now;
+      this.currentSessionId = existingSession.sessionId;
       this.saveSessionsToStorage();
-      console.log(`用戶 ${userId} 已有活躍會話，更新活動時間`);
+      console.log(`用戶 ${userId} 已有活躍會話，更新 ping 時間`);
       return existingSession.sessionId;
     }
     
     // 創建新會話
     const sessionId = this.generateSessionId();
+    this.currentSessionId = sessionId;
     
-    // 新登入
+    // 新登入統計
     this.stats.todayLogins++;
     this.stats.thisMonthLogins++;
     
@@ -146,7 +152,7 @@ class UserStatsService {
     this.sessions.set(sessionId, {
       userId,
       loginTime: now,
-      lastActivity: now,
+      lastPing: now,
       sessionId
     });
     
@@ -158,11 +164,17 @@ class UserStatsService {
     return sessionId;
   }
 
-  // 用戶登出
+  // 用戶登出 - 停止 ping 並移除會話
   public userLogout(sessionId: string): void {
     if (this.sessions.has(sessionId)) {
       const session = this.sessions.get(sessionId);
       this.sessions.delete(sessionId);
+      
+      // 如果是當前會話，清除 currentSessionId
+      if (this.currentSessionId === sessionId) {
+        this.currentSessionId = null;
+      }
+      
       this.updateOnlineUsersCount();
       this.saveSessionsToStorage();
       console.log(`用戶 ${session?.userId} 登出，會話 ID: ${sessionId}，在線用戶數: ${this.stats.onlineUsers}`);
@@ -171,16 +183,36 @@ class UserStatsService {
     }
   }
 
-  // 更新用戶活動
-  public updateUserActivity(sessionId: string): void {
-    const session = this.sessions.get(sessionId);
-    if (session) {
-      session.lastActivity = Date.now();
-      this.saveSessionsToStorage();
-      console.log(`更新用戶 ${session.userId} 活動時間`);
-    } else {
-      console.log(`嘗試更新不存在的會話活動: ${sessionId}`);
+  // 發送 ping - 更新會話的最後 ping 時間
+  public sendPing(sessionId?: string): boolean {
+    const targetSessionId = sessionId || this.currentSessionId;
+    
+    if (!targetSessionId) {
+      console.log('沒有活躍會話，無法發送 ping');
+      return false;
     }
+    
+    const session = this.sessions.get(targetSessionId);
+    if (session) {
+      session.lastPing = Date.now();
+      this.saveSessionsToStorage();
+      console.log(`Ping 發送成功 - 用戶: ${session.userId}, 會話: ${targetSessionId}`);
+      return true;
+    } else {
+      console.log(`嘗試 ping 不存在的會話: ${targetSessionId}`);
+      return false;
+    }
+  }
+
+  // 自動 ping 系統 - 為當前用戶自動發送 ping
+  private startPingSystem(): void {
+    this.pingInterval = setInterval(() => {
+      if (this.currentSessionId) {
+        this.sendPing();
+      }
+    }, this.PING_INTERVAL);
+    
+    console.log(`Ping 系統已啟動，間隔: ${this.PING_INTERVAL / 1000} 秒`);
   }
 
   // 獲取統計數據（不觸發更新，避免重複計算）
@@ -196,13 +228,13 @@ class UserStatsService {
     return { ...this.stats };
   }
 
-  // 清理過期會話
+  // 清理過期會話（基於 lastPing）
   private cleanupExpiredSessions(): void {
     const now = Date.now();
     const beforeCount = this.sessions.size;
     
     const activeSessions = Array.from(this.sessions.values())
-      .filter(session => now - session.lastActivity < this.SESSION_TIMEOUT);
+      .filter(session => now - session.lastPing < this.SESSION_TIMEOUT);
     
     // 清理並重建會話 Map
     this.sessions.clear();
@@ -212,12 +244,12 @@ class UserStatsService {
     
     const afterCount = this.sessions.size;
     if (beforeCount !== afterCount) {
-      console.log(`清理過期會話: ${beforeCount} -> ${afterCount}`);
+      console.log(`清理過期會話 (基於 ping): ${beforeCount} -> ${afterCount}`);
       this.saveSessionsToStorage();
     }
   }
 
-  // 更新在線用戶數（僅更新計數，不清理會話）
+  // 更新在線用戶數
   private updateOnlineUsersCount(): void {
     const previousCount = this.stats.onlineUsers;
     this.stats.onlineUsers = this.sessions.size;
@@ -255,11 +287,14 @@ class UserStatsService {
       this.updateOnlineUsersCount();
       this.saveStatsToStorage();
     }, this.UPDATE_INTERVAL);
+    
+    console.log(`統計更新系統已啟動，間隔: ${this.UPDATE_INTERVAL / 1000} 秒`);
   }
 
   // 設置頁面關閉處理
   private setupBeforeUnloadHandler(): void {
     window.addEventListener('beforeunload', () => {
+      // 頁面關閉時不立即移除會話，讓 ping 超時機制處理
       this.saveStatsToStorage();
       this.saveSessionsToStorage();
     });
@@ -271,6 +306,11 @@ class UserStatsService {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
     }
+    
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
   }
 
   // 獲取活躍會話列表（用於調試）
@@ -280,11 +320,21 @@ class UserStatsService {
 
   // 獲取詳細統計信息（用於調試）
   public getDetailedStats(): any {
+    const now = Date.now();
+    const sessions = this.getActiveSessions();
+    
     return {
       stats: this.getStats(),
-      activeSessions: this.getActiveSessions(),
+      activeSessions: sessions,
       sessionCount: this.sessions.size,
-      isInitialized: this.isInitialized
+      isInitialized: this.isInitialized,
+      currentSessionId: this.currentSessionId,
+      pingInfo: sessions.map(session => ({
+        userId: session.userId,
+        sessionId: session.sessionId,
+        lastPingAgo: Math.floor((now - session.lastPing) / 1000),
+        isActive: (now - session.lastPing) < this.SESSION_TIMEOUT
+      }))
     };
   }
 
@@ -294,6 +344,7 @@ class UserStatsService {
     
     // 清除內存中的數據
     this.sessions.clear();
+    this.currentSessionId = null;
     this.stats = {
       totalUsers: 0,
       onlineUsers: 0,
@@ -319,31 +370,31 @@ class UserStatsService {
     console.log('所有用戶統計數據已重置完成');
   }
 
-  // 模擬增加用戶數據（用於演示，改進邏輯）
+  // 模擬增加用戶數據（用於演示）
   public simulateUserActivity(): void {
-    // 只有在已有用戶時才進行模擬活動
-    if (this.sessions.size === 0) {
-      console.log('沒有活躍用戶，跳過模擬活動');
-      return;
-    }
-    
     const demoUsers = ['demo_user_1', 'demo_user_2', 'demo_user_3', 'demo_user_4', 'demo_user_5'];
     
-    // 降低新用戶登入的機率
-    if (Math.random() > 0.8) { // 20% 機率有新用戶登入
+    // 20% 機率有新用戶登入
+    if (Math.random() > 0.8) {
       const randomUser = demoUsers[Math.floor(Math.random() * demoUsers.length)];
       this.userLogin(randomUser);
     }
     
-    // 模擬現有用戶活動
+    // 模擬現有用戶的 ping 活動
     const sessions = this.getActiveSessions();
     sessions.forEach(session => {
       if (Math.random() > 0.95) { // 5% 機率用戶登出
         this.userLogout(session.sessionId);
-      } else if (Math.random() > 0.7) { // 30% 機率更新活動
-        this.updateUserActivity(session.sessionId);
+      } else if (Math.random() > 0.7) { // 30% 機率發送 ping
+        this.sendPing(session.sessionId);
       }
     });
+  }
+
+  // 更新用戶活動（保持向後兼容）
+  public updateUserActivity(sessionId: string): void {
+    // 將活動更新轉換為 ping
+    this.sendPing(sessionId);
   }
 }
 

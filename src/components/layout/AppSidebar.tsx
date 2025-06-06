@@ -68,7 +68,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
       {/* 側邊欄內容 - 直接使用 flex 佈局，不再包裝額外的 div */}
       <div className="flex flex-col h-full">
         {/* Logo 區域 - 所有設備都顯示 */}
-        <div className="p-4 md:py-4 md:px-2">
+        <div className="p-4 md:p-2 md:h-16 md:flex md:items-center">
           {shouldShowText && (
             <Link 
               to="/" 

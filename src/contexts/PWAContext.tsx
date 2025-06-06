@@ -24,17 +24,73 @@ export function PWAProvider({ children }: PWAProviderProps) {
   const [isInstalled, setIsInstalled] = useState(false);
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
 
+  // 保存 PWA 狀態到 sessionStorage
+  const savePWAState = (hasPrompt: boolean, installed: boolean) => {
+    try {
+      sessionStorage.setItem('pwa-state', JSON.stringify({
+        hasPrompt,
+        installed,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.warn('PWA Context: 無法保存狀態到 sessionStorage:', error);
+    }
+  };
+
+  // 從 sessionStorage 恢復 PWA 狀態
+  const loadPWAState = () => {
+    try {
+      const saved = sessionStorage.getItem('pwa-state');
+      if (saved) {
+        const state = JSON.parse(saved);
+        // 只恢復 1 小時內的狀態
+        if (Date.now() - state.timestamp < 60 * 60 * 1000) {
+          return state;
+        }
+      }
+    } catch (error) {
+      console.warn('PWA Context: 無法從 sessionStorage 載入狀態:', error);
+    }
+    return null;
+  };
+
   useEffect(() => {
     // 檢查是否已經安裝
     const checkIfInstalled = () => {
       if (window.matchMedia('(display-mode: standalone)').matches || 
           (window.navigator as any).standalone === true) {
         setIsInstalled(true);
-        return;
+        savePWAState(false, true);
+        return true;
       }
+      return false;
     };
 
-    checkIfInstalled();
+    const installed = checkIfInstalled();
+    
+    // 如果未安裝，嘗試恢復之前的狀態
+    if (!installed) {
+      const savedState = loadPWAState();
+      if (savedState && savedState.hasPrompt && !savedState.installed) {
+        console.log('PWA Context: 恢復之前的安裝提示狀態');
+        // 創建一個虛擬的 prompt 狀態，表示之前有過安裝提示
+        // 這樣按鈕就會顯示，即使實際的 beforeinstallprompt 事件已經被消耗
+        const virtualPrompt = {
+          prompt: async () => {
+            console.log('PWA Context: 使用虛擬提示 - 顯示手動安裝指引');
+            // 這裡可以顯示手動安裝指引
+          },
+          userChoice: Promise.resolve({ outcome: 'dismissed' as const }),
+          platforms: ['web'],
+          preventDefault: () => {},
+          isTrusted: false,
+          type: 'beforeinstallprompt'
+        } as any;
+        
+        deferredPromptRef.current = virtualPrompt;
+        setDeferredPrompt(virtualPrompt);
+      }
+    }
 
     // 監聽 beforeinstallprompt 事件
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -48,8 +104,11 @@ export function PWAProvider({ children }: PWAProviderProps) {
       const promptEvent = e as BeforeInstallPromptEvent;
       deferredPromptRef.current = promptEvent;
       setDeferredPrompt(promptEvent);
-      console.log('PWA Context: 已保存安裝提示事件（覆蓋舊事件）');
       
+      // 保存狀態到 sessionStorage
+      savePWAState(true, false);
+      
+      console.log('PWA Context: 已保存安裝提示事件（覆蓋舊事件）');
       console.log('PWA Context: 已阻止原生提示');
     };
 
@@ -59,6 +118,9 @@ export function PWAProvider({ children }: PWAProviderProps) {
       setIsInstalled(true);
       deferredPromptRef.current = null;
       setDeferredPrompt(null);
+      
+      // 更新保存的狀態
+      savePWAState(false, true);
     };
 
     // 不再需要監聽 manifest 更新事件，使用統一的英文 manifest
@@ -79,6 +141,15 @@ export function PWAProvider({ children }: PWAProviderProps) {
     
     if (!deferredPrompt) {
       console.error('PWA Context: 沒有 deferredPrompt，無法觸發安裝');
+      return;
+    }
+
+    // 檢查是否是虛擬提示
+    if (!deferredPrompt.isTrusted) {
+      console.log('PWA Context: 使用虛擬提示，顯示手動安裝指引');
+      // 這裡可以觸發自定義的安裝指引對話框
+      // 暫時先顯示一個簡單的提示
+      alert('請使用瀏覽器選單中的「安裝應用」或「加到主畫面」選項來安裝此應用。');
       return;
     }
 
