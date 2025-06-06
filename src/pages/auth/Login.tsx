@@ -44,7 +44,7 @@ export default function Login() {
       
       // 提供更詳細的錯誤處理
       if (err?.message?.includes('Invalid credentials')) {
-        setError('郵件地址或密碼錯誤，請檢查後重試');
+        setError(t('auth.invalidCredentials'));
       } else if (err?.message?.includes('Password must be between 8 and 256 characters') || 
                  err?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
         setError(t('auth.passwordTooShort'));
@@ -53,7 +53,7 @@ export default function Login() {
                  err?.message?.includes('Rate limit for the current endpoint has been exceeded')) {
         setError(t('auth.rateLimitExceeded'));
       } else if (err?.message?.includes('session is active') || err?.message?.includes('session is prohibited')) {
-        setError('檢測到現有登入狀態，正在嘗試重新登入...');
+        setError(t('auth.sessionConflict'));
         // 稍後自動重試
         setTimeout(() => {
           setError('');
@@ -61,12 +61,12 @@ export default function Login() {
         }, 1500);
         return;
       } else if (err?.message?.includes('User (role: guests) missing scope')) {
-        setError('帳戶權限不足，請聯繫管理員');
+        setError(t('auth.accountPermissionDenied'));
       } else if (err?.message?.includes('Network')) {
-        setError('網絡連接錯誤，請檢查網絡後重試');
+        setError(t('auth.networkError'));
       } else {
         // 使用通用的錯誤訊息
-        setError(err?.message || '登入失敗，請稍後再試');
+        setError(err?.message || t('auth.loginFailed'));
       }
     } finally {
       setLoading(false);
@@ -168,7 +168,7 @@ export default function Login() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? '登入中...' : t('auth.signIn')}
+                {loading ? t('auth.processing') : t('auth.signIn')}
               </Button>
               
               <p className="text-center text-sm text-muted-foreground">

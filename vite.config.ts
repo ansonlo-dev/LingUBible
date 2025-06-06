@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { VitePWA } from 'vite-plugin-pwa';
 import type { ViteDevServer } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'http';
 
@@ -15,11 +16,112 @@ export default defineConfig(({ command, mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
-    // 添加自定義插件處理 manifest 請求
+    VitePWA({
+      registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: [
+          '**/*.{js,css,html,woff2}',
+          ...(mode === 'production' ? ['*.{ico,png,svg}', 'assets/**/*.{png,svg,jpg,jpeg,gif,webp}'] : [])
+        ],
+                // 運行時緩存配置
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
+          },
+          // 緩存圖標文件（開發和生產模式都需要）
+          {
+            urlPattern: /\.(ico|png|svg)$/,
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'icons-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          }
+        ],
+        // 忽略不需要的文件
+        globIgnores: [
+          '**/dev/**',
+          '**/icons/**',
+          'pwa-test.html',
+          'manifest.js',
+          'manifest.json'
+        ]
+      },
+      // includeAssets 已通過 globPatterns 處理，避免重複
+      includeAssets: [],
+      manifest: {
+        name: 'LingUBible - Course & Lecturer Reviews',
+        short_name: 'LingUBible',
+        description: 'Platform for college students to review courses and lecturers',
+        theme_color: '#dc2626',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'any',
+        scope: '/',
+        start_url: '/',
+        id: '/',
+        icons: [
+          {
+            src: 'favicon-32.png',
+            sizes: '32x32',
+            type: 'image/png'
+          },
+          {
+            src: 'icon-192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'icon-512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png'
+          },
+          {
+            src: 'favicon.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          }
+        ]
+      },
+      devOptions: {
+        enabled: true
+      },
+      // 不阻止瀏覽器原生安裝提示
+      injectRegister: 'auto'
+    }),
+    // 簡化的 manifest 處理，避免與 VitePWA 衝突
     {
-      name: 'dynamic-manifest',
+      name: 'simple-manifest',
       configureServer(server: ViteDevServer) {
-        server.middlewares.use('/manifest.json', (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        server.middlewares.use('/manifest-dynamic.json', (req: IncomingMessage, res: ServerResponse, next: () => void) => {
           // 解析查詢參數
           const url = new URL(req.url || '', `http://${req.headers.host}`);
           const lang = url.searchParams.get('lang') || 'en';
@@ -29,7 +131,7 @@ export default defineConfig(({ command, mode }) => ({
             'en': {
               name: 'LingUBible - Course & Lecturer Reviews',
               short_name: 'LingUBible',
-              description: 'Platform for college students to review courses and lecturers',
+              description: 'Your trusted course and lecturer review platform. Access honest reviews, make informed decisions about your courses, and share your experiences with fellow students. Get faster loading, offline access, and a native app experience.',
               lang: 'en',
               dir: 'ltr',
               screenshots: {
@@ -52,7 +154,7 @@ export default defineConfig(({ command, mode }) => ({
             'zh-TW': {
               name: 'LingUBible - 課程與講師評價平台',
               short_name: 'LingUBible',
-              description: '真實可靠的Reg科聖經，幫助同學們作出明智的選擇',
+              description: '真實可靠的Reg科聖經，幫助同學們作出明智的選擇。瀏覽誠實的評價，分享您的課程體驗，享受更快的載入速度、離線存取和原生應用體驗。',
               lang: 'zh-TW',
               dir: 'ltr',
               screenshots: {
@@ -75,7 +177,7 @@ export default defineConfig(({ command, mode }) => ({
             'zh-CN': {
               name: 'LingUBible - 课程与讲师评价平台',
               short_name: 'LingUBible',
-              description: '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定',
+              description: '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定。浏览诚实的评价，分享您的课程体验，享受更快的加载速度、离线访问和原生应用体验。',
               lang: 'zh-CN',
               dir: 'ltr',
               screenshots: {

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 語言設置調試工具</h1>
+    
+    <div class="debug-section info">
+        <h2>📊 當前狀態</h2>
+        <p><strong>瀏覽器語言:</strong> <code id="browserLang">檢測中...</code></p>
+        <p><strong>Cookie 語言:</strong> <code id="cookieLang">檢測中...</code></p>
+        <p><strong>URL 參數:</strong> <code id="urlLang">檢測中...</code></p>
+        <p><strong>HTML lang 屬性:</strong> <code id="htmlLang">檢測中...</code></p>
+    </div>
+
+    <div class="debug-section warning">
+        <h2>🧪 測試翻譯鍵</h2>
+        <p>測試 toast.loginSuccess 在不同語言下的翻譯：</p>
+        <div id="translationTest">
+            <p><strong>英文 (en):</strong> <span id="enTranslation">檢測中...</span></p>
+            <p><strong>繁體中文 (zh-TW):</strong> <span id="zhTWTranslation">檢測中...</span></p>
+            <p><strong>簡體中文 (zh-CN):</strong> <span id="zhCNTranslation">檢測中...</span></p>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔧 手動測試</h2>
+        <p>點擊按鈕切換語言並測試：</p>
+        <button class="test-button" onclick="setLanguage('en')">切換到英文</button>
+        <button class="test-button" onclick="setLanguage('zh-TW')">切換到繁體中文</button>
+        <button class="test-button" onclick="setLanguage('zh-CN')">切換到簡體中文</button>
+        <br><br>
+        <button class="test-button" onclick="testToast()">測試 Toast 訊息</button>
+        <button class="test-button" onclick="clearCookies()">清除語言 Cookie</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>📝 調試日誌</h2>
+        <div id="debugLog" style="background-color: #000; color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; height: 200px; overflow-y: auto;">
+        </div>
+    </div>
+
+    <script>
+        // 調試日誌函數
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        // 獲取 Cookie
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // 設置 Cookie
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+            log(`設置 Cookie: ${name}=${value}`);
+        }
+
+        // 設置語言
+        function setLanguage(lang) {
+            setCookie('language', lang);
+            log(`切換語言到: ${lang}`);
+            updateStatus();
+            // 重新載入頁面以應用語言變更
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+
+        // 清除 Cookie
+        function clearCookies() {
+            document.cookie = 'language=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            log('已清除語言 Cookie');
+            updateStatus();
+        }
+
+        // 測試 Toast
+        function testToast() {
+            const currentLang = getCookie('language') || 'en';
+            log(`當前語言: ${currentLang}`);
+            
+            // 模擬翻譯
+            const translations = {
+                'en': {
+                    'toast.loginSuccess': 'Login Successful!',
+                    'toast.welcomeBack': 'Welcome back, {username}!'
+                },
+                'zh-TW': {
+                    'toast.loginSuccess': '登入成功！',
+                    'toast.welcomeBack': '歡迎回來，{username}！'
+                },
+                'zh-CN': {
+                    'toast.loginSuccess': '登录成功！',
+                    'toast.welcomeBack': '欢迎回来，{username}！'
+                }
+            };
+            
+            const loginMsg = translations[currentLang]?.['toast.loginSuccess'] || 'Translation not found';
+            const welcomeMsg = translations[currentLang]?.['toast.welcomeBack']?.replace('{username}', 'User') || 'Translation not found';
+            
+            log(`Toast 標題: ${loginMsg}`);
+            log(`Toast 描述: ${welcomeMsg}`);
+            
+            // 顯示模擬 toast
+            alert(`Toast 訊息:\n標題: ${loginMsg}\n描述: ${welcomeMsg}`);
+        }
+
+        // 更新狀態顯示
+        function updateStatus() {
+            // 瀏覽器語言
+            const browserLang = navigator.language || navigator.languages?.[0] || 'unknown';
+            document.getElementById('browserLang').textContent = browserLang;
+            
+            // Cookie 語言
+            const cookieLang = getCookie('language') || 'none';
+            document.getElementById('cookieLang').textContent = cookieLang;
+            
+            // URL 參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('lang') || 'none';
+            document.getElementById('urlLang').textContent = urlLang;
+            
+            // HTML lang 屬性
+            const htmlLang = document.documentElement.lang || 'none';
+            document.getElementById('htmlLang').textContent = htmlLang;
+            
+            log(`狀態更新 - 瀏覽器: ${browserLang}, Cookie: ${cookieLang}, URL: ${urlLang}, HTML: ${htmlLang}`);
+        }
+
+        // 測試翻譯
+        function testTranslations() {
+            const translations = {
+                'en': 'Login Successful!',
+                'zh-TW': '登入成功！',
+                'zh-CN': '登录成功！'
+            };
+            
+            document.getElementById('enTranslation').textContent = translations['en'];
+            document.getElementById('zhTWTranslation').textContent = translations['zh-TW'];
+            document.getElementById('zhCNTranslation').textContent = translations['zh-CN'];
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('頁面載入完成，開始調試...');
+            updateStatus();
+            testTranslations();
+            
+            // 檢查是否有語言參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            if (langParam) {
+                log(`檢測到 URL 語言參數: ${langParam}`);
+                setLanguage(langParam);
+            }
+        });
+
+        // 定期更新狀態
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html> 

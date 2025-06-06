@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多語言 PWA Manifest 測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .language-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .language-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .language-btn:hover {
+            background: #2563eb;
+        }
+        .language-btn.active {
+            background: #1d4ed8;
+        }
+        .manifest-info {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .manifest-content {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .status.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+        }
+        .test-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+        }
+        .test-button:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 多語言 PWA Manifest 測試</h1>
+        <p>這個頁面用來測試 PWA manifest 的多語言支援功能。</p>
+        
+        <div class="language-buttons">
+            <button class="language-btn active" onclick="switchLanguage('en')" id="btn-en">
+                🇺🇸 English
+            </button>
+            <button class="language-btn" onclick="switchLanguage('zh-TW')" id="btn-zh-TW">
+                🇹🇼 繁體中文
+            </button>
+            <button class="language-btn" onclick="switchLanguage('zh-CN')" id="btn-zh-CN">
+                🇨🇳 简体中文
+            </button>
+        </div>
+        
+        <div id="status-container"></div>
+    </div>
+
+    <div class="container">
+        <h2>📱 當前 Manifest 資訊</h2>
+        <div class="manifest-info">
+            <strong>當前語言：</strong> <span id="current-lang">en</span><br>
+            <strong>Manifest URL：</strong> <span id="manifest-url">/manifest-dynamic.json?lang=en</span>
+        </div>
+        
+        <button class="test-button" onclick="fetchManifest()">
+            🔄 重新載入 Manifest
+        </button>
+        <button class="test-button" onclick="testPWAInstall()">
+            📱 測試 PWA 安裝
+        </button>
+        
+        <h3>Manifest 內容：</h3>
+        <div class="manifest-content" id="manifest-content">
+            載入中...
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 測試結果</h2>
+        <div id="test-results">
+            <div class="status info">
+                點擊上方的語言按鈕來測試不同語言的 manifest
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔄 PWA 安裝提示測試</h2>
+        <p>測試 PWA 安裝提示在語言切換後是否顯示正確的元數據。</p>
+        
+        <button class="test-button" onclick="simulatePWAPrompt()">
+            🎯 模擬 PWA 安裝提示
+        </button>
+        <button class="test-button" onclick="testManifestUpdate()">
+            🔄 測試 Manifest 更新
+        </button>
+        <button class="test-button" onclick="testPageRefresh()">
+            🔄 測試頁面刷新
+        </button>
+        <button class="test-button" onclick="testLanguageSync()">
+            🎯 測試語言同步
+        </button>
+        
+        <div id="pwa-prompt-container" style="display: none;">
+            <h3>模擬的 PWA 安裝提示：</h3>
+            <div class="manifest-info">
+                <div id="simulated-prompt">
+                    <strong>應用名稱：</strong> <span id="prompt-app-name">載入中...</span><br>
+                    <strong>描述：</strong> <span id="prompt-app-description">載入中...</span><br>
+                    <strong>語言：</strong> <span id="prompt-app-lang">載入中...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'en';
+        
+        // 切換語言
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.language-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-${lang}`).classList.add('active');
+            
+            // 更新顯示
+            document.getElementById('current-lang').textContent = lang;
+            document.getElementById('manifest-url').textContent = `/manifest-dynamic.json?lang=${lang}`;
+            
+            // 載入新的 manifest
+            fetchManifest();
+            
+            // 更新頁面語言
+            updatePageLanguage(lang);
+            
+            addTestResult(`切換到語言: ${getLanguageName(lang)}`, 'info');
+        }
+        
+        // 獲取語言名稱
+        function getLanguageName(lang) {
+            const names = {
+                'en': 'English',
+                'zh-TW': '繁體中文',
+                'zh-CN': '简体中文'
+            };
+            return names[lang] || lang;
+        }
+        
+        // 更新頁面語言
+        function updatePageLanguage(lang) {
+            document.documentElement.lang = lang;
+            
+            // 模擬更新 manifest 連結（如同 DocumentHead 組件）
+            let manifestLink = document.querySelector('link[rel="manifest"]');
+            if (!manifestLink) {
+                manifestLink = document.createElement('link');
+                manifestLink.rel = 'manifest';
+                document.head.appendChild(manifestLink);
+            }
+            manifestLink.href = `/manifest-dynamic.json?lang=${lang}`;
+            
+            addTestResult(`頁面語言已更新為: ${lang}`, 'success');
+        }
+        
+        // 載入 manifest
+        async function fetchManifest() {
+            const url = `/manifest-dynamic.json?lang=${currentLanguage}`;
+            
+            try {
+                addTestResult('正在載入 manifest...', 'info');
+                
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const manifest = await response.json();
+                
+                // 顯示 manifest 內容
+                document.getElementById('manifest-content').textContent = JSON.stringify(manifest, null, 2);
+                
+                // 驗證關鍵欄位
+                const requiredFields = ['name', 'short_name', 'description', 'lang', 'dir'];
+                const missingFields = requiredFields.filter(field => !manifest[field]);
+                
+                if (missingFields.length === 0) {
+                    addTestResult(`✅ Manifest 載入成功 (${getLanguageName(currentLanguage)})`, 'success');
+                    addTestResult(`📱 應用名稱: ${manifest.name}`, 'info');
+                    addTestResult(`📝 描述: ${manifest.description}`, 'info');
+                    addTestResult(`🌐 語言: ${manifest.lang} (${manifest.dir})`, 'info');
+                } else {
+                    addTestResult(`⚠️ Manifest 缺少必要欄位: ${missingFields.join(', ')}`, 'error');
+                }
+                
+            } catch (error) {
+                addTestResult(`❌ 載入 manifest 失敗: ${error.message}`, 'error');
+                document.getElementById('manifest-content').textContent = `錯誤: ${error.message}`;
+            }
+        }
+        
+        // 測試 PWA 安裝
+        function testPWAInstall() {
+            addTestResult('🔍 檢查 PWA 安裝條件...', 'info');
+            
+            // 檢查 Service Worker
+            if ('serviceWorker' in navigator) {
+                addTestResult('✅ Service Worker 支援', 'success');
+            } else {
+                addTestResult('❌ Service Worker 不支援', 'error');
+            }
+            
+            // 檢查 manifest
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            if (manifestLink) {
+                addTestResult(`✅ Manifest 連結存在: ${manifestLink.href}`, 'success');
+            } else {
+                addTestResult('❌ 找不到 manifest 連結', 'error');
+            }
+            
+            // 檢查 HTTPS
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                addTestResult('✅ 安全連線 (HTTPS/localhost)', 'success');
+            } else {
+                addTestResult('⚠️ 非安全連線，PWA 可能無法正常安裝', 'error');
+            }
+            
+            // 檢查是否已安裝
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            if (isStandalone) {
+                addTestResult('📱 應用已在獨立模式下運行', 'info');
+            } else {
+                addTestResult('🌐 應用在瀏覽器模式下運行', 'info');
+            }
+        }
+        
+        // 添加測試結果
+        function addTestResult(message, type) {
+            const container = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            container.appendChild(div);
+            
+            // 保持最新的 10 條記錄
+            const results = container.querySelectorAll('.status');
+            if (results.length > 10) {
+                results[0].remove();
+            }
+            
+            // 滾動到最新結果
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            addTestResult('🚀 多語言 PWA Manifest 測試頁面已載入', 'success');
+            
+            // 檢查是否是刷新後的頁面
+            checkAfterRefresh();
+            
+            fetchManifest();
+            
+            // 每 30 秒自動重新載入 manifest
+            setInterval(() => {
+                addTestResult('🔄 自動重新載入 manifest', 'info');
+                fetchManifest();
+            }, 30000);
+        });
+        
+        // 監聽 beforeinstallprompt 事件
+        window.addEventListener('beforeinstallprompt', (e) => {
+            addTestResult('🎯 PWA 安裝提示事件觸發！', 'success');
+            console.log('beforeinstallprompt event fired', e);
+        });
+        
+        // 監聽應用安裝事件
+        window.addEventListener('appinstalled', () => {
+            addTestResult('🎉 PWA 應用安裝成功！', 'success');
+        });
+
+        // 監聽 manifest 更新事件
+        window.addEventListener('manifestUpdated', (event) => {
+            addTestResult(`🔄 Manifest 更新事件: ${event.detail.language}`, 'info');
+            
+            // 延遲一點時間後重新載入 manifest 來測試
+            setTimeout(() => {
+                fetchManifest();
+                updateSimulatedPrompt();
+            }, 500);
+        });
+
+        // 監聽強制 manifest 更新事件
+        window.addEventListener('forceManifestUpdate', (event) => {
+            addTestResult(`🎯 強制 Manifest 更新事件: ${event.detail.language}`, 'success');
+        });
+
+        // 模擬 PWA 安裝提示
+        function simulatePWAPrompt() {
+            const container = document.getElementById('pwa-prompt-container');
+            container.style.display = 'block';
+            updateSimulatedPrompt();
+            addTestResult('🎯 顯示模擬的 PWA 安裝提示', 'info');
+        }
+
+        // 更新模擬的安裝提示內容
+        async function updateSimulatedPrompt() {
+            try {
+                const url = `/manifest-dynamic.json?lang=${currentLanguage}`;
+                const response = await fetch(url);
+                const manifest = await response.json();
+                
+                document.getElementById('prompt-app-name').textContent = manifest.name;
+                document.getElementById('prompt-app-description').textContent = manifest.description;
+                document.getElementById('prompt-app-lang').textContent = manifest.lang;
+                
+                addTestResult(`✅ 模擬提示已更新為 ${manifest.lang}`, 'success');
+            } catch (error) {
+                addTestResult(`❌ 更新模擬提示失敗: ${error.message}`, 'error');
+            }
+        }
+
+        // 測試 manifest 更新
+        function testManifestUpdate() {
+            addTestResult('🧪 測試 Manifest 更新機制', 'info');
+            
+            // 模擬觸發 manifestUpdated 事件
+            const event = new CustomEvent('manifestUpdated', {
+                detail: { 
+                    language: currentLanguage, 
+                    manifestUrl: `/manifest-dynamic.json?lang=${currentLanguage}&t=${Date.now()}` 
+                }
+            });
+            window.dispatchEvent(event);
+        }
+
+        // 測試頁面刷新
+        function testPageRefresh() {
+            addTestResult('🔄 即將刷新頁面來測試 manifest 持久性', 'info');
+            
+            // 保存當前語言到 sessionStorage 以便刷新後檢查
+            sessionStorage.setItem('testLanguageBeforeRefresh', currentLanguage);
+            sessionStorage.setItem('testRefreshTime', Date.now().toString());
+            
+            // 延遲刷新，讓用戶看到消息
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+
+        // 檢查是否是刷新後的頁面
+        function checkAfterRefresh() {
+            const savedLanguage = sessionStorage.getItem('testLanguageBeforeRefresh');
+            const refreshTime = sessionStorage.getItem('testRefreshTime');
+            
+            if (savedLanguage && refreshTime) {
+                const timeDiff = Date.now() - parseInt(refreshTime);
+                if (timeDiff < 10000) { // 10秒內的刷新
+                    addTestResult(`✅ 頁面刷新測試：語言 ${savedLanguage} → ${currentLanguage}`, 'success');
+                    
+                    // 檢查 manifest 是否正確
+                    setTimeout(() => {
+                        const manifestLink = document.querySelector('link[rel="manifest"]');
+                        if (manifestLink) {
+                            const href = manifestLink.getAttribute('href');
+                            if (href && href.includes(`lang=${currentLanguage}`)) {
+                                addTestResult('✅ 刷新後 manifest 語言正確', 'success');
+                            } else {
+                                addTestResult('❌ 刷新後 manifest 語言不正確', 'error');
+                            }
+                        }
+                        
+                        // 清除測試數據
+                        sessionStorage.removeItem('testLanguageBeforeRefresh');
+                        sessionStorage.removeItem('testRefreshTime');
+                    }, 1000);
+                }
+            }
+        }
+
+        // 測試語言同步
+        function testLanguageSync() {
+            addTestResult('🎯 測試 PWA 安裝提示語言同步', 'info');
+            
+            // 模擬觸發強制 manifest 更新
+            const event = new CustomEvent('forceManifestUpdate', {
+                detail: { language: currentLanguage }
+            });
+            window.dispatchEvent(event);
+            
+            // 延遲後檢查結果
+            setTimeout(() => {
+                addTestResult(`✅ 強制更新完成，當前語言: ${currentLanguage}`, 'success');
+                updateSimulatedPrompt();
+            }, 500);
+        }
+    </script>
+</body>
+</html> 

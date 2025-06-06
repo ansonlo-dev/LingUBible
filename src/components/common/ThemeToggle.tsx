@@ -26,7 +26,11 @@ function setTheme(isDark: boolean) {
   theme.set(themeName);
 }
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  variant?: 'button' | 'toggle';
+}
+
+export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
   // 直接從 DOM 讀取當前主題狀態
   const [isDark, setIsDark] = useState(() => {
     return document.documentElement.classList.contains('dark');
@@ -61,6 +65,29 @@ export function ThemeToggle() {
     setTheme(newTheme);
     // setIsDark 會由 MutationObserver 自動更新
   };
+
+  if (variant === 'toggle') {
+    return (
+      <div className="flex items-center gap-2">
+        <Sun className="h-4 w-4 text-muted-foreground" />
+        <button
+          onClick={toggleTheme}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+            isDark ? 'bg-primary' : 'bg-secondary'
+          }`}
+          role="switch"
+          aria-checked={isDark}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              isDark ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
+        <Moon className="h-4 w-4 text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">

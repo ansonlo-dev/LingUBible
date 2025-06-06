@@ -9,6 +9,39 @@ interface DocumentHeadProps {
 export function DocumentHead({ title, description }: DocumentHeadProps) {
   const { t, language } = useLanguage();
 
+  // 獲取初始語言的函數（與 LanguageContext 中的邏輯一致）
+  const getInitialLanguage = (): string => {
+    if (typeof window === 'undefined') return 'en';
+    
+    // 首先檢查 cookie
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'language' && ['en', 'zh-TW', 'zh-CN'].includes(value)) {
+        return value;
+      }
+    }
+    
+    // 如果沒有 cookie，檢測瀏覽器語言
+    const browserLang = navigator.language || navigator.languages?.[0];
+    if (browserLang) {
+      if (browserLang.startsWith('zh-TW') || 
+          browserLang.startsWith('zh-Hant') || 
+          browserLang === 'zh-HK' || 
+          browserLang === 'zh-MO') {
+        return 'zh-TW';
+      } else if (browserLang.startsWith('zh-CN') || 
+                 browserLang.startsWith('zh-Hans') || 
+                 browserLang.startsWith('zh-SG')) {
+        return 'zh-CN';
+      }
+    }
+    
+    return 'en'; // 默認英文
+  };
+
+  // 不再需要動態 manifest 更新，使用統一的英文 manifest
+
   useEffect(() => {
     // 設置頁面標題
     const pageTitle = title || t('site.title');

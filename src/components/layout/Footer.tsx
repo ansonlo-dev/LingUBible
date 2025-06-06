@@ -8,9 +8,11 @@ export function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="border-t border-muted-foreground/30 dark:border-muted-foreground/30 bg-background">
-      <div className="container mx-auto px-4 py-3">
-        {/* Desktop Layout */}
+    <footer className="bg-background">
+      <div className="mx-auto px-4 py-3" style={{ marginLeft: '10px', marginRight: '10px' }}>
+        <div className="border-t-2" style={{ borderTopColor: 'rgb(var(--border))' }}></div>
+        <div className="pt-3">
+          {/* Desktop Layout */}
         <div className="hidden md:block">
           {/* Single row layout with three sections */}
           <div className="flex justify-between items-center">
@@ -39,7 +41,7 @@ export function Footer() {
               </div>
               
               {/* User Stats */}
-              <div className="border-l border-muted-foreground/30 pl-4">
+              <div className="border-l pl-4" style={{ borderLeftColor: 'rgb(var(--border))' }}>
                 <UserStatsDisplay variant="compact" />
               </div>
             </div>
@@ -136,7 +138,7 @@ export function Footer() {
           </div>
           
           {/* Horizontal ruler */}
-          <hr className="border-t border-muted-foreground/30 dark:border-muted-foreground/30" />
+          <hr className="border-t-2" style={{ borderTopColor: 'rgb(var(--border))' }} />
           
           {/* License and GitHub */}
           <div className="flex justify-center items-center space-x-4 pt-1">
@@ -158,6 +160,7 @@ export function Footer() {
               <Github className="h-4 w-4" />
             </a>
           </div>
+        </div>
         </div>
       </div>
     </footer>

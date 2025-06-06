@@ -1,7 +1,7 @@
 {
-  "name": "LingUBible - Course & Lecturer Reviews",
+  "name": "LingUBible",
   "short_name": "LingUBible",
-  "description": "Platform for college students to review courses and lecturers",
+  "description": "University course and lecturer review platform",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

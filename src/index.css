@@ -34,7 +34,7 @@
     --sidebar-ring: 220, 38, 38;
     
     /* 佈局變數 */
-    --sidebar-width: 11.5rem;
+    --sidebar-width: 11rem;
     --header-height: 4rem;
   }
 
@@ -145,6 +145,8 @@
       top: 0;
       height: 100vh;
       z-index: 50;
+      /* 移動版本強制使用足夠的寬度來顯示所有文字 */
+      width: 50vw !important;
     }
     
     .sidebar-container.mobile-open {
@@ -276,7 +278,7 @@
   /* 統計卡片樣式 - 淺色模式使用純白背景 */
   .stats-card {
     background: #ffffff !important;
-    border: 1px solid rgb(var(--border));
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 12px;
     box-shadow: 
       0 2px 8px rgba(0, 0, 0, 0.08),
@@ -288,6 +290,7 @@
 
   .stats-card:hover {
     background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
     box-shadow: 
       0 4px 16px rgba(0, 0, 0, 0.12),
       0 2px 8px rgba(0, 0, 0, 0.06);
@@ -312,7 +315,7 @@
   /* 課程卡片樣式 - 淺色模式使用純白背景 */
   .course-card {
     background: #ffffff !important;
-    border: 1px solid rgb(var(--border));
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 12px;
     box-shadow: 
       0 2px 8px rgba(0, 0, 0, 0.08),
@@ -325,11 +328,11 @@
 
   .course-card:hover {
     background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.15),
       0 4px 12px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
-    border-color: rgba(var(--primary), 0.2);
   }
 
   .dark .course-card {
@@ -685,6 +688,7 @@
   .card {
     background-color: #ffffff !important;
     backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
   }
   
   .course-card:hover,
@@ -694,6 +698,7 @@
   .card:hover {
     background-color: #ffffff !important;
     backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
   }
   
   /* 暗色主題下保持原有樣式 */
@@ -831,6 +836,13 @@
     .sidebar-container.mobile-open {
       transform: translateX(0);
       box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  /* 移動端橫屏模式：側邊欄寬度為屏幕寬度的三分之一 */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .sidebar-container {
+      width: 33.33vw !important;
     }
   }
 
@@ -990,5 +1002,108 @@
   .dark [data-radix-dialog-content] {
     background-color: rgb(24, 24, 27) !important;
     border: 1px solid rgb(63, 63, 70) !important;
+  }
+
+  /* PWA 安裝按鈕特殊樣式 */
+  .pwa-install-button {
+    background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(239, 68, 68) 50%, rgb(220, 38, 38) 100%) !important;
+    background-size: 200% 200% !important;
+    border: none !important;
+    box-shadow: 
+      0 4px 15px rgba(220, 38, 38, 0.3),
+      0 0 20px rgba(220, 38, 38, 0.2) !important;
+    animation: pwa-pulse-glow 3s ease-in-out infinite, pwa-gradient-shift 4s ease-in-out infinite !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    font-weight: 700 !important;
+  }
+
+  .pwa-install-button:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 
+      0 8px 25px rgba(220, 38, 38, 0.4),
+      0 0 30px rgba(220, 38, 38, 0.3) !important;
+    animation-duration: 1.5s, 2s !important;
+  }
+
+  .pwa-install-button:active {
+    transform: translateY(0) scale(1.02) !important;
+  }
+
+  /* 添加閃爍效果 */
+  .pwa-install-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: pwa-shine 3s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  .pwa-install-button > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* 動畫定義 */
+  @keyframes pwa-pulse-glow {
+    0%, 100% { 
+      box-shadow: 
+        0 4px 15px rgba(220, 38, 38, 0.3),
+        0 0 20px rgba(220, 38, 38, 0.2);
+    }
+    50% { 
+      box-shadow: 
+        0 6px 20px rgba(220, 38, 38, 0.5),
+        0 0 35px rgba(220, 38, 38, 0.4);
+    }
+  }
+
+  @keyframes pwa-gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes pwa-shine {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
+  }
+
+  /* 暗色主題下的調整 */
+  .dark .pwa-install-button {
+    box-shadow: 
+      0 4px 15px rgba(220, 38, 38, 0.4),
+      0 0 25px rgba(220, 38, 38, 0.3) !important;
+  }
+
+  .dark .pwa-install-button:hover {
+    box-shadow: 
+      0 8px 25px rgba(220, 38, 38, 0.6),
+      0 0 40px rgba(220, 38, 38, 0.5) !important;
+  }
+
+  /* 登入、註冊、開始使用按鈕粗體樣式 */
+  .gradient-primary,
+  button[type="submit"],
+  .btn-primary,
+  .bg-primary {
+    font-weight: 700 !important;
+  }
+
+  /* 確保所有主要操作按鈕都是粗體 */
+  button:has-text("Sign In"),
+  button:has-text("Sign Up"),
+  button:has-text("Get Started"),
+  button:has-text("登入"),
+  button:has-text("註冊"),
+  button:has-text("開始使用"),
+  button:has-text("登录"),
+  button:has-text("注册"),
+  button:has-text("开始使用") {
+    font-weight: 700 !important;
   }
 }

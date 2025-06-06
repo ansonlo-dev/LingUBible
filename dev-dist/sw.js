@@ -67,13 +67,10 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-bcf21b90'], (function (workbox) { 'use strict';
+define(['./workbox-d9a5ed57'], (function (workbox) { 'use strict';
 
-  self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-      self.skipWaiting();
-    }
-  });
+  self.skipWaiting();
+  workbox.clientsClaim();
 
   /**
    * The precacheAndRoute() method efficiently caches and responds to
@@ -84,13 +81,12 @@ define(['./workbox-bcf21b90'], (function (workbox) { 'use strict';
     "url": "registerSW.js",
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
-    "url": "/offline.html",
-    "revision": "0.7n82d35dfco"
+    "url": "index.html",
+    "revision": "0.r5cee0rttp8"
   }], {});
   workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/offline.html"), {
-    allowlist: [/^\/$/],
-    denylist: [/^\/_/, /\/[^/?]+\.[^/]+$/]
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
+    allowlist: [/^\/$/]
   }));
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
     "cacheName": "google-fonts-cache",
@@ -106,29 +102,11 @@ define(['./workbox-bcf21b90'], (function (workbox) { 'use strict';
       maxAgeSeconds: 31536000
     })]
   }), 'GET');
-  workbox.registerRoute(/\.(?:png|jpg|jpeg|svg|gif|webp)$/, new workbox.CacheFirst({
-    "cacheName": "images-cache",
+  workbox.registerRoute(/\.(ico|png|svg)$/, new workbox.CacheFirst({
+    "cacheName": "icons-cache",
     plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 100,
+      maxEntries: 20,
       maxAgeSeconds: 2592000
-    })]
-  }), 'GET');
-  workbox.registerRoute(/^https:\/\/.*\.appwrite\.io\/v1\/.*/, new workbox.NetworkFirst({
-    "cacheName": "appwrite-api-cache",
-    "networkTimeoutSeconds": 10,
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 50,
-      maxAgeSeconds: 86400
-    })]
-  }), 'GET');
-  workbox.registerRoute(({
-    request
-  }) => request.destination === "document", new workbox.NetworkFirst({
-    "cacheName": "pages-cache",
-    "networkTimeoutSeconds": 3,
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 50,
-      maxAgeSeconds: 604800
     })]
   }), 'GET');
 

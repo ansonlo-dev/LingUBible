@@ -20,8 +20,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // 獲取用戶顯示名稱的輔助函數
-const getUserDisplayName = (user: AuthUser | null): string => {
-    if (!user) return '用戶';
+const getUserDisplayName = (user: AuthUser | null, t: (key: string) => string): string => {
+    if (!user) return t('common.user');
     
     // 如果 name 存在且不等於 email，則使用 name（用戶名）
     if (user.name && user.name !== user.email) {
@@ -29,13 +29,13 @@ const getUserDisplayName = (user: AuthUser | null): string => {
     }
     
     // 否則使用郵箱前綴
-    return user.email?.split('@')[0] || '用戶';
+    return user.email?.split('@')[0] || t('common.user');
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
-    const { t } = useLanguage();
+    const { t } = useLanguage(); // 將 useLanguage 移到組件頂層
 
     useEffect(() => {
         checkUser();
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // 顯示登入成功 toast
             const currentUser = await authService.getCurrentUser();
-            const username = getUserDisplayName(currentUser);
+            const username = getUserDisplayName(currentUser, t);
             
             // 獲取用戶頭像
             let userAvatar = '';
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await checkUser();
             
             // 顯示註冊成功 toast，使用傳入的用戶名
-            const username = name || email?.split('@')[0] || '用戶';
+            const username = name || email?.split('@')[0] || t('common.user');
             
             // 獲取用戶頭像
             let userAvatar = '';
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             
             // 顯示登出成功 toast
-            const username = getUserDisplayName(currentUser);
+            const username = getUserDisplayName(currentUser, t);
             
             toast({
                 variant: "success",

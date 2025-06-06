@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { X, Download, Smartphone, Monitor } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { usePWAManifest } from '@/hooks/usePWAManifest';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CustomPWAInstallDialog } from './CustomPWAInstallDialog';
 
 interface PWAInstallBannerProps {
   className?: string;
@@ -27,8 +29,18 @@ export function PWAInstallBanner({
     isStandalone,
     platform,
     promptInstall,
-    getInstallInstructions 
+    getInstallInstructions,
+    showCustomDialog,
+    closeCustomDialog,
+    handleInstallComplete,
+    installPrompt
   } = usePWAInstall();
+  
+  const {
+    getAppName,
+    getAppDescription,
+    isManifestReady
+  } = usePWAManifest();
   
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -73,6 +85,16 @@ export function PWAInstallBanner({
 
   const handleInstall = async () => {
     if (canInstall) {
+      // 在觸發安裝前，確保使用最新的 manifest 數據
+      console.log('PWA Banner: 準備觸發安裝，當前 manifest 狀態:', isManifestReady());
+      
+      if (isManifestReady()) {
+        console.log('PWA Banner: 使用最新的 manifest 數據:', {
+          name: getAppName(),
+          description: getAppDescription()
+        });
+      }
+      
       // 使用官方 API 觸發安裝
       const success = await promptInstall();
       if (success) {
@@ -109,10 +131,10 @@ export function PWAInstallBanner({
               {isPlatformMobile ? <Smartphone className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
               <div>
                 <p className="font-medium">
-                  {t('pwa.installAvailable')}
+                  {isManifestReady() ? getAppName() : t('pwa.installAvailable')}
                 </p>
                 <p className="text-sm opacity-90">
-                  {t('pwa.installDescription')}
+                  {isManifestReady() ? getAppDescription() : t('pwa.detailedDescription')}
                 </p>
               </div>
             </div>
@@ -121,7 +143,7 @@ export function PWAInstallBanner({
                 variant="secondary"
                 size="sm"
                 onClick={handleInstall}
-                className="bg-white text-blue-600 hover:bg-gray-100"
+                className="pwa-install-button text-white"
               >
                 <Download className="h-4 w-4 mr-2" />
                 {canInstall ? t('pwa.install') : t('pwa.howToInstall')}
@@ -151,16 +173,16 @@ export function PWAInstallBanner({
               {isPlatformMobile ? <Smartphone className="h-6 w-6 text-blue-600 mt-1" /> : <Monitor className="h-6 w-6 text-blue-600 mt-1" />}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">
-                  {t('pwa.installAvailable')}
+                  {isManifestReady() ? getAppName() : t('pwa.installAvailable')}
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">
-                  {t('pwa.installDescription')}
+                  {isManifestReady() ? getAppDescription() : t('pwa.detailedDescription')}
                 </p>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     onClick={handleInstall}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="pwa-install-button text-white"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     {canInstall ? t('pwa.install') : t('pwa.howToInstall')}
@@ -200,7 +222,7 @@ export function PWAInstallBanner({
               <div className="flex items-center gap-2">
                 {isPlatformMobile ? <Smartphone className="h-5 w-5 text-blue-600" /> : <Monitor className="h-5 w-5 text-blue-600" />}
                 <h4 className="font-medium text-gray-900">
-                  {t('pwa.installApp')}
+                  {isManifestReady() ? getAppName() : t('pwa.installApp')}
                 </h4>
               </div>
               <Button
@@ -213,13 +235,13 @@ export function PWAInstallBanner({
               </Button>
             </div>
             <p className="text-sm text-gray-600 mb-3">
-              {t('pwa.installBenefits')}
+              {isManifestReady() ? getAppDescription() : t('pwa.installBenefits')}
             </p>
             <div className="flex gap-2">
               <Button
                 size="sm"
                 onClick={handleInstall}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 pwa-install-button text-white"
               >
                 <Download className="h-4 w-4 mr-2" />
                 {canInstall ? t('pwa.install') : t('pwa.howToInstall')}
@@ -279,5 +301,15 @@ export function PWAInstallBanner({
     );
   }
 
-  return null;
+  return (
+    <>
+      {/* 自定義 PWA 安裝對話框 */}
+      <CustomPWAInstallDialog
+        isOpen={showCustomDialog}
+        onClose={closeCustomDialog}
+        installPrompt={installPrompt}
+        onInstallComplete={handleInstallComplete}
+      />
+    </>
+  );
 } 

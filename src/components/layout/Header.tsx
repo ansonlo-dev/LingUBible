@@ -1,11 +1,12 @@
-import { BookOpen, Search, PanelLeft } from 'lucide-react';
+import { BookOpen, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { PWAInstallIcon } from '@/components/common/PWAInstallIcon';
 import { SearchDropdown } from '@/components/common/SearchDialog';
-import { PWAStatusIndicator } from '@/components/features/pwa/PWAStatusIndicator';
+import { useState, useEffect } from 'react';
+
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from "@/components/user/UserMenu";
 import { Link } from 'react-router-dom';
@@ -16,9 +17,20 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { user } = useAuth();
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkIsDesktop();
+    window.addEventListener('resize', checkIsDesktop);
+    
+    return () => window.removeEventListener('resize', checkIsDesktop);
+  }, []);
 
   return (
     <>
@@ -36,75 +48,40 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               <PanelLeft className="h-4 w-4" />
             </Button>
           )}
-          
-          {/* Logo - 桌面版和手機版都顯示，但手機版較小 */}
-          <Link to="/" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity whitespace-nowrap">
-            <BookOpen className="h-5 w-5 md:h-6 md:w-6" />
-            <span className="text-lg md:text-xl font-bold">LingUBible</span>
-          </Link>
         </div>
 
-        {/* 中間區域 - 桌面版搜索 */}
-        <div className="flex-1 mx-4 hidden md:block">
+        {/* 中間區域 - 搜索框（所有設備都顯示） */}
+        <div className="flex-1 mx-2 md:mx-4">
           <SearchDropdown 
             isOpen={true}
-            onClose={() => {}} // Desktop version is always open
-            isDesktop={true}
+            onClose={() => {}} // Always open version
+            isDesktop={isDesktop}
           />
         </div>
 
         {/* 右側區域 */}
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-          {/* 手機版搜索按鈕 */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSearchOpen(true)}
-              className="h-8 w-8"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </div>
           
-          {/* PWA 狀態指示器 - 只在桌面版顯示文字 */}
-          <PWAStatusIndicator showText={false} className="hidden sm:flex" />
+          {/* PWA 安裝圖標 - 所有設備都顯示 */}
+          <PWAInstallIcon />
           
-          {/* 語言切換器 - 手機版較小 */}
-          <div className="scale-90 md:scale-100">
-            <LanguageSwitcher onLanguageChange={setLanguage} currentLanguage={language} />
-          </div>
-          
-          {/* 主題切換 */}
-          <ThemeToggle />
-          
-          {/* 用戶菜單或登入按鈕 */}
+          {/* 用戶菜單或登入按鈕 - 最高優先級，始終顯示 */}
           {user ? (
             <UserMenu />
           ) : (
             <Button 
               asChild
-              className="gradient-primary hover:opacity-90 text-white font-medium text-sm md:text-base px-2 md:px-4"
+              className="gradient-primary hover:opacity-90 text-white font-bold text-sm px-2 sm:px-3 md:px-4"
               size="sm"
             >
               <Link to="/login">
                 <span className="hidden sm:inline">{t('nav.signIn')}</span>
-                <span className="sm:hidden">{t('nav.signIn')}</span>
+                <span className="sm:hidden text-xs">{t('nav.signIn')}</span>
               </Link>
             </Button>
           )}
         </div>
       </header>
-
-      {/* Mobile Search - positioned like desktop */}
-      {isSearchOpen && (
-        <div className="md:hidden fixed top-16 left-4 right-4 z-[99999]">
-          <SearchDropdown 
-            isOpen={isSearchOpen}
-            onClose={() => setIsSearchOpen(false)}
-          />
-        </div>
-      )}
     </>
   );
 }

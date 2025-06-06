@@ -13,6 +13,7 @@ export type Language = 'en' | 'zh-TW' | 'zh-CN';
 interface LanguageSwitcherProps {
   onLanguageChange: (language: Language) => void;
   currentLanguage: Language;
+  variant?: 'dropdown' | 'pills' | 'vertical-pills';
 }
 
 const languages = {
@@ -21,7 +22,13 @@ const languages = {
   en: 'English',
 };
 
-export function LanguageSwitcher({ onLanguageChange, currentLanguage }: LanguageSwitcherProps) {
+const languageShortNames = {
+  'zh-TW': '繁',
+  'zh-CN': '简',
+  en: 'EN',
+};
+
+export function LanguageSwitcher({ onLanguageChange, currentLanguage, variant = 'dropdown' }: LanguageSwitcherProps) {
   const [isDark, setIsDark] = useState(false);
 
   // 監聽主題變化
@@ -50,6 +57,50 @@ export function LanguageSwitcher({ onLanguageChange, currentLanguage }: Language
 
     return () => observer.disconnect();
   }, []);
+
+  if (variant === 'pills') {
+    return (
+      <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg">
+        {Object.entries(languageShortNames).map(([code, shortName]) => (
+          <Button
+            key={code}
+            variant={currentLanguage === code ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onLanguageChange(code as Language)}
+            className={`h-7 px-2 text-xs font-medium transition-all ${
+              currentLanguage === code 
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {shortName}
+          </Button>
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === 'vertical-pills') {
+    return (
+      <div className="flex flex-col gap-1 p-1 bg-secondary/50 rounded-lg">
+        {Object.entries(languageShortNames).map(([code, shortName]) => (
+          <Button
+            key={code}
+            variant={currentLanguage === code ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onLanguageChange(code as Language)}
+            className={`h-6 w-8 text-xs font-medium transition-all ${
+              currentLanguage === code 
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {shortName}
+          </Button>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <DropdownMenu>

@@ -68,7 +68,7 @@ export default function Register() {
     }
 
     if (!isUsernameValid) {
-      setError('請輸入有效的用戶名');
+      setError(t('auth.validUsername'));
       return;
     }
 
@@ -94,7 +94,7 @@ export default function Register() {
     } catch (error: any) {
       console.error('Registration error:', error);
       if (error.code === 409) {
-        setError('此電子郵件地址已被註冊');
+        setError(t('auth.emailAlreadyExists'));
       } else if (error?.message?.includes('Password must be between 8 and 256 characters') || 
                  error?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
         // 在開發模式下跳過密碼長度錯誤，因為後端會自動使用預設密碼

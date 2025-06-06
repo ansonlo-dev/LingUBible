@@ -127,7 +127,7 @@ const Index = () => {
             />
           </div>
           
-          <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-medium px-8" asChild>
+          <Button size="lg" className="gradient-primary hover:opacity-90 text-white font-bold px-8" asChild>
             <Link to="/register">
               {t('hero.getStarted')}
             </Link>

@@ -37,7 +37,8 @@ const getInitialLanguage = (): Language => {
   let detectedLanguage: Language = 'en'; // 默認英文
   
   if (browserLang) {
-    console.log('檢測到的瀏覽器語言:', browserLang);
+    console.log('🌐 檢測到的瀏覽器語言:', browserLang);
+    console.log('🌐 所有瀏覽器語言:', navigator.languages);
     
     if (browserLang.startsWith('zh-TW') || 
         browserLang.startsWith('zh-Hant') || 
@@ -46,9 +47,11 @@ const getInitialLanguage = (): Language => {
       detectedLanguage = 'zh-TW';
     } else if (browserLang.startsWith('zh-CN') || 
                browserLang.startsWith('zh-Hans') || 
-               browserLang.startsWith('zh-SG') || 
-               browserLang === 'zh') {
+               browserLang.startsWith('zh-SG')) {
       detectedLanguage = 'zh-CN';
+    } else if (browserLang === 'zh') {
+      // 對於通用的 'zh'，默認使用英文（適合香港的學術環境）
+      detectedLanguage = 'en';
     } else if (browserLang.startsWith('en')) {
       detectedLanguage = 'en';
     } else {
@@ -57,10 +60,11 @@ const getInitialLanguage = (): Language => {
     }
   }
   
-  console.log('自動檢測語言設定為:', detectedLanguage);
+  console.log('🎯 自動檢測語言設定為:', detectedLanguage);
   
   // 自動保存檢測到的語言到 cookie
   setCookie('language', detectedLanguage);
+  console.log('💾 語言已保存到 Cookie:', detectedLanguage);
   
   return detectedLanguage;
 };
@@ -82,6 +86,8 @@ const translations = {
     'nav.lecturers': 'Lecturers',
     'nav.about': 'About',
     'nav.signIn': 'Sign In',
+    'nav.language': 'Language',
+    'nav.theme': 'Theme',
     'stats.totalCourses': 'Total Courses',
     'stats.lecturers': 'Lecturers',
     'stats.reviews': 'Reviews',
@@ -161,6 +167,7 @@ const translations = {
     'toast.goodbye': 'Goodbye, {username}! Looking forward to your next visit.',
     // Search
     'search.placeholder': 'Search courses, lecturers...',
+    'search.search': 'Search',
     // Buttons
     'button.viewAll': 'View All',
     'button.review': 'Review',
@@ -201,6 +208,7 @@ const translations = {
     'sidebar.myReviews': 'My Reviews',
     'sidebar.trending': 'Trending',
     'sidebar.settings': 'Settings',
+    'sidebar.preferences': 'Preferences',
     // Password Security
     'password.strength': 'Password Strength',
     'password.requirements': 'Password Requirements:',
@@ -245,9 +253,17 @@ const translations = {
     'auth.resetPasswordDescription': 'Enter your Lingnanians email address and we will send you a reset link',
     'auth.emailNotRegistered': 'This email address is not registered. Please register first or check your email address.',
     'auth.checkingEmailExists': 'Checking if email is registered...',
-    'auth.emailRegistered': 'Email address is registered',
-    'auth.invalidCredentials': 'Invalid email or password. Please check and try again.',
-    'auth.registrationFailed': 'Registration failed. Please check your information and try again.',
+            'auth.emailRegistered': 'Email address is registered',
+        'auth.emailAlreadyExists': 'This email address is already registered',
+            'auth.invalidCredentials': 'Invalid email or password. Please check and try again.',
+        'auth.sessionConflict': 'Existing login session detected, attempting to re-login...',
+        'auth.accountPermissionDenied': 'Account permission denied, please contact administrator',
+        'auth.networkError': 'Network connection error, please check your network and try again',
+                'auth.loginFailed': 'Login failed, please try again later',
+        'auth.fillAllFields': 'Please fill in all required fields',
+        'auth.enterUsername': 'Please enter a username',
+        'auth.validUsername': 'Please enter a valid username',
+        'auth.registrationFailed': 'Registration failed. Please check your information and try again.',
     // Processing
     'auth.processing': 'Processing...',
     // Email placeholder
@@ -314,6 +330,7 @@ const translations = {
     'pwa.installDescription': 'Install LingUBible for a better experience',
     'pwa.installBenefits': 'Faster loading, offline access, and native app experience',
     'pwa.install': 'Install',
+    'pwa.showInstructions': 'Show Instructions',
     'pwa.installApp': 'Install App',
     'pwa.howToInstall': 'How to Install',
     'pwa.notNow': 'Not Now',
@@ -322,9 +339,25 @@ const translations = {
     'pwa.installSuccess': 'App installed successfully!',
     'pwa.installFailed': 'Installation failed. Please try again.',
     'pwa.alreadyInstalled': 'App is already installed',
+    'pwa.manualInstall': 'Install App to Your Device',
+    'pwa.manual.step1': 'Open browser menu (⋮ or ⋯)',
+    'pwa.manual.step2': 'Look for "Install app" or "Add to Home screen"',
+    'pwa.manual.step3': 'Follow the prompts to complete installation',
+    'pwa.manual.chrome': 'Chrome: Menu → Install app',
+    'pwa.manual.firefox': 'Firefox: Menu → Install',
+    'pwa.manual.safari': 'Safari: Share → Add to Home Screen',
+    'pwa.manual.edge': 'Edge: Menu → Apps → Install this site as an app',
+    'pwa.manual.browserSpecific': 'Browser-specific instructions:',
     'pwa.updateAvailable': 'App update available',
     'pwa.updateNow': 'Update Now',
     'pwa.updateLater': 'Update Later',
+    // PWA Detailed Descriptions
+    'pwa.detailedDescription': 'Your trusted course and lecturer review platform. Access honest reviews, make informed decisions about your courses, and share your experiences with fellow students. Get faster loading, offline access, and a native app experience.',
+    'pwa.features.offline': 'Browse reviews offline',
+    'pwa.features.fast': 'Lightning-fast loading',
+    'pwa.features.native': 'Native app experience',
+    'pwa.features.notifications': 'Get notified of new reviews',
+    'pwa.features.homescreen': 'Quick access from home screen',
     // User Stats
     'stats.onlineUsers': 'Online Users',
     'stats.totalRegistered': 'Total Registered',
@@ -469,6 +502,9 @@ const translations = {
     // Common
     'common.backToHome': 'Back to Home',
     'common.lastUpdated': 'Last updated',
+    'common.user': 'User',
+    'common.language': 'Language',
+    'common.installing': 'Installing...',
     // Terms agreement
     'auth.termsAgreement': 'By signing up, you agree to our Terms of Service and Privacy Policy',
     'auth.termsAgreementShort': 'By signing up, you agree to our',
@@ -571,6 +607,8 @@ const translations = {
     'nav.lecturers': '講師',
     'nav.about': '關於',
     'nav.signIn': '登入',
+    'nav.language': '語言',
+    'nav.theme': '主題',
     'stats.totalCourses': '總課程數',
     'stats.lecturers': '講師',
     'stats.reviews': '評價',
@@ -650,6 +688,7 @@ const translations = {
     'toast.goodbye': '再見，{username}！期待您的下次造訪。',
     // Search
     'search.placeholder': '搜尋課程、講師...',
+    'search.search': '搜尋',
     // Buttons
     'button.viewAll': '查看全部',
     'button.review': '評價',
@@ -690,6 +729,7 @@ const translations = {
     'sidebar.myReviews': '我的評價',
     'sidebar.trending': '熱門',
     'sidebar.settings': '設置',
+    'sidebar.preferences': '偏好設定',
     // Password Security
     'password.strength': '密碼強度',
     'password.requirements': '密碼要求：',
@@ -734,9 +774,17 @@ const translations = {
     'auth.resetPasswordDescription': '輸入您的嶺南人郵件地址，我們將發送重設密碼的連結給您',
     'auth.emailNotRegistered': '此郵件地址尚未註冊。請先註冊或檢查您的郵件地址。',
     'auth.checkingEmailExists': '檢查郵件是否已註冊...',
-    'auth.emailRegistered': '郵件地址已註冊',
-    'auth.invalidCredentials': '郵件地址或密碼錯誤，請檢查後重試',
-    'auth.registrationFailed': '註冊失敗，請檢查資料後重試',
+            'auth.emailRegistered': '郵件地址已註冊',
+        'auth.emailAlreadyExists': '此郵件地址已被註冊',
+            'auth.invalidCredentials': '郵件地址或密碼錯誤，請檢查後重試',
+        'auth.sessionConflict': '檢測到現有登入狀態，正在嘗試重新登入...',
+        'auth.accountPermissionDenied': '帳戶權限不足，請聯繫管理員',
+        'auth.networkError': '網絡連接錯誤，請檢查網絡後重試',
+                'auth.loginFailed': '登入失敗，請稍後再試',
+        'auth.fillAllFields': '請填寫所有必填欄位',
+        'auth.enterUsername': '請輸入用戶名',
+        'auth.validUsername': '請輸入有效的用戶名',
+        'auth.registrationFailed': '註冊失敗，請檢查資料後重試',
     // Processing
     'auth.processing': '處理中...',
     // Email placeholder
@@ -803,6 +851,7 @@ const translations = {
     'pwa.installDescription': '安裝 LingUBible 獲得更好的使用體驗',
     'pwa.installBenefits': '更快載入、離線存取和原生應用體驗',
     'pwa.install': '安裝',
+    'pwa.showInstructions': '顯示安裝指引',
     'pwa.installApp': '安裝應用',
     'pwa.howToInstall': '安裝方法',
     'pwa.notNow': '稍後再說',
@@ -811,9 +860,25 @@ const translations = {
     'pwa.installSuccess': '應用安裝成功！',
     'pwa.installFailed': '安裝失敗，請重試。',
     'pwa.alreadyInstalled': '應用已安裝',
+    'pwa.manualInstall': '安裝應用程式到您的裝置',
+    'pwa.manual.step1': '打開瀏覽器選單（⋮ 或 ⋯）',
+    'pwa.manual.step2': '尋找「安裝應用程式」或「加到主畫面」',
+    'pwa.manual.step3': '按照提示完成安裝',
+    'pwa.manual.chrome': 'Chrome：選單 → 安裝應用程式',
+    'pwa.manual.firefox': 'Firefox：選單 → 安裝',
+    'pwa.manual.safari': 'Safari：分享 → 加入主畫面',
+    'pwa.manual.edge': 'Edge：選單 → 應用程式 → 將此網站安裝為應用程式',
+    'pwa.manual.browserSpecific': '瀏覽器特定指引：',
     'pwa.updateAvailable': '應用更新可用',
     'pwa.updateNow': '立即更新',
     'pwa.updateLater': '稍後更新',
+    // PWA Detailed Descriptions
+    'pwa.detailedDescription': '真實可靠的Reg科聖經，幫助同學們作出明智的選擇。瀏覽誠實的評價，分享您的課程體驗，享受更快的載入速度、離線存取和原生應用體驗。',
+    'pwa.features.offline': '離線瀏覽評價',
+    'pwa.features.fast': '閃電般快速載入',
+    'pwa.features.native': '原生應用體驗',
+    'pwa.features.notifications': '接收新評價通知',
+    'pwa.features.homescreen': '主畫面快速存取',
     // User Stats
     'stats.onlineUsers': '在線用戶',
     'stats.totalRegistered': '總註冊數',
@@ -958,6 +1023,9 @@ const translations = {
     // Common
     'common.backToHome': '返回首頁',
     'common.lastUpdated': '最後更新',
+    'common.user': '用戶',
+    'common.language': '語言',
+    'common.installing': '安裝中...',
     // Terms agreement
     'auth.termsAgreement': '註冊即表示您同意我們的使用條款和隱私政策',
     'auth.termsAgreementShort': '註冊即表示您同意我們的',
@@ -1060,6 +1128,8 @@ const translations = {
     'nav.lecturers': '讲师',
     'nav.about': '关于',
     'nav.signIn': '登录',
+    'nav.language': '语言',
+    'nav.theme': '主题',
     'stats.totalCourses': '总课程数',
     'stats.lecturers': '讲师',
     'stats.reviews': '评价',
@@ -1139,6 +1209,7 @@ const translations = {
     'toast.goodbye': '再见，{username}！期待您的下次造访。',
     // Search
     'search.placeholder': '搜索课程、讲师...',
+    'search.search': '搜索',
     // Buttons
     'button.viewAll': '查看全部',
     'button.review': '评价',
@@ -1179,6 +1250,7 @@ const translations = {
     'sidebar.myReviews': '我的评价',
     'sidebar.trending': '热门',
     'sidebar.settings': '设置',
+    'sidebar.preferences': '偏好设置',
     // Password Security
     'password.strength': '密码强度',
     'password.requirements': '密码要求：',
@@ -1223,9 +1295,17 @@ const translations = {
     'auth.resetPasswordDescription': '输入您的岭南人邮件地址，我们将发送重置密码的链接给您',
     'auth.emailNotRegistered': '此邮件地址尚未注册。请先注册或检查您的邮件地址。',
     'auth.checkingEmailExists': '检查邮件是否已注册...',
-    'auth.emailRegistered': '邮件地址已注册',
-    'auth.invalidCredentials': '邮件地址或密码错误，请检查后重试',
-    'auth.registrationFailed': '注册失败，请检查资料后重试',
+            'auth.emailRegistered': '邮件地址已注册',
+        'auth.emailAlreadyExists': '此邮件地址已被注册',
+            'auth.invalidCredentials': '邮件地址或密码错误，请检查后重试',
+        'auth.sessionConflict': '检测到现有登录状态，正在尝试重新登录...',
+        'auth.accountPermissionDenied': '账户权限不足，请联系管理员',
+        'auth.networkError': '网络连接错误，请检查网络后重试',
+                'auth.loginFailed': '登录失败，请稍后再试',
+        'auth.fillAllFields': '请填写所有必填栏位',
+        'auth.enterUsername': '请输入用户名',
+        'auth.validUsername': '请输入有效的用户名',
+        'auth.registrationFailed': '注册失败，请检查资料后重试',
     // Processing
     'auth.processing': '处理中...',
     // Email placeholder
@@ -1292,6 +1372,7 @@ const translations = {
     'pwa.installDescription': '安装 LingUBible 获得更好的使用体验',
     'pwa.installBenefits': '更快加载、离线访问和原生应用体验',
     'pwa.install': '安装',
+    'pwa.showInstructions': '显示安装指引',
     'pwa.installApp': '安装应用',
     'pwa.howToInstall': '安装方法',
     'pwa.notNow': '稍后再说',
@@ -1300,9 +1381,25 @@ const translations = {
     'pwa.installSuccess': '应用安装成功！',
     'pwa.installFailed': '安装失败，请重试。',
     'pwa.alreadyInstalled': '应用已安装',
+    'pwa.manualInstall': '安装应用到您的设备',
+    'pwa.manual.step1': '打开浏览器菜单（⋮ 或 ⋯）',
+    'pwa.manual.step2': '寻找「安装应用」或「添加到主屏幕」',
+    'pwa.manual.step3': '按照提示完成安装',
+    'pwa.manual.chrome': 'Chrome：菜单 → 安装应用',
+    'pwa.manual.firefox': 'Firefox：菜单 → 安装',
+    'pwa.manual.safari': 'Safari：分享 → 添加到主屏幕',
+    'pwa.manual.edge': 'Edge：菜单 → 应用 → 将此站点安装为应用',
+    'pwa.manual.browserSpecific': '浏览器特定指引：',
     'pwa.updateAvailable': '应用更新可用',
     'pwa.updateNow': '立即更新',
     'pwa.updateLater': '稍后更新',
+    // PWA Detailed Descriptions
+    'pwa.detailedDescription': '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定。浏览诚实的评价，分享您的课程体验，享受更快的加载速度、离线访问和原生应用体验。',
+    'pwa.features.offline': '离线浏览评价',
+    'pwa.features.fast': '闪电般快速加载',
+    'pwa.features.native': '原生应用体验',
+    'pwa.features.notifications': '接收新评价通知',
+    'pwa.features.homescreen': '主屏幕快速访问',
     // User Stats
     'stats.onlineUsers': '在线用户',
     'stats.totalRegistered': '总注册数',
@@ -1440,6 +1537,9 @@ const translations = {
     // Common
     'common.backToHome': '返回首页',
     'common.lastUpdated': '最后更新',
+    'common.user': '用户',
+    'common.language': '语言',
+    'common.installing': '安装中...',
     // Terms agreement
     'auth.termsAgreement': '注册即表示您同意我们的使用条款和隐私政策',
     'auth.termsAgreementShort': '注册即表示您同意我们的',
@@ -1537,9 +1637,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Update language and save to cookie
   const setLanguage = (newLanguage: Language) => {
-    console.log('切換語言到:', newLanguage);
+    console.log('🔄 切換語言到:', newLanguage);
+    console.log('🔄 當前語言狀態:', language);
     setLanguageState(newLanguage);
     setCookie('language', newLanguage);
+    console.log('💾 新語言已保存到 Cookie:', newLanguage);
     
     // 觸發 PWA manifest 更新
     if (typeof window !== 'undefined' && window.updatePWAManifest) {
@@ -1571,12 +1673,22 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const t = (key: string, params?: Record<string, any>): any => {
     let translation = translations[language][key] || key;
     
+    // 調試 toast 相關的翻譯
+    if (key.startsWith('toast.')) {
+      console.log(`🌐 翻譯 "${key}" (語言: ${language}):`, translation);
+    }
+    
     // 如果有參數，進行字符串替換
     if (params && typeof translation === 'string') {
       Object.keys(params).forEach(paramKey => {
         const placeholder = `{${paramKey}}`;
         translation = translation.replace(new RegExp(placeholder, 'g'), params[paramKey]);
       });
+      
+      // 調試參數替換後的結果
+      if (key.startsWith('toast.')) {
+        console.log(`🌐 參數替換後 "${key}":`, translation);
+      }
     }
     
     return translation;

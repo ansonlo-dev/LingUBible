@@ -3,7 +3,7 @@
 ## 標題區域
 <div align="center">
 
-# 🎓 Campus Comment Verse
+# 🎓 LingUBible
 
 ### *讓每一個評價，成為學習路上的明燈*
 
@@ -28,7 +28,7 @@
 
 | 🌅 淺色主題 | 🌙 深色主題 |
 |:---:|:---:|
-| ![Light Theme](https://via.placeholder.com/800x500/f8fafc/1e293b?text=Campus%20Comment%20Verse%20-%20Light%20Theme) | ![Dark Theme](https://via.placeholder.com/800x500/0f172a/e2e8f0?text=Campus%20Comment%20Verse%20-%20Dark%20Theme) |
+| ![Light Theme](https://via.placeholder.com/800x500/f8fafc/1e293b?text=LingUBible%20-%20Light%20Theme) | ![Dark Theme](https://via.placeholder.com/800x500/0f172a/e2e8f0?text=LingUBible%20-%20Dark%20Theme) |
 
 ### 📱 多設備支援
 *桌面、平板、手機完美適配*
@@ -40,4 +40,4 @@
 ---
 
 *此文件由 generate-readme-assets.js 自動生成*
-*最後更新: 2025-06-05T19:18:48.927Z*
+*最後更新: 2025-06-05T19:38:10.805Z*

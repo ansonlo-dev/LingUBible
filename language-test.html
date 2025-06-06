@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 語言設置測試</h1>
+    
+    <div class="test-section">
+        <h2>📊 瀏覽器信息</h2>
+        <p><strong>主要語言:</strong> <code id="primaryLang"></code></p>
+        <p><strong>所有語言:</strong> <code id="allLangs"></code></p>
+        <p><strong>用戶代理:</strong> <code id="userAgent"></code></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🍪 Cookie 狀態</h2>
+        <p><strong>語言 Cookie:</strong> <code id="langCookie"></code></p>
+        <p><strong>所有 Cookies:</strong> <code id="allCookies"></code></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 測試操作</h2>
+        <button class="button" onclick="setLangCookie('en')">設置英文</button>
+        <button class="button" onclick="setLangCookie('zh-TW')">設置繁體中文</button>
+        <button class="button" onclick="setLangCookie('zh-CN')">設置簡體中文</button>
+        <button class="button" onclick="clearLangCookie()">清除 Cookie</button>
+        <button class="button" onclick="reloadPage()">重新載入</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 建議</h2>
+        <p>如果登入 toast 顯示簡體中文，請嘗試：</p>
+        <ol>
+            <li>點擊 "清除 Cookie" 按鈕</li>
+            <li>點擊 "設置英文" 按鈕</li>
+            <li>點擊 "重新載入" 按鈕</li>
+            <li>前往 <a href="http://localhost:8082/login" target="_blank">登入頁面</a> 測試</li>
+        </ol>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function setLangCookie(lang) {
+            setCookie('language', lang);
+            updateDisplay();
+            alert(`語言已設置為: ${lang}`);
+        }
+
+        function clearLangCookie() {
+            document.cookie = 'language=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            updateDisplay();
+            alert('語言 Cookie 已清除');
+        }
+
+        function reloadPage() {
+            window.location.reload();
+        }
+
+        function updateDisplay() {
+            // 瀏覽器語言信息
+            document.getElementById('primaryLang').textContent = navigator.language || 'unknown';
+            document.getElementById('allLangs').textContent = navigator.languages ? navigator.languages.join(', ') : 'unknown';
+            document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 100) + '...';
+            
+            // Cookie 信息
+            document.getElementById('langCookie').textContent = getCookie('language') || 'none';
+            document.getElementById('allCookies').textContent = document.cookie || 'none';
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDisplay();
+            
+            // 每秒更新一次
+            setInterval(updateDisplay, 1000);
+        });
+    </script>
+</body>
+</html> 

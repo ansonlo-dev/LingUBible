@@ -19,6 +19,7 @@ interface PWAInstallState {
 
 export function usePWAInstall() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [installState, setInstallState] = useState<PWAInstallState>({
     isInstallable: false,
     isInstalled: false,
@@ -26,6 +27,26 @@ export function usePWAInstall() {
     platform: null,
     canInstall: false
   });
+
+  // 保存安裝狀態到 sessionStorage
+  const saveInstallState = (state: PWAInstallState) => {
+    try {
+      sessionStorage.setItem('pwa-install-state', JSON.stringify(state));
+    } catch (error) {
+      console.warn('PWA: 無法保存安裝狀態到 sessionStorage:', error);
+    }
+  };
+
+  // 從 sessionStorage 恢復安裝狀態
+  const loadInstallState = (): Partial<PWAInstallState> | null => {
+    try {
+      const saved = sessionStorage.getItem('pwa-install-state');
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.warn('PWA: 無法從 sessionStorage 載入安裝狀態:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     // 檢查是否已經在 PWA 模式下運行
@@ -51,83 +72,110 @@ export function usePWAInstall() {
       platform = 'Desktop';
     }
 
-    setInstallState(prev => ({
-      ...prev,
+    // 嘗試從 sessionStorage 恢復之前的安裝狀態
+    const savedState = loadInstallState();
+    
+    const newState = {
       isStandalone,
       isInstalled,
-      platform
-    }));
+      platform,
+      // 如果有保存的狀態且當前未安裝，則恢復 isInstallable 和 canInstall
+      isInstallable: savedState?.isInstallable && !isInstalled ? true : false,
+      canInstall: savedState?.canInstall && !isInstalled ? true : false
+    };
 
-    // 監聽 beforeinstallprompt 事件
+    setInstallState(newState);
+    saveInstallState(newState);
+
+    console.log('PWA: 初始化狀態', {
+      current: newState,
+      saved: savedState,
+      restored: !!savedState
+    });
+
+    // 暫時禁用 beforeinstallprompt 事件監聽，避免與 PWAContext 衝突
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('PWA: beforeinstallprompt 事件觸發');
-      // 阻止瀏覽器默認的安裝提示
-      e.preventDefault();
-      
-      const promptEvent = e as BeforeInstallPromptEvent;
-      setInstallPrompt(promptEvent);
-      
-      setInstallState(prev => ({
-        ...prev,
-        isInstallable: true,
-        canInstall: true
-      }));
+      console.log('PWA: beforeinstallprompt 事件觸發 (已禁用處理)');
+      // 不處理事件，讓 PWAContext 處理
     };
 
     // 監聽應用安裝事件
     const handleAppInstalled = () => {
       console.log('PWA: 應用已安裝');
       setInstallPrompt(null);
-      setInstallState(prev => ({
-        ...prev,
-        isInstalled: true,
-        isInstallable: false,
-        canInstall: false
-      }));
+      setInstallState(prev => {
+        const newState = {
+          ...prev,
+          isInstalled: true,
+          isInstallable: false,
+          canInstall: false
+        };
+        saveInstallState(newState);
+        return newState;
+      });
     };
 
-    // 添加事件監聽器
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // 添加事件監聽器 (暫時禁用 beforeinstallprompt 以避免與 PWAContext 衝突)
+    // window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
     // 清理函數
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      // window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
   // 觸發安裝提示
   const promptInstall = async () => {
-    if (!installPrompt) {
-      console.log('PWA: 沒有可用的安裝提示');
-      return false;
-    }
+    console.log('PWA: 準備顯示自定義安裝對話框');
+    console.log('PWA: installPrompt 狀態:', !!installPrompt);
+    
+    // 記錄當前語言
+    const currentLang = document.documentElement.lang || 'en';
+    console.log('PWA: 當前頁面語言:', currentLang);
+    
+    // 即使沒有 installPrompt，也顯示自定義對話框
+    // 對話框內部會處理沒有 installPrompt 的情況
+    setShowCustomDialog(true);
+    
+    return new Promise((resolve) => {
+      // 這個 Promise 會在對話框關閉時解決
+      const handleDialogClose = (success: boolean) => {
+        setShowCustomDialog(false);
+        if (success) {
+          setInstallState(prev => {
+            const newState = { ...prev, isInstalled: true, canInstall: false };
+            saveInstallState(newState);
+            return newState;
+          });
+          setInstallPrompt(null);
+        }
+        resolve(success);
+      };
+      
+      // 將處理函數存儲以供對話框使用
+      (window as any).__pwaInstallDialogHandler = handleDialogClose;
+    });
+  };
 
-    try {
-      // 顯示安裝提示
-      await installPrompt.prompt();
-      
-      // 等待用戶選擇
-      const choiceResult = await installPrompt.userChoice;
-      
-      console.log('PWA: 用戶選擇結果:', choiceResult.outcome);
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('PWA: 用戶接受安裝');
-        setInstallState(prev => ({ ...prev, isInstalled: true }));
-      } else {
-        console.log('PWA: 用戶拒絕安裝');
-      }
-      
-      // 清除提示
+  // 關閉自定義對話框
+  const closeCustomDialog = () => {
+    setShowCustomDialog(false);
+  };
+
+  // 處理安裝完成
+  const handleInstallComplete = (success: boolean) => {
+    if (success) {
+      setInstallState(prev => ({ ...prev, isInstalled: true }));
       setInstallPrompt(null);
       setInstallState(prev => ({ ...prev, canInstall: false }));
-      
-      return choiceResult.outcome === 'accepted';
-    } catch (error) {
-      console.error('PWA: 安裝提示失敗:', error);
-      return false;
+    }
+    
+    // 調用存儲的處理函數
+    if ((window as any).__pwaInstallDialogHandler) {
+      (window as any).__pwaInstallDialogHandler(success);
+      delete (window as any).__pwaInstallDialogHandler;
     }
   };
 
@@ -166,10 +214,31 @@ export function usePWAInstall() {
     }
   };
 
+  // 監聽 manifest 更新事件
+  useEffect(() => {
+    const handleManifestUpdate = (event: CustomEvent) => {
+      console.log('PWA: Manifest 已更新', event.detail);
+      
+      // 當 manifest 更新時，不要重置 installPrompt
+      // 保持現有的安裝提示可用，因為瀏覽器不會重新觸發 beforeinstallprompt
+      console.log('PWA: Manifest 更新完成，保持現有安裝提示可用');
+    };
+
+    window.addEventListener('manifestUpdated', handleManifestUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('manifestUpdated', handleManifestUpdate as EventListener);
+    };
+  }, []);
+
   return {
     ...installState,
     promptInstall,
     getInstallInstructions,
-    hasInstallPrompt: !!installPrompt
+    hasInstallPrompt: !!installPrompt,
+    showCustomDialog,
+    closeCustomDialog,
+    handleInstallComplete,
+    installPrompt
   };
 } 

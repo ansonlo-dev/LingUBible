@@ -16,9 +16,14 @@
     "refactor:update-imports": "node tools/scripts/refactor/update-imports.js",
     "refactor:check": "npm run build && echo '✅ Refactoring check passed!'",
     "project:structure": "tree src/ -I 'node_modules|*.backup' -L 3",
+    "pwa:test": "node tools/scripts/build/test-pwa.js",
+    "pwa:test-dev": "node tools/scripts/build/test-pwa-dev.js",
+    "pwa:build-test": "npm run build && npm run pwa:test",
     "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2",
     "readme:generate-assets": "node tools/scripts/build/generate-readme-assets.js",
-    "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/campus-comment-verse'"
+    "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/campus-comment-verse'",
+    "functions:cleanup": "bash tools/scripts/build/cleanup-functions.sh",
+    "functions:status": "echo '📊 Functions Status:' && ls -la functions/ && echo '' && echo '⚙️ Configured in appwrite.json:' && grep -A 1 '\"name\":' appwrite.json | grep '\"name\":'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

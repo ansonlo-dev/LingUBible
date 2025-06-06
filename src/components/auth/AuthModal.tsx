@@ -60,18 +60,18 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     // 基本驗證
     if (!email || !password) {
-      setError('請填寫所有必填欄位');
+      setError(t('auth.fillAllFields'));
       return;
     }
 
     if (isSignUp) {
       if (!username) {
-        setError('請輸入用戶名');
+        setError(t('auth.enterUsername'));
         return;
       }
 
       if (!isUsernameValid) {
-        setError('請輸入有效的用戶名');
+        setError(t('auth.validUsername'));
         return;
       }
 
@@ -114,9 +114,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       if (err?.message?.includes('請先驗證您的嶺南人郵件地址')) {
         setError(t('auth.pleaseVerifyStudentEmail'));
       } else if (err?.message?.includes('Invalid credentials')) {
-        setError('郵件地址或密碼錯誤');
+        setError(t('auth.invalidCredentials'));
       } else if (err?.message?.includes('user with the same email already exists')) {
-        setError('此郵件地址已被註冊');
+        setError(t('auth.emailAlreadyExists'));
       } else if (err?.message?.includes('Password must be between 8 and 256 characters') || 
                  err?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
         setError(t('auth.passwordTooShort'));
@@ -125,7 +125,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                  err?.message?.includes('Rate limit for the current endpoint has been exceeded')) {
         setError(t('auth.rateLimitExceeded'));
       } else if (err?.message?.includes('session is active') || err?.message?.includes('session is prohibited')) {
-        setError('檢測到現有登入狀態，正在嘗試重新登入...');
+        setError(t('auth.sessionConflict'));
         // 稍後自動重試
         setTimeout(() => {
           setError('');
@@ -135,7 +135,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         }, 1500);
         return;
       } else {
-        setError(err?.message || (isSignUp ? '註冊失敗' : '登入失敗'));
+        setError(err?.message || (isSignUp ? t('auth.registrationFailed') : t('auth.loginFailed')));
       }
     } finally {
       setLoading(false);
@@ -390,7 +390,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           
           <Button 
             type="submit" 
-            className="w-full gradient-primary hover:opacity-90 text-white"
+            className="w-full gradient-primary hover:opacity-90 text-white font-bold"
             disabled={loading || (isSignUp && (!isStudentVerified || !isUsernameValid || !isPasswordValid || password !== confirmPassword || !termsAccepted))}
           >
             {loading ? t('auth.processing') : (isSignUp ? t('auth.signUp') : t('auth.signIn'))}

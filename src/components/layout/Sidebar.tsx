@@ -32,7 +32,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         "fixed left-0 top-0 z-50 h-full w-64 transform bg-background border-r transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex h-16 items-center justify-between px-4 border-b md:hidden">
+        <div className="flex h-16 items-center justify-between px-4 md:hidden">
           <span className="font-semibold text-lg">Menu</span>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
@@ -57,7 +57,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
         
-        <div className="p-4 border-t">
+        <div className="p-4">
           <div className="glass-card rounded-lg p-4">
             <h3 className="font-semibold text-sm mb-2">Quick Stats</h3>
             <div className="space-y-2 text-sm text-muted-foreground">

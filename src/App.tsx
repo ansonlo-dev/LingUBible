@@ -2,14 +2,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { PWAProvider } from "@/contexts/PWAContext";
+import { AuthProvider } from '@/contexts/AuthContext';
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
 import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
+import { PWAPromptTrigger } from "@/components/common/PWAPromptTrigger";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -27,7 +30,7 @@ import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
 import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { PWAInstallBanner } from "@/components/features/pwa/PWAInstallBanner";
+
 
 const queryClient = new QueryClient();
 
@@ -233,7 +236,7 @@ const AppContent = () => {
   };
 
   // 滑動手勢處理 - 只在手機版且側邊欄關閉時啟用
-  const swipeRef = useSwipeGesture({
+  const { ref: swipeRef, forceReinit: forceSwipeReinit } = useSwipeGesture({
     onSwipeRight: () => {
       if (isMobile && !isMobileSidebarOpen) {
         setIsMobileSidebarOpen(true);
@@ -249,9 +252,9 @@ const AppContent = () => {
     },
     enabled: isMobile,
     swipeZone: 'full', // 改為全屏檢測滑動
-    threshold: 80, // 降低滑動距離要求
-    restraint: 120, // 允許更多垂直偏移
-    allowedTime: 400 // 增加允許的滑動時間
+    threshold: 20, // 進一步降低滑動距離要求（從30降到20）
+    restraint: 200, // 允許更多垂直偏移（從150增加到200）
+    allowedTime: 800 // 增加允許的滑動時間（從600增加到800）
   });
 
   return (
@@ -263,13 +266,6 @@ const AppContent = () => {
     >
       {/* 動態文檔標題和元數據 */}
       <DocumentHead />
-      
-      {/* PWA 安裝橫幅 */}
-      <PWAInstallBanner 
-        variant="floating"
-        showDelay={5000}
-        autoHide={false}
-      />
       
       <Routes>
         {/* 登入和註冊頁面使用獨立佈局 */}
@@ -355,6 +351,11 @@ const AppContent = () => {
                 
                 {/* 頁面內容 */}
                 <main className="content-area">
+                  <RouteMonitor 
+                    isMobile={isMobile}
+                    isMobileSidebarOpen={isMobileSidebarOpen}
+                    forceSwipeReinit={forceSwipeReinit}
+                  />
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/settings" element={<UserSettings />} />
@@ -378,15 +379,50 @@ const AppContent = () => {
   );
 };
 
+// 路由監控組件
+const RouteMonitor = ({ 
+  isMobile, 
+  isMobileSidebarOpen, 
+  forceSwipeReinit 
+}: {
+  isMobile: boolean;
+  isMobileSidebarOpen: boolean;
+  forceSwipeReinit: () => void;
+}) => {
+  const location = useLocation();
+
+  // 監控路由變化，確保滑動手勢在頁面導航後正常工作
+  useEffect(() => {
+    // 在路由變化後稍微延遲，確保頁面完全加載，然後重新初始化滑動手勢
+    const timeoutId = setTimeout(() => {
+      // 強制重新初始化滑動手勢
+      if (isMobile && forceSwipeReinit) {
+        forceSwipeReinit();
+      }
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname, isMobile, isMobileSidebarOpen, forceSwipeReinit]);
+
+  return null; // 這個組件不渲染任何內容，只是監控路由
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <CookieConsent />
-        <DevModeIndicator />
-        <AppContent />
+        <PWAProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <AppContent />
+              <Toaster />
+              <Sonner />
+              <CookieConsent />
+              <DevModeIndicator />
+              <PWAPromptTrigger />
+            </AuthProvider>
+          </LanguageProvider>
+        </PWAProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -15,8 +15,8 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <link rel="mask-icon" href="/logo.svg?v=2" color="#dc2626" />
     
-    <!-- PWA - 動態 manifest -->
-    <link rel="manifest" href="/manifest.json" id="manifest-link" />
+    <!-- PWA - 使用 VitePWA 生成的 manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" id="manifest-link" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -84,25 +84,17 @@
           return 'en';
         }
 
-        // 更新 manifest 連結
+        // 簡化的 manifest 處理
         function updateManifestLink() {
-          const language = detectUserLanguage();
+          // 使用靜態 manifest，避免與 Service Worker 衝突
           const manifestLink = document.getElementById('manifest-link');
-          
-          if (manifestLink) {
-            // 更新 manifest URL 包含語言參數和時間戳避免緩存
-            manifestLink.href = `/manifest.json?lang=${language}&t=${Date.now()}`;
+          if (manifestLink && !manifestLink.href.includes('manifest.webmanifest')) {
+            manifestLink.href = '/manifest.webmanifest';
           }
         }
 
-        // 立即更新 manifest
-        updateManifestLink();
-        
-        // 當 DOM 載入後再次確保更新
+        // 當 DOM 載入後確保使用正確的 manifest
         document.addEventListener('DOMContentLoaded', updateManifestLink);
-        
-        // 監聽語言變化事件
-        window.addEventListener('languagechange', updateManifestLink);
         
         // 全局函數供其他腳本使用
         window.updatePWAManifest = updateManifestLink;

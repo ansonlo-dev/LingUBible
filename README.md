@@ -1,8 +1,8 @@
 <div align="center">
 
-![Campus Comment Verse Logo](public/assets/logo-banner.svg)
+![LingUBible Logo](assets/logo-banner.svg)
 
-# 🎓 Campus Comment Verse
+# 📚 LingUBible
 
 ### *讓每一個評價，成為學習路上的明燈*
 
@@ -22,7 +22,7 @@
 
 ---
 
-**🌟 一個專為大學生打造的課程與講師評價平台**
+**🌟 一個專為嶺南大學學生打造的課程與講師評價平台**
 
 *幫助同學們做出明智的學術選擇，分享真實的學習體驗*
 
@@ -123,7 +123,7 @@ graph TB
 ### 🏛️ 項目架構
 
 ```
-📁 campus-comment-verse/
+📁 lingubible/
 ├── 🎨 src/                    # 源代碼
 │   ├── 🧩 components/         # React 組件
 │   ├── 📄 pages/              # 頁面組件
@@ -341,7 +341,7 @@ npm run readme:generate-assets  # 生成 README 資產
 
 ### 💝 特別感謝
 
-**🎓 Campus Comment Verse** 的成功離不開以下支持：
+**📚 LingUBible** 的成功離不開以下支持：
 
 | 類別 | 感謝對象 |
 |:---:|:---|
@@ -372,7 +372,7 @@ npm run readme:generate-assets  # 生成 README 資產
 本項目採用 [MIT License](LICENSE) 開源協議
 
 ```
-Copyright (c) 2024 Campus Comment Verse
+Copyright (c) 2024 LingUBible
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -401,7 +401,7 @@ copies or substantial portions of the Software.
 
 **🔗 相關鏈接**
 
-[🌐 官方網站](https://campus-comment-verse.vercel.app) • 
+[🌐 官方網站](https://lingubible.vercel.app) • 
 [📧 聯繫我們](mailto:contact@ansonlo.dev) • 
 [💬 討論區](https://github.com/ansonlo/campus-comment-verse/discussions) • 
 [🐛 問題回報](https://github.com/ansonlo/campus-comment-verse/issues)

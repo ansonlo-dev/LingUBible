@@ -14,9 +14,9 @@ const __dirname = path.dirname(__filename);
 
 // 項目信息
 const projectInfo = {
-  name: 'Campus Comment Verse',
+  name: 'LingUBible',
   tagline: '讓每一個評價，成為學習路上的明燈',
-  description: '一個專為大學生打造的課程與講師評價平台',
+  description: '一個專為嶺南大學學生打造的課程與講師評價平台',
   version: '1.0.0',
   author: 'ansonlo.dev'
 };
@@ -52,13 +52,13 @@ function generateReadmeAssets() {
         800, 500, 
         colors.light.background, 
         colors.light.text,
-        'Campus Comment Verse - Light Theme'
+                 'LingUBible - Light Theme'
       ),
       darkTheme: generatePlaceholderUrl(
         800, 500, 
         colors.dark.background, 
         colors.dark.text,
-        'Campus Comment Verse - Dark Theme'
+                 'LingUBible - Dark Theme'
       ),
       responsive: generatePlaceholderUrl(
         1200, 300, 
@@ -164,7 +164,7 @@ function generateSvgLogo() {
   <circle cx="85" cy="45" r="2" fill="#3b82f6"/>
   
   <!-- 文字 -->
-  <text x="60" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff">CCV</text>
+  <text x="60" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#ffffff">LingUBible</text>
 </svg>`;
 }
 

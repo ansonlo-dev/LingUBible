@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface SwipeGestureOptions {
   onSwipeRight?: () => void;
@@ -27,9 +27,36 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
   const touchStartY = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
   const elementRef = useRef<HTMLDivElement>(null);
+  const [reinitTrigger, setReinitTrigger] = useState<number>(0);
+
+  // 使用 ref 來存儲最新的選項，避免頻繁重新創建事件處理器
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (!enabled) return;
+    const currentOptions = optionsRef.current;
+    if (!currentOptions.enabled) return;
+
+    // 檢查觸摸是否發生在互動元素上
+    const target = e.target as Element;
+    if (target && (
+      target.closest('[role="dialog"]') ||
+      target.closest('.search-container') ||
+      target.closest('[data-radix-dialog-content]') ||
+      target.closest('input[type="text"]') ||
+      target.closest('textarea') ||
+      target.closest('select') ||
+      target.closest('button') ||
+      target.closest('a[href]') ||
+      target.closest('[cmdk-root]') ||
+      target.closest('.fixed.left-4.right-4') || // 搜索結果下拉框
+      target.closest('.pwa-install-banner') || // PWA 安裝橫幅
+      target.closest('.pwa-install-dialog') || // PWA 安裝對話框
+      target.closest('[data-pwa-install]') // PWA 相關元素
+    )) {
+
+      return;
+    }
 
     const touch = e.touches[0];
     const startX = touch.clientX;
@@ -37,21 +64,45 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const screenWidth = window.innerWidth;
 
     // 檢查滑動區域
-    if (swipeZone === 'right-half' && startX < screenWidth / 2) {
+    if (currentOptions.swipeZone === 'right-half' && startX < screenWidth / 2) {
       return;
     }
     
-    if (swipeZone === 'left-edge' && startX > edgeThreshold) {
+    if (currentOptions.swipeZone === 'left-edge' && startX > (currentOptions.edgeThreshold || 50)) {
       return;
     }
 
     touchStartX.current = startX;
     touchStartY.current = startY;
     touchStartTime.current = Date.now();
-  }, [enabled, swipeZone, edgeThreshold]);
+    
+
+  }, []); // 移除所有依賴，使用 ref 來獲取最新值
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
-    if (!enabled) return;
+    const currentOptions = optionsRef.current;
+    if (!currentOptions.enabled) return;
+
+    // 檢查觸摸結束是否發生在互動元素上
+    const target = e.target as Element;
+    if (target && (
+      target.closest('[role="dialog"]') ||
+      target.closest('.search-container') ||
+      target.closest('[data-radix-dialog-content]') ||
+      target.closest('input[type="text"]') ||
+      target.closest('textarea') ||
+      target.closest('select') ||
+      target.closest('button') ||
+      target.closest('a[href]') ||
+      target.closest('[cmdk-root]') ||
+      target.closest('.fixed.left-4.right-4') || // 搜索結果下拉框
+      target.closest('.pwa-install-banner') || // PWA 安裝橫幅
+      target.closest('.pwa-install-dialog') || // PWA 安裝對話框
+      target.closest('[data-pwa-install]') // PWA 相關元素
+    )) {
+
+      return;
+    }
 
     const touch = e.changedTouches[0];
     const endX = touch.clientX;
@@ -62,34 +113,73 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const distanceY = endY - touchStartY.current;
     const elapsedTime = endTime - touchStartTime.current;
 
+    const threshold = currentOptions.threshold || 100;
+    const restraint = currentOptions.restraint || 100;
+    const allowedTime = currentOptions.allowedTime || 300;
+
     // 檢查時間限制
     if (elapsedTime > allowedTime) return;
 
+
+
     // 檢查是否為有效的水平滑動
     if (Math.abs(distanceX) >= threshold && Math.abs(distanceY) <= restraint) {
-      if (distanceX > 0 && onSwipeRight) {
+      // 阻止默認行為以避免頁面滾動等干擾
+      try {
+        e.preventDefault();
+      } catch (err) {
+        // 忽略錯誤，可能是被動監聽器
+      }
+
+      if (distanceX > 0 && currentOptions.onSwipeRight) {
         // 向右滑動
-        onSwipeRight();
-      } else if (distanceX < 0 && onSwipeLeft) {
+        currentOptions.onSwipeRight();
+      } else if (distanceX < 0 && currentOptions.onSwipeLeft) {
         // 向左滑動
-        onSwipeLeft();
+        currentOptions.onSwipeLeft();
       }
     }
-  }, [enabled, threshold, restraint, allowedTime, onSwipeRight, onSwipeLeft]);
+  }, []); // 移除所有依賴，使用 ref 來獲取最新值
+
+  // 強制重新初始化的函數
+  const forceReinit = useCallback(() => {
+    setReinitTrigger(prev => prev + 1);
+  }, [reinitTrigger]);
 
   useEffect(() => {
     const element = elementRef.current || document;
+    const currentCount = reinitTrigger;
 
-    if (enabled) {
-      element.addEventListener('touchstart', handleTouchStart, { passive: true });
-      element.addEventListener('touchend', handleTouchEnd, { passive: true });
-    }
+    // 添加延遲以確保在頁面導航後正確綁定
+    const bindEvents = () => {
+      // 總是添加事件監聽器，在處理器內部檢查 enabled 狀態
+      // 使用 passive: false 以便在需要時可以調用 preventDefault
+      element.addEventListener('touchstart', handleTouchStart, { passive: false });
+      element.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-    return () => {
+
+    };
+
+    // 立即綁定
+    bindEvents();
+
+    // 也在下一個事件循環中再次綁定，以防頁面導航時的時機問題
+    const timeoutId = setTimeout(() => {
+      // 先移除可能存在的監聽器，避免重複綁定
       element.removeEventListener('touchstart', handleTouchStart);
       element.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [enabled, handleTouchStart, handleTouchEnd]);
+      // 重新綁定
+      bindEvents();
 
-  return elementRef;
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchend', handleTouchEnd);
+
+    };
+  }, [handleTouchStart, handleTouchEnd, reinitTrigger]); // 添加 reinitTrigger 作為依賴
+
+  return { ref: elementRef, forceReinit };
 } 
