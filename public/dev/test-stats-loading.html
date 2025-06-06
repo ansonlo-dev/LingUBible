@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計卡片載入效果測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.success:hover {
+            background: #1e7e34;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .stat-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #212529;
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-change {
+            font-size: 14px;
+            color: #28a745;
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #007bff;
+            font-size: 24px;
+        }
+        .loading-dots {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #007bff;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { animation-delay: 0s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1);
+            }
+        }
+        
+        .pulsing {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #007bff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .comparison-section {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .comparison-section.old {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .comparison-section.new {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .old .section-title {
+            color: #dc3545;
+        }
+        
+        .new .section-title {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 統計卡片載入效果測試</h1>
+        <p>這個頁面展示了改善後的統計卡片載入體驗，解決了「載入中...」文字顯示的問題。</p>
+        
+        <div>
+            <button class="button success" onclick="openMainApp()">🏠 查看主應用效果</button>
+            <button class="button" onclick="window.location.reload()">🔄 重新載入頁面</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>🆚 載入體驗對比</h3>
+        <div class="comparison">
+            <div class="comparison-section old">
+                <div class="section-title">❌ 修復前（問題）</div>
+                <div class="stat-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="stat-title">註冊學生</div>
+                            <div class="stat-value" id="old-value">載入中...</div>
+                            <div class="stat-change" id="old-change" style="display: none;">7 已驗證</div>
+                        </div>
+                        <div class="stat-icon">📈</div>
+                    </div>
+                </div>
+                <p style="margin-top: 10px; font-size: 12px; color: #dc3545;">
+                    ❌ 顯示文字「載入中...」<br>
+                    ❌ 與其他數字卡片不一致<br>
+                    ❌ 突然的內容變化
+                </p>
+            </div>
+            
+            <div class="comparison-section new">
+                <div class="section-title">✅ 修復後（改善）</div>
+                <div class="stat-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="stat-title">註冊學生</div>
+                            <div style="position: relative;">
+                                <div class="stat-value" id="new-value">9</div>
+                                <div id="loading-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center;">
+                                    <div class="loading-dots">
+                                        <div class="loading-dot"></div>
+                                        <div class="loading-dot"></div>
+                                        <div class="loading-dot"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-change" id="new-change">7 已驗證</div>
+                            <div id="loading-text" style="display: none; font-size: 12px; color: #6c757d; margin-top: 4px;">
+                                <div class="loading-dots" style="display: inline-flex; margin-right: 8px;">
+                                    <div class="loading-dot" style="width: 4px; height: 4px;"></div>
+                                    <div class="loading-dot" style="width: 4px; height: 4px;"></div>
+                                    <div class="loading-dot" style="width: 4px; height: 4px;"></div>
+                                </div>
+                                Updating...
+                            </div>
+                        </div>
+                        <div class="stat-icon" style="position: relative;">
+                            📈
+                            <div id="icon-spinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 10px; font-size: 12px; color: #28a745;">
+                    ✅ 顯示預設數值<br>
+                    ✅ 視覺一致性<br>
+                    ✅ 平滑的載入動畫
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>🎯 實際效果演示</h3>
+        <div class="stats-grid" id="demo-stats">
+            <!-- 統計卡片將在這裡生成 -->
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>📋 改善要點</h3>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff;">
+            <h4 style="margin-top: 0; color: #007bff;">🎨 視覺改善</h4>
+            <ul style="margin-bottom: 0;">
+                <li><strong>預設值顯示</strong>：使用合理的預設數值而非「載入中...」文字</li>
+                <li><strong>載入動畫</strong>：使用點狀動畫和微調透明度</li>
+                <li><strong>平滑過渡</strong>：避免突然的內容變化</li>
+                <li><strong>視覺一致性</strong>：所有卡片都顯示數字格式</li>
+            </ul>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745; margin-top: 15px;">
+            <h4 style="margin-top: 0; color: #28a745;">⚡ 性能改善</h4>
+            <ul style="margin-bottom: 0;">
+                <li><strong>延遲載入</strong>：避免阻塞頁面初始渲染</li>
+                <li><strong>智能緩存</strong>：減少重複 API 請求</li>
+                <li><strong>錯誤處理</strong>：載入失敗時保持預設值</li>
+                <li><strong>載入狀態管理</strong>：避免不必要的載入指示器</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let isLoading = false;
+        let demoStats = [
+            { title: '總課程', value: 1247, change: '+12% 本月', icon: '📚' },
+            { title: '講師', value: 342, change: '+5% 本月', icon: '👨‍🏫' },
+            { title: '評價', value: 8943, change: '+23% 本月', icon: '⭐' },
+            { title: '註冊學生', value: 9, change: '7 已驗證', icon: '📈' }
+        ];
+
+        function createStatCard(stat, index, loading = false) {
+            const loadingClass = loading ? 'pulsing' : '';
+            const valueOpacity = loading ? 'opacity: 0.3;' : '';
+            const loadingIndicator = loading ? `
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center;">
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            ` : '';
+            
+            const loadingText = loading ? `
+                <div style="display: flex; align-items: center; margin-top: 4px; font-size: 12px; color: #6c757d;">
+                    <div class="loading-dots" style="margin-right: 8px;">
+                        <div class="loading-dot" style="width: 4px; height: 4px;"></div>
+                        <div class="loading-dot" style="width: 4px; height: 4px;"></div>
+                        <div class="loading-dot" style="width: 4px; height: 4px;"></div>
+                    </div>
+                    Updating...
+                </div>
+            ` : '';
+
+            return `
+                <div class="stat-card fade-in" style="animation-delay: ${index * 0.1}s;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="stat-title">${stat.title}</div>
+                            <div style="position: relative;">
+                                <div class="stat-value ${loadingClass}" style="${valueOpacity}">
+                                    ${stat.value.toLocaleString()}
+                                </div>
+                                ${loadingIndicator}
+                            </div>
+                            ${!loading ? `<div class="stat-change">${stat.change}</div>` : ''}
+                            ${loadingText}
+                        </div>
+                        <div class="stat-icon" style="position: relative; ${loading ? 'opacity: 0.5;' : ''}">
+                            ${stat.icon}
+                            ${loading ? '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><div class="spinner"></div></div>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStats(loading = false) {
+            const container = document.getElementById('demo-stats');
+            container.innerHTML = demoStats.map((stat, index) => 
+                createStatCard(stat, index, loading)
+            ).join('');
+        }
+
+        function openMainApp() {
+            window.open('/', '_blank');
+        }
+
+        // 演示對比區域的載入效果
+        setInterval(() => {
+            const oldValue = document.getElementById('old-value');
+            const oldChange = document.getElementById('old-change');
+            const newValue = document.getElementById('new-value');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+            const iconSpinner = document.getElementById('icon-spinner');
+            
+            if (oldValue.textContent === '載入中...') {
+                // 模擬載入完成
+                oldValue.textContent = '9';
+                oldChange.style.display = 'block';
+                
+                newValue.style.opacity = '1';
+                loadingOverlay.style.display = 'none';
+                loadingText.style.display = 'none';
+                iconSpinner.style.display = 'none';
+            } else {
+                // 模擬開始載入
+                oldValue.textContent = '載入中...';
+                oldChange.style.display = 'none';
+                
+                newValue.style.opacity = '0.3';
+                loadingOverlay.style.display = 'flex';
+                loadingText.style.display = 'block';
+                iconSpinner.style.display = 'block';
+            }
+        }, 3000);
+    </script>
+</body>
+</html> 

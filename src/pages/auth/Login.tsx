@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,10 +90,10 @@ export default function Login() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
-      <div className="w-full max-w-md">
+    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+      <div className="w-full max-w-md flex flex-col max-h-full">
         {/* Logo and Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 flex-shrink-0">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
             <BookOpen className="h-8 w-8" />
             LingUBible
@@ -101,15 +101,12 @@ export default function Login() {
           <p className="text-muted-foreground mt-2">{t('auth.welcomeBack')}</p>
         </div>
 
-        <Card className="glass-card">
-          <CardHeader className="text-center">
+        <Card className="glass-card flex flex-col flex-1 min-h-0">
+          <CardHeader className="text-center flex-shrink-0">
             <CardTitle className="text-2xl">{t('auth.signIn')}</CardTitle>
-            <CardDescription>
-              {t('auth.enterAccountInfo')}
-            </CardDescription>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">{t('auth.email')}</Label>
@@ -197,7 +194,7 @@ export default function Login() {
         </Card>
 
         {/* 安全連接頁腳 */}
-        <div className="mt-8 text-center">
+        <div className="mt-4 text-center flex-shrink-0">
           <div className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300">
             <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
             <span>{t('auth.secureConnection')}</span>

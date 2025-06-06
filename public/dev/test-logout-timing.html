@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登出時序測試 - LingUBible</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .counter {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 3px solid #007bff;
+        }
+        .counter.correct {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        .counter.incorrect {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .timeline {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .timeline-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .test-step {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⏱️ 登出時序測試</h1>
+        <p>這個頁面專門測試用戶登出時統計計數器的即時更新效果。</p>
+        
+        <div class="status warning">
+            <strong>測試目標：</strong><br>
+            驗證用戶登出後，在線用戶計數器是否立即減少，而不需要等待下次定期更新。
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📊 在線用戶計數器</h3>
+        <div class="counter" id="counter">0</div>
+        <div style="text-align: center;">
+            <button class="button" onclick="refreshCounter()">🔄 手動刷新</button>
+            <span id="last-update">最後更新: 未知</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🧪 測試控制</h3>
+        <div class="test-step">
+            <strong>步驟 1:</strong> 模擬用戶登入
+            <br><button class="button" onclick="simulateLogin()">👤 模擬登入</button>
+            <span id="login-status">等待操作</span>
+        </div>
+        
+        <div class="test-step">
+            <strong>步驟 2:</strong> 模擬用戶登出並觀察計數器變化
+            <br><button class="button danger" onclick="simulateLogout()">👋 模擬登出</button>
+            <span id="logout-status">等待操作</span>
+        </div>
+        
+        <div class="test-step">
+            <strong>步驟 3:</strong> 自動化測試
+            <br><button class="button" onclick="runAutomatedTest()">🤖 執行自動化測試</button>
+            <span id="auto-test-status">等待操作</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📝 時序記錄</h3>
+        <div class="timeline" id="timeline">
+            <!-- 時序記錄將在這裡顯示 -->
+        </div>
+        <button class="button" onclick="clearTimeline()">清除記錄</button>
+    </div>
+
+    <div class="card">
+        <h3>📈 測試結果分析</h3>
+        <div id="test-results">
+            <p>執行測試後，這裡會顯示詳細的時序分析結果。</p>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = null;
+        let testStartTime = null;
+        let expectedCount = 0;
+
+        // 模擬統計服務
+        class TimingTestService {
+            constructor() {
+                this.sessions = new Map();
+                this.stats = { onlineUsers: 0 };
+            }
+
+            async login(userId) {
+                const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                this.sessions.set(sessionId, {
+                    userId,
+                    sessionId,
+                    loginTime: Date.now(),
+                    lastPing: Date.now()
+                });
+                this.updateStats();
+                logEvent(`用戶 ${userId} 登入，會話: ${sessionId.substr(-8)}`);
+                return sessionId;
+            }
+
+            async logout(sessionId) {
+                if (this.sessions.has(sessionId)) {
+                    const session = this.sessions.get(sessionId);
+                    this.sessions.delete(sessionId);
+                    this.updateStats();
+                    logEvent(`用戶 ${session.userId} 登出，會話: ${sessionId.substr(-8)}`);
+                    
+                    // 模擬數據庫延遲
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            logEvent(`數據庫操作完成 - 會話 ${sessionId.substr(-8)} 已刪除`);
+                            resolve();
+                        }, Math.random() * 200 + 100); // 100-300ms 延遲
+                    });
+                } else {
+                    logEvent(`嘗試登出不存在的會話: ${sessionId.substr(-8)}`);
+                }
+            }
+
+            updateStats() {
+                this.stats.onlineUsers = this.sessions.size;
+                logEvent(`統計更新: ${this.stats.onlineUsers} 個在線用戶`);
+            }
+
+            getStats() {
+                return { ...this.stats };
+            }
+        }
+
+        const testService = new TimingTestService();
+
+        function logEvent(message) {
+            const timeline = document.getElementById('timeline');
+            const timestamp = new Date().toLocaleTimeString();
+            const elapsed = testStartTime ? Date.now() - testStartTime : 0;
+            
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = `[${timestamp}] (+${elapsed}ms) ${message}`;
+            timeline.appendChild(item);
+            timeline.scrollTop = timeline.scrollHeight;
+            
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateCounter() {
+            const stats = testService.getStats();
+            const counter = document.getElementById('counter');
+            const lastUpdate = document.getElementById('last-update');
+            
+            counter.textContent = stats.onlineUsers;
+            lastUpdate.textContent = `最後更新: ${new Date().toLocaleTimeString()}`;
+            
+            // 檢查計數器是否正確
+            if (stats.onlineUsers === expectedCount) {
+                counter.className = 'counter correct';
+            } else {
+                counter.className = 'counter incorrect';
+            }
+            
+            logEvent(`UI 更新: 顯示 ${stats.onlineUsers} 個在線用戶`);
+        }
+
+        function refreshCounter() {
+            logEvent('手動刷新計數器');
+            updateCounter();
+        }
+
+        async function simulateLogin() {
+            const loginStatus = document.getElementById('login-status');
+            testStartTime = Date.now();
+            
+            try {
+                logEvent('=== 開始登入測試 ===');
+                currentSessionId = await testService.login('test_user_1');
+                expectedCount = 1;
+                
+                // 模擬事件觸發
+                setTimeout(() => {
+                    logEvent('觸發統計更新事件');
+                    updateCounter();
+                }, 50);
+                
+                loginStatus.textContent = '✅ 登入成功';
+                loginStatus.style.color = '#28a745';
+                
+            } catch (error) {
+                loginStatus.textContent = '❌ 登入失敗';
+                loginStatus.style.color = '#dc3545';
+                logEvent(`登入失敗: ${error.message}`);
+            }
+        }
+
+        async function simulateLogout() {
+            const logoutStatus = document.getElementById('logout-status');
+            
+            if (!currentSessionId) {
+                logoutStatus.textContent = '❌ 沒有活躍會話';
+                logoutStatus.style.color = '#dc3545';
+                return;
+            }
+            
+            try {
+                logEvent('=== 開始登出測試 ===');
+                const logoutStartTime = Date.now();
+                
+                // 模擬修復後的登出流程
+                logEvent('步驟 1: 調用 userLogout()');
+                await testService.logout(currentSessionId);
+                
+                logEvent('步驟 2: 立即觸發統計更新事件');
+                updateCounter();
+                expectedCount = 0;
+                
+                logEvent('步驟 3: 延遲觸發確認更新 (500ms)');
+                setTimeout(() => {
+                    logEvent('延遲更新觸發');
+                    updateCounter();
+                }, 500);
+                
+                const logoutEndTime = Date.now();
+                const totalTime = logoutEndTime - logoutStartTime;
+                
+                logoutStatus.textContent = `✅ 登出成功 (${totalTime}ms)`;
+                logoutStatus.style.color = '#28a745';
+                
+                currentSessionId = null;
+                
+            } catch (error) {
+                logoutStatus.textContent = '❌ 登出失敗';
+                logoutStatus.style.color = '#dc3545';
+                logEvent(`登出失敗: ${error.message}`);
+            }
+        }
+
+        async function runAutomatedTest() {
+            const autoTestStatus = document.getElementById('auto-test-status');
+            const testResults = document.getElementById('test-results');
+            
+            autoTestStatus.textContent = '🔄 執行中...';
+            autoTestStatus.style.color = '#007bff';
+            
+            clearTimeline();
+            testStartTime = Date.now();
+            
+            try {
+                logEvent('=== 自動化測試開始 ===');
+                
+                // 步驟 1: 登入
+                logEvent('自動測試 - 步驟 1: 用戶登入');
+                currentSessionId = await testService.login('auto_test_user');
+                expectedCount = 1;
+                updateCounter();
+                
+                await sleep(1000);
+                
+                // 步驟 2: 記錄登出前狀態
+                const beforeLogout = testService.getStats();
+                logEvent(`登出前狀態: ${beforeLogout.onlineUsers} 個在線用戶`);
+                
+                // 步驟 3: 登出並測量時序
+                logEvent('自動測試 - 步驟 2: 用戶登出');
+                const logoutStart = Date.now();
+                
+                await testService.logout(currentSessionId);
+                updateCounter();
+                expectedCount = 0;
+                
+                const immediateUpdate = Date.now();
+                const immediateStats = testService.getStats();
+                
+                // 步驟 4: 延遲確認
+                setTimeout(() => {
+                    const delayedUpdate = Date.now();
+                    const delayedStats = testService.getStats();
+                    
+                    // 分析結果
+                    const immediateDelay = immediateUpdate - logoutStart;
+                    const totalTestTime = Date.now() - testStartTime;
+                    
+                    const results = `
+                        <h4>📊 測試結果分析</h4>
+                        <p><strong>登出響應時間:</strong> ${immediateDelay}ms</p>
+                        <p><strong>登出前在線用戶:</strong> ${beforeLogout.onlineUsers}</p>
+                        <p><strong>登出後立即統計:</strong> ${immediateStats.onlineUsers}</p>
+                        <p><strong>延遲確認統計:</strong> ${delayedStats.onlineUsers}</p>
+                        <p><strong>總測試時間:</strong> ${totalTestTime}ms</p>
+                        
+                        <h4>✅ 測試評估</h4>
+                        ${immediateStats.onlineUsers === 0 ? 
+                            '<p style="color: #28a745;">✅ 優秀！登出後計數器立即更新</p>' : 
+                            '<p style="color: #dc3545;">❌ 問題！登出後計數器未立即更新</p>'
+                        }
+                        ${immediateDelay < 100 ? 
+                            '<p style="color: #28a745;">✅ 響應時間優秀 (< 100ms)</p>' : 
+                            immediateDelay < 500 ? 
+                                '<p style="color: #ffc107;">⚠️ 響應時間可接受 (< 500ms)</p>' :
+                                '<p style="color: #dc3545;">❌ 響應時間過慢 (> 500ms)</p>'
+                        }
+                    `;
+                    
+                    testResults.innerHTML = results;
+                    
+                    autoTestStatus.textContent = '✅ 測試完成';
+                    autoTestStatus.style.color = '#28a745';
+                    
+                    logEvent('=== 自動化測試完成 ===');
+                    
+                }, 500);
+                
+                currentSessionId = null;
+                
+            } catch (error) {
+                autoTestStatus.textContent = '❌ 測試失敗';
+                autoTestStatus.style.color = '#dc3545';
+                logEvent(`自動化測試失敗: ${error.message}`);
+            }
+        }
+
+        function clearTimeline() {
+            document.getElementById('timeline').innerHTML = '';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 初始化
+        updateCounter();
+        logEvent('登出時序測試頁面已載入');
+    </script>
+</body>
+</html> 

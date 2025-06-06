@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>背景標籤頁 Ping 測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.visible {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.hidden {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry.success {
+            color: #28a745;
+        }
+        .log-entry.error {
+            color: #dc3545;
+        }
+        .log-entry.info {
+            color: #007bff;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 背景標籤頁 Ping 測試</h1>
+        
+        <div class="instructions">
+            <h3>📋 測試步驟：</h3>
+            <ol>
+                <li>點擊「開始測試」按鈕</li>
+                <li>觀察當前標籤頁的 ping 狀態</li>
+                <li><strong>切換到其他標籤頁</strong>（讓此頁面變成背景）</li>
+                <li>等待 1-2 分鐘後回到此頁面</li>
+                <li>檢查日誌是否顯示背景 ping 正常工作</li>
+            </ol>
+        </div>
+
+        <div id="visibilityStatus" class="status visible">
+            📱 標籤頁狀態：前景（可見）
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="pingCount">0</div>
+                <div>總 Ping 次數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="successCount">0</div>
+                <div>成功次數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="errorCount">0</div>
+                <div>失敗次數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="backgroundPings">0</div>
+                <div>背景 Ping 次數</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startTest">開始測試</button>
+            <button id="stopTest" disabled>停止測試</button>
+            <button id="clearLog">清除日誌</button>
+            <button id="manualPing">手動 Ping</button>
+        </div>
+
+        <h3>📊 實時日誌</h3>
+        <div id="logContainer" class="log"></div>
+    </div>
+
+    <script>
+        class BackgroundPingTester {
+            constructor() {
+                this.isRunning = false;
+                this.pingCount = 0;
+                this.successCount = 0;
+                this.errorCount = 0;
+                this.backgroundPings = 0;
+                this.sessionId = `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                this.pingInterval = null;
+                this.worker = null;
+                this.useWorker = false;
+
+                this.initializeElements();
+                this.setupEventListeners();
+                this.initializeWorker();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    visibilityStatus: document.getElementById('visibilityStatus'),
+                    pingCount: document.getElementById('pingCount'),
+                    successCount: document.getElementById('successCount'),
+                    errorCount: document.getElementById('errorCount'),
+                    backgroundPings: document.getElementById('backgroundPings'),
+                    startTest: document.getElementById('startTest'),
+                    stopTest: document.getElementById('stopTest'),
+                    clearLog: document.getElementById('clearLog'),
+                    manualPing: document.getElementById('manualPing'),
+                    logContainer: document.getElementById('logContainer')
+                };
+            }
+
+            setupEventListeners() {
+                // 按鈕事件
+                this.elements.startTest.addEventListener('click', () => this.startTest());
+                this.elements.stopTest.addEventListener('click', () => this.stopTest());
+                this.elements.clearLog.addEventListener('click', () => this.clearLog());
+                this.elements.manualPing.addEventListener('click', () => this.manualPing());
+
+                // 頁面可見性變化
+                document.addEventListener('visibilitychange', () => {
+                    this.handleVisibilityChange();
+                });
+
+                // 頁面卸載
+                window.addEventListener('beforeunload', () => {
+                    this.cleanup();
+                });
+            }
+
+            initializeWorker() {
+                if (typeof Worker !== 'undefined') {
+                    try {
+                        this.worker = new Worker('/ping-worker.js');
+                        this.useWorker = true;
+
+                        this.worker.onmessage = (e) => {
+                            const { type, data } = e.data;
+                            
+                            switch (type) {
+                                case 'PING_SUCCESS':
+                                    this.handlePingSuccess(data, true);
+                                    break;
+                                case 'PING_ERROR':
+                                    this.handlePingError(data, true);
+                                    break;
+                                case 'WORKER_STATUS':
+                                    this.log(`Worker 狀態: ${data.isActive ? '活躍' : '非活躍'}`, 'info');
+                                    break;
+                            }
+                        };
+
+                        this.worker.onerror = (error) => {
+                            this.log(`Worker 錯誤: ${error.message}`, 'error');
+                            this.useWorker = false;
+                        };
+
+                        this.log('Web Worker 初始化成功', 'success');
+                    } catch (error) {
+                        this.log(`Web Worker 初始化失敗: ${error.message}`, 'error');
+                        this.useWorker = false;
+                    }
+                } else {
+                    this.log('瀏覽器不支援 Web Worker', 'error');
+                    this.useWorker = false;
+                }
+            }
+
+            startTest() {
+                if (this.isRunning) return;
+
+                this.isRunning = true;
+                this.elements.startTest.disabled = true;
+                this.elements.stopTest.disabled = false;
+
+                this.log(`開始測試 - 會話 ID: ${this.sessionId}`, 'info');
+                this.startPing();
+            }
+
+            stopTest() {
+                if (!this.isRunning) return;
+
+                this.isRunning = false;
+                this.elements.startTest.disabled = false;
+                this.elements.stopTest.disabled = true;
+
+                this.stopPing();
+                this.log('測試已停止', 'info');
+            }
+
+            startPing() {
+                if (document.hidden && this.useWorker) {
+                    // 使用 Worker ping
+                    this.worker.postMessage({
+                        type: 'START_PING',
+                        data: {
+                            sessionId: this.sessionId,
+                            interval: 30000, // 30 秒測試間隔
+                            endpoint: 'https://fra.cloud.appwrite.io/v1',
+                            projectId: 'lingubible'
+                        }
+                    });
+                    this.log('切換到 Web Worker ping', 'info');
+                } else {
+                    // 使用主線程 ping
+                    const interval = document.hidden ? 30000 : 60000; // 背景 30 秒，前景 60 秒
+                    this.pingInterval = setInterval(() => {
+                        this.sendPing();
+                    }, interval);
+                    this.log(`主線程 ping 已啟動，間隔: ${interval / 1000} 秒`, 'info');
+                }
+            }
+
+            stopPing() {
+                // 停止主線程 ping
+                if (this.pingInterval) {
+                    clearInterval(this.pingInterval);
+                    this.pingInterval = null;
+                }
+
+                // 停止 Worker ping
+                if (this.worker && this.useWorker) {
+                    this.worker.postMessage({ type: 'STOP_PING' });
+                }
+            }
+
+            async sendPing() {
+                this.pingCount++;
+                this.updateStats();
+
+                try {
+                    const response = await fetch('https://fra.cloud.appwrite.io/v1/databases/user-stats-db/collections/user-sessions/documents', {
+                        method: 'GET',
+                        headers: {
+                            'X-Appwrite-Project': 'lingubible',
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (response.ok) {
+                        this.handlePingSuccess({ sessionId: this.sessionId }, false);
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    this.handlePingError({ sessionId: this.sessionId, error: error.message }, false);
+                }
+            }
+
+            handlePingSuccess(data, isWorker) {
+                this.successCount++;
+                if (isWorker) {
+                    this.backgroundPings++;
+                }
+                this.updateStats();
+
+                const source = isWorker ? 'Worker' : '主線程';
+                const visibility = document.hidden ? '背景' : '前景';
+                this.log(`${source} ping 成功 [${visibility}] - ${new Date().toLocaleTimeString()}`, 'success');
+            }
+
+            handlePingError(data, isWorker) {
+                this.errorCount++;
+                this.updateStats();
+
+                const source = isWorker ? 'Worker' : '主線程';
+                const visibility = document.hidden ? '背景' : '前景';
+                this.log(`${source} ping 失敗 [${visibility}]: ${data.error} - ${new Date().toLocaleTimeString()}`, 'error');
+            }
+
+            handleVisibilityChange() {
+                const isHidden = document.hidden;
+                
+                // 更新狀態顯示
+                this.elements.visibilityStatus.textContent = isHidden ? 
+                    '🌙 標籤頁狀態：背景（隱藏）' : 
+                    '📱 標籤頁狀態：前景（可見）';
+                this.elements.visibilityStatus.className = isHidden ? 'status hidden' : 'status visible';
+
+                this.log(`標籤頁變為${isHidden ? '背景' : '前景'}`, 'info');
+
+                // 如果測試正在運行，重新啟動 ping
+                if (this.isRunning) {
+                    this.stopPing();
+                    setTimeout(() => {
+                        this.startPing();
+                    }, 1000);
+                }
+            }
+
+            manualPing() {
+                this.log('手動觸發 ping', 'info');
+                this.sendPing();
+            }
+
+            updateStats() {
+                this.elements.pingCount.textContent = this.pingCount;
+                this.elements.successCount.textContent = this.successCount;
+                this.elements.errorCount.textContent = this.errorCount;
+                this.elements.backgroundPings.textContent = this.backgroundPings;
+            }
+
+            log(message, type = 'info') {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                
+                this.elements.logContainer.appendChild(entry);
+                this.elements.logContainer.scrollTop = this.elements.logContainer.scrollHeight;
+
+                // 限制日誌條目數量
+                const entries = this.elements.logContainer.children;
+                if (entries.length > 100) {
+                    this.elements.logContainer.removeChild(entries[0]);
+                }
+            }
+
+            clearLog() {
+                this.elements.logContainer.innerHTML = '';
+                this.log('日誌已清除', 'info');
+            }
+
+            cleanup() {
+                this.stopPing();
+                if (this.worker) {
+                    this.worker.terminate();
+                }
+            }
+        }
+
+        // 初始化測試器
+        const tester = new BackgroundPingTester();
+    </script>
+</body>
+</html> 

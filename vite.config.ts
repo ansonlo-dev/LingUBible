@@ -23,7 +23,11 @@ export default defineConfig(({ command, mode }) => ({
           '**/*.{js,css,html,woff2}',
           ...(mode === 'production' ? ['*.{ico,png,svg}', 'assets/**/*.{png,svg,jpg,jpeg,gif,webp}'] : [])
         ],
-                // 運行時緩存配置
+        // 在開發模式下簡化 globPatterns 以避免警告
+        ...(mode === 'development' && {
+          globPatterns: ['**/*.{js,css,html}']
+        }),
+        // 運行時緩存配置
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -58,15 +62,38 @@ export default defineConfig(({ command, mode }) => ({
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
+          },
+          // 忽略 Appwrite API 請求，避免緩存認證相關請求
+          {
+            urlPattern: /^https:\/\/fra\.cloud\.appwrite\.io\/v1\/.*/i,
+            handler: 'NetworkOnly' as const
+          },
+          // 忽略外部 API 請求
+          {
+            urlPattern: /^https:\/\/api\.ipify\.org\/.*/i,
+            handler: 'NetworkOnly' as const
+          },
+          {
+            urlPattern: /^https:\/\/api\.openstatus\.dev\/.*/i,
+            handler: 'NetworkOnly' as const
           }
         ],
-        // 忽略不需要的文件
+        // 忽略不需要的文件和開發環境文件
         globIgnores: [
           '**/dev/**',
           '**/icons/**',
           'pwa-test.html',
           'manifest.js',
-          'manifest.json'
+          'manifest.json',
+          // 開發環境特定文件
+          '**/@vite/**',
+          '**/src/**',
+          '**/node_modules/**',
+          '**/?*',
+          '**/*.map',
+          // 忽略 service worker 相關文件
+          'sw.js',
+          'workbox-*.js'
         ]
       },
       // includeAssets 已通過 globPatterns 處理，避免重複
@@ -112,7 +139,11 @@ export default defineConfig(({ command, mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true
+        enabled: true,
+        // 在開發模式下減少日誌輸出
+        suppressWarnings: true,
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^(?!\/@vite|\/@react-refresh|\/src|\/node_modules).*/]
       },
       // 不阻止瀏覽器原生安裝提示
       injectRegister: 'auto'

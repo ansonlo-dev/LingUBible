@@ -9,14 +9,18 @@ import { FloatingCircles } from "@/components/features/animations/FloatingCircle
 import { BookOpen, Users, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
+import { HeavenTransition } from '@/components/ui/heaven-transition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
+  const [showHeavenTransition, setShowHeavenTransition] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | undefined>();
   const { stats: registeredUsersStats, loading: registeredUsersLoading } = useRegisteredUsers();
 
   useEffect(() => {
@@ -100,6 +104,32 @@ const Index = () => {
   const actions = t('hero.actions');
   const actionTexts = Array.isArray(actions) ? actions : [actions];
 
+  // Handle heaven transition to register page
+  const handleGetStartedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Get Started button clicked!'); // 調試信息
+    
+    // 獲取按鈕位置
+    const button = e.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    console.log('Button position:', { x: centerX, y: centerY }); // 調試信息
+    
+    setButtonPosition({ x: centerX, y: centerY });
+    setShowHeavenTransition(true);
+  };
+
+  const handleTransitionComplete = () => {
+    console.log('Transition complete, navigating to register');
+    setShowHeavenTransition(false);
+    setButtonPosition(undefined);
+    navigate('/register');
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       <FloatingCircles zIndex={0} />
@@ -107,7 +137,7 @@ const Index = () => {
       {!isMobile && <FloatingGlare count={3} className="fixed inset-0 top-16 z-0" />}
       <div className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Hero Section */}
-        <div className="text-center py-12 animate-fade-in relative overflow-visible">
+        <div className="text-center py-12 animate-fade-in relative overflow-visible z-30">
           {/* 在桌面版才顯示額外的 FloatingCircles */}
           {!isMobile && <FloatingCircles zIndex={0} className="absolute inset-0 w-full h-full" />}
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
@@ -115,11 +145,20 @@ const Index = () => {
             <span className="red-neon-glow-text">LingUBible</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-            <span className="inline md:block">
-              {t('hero.subtitle').split('. ')[0]}
+            {/* 桌面版：一行顯示 */}
+            <span className="hidden md:block">
+              {t('hero.subtitleDesktop')}
             </span>
-            <span className="inline md:block md:ml-0 ml-1">
-              {t('hero.subtitle').split('. ')[1]}
+            {/* 手機版：英文兩行，中文一行 */}
+            <span className="block md:hidden">
+              {language === 'en' ? (
+                <>
+                  <span className="block">{t('hero.subtitleMobileLine1')}</span>
+                  <span className="block">{t('hero.subtitleMobileLine2')}</span>
+                </>
+              ) : (
+                <span className="block">{t('hero.subtitleMobileLine1')}</span>
+              )}
             </span>
           </p>
           
@@ -132,11 +171,15 @@ const Index = () => {
             />
           </div>
           
-          <WingedButton size="lg" className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8" asChild>
-            <Link to="/register">
+          <div className="relative z-50">
+            <WingedButton 
+              size="lg" 
+              className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8"
+              onClick={handleGetStartedClick}
+            >
               {t('hero.getStarted')}
-            </Link>
-          </WingedButton>
+            </WingedButton>
+          </div>
         </div>
 
         {/* Stats */}
@@ -147,6 +190,7 @@ const Index = () => {
             change={`+12% ${t('stats.thisMonth')}`}
             icon={BookOpen}
             trend="up"
+            animationDelay={0}
           />
           <StatsCard
             title={t('stats.lecturers')}
@@ -154,6 +198,7 @@ const Index = () => {
             change={`+5% ${t('stats.thisMonth')}`}
             icon={Users}
             trend="up"
+            animationDelay={200}
           />
           <StatsCard
             title={t('stats.reviews')}
@@ -161,13 +206,16 @@ const Index = () => {
             change={`+23% ${t('stats.thisMonth')}`}
             icon={Star}
             trend="up"
+            animationDelay={400}
           />
           <StatsCard
             title={t('stats.registeredStudents')}
-            value={registeredUsersLoading ? "載入中..." : registeredUsersStats.totalRegisteredUsers.toLocaleString()}
-            change={registeredUsersLoading ? "" : `${registeredUsersStats.verifiedUsers} ${t('stats.verified')}`}
+            value={registeredUsersStats.totalRegisteredUsers.toLocaleString()}
+            change={`+${registeredUsersStats.newUsersLast30Days} ${t('stats.newLast30Days')}`}
             icon={TrendingUp}
             trend="up"
+            animationDelay={600}
+            isLoading={registeredUsersLoading}
           />
         </div>
 
@@ -185,8 +233,7 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="courses" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t('tabs.popularCourses')}</h2>
+            <div className="flex justify-end">
               <Button variant="outline">{t('button.viewAll')}</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -213,6 +260,14 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Heaven Transition Effect */}
+      <HeavenTransition 
+        isActive={showHeavenTransition}
+        onComplete={handleTransitionComplete}
+        duration={1200}
+        buttonPosition={buttonPosition}
+      />
     </div>
   );
 };

@@ -1,0 +1,16 @@
+{
+  "name": "get-user-stats",
+  "version": "1.0.0",
+  "description": "Appwrite function to get user statistics using server SDK",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  },
+  "keywords": ["appwrite", "function", "user-stats"],
+  "author": "LingUBible",
+  "license": "MIT"
+} 

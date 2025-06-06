@@ -82,7 +82,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
           {!shouldShowText && (
             <Link 
               to="/" 
-              className="flex justify-center text-primary hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={() => onMobileToggle && onMobileToggle()}
             >
               <BookOpen className="h-6 w-6" />

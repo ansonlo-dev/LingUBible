@@ -154,8 +154,8 @@ export default function UserSettings() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-muted-foreground">{t('settings.loginRequired')}</p>

@@ -5,11 +5,11 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, CheckCircle, Lock, AlertTriangle, Info, User, Lightbulb, Shield, Mail } from 'lucide-react';
+import { BookOpen, CheckCircle, Lock, AlertTriangle, User, Lightbulb } from 'lucide-react';
 import { StudentVerificationInput } from "@/components/auth/StudentVerificationInput";
 import { PasswordStrengthChecker } from "@/components/auth/PasswordStrengthChecker";
 import { isValidEmailForRegistration, getEmailType, DEV_MODE } from '@/config/devMode';
@@ -166,10 +166,10 @@ export default function Register() {
   }, [username]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
-      <div className="w-full max-w-6xl">
+    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+      <div className="w-full max-w-md flex flex-col max-h-full">
         {/* Logo and Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 flex-shrink-0">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
             <BookOpen className="h-8 w-8" />
             LingUBible
@@ -177,25 +177,17 @@ export default function Register() {
           <p className="text-muted-foreground mt-2">{t('auth.createStudentAccount')}</p>
         </div>
 
-        <Card className="glass-card">
-          <CardHeader className="text-center">
+        <Card className="glass-card flex flex-col flex-1 min-h-0">
+          <CardHeader className="text-center flex-shrink-0">
             <CardTitle className="text-2xl">{t('auth.signUp')}</CardTitle>
-            <CardDescription>
-              {t('auth.fillInfoToCreate')}
-            </CardDescription>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 三列佈局 */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* 左列：基本資訊和驗證 */}
+              {/* 簡化的單列佈局 */}
+              <div className="space-y-6">
+                {/* 郵箱驗證區域 */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    {t('auth.studentInfoVerification')}
-                  </h3>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="email">{t('auth.email')}</Label>
                     <Input
@@ -235,13 +227,8 @@ export default function Register() {
                   )}
                 </div>
 
-                {/* 中列：用戶名設定 */}
+                {/* 用戶名區域 */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {t('auth.usernameSetup')}
-                  </h3>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="username">{t('auth.username')}</Label>
                     <Input
@@ -295,28 +282,11 @@ export default function Register() {
                     )}
                   </div>
                   
-                  {/* 用戶名規則說明 */}
-                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-                    <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <AlertDescription className="text-blue-600 dark:text-blue-400 text-xs">
-                      <div className="space-y-1">
-                        <div>{t('auth.usernameRules')}</div>
-                        <div>{t('auth.usernameLength')}</div>
-                        <div>{t('auth.usernameSupported')}</div>
-                        <div>{t('auth.usernameDisplay')}</div>
-                        <div>{t('auth.usernameModifiable')}</div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
+
                 </div>
 
-                {/* 右列：密碼設定 */}
+                {/* 密碼區域 */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    {t('auth.passwordSetup')}
-                  </h3>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="password">{t('auth.password')}</Label>
                     <PasswordInput
@@ -363,13 +333,6 @@ export default function Register() {
                     />
                   )}
 
-                  {/* 學校帳戶密碼提醒 */}
-                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-                    <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <AlertDescription className="text-blue-600 dark:text-blue-400">
-                      {t('auth.schoolPasswordReminder')}
-                    </AlertDescription>
-                  </Alert>
                 </div>
               </div>
 

@@ -74,16 +74,31 @@ export function useUserStats() {
     // 初始載入
     updateStats();
 
-    // 設置定期更新
+    // 設置定期更新 - 縮短間隔以更快檢測變化
     const interval = setInterval(() => {
       console.log('Hook: 定期更新統計數據');
       updateStats();
-    }, 60 * 1000); // 每1分鐘更新一次（Pro 方案優化）
+    }, 60 * 1000); // 改為每1分鐘更新一次，更快檢測變化
+
+    // 監聽統計更新事件
+    const handleStatsUpdate = () => {
+      console.log('Hook: 收到統計更新事件，立即刷新');
+      updateStats();
+      
+      // 額外的延遲更新，確保數據一致性
+      setTimeout(() => {
+        console.log('Hook: 延遲確認更新');
+        updateStats();
+      }, 1000);
+    };
+    
+    window.addEventListener('userStatsUpdated', handleStatsUpdate);
 
     // 清理函數
     return () => {
       clearInterval(interval);
-      console.log('Hook: 清理定期更新');
+      window.removeEventListener('userStatsUpdated', handleStatsUpdate);
+      console.log('Hook: 清理定期更新和事件監聽');
     };
   }, [updateStats]);
 

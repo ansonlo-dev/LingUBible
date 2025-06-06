@@ -37,6 +37,7 @@ const getUserDisplayName = (user: AuthUser | null, t: (key: string) => string): 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userSessionId, setUserSessionId] = useState<string | null>(null); // 存儲當前用戶的 sessionId
     const { t } = useLanguage(); // 將 useLanguage 移到組件頂層
 
     useEffect(() => {
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     localStorage.removeItem('rememberMe');
                     localStorage.removeItem('savedEmail');
                     setUser(null);
+                    setUserSessionId(null);
                     return;
                 }
                 
@@ -65,9 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(currentUser);
             } else {
                 setUser(null);
+                setUserSessionId(null);
             }
         } catch (error) {
             setUser(null);
+            setUserSessionId(null);
         } finally {
             setLoading(false);
         }
@@ -78,56 +82,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await authService.login(email, password, rememberMe);
             await checkUser();
             
-            // 記錄用戶登入到統計系統
-            const currentUser = await authService.getCurrentUser();
+            // 獲取當前用戶（已經在 checkUser 中獲取過了）
+            const currentUser = user || await authService.getCurrentUser();
+            
+            // 異步處理統計記錄和頭像獲取，不阻塞登入流程
             if (currentUser?.$id) {
-                try {
-                    const userStatsService = AppwriteUserStatsService.getInstance();
-                    await userStatsService.userLogin(currentUser.$id);
-                    console.log('用戶統計: 登入記錄成功');
-                } catch (error) {
+                // 統計記錄 - 異步執行，不等待結果
+                const userStatsService = AppwriteUserStatsService.getInstance();
+                userStatsService.userLogin(currentUser.$id).then((sessionId) => {
+                    console.log('用戶統計: 登入記錄成功，會話 ID:', sessionId);
+                    // 存儲 sessionId
+                    setUserSessionId(sessionId);
+                    // 觸發統計數據更新事件，讓 UI 立即刷新
+                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
+                }).catch((error) => {
                     console.error('用戶統計: 登入記錄失敗', error);
-                }
+                });
+                
+                // 頭像獲取 - 異步執行，不等待結果
+                avatarService.getUserAvatar(currentUser.$id).then((customAvatar) => {
+                    // 頭像獲取成功，但不需要立即顯示
+                    console.log('用戶頭像已預載');
+                }).catch((error) => {
+                    console.error('預載用戶頭像失敗:', error);
+                });
             }
             
-            // 顯示登入成功 toast
+            // 立即顯示簡化的登入成功 toast
             const username = getUserDisplayName(currentUser, t);
-            
-            // 獲取用戶頭像
-            let userAvatar = '';
-            if (currentUser?.$id) {
-                try {
-                    // 嘗試獲取自定義頭像
-                    const customAvatar = await avatarService.getUserAvatar(currentUser.$id);
-                    
-                    // 獲取頭像內容
-                    const avatarContent = getAvatarContent(
-                        {
-                            showPersonalAvatar: true,
-                            showAnonymousAvatar: false,
-                            size: 'md',
-                            context: 'profile'
-                        },
-                        {
-                            userId: currentUser.$id,
-                            name: currentUser.name,
-                            email: currentUser.email,
-                            customAvatar: customAvatar || undefined
-                        }
-                    );
-                    
-                    if (avatarContent.type === 'emoji') {
-                        userAvatar = avatarContent.content + ' ';
-                    }
-                } catch (error) {
-                    console.error('獲取用戶頭像失敗:', error);
-                }
-            }
             
             toast({
                 variant: "success",
                 title: `🎉 ${t('toast.loginSuccess')}`,
-                description: t('toast.welcomeBack', { username: `${userAvatar}${username}` }),
+                description: t('toast.welcomeBack', { username }),
                 duration: 4000,
             });
         } catch (error) {
@@ -140,56 +127,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await authService.createAccount(email, password, name);
             await checkUser();
             
-            // 記錄用戶註冊到統計系統
-            const currentUser = await authService.getCurrentUser();
+            // 獲取當前用戶
+            const currentUser = user || await authService.getCurrentUser();
+            
+            // 異步處理統計記錄，不阻塞註冊流程
             if (currentUser?.$id) {
-                try {
-                    const userStatsService = AppwriteUserStatsService.getInstance();
-                    await userStatsService.userLogin(currentUser.$id);
-                    console.log('用戶統計: 註冊記錄成功');
-                } catch (error) {
+                const userStatsService = AppwriteUserStatsService.getInstance();
+                userStatsService.userLogin(currentUser.$id).then((sessionId) => {
+                    console.log('用戶統計: 註冊記錄成功，會話 ID:', sessionId);
+                    // 存儲 sessionId
+                    setUserSessionId(sessionId);
+                    // 觸發統計數據更新事件，讓 UI 立即刷新
+                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
+                }).catch((error) => {
                     console.error('用戶統計: 註冊記錄失敗', error);
-                }
+                });
             }
             
-            // 顯示註冊成功 toast，使用傳入的用戶名
+            // 立即顯示註冊成功 toast，使用傳入的用戶名
             const username = name || email?.split('@')[0] || t('common.user');
-            
-            // 獲取用戶頭像
-            let userAvatar = '';
-            if (currentUser?.$id) {
-                try {
-                    // 嘗試獲取自定義頭像
-                    const customAvatar = await avatarService.getUserAvatar(currentUser.$id);
-                    
-                    // 獲取頭像內容
-                    const avatarContent = getAvatarContent(
-                        {
-                            showPersonalAvatar: true,
-                            showAnonymousAvatar: false,
-                            size: 'md',
-                            context: 'profile'
-                        },
-                        {
-                            userId: currentUser.$id,
-                            name: currentUser.name,
-                            email: currentUser.email,
-                            customAvatar: customAvatar || undefined
-                        }
-                    );
-                    
-                    if (avatarContent.type === 'emoji') {
-                        userAvatar = avatarContent.content + ' ';
-                    }
-                } catch (error) {
-                    console.error('獲取用戶頭像失敗:', error);
-                }
-            }
             
             toast({
                 variant: "success",
                 title: `🎊 ${t('toast.registerSuccess')}`,
-                description: t('toast.welcomeToApp', { username: `${userAvatar}${username}` }),
+                description: t('toast.welcomeToApp', { username }),
                 duration: 4000,
             });
         } catch (error) {
@@ -216,59 +177,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             const currentUser = user;
+            const username = getUserDisplayName(currentUser, t);
             
-            // 記錄用戶登出到統計系統
-            if (currentUser?.$id) {
+            // 處理統計記錄，確保立即更新
+            if (currentUser?.$id && userSessionId) {
+                const userStatsService = AppwriteUserStatsService.getInstance();
                 try {
-                    const userStatsService = AppwriteUserStatsService.getInstance();
-                    await userStatsService.userLogout();
+                    // 等待登出操作完成
+                    await userStatsService.userLogout(userSessionId);
                     console.log('用戶統計: 登出記錄成功');
+                    
+                    // 立即觸發統計數據更新事件
+                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
+                    
+                    // 額外的延遲觸發，確保數據庫同步完成
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('userStatsUpdated'));
+                        console.log('用戶統計: 延遲更新觸發');
+                    }, 500);
+                    
                 } catch (error) {
                     console.error('用戶統計: 登出記錄失敗', error);
-                }
-            }
-            
-            // 獲取用戶頭像（在登出前）
-            let userAvatar = '';
-            if (currentUser?.$id) {
-                try {
-                    // 嘗試獲取自定義頭像
-                    const customAvatar = await avatarService.getUserAvatar(currentUser.$id);
-                    
-                    // 獲取頭像內容
-                    const avatarContent = getAvatarContent(
-                        {
-                            showPersonalAvatar: true,
-                            showAnonymousAvatar: false,
-                            size: 'md',
-                            context: 'profile'
-                        },
-                        {
-                            userId: currentUser.$id,
-                            name: currentUser.name,
-                            email: currentUser.email,
-                            customAvatar: customAvatar || undefined
-                        }
-                    );
-                    
-                    if (avatarContent.type === 'emoji') {
-                        userAvatar = avatarContent.content + ' ';
-                    }
-                } catch (error) {
-                    console.error('獲取用戶頭像失敗:', error);
+                    // 即使失敗也觸發更新，讓系統自我修正
+                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
                 }
             }
             
             await authService.logout();
             setUser(null);
+            setUserSessionId(null); // 清除 sessionId
             
-            // 顯示登出成功 toast
-            const username = getUserDisplayName(currentUser, t);
-            
+            // 立即顯示登出成功 toast
             toast({
                 variant: "success",
                 title: `👋 ${t('toast.logoutSuccess')}`,
-                description: t('toast.goodbye', { username: `${userAvatar}${username}` }),
+                description: t('toast.goodbye', { username }),
                 duration: 4000,
             });
         } catch (error) {
@@ -284,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error('刷新用戶資料失敗:', error);
             // 如果刷新失敗，可能是 session 過期，設置為 null
             setUser(null);
+            setUserSessionId(null);
         }
     };
 

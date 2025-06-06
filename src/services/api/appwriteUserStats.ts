@@ -23,36 +23,41 @@ class AppwriteUserStatsService {
   private client: Client;
   private databases: Databases;
   private functions: Functions;
-  private currentSessionId: string | null = null;
-  private pingInterval: NodeJS.Timeout | null = null;
+  private activeSessions: Map<string, string> = new Map(); // userId -> sessionId
+  private pingIntervals: Map<string, NodeJS.Timeout> = new Map(); // sessionId -> interval
   private readonly SESSION_TIMEOUT = 5 * 60 * 1000; // 5 分鐘（配合 2 分鐘 ping）
-  private readonly PING_INTERVAL = 60 * 1000; // 60 秒
+  private readonly PING_INTERVAL = 120 * 1000; // 120 秒（2 分鐘）
+  private readonly BACKGROUND_PING_INTERVAL = 60 * 1000; // 背景標籤頁：60 秒
   private readonly DATABASE_ID = 'user-stats-db';
   private readonly SESSIONS_COLLECTION_ID = 'user-sessions';
   private readonly STATS_COLLECTION_ID = 'user-stats';
+  private visibilityChangeHandler: (() => void) | null = null;
+  private pingWorker: Worker | null = null;
+  private useWebWorker: boolean = true; // 是否使用 Web Worker
 
   private constructor() {
-    // 檢查環境變數
-    const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
-    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
-
-    if (!endpoint || !projectId) {
-      console.warn('AppwriteUserStatsService: 缺少環境變數，使用預設配置');
-      console.warn('請創建 .env 文件並設置 VITE_APPWRITE_ENDPOINT 和 VITE_APPWRITE_PROJECT_ID');
-      
-      // 使用預設配置
-      this.client = new Client()
-        .setEndpoint('https://fra.cloud.appwrite.io/v1')
-        .setProject('lingubible');
-    } else {
-      // 使用環境變數配置
-      this.client = new Client()
-        .setEndpoint(endpoint)
-        .setProject(projectId);
-    }
+    this.client = new Client()
+      .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
+      .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
     this.databases = new Databases(this.client);
     this.functions = new Functions(this.client);
+
+    // 初始化 Web Worker
+    this.initializeWebWorker();
+
+    // 設置頁面可見性監聽器
+    this.setupVisibilityListener();
+
+    // 頁面卸載時清理資源
+    window.addEventListener('beforeunload', () => {
+      this.cleanup();
+    });
+
+    // 頁面隱藏時發送最後一次 ping
+    window.addEventListener('pagehide', () => {
+      this.sendFinalPings();
+    });
 
     console.log('AppwriteUserStatsService 初始化完成');
   }
@@ -93,7 +98,16 @@ class AppwriteUserStatsService {
           }
         );
         
-        this.currentSessionId = sessionId;
+        // 停止舊的 ping 系統
+        const oldSessionId = this.activeSessions.get(userId);
+        if (oldSessionId) {
+          this.stopPingForSession(oldSessionId);
+        }
+        
+        // 更新會話映射
+        this.activeSessions.set(userId, sessionId);
+        this.startPingForSession(sessionId);
+        
         console.log(`用戶 ${userId} 已有活躍會話，更新 ping 時間`);
         return sessionId;
       }
@@ -115,13 +129,14 @@ class AppwriteUserStatsService {
         sessionData
       );
 
-      this.currentSessionId = sessionId;
+      // 更新會話映射
+      this.activeSessions.set(userId, sessionId);
       
       // 更新統計數據
       await this.updateStats(userId);
       
       // 開始 ping 系統
-      this.startPingSystem();
+      this.startPingForSession(sessionId);
 
       console.log(`用戶 ${userId} 登入成功，會話 ID: ${sessionId}`);
       return sessionId;
@@ -135,10 +150,12 @@ class AppwriteUserStatsService {
   // 用戶登出 - 移除會話記錄
   public async userLogout(sessionId?: string): Promise<void> {
     try {
-      const targetSessionId = sessionId || this.currentSessionId;
+      // 如果沒有提供 sessionId，嘗試找到當前用戶的會話
+      let targetSessionId = sessionId;
       
       if (!targetSessionId) {
-        console.log('沒有活躍會話可以登出');
+        // 查找當前用戶的會話（這裡需要用戶 ID，但我們沒有，所以保持原邏輯）
+        console.log('沒有提供會話 ID，無法登出');
         return;
       }
 
@@ -150,18 +167,19 @@ class AppwriteUserStatsService {
       );
 
       if (sessions.documents.length > 0) {
+        const session = sessions.documents[0] as unknown as UserSession;
+        
         await this.databases.deleteDocument(
           this.DATABASE_ID,
           this.SESSIONS_COLLECTION_ID,
           sessions.documents[0].$id
         );
 
-        console.log(`會話 ${targetSessionId} 已登出`);
-      }
+        // 清理會話映射
+        this.activeSessions.delete(session.userId);
+        this.stopPingForSession(targetSessionId);
 
-      if (this.currentSessionId === targetSessionId) {
-        this.currentSessionId = null;
-        this.stopPingSystem();
+        console.log(`會話 ${targetSessionId} 已登出`);
       }
 
     } catch (error) {
@@ -173,17 +191,15 @@ class AppwriteUserStatsService {
   // 發送 ping - 更新會話的最後 ping 時間
   public async sendPing(sessionId?: string): Promise<boolean> {
     try {
-      const targetSessionId = sessionId || this.currentSessionId;
-      
-      if (!targetSessionId) {
-        console.log('沒有活躍會話，無法發送 ping');
+      if (!sessionId) {
+        console.log('沒有提供會話 ID，無法發送 ping');
         return false;
       }
 
       const sessions = await this.databases.listDocuments(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
-        [Query.equal('sessionId', targetSessionId)]
+        [Query.equal('sessionId', sessionId)]
       );
 
       if (sessions.documents.length > 0) {
@@ -196,10 +212,12 @@ class AppwriteUserStatsService {
           }
         );
 
-        console.log(`Ping 發送成功 - 會話: ${targetSessionId}`);
+        console.log(`Ping 發送成功 - 會話: ${sessionId}`);
         return true;
       } else {
-        console.log(`會話不存在: ${targetSessionId}`);
+        console.log(`會話不存在: ${sessionId}`);
+        // 會話不存在，停止對應的 ping
+        this.stopPingForSession(sessionId);
         return false;
       }
 
@@ -379,24 +397,183 @@ class AppwriteUserStatsService {
     }
   }
 
-  // 自動 ping 系統
-  private startPingSystem(): void {
-    if (this.pingInterval) return;
+  // 初始化 Web Worker
+  private initializeWebWorker(): void {
+    if (typeof Worker !== 'undefined' && this.useWebWorker) {
+      try {
+        this.pingWorker = new Worker('/ping-worker.js');
+        
+        this.pingWorker.onmessage = (e) => {
+          const { type, data } = e.data;
+          
+          switch (type) {
+            case 'PING_SUCCESS':
+              console.log(`Worker ping 成功 - 會話: ${data.sessionId}`);
+              break;
+            case 'PING_ERROR':
+              console.error(`Worker ping 失敗 - 會話: ${data.sessionId}:`, data.error);
+              break;
+            case 'WORKER_STATUS':
+              console.log('Worker 狀態:', data);
+              break;
+          }
+        };
 
-    this.pingInterval = setInterval(async () => {
-      if (this.currentSessionId) {
-        await this.sendPing();
+        this.pingWorker.onerror = (error) => {
+          console.error('Web Worker 錯誤:', error);
+          this.useWebWorker = false;
+          this.pingWorker = null;
+        };
+
+        console.log('Web Worker 初始化成功');
+      } catch (error) {
+        console.error('Web Worker 初始化失敗:', error);
+        this.useWebWorker = false;
       }
-    }, this.PING_INTERVAL);
-
-    console.log(`Ping 系統已啟動，間隔: ${this.PING_INTERVAL / 1000} 秒`);
+    } else {
+      console.log('Web Worker 不可用，使用傳統 ping 方式');
+      this.useWebWorker = false;
+    }
   }
 
-  private stopPingSystem(): void {
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
-      console.log('Ping 系統已停止');
+  // 設置頁面可見性監聽器
+  private setupVisibilityListener(): void {
+    if (typeof document.hidden !== 'undefined') {
+      this.visibilityChangeHandler = () => {
+        if (document.hidden) {
+          console.log('標籤頁變為背景，切換到 Web Worker ping');
+          this.switchToWorkerPing();
+        } else {
+          console.log('標籤頁變為前景，切換到主線程 ping');
+          this.switchToMainThreadPing();
+        }
+      };
+
+      document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+    }
+  }
+
+  // 切換到 Web Worker ping
+  private switchToWorkerPing(): void {
+    if (!this.pingWorker || !this.useWebWorker) {
+      // 如果沒有 Worker，使用調整後的主線程 ping
+      this.adjustPingForBackground();
+      return;
+    }
+
+    // 停止主線程的 ping
+    this.pingIntervals.forEach((interval) => {
+      clearInterval(interval);
+    });
+    this.pingIntervals.clear();
+
+    // 啟動 Worker ping
+    this.activeSessions.forEach((sessionId) => {
+      this.pingWorker!.postMessage({
+        type: 'START_PING',
+        data: {
+          sessionId,
+          interval: this.BACKGROUND_PING_INTERVAL,
+          endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+          projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID
+        }
+      });
+    });
+  }
+
+  // 切換到主線程 ping
+  private switchToMainThreadPing(): void {
+    // 停止 Worker ping
+    if (this.pingWorker && this.useWebWorker) {
+      this.pingWorker.postMessage({ type: 'STOP_PING' });
+    }
+
+    // 重新啟動主線程 ping
+    this.activeSessions.forEach((sessionId) => {
+      this.startPingForSession(sessionId);
+    });
+  }
+
+  // 調整背景標籤頁的 ping 策略（備用方案）
+  private adjustPingForBackground(): void {
+    this.pingIntervals.forEach((interval, sessionId) => {
+      clearInterval(interval);
+      
+      // 使用更短的間隔來對抗瀏覽器限制
+      const newInterval = setInterval(async () => {
+        await this.sendPing(sessionId);
+      }, this.BACKGROUND_PING_INTERVAL);
+
+      this.pingIntervals.set(sessionId, newInterval);
+    });
+  }
+
+  // 恢復前景標籤頁的正常 ping（備用方案）
+  private adjustPingForForeground(): void {
+    this.pingIntervals.forEach((interval, sessionId) => {
+      clearInterval(interval);
+      
+      // 恢復正常間隔
+      const newInterval = setInterval(async () => {
+        await this.sendPing(sessionId);
+      }, this.PING_INTERVAL);
+
+      this.pingIntervals.set(sessionId, newInterval);
+    });
+  }
+
+  // 頁面隱藏時發送最後一次 ping
+  private sendFinalPings(): void {
+    this.activeSessions.forEach(async (sessionId) => {
+      try {
+        await this.sendPing(sessionId);
+        console.log(`發送最後一次 ping - 會話: ${sessionId}`);
+      } catch (error) {
+        console.error('發送最後 ping 失敗:', error);
+      }
+    });
+  }
+
+  // 自動 ping 系統
+  private startPingForSession(sessionId: string): void {
+    if (this.pingIntervals.has(sessionId)) return;
+
+    // 如果頁面在背景且有 Worker，使用 Worker
+    if (document.hidden && this.pingWorker && this.useWebWorker) {
+      this.pingWorker.postMessage({
+        type: 'START_PING',
+        data: {
+          sessionId,
+          interval: this.BACKGROUND_PING_INTERVAL,
+          endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+          projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID
+        }
+      });
+      return;
+    }
+
+    // 根據當前頁面狀態選擇間隔
+    const interval = document.hidden ? this.BACKGROUND_PING_INTERVAL : this.PING_INTERVAL;
+    
+    const pingInterval = setInterval(async () => {
+      await this.sendPing(sessionId);
+    }, interval);
+
+    this.pingIntervals.set(sessionId, pingInterval);
+    console.log(`Ping 系統已啟動，會話: ${sessionId}，間隔: ${interval / 1000} 秒`);
+  }
+
+  private stopPingForSession(sessionId: string): void {
+    // 停止主線程 ping
+    if (this.pingIntervals.has(sessionId)) {
+      clearInterval(this.pingIntervals.get(sessionId));
+      this.pingIntervals.delete(sessionId);
+      console.log(`主線程 Ping 系統已停止 - 會話: ${sessionId}`);
+    }
+
+    // 停止 Worker ping
+    if (this.pingWorker && this.useWebWorker) {
+      this.pingWorker.postMessage({ type: 'STOP_PING' });
     }
   }
 
@@ -421,7 +598,23 @@ class AppwriteUserStatsService {
 
   // 清理資源
   public cleanup(): void {
-    this.stopPingSystem();
+    this.pingIntervals.forEach((interval, sessionId) => {
+      clearInterval(interval);
+    });
+    this.pingIntervals.clear();
+
+    // 清理 Web Worker
+    if (this.pingWorker) {
+      this.pingWorker.postMessage({ type: 'STOP_PING' });
+      this.pingWorker.terminate();
+      this.pingWorker = null;
+    }
+
+    // 移除事件監聽器
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
   }
 }
 

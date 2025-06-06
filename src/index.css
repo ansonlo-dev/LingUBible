@@ -143,10 +143,13 @@
     .sidebar-container {
       transform: translateX(-100%);
       top: 0;
-      height: 100vh;
+      height: 100vh; /* 備用方案 */
+      height: 100dvh; /* 使用動態視窗高度，考慮瀏覽器地址欄 */
       z-index: 50;
       /* 移動版本強制使用足夠的寬度來顯示所有文字 */
       width: 50vw !important;
+      overflow-y: auto; /* 確保內容可以滾動 */
+      overflow-x: hidden;
     }
     
     .sidebar-container.mobile-open {
@@ -156,6 +159,19 @@
     /* 手機版不支援摺疊 */
     .sidebar-container.collapsed {
       width: var(--sidebar-width);
+    }
+
+    /* 確保側邊欄內容在手機版中正確佈局 */
+    .sidebar-container > div {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 確保底部設置區域始終可見 */
+    .sidebar-container nav {
+      flex: 1;
+      overflow-y: auto;
     }
   }
 
@@ -310,6 +326,13 @@
     box-shadow: 
       0 4px 16px rgba(0, 0, 0, 0.2),
       0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 數字動畫樣式 */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    letter-spacing: 0.025em;
   }
 
   /* 課程卡片樣式 - 淺色模式使用純白背景 */
@@ -659,6 +682,17 @@
     width: auto !important;
     max-width: 420px !important;
     z-index: 9999 !important;
+  }
+
+  /* 手機版 Toast 位置調整 - 底部中央 */
+  @media (max-width: 768px) {
+    [data-radix-toast-viewport] {
+      left: 1rem !important;
+      right: 1rem !important;
+      bottom: 1rem !important;
+      width: calc(100% - 2rem) !important;
+      max-width: none !important;
+    }
   }
 
   /* Toast 成功變體增強樣式 */
@@ -1275,6 +1309,8 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transform: translateZ(0);
+    /* 確保按鈕可以點擊 */
+    pointer-events: auto;
   }
 
   .wing {
@@ -1342,6 +1378,13 @@
   .winged-button-container:not(:hover) .winged-button {
     transform: scale(1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* 確保按鈕可以點擊 */
+  .winged-button {
+    pointer-events: auto;
+    position: relative;
+    z-index: 10;
   }
 
   /* 禁用翅膀按鈕的霓虹燈效果 */
@@ -1436,6 +1479,20 @@
         0 8px 25px rgba(220, 38, 38, 0.3),
         0 0 30px rgba(220, 38, 38, 0.2);
     }
+    
+    /* 確保手機上按鈕可以點擊 */
+    .winged-button-container {
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    .winged-button {
+      touch-action: manipulation;
+      pointer-events: auto !important;
+      z-index: 100 !important;
+    }
   }
 
   /* 天使光環效果 */
@@ -1474,5 +1531,368 @@
       transparent 0%, 
       rgba(248, 113, 113, 0.7) 50%, 
       transparent 100%);
+  }
+
+  /* Heaven Transition Effects */
+  .heaven-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 40;
+    pointer-events: none;
+    overflow: hidden;
+    background: linear-gradient(45deg, 
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 215, 0, 0.15) 50%,
+      rgba(255, 255, 255, 0.2) 100%);
+    animation: heaven-background-glow 1.2s ease-out;
+  }
+
+  /* 主要光芒爆發效果 */
+  .heaven-light-burst {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 150px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, 
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 215, 0, 0.6) 30%,
+      rgba(255, 255, 255, 0.4) 60%,
+      transparent 100%);
+    border-radius: 50%;
+    animation: heaven-light-explosion 1.2s ease-out;
+    z-index: -1;
+  }
+
+  /* 神聖光環 */
+  .heaven-halo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    height: 300px;
+    transform: translate(-50%, -50%);
+    border: 3px solid rgba(255, 215, 0, 0.8);
+    border-radius: 50%;
+    animation: heaven-halo-expand 2s ease-out;
+    z-index: -1;
+  }
+
+  /* 雲朵容器 */
+  .heaven-clouds {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  /* 雲朵樣式 */
+  .heaven-cloud {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50px;
+    opacity: 0;
+    animation: heaven-cloud-float 1.2s ease-out;
+  }
+
+  .heaven-cloud::before,
+  .heaven-cloud::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50px;
+  }
+
+  .heaven-cloud-1 {
+    width: 80px;
+    height: 40px;
+    top: 20%;
+    left: 10%;
+    animation-delay: 0.2s;
+  }
+
+  .heaven-cloud-1::before {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 10px;
+  }
+
+  .heaven-cloud-1::after {
+    width: 60px;
+    height: 40px;
+    top: -15px;
+    right: 10px;
+  }
+
+  .heaven-cloud-2 {
+    width: 100px;
+    height: 50px;
+    top: 15%;
+    right: 15%;
+    animation-delay: 0.4s;
+  }
+
+  .heaven-cloud-2::before {
+    width: 60px;
+    height: 60px;
+    top: -30px;
+    left: 15px;
+  }
+
+  .heaven-cloud-2::after {
+    width: 70px;
+    height: 50px;
+    top: -20px;
+    right: 15px;
+  }
+
+  .heaven-cloud-3 {
+    width: 90px;
+    height: 45px;
+    top: 70%;
+    left: 20%;
+    animation-delay: 0.6s;
+  }
+
+  .heaven-cloud-3::before {
+    width: 55px;
+    height: 55px;
+    top: -27px;
+    left: 12px;
+  }
+
+  .heaven-cloud-3::after {
+    width: 65px;
+    height: 45px;
+    top: -18px;
+    right: 12px;
+  }
+
+  .heaven-cloud-4 {
+    width: 110px;
+    height: 55px;
+    top: 75%;
+    right: 10%;
+    animation-delay: 0.8s;
+  }
+
+  .heaven-cloud-4::before {
+    width: 65px;
+    height: 65px;
+    top: -32px;
+    left: 18px;
+  }
+
+  .heaven-cloud-4::after {
+    width: 75px;
+    height: 55px;
+    top: -22px;
+    right: 18px;
+  }
+
+  .heaven-cloud-5 {
+    width: 70px;
+    height: 35px;
+    top: 40%;
+    left: 5%;
+    animation-delay: 1s;
+  }
+
+  .heaven-cloud-5::before {
+    width: 45px;
+    height: 45px;
+    top: -22px;
+    left: 8px;
+  }
+
+  .heaven-cloud-5::after {
+    width: 55px;
+    height: 35px;
+    top: -12px;
+    right: 8px;
+  }
+
+  .heaven-cloud-6 {
+    width: 95px;
+    height: 48px;
+    top: 45%;
+    right: 8%;
+    animation-delay: 1.2s;
+  }
+
+  .heaven-cloud-6::before {
+    width: 58px;
+    height: 58px;
+    top: -29px;
+    left: 14px;
+  }
+
+  .heaven-cloud-6::after {
+    width: 68px;
+    height: 48px;
+    top: -19px;
+    right: 14px;
+  }
+
+  /* 羽毛容器 */
+  .heaven-feathers {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  /* 羽毛樣式 */
+  .heaven-feather {
+    position: absolute;
+    width: 12px;
+    height: 36px;
+    opacity: 0;
+    animation: heaven-feather-fall 1.5s ease-out;
+  }
+
+  .feather-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
+  }
+
+  /* 羽毛位置和延遲 */
+  .heaven-feather-1 { top: -50px; left: 20%; animation-delay: 0.2s; }
+  .heaven-feather-2 { top: -50px; left: 40%; animation-delay: 0.4s; }
+  .heaven-feather-3 { top: -50px; left: 60%; animation-delay: 0.6s; }
+  .heaven-feather-4 { top: -50px; left: 80%; animation-delay: 0.8s; }
+  .heaven-feather-5 { top: -50px; left: 30%; animation-delay: 0.3s; }
+  .heaven-feather-6 { top: -50px; left: 70%; animation-delay: 0.5s; }
+
+  /* 金色粒子容器 */
+  .heaven-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  /* 金色粒子樣式 */
+  .heaven-particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+    border-radius: 50%;
+    opacity: 0;
+    animation: heaven-particle-sparkle 1.2s ease-out;
+  }
+
+  /* 粒子位置和延遲 */
+  .heaven-particle-1 { top: 25%; left: 20%; animation-delay: 0.1s; }
+  .heaven-particle-2 { top: 30%; left: 80%; animation-delay: 0.3s; }
+  .heaven-particle-3 { top: 40%; left: 30%; animation-delay: 0.5s; }
+  .heaven-particle-4 { top: 50%; left: 70%; animation-delay: 0.7s; }
+  .heaven-particle-5 { top: 60%; left: 40%; animation-delay: 0.2s; }
+  .heaven-particle-6 { top: 70%; left: 60%; animation-delay: 0.4s; }
+  .heaven-particle-7 { top: 35%; left: 50%; animation-delay: 0.6s; }
+  .heaven-particle-8 { top: 65%; left: 25%; animation-delay: 0.8s; }
+
+
+
+  /* 動畫定義 */
+  @keyframes heaven-background-glow {
+    0% {
+      opacity: 0;
+      background: transparent;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes heaven-light-explosion {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+    40% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(4);
+      opacity: 0;
+    }
+  }
+
+
+
+  @keyframes heaven-cloud-float {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-10px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-40px) scale(1.2);
+    }
+  }
+
+  @keyframes heaven-feather-fall {
+    0% {
+      opacity: 0;
+      transform: translateY(0) rotate(0deg);
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(calc(100vh + 50px)) rotate(180deg);
+    }
+  }
+
+  @keyframes heaven-particle-sparkle {
+    0% {
+      opacity: 0;
+      transform: scale(0) rotate(0deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1) rotate(180deg);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0) rotate(360deg);
+    }
+  }
+
+
+
+  /* 響應式設計 */
+  @media (max-width: 768px) {
+    .heaven-light-burst {
+      width: 120px;
+      height: 120px;
+    }
+    
+    .heaven-feather {
+      width: 10px;
+      height: 30px;
+    }
+    
+    .heaven-particle {
+      width: 2px;
+      height: 2px;
+    }
   }
 }

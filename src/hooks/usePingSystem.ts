@@ -10,7 +10,7 @@ interface PingSystemOptions {
 export function usePingSystem(options: PingSystemOptions = {}) {
   const {
     enabled = true,
-    pingInterval = 60 * 1000, // 預設 60 秒
+    pingInterval = 120 * 1000, // 預設 120 秒（2 分鐘）
     activityEvents = ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
   } = options;
 

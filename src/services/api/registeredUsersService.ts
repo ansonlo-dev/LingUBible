@@ -1,9 +1,9 @@
-import { Client, Databases } from 'appwrite';
+import { Client, Databases, Functions } from 'appwrite';
 
 interface RegisteredUsersStats {
   totalRegisteredUsers: number;
-  verifiedUsers: number;
-  unverifiedUsers: number;
+  newUsersLast30Days: number;
+  verifiedUsers: number; // 保留但不在前端顯示
   lastUpdated: string;
 }
 
@@ -11,10 +11,12 @@ class RegisteredUsersService {
   private static instance: RegisteredUsersService;
   private client: Client;
   private databases: Databases;
+  private functions: Functions;
   private cachedStats: RegisteredUsersStats | null = null;
   private lastCacheTime: number = 0;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘緩存
+  private readonly CACHE_DURATION = 15 * 60 * 1000; // 15 分鐘緩存
   private readonly DATABASE_ID = 'user-stats-db';
+  private readonly FUNCTION_ID = 'get-user-stats';
 
   private constructor() {
     // 檢查環境變數
@@ -35,6 +37,7 @@ class RegisteredUsersService {
     }
 
     this.databases = new Databases(this.client);
+    this.functions = new Functions(this.client);
     console.log('RegisteredUsersService 初始化完成');
   }
 
@@ -55,10 +58,10 @@ class RegisteredUsersService {
         return this.cachedStats;
       }
 
-      console.log('從用戶統計服務獲取數據...');
+      console.log('從 Appwrite 函數獲取用戶統計...');
       
-      // 從用戶統計服務獲取數據
-      const stats = await this.getStatsFromUserStatsService();
+      // 優先嘗試從 Appwrite 函數獲取數據
+      const stats = await this.getStatsFromAppwriteFunction();
       
       // 更新緩存
       this.cachedStats = stats;
@@ -72,14 +75,73 @@ class RegisteredUsersService {
       // 返回預設值
       return {
         totalRegisteredUsers: 0,
+        newUsersLast30Days: 0,
         verifiedUsers: 0,
-        unverifiedUsers: 0,
         lastUpdated: new Date().toISOString()
       };
     }
   }
 
-  // 從數據庫直接獲取註冊用戶統計
+  // 從 Appwrite 函數獲取用戶統計
+  private async getStatsFromAppwriteFunction(): Promise<RegisteredUsersStats> {
+    try {
+      console.log('調用 Appwrite 函數獲取用戶統計...');
+      
+      const execution = await this.functions.createExecution(this.FUNCTION_ID);
+      
+      if (execution.status === 'completed' && execution.responseStatusCode === 200) {
+        const response = JSON.parse(execution.responseBody);
+        
+        if (response.success) {
+          console.log('從 Appwrite 函數獲取統計成功:', response.data);
+          return response.data;
+        } else {
+          console.error('Appwrite 函數返回錯誤:', response.error);
+          throw new Error(response.error);
+        }
+      } else {
+        console.error('Appwrite 函數執行失敗:', execution);
+        throw new Error(`函數執行失敗: ${execution.status}`);
+      }
+    } catch (error) {
+      console.error('調用 Appwrite 函數失敗，回退到緩存數據:', error);
+      
+      // 如果 Appwrite 函數失敗，嘗試從緩存數據庫獲取
+      return await this.getStatsFromCache();
+    }
+  }
+
+  // 從緩存數據庫獲取統計（備用方案）
+  private async getStatsFromCache(): Promise<RegisteredUsersStats> {
+    try {
+      console.log('從緩存數據庫獲取用戶統計...');
+      
+      const cacheResponse = await this.databases.getDocument(
+        this.DATABASE_ID,
+        'user-stats-cache',
+        'latest-stats'
+      );
+      
+      return {
+        totalRegisteredUsers: cacheResponse.totalRegisteredUsers || 0,
+        newUsersLast30Days: cacheResponse.newUsersLast30Days || 0,
+        verifiedUsers: cacheResponse.verifiedUsers || 0,
+        lastUpdated: cacheResponse.lastUpdated || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('從緩存獲取統計失敗:', error);
+      
+      // 最後的備用方案：返回預設值
+      return {
+        totalRegisteredUsers: 0,
+        newUsersLast30Days: 0,
+        verifiedUsers: 0,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+  }
+
+  // 從數據庫直接獲取註冊用戶統計（已棄用，保留作為備用）
   private async getStatsFromUserStatsService(): Promise<RegisteredUsersStats> {
     try {
       console.log('從數據庫獲取註冊用戶統計...');
@@ -91,8 +153,8 @@ class RegisteredUsersService {
       
       return {
         totalRegisteredUsers: totalUsers,
+        newUsersLast30Days: 0, // 無法從舊數據計算，設為0
         verifiedUsers: totalUsers, // 假設所有用戶都已驗證
-        unverifiedUsers: 0,
         lastUpdated: new Date().toISOString()
       };
     } catch (error) {
@@ -101,8 +163,8 @@ class RegisteredUsersService {
       // 返回預設值
       return {
         totalRegisteredUsers: 0,
+        newUsersLast30Days: 0,
         verifiedUsers: 0,
-        unverifiedUsers: 0,
         lastUpdated: new Date().toISOString()
       };
     }

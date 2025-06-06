@@ -426,7 +426,7 @@ const App = () => {
               <Toaster />
               <Sonner />
               <CookieConsent />
-              <DevModeIndicator />
+              {/* <DevModeIndicator /> */}
               <PWAPromptTrigger />
             </AuthProvider>
           </LanguageProvider>

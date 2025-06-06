@@ -4,26 +4,22 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { LanguageProvider } from './contexts/LanguageContext'
 
-// 註冊 Service Worker (PWA 支援)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      // 嘗試註冊開發環境的 Service Worker
-      const registration = await navigator.serviceWorker.register('/dev-sw.js?dev-sw', { 
-        scope: '/',
-        type: 'classic'
-      });
-      console.log('SW registered: ', registration);
-      
-      // 監聽 Service Worker 更新
-      registration.addEventListener('updatefound', () => {
-        console.log('SW update found');
-      });
-      
-    } catch (registrationError) {
-      console.log('SW registration failed: ', registrationError);
+// PWA Service Worker 由 VitePWA 插件自動處理
+// 在開發模式下減少 Service Worker 相關的日誌輸出
+if (import.meta.env.DEV) {
+  // 覆蓋 console.warn 來過濾 workbox 相關的警告
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args.join(' ');
+    if (
+      message.includes('workbox') ||
+      message.includes('Precaching did not find a match') ||
+      message.includes('No route found for')
+    ) {
+      return; // 忽略這些日誌
     }
-  });
+    originalWarn.apply(console, args);
+  };
 }
 
 createRoot(document.getElementById("root")!).render(
