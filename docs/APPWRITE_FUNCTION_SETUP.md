@@ -56,16 +56,16 @@ appwrite init function
 # Events: (留空，我們使用手動執行)
 # Schedule: (留空)
 # Timeout: 15 (秒)
-# Path: appwrite/functions/get-user-stats
+# Path: functions/get-user-stats
 ```
 
 ### 5. 配置項目設置
 
-檢查並更新 `appwrite/appwrite.json`：
+檢查並更新 `appwrite.json`：
 
 ```bash
 # 查看當前配置
-cat appwrite/appwrite.json
+cat appwrite.json
 
 # 如果需要，可以手動編輯配置文件
 ```
@@ -85,18 +85,18 @@ cat appwrite/appwrite.json
 
 ```bash
 # 為函數設置環境變數
-appwrite functions updateVariable \
-    --functionId get-user-stats \
+appwrite functions update-variable \
+    --function-id get-user-stats \
     --key APPWRITE_API_KEY \
     --value "your-api-key-here"
 
-appwrite functions updateVariable \
-    --functionId get-user-stats \
+appwrite functions update-variable \
+    --function-id get-user-stats \
     --key APPWRITE_FUNCTION_ENDPOINT \
     --value "https://fra.cloud.appwrite.io/v1"
 
-appwrite functions updateVariable \
-    --functionId get-user-stats \
+appwrite functions update-variable \
+    --function-id get-user-stats \
     --key APPWRITE_FUNCTION_PROJECT_ID \
     --value "lingubible"
 ```
@@ -116,18 +116,12 @@ chmod +x scripts/deploy-appwrite-function.sh
 #### 方法 2: 使用 CLI 命令
 
 ```bash
-# 切換到 appwrite 目錄
-cd appwrite
-
-# 部署函數
-appwrite functions createDeployment \
-    --functionId get-user-stats \
+# 在項目根目錄部署函數
+appwrite functions create-deployment \
+    --function-id get-user-stats \
     --entrypoint "src/main.js" \
-    --code "./functions/get-user-stats" \
+    --code "functions/get-user-stats" \
     --activate true
-
-# 返回項目根目錄
-cd ..
 ```
 
 #### 方法 3: 使用 appwrite deploy 命令
@@ -196,13 +190,13 @@ appwrite databases createDatetimeAttribute \
 appwrite functions list
 
 # 查看特定函數詳情
-appwrite functions get --functionId get-user-stats
+appwrite functions get --function-id get-user-stats
 
 # 查看函數部署
-appwrite functions listDeployments --functionId get-user-stats
+appwrite functions list-deployments --function-id get-user-stats
 
 # 測試函數執行
-appwrite functions createExecution --functionId get-user-stats
+appwrite functions create-execution --function-id get-user-stats
 ```
 
 ## CLI 常用命令
@@ -214,33 +208,33 @@ appwrite functions createExecution --functionId get-user-stats
 appwrite functions list
 
 # 查看函數詳情
-appwrite functions get --functionId get-user-stats
+appwrite functions get --function-id get-user-stats
 
 # 更新函數配置
 appwrite functions update \
-    --functionId get-user-stats \
+    --function-id get-user-stats \
     --name "Updated Function Name" \
     --timeout 30
 
 # 刪除函數
-appwrite functions delete --functionId get-user-stats
+appwrite functions delete --function-id get-user-stats
 ```
 
 ### 部署管理
 
 ```bash
 # 查看部署列表
-appwrite functions listDeployments --functionId get-user-stats
+appwrite functions list-deployments --function-id get-user-stats
 
 # 查看特定部署
-appwrite functions getDeployment \
-    --functionId get-user-stats \
-    --deploymentId deployment-id
+appwrite functions get-deployment \
+    --function-id get-user-stats \
+    --deployment-id deployment-id
 
 # 激活特定部署
-appwrite functions updateDeployment \
-    --functionId get-user-stats \
-    --deploymentId deployment-id \
+appwrite functions update-deployment \
+    --function-id get-user-stats \
+    --deployment-id deployment-id \
     --activate true
 ```
 
@@ -248,40 +242,40 @@ appwrite functions updateDeployment \
 
 ```bash
 # 手動執行函數
-appwrite functions createExecution --functionId get-user-stats
+appwrite functions create-execution --function-id get-user-stats
 
 # 查看執行歷史
-appwrite functions listExecutions --functionId get-user-stats
+appwrite functions list-executions --function-id get-user-stats
 
 # 查看特定執行詳情
-appwrite functions getExecution \
-    --functionId get-user-stats \
-    --executionId execution-id
+appwrite functions get-execution \
+    --function-id get-user-stats \
+    --execution-id execution-id
 ```
 
 ### 環境變數管理
 
 ```bash
 # 查看環境變數
-appwrite functions listVariables --functionId get-user-stats
+appwrite functions list-variables --function-id get-user-stats
 
 # 添加環境變數
-appwrite functions createVariable \
-    --functionId get-user-stats \
+appwrite functions create-variable \
+    --function-id get-user-stats \
     --key NEW_VAR \
     --value "new-value"
 
 # 更新環境變數
-appwrite functions updateVariable \
-    --functionId get-user-stats \
-    --variableId variable-id \
+appwrite functions update-variable \
+    --function-id get-user-stats \
+    --variable-id variable-id \
     --key UPDATED_VAR \
     --value "updated-value"
 
 # 刪除環境變數
-appwrite functions deleteVariable \
-    --functionId get-user-stats \
-    --variableId variable-id
+appwrite functions delete-variable \
+    --function-id get-user-stats \
+    --variable-id variable-id
 ```
 
 ## 工作原理
@@ -321,10 +315,10 @@ appwrite functions deleteVariable \
 
 ```bash
 # 執行函數並查看結果
-appwrite functions createExecution --functionId get-user-stats
+appwrite functions create-execution --function-id get-user-stats
 
 # 查看最近的執行結果
-appwrite functions listExecutions --functionId get-user-stats --limit 1
+appwrite functions list-executions --function-id get-user-stats --limit 1
 ```
 
 #### 使用控制台測試
@@ -356,10 +350,10 @@ appwrite functions listExecutions --functionId get-user-stats --limit 1
 2. **函數部署失敗**
    ```bash
    # 檢查函數配置
-   appwrite functions get --functionId get-user-stats
+   appwrite functions get --function-id get-user-stats
    
    # 查看部署日誌
-   appwrite functions listDeployments --functionId get-user-stats
+   appwrite functions list-deployments --function-id get-user-stats
    ```
 
 3. **函數執行失敗**
@@ -381,12 +375,12 @@ appwrite functions listExecutions --functionId get-user-stats --limit 1
 
 ```bash
 # 查看函數執行日誌
-appwrite functions listExecutions --functionId get-user-stats
+appwrite functions list-executions --function-id get-user-stats
 
 # 查看特定執行的詳細日誌
-appwrite functions getExecution \
-    --functionId get-user-stats \
-    --executionId execution-id
+appwrite functions get-execution \
+    --function-id get-user-stats \
+    --execution-id execution-id
 ```
 
 #### 控制台日誌檢查
@@ -401,7 +395,7 @@ appwrite functions getExecution \
 1. **監控函數性能**: 檢查執行時間和成功率
    ```bash
    # 查看最近的執行統計
-   appwrite functions listExecutions --functionId get-user-stats --limit 10
+   appwrite functions list-executions --function-id get-user-stats --limit 10
    ```
 
 2. **更新緩存策略**: 根據使用情況調整緩存時間

@@ -80,6 +80,28 @@
             "commands": "npm install",
             "specification": "s-0.5vcpu-512mb",
             "path": "functions/cleanup-expired-codes"
+        },
+        {
+            "$id": "get-user-stats",
+            "execute": [
+                "any"
+            ],
+            "name": "Get User Statistics",
+            "enabled": true,
+            "logging": true,
+            "runtime": "node-18.0",
+            "scopes": [
+                "users.read",
+                "databases.read",
+                "databases.write"
+            ],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "specification": "s-0.5vcpu-512mb",
+            "path": "functions/get-user-stats"
         }
     ],
     "databases": [

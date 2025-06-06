@@ -19,15 +19,19 @@ if ! appwrite client --version &> /dev/null; then
     exit 1
 fi
 
-# 進入 appwrite 目錄
-cd appwrite
+# 確保在項目根目錄
+if [ ! -f "appwrite.json" ]; then
+    echo "❌ 請在項目根目錄運行此腳本"
+    exit 1
+fi
 
 # 部署函數
 echo "📦 部署 get-user-stats 函數..."
-appwrite functions createDeployment \
-    --functionId=get-user-stats \
+appwrite functions create-deployment \
+    --function-id=get-user-stats \
     --entrypoint="src/main.js" \
-    --code="./functions/get-user-stats"
+    --code="functions/get-user-stats" \
+    --activate=true
 
 if [ $? -eq 0 ]; then
     echo "✅ 函數部署成功！"
@@ -36,6 +40,9 @@ if [ $? -eq 0 ]; then
     echo "1. 在 Appwrite 控制台中設置 API 密鑰環境變數 APPWRITE_API_KEY"
     echo "2. 確保函數有適當的執行權限"
     echo "3. 測試函數是否正常工作"
+    echo ""
+    echo "🧪 測試函數："
+    echo "appwrite functions create-execution --function-id=get-user-stats"
 else
     echo "❌ 函數部署失敗"
     exit 1
