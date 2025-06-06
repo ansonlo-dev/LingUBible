@@ -27,22 +27,143 @@ jobs:
         cache: 'npm'
         
     - name: Install Appwrite CLI
-      run: npm install -g appwrite-cli
-      
-    - name: Login to Appwrite
       run: |
-        appwrite login --endpoint ${{ secrets.APPWRITE_ENDPOINT }} --email ${{ secrets.APPWRITE_EMAIL }} --password ${{ secrets.APPWRITE_PASSWORD }}
+        npm install -g appwrite-cli@latest
+        appwrite --version
+      
+    - name: Verify environment variables
+      run: |
+        echo "🔍 Checking environment variables..."
+        
+        # Check required variables
+        if [ -z "${{ secrets.APPWRITE_ENDPOINT }}" ]; then
+          echo "❌ APPWRITE_ENDPOINT is not set"
+          echo "Please set this secret in GitHub repository settings"
+          exit 1
+        fi
+        
+        if [ -z "${{ secrets.APPWRITE_PROJECT_ID }}" ]; then
+          echo "❌ APPWRITE_PROJECT_ID is not set"
+          echo "Please set this secret in GitHub repository settings"
+          exit 1
+        fi
+        
+        # Check authentication method
+        if [ -n "${{ secrets.APPWRITE_API_KEY }}" ]; then
+          echo "✅ Using API Key authentication (recommended)"
+          echo "AUTH_METHOD=api_key" >> $GITHUB_ENV
+        elif [ -n "${{ secrets.APPWRITE_EMAIL }}" ] && [ -n "${{ secrets.APPWRITE_PASSWORD }}" ]; then
+          echo "⚠️ Using email/password authentication"
+          echo "Consider switching to API Key for better security"
+          echo "AUTH_METHOD=email_password" >> $GITHUB_ENV
+        else
+          echo "❌ No valid authentication method found"
+          echo "Please set either:"
+          echo "  - APPWRITE_API_KEY (recommended)"
+          echo "  - APPWRITE_EMAIL and APPWRITE_PASSWORD"
+          exit 1
+        fi
+        
+        echo "✅ Environment validation completed"
+      
+    - name: Login to Appwrite (API Key)
+      if: env.AUTH_METHOD == 'api_key'
+      run: |
+        echo "🔐 Authenticating with API Key..."
+        appwrite client \
+          --endpoint "${{ secrets.APPWRITE_ENDPOINT }}" \
+          --project-id "${{ secrets.APPWRITE_PROJECT_ID }}" \
+          --key "${{ secrets.APPWRITE_API_KEY }}"
+        echo "✅ API Key authentication successful"
+      
+    - name: Login to Appwrite (Email/Password)
+      if: env.AUTH_METHOD == 'email_password'
+      run: |
+        echo "🔐 Authenticating with email/password..."
+        appwrite login \
+          --endpoint "${{ secrets.APPWRITE_ENDPOINT }}" \
+          --email "${{ secrets.APPWRITE_EMAIL }}" \
+          --password "${{ secrets.APPWRITE_PASSWORD }}"
+        
+        echo "🎯 Setting project..."
+        appwrite client set-project "${{ secrets.APPWRITE_PROJECT_ID }}"
+        echo "✅ Email/password authentication successful"
+      
+    - name: Verify connection
+      run: |
+        echo "🔗 Verifying Appwrite connection..."
+        appwrite client --version
+        echo "✅ Connection verified"
       
     - name: Deploy Functions
       run: |
-        appwrite push functions --function-id send-verification --async
+        echo "🚀 Starting function deployment..."
         
-    - name: Notify deployment status
+        # Function deployment with error handling
+        deploy_function() {
+          local func_id=$1
+          local func_name=$2
+          local func_path=$3
+          
+          echo "📦 Deploying $func_name function..."
+          
+          if appwrite functions create-deployment \
+            --function-id "$func_id" \
+            --entrypoint "src/main.js" \
+            --code "$func_path" \
+            --activate true; then
+            echo "✅ $func_name deployed successfully"
+          else
+            echo "❌ Failed to deploy $func_name"
+            return 1
+          fi
+        }
+        
+        # Deploy all functions
+        deploy_function "send-verification" "Send Verification Email" "functions/send-verification-email"
+        deploy_function "cleanup-expired-codes" "Cleanup Expired Codes" "functions/cleanup-expired-codes"  
+        deploy_function "get-user-stats" "Get User Statistics" "functions/get-user-stats"
+        
+        echo "🎉 All functions deployed successfully!"
+        
+    - name: Verify deployments
+      run: |
+        echo "🔍 Verifying function deployments..."
+        
+        # Check each function
+        for func_id in "send-verification" "cleanup-expired-codes" "get-user-stats"; do
+          echo "Checking $func_id..."
+          if appwrite functions get --function-id "$func_id" > /dev/null 2>&1; then
+            echo "✅ $func_id is active"
+          else
+            echo "❌ $func_id verification failed"
+          fi
+        done
+        
+        echo "✅ Deployment verification completed"
+        
+    - name: Deployment summary
       if: always()
       run: |
-        if [ $? -eq 0 ]; then
-          echo "✅ Appwrite functions deployed successfully!"
+        echo "📊 Deployment Summary"
+        echo "===================="
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Trigger: ${{ github.event_name }}"
+        echo "Auth Method: ${{ env.AUTH_METHOD }}"
+        
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "Status: ✅ SUCCESS"
+          echo ""
+          echo "🎉 All Appwrite functions have been deployed successfully!"
+          echo "You can verify the deployments in the Appwrite console."
         else
-          echo "❌ Appwrite functions deployment failed!"
-          exit 1
+          echo "Status: ❌ FAILED"
+          echo ""
+          echo "💡 Troubleshooting tips:"
+          echo "1. Check GitHub Secrets are properly set"
+          echo "2. Verify Appwrite credentials and permissions"
+          echo "3. Review the deployment logs above"
+          echo "4. See docs/GITHUB_SECRETS_SETUP.md for detailed setup guide"
         fi 
