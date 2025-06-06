@@ -123,18 +123,18 @@ graph TB
 ### 🏛️ 專案架構
 
 ```
-📁 lingubible/
-├── 🎨 src/                    # 原始碼
-│   ├── 🧩 components/         # React 元件
-│   ├── 📄 pages/              # 頁面元件
-│   ├── 🔧 services/           # API 服務
-│   ├── 🎣 hooks/              # 自訂 Hooks
-│   ├── 🛠️ utils/              # 工具函數
-│   └── 📝 types/              # TypeScript 型別
-├── 📚 docs/                   # 專案文檔
-├── 🛠️ tools/                  # 開發工具
-├── 🌐 public/                 # 靜態資源
-└── ⚙️ functions/              # 雲端函數
+lingubible/
+├── src/                       # 原始碼
+│   ├── components/            # React 元件
+│   ├── pages/                 # 頁面元件
+│   ├── services/              # API 服務
+│   ├── hooks/                 # 自訂 Hooks
+│   ├── utils/                 # 工具函數
+│   └── types/                 # TypeScript 型別
+├── docs/                      # 專案文檔
+├── tools/                     # 開發工具
+├── public/                    # 靜態資源
+└── functions/                 # 雲端函數
 ```
 
 ### 📊 效能指標
@@ -253,9 +253,9 @@ npm run readme:generate-assets  # 產生 README 資源
 
 | 語言 | README | 文檔 | 狀態 |
 |:---:|:---:|:---:|:---:|
-| 🇺🇸 **English** | [README.md](../../README.md) | [Documentation](../) | ✅ 完整 |
-| 🇭🇰 **繁體中文** | [README.md](README.md) | [文檔](./) | ✅ 完整 |
-| 🇨🇳 **简体中文** | [README.md](../zh-CN/README.md) | [文档](../zh-CN/) | ✅ 完整 |
+| **English** | [README.md](../../README.md) | [Documentation](../) | ✅ 完整 |
+| **繁體中文** | [README.md](README.md) | [文檔](./) | ✅ 完整 |
+| **简体中文** | [README.md](../zh-CN/README.md) | [文档](../zh-CN/) | ✅ 完整 |
 
 </div>
 
@@ -310,9 +310,9 @@ npm run readme:generate-assets  # 產生 README 資源
 
 ### 📖 詳細指南
 
-- [🇺🇸 Contributing Guide (English)](../CONTRIBUTING.md)
-- [🇭🇰 貢獻指南 (繁體中文)](CONTRIBUTING.md)
-- [🇨🇳 贡献指南 (简体中文)](../zh-CN/CONTRIBUTING.md)
+- [Contributing Guide (English)](../CONTRIBUTING.md)
+- [貢獻指南 (繁體中文)](CONTRIBUTING.md)
+- [贡献指南 (简体中文)](../zh-CN/CONTRIBUTING.md)
 
 ---
 

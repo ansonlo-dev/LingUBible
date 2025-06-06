@@ -14,7 +14,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
       notice: 'Notice: Only Lingnan University Lingnanians with @ln.hk or @ln.edu.hk email addresses can register for LingUBible.',
       support: 'If you have any questions, please contact our technical support team.',
       platform: 'Lingnan University Course & Lecturer Review Platform',
-      license: 'Licensed under CC BY-SA',
+      license: 'Licensed under MIT',
       team: 'LingUBible Team'
     },
     'zh-TW': {
@@ -29,7 +29,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
       notice: '注意事項：只有使用 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南大學嶺南人才能註冊 LingUBible。',
       support: '如有任何問題，請聯繫我們的技術支援團隊。',
       platform: '嶺南大學課程與講師評價平台',
-      license: '採用 CC BY-SA 授權',
+      license: '採用 MIT 授權',
       team: 'LingUBible 團隊'
     },
     'zh-CN': {
@@ -44,7 +44,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
       notice: '注意事项：只有使用 @ln.hk 或 @ln.edu.hk 邮件地址的岭南大学岭南人才能注册 LingUBible。',
       support: '如有任何问题，请联系我们的技术支持团队。',
       platform: '岭南大学课程与讲师评价平台',
-      license: '采用 CC BY-SA 授权',
+      license: '采用 MIT 授权',
       team: 'LingUBible 团队'
     }
   };

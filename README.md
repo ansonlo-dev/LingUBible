@@ -123,18 +123,18 @@ graph TB
 ### 🏛️ Project Architecture
 
 ```
-📁 lingubible/
-├── 🎨 src/                    # Source code
-│   ├── 🧩 components/         # React components
-│   ├── 📄 pages/              # Page components
-│   ├── 🔧 services/           # API services
-│   ├── 🎣 hooks/              # Custom Hooks
-│   ├── 🛠️ utils/              # Utility functions
-│   └── 📝 types/              # TypeScript types
-├── 📚 docs/                   # Project documentation
-├── 🛠️ tools/                  # Development tools
-├── 🌐 public/                 # Static assets
-└── ⚙️ functions/              # Cloud functions
+lingubible/
+├── src/                       # Source code
+│   ├── components/            # React components
+│   ├── pages/                 # Page components
+│   ├── services/              # API services
+│   ├── hooks/                 # Custom Hooks
+│   ├── utils/                 # Utility functions
+│   └── types/                 # TypeScript types
+├── docs/                      # Project documentation
+├── tools/                     # Development tools
+├── public/                    # Static assets
+└── functions/                 # Cloud functions
 ```
 
 ### 📊 Performance Metrics
@@ -253,9 +253,9 @@ npm run readme:generate-assets  # Generate README assets
 
 | Language | README | Documentation | Status |
 |:---:|:---:|:---:|:---:|
-| 🇺🇸 **English** | [README.md](README.md) | [Documentation](docs/) | ✅ Complete |
-| �� **繁體中文** | [README.md](docs/zh-TW/README.md) | [文檔](docs/zh-TW/) | ✅ Complete |
-| 🇨🇳 **简体中文** | [README.md](docs/zh-CN/README.md) | [文档](docs/zh-CN/) | ✅ Complete |
+| **English** | [README.md](README.md) | [Documentation](docs/) | ✅ Complete |
+| **繁體中文** | [README.md](docs/zh-TW/README.md) | [文檔](docs/zh-TW/) | ✅ Complete |
+| **简体中文** | [README.md](docs/zh-CN/README.md) | [文档](docs/zh-CN/) | ✅ Complete |
 
 </div>
 
@@ -310,9 +310,9 @@ We welcome all forms of contributions, whether it's code, documentation, design,
 
 ### 📖 Detailed Guides
 
-- [🇺🇸 Contributing Guide (English)](docs/CONTRIBUTING.md)
-- [�� 貢獻指南 (繁體中文)](docs/zh-TW/CONTRIBUTING.md)
-- [🇨🇳 贡献指南 (简体中文)](docs/zh-CN/CONTRIBUTING.md)
+- [Contributing Guide (English)](docs/CONTRIBUTING.md)
+- [貢獻指南 (繁體中文)](docs/zh-TW/CONTRIBUTING.md)
+- [贡献指南 (简体中文)](docs/zh-CN/CONTRIBUTING.md)
 
 ---
 
