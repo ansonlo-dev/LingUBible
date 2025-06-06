@@ -102,40 +102,118 @@
 
 ### 🏗️ 技術棧
 
+<div align="center">
+
+| 類別 | 技術 | 版本 | 用途 |
+|:-----|:-----|:-----|:-----|
+| **🎨 前端** | React | 18.3.1 | UI 框架 |
+| | TypeScript | 5.5.3 | 型別安全 |
+| | Vite | 5.4.1 | 建構工具 |
+| | Tailwind CSS | 3.4.17 | 樣式設計 |
+| | shadcn/ui | 最新 | UI 元件 |
+| **🔧 後端** | Appwrite | 18.1.1 | BaaS 平台 |
+| | 郵件服務 | - | 通訊功能 |
+| | 身份驗證 | - | 用戶管理 |
+| **📦 工具** | ESLint | 最新 | 程式碼檢查 |
+| | PostCSS | 最新 | CSS 處理 |
+| | PWA | - | 漸進式網頁應用 |
+| | i18n | - | 國際化 |
+
+</div>
+
 ```mermaid
-graph TB
-    A[🎨 前端] --> B[⚛️ React 18.3.1]
-    A --> C[📘 TypeScript 5.5.3]
-    A --> D[⚡ Vite 5.4.1]
-    A --> E[🎨 Tailwind CSS 3.4.17]
-    A --> F[🧩 shadcn/ui]
+graph TD
+    subgraph "🎨 前端技術棧"
+        A[React 18.3.1]
+        B[TypeScript 5.5.3]
+        C[Vite 5.4.1]
+        D[Tailwind CSS]
+        E[shadcn/ui]
+    end
     
-    G[🔧 後端] --> H[🚀 Appwrite 18.1.1]
-    G --> I[📧 郵件服務]
-    G --> J[🔐 身份驗證]
+    subgraph "🔧 後端服務"
+        F[Appwrite 18.1.1]
+        G[郵件服務]
+        H[身份驗證]
+    end
     
-    K[📦 工具] --> L[📝 ESLint]
-    K --> M[🔧 PostCSS]
-    K --> N[📱 PWA 支援]
-    K --> O[🌍 國際化]
+    subgraph "📦 開發工具"
+        I[ESLint]
+        J[PostCSS]
+        K[PWA 支援]
+        L[國際化]
+    end
+    
+    style A fill:#61dafb
+    style B fill:#3178c6
+    style C fill:#646cff
+    style D fill:#06b6d4
+    style E fill:#000000
+    style F fill:#fd366e
+    style G fill:#ea4335
+    style H fill:#4285f4
+    style I fill:#4b32c3
+    style J fill:#dd3a0a
+    style K fill:#5a0fc8
+    style L fill:#009688
 ```
 
 ### 🏛️ 專案架構
 
+```mermaid
+graph TD
+    A[🏠 lingubible] --> B[📁 src]
+    A --> C[📚 docs]
+    A --> D[🛠️ tools]
+    A --> E[🌐 public]
+    A --> F[⚙️ functions]
+    
+    B --> B1[🧩 components]
+    B --> B2[📄 pages]
+    B --> B3[🔧 services]
+    B --> B4[🎣 hooks]
+    B --> B5[🛠️ utils]
+    B --> B6[📝 types]
+    
+    B1 --> B1A[auth]
+    B1 --> B1B[layout]
+    B1 --> B1C[user]
+    B1 --> B1D[common]
+    B1 --> B1E[features]
+    B1 --> B1F[ui]
+    
+    B2 --> B2A[auth]
+    B2 --> B2B[user]
+    B2 --> B2C[demo]
+    B2 --> B2D[legal]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fce4ec
+    style F fill:#f1f8e9
 ```
-lingubible/
-├── src/                       # 原始碼
-│   ├── components/            # React 元件
-│   ├── pages/                 # 頁面元件
-│   ├── services/              # API 服務
-│   ├── hooks/                 # 自訂 Hooks
-│   ├── utils/                 # 工具函數
-│   └── types/                 # TypeScript 型別
-├── docs/                      # 專案文檔
-├── tools/                     # 開發工具
-├── public/                    # 靜態資源
-└── functions/                 # 雲端函數
-```
+
+<div align="center">
+
+### 📂 目錄結構概覽
+
+| 目錄 | 用途 | 主要組件 |
+|:-----|:-----|:---------|
+| **📁 src/** | 原始碼 | 主要應用程式碼 |
+| **├── 🧩 components/** | React 元件 | UI 建構模塊 |
+| **├── 📄 pages/** | 頁面元件 | 路由級元件 |
+| **├── 🔧 services/** | API 服務 | 外部服務整合 |
+| **├── 🎣 hooks/** | 自訂 Hooks | 可重用的 React 邏輯 |
+| **├── 🛠️ utils/** | 工具函數 | 輔助函數和常量 |
+| **└── 📝 types/** | TypeScript 型別 | 型別定義 |
+| **📚 docs/** | 文檔 | 專案文檔 |
+| **🛠️ tools/** | 開發工具 | 建構腳本和工具 |
+| **🌐 public/** | 靜態資源 | 圖片、圖標、清單 |
+| **⚙️ functions/** | 雲端函數 | 無伺服器函數 |
+
+</div>
 
 ### 📊 效能指標
 

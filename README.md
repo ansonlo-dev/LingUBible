@@ -102,40 +102,118 @@
 
 ### 🏗️ Tech Stack
 
+<div align="center">
+
+| Category | Technology | Version | Purpose |
+|:---------|:-----------|:--------|:--------|
+| **🎨 Frontend** | React | 18.3.1 | UI Framework |
+| | TypeScript | 5.5.3 | Type Safety |
+| | Vite | 5.4.1 | Build Tool |
+| | Tailwind CSS | 3.4.17 | Styling |
+| | shadcn/ui | Latest | UI Components |
+| **🔧 Backend** | Appwrite | 18.1.1 | BaaS Platform |
+| | Email Services | - | Communication |
+| | Authentication | - | User Management |
+| **📦 Tools** | ESLint | Latest | Code Linting |
+| | PostCSS | Latest | CSS Processing |
+| | PWA | - | Progressive Web App |
+| | i18n | - | Internationalization |
+
+</div>
+
 ```mermaid
-graph TB
-    A[🎨 Frontend] --> B[⚛️ React 18.3.1]
-    A --> C[📘 TypeScript 5.5.3]
-    A --> D[⚡ Vite 5.4.1]
-    A --> E[🎨 Tailwind CSS 3.4.17]
-    A --> F[🧩 shadcn/ui]
+graph TD
+    subgraph "🎨 Frontend Stack"
+        A[React 18.3.1]
+        B[TypeScript 5.5.3]
+        C[Vite 5.4.1]
+        D[Tailwind CSS]
+        E[shadcn/ui]
+    end
     
-    G[🔧 Backend] --> H[🚀 Appwrite 18.1.1]
-    G --> I[📧 Email Services]
-    G --> J[🔐 Authentication]
+    subgraph "🔧 Backend Services"
+        F[Appwrite 18.1.1]
+        G[Email Services]
+        H[Authentication]
+    end
     
-    K[📦 Tools] --> L[📝 ESLint]
-    K --> M[🔧 PostCSS]
-    K --> N[📱 PWA Support]
-    K --> O[🌍 i18n]
+    subgraph "📦 Development Tools"
+        I[ESLint]
+        J[PostCSS]
+        K[PWA Support]
+        L[i18n]
+    end
+    
+    style A fill:#61dafb
+    style B fill:#3178c6
+    style C fill:#646cff
+    style D fill:#06b6d4
+    style E fill:#000000
+    style F fill:#fd366e
+    style G fill:#ea4335
+    style H fill:#4285f4
+    style I fill:#4b32c3
+    style J fill:#dd3a0a
+    style K fill:#5a0fc8
+    style L fill:#009688
 ```
 
 ### 🏛️ Project Architecture
 
+```mermaid
+graph TD
+    A[🏠 lingubible] --> B[📁 src]
+    A --> C[📚 docs]
+    A --> D[🛠️ tools]
+    A --> E[🌐 public]
+    A --> F[⚙️ functions]
+    
+    B --> B1[🧩 components]
+    B --> B2[📄 pages]
+    B --> B3[🔧 services]
+    B --> B4[🎣 hooks]
+    B --> B5[🛠️ utils]
+    B --> B6[📝 types]
+    
+    B1 --> B1A[auth]
+    B1 --> B1B[layout]
+    B1 --> B1C[user]
+    B1 --> B1D[common]
+    B1 --> B1E[features]
+    B1 --> B1F[ui]
+    
+    B2 --> B2A[auth]
+    B2 --> B2B[user]
+    B2 --> B2C[demo]
+    B2 --> B2D[legal]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fce4ec
+    style F fill:#f1f8e9
 ```
-lingubible/
-├── src/                       # Source code
-│   ├── components/            # React components
-│   ├── pages/                 # Page components
-│   ├── services/              # API services
-│   ├── hooks/                 # Custom Hooks
-│   ├── utils/                 # Utility functions
-│   └── types/                 # TypeScript types
-├── docs/                      # Project documentation
-├── tools/                     # Development tools
-├── public/                    # Static assets
-└── functions/                 # Cloud functions
-```
+
+<div align="center">
+
+### 📂 Directory Structure Overview
+
+| Directory | Purpose | Key Components |
+|:----------|:--------|:---------------|
+| **📁 src/** | Source code | Main application code |
+| **├── 🧩 components/** | React components | UI building blocks |
+| **├── 📄 pages/** | Page components | Route-level components |
+| **├── 🔧 services/** | API services | External service integrations |
+| **├── 🎣 hooks/** | Custom Hooks | Reusable React logic |
+| **├── 🛠️ utils/** | Utility functions | Helper functions and constants |
+| **└── 📝 types/** | TypeScript types | Type definitions |
+| **📚 docs/** | Documentation | Project documentation |
+| **🛠️ tools/** | Development tools | Build scripts and utilities |
+| **🌐 public/** | Static assets | Images, icons, manifest |
+| **⚙️ functions/** | Cloud functions | Serverless functions |
+
+</div>
 
 ### 📊 Performance Metrics
 

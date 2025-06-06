@@ -102,40 +102,118 @@
 
 ### 🏗️ 技术栈
 
+<div align="center">
+
+| 类别 | 技术 | 版本 | 用途 |
+|:-----|:-----|:-----|:-----|
+| **🎨 前端** | React | 18.3.1 | UI 框架 |
+| | TypeScript | 5.5.3 | 类型安全 |
+| | Vite | 5.4.1 | 构建工具 |
+| | Tailwind CSS | 3.4.17 | 样式设计 |
+| | shadcn/ui | 最新 | UI 组件 |
+| **🔧 后端** | Appwrite | 18.1.1 | BaaS 平台 |
+| | 邮件服务 | - | 通信功能 |
+| | 身份认证 | - | 用户管理 |
+| **📦 工具** | ESLint | 最新 | 代码检查 |
+| | PostCSS | 最新 | CSS 处理 |
+| | PWA | - | 渐进式网页应用 |
+| | i18n | - | 国际化 |
+
+</div>
+
 ```mermaid
-graph TB
-    A[🎨 前端] --> B[⚛️ React 18.3.1]
-    A --> C[📘 TypeScript 5.5.3]
-    A --> D[⚡ Vite 5.4.1]
-    A --> E[🎨 Tailwind CSS 3.4.17]
-    A --> F[🧩 shadcn/ui]
+graph TD
+    subgraph "🎨 前端技术栈"
+        A[React 18.3.1]
+        B[TypeScript 5.5.3]
+        C[Vite 5.4.1]
+        D[Tailwind CSS]
+        E[shadcn/ui]
+    end
     
-    G[🔧 后端] --> H[🚀 Appwrite 18.1.1]
-    G --> I[📧 邮件服务]
-    G --> J[🔐 身份认证]
+    subgraph "🔧 后端服务"
+        F[Appwrite 18.1.1]
+        G[邮件服务]
+        H[身份认证]
+    end
     
-    K[📦 工具] --> L[📝 ESLint]
-    K --> M[🔧 PostCSS]
-    K --> N[📱 PWA 支持]
-    K --> O[🌍 国际化]
+    subgraph "📦 开发工具"
+        I[ESLint]
+        J[PostCSS]
+        K[PWA 支持]
+        L[国际化]
+    end
+    
+    style A fill:#61dafb
+    style B fill:#3178c6
+    style C fill:#646cff
+    style D fill:#06b6d4
+    style E fill:#000000
+    style F fill:#fd366e
+    style G fill:#ea4335
+    style H fill:#4285f4
+    style I fill:#4b32c3
+    style J fill:#dd3a0a
+    style K fill:#5a0fc8
+    style L fill:#009688
 ```
 
 ### 🏛️ 项目架构
 
+```mermaid
+graph TD
+    A[🏠 lingubible] --> B[📁 src]
+    A --> C[📚 docs]
+    A --> D[🛠️ tools]
+    A --> E[🌐 public]
+    A --> F[⚙️ functions]
+    
+    B --> B1[🧩 components]
+    B --> B2[📄 pages]
+    B --> B3[🔧 services]
+    B --> B4[🎣 hooks]
+    B --> B5[🛠️ utils]
+    B --> B6[📝 types]
+    
+    B1 --> B1A[auth]
+    B1 --> B1B[layout]
+    B1 --> B1C[user]
+    B1 --> B1D[common]
+    B1 --> B1E[features]
+    B1 --> B1F[ui]
+    
+    B2 --> B2A[auth]
+    B2 --> B2B[user]
+    B2 --> B2C[demo]
+    B2 --> B2D[legal]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fce4ec
+    style F fill:#f1f8e9
 ```
-lingubible/
-├── src/                       # 源代码
-│   ├── components/            # React 组件
-│   ├── pages/                 # 页面组件
-│   ├── services/              # API 服务
-│   ├── hooks/                 # 自定义 Hooks
-│   ├── utils/                 # 工具函数
-│   └── types/                 # TypeScript 类型
-├── docs/                      # 项目文档
-├── tools/                     # 开发工具
-├── public/                    # 静态资源
-└── functions/                 # 云函数
-```
+
+<div align="center">
+
+### 📂 目录结构概览
+
+| 目录 | 用途 | 主要组件 |
+|:-----|:-----|:---------|
+| **📁 src/** | 源代码 | 主要应用程序代码 |
+| **├── 🧩 components/** | React 组件 | UI 构建块 |
+| **├── 📄 pages/** | 页面组件 | 路由级组件 |
+| **├── 🔧 services/** | API 服务 | 外部服务集成 |
+| **├── 🎣 hooks/** | 自定义 Hooks | 可重用的 React 逻辑 |
+| **├── 🛠️ utils/** | 工具函数 | 辅助函数和常量 |
+| **└── 📝 types/** | TypeScript 类型 | 类型定义 |
+| **📚 docs/** | 文档 | 项目文档 |
+| **🛠️ tools/** | 开发工具 | 构建脚本和工具 |
+| **🌐 public/** | 静态资源 | 图片、图标、清单 |
+| **⚙️ functions/** | 云函数 | 无服务器函数 |
+
+</div>
 
 ### 📊 性能指标
 
