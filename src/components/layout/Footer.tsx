@@ -86,7 +86,7 @@ export function Footer() {
                       ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/30' 
                       : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
                   }`}
-                  title={`查看 ${version} 發布說明`}
+                  title={t('footer.versionTooltip', { version })}
                 >
                   {isLoading ? (
                     <RefreshCw className="h-3 w-3 animate-spin" />
@@ -103,7 +103,7 @@ export function Footer() {
                 }`}>
                   {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
                   {version}
-                  {error && <span className="text-xs opacity-60" title={`無法獲取最新版本: ${error}`}>*</span>}
+                  {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
                 </span>
               )}
               <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -156,7 +156,7 @@ export function Footer() {
                         ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/30' 
                         : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
                     }`}
-                    title={`查看 ${version} 發布說明`}
+                    title={t('footer.versionTooltip', { version })}
                   >
                     {isLoading ? (
                       <RefreshCw className="h-3 w-3 animate-spin" />
@@ -173,7 +173,7 @@ export function Footer() {
                   }`}>
                     {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
                     {version}
-                    {error && <span className="text-xs opacity-60" title={`無法獲取最新版本: ${error}`}>*</span>}
+                    {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
                   </span>
                 )}
               </div>
@@ -234,7 +234,7 @@ export function Footer() {
                     ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/30' 
                     : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
                 }`}
-                title={`查看 ${version} 發布說明`}
+                title={t('footer.versionTooltip', { version })}
               >
                 {isLoading ? (
                   <RefreshCw className="h-3 w-3 animate-spin" />
@@ -251,7 +251,7 @@ export function Footer() {
               }`}>
                 {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
                 {version}
-                {error && <span className="text-xs opacity-60" title={`無法獲取最新版本: ${error}`}>*</span>}
+                {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
               </span>
             )}
           </div>

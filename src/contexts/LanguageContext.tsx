@@ -113,6 +113,8 @@ const translations = {
     'footer.contact': 'Contact',
     'footer.terms': 'Terms',
     'footer.privacy': 'Privacy',
+    'footer.versionTooltip': 'View {version} release notes',
+    'footer.versionError': 'Unable to fetch latest version: {error}',
     // Auth Modal
     'auth.signIn': 'Sign In',
     'auth.signUp': 'Sign Up',
@@ -709,6 +711,8 @@ const translations = {
     'footer.contact': '聯絡',
     'footer.terms': '條款',
     'footer.privacy': '隱私',
+    'footer.versionTooltip': '查看 {version} 發布說明',
+    'footer.versionError': '無法獲取最新版本: {error}',
     // Auth Modal
     'auth.signIn': '登入',
     'auth.signUp': '註冊',
@@ -1305,6 +1309,8 @@ const translations = {
     'footer.contact': '联系',
     'footer.terms': '条款',
     'footer.privacy': '隐私',
+    'footer.versionTooltip': '查看 {version} 发布说明',
+    'footer.versionError': '无法获取最新版本: {error}',
     // Auth Modal
     'auth.signIn': '登录',
     'auth.signUp': '注册',

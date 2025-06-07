@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多語言版本徽章測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background-color: #fed7aa;
+            color: #ea580c;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+        .version-badge:hover {
+            background-color: #fdba74;
+            transform: scale(1.05);
+        }
+        .external-icon {
+            width: 12px;
+            height: 12px;
+        }
+        .language-selector {
+            margin: 10px 0;
+        }
+        .language-selector button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .language-selector button.active {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 多語言版本徽章測試</h1>
+    
+    <div class="test-container">
+        <h2>語言切換</h2>
+        <div class="language-selector">
+            <button onclick="setLanguage('en')" id="btn-en">English</button>
+            <button onclick="setLanguage('zh-TW')" id="btn-zh-tw" class="active">繁體中文</button>
+            <button onclick="setLanguage('zh-CN')" id="btn-zh-cn">简体中文</button>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>版本徽章測試</h2>
+        <p>懸停在版本徽章上查看多語言提示文字：</p>
+        
+        <div id="version-badges">
+            <!-- 版本徽章將在這裡動態生成 -->
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3>當前語言設置</h3>
+            <p><strong>語言：</strong> <span id="current-language">繁體中文</span></p>
+            <p><strong>版本提示文字：</strong> <span id="tooltip-text">查看 Beta 0.0.6 發布說明</span></p>
+            <p><strong>錯誤提示文字：</strong> <span id="error-text">無法獲取最新版本: API 錯誤</span></p>
+        </div>
+    </div>
+
+    <script>
+        // 模擬翻譯數據
+        const translations = {
+            'en': {
+                'footer.versionTooltip': 'View {version} release notes',
+                'footer.versionError': 'Unable to fetch latest version: {error}',
+                'language.name': 'English'
+            },
+            'zh-TW': {
+                'footer.versionTooltip': '查看 {version} 發布說明',
+                'footer.versionError': '無法獲取最新版本: {error}',
+                'language.name': '繁體中文'
+            },
+            'zh-CN': {
+                'footer.versionTooltip': '查看 {version} 发布说明',
+                'footer.versionError': '无法获取最新版本: {error}',
+                'language.name': '简体中文'
+            }
+        };
+
+        let currentLanguage = 'zh-TW';
+
+        // 翻譯函數
+        function t(key, params = {}) {
+            let translation = translations[currentLanguage][key] || key;
+            
+            // 參數替換
+            if (params && typeof translation === 'string') {
+                Object.keys(params).forEach(paramKey => {
+                    const placeholder = `{${paramKey}}`;
+                    translation = translation.replace(new RegExp(placeholder, 'g'), params[paramKey]);
+                });
+            }
+            
+            return translation;
+        }
+
+        // 設置語言
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.language-selector button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-${lang.toLowerCase()}`).classList.add('active');
+            
+            // 更新顯示
+            updateDisplay();
+        }
+
+        // 更新顯示內容
+        function updateDisplay() {
+            const version = 'Beta 0.0.6';
+            const error = 'API 錯誤';
+            
+            // 更新語言名稱
+            document.getElementById('current-language').textContent = t('language.name');
+            
+            // 更新提示文字
+            document.getElementById('tooltip-text').textContent = t('footer.versionTooltip', { version });
+            document.getElementById('error-text').textContent = t('footer.versionError', { error });
+            
+            // 生成版本徽章
+            generateVersionBadges(version);
+        }
+
+        // 生成版本徽章
+        function generateVersionBadges(version) {
+            const container = document.getElementById('version-badges');
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <h4>正常版本徽章：</h4>
+                    <a href="https://github.com/ansonlo-dev/LingUBible/releases/tag/v0.0.6" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="version-badge"
+                       title="${t('footer.versionTooltip', { version })}">
+                        <svg class="external-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        ${version}
+                    </a>
+                </div>
+                
+                <div>
+                    <h4>錯誤狀態徽章：</h4>
+                    <span class="version-badge" style="background-color: #fecaca; color: #dc2626;">
+                        ${version}
+                        <span style="margin-left: 4px; opacity: 0.6;" title="${t('footer.versionError', { error: 'API 錯誤' })}">*</span>
+                    </span>
+                </div>
+            `;
+        }
+
+        // 初始化
+        updateDisplay();
+    </script>
+</body>
+</html> 
