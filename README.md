@@ -494,4 +494,8 @@ This website has no official affiliation with Lingnan University. All reviews an
 
 *Built with ❤️ by [ansonlo.dev](https://ansonlo.dev) | Powered by Open Source*
 
+---
+
+*Last updated: GitHub Actions configured for API Key authentication*
+
 </div> 
