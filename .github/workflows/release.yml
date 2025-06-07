@@ -85,6 +85,12 @@ jobs:
         echo "🐛 **問題回報**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
         
+    - name: Create build archive
+      run: |
+        cd dist
+        zip -r ../lingubible-${{ steps.package_version.outputs.PACKAGE_VERSION }}-build.zip .
+        cd ..
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       env:
@@ -96,4 +102,4 @@ jobs:
         draft: false
         prerelease: ${{ steps.release_type.outputs.PRERELEASE }}
         files: |
-          dist/**/* 
+          lingubible-${{ steps.package_version.outputs.PACKAGE_VERSION }}-build.zip 
