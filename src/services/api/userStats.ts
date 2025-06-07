@@ -19,8 +19,8 @@ class UserStatsService {
   private static instance: UserStatsService;
   private stats: UserStats;
   private sessions: Map<string, UserSession> = new Map();
-  private updateInterval: number | null = null;
-  private pingInterval: number | null = null;
+  private updateInterval: NodeJS.Timeout | null = null;
+  private pingInterval: NodeJS.Timeout | null = null;
   private readonly SESSION_TIMEOUT = 90 * 1000; // 90 秒無 ping 視為離線（給用戶足夠時間切換標籤頁）
   private readonly UPDATE_INTERVAL = 30 * 1000; // 每 30 秒更新一次統計
   private readonly PING_INTERVAL = 45 * 1000; // 每 45 秒發送一次 ping
@@ -552,11 +552,13 @@ class UserStatsService {
 
   // 通知統計數據更新
   private notifyStatsUpdate(): void {
+    // 暫時禁用事件觸發，避免與 useUserStats 的緩存機制衝突
     // 發送自定義事件通知 UI 組件更新
-    const event = new CustomEvent('userStatsUpdated', {
-      detail: this.getStats()
-    });
-    window.dispatchEvent(event);
+    // const event = new CustomEvent('userStatsUpdated', {
+    //   detail: this.getStats()
+    // });
+    // window.dispatchEvent(event);
+    console.log('UserStats: 統計更新通知已禁用，避免重複調用');
   }
 }
 

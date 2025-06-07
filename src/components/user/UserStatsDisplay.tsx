@@ -11,25 +11,15 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
   const { stats, isLoading } = useUserStats();
   const { t } = useLanguage();
 
-  // 調試信息
-  console.log('UserStatsDisplay: 當前統計數據', stats);
-  console.log('UserStatsDisplay: 載入狀態', isLoading);
-
-  if (isLoading) {
-    return (
-      <div className={`flex items-center text-xs text-muted-foreground ${className}`}>
-        <Users className="h-3 w-3 mr-1" />
-        {t('stats.loading')}
-      </div>
-    );
-  }
+  // 不再顯示 loading 文字，而是顯示數據並添加載入動畫
+  const showLoadingAnimation = isLoading;
 
   if (variant === 'compact') {
     return (
       <div className={`flex items-center text-xs text-muted-foreground ${className}`}>
         <div className="flex items-center">
-          <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
-          <span className="font-medium text-green-600 dark:text-green-400">
+          <div className={`w-2 h-2 bg-green-500 rounded-full mr-1 ${showLoadingAnimation ? 'animate-pulse' : 'animate-pulse'}`}></div>
+          <span className={`font-medium text-green-600 dark:text-green-400 ${showLoadingAnimation ? 'opacity-70' : ''}`}>
             {stats.onlineUsers || 0} {t('stats.users')}, {stats.onlineVisitors || 0} {t('stats.visitors')} {t('stats.online')}
           </span>
         </div>
@@ -40,7 +30,7 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
   return (
     <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${className}`}>
       {/* 在線用戶和訪客 */}
-      <div className="flex items-center space-x-2 text-sm">
+      <div className={`flex items-center space-x-2 text-sm ${showLoadingAnimation ? 'opacity-70' : ''}`}>
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
           <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -56,7 +46,7 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
       </div>
 
       {/* 總註冊用戶 */}
-      <div className="flex items-center space-x-2 text-sm">
+      <div className={`flex items-center space-x-2 text-sm ${showLoadingAnimation ? 'opacity-70' : ''}`}>
         <UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <div>
           <div className="font-semibold text-blue-600 dark:text-blue-400">
@@ -69,7 +59,7 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
       </div>
 
       {/* 今日登入 */}
-      <div className="flex items-center space-x-2 text-sm">
+      <div className={`flex items-center space-x-2 text-sm ${showLoadingAnimation ? 'opacity-70' : ''}`}>
         <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
         <div>
           <div className="font-semibold text-orange-600 dark:text-orange-400">
@@ -82,7 +72,7 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
       </div>
 
       {/* 本月登入 */}
-      <div className="flex items-center space-x-2 text-sm">
+      <div className={`flex items-center space-x-2 text-sm ${showLoadingAnimation ? 'opacity-70' : ''}`}>
         <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
         <div>
           <div className="font-semibold text-purple-600 dark:text-purple-400">

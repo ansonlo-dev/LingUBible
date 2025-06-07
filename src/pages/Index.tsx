@@ -223,18 +223,18 @@ const Index = () => {
 
         {/* Content Tabs */}
         <Tabs defaultValue="courses" className="space-y-6 relative z-20">
-          <div className="flex items-center justify-between">
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="courses" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                {t('tabs.popularCourses')}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <TabsList className="grid grid-cols-2 w-full sm:w-auto min-w-0">
+              <TabsTrigger value="courses" className="flex items-center gap-2 min-w-0">
+                <BookOpen className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{t('tabs.popularCourses')}</span>
               </TabsTrigger>
-              <TabsTrigger value="lecturers" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                {t('tabs.topLecturers')}
+              <TabsTrigger value="lecturers" className="flex items-center gap-2 min-w-0">
+                <Users className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{t('tabs.topLecturers')}</span>
               </TabsTrigger>
             </TabsList>
-            <Button variant="outline">{t('button.viewAll')}</Button>
+            <Button variant="outline" className="w-full sm:w-auto">{t('button.viewAll')}</Button>
           </div>
 
           <TabsContent value="courses" className="space-y-6">

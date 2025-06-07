@@ -315,6 +315,41 @@
     z-index: 1;
   }
 
+  /* 頁腳響應式佈局優化 */
+  footer {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* 中等螢幕尺寸的頁腳佈局優化 */
+  @media (min-width: 768px) and (max-width: 1279px) {
+    footer .space-y-3 > div {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    
+    /* 確保導航連結在中等螢幕上不會過於擁擠 */
+    footer .space-x-4 {
+      gap: 0.75rem;
+    }
+    
+    /* 調整文字大小以適應較小的空間 */
+    footer .text-sm {
+      font-size: 0.8125rem;
+    }
+  }
+
+  /* 小螢幕桌面版（768px-1024px）的特殊處理 */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    footer .space-x-4 {
+      gap: 0.5rem;
+    }
+    
+    footer .space-x-6 {
+      gap: 0.75rem;
+    }
+  }
+
   /* 玻璃卡片效果 - 確保淺色模式有足夠的背景 */
   .glass-card {
     background: #ffffff !important;
@@ -679,7 +714,7 @@
     }
   }
 
-  /* 滾動條樣式 */
+  /* 滾動條樣式 - 桌面版 */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -698,6 +733,61 @@
 
   ::-webkit-scrollbar-thumb:hover {
     opacity: 0.8;
+  }
+
+  /* 手機版和平板電腦隱藏滾動條 - 現代應用風格 */
+  @media (max-width: 1024px) {
+    /* Webkit 瀏覽器（Safari, Chrome 等） */
+    ::-webkit-scrollbar {
+      width: 0px;
+      height: 0px;
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: transparent;
+    }
+    
+    /* Firefox */
+    * {
+      scrollbar-width: none;
+    }
+    
+    /* 確保滾動功能仍然可用 */
+    html, body {
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    
+    /* 針對特定容器也隱藏滾動條 */
+    .main-container,
+    .content-area,
+    .sidebar-container,
+    [data-radix-dialog-content],
+    [data-radix-dropdown-content],
+    [data-radix-select-content],
+    [data-radix-popover-content],
+    [cmdk-root],
+    .command-list {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    
+    .main-container::-webkit-scrollbar,
+    .content-area::-webkit-scrollbar,
+    .sidebar-container::-webkit-scrollbar,
+    [data-radix-dialog-content]::-webkit-scrollbar,
+    [data-radix-dropdown-content]::-webkit-scrollbar,
+    [data-radix-select-content]::-webkit-scrollbar,
+    [data-radix-popover-content]::-webkit-scrollbar,
+    [cmdk-root]::-webkit-scrollbar,
+    .command-list::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   /* 選擇文字樣式 */
@@ -1197,6 +1287,84 @@
     box-shadow: none !important;
     position: relative !important;
     z-index: 10 !important;
+  }
+
+  /* 手機版標籤切換響應式設計 */
+  @media (max-width: 640px) {
+    /* 確保 TabsList 在手機版有足夠的寬度 */
+    [data-radix-tabs-list] {
+      width: 100% !important;
+      min-width: 100% !important;
+    }
+    
+    /* 確保 TabsTrigger 在手機版有適當的尺寸和間距 */
+    [data-radix-tabs-trigger] {
+      flex: 1 !important;
+      min-width: 0 !important;
+      padding: 10px 8px !important;
+      font-size: 14px !important;
+      gap: 6px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    /* 確保圖示在手機版始終顯示且不會被壓縮 */
+    [data-radix-tabs-trigger] svg {
+      flex-shrink: 0 !important;
+      width: 16px !important;
+      height: 16px !important;
+      min-width: 16px !important;
+      display: block !important;
+    }
+    
+    /* 確保文字在手機版不會被隱藏，但允許適當的截斷 */
+    [data-radix-tabs-trigger] span {
+      flex-shrink: 1 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      display: block !important;
+    }
+  }
+
+  /* 極小螢幕（小於 480px）的特殊處理 */
+  @media (max-width: 480px) {
+    [data-radix-tabs-trigger] {
+      padding: 8px 6px !important;
+      font-size: 13px !important;
+      gap: 4px !important;
+    }
+    
+    [data-radix-tabs-trigger] svg {
+      width: 14px !important;
+      height: 14px !important;
+      min-width: 14px !important;
+    }
+  }
+
+  /* 超小螢幕（小於 360px）的特殊處理 - 只顯示圖示 */
+  @media (max-width: 360px) {
+    [data-radix-tabs-trigger] {
+      padding: 8px 4px !important;
+      font-size: 12px !important;
+      gap: 2px !important;
+    }
+    
+    /* 在超小螢幕上，文字可能會很擠，但仍然保持顯示 */
+    [data-radix-tabs-trigger] span {
+      font-size: 11px !important;
+    }
+    
+    [data-radix-tabs-trigger] svg {
+      width: 12px !important;
+      height: 12px !important;
+      min-width: 12px !important;
+    }
   }
   
   /* 確保 Tailwind 的 data-[state=active] 選擇器被覆蓋 */

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import RegisteredUsersService from '@/services/api/registeredUsersService';
+import { useState, useEffect, useCallback } from 'react';
+import { useUserStats } from './useUserStats';
 
 interface RegisteredUsersStats {
   totalRegisteredUsers: number;
@@ -9,7 +9,7 @@ interface RegisteredUsersStats {
 }
 
 export const useRegisteredUsers = () => {
-  // 初始狀態不設置預設值，讓 API 數據優先
+  const { stats: userStats, backendStats, isLoading: userStatsLoading } = useUserStats();
   const [stats, setStats] = useState<RegisteredUsersStats>({
     totalRegisteredUsers: 0,
     newUsersLast30Days: 0,
@@ -18,69 +18,43 @@ export const useRegisteredUsers = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  const fetchStats = async (forceRefresh = false) => {
-    try {
-      // 只在首次載入或強制刷新時顯示載入狀態
-      // 如果已經載入過一次，就不再顯示載入狀態（避免閃爍）
-      if (!hasLoadedOnce || forceRefresh) {
-        setLoading(true);
-      }
-      setError(null);
-      const registeredUsersService = RegisteredUsersService.getInstance();
-      
-      // 如果強制刷新，清除緩存
-      if (forceRefresh) {
-        registeredUsersService.clearCache();
-      }
-      
-      const newStats = await registeredUsersService.getRegisteredUsersStats();
-      setStats(newStats);
-      setHasLoadedOnce(true);
-      console.log('註冊用戶統計已更新:', newStats);
-    } catch (err) {
-      console.error('獲取註冊用戶統計失敗:', err);
-      setError(err instanceof Error ? err.message : '獲取統計失敗');
-      
-      // 如果是首次載入失敗，標記已載入但保持重試機制
-      if (!hasLoadedOnce) {
-        setHasLoadedOnce(true);
-        console.log('首次載入失敗，將在稍後重試');
-        
-        // 延遲重試
-        setTimeout(() => {
-          console.log('重試獲取註冊用戶統計...');
-          fetchStats();
-        }, 5000);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 強制刷新數據（清除緩存）
-  const forceRefresh = () => {
-    console.log('強制刷新註冊用戶統計...');
-    setHasLoadedOnce(false); // 重置載入狀態
-    fetchStats(true);
-  };
-
+  // 將 userStats 轉換為 RegisteredUsersStats 格式
   useEffect(() => {
-    // 延遲載入以避免阻塞頁面渲染
-    const timer = setTimeout(() => {
-      fetchStats();
-    }, 100);
+    if (!userStatsLoading && userStats) {
+      console.log('useRegisteredUsers: 使用 userStats 數據', userStats);
+      console.log('useRegisteredUsers: 使用原始後端數據', backendStats);
+      
+      const convertedStats: RegisteredUsersStats = {
+        totalRegisteredUsers: userStats.totalUsers || 0,
+        // 優先使用原始後端數據中的 newUsersLast30Days
+        newUsersLast30Days: backendStats?.newUsersLast30Days || userStats.thisMonthLogins || 0,
+        verifiedUsers: backendStats?.verifiedUsers || userStats.totalUsers || 0,
+        lastUpdated: userStats.lastUpdated
+      };
+      
+      console.log('useRegisteredUsers: 轉換後的統計數據', convertedStats);
+      
+      setStats(convertedStats);
+      setLoading(false);
+      setError(null);
+    }
+  }, [userStats, backendStats, userStatsLoading]);
 
-    return () => clearTimeout(timer);
+  // 手動刷新（實際上會觸發 userStats 的刷新）
+  const refreshStats = useCallback(async () => {
+    console.log('useRegisteredUsers: 手動刷新統計數據');
+    setLoading(true);
+    setError(null);
+    
+    // 注意：實際的刷新由 useUserStats 處理
+    // 這裡只是重置狀態，數據會通過 useEffect 更新
   }, []);
 
   return {
     stats,
-    loading: loading && !hasLoadedOnce, // 只在首次載入時顯示載入狀態
+    loading: loading || userStatsLoading,
     error,
-    refetch: fetchStats,
-    forceRefresh,
-    hasLoadedOnce
+    refreshStats
   };
 }; 

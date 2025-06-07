@@ -27,12 +27,12 @@ class AppwriteUserStatsService {
   private databases: Databases;
   private functions: Functions;
   private activeSessions: Map<string, string> = new Map(); // userId -> sessionId
-  private pingIntervals: Map<string, number> = new Map(); // sessionId -> interval
+  private pingIntervals: Map<string, NodeJS.Timeout> = new Map(); // sessionId -> interval
   private readonly SESSION_TIMEOUT = 5 * 60 * 1000; // 5 分鐘（配合 2 分鐘 ping）
   private readonly PING_INTERVAL = 120 * 1000; // 120 秒（2 分鐘）
   private readonly BACKGROUND_PING_INTERVAL = 60 * 1000; // 背景標籤頁：60 秒
   private readonly CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 分鐘清理一次
-  private cleanupTimer: number | null = null; // 清理定時器
+  private cleanupTimer: NodeJS.Timeout | null = null; // 清理定時器
   private readonly DATABASE_ID = 'user-stats-db';
   private readonly SESSIONS_COLLECTION_ID = 'user-sessions';
   private readonly STATS_COLLECTION_ID = 'user-stats';
@@ -304,12 +304,12 @@ class AppwriteUserStatsService {
   }
 
   // 獲取統計數據 - 使用 Function（更安全）
-  async getStatsViaFunction(): Promise<UserStats> {
+  async getStatsViaFunction(): Promise<UserStats & { _backendData?: any }> {
     try {
       console.log('AppwriteUserStats: 通過 Function 獲取統計數據...');
       
-      // 在獲取統計數據前清理過期會話
-      await this.cleanupExpiredSessions();
+      // 移除每次獲取統計時的清理操作，避免頻繁調用
+      // await this.cleanupExpiredSessions();
       
       const result = await this.functions.createExecution(
         'get-user-stats', // Function ID
@@ -319,11 +319,25 @@ class AppwriteUserStatsService {
       
       if (result.responseStatusCode === 200) {
         const response = JSON.parse(result.responseBody);
-        console.log('AppwriteUserStats: Function 統計數據', response);
+        console.log('AppwriteUserStats: Function 原始統計數據', response);
         
         // 檢查響應格式並提取數據
         if (response.success && response.data) {
-          return response.data;
+          const backendData = response.data;
+          
+          // 將後端數據結構轉換為前端期望的 UserStats 格式
+          const frontendStats: UserStats & { _backendData?: any } = {
+            totalUsers: backendData.totalRegisteredUsers || 0,
+            onlineUsers: backendData.onlineUsers || 0,
+            onlineVisitors: backendData.onlineVisitors || 0,
+            todayLogins: backendData.todayLogins || 0,
+            thisMonthLogins: backendData.thisMonthLogins || 0,
+            lastUpdated: backendData.lastUpdated || new Date().toISOString(),
+            _backendData: backendData // 保存原始後端數據
+          };
+          
+          console.log('AppwriteUserStats: 轉換後的前端統計數據', frontendStats);
+          return frontendStats;
         } else {
           throw new Error(`Function 返回錯誤: ${response.error || 'Unknown error'}`);
         }

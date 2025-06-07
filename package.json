@@ -30,7 +30,12 @@
     "version:minor": "node tools/scripts/version/update-version.js minor",
     "version:major": "node tools/scripts/version/update-version.js major",
     "version:set": "node tools/scripts/version/update-version.js custom",
-    "version:info": "node -e \"const pkg = require('./package.json'); const { getFormattedVersion, getVersionStatus } = require('./src/utils/version.ts'); console.log('📦 當前版本:', pkg.version); console.log('🏷️ 顯示格式:', getFormattedVersion()); console.log('📊 版本狀態:', getVersionStatus());\""
+    "version:info": "node -e \"const pkg = require('./package.json'); const { getFormattedVersion, getVersionStatus } = require('./src/utils/version.ts'); console.log('📦 當前版本:', pkg.version); console.log('🏷️ 顯示格式:', getFormattedVersion()); console.log('📊 版本狀態:', getVersionStatus());\"",
+    "release:patch": "node tools/scripts/version/manual-release.js patch",
+    "release:minor": "node tools/scripts/version/manual-release.js minor",
+    "release:major": "node tools/scripts/version/manual-release.js major",
+    "release:auto": "node tools/scripts/version/manual-release.js patch --yes",
+    "release:check": "echo '🔍 檢查發布狀態...' && git status && echo '' && echo '📋 最近的標籤:' && git tag --sort=-version:refname | head -5"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
