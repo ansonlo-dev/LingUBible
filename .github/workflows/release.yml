@@ -8,6 +8,9 @@ on:
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     
     steps:
     - name: Checkout code
@@ -16,7 +19,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install dependencies
@@ -37,7 +40,13 @@ jobs:
       
     - name: Get package version
       id: package_version
-      run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      run: |
+        PACKAGE_VERSION=$(node -e "
+        import fs from 'fs';
+        const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+        console.log(pkg.version);
+        ")
+        echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
       
     - name: Determine release type
       id: release_type
@@ -77,22 +86,14 @@ jobs:
         echo "EOF" >> $GITHUB_OUTPUT
         
     - name: Create Release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.get_version.outputs.VERSION }}
-        release_name: ${{ steps.release_type.outputs.RELEASE_NAME }}
+        name: ${{ steps.release_type.outputs.RELEASE_NAME }}
         body: ${{ steps.changelog.outputs.CHANGELOG }}
         draft: false
         prerelease: ${{ steps.release_type.outputs.PRERELEASE }}
-        
-    - name: Upload build artifacts
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist
-        asset_name: lingubible-${{ steps.package_version.outputs.PACKAGE_VERSION }}-build.zip
-        asset_content_type: application/zip 
+        files: |
+          dist/**/* 
