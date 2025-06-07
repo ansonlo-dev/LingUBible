@@ -18,8 +18,8 @@ export default defineConfig(({ command, mode }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      // 在 Cloudflare Workers 環境中禁用 Service Worker
-      disable: process.env.CF_PAGES === '1' || process.env.NODE_ENV === 'production',
+      // 重新啟用 PWA，但針對 Cloudflare Workers 優化配置
+      disable: false,
       workbox: {
         globPatterns: [
           '**/*.{js,css,html,woff2}',
@@ -29,6 +29,10 @@ export default defineConfig(({ command, mode }) => ({
         ...(mode === 'development' && {
           globPatterns: ['**/*.{js,css,html}']
         }),
+        // 針對 Cloudflare Workers 的特殊配置
+        navigateFallback: null, // 禁用導航回退，讓 Cloudflare Workers 處理 SPA 路由
+        skipWaiting: true,
+        clientsClaim: true,
         // 運行時緩存配置
         runtimeCaching: [
           {
