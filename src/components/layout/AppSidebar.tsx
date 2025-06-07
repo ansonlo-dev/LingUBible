@@ -36,20 +36,51 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   const { user } = useAuth();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
 
   // 檢測移動設備並監聽方向變化
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
+      // 強制重新渲染以確保 shouldShowText 正確更新
+      setForceRender(prev => prev + 1);
     };
 
+    // 初始檢測
     checkIsMobile();
+
+    // 處理方向變化的函數，添加延遲確保視窗大小正確更新
+    const handleOrientationChange = () => {
+      // 立即檢測一次
+      checkIsMobile();
+      
+      // 延遲檢測，確保視窗大小已經更新
+      setTimeout(() => {
+        checkIsMobile();
+      }, 100);
+      
+      // 再次延遲檢測，處理某些設備的延遲更新
+      setTimeout(() => {
+        checkIsMobile();
+      }, 300);
+    };
+
+    // 監聽多種事件來確保捕獲所有變化
     window.addEventListener('resize', checkIsMobile);
-    window.addEventListener('orientationchange', checkIsMobile);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // 監聽視覺視窗變化（PWA 特有）
+    if ('visualViewport' in window) {
+      window.visualViewport?.addEventListener('resize', checkIsMobile);
+    }
 
     return () => {
       window.removeEventListener('resize', checkIsMobile);
-      window.removeEventListener('orientationchange', checkIsMobile);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      if ('visualViewport' in window) {
+        window.visualViewport?.removeEventListener('resize', checkIsMobile);
+      }
     };
   }, []);
 
@@ -69,7 +100,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   return (
     <>
       {/* 側邊欄內容 - 直接使用 flex 佈局，不再包裝額外的 div */}
-      <div className="flex flex-col h-full">
+      <div key={`sidebar-${forceRender}`} className="flex flex-col h-full">
         {/* Logo 區域 - 所有設備都顯示 */}
         <div className="p-4 md:p-2 md:h-16 md:flex md:items-center mt-2">
           {shouldShowText && (

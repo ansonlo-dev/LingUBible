@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計數據測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 LingUBible 統計數據測試</h1>
+        
+        <div>
+            <button onclick="testConnection()">測試連接</button>
+            <button onclick="testStats()">測試統計數據</button>
+            <button onclick="clearLog()">清除日誌</button>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsers">-</div>
+                <div class="stat-label">總用戶數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="onlineUsers">-</div>
+                <div class="stat-label">在線用戶</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="todayLogins">-</div>
+                <div class="stat-label">今日登入</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="thisMonthLogins">-</div>
+                <div class="stat-label">本月登入</div>
+            </div>
+        </div>
+
+        <h3>測試日誌</h3>
+        <div id="log"></div>
+    </div>
+
+    <script type="module">
+        import { Client, Databases, Query } from 'https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/esm/sdk.js';
+
+        let client, databases;
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.className = type;
+            statusElement.textContent = message;
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+            document.getElementById('onlineUsers').textContent = stats.onlineUsers || 0;
+            document.getElementById('todayLogins').textContent = stats.todayLogins || 0;
+            document.getElementById('thisMonthLogins').textContent = stats.thisMonthLogins || 0;
+        }
+
+        window.testConnection = async function() {
+            try {
+                log('開始測試 Appwrite 連接...');
+                
+                // 初始化 Appwrite 客戶端
+                client = new Client()
+                    .setEndpoint('https://fra.cloud.appwrite.io/v1')
+                    .setProject('lingubible');
+                
+                databases = new Databases(client);
+                
+                log('Appwrite 客戶端初始化成功', 'success');
+                showStatus('連接成功！', 'success');
+                
+                // 測試數據庫訪問
+                const collections = await databases.listCollections('user-stats-db');
+                log(`找到 ${collections.collections.length} 個集合`, 'success');
+                
+                collections.collections.forEach(collection => {
+                    log(`集合: ${collection.name} (${collection.$id})`);
+                });
+                
+            } catch (error) {
+                log(`連接失敗: ${error.message}`, 'error');
+                showStatus('連接失敗！', 'error');
+                console.error('連接錯誤:', error);
+            }
+        };
+
+        window.testStats = async function() {
+            if (!databases) {
+                log('請先測試連接', 'error');
+                return;
+            }
+
+            try {
+                log('開始測試統計數據讀取...');
+                
+                // 測試讀取統計文檔
+                const statsResult = await databases.listDocuments(
+                    'user-stats-db',
+                    'user-stats'
+                );
+                
+                log(`找到 ${statsResult.documents.length} 個統計文檔`, 'success');
+                
+                if (statsResult.documents.length > 0) {
+                    const statsDoc = statsResult.documents[0];
+                    log(`統計數據: ${JSON.stringify(statsDoc, null, 2)}`);
+                    
+                    // 測試讀取會話數據
+                    const sessionsResult = await databases.listDocuments(
+                        'user-stats-db',
+                        'user-sessions',
+                        [
+                            Query.greaterThan('lastPing', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+                        ]
+                    );
+                    
+                    log(`找到 ${sessionsResult.documents.length} 個活躍會話`, 'success');
+                    
+                    // 更新顯示
+                    const stats = {
+                        totalUsers: statsDoc.totalUsers,
+                        onlineUsers: sessionsResult.documents.length,
+                        todayLogins: statsDoc.todayLogins,
+                        thisMonthLogins: statsDoc.thisMonthLogins
+                    };
+                    
+                    updateStats(stats);
+                    showStatus('統計數據讀取成功！', 'success');
+                    
+                } else {
+                    log('沒有找到統計文檔', 'error');
+                    showStatus('沒有統計數據', 'error');
+                }
+                
+            } catch (error) {
+                log(`讀取統計數據失敗: ${error.message}`, 'error');
+                showStatus('讀取失敗！', 'error');
+                console.error('統計錯誤:', error);
+            }
+        };
+
+        window.clearLog = function() {
+            document.getElementById('log').textContent = '';
+        };
+
+        // 頁面載入時自動測試連接
+        window.addEventListener('load', () => {
+            log('頁面載入完成，準備測試...');
+        });
+    </script>
+</body>
+</html> 

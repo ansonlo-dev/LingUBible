@@ -1079,6 +1079,32 @@
     .sidebar-container {
       width: 33.33vw !important;
     }
+    
+    /* 確保橫屏模式下文字始終顯示 */
+    .sidebar-container nav a span {
+      opacity: 1 !important;
+      width: auto !important;
+      display: inline !important;
+    }
+    
+    /* 強制顯示 Logo 文字 */
+    .sidebar-container .text-xl {
+      display: inline !important;
+    }
+  }
+
+  /* 移動端豎屏模式：確保文字正確顯示 */
+  @media (max-width: 768px) and (orientation: portrait) {
+    .sidebar-container nav a span {
+      opacity: 1 !important;
+      width: auto !important;
+      display: inline !important;
+    }
+    
+    /* 強制顯示 Logo 文字 */
+    .sidebar-container .text-xl {
+      display: inline !important;
+    }
   }
 
   /* TabsTrigger 懸停效果 */

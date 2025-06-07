@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useUserStats } from './useUserStats';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PingSystemOptions {
   enabled?: boolean;
@@ -14,9 +15,10 @@ export function usePingSystem(options: PingSystemOptions = {}) {
     activityEvents = ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
   } = options;
 
+  const { user } = useAuth();
   const { sendPing } = useUserStats();
   const lastActivityRef = useRef<number>(Date.now());
-  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pingIntervalRef = useRef<number | null>(null);
   const activityListenersRef = useRef<boolean>(false);
 
   // 記錄用戶活動
@@ -105,7 +107,10 @@ export function usePingSystem(options: PingSystemOptions = {}) {
   };
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !user) {
+      console.log('Ping 系統: 已禁用或用戶未登入，跳過初始化');
+      return;
+    }
 
     setupActivityListeners();
     startPingSystem();
@@ -146,7 +151,7 @@ export function usePingSystem(options: PingSystemOptions = {}) {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [enabled, pingInterval]);
+  }, [enabled, pingInterval, user]);
 
   return {
     manualPing,

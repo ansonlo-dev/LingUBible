@@ -1,9 +1,10 @@
-import { BookOpen, PanelLeft } from 'lucide-react';
+import { BookOpen, PanelLeft, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { PWAInstallIcon } from '@/components/common/PWAInstallIcon';
 import { SearchDropdown } from '@/components/common/SearchDialog';
+import { MobileSearchModal } from '@/components/common/MobileSearchModal';
 import { useState, useEffect } from 'react';
 
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,6 +21,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { language, setLanguage, t } = useLanguage();
   const { user } = useAuth();
   const [isDesktop, setIsDesktop] = useState(true);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     const checkIsDesktop = () => {
@@ -50,13 +52,23 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
           )}
         </div>
 
-        {/* 中間區域 - 搜索框（所有設備都顯示） */}
+        {/* 中間區域 - 搜索框 */}
         <div className="flex-1 mx-2 md:mx-4">
-          <SearchDropdown 
-            isOpen={true}
-            onClose={() => {}} // Always open version
-            isDesktop={isDesktop}
-          />
+          {isDesktop ? (
+            <SearchDropdown 
+              isOpen={true}
+              onClose={() => {}} // Always open version
+              isDesktop={true}
+            />
+          ) : (
+            <button
+              onClick={() => setIsMobileSearchOpen(true)}
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-muted-foreground bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+            >
+              <Search className="h-4 w-4" />
+              <span>{t('search.search')}</span>
+            </button>
+          )}
         </div>
 
         {/* 右側區域 */}
@@ -82,6 +94,12 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
           )}
         </div>
       </header>
+      
+      {/* 移動端搜索模態 */}
+      <MobileSearchModal 
+        isOpen={isMobileSearchOpen}
+        onClose={() => setIsMobileSearchOpen(false)}
+      />
     </>
   );
 }

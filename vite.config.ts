@@ -20,6 +20,7 @@ export default defineConfig(({ command, mode }) => ({
       registerType: 'autoUpdate',
       // 重新啟用 PWA，但針對 Cloudflare Workers 優化配置
       disable: false,
+      // 使用 generateSW 策略但配置嚴格規則來減少日誌
       workbox: {
         globPatterns: [
           '**/*.{js,css,html,woff2}',
@@ -27,7 +28,9 @@ export default defineConfig(({ command, mode }) => ({
         ],
         // 在開發模式下簡化 globPatterns 以避免警告
         ...(mode === 'development' && {
-          globPatterns: ['**/*.{js,css,html}']
+          globPatterns: ['**/*.{js,css,html}'],
+          // 開發模式下減少日誌輸出
+          mode: 'development'
         }),
         // 針對 Cloudflare Workers 的特殊配置
         navigateFallback: null, // 禁用導航回退，讓 Cloudflare Workers 處理 SPA 路由
@@ -82,7 +85,14 @@ export default defineConfig(({ command, mode }) => ({
           {
             urlPattern: /^https:\/\/api\.openstatus\.dev\/.*/i,
             handler: 'NetworkOnly' as const
-          }
+          },
+          // 開發環境：忽略所有 Vite 相關請求，減少日誌
+          ...(mode === 'development' ? [
+            {
+              urlPattern: /\/@vite\/|\/src\/|\/node_modules\/|\?t=|\.tsx?$/,
+              handler: 'NetworkOnly' as const
+            }
+          ] : [])
         ],
         // 忽略不需要的文件和開發環境文件
         globIgnores: [
@@ -99,7 +109,14 @@ export default defineConfig(({ command, mode }) => ({
           '**/*.map',
           // 忽略 service worker 相關文件
           'sw.js',
-          'workbox-*.js'
+          'workbox-*.js',
+          // 忽略開發環境的動態文件
+          '**/*.tsx?t=*',
+          '**/main.tsx?t=*',
+          '**/@react-refresh',
+          '**/@vite-plugin-pwa/**',
+          '**/registerSW.js',
+          '**/ping-worker.js'
         ]
       },
       // includeAssets 已通過 globPatterns 處理，避免重複
@@ -149,7 +166,9 @@ export default defineConfig(({ command, mode }) => ({
         // 在開發模式下減少日誌輸出
         suppressWarnings: true,
         navigateFallback: 'index.html',
-        navigateFallbackAllowlist: [/^(?!\/@vite|\/@react-refresh|\/src|\/node_modules).*/]
+        navigateFallbackAllowlist: [/^(?!\/@vite|\/@react-refresh|\/src|\/node_modules).*/],
+        // 開發環境下的額外配置
+        type: 'module'
       },
       // 不阻止瀏覽器原生安裝提示
       injectRegister: 'auto'

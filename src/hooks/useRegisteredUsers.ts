@@ -9,11 +9,11 @@ interface RegisteredUsersStats {
 }
 
 export const useRegisteredUsers = () => {
-  // 提供合理的預設值，避免顯示 0
+  // 初始狀態不設置預設值，讓 API 數據優先
   const [stats, setStats] = useState<RegisteredUsersStats>({
-    totalRegisteredUsers: 9, // 預設值，基於之前的實際數據
-    newUsersLast30Days: 3, // 預設過去30天有3個新用戶
-    verifiedUsers: 7,
+    totalRegisteredUsers: 0,
+    newUsersLast30Days: 0,
+    verifiedUsers: 0,
     lastUpdated: new Date().toISOString()
   });
   const [loading, setLoading] = useState(true);
@@ -43,10 +43,16 @@ export const useRegisteredUsers = () => {
       console.error('獲取註冊用戶統計失敗:', err);
       setError(err instanceof Error ? err.message : '獲取統計失敗');
       
-      // 如果是首次載入失敗，保持預設值但停止載入狀態
+      // 如果是首次載入失敗，標記已載入但保持重試機制
       if (!hasLoadedOnce) {
         setHasLoadedOnce(true);
-        console.log('首次載入失敗，使用預設統計值');
+        console.log('首次載入失敗，將在稍後重試');
+        
+        // 延遲重試
+        setTimeout(() => {
+          console.log('重試獲取註冊用戶統計...');
+          fetchStats();
+        }, 5000);
       }
     } finally {
       setLoading(false);

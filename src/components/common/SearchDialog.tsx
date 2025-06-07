@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { Search, BookOpen, Users, Star, TrendingUp, FileText, Hash, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
@@ -20,6 +19,7 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   const [isMounted, setIsMounted] = useState(false); // 追蹤組件是否已掛載
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const blurTimeoutRef = useRef<number | null>(null);
 
   // Check if this is desktop mode (always open)
   const isDesktopMode = isDesktop;
@@ -125,11 +125,21 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   };
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // 清除任何待處理的 blur 超時
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    
     // 簡化邏輯：只要獲得焦點就顯示結果
     if (!isInitialized) {
       setIsInitialized(true);
     }
-    setShowResults(true);
+    
+    // 統一處理，移動端和桌面端都使用相同邏輯
+    setTimeout(() => {
+      setShowResults(true);
+    }, isDesktopMode ? 0 : 100);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,10 +161,19 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
     if (!isInitialized) {
       setIsInitialized(true);
     }
-    setShowResults(true);
+    
+    // 簡化處理
+    setTimeout(() => {
+      setShowResults(true);
+    }, isDesktopMode ? 0 : 100);
   };
 
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // 移動端完全忽略 blur 事件
+    if (!isDesktopMode) {
+      return;
+    }
+    
     // 檢查焦點是否移動到搜尋結果容器內
     const relatedTarget = e.relatedTarget as HTMLElement;
     const searchContainer = searchRef.current;
@@ -164,9 +183,10 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       return;
     }
     
-    // 延遲隱藏結果，以便點擊結果項目時有時間處理
-    setTimeout(() => {
+    // 桌面端延遲隱藏結果
+    blurTimeoutRef.current = window.setTimeout(() => {
       setShowResults(false);
+      blurTimeoutRef.current = null;
     }, 150);
   };
 
@@ -226,30 +246,31 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   useEffect(() => {
     // 手機版不自動獲得焦點，也不自動顯示搜尋結果
     // 只有當用戶明確點擊或聚焦搜尋框時才顯示結果
-    if (isOpen && !isDesktopMode && inputRef.current) {
+    if (isOpen && !isDesktopMode) {
       // 確保手機版初始狀態不顯示搜尋結果
       setShowResults(false);
       setIsInitialized(false);
     }
   }, [isOpen, isDesktopMode]);
 
-  // Click outside to close (主要用於手機版)
+  // Click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
       
       // 檢查點擊是否在搜尋容器外部
       if (searchRef.current && !searchRef.current.contains(target)) {
-        // 手機版：關閉整個搜尋對話框
-        if (!isDesktopMode) {
+        if (isDesktopMode) {
+          // 桌面版：隱藏搜索結果
+          setShowResults(false);
+        } else {
+          // 移動端：關閉整個搜尋對話框
           onClose();
         }
-        // 桌面版主要依賴 onBlur 事件處理
       }
     };
 
-    // 主要為手機版添加監聽器
-    if (isOpen && !isDesktopMode) {
+    if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside, true);
       document.addEventListener('touchstart', handleClickOutside, true);
     }
@@ -259,6 +280,8 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       document.removeEventListener('touchstart', handleClickOutside, true);
     };
   }, [isOpen, isDesktopMode, onClose]);
+
+  
 
   // 組件掛載後設置標記
   useEffect(() => {
@@ -290,6 +313,10 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
     
     return () => {
       timeouts.forEach(timeout => clearTimeout(timeout));
+      // 清理 blur timeout
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
     };
   }, [isInitialized, isInitialLoad, isDesktopMode]);
 
@@ -327,6 +354,7 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           onClick={handleInputClick}
+
           autoFocus={false}
           autoComplete="off"
           className={`pl-10 h-9 text-base transition-all text-center placeholder:text-center ${
@@ -356,12 +384,11 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
         )}
       </div>
 
-      {/* Mobile Search Results Dropdown - Rendered via Portal */}
-      {shouldShowResults && !isDesktopMode && createPortal(
+      {/* Mobile Search Results Dropdown */}
+      {shouldShowResults && !isDesktopMode && (
         <div 
-          className="fixed left-4 right-4 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999]"
+          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999]"
           style={{
-            top: inputRef.current ? inputRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : '60px',
             backgroundColor: document.documentElement.classList.contains('dark') 
               ? '#0a0a0a' 
               : '#ffffff',
@@ -410,8 +437,7 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
               ))}
             </div>
           )}
-        </div>,
-        document.body
+        </div>
       )}
       
       {/* Desktop Search Results Dropdown */}

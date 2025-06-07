@@ -227,9 +227,21 @@ class AppwriteUserStatsService {
     }
   }
 
-  // 獲取統計數據
+  // 獲取統計數據 - 只有在有活動會話時才執行
   public async getStats(): Promise<UserStats> {
     try {
+      // 檢查是否有活動會話，如果沒有則返回默認值
+      if (this.activeSessions.size === 0) {
+        console.log('AppwriteUserStatsService: 無活動會話，返回默認統計數據');
+        return {
+          totalUsers: 0,
+          onlineUsers: 0,
+          todayLogins: 0,
+          thisMonthLogins: 0,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
       // 清理過期會話
       await this.cleanupExpiredSessions();
 

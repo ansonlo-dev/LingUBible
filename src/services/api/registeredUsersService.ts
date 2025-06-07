@@ -54,11 +54,11 @@ class RegisteredUsersService {
       // 檢查緩存
       const now = Date.now();
       if (this.cachedStats && (now - this.lastCacheTime) < this.CACHE_DURATION) {
-        console.log('使用緩存的用戶統計數據');
+        console.log('RegisteredUsersService: 使用緩存的用戶統計數據', this.cachedStats);
         return this.cachedStats;
       }
 
-      console.log('從 Appwrite 函數獲取用戶統計...');
+      console.log('RegisteredUsersService: 從 Appwrite 函數獲取用戶統計...');
       
       // 優先嘗試從 Appwrite 函數獲取數據
       const stats = await this.getStatsFromAppwriteFunction();
@@ -67,44 +67,50 @@ class RegisteredUsersService {
       this.cachedStats = stats;
       this.lastCacheTime = now;
 
+      console.log('RegisteredUsersService: 成功獲取並緩存統計數據', stats);
       return stats;
 
     } catch (error) {
-      console.error('獲取用戶統計失敗:', error);
+      console.error('RegisteredUsersService: 獲取用戶統計失敗:', error);
       
-      // 返回預設值
-      return {
-        totalRegisteredUsers: 0,
-        newUsersLast30Days: 0,
-        verifiedUsers: 0,
-        lastUpdated: new Date().toISOString()
-      };
+      // 拋出錯誤而不是返回預設值，讓上層處理
+      throw error;
     }
   }
 
   // 從 Appwrite 函數獲取用戶統計
   private async getStatsFromAppwriteFunction(): Promise<RegisteredUsersStats> {
     try {
-      console.log('調用 Appwrite 函數獲取用戶統計...');
+      console.log('RegisteredUsersService: 調用 Appwrite 函數獲取用戶統計...');
       
       const execution = await this.functions.createExecution(this.FUNCTION_ID);
+      
+      console.log('RegisteredUsersService: 函數執行結果', {
+        status: execution.status,
+        responseStatusCode: execution.responseStatusCode,
+        responseBody: execution.responseBody?.substring(0, 200) + '...'
+      });
       
       if (execution.status === 'completed' && execution.responseStatusCode === 200) {
         const response = JSON.parse(execution.responseBody);
         
         if (response.success) {
-          console.log('從 Appwrite 函數獲取統計成功:', response.data);
+          console.log('RegisteredUsersService: 從 Appwrite 函數獲取統計成功:', response.data);
           return response.data;
         } else {
-          console.error('Appwrite 函數返回錯誤:', response.error);
+          console.error('RegisteredUsersService: Appwrite 函數返回錯誤:', response.error);
           throw new Error(response.error);
         }
       } else {
-        console.error('Appwrite 函數執行失敗:', execution);
+        console.error('RegisteredUsersService: Appwrite 函數執行失敗:', {
+          status: execution.status,
+          responseStatusCode: execution.responseStatusCode,
+          errors: execution.errors
+        });
         throw new Error(`函數執行失敗: ${execution.status}`);
       }
     } catch (error) {
-      console.error('調用 Appwrite 函數失敗，回退到緩存數據:', error);
+      console.error('RegisteredUsersService: 調用 Appwrite 函數失敗，回退到緩存數據:', error);
       
       // 如果 Appwrite 函數失敗，嘗試從緩存數據庫獲取
       return await this.getStatsFromCache();

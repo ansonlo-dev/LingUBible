@@ -217,8 +217,37 @@ const AppContent = () => {
       // 當從桌面版切換到手機版時，不需要特殊處理
     };
 
+    // 處理方向變化的函數，添加延遲確保視窗大小正確更新
+    const handleOrientationChange = () => {
+      // 立即檢測一次
+      handleResize();
+      
+      // 延遲檢測，確保視窗大小已經更新
+      setTimeout(() => {
+        handleResize();
+      }, 100);
+      
+      // 再次延遲檢測，處理某些設備的延遲更新
+      setTimeout(() => {
+        handleResize();
+      }, 300);
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // 監聽視覺視窗變化（PWA 特有）
+    if ('visualViewport' in window) {
+      window.visualViewport?.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      if ('visualViewport' in window) {
+        window.visualViewport?.removeEventListener('resize', handleResize);
+      }
+    };
   }, [isMobile, isMobileSidebarOpen]);
 
   const toggleSidebar = () => {
@@ -260,10 +289,11 @@ const AppContent = () => {
       }
     },
     enabled: isMobile,
-    swipeZone: 'full', // 改為全屏檢測滑動
-    threshold: 20, // 進一步降低滑動距離要求（從30降到20）
-    restraint: 200, // 允許更多垂直偏移（從150增加到200）
-    allowedTime: 800 // 增加允許的滑動時間（從600增加到800）
+    swipeZone: 'left-edge', // 只在左邊緣檢測滑動，避免與滾動衝突
+    edgeThreshold: 60, // 左邊緣60px內才觸發，增加觸發區域
+    threshold: 50, // 適中的滑動距離要求
+    restraint: 80, // 適度允許垂直偏移，考慮手指滑動的自然軌跡
+    allowedTime: 600 // 適中的滑動時間，不要太急促
   });
 
   return (

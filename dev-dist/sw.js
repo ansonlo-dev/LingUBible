@@ -67,47 +67,34 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-d38da2cf'], (function (workbox) { 'use strict';
+define(['./workbox-2c7d8ba0'], (function (workbox) { 'use strict';
 
-  self.skipWaiting();
-  workbox.clientsClaim();
-
-  /**
-   * The precacheAndRoute() method efficiently caches and responds to
-   * requests for URLs in the manifest.
-   * See https://goo.gl/S9QRab
-   */
-  workbox.precacheAndRoute([{
-    "url": "index.html",
-    "revision": "0.gofq1lgivdo"
-  }], {});
-  workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
-    allowlist: [/^(?!\/@vite|\/@react-refresh|\/src|\/node_modules).*/]
-  }));
-  workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
-    "cacheName": "google-fonts-cache",
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 10,
-      maxAgeSeconds: 31536000
-    })]
-  }), 'GET');
-  workbox.registerRoute(/^https:\/\/fonts\.gstatic\.com\/.*/i, new workbox.CacheFirst({
-    "cacheName": "gstatic-fonts-cache",
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 10,
-      maxAgeSeconds: 31536000
-    })]
-  }), 'GET');
-  workbox.registerRoute(/\.(ico|png|svg)$/, new workbox.CacheFirst({
-    "cacheName": "icons-cache",
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 20,
-      maxAgeSeconds: 2592000
-    })]
-  }), 'GET');
-  workbox.registerRoute(/^https:\/\/fra\.cloud\.appwrite\.io\/v1\/.*/i, new workbox.NetworkOnly(), 'GET');
-  workbox.registerRoute(/^https:\/\/api\.ipify\.org\/.*/i, new workbox.NetworkOnly(), 'GET');
-  workbox.registerRoute(/^https:\/\/api\.openstatus\.dev\/.*/i, new workbox.NetworkOnly(), 'GET');
+	self.skipWaiting();
+	workbox.clientsClaim();
+	workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
+	  "cacheName": "google-fonts-cache",
+	  plugins: [new workbox.ExpirationPlugin({
+	    maxEntries: 10,
+	    maxAgeSeconds: 31536000
+	  })]
+	}), 'GET');
+	workbox.registerRoute(/^https:\/\/fonts\.gstatic\.com\/.*/i, new workbox.CacheFirst({
+	  "cacheName": "gstatic-fonts-cache",
+	  plugins: [new workbox.ExpirationPlugin({
+	    maxEntries: 10,
+	    maxAgeSeconds: 31536000
+	  })]
+	}), 'GET');
+	workbox.registerRoute(/\.(ico|png|svg)$/, new workbox.CacheFirst({
+	  "cacheName": "icons-cache",
+	  plugins: [new workbox.ExpirationPlugin({
+	    maxEntries: 20,
+	    maxAgeSeconds: 2592000
+	  })]
+	}), 'GET');
+	workbox.registerRoute(/^https:\/\/fra\.cloud\.appwrite\.io\/v1\/.*/i, new workbox.NetworkOnly(), 'GET');
+	workbox.registerRoute(/^https:\/\/api\.ipify\.org\/.*/i, new workbox.NetworkOnly(), 'GET');
+	workbox.registerRoute(/^https:\/\/api\.openstatus\.dev\/.*/i, new workbox.NetworkOnly(), 'GET');
+	workbox.registerRoute(/\/@vite\/|\/src\/|\/node_modules\/|\?t=|\.tsx?$/, new workbox.NetworkOnly(), 'GET');
 
 }));
