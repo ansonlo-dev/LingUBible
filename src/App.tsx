@@ -293,11 +293,10 @@ const AppContent = () => {
       }
     },
     enabled: isMobile,
-    swipeZone: 'left-edge', // 只在左邊緣檢測滑動，避免與滾動衝突
-    edgeThreshold: 60, // 左邊緣60px內才觸發，增加觸發區域
-    threshold: 50, // 適中的滑動距離要求
-    restraint: 80, // 適度允許垂直偏移，考慮手指滑動的自然軌跡
-    allowedTime: 600 // 適中的滑動時間，不要太急促
+    swipeZone: 'left-half-to-right', // 從左半部分滑動到右半部分觸發
+    threshold: 80, // 適中的滑動距離要求，考慮到用戶需要滑動更長距離
+    restraint: 100, // 允許更多垂直偏移，因為滑動距離更長
+    allowedTime: 800 // 增加允許時間，因為滑動距離更長
   });
 
   return (

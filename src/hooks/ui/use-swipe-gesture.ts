@@ -7,7 +7,7 @@ interface SwipeGestureOptions {
   restraint?: number;
   allowedTime?: number;
   enabled?: boolean;
-  swipeZone?: 'full' | 'right-half' | 'left-edge';
+  swipeZone?: 'full' | 'right-half' | 'left-edge' | 'left-half-to-right';
   edgeThreshold?: number;
 }
 
@@ -75,6 +75,11 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     }
     
     if (currentOptions.swipeZone === 'left-edge' && startX > (currentOptions.edgeThreshold || 50)) {
+      return;
+    }
+
+    // 新增：左半部分到右半部分的滑動檢測
+    if (currentOptions.swipeZone === 'left-half-to-right' && startX > screenWidth / 2) {
       return;
     }
 
@@ -163,7 +168,33 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     // 檢查時間限制
     if (elapsedTime > allowedTime) return;
 
-
+    // 特殊處理：左半部分到右半部分的滑動
+    if (currentOptions.swipeZone === 'left-half-to-right') {
+      const screenWidth = window.innerWidth;
+      const startX = touchStartX.current;
+      
+      // 確保滑動從左半部分開始，在右半部分結束，且是向右滑動
+      if (startX <= screenWidth / 2 && endX > screenWidth / 2 && distanceX > 0) {
+        // 對於這種模式，使用較小的閾值，因為用戶已經滑動了較長距離
+        const adjustedThreshold = Math.min(threshold, screenWidth / 4); // 最多螢幕寬度的1/4
+        
+        if (Math.abs(distanceX) >= adjustedThreshold && Math.abs(distanceY) <= restraint) {
+          try {
+            e.preventDefault();
+          } catch (err) {
+            // 忽略錯誤，可能是被動監聽器
+          }
+          
+          if (currentOptions.onSwipeRight) {
+            currentOptions.onSwipeRight();
+          }
+        }
+      }
+      
+      // 重置狀態
+      isValidSwipeStart.current = false;
+      return;
+    }
 
     // 檢查是否為有效的水平滑動
     if (Math.abs(distanceX) >= threshold && Math.abs(distanceY) <= restraint) {
