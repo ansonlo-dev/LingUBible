@@ -17,8 +17,8 @@ class UserStatsService {
   private static instance: UserStatsService;
   private stats: UserStats;
   private sessions: Map<string, UserSession> = new Map();
-  private updateInterval: NodeJS.Timeout | null = null;
-  private pingInterval: NodeJS.Timeout | null = null;
+  private updateInterval: number | null = null;
+  private pingInterval: number | null = null;
   private readonly SESSION_TIMEOUT = 2 * 60 * 1000; // 2 分鐘無 ping 視為離線（更短的超時時間）
   private readonly UPDATE_INTERVAL = 30 * 1000; // 每 30 秒更新一次統計
   private readonly PING_INTERVAL = 60 * 1000; // 每 60 秒發送一次 ping
@@ -121,18 +121,8 @@ class UserStatsService {
   public userLogin(userId: string): string {
     const now = Date.now();
     
-    // 檢查是否已有活躍會話
-    const existingSession = Array.from(this.sessions.values())
-      .find(session => session.userId === userId && now - session.lastPing < this.SESSION_TIMEOUT);
-    
-    if (existingSession) {
-      // 更新現有會話的 ping 時間
-      existingSession.lastPing = now;
-      this.currentSessionId = existingSession.sessionId;
-      this.saveSessionsToStorage();
-      console.log(`用戶 ${userId} 已有活躍會話，更新 ping 時間`);
-      return existingSession.sessionId;
-    }
+    // 每次登入都創建新會話，不檢查是否已有活躍會話
+    // 這樣可以正確追蹤不同設備上的同一用戶
     
     // 創建新會話
     const sessionId = this.generateSessionId();
