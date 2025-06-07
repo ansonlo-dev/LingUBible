@@ -11,6 +11,10 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
   const { stats, isLoading } = useUserStats();
   const { t } = useLanguage();
 
+  // 調試信息
+  console.log('UserStatsDisplay: 當前統計數據', stats);
+  console.log('UserStatsDisplay: 載入狀態', isLoading);
+
   if (isLoading) {
     return (
       <div className={`flex items-center text-xs text-muted-foreground ${className}`}>
@@ -26,7 +30,7 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
           <span className="font-medium text-green-600 dark:text-green-400">
-            {stats.onlineUsers} {t('stats.users')}{stats.onlineVisitors > 0 && `, ${stats.onlineVisitors} ${t('stats.visitors')}`} {t('stats.online')}
+            {stats.onlineUsers || 0} {t('stats.users')}, {stats.onlineVisitors || 0} {t('stats.visitors')} {t('stats.online')}
           </span>
         </div>
       </div>

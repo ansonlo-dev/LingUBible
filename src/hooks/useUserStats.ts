@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import AppwriteUserStatsService from "@/services/api/appwriteUserStats";
+import UserStatsService from "@/services/api/userStats";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UserStats {
@@ -24,12 +25,33 @@ export function useUserStats() {
   const [isLoading, setIsLoading] = useState(true);
   const isInitializedRef = useRef(false);
 
-  const userStatsService = AppwriteUserStatsService.getInstance();
+  const appwriteUserStatsService = AppwriteUserStatsService.getInstance();
+  const localUserStatsService = UserStatsService.getInstance();
 
-  // 更新統計數據 - 只有在用戶登入時才執行
+  // 更新統計數據 - 使用 Appwrite 全球統計
   const updateStats = useCallback(async () => {
-    // 如果用戶未登入，只返回默認統計數據，不執行 API 調用
-    if (!user) {
+    try {
+      console.log('Hook: 獲取全球統計數據...');
+      
+      // 優先使用 Function 方法（更安全）
+      let globalStats;
+      try {
+        globalStats = await appwriteUserStatsService.getStatsViaFunction();
+        console.log('Hook: 通過 Function 獲取全球統計數據', globalStats);
+      } catch (error) {
+        console.warn('Hook: Function 方法失敗，回退到直接查詢:', error);
+        globalStats = await appwriteUserStatsService.getStats();
+        console.log('Hook: 通過直接查詢獲取全球統計數據', globalStats);
+      }
+      
+      setStats(globalStats);
+      setIsLoading(false);
+      console.log('Hook: 使用全球統計數據', globalStats);
+      
+    } catch (error) {
+      console.error('Hook: 獲取統計數據失敗:', error);
+      
+      // 返回默認值
       setStats({
         totalUsers: 0,
         onlineUsers: 0,
@@ -39,61 +61,45 @@ export function useUserStats() {
         lastUpdated: new Date().toISOString()
       });
       setIsLoading(false);
-      return;
+      console.log('Hook: 使用默認統計數據');
     }
-
-    try {
-      const newStats = await userStatsService.getStats();
-      setStats(newStats);
-      setIsLoading(false);
-      console.log('Hook: 統計數據已更新', newStats);
-    } catch (error) {
-      console.error('更新用戶統計失敗:', error);
-      setIsLoading(false);
-    }
-  }, [userStatsService, user]);
+  }, [appwriteUserStatsService]);
 
   // 用戶登入
   const handleUserLogin = useCallback(async (userId: string): Promise<string> => {
     try {
-      const sessionId = await userStatsService.userLogin(userId);
+      const sessionId = await appwriteUserStatsService.userLogin(userId);
       await updateStats();
       return sessionId;
     } catch (error) {
       console.error('用戶登入失敗:', error);
       throw error;
     }
-  }, [userStatsService, updateStats]);
+  }, [appwriteUserStatsService, updateStats]);
 
   // 用戶登出
   const handleUserLogout = useCallback(async (sessionId: string) => {
     try {
-      await userStatsService.userLogout(sessionId);
+      await appwriteUserStatsService.userLogout(sessionId);
       await updateStats();
     } catch (error) {
       console.error('用戶登出失敗:', error);
     }
-  }, [userStatsService, updateStats]);
+  }, [appwriteUserStatsService, updateStats]);
 
   // 發送 ping
   const sendPing = useCallback(async (sessionId?: string) => {
     try {
-      return await userStatsService.sendPing(sessionId);
+      return await appwriteUserStatsService.sendPing(sessionId);
     } catch (error) {
       console.error('發送 ping 失敗:', error);
       return false;
     }
-  }, [userStatsService]);
+  }, [appwriteUserStatsService]);
 
-  // 初始化和定期更新 - 只有在用戶登入時才執行
+  // 初始化和定期更新 - 無論用戶是否登入都執行
   useEffect(() => {
-    if (!user) {
-      console.log('Hook: 用戶未登入，跳過統計初始化');
-      setIsLoading(false);
-      return;
-    }
-
-    console.log('Hook: 初始化用戶統計');
+    console.log('Hook: 初始化統計系統', { user: !!user });
     
     // 初始載入
     updateStats();
@@ -102,7 +108,7 @@ export function useUserStats() {
     const interval = setInterval(() => {
       console.log('Hook: 定期更新統計數據');
       updateStats();
-    }, 60 * 1000); // 改為每1分鐘更新一次，更快檢測變化
+    }, 30 * 1000); // 每30秒更新一次
 
     // 監聽統計更新事件
     const handleStatsUpdate = () => {
@@ -124,7 +130,7 @@ export function useUserStats() {
       window.removeEventListener('userStatsUpdated', handleStatsUpdate);
       console.log('Hook: 清理定期更新和事件監聽');
     };
-  }, [updateStats, user]);
+  }, [updateStats]); // 移除 user 依賴，確保總是執行
 
   // 標記初始化完成
   useEffect(() => {

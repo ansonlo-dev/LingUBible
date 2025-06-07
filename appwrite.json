@@ -128,10 +128,10 @@
                     "collectionId": "user-sessions",
                     "name": "User Sessions",
                     "permissions": [
-                        "read(\"users\")",
-                        "create(\"users\")",
-                        "update(\"users\")",
-                        "delete(\"users\")"
+                        "read(\"any\")",
+                        "create(\"any\")",
+                        "update(\"any\")",
+                        "delete(\"any\")"
                     ],
                     "documentSecurity": true,
                     "enabled": true,
@@ -141,7 +141,7 @@
                             "type": "string",
                             "status": "available",
                             "error": "",
-                            "required": true,
+                            "required": false,
                             "array": false,
                             "size": 255,
                             "default": null
@@ -195,6 +195,15 @@
                             "array": false,
                             "size": 45,
                             "default": null
+                        },
+                        {
+                            "key": "isVisitor",
+                            "type": "boolean",
+                            "status": "available",
+                            "error": "",
+                            "required": true,
+                            "array": false,
+                            "default": false
                         }
                     ],
                     "indexes": [

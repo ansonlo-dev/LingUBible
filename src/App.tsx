@@ -98,7 +98,7 @@ const AppContent = () => {
   // 啟動 ping 系統來追蹤用戶在線狀態
   usePingSystem({
     enabled: true,
-    pingInterval: 2 * 60 * 1000, // 每 2 分鐘 ping 一次（Pro 方案優化）
+    pingInterval: 45 * 1000, // 每 45 秒 ping 一次，與本地統計服務同步
     activityEvents: ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
   });
   // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開

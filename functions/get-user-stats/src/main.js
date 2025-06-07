@@ -48,11 +48,84 @@ module.exports = async ({ req, res, log, error }) => {
       }
     }
 
+    // 獲取在線用戶和訪客統計
+    log('開始獲取在線用戶統計...');
+    
+    // 獲取所有會話（先不過濾，在代碼中處理）
+    const sessionsResponse = await fetch(`${endpoint}/databases/user-stats-db/collections/user-sessions/documents?limit=1000`, {
+      method: 'GET',
+      headers: {
+        'X-Appwrite-Project': projectId,
+        'X-Appwrite-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    let onlineUsers = 0;
+    let onlineVisitors = 0;
+    let todayLogins = 0;
+    let thisMonthLogins = 0;
+
+    if (sessionsResponse.ok) {
+      const sessionsData = await sessionsResponse.json();
+      log(`獲取到 ${sessionsData.total} 個會話`);
+
+      // 計算活躍會話的時間閾值（2分鐘前）
+      const activeThreshold = new Date();
+      activeThreshold.setMinutes(activeThreshold.getMinutes() - 2);
+
+      // 計算今天和本月的時間閾值
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString();
+
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      thisMonth.setHours(0, 0, 0, 0);
+      const thisMonthISO = thisMonth.toISOString();
+
+      // 統計活躍會話
+      const activeUserIds = new Set();
+      
+      for (const session of sessionsData.documents) {
+        // 檢查會話是否活躍（最後 ping 時間在2分鐘內）
+        const lastPingTime = new Date(session.lastPing);
+        const isActive = lastPingTime > activeThreshold;
+
+        if (isActive) {
+          // 檢查是否為訪客
+          if (session.isVisitor || !session.userId || session.userId === '') {
+            onlineVisitors++;
+          } else {
+            // 避免重複計算同一用戶的多個會話
+            activeUserIds.add(session.userId);
+          }
+        }
+
+        // 計算今天和本月的登入次數（不限於活躍會話）
+        if (session.loginTime >= todayISO) {
+          todayLogins++;
+        }
+        if (session.loginTime >= thisMonthISO) {
+          thisMonthLogins++;
+        }
+      }
+
+      onlineUsers = activeUserIds.size;
+      log(`在線統計: ${onlineUsers} 用戶, ${onlineVisitors} 訪客`);
+    } else {
+      log('獲取會話數據失敗:', sessionsResponse.status, sessionsResponse.statusText);
+    }
+
     // 準備統計數據
     const stats = {
       totalRegisteredUsers: totalUsers,
       newUsersLast30Days: newUsersLast30Days,
       verifiedUsers: verifiedUsers,
+      onlineUsers: onlineUsers,
+      onlineVisitors: onlineVisitors,
+      todayLogins: todayLogins,
+      thisMonthLogins: thisMonthLogins,
       lastUpdated: new Date().toISOString()
     };
 
@@ -118,6 +191,10 @@ module.exports = async ({ req, res, log, error }) => {
         totalRegisteredUsers: 0,
         newUsersLast30Days: 0,
         verifiedUsers: 0,
+        onlineUsers: 0,
+        onlineVisitors: 0,
+        todayLogins: 0,
+        thisMonthLogins: 0,
         lastUpdated: new Date().toISOString()
       }
     });

@@ -1,4 +1,5 @@
 import { Client, Databases, Functions, ID, Query } from 'appwrite';
+import { Permission, Role } from 'appwrite';
 
 interface UserStats {
   totalUsers: number;
@@ -11,12 +12,13 @@ interface UserStats {
 
 interface UserSession {
   $id?: string;
-  userId: string;
+  userId: string | null; // 允許 null 以支持訪客
   sessionId: string;
   loginTime: string;
   lastPing: string;
   deviceInfo?: string;
   ipAddress?: string;
+  isVisitor: boolean; // 標記是否為訪客
 }
 
 class AppwriteUserStatsService {
@@ -29,6 +31,8 @@ class AppwriteUserStatsService {
   private readonly SESSION_TIMEOUT = 5 * 60 * 1000; // 5 分鐘（配合 2 分鐘 ping）
   private readonly PING_INTERVAL = 120 * 1000; // 120 秒（2 分鐘）
   private readonly BACKGROUND_PING_INTERVAL = 60 * 1000; // 背景標籤頁：60 秒
+  private readonly CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 分鐘清理一次
+  private cleanupTimer: number | null = null; // 清理定時器
   private readonly DATABASE_ID = 'user-stats-db';
   private readonly SESSIONS_COLLECTION_ID = 'user-sessions';
   private readonly STATS_COLLECTION_ID = 'user-stats';
@@ -49,6 +53,9 @@ class AppwriteUserStatsService {
 
     // 設置頁面可見性監聽器
     this.setupVisibilityListener();
+
+    // 啟動定期清理機制
+    this.startPeriodicCleanup();
 
     // 頁面卸載時清理資源
     window.addEventListener('beforeunload', () => {
@@ -76,23 +83,26 @@ class AppwriteUserStatsService {
       const now = new Date().toISOString();
       const sessionId = this.generateSessionId();
 
-      // 檢查是否已有活躍會話
-      const existingSessions = await this.databases.listDocuments(
+      console.log('AppwriteUserStats: 用戶登入', { userId, sessionId });
+
+      // 檢查是否已有活躍的用戶會話
+      const existingUserSessions = await this.databases.listDocuments(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [
           Query.equal('userId', userId),
+          Query.equal('isVisitor', false),
           Query.greaterThan('lastPing', new Date(Date.now() - this.SESSION_TIMEOUT).toISOString())
         ]
       );
 
-      if (existingSessions.documents.length > 0) {
-        // 更新現有會話
-        const existingSession = existingSessions.documents[0] as unknown as UserSession;
+      if (existingUserSessions.documents.length > 0) {
+        // 更新現有用戶會話
+        const existingSession = existingUserSessions.documents[0];
         await this.databases.updateDocument(
           this.DATABASE_ID,
           this.SESSIONS_COLLECTION_ID,
-          existingSession.$id!,
+          existingSession.$id,
           {
             lastPing: now,
             sessionId: sessionId
@@ -109,25 +119,87 @@ class AppwriteUserStatsService {
         this.activeSessions.set(userId, sessionId);
         this.startPingForSession(sessionId);
         
-        console.log(`用戶 ${userId} 已有活躍會話，更新 ping 時間`);
+        console.log(`AppwriteUserStats: 用戶 ${userId} 已有活躍會話，更新 ping 時間`);
+        
+        // 清理當前設備的活躍訪客會話（避免雙重計算）
+        await this.cleanupCurrentDeviceVisitorSessions();
+        
         return sessionId;
       }
 
-      // 創建新會話
-      const sessionData: Omit<UserSession, '$id'> = {
+      // 檢查是否有訪客會話需要轉換
+      const visitorSessions = await this.databases.listDocuments(
+        this.DATABASE_ID,
+        this.SESSIONS_COLLECTION_ID,
+        [
+          Query.equal('isVisitor', true),
+          Query.greaterThan('lastPing', new Date(Date.now() - this.SESSION_TIMEOUT).toISOString())
+        ]
+      );
+
+      if (visitorSessions.documents.length > 0) {
+        const currentDeviceInfo = this.getDeviceInfo();
+        
+        // 查找當前設備的訪客會話
+        const currentDeviceVisitorSession = visitorSessions.documents.find(
+          session => session.deviceInfo === currentDeviceInfo
+        );
+
+        if (currentDeviceVisitorSession) {
+          // 轉換當前設備的訪客會話為用戶會話
+          await this.databases.updateDocument(
+            this.DATABASE_ID,
+            this.SESSIONS_COLLECTION_ID,
+            currentDeviceVisitorSession.$id,
+            {
+              userId: userId,
+              isVisitor: false,
+              loginTime: now,
+              lastPing: now,
+              sessionId: sessionId
+            },
+            [
+              // 更新文檔級權限
+              Permission.read(Role.user(userId)),
+              Permission.update(Role.user(userId)),
+              Permission.delete(Role.user(userId))
+            ]
+          );
+
+          // 更新會話映射
+          this.activeSessions.set(userId, sessionId);
+          this.startPingForSession(sessionId);
+
+          console.log(`AppwriteUserStats: 當前設備的訪客會話已轉換為用戶會話`, { userId, sessionId });
+          return sessionId;
+        } else {
+          // 如果沒有找到當前設備的訪客會話，清理當前設備的訪客會話並創建新的用戶會話
+          console.log('AppwriteUserStats: 沒有找到當前設備的訪客會話，將創建新的用戶會話');
+        }
+      }
+
+      // 創建新的用戶會話
+      const sessionData = {
         userId,
         sessionId,
         loginTime: now,
         lastPing: now,
         deviceInfo: this.getDeviceInfo(),
-        ipAddress: await this.getClientIP()
+        ipAddress: await this.getClientIP(),
+        isVisitor: false
       };
 
       await this.databases.createDocument(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         ID.unique(),
-        sessionData
+        sessionData,
+        [
+          // 文檔級權限：只有創建者可以訪問
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId))
+        ]
       );
 
       // 更新會話映射
@@ -139,11 +211,14 @@ class AppwriteUserStatsService {
       // 開始 ping 系統
       this.startPingForSession(sessionId);
 
-      console.log(`用戶 ${userId} 登入成功，會話 ID: ${sessionId}`);
+      // 清理當前設備的活躍訪客會話（避免雙重計算）
+      await this.cleanupCurrentDeviceVisitorSessions();
+
+      console.log(`AppwriteUserStats: 用戶 ${userId} 登入成功，會話 ID: ${sessionId}`);
       return sessionId;
 
     } catch (error) {
-      console.error('用戶登入失敗:', error);
+      console.error('AppwriteUserStats: 用戶登入失敗:', error);
       throw error;
     }
   }
@@ -228,48 +303,102 @@ class AppwriteUserStatsService {
     }
   }
 
-  // 獲取統計數據 - 只有在有活動會話時才執行
-  public async getStats(): Promise<UserStats> {
+  // 獲取統計數據 - 使用 Function（更安全）
+  async getStatsViaFunction(): Promise<UserStats> {
     try {
-      // 檢查是否有活動會話，如果沒有則返回默認值
-      if (this.activeSessions.size === 0) {
-        console.log('AppwriteUserStatsService: 無活動會話，返回默認統計數據');
-        return {
-          totalUsers: 0,
-          onlineUsers: 0,
-          onlineVisitors: 0,
-          todayLogins: 0,
-          thisMonthLogins: 0,
-          lastUpdated: new Date().toISOString()
-        };
+      console.log('AppwriteUserStats: 通過 Function 獲取統計數據...');
+      
+      // 在獲取統計數據前清理過期會話
+      await this.cleanupExpiredSessions();
+      
+      const result = await this.functions.createExecution(
+        'get-user-stats', // Function ID
+        JSON.stringify({}), // 空參數
+        false // 不是異步執行
+      );
+      
+      if (result.responseStatusCode === 200) {
+        const response = JSON.parse(result.responseBody);
+        console.log('AppwriteUserStats: Function 統計數據', response);
+        
+        // 檢查響應格式並提取數據
+        if (response.success && response.data) {
+          return response.data;
+        } else {
+          throw new Error(`Function 返回錯誤: ${response.error || 'Unknown error'}`);
+        }
+      } else {
+        throw new Error(`Function 執行失敗: ${result.responseBody}`);
       }
+    } catch (error) {
+      console.error('AppwriteUserStats: 通過 Function 獲取統計數據失敗:', error);
+      
+      // 如果 Function 失敗，嘗試使用本地方法
+      console.log('AppwriteUserStats: 嘗試使用本地方法獲取統計數據...');
+      return await this.getStats();
+    }
+  }
 
+  // 獲取統計數據 - 直接查詢（需要適當權限）
+  async getStats(): Promise<UserStats> {
+    try {
+      console.log('AppwriteUserStats: 獲取統計數據...');
+      
       // 清理過期會話
       await this.cleanupExpiredSessions();
-
-      // 獲取在線用戶數
+      
+      const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
+      
+      // 獲取活躍會話
       const activeSessions = await this.databases.listDocuments(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
-        [
-          Query.greaterThan('lastPing', new Date(Date.now() - this.SESSION_TIMEOUT).toISOString())
-        ]
+        [Query.greaterThan('lastPing', cutoffTime)]
       );
-
-      // 獲取統計數據
-      const statsDoc = await this.getOrCreateStatsDocument();
-
-      return {
-        totalUsers: statsDoc.totalUsers || 0,
-        onlineUsers: activeSessions.documents.length,
-        onlineVisitors: statsDoc.onlineVisitors || 0,
-        todayLogins: statsDoc.todayLogins || 0,
-        thisMonthLogins: statsDoc.thisMonthLogins || 0,
+      
+      console.log('AppwriteUserStats: 活躍會話', activeSessions.documents);
+      
+      // 分別計算用戶和訪客
+      let onlineUsers = 0;
+      let onlineVisitors = 0;
+      
+      activeSessions.documents.forEach(session => {
+        if (session.isVisitor) {
+          onlineVisitors++;
+        } else {
+          onlineUsers++;
+        }
+      });
+      
+      // 獲取總用戶數（這需要訪問用戶集合的權限）
+      let totalUsers = 0;
+      try {
+        const users = await this.databases.listDocuments(
+          this.DATABASE_ID,
+          'users', // 假設用戶集合名稱
+          [Query.limit(1)]
+        );
+        totalUsers = users.total;
+      } catch (error) {
+        console.warn('無法獲取總用戶數:', error);
+      }
+      
+      const stats: UserStats = {
+        totalUsers,
+        onlineUsers,
+        onlineVisitors,
+        todayLogins: 0, // 需要額外的查詢來計算
+        thisMonthLogins: 0, // 需要額外的查詢來計算
         lastUpdated: new Date().toISOString()
       };
-
+      
+      console.log('AppwriteUserStats: 統計數據', stats);
+      return stats;
+      
     } catch (error) {
       console.error('獲取統計數據失敗:', error);
+      
+      // 返回默認值
       return {
         totalUsers: 0,
         onlineUsers: 0,
@@ -304,11 +433,39 @@ class AppwriteUserStatsService {
       await Promise.all(deletePromises);
 
       if (expiredSessions.documents.length > 0) {
-        console.log(`清理了 ${expiredSessions.documents.length} 個過期會話`);
+        console.log(`🧹 清理了 ${expiredSessions.documents.length} 個過期會話`);
       }
 
     } catch (error) {
       console.error('清理過期會話失敗:', error);
+    }
+  }
+
+  // 啟動定期清理機制
+  private startPeriodicCleanup(): void {
+    // 立即執行一次清理
+    this.cleanupExpiredSessions().catch(error => {
+      console.error('初始清理失敗:', error);
+    });
+
+    // 設置定期清理
+    this.cleanupTimer = setInterval(async () => {
+      try {
+        await this.cleanupExpiredSessions();
+      } catch (error) {
+        console.error('定期清理失敗:', error);
+      }
+    }, this.CLEANUP_INTERVAL);
+
+    console.log(`🕒 定期清理已啟動，間隔: ${this.CLEANUP_INTERVAL / 1000 / 60} 分鐘`);
+  }
+
+  // 停止定期清理
+  private stopPeriodicCleanup(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+      console.log('🛑 定期清理已停止');
     }
   }
 
@@ -619,6 +776,9 @@ class AppwriteUserStatsService {
     });
     this.pingIntervals.clear();
 
+    // 停止定期清理
+    this.stopPeriodicCleanup();
+
     // 清理 Web Worker
     if (this.pingWorker) {
       this.pingWorker.postMessage({ type: 'STOP_PING' });
@@ -630,6 +790,176 @@ class AppwriteUserStatsService {
     if (this.visibilityChangeHandler) {
       document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
       this.visibilityChangeHandler = null;
+    }
+  }
+
+  // 創建或重用訪客會話
+  public async createVisitorSession(): Promise<string> {
+    try {
+      const currentDeviceInfo = this.getDeviceInfo();
+      const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
+      
+      console.log('AppwriteUserStats: 檢查現有訪客會話...');
+      
+      // 首先檢查是否已有當前設備的活躍訪客會話
+      const existingVisitorSessions = await this.databases.listDocuments(
+        this.DATABASE_ID,
+        this.SESSIONS_COLLECTION_ID,
+        [
+          Query.equal('isVisitor', true),
+          Query.greaterThan('lastPing', cutoffTime)
+        ]
+      );
+
+      // 查找當前設備的活躍訪客會話
+      const currentDeviceSession = existingVisitorSessions.documents.find(
+        session => session.deviceInfo === currentDeviceInfo
+      );
+
+      if (currentDeviceSession) {
+        // 重用現有會話，更新 ping 時間
+        const now = new Date().toISOString();
+        await this.databases.updateDocument(
+          this.DATABASE_ID,
+          this.SESSIONS_COLLECTION_ID,
+          currentDeviceSession.$id,
+          {
+            lastPing: now
+          }
+        );
+
+        // 開始 ping 系統
+        this.startPingForSession(currentDeviceSession.sessionId);
+        
+        console.log('AppwriteUserStats: 重用現有訪客會話', currentDeviceSession.sessionId);
+        return currentDeviceSession.sessionId;
+      }
+
+      // 如果沒有現有會話，創建新的訪客會話
+      const sessionId = this.generateSessionId();
+      const now = new Date().toISOString();
+      
+      console.log('AppwriteUserStats: 創建新的訪客會話', { sessionId });
+      
+      const sessionData = {
+        sessionId,
+        userId: "", // 空字符串而不是 null
+        isVisitor: true,
+        loginTime: now,
+        lastPing: now,
+        deviceInfo: currentDeviceInfo,
+        ipAddress: await this.getClientIP()
+      };
+      
+      const session = await this.databases.createDocument(
+        this.DATABASE_ID,
+        this.SESSIONS_COLLECTION_ID,
+        ID.unique(),
+        sessionData,
+        [
+          // 文檔級權限：允許任何人讀取和更新訪客會話
+          Permission.read(Role.any()),
+          Permission.update(Role.any()),
+          Permission.delete(Role.any())
+        ]
+      );
+      
+      // 開始 ping 系統
+      this.startPingForSession(sessionId);
+      
+      console.log('AppwriteUserStats: 新訪客會話已創建', session);
+      return sessionId;
+    } catch (error) {
+      console.error('AppwriteUserStats: 創建/重用訪客會話失敗:', error);
+      throw error;
+    }
+  }
+
+  // 將訪客會話轉換為用戶會話
+  public async convertVisitorToUser(visitorSessionId: string, userId: string): Promise<string> {
+    try {
+      const now = new Date().toISOString();
+      
+      // 查找訪客會話
+      const sessions = await this.databases.listDocuments(
+        this.DATABASE_ID,
+        this.SESSIONS_COLLECTION_ID,
+        [Query.equal('sessionId', visitorSessionId)]
+      );
+
+      if (sessions.documents.length > 0) {
+        const session = sessions.documents[0] as unknown as UserSession;
+        
+        if (session.isVisitor) {
+          // 轉換為用戶會話
+          await this.databases.updateDocument(
+            this.DATABASE_ID,
+            this.SESSIONS_COLLECTION_ID,
+            session.$id!,
+            {
+              userId: userId,
+              isVisitor: false,
+              lastPing: now
+            }
+          );
+
+          // 更新會話映射
+          this.activeSessions.set(userId, visitorSessionId);
+          
+          // 更新統計數據
+          await this.updateStats(userId);
+
+          console.log(`訪客會話 ${visitorSessionId} 已轉換為用戶 ${userId} 的會話`);
+          return visitorSessionId;
+        }
+      }
+
+      // 如果找不到訪客會話，創建新的用戶會話
+      return await this.userLogin(userId);
+
+    } catch (error) {
+      console.error('轉換訪客會話失敗:', error);
+      // 如果轉換失敗，創建新的用戶會話
+      return await this.userLogin(userId);
+    }
+  }
+
+  // 清理當前設備的活躍訪客會話（避免雙重計算）
+  private async cleanupCurrentDeviceVisitorSessions(): Promise<void> {
+    try {
+      const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
+      const currentDeviceInfo = this.getDeviceInfo();
+      
+      const visitorSessions = await this.databases.listDocuments(
+        this.DATABASE_ID,
+        this.SESSIONS_COLLECTION_ID,
+        [
+          Query.equal('isVisitor', true),
+          Query.greaterThan('lastPing', cutoffTime)
+        ]
+      );
+
+      // 只刪除當前設備的訪客會話
+      const currentDeviceVisitorSessions = visitorSessions.documents.filter(
+        session => session.deviceInfo === currentDeviceInfo
+      );
+
+      const deletePromises = currentDeviceVisitorSessions.map(session =>
+        this.databases.deleteDocument(
+          this.DATABASE_ID,
+          this.SESSIONS_COLLECTION_ID,
+          session.$id
+        )
+      );
+
+      await Promise.all(deletePromises);
+
+      if (currentDeviceVisitorSessions.length > 0) {
+        console.log(`清理了當前設備的 ${currentDeviceVisitorSessions.length} 個訪客會話`);
+      }
+
+    } catch (error) {
+      console.error('清理當前設備訪客會話失敗:', error);
     }
   }
 }

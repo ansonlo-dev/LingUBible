@@ -21,9 +21,9 @@ class UserStatsService {
   private sessions: Map<string, UserSession> = new Map();
   private updateInterval: number | null = null;
   private pingInterval: number | null = null;
-  private readonly SESSION_TIMEOUT = 2 * 60 * 1000; // 2 分鐘無 ping 視為離線（更短的超時時間）
+  private readonly SESSION_TIMEOUT = 90 * 1000; // 90 秒無 ping 視為離線（給用戶足夠時間切換標籤頁）
   private readonly UPDATE_INTERVAL = 30 * 1000; // 每 30 秒更新一次統計
-  private readonly PING_INTERVAL = 60 * 1000; // 每 60 秒發送一次 ping
+  private readonly PING_INTERVAL = 45 * 1000; // 每 45 秒發送一次 ping
   private isInitialized = false;
   private currentSessionId: string | null = null;
 
@@ -33,6 +33,7 @@ class UserStatsService {
     this.startPeriodicUpdate();
     this.startPingSystem();
     this.setupBeforeUnloadHandler();
+    this.setupCrossTabSync();
     this.isInitialized = true;
     
     // 如果當前沒有會話，創建訪客會話
@@ -158,6 +159,7 @@ class UserStatsService {
         this.updateOnlineUsersCount();
         this.saveStatsToStorage();
         this.saveSessionsToStorage();
+        this.notifyStatsUpdate();
         
         console.log(`訪客轉換為用戶 ${userId}，會話 ID: ${this.currentSessionId}，在線用戶數: ${this.stats.onlineUsers}`);
         return this.currentSessionId;
@@ -193,6 +195,7 @@ class UserStatsService {
     this.updateOnlineUsersCount();
     this.saveStatsToStorage();
     this.saveSessionsToStorage();
+    this.notifyStatsUpdate();
     
     console.log(`用戶 ${userId} 登入，會話 ID: ${sessionId}，在線用戶數: ${this.stats.onlineUsers}`);
     return sessionId;
@@ -211,6 +214,7 @@ class UserStatsService {
       
       this.updateOnlineUsersCount();
       this.saveSessionsToStorage();
+      this.notifyStatsUpdate();
       console.log(`用戶 ${session?.userId} 登出，會話 ID: ${sessionId}，在線用戶數: ${this.stats.onlineUsers}`);
     } else {
       console.log(`嘗試登出不存在的會話: ${sessionId}`);
@@ -332,9 +336,23 @@ class UserStatsService {
   // 開始定期更新
   private startPeriodicUpdate(): void {
     this.updateInterval = setInterval(() => {
+      const beforeCount = this.sessions.size;
       this.cleanupExpiredSessions();
       this.updateOnlineUsersCount();
       this.saveStatsToStorage();
+      
+      // 如果會話數量有變化，通知其他標籤頁
+      if (beforeCount !== this.sessions.size) {
+        this.notifyStatsUpdate();
+      }
+      
+      // 調試信息：顯示當前活躍會話
+      const sessions = this.getActiveSessions();
+      console.log(`定期更新 - 活躍會話數: ${sessions.length}, 用戶: ${this.stats.onlineUsers}, 訪客: ${this.stats.onlineVisitors}`);
+      sessions.forEach(session => {
+        const lastPingAgo = Math.floor((Date.now() - session.lastPing) / 1000);
+        console.log(`  會話 ${session.sessionId.slice(-8)}: ${session.isVisitor ? '訪客' : '用戶'}, 最後 ping: ${lastPingAgo}秒前`);
+      });
     }, this.UPDATE_INTERVAL);
     
     console.log(`統計更新系統已啟動，間隔: ${this.UPDATE_INTERVAL / 1000} 秒`);
@@ -342,11 +360,20 @@ class UserStatsService {
 
   // 設置頁面關閉處理
   private setupBeforeUnloadHandler(): void {
-    window.addEventListener('beforeunload', () => {
-      // 頁面關閉時不立即移除會話，讓 ping 超時機制處理
-      this.saveStatsToStorage();
-      this.saveSessionsToStorage();
-    });
+    // 頁面關閉時立即清理當前會話
+    const handleBeforeUnload = () => {
+      if (this.currentSessionId && this.sessions.has(this.currentSessionId)) {
+        console.log(`頁面關閉，立即清理會話: ${this.currentSessionId}`);
+        this.sessions.delete(this.currentSessionId);
+        this.updateOnlineUsersCount();
+        this.saveStatsToStorage();
+        this.saveSessionsToStorage();
+      }
+    };
+
+    // 只監聽真正的頁面關閉事件
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('unload', handleBeforeUnload);
   }
 
   // 清理資源
@@ -463,6 +490,7 @@ class UserStatsService {
     this.updateOnlineUsersCount();
     this.saveStatsToStorage();
     this.saveSessionsToStorage();
+    this.notifyStatsUpdate();
     
     console.log(`訪客會話創建，會話 ID: ${sessionId}，在線訪客數: ${this.stats.onlineVisitors}`);
     return sessionId;
@@ -470,10 +498,65 @@ class UserStatsService {
 
   // 公開方法：為訪客創建會話（供外部調用）
   public initVisitorSession(): string {
-    if (!this.currentSessionId || !this.sessions.has(this.currentSessionId)) {
-      return this.createVisitorSession();
+    console.log('initVisitorSession: 開始初始化訪客會話');
+    console.log('initVisitorSession: 當前會話ID', this.currentSessionId);
+    console.log('initVisitorSession: 會話存在?', this.currentSessionId ? this.sessions.has(this.currentSessionId) : false);
+    
+    // 檢查是否已有有效的訪客會話
+    if (this.currentSessionId && this.sessions.has(this.currentSessionId)) {
+      const currentSession = this.sessions.get(this.currentSessionId);
+      if (currentSession && currentSession.isVisitor) {
+        // 更新現有訪客會話的 ping 時間
+        currentSession.lastPing = Date.now();
+        this.saveSessionsToStorage();
+        console.log('initVisitorSession: 更新現有訪客會話', this.currentSessionId);
+        return this.currentSessionId;
+      }
     }
-    return this.currentSessionId;
+    
+    // 清理過期會話
+    this.cleanupExpiredSessions();
+    
+    // 創建新的訪客會話
+    console.log('initVisitorSession: 創建新的訪客會話');
+    const sessionId = this.createVisitorSession();
+    console.log('initVisitorSession: 新會話創建完成', sessionId);
+    return sessionId;
+  }
+
+  // 設置跨標籤頁同步
+  private setupCrossTabSync(): void {
+    // 監聽 localStorage 變化，實現跨標籤頁同步
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'userSessions' || event.key === 'userStats') {
+        console.log(`跨標籤頁同步: ${event.key} 已更新`);
+        
+        // 重新載入數據
+        if (event.key === 'userSessions') {
+          this.loadSessionsFromStorage();
+        } else if (event.key === 'userStats') {
+          this.stats = this.loadStatsFromStorage();
+        }
+        
+        // 更新統計並通知 UI
+        this.updateOnlineUsersCount();
+        this.notifyStatsUpdate();
+      }
+    });
+    
+    // 定期廣播統計更新事件
+    setInterval(() => {
+      this.notifyStatsUpdate();
+    }, 10 * 1000); // 每 10 秒通知一次 UI 更新
+  }
+
+  // 通知統計數據更新
+  private notifyStatsUpdate(): void {
+    // 發送自定義事件通知 UI 組件更新
+    const event = new CustomEvent('userStatsUpdated', {
+      detail: this.getStats()
+    });
+    window.dispatchEvent(event);
   }
 }
 
