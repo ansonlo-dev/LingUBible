@@ -1,8 +1,8 @@
-import { Client, Databases, Users } from 'node-appwrite';
+const { Client, Databases, Users } = require('node-appwrite');
 
 // 這是一個 Appwrite 函數，用於獲取用戶統計
 // 使用服務器 SDK 來避免客戶端的隱私限制
-export default async ({ req, res, log, error }) => {
+module.exports = async ({ req, res, log, error }) => {
   try {
     // 初始化 Appwrite 客戶端（服務器端）
     const client = new Client()

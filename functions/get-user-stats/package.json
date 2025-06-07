@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Appwrite function to get user statistics using server SDK",
   "main": "src/main.js",
-  "type": "module",
   "scripts": {
     "start": "node src/main.js"
   },
