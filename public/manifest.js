@@ -1,5 +1,6 @@
 // 動態 PWA Manifest 生成器
 // 根據用戶語言偏好生成對應的 manifest 內容
+// 支援版本同步功能
 
 const manifestTranslations = {
   'en': {
@@ -113,14 +114,71 @@ function detectUserLanguage() {
   return 'en';
 }
 
+// 獲取版本信息
+async function getVersionInfo() {
+  try {
+    // 嘗試從 GitHub API 獲取最新版本
+    const response = await fetch('https://api.github.com/repos/ansonlo-dev/LingUBible/releases/latest', {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        ...(window.VITE_GITHUB_TOKEN && {
+          'Authorization': `token ${window.VITE_GITHUB_TOKEN}`
+        })
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        version: data.tag_name.replace(/^v/, ''), // 移除 v 前綴
+        formattedVersion: data.tag_name.startsWith('v0.') ? `Beta ${data.tag_name.replace(/^v/, '')}` : data.tag_name,
+        status: data.tag_name.startsWith('v0.') ? 'beta' : 'stable',
+        releaseUrl: data.html_url,
+        publishedAt: data.published_at
+      };
+    }
+  } catch (error) {
+    console.warn('無法從 GitHub 獲取版本信息，使用本地版本:', error);
+  }
+  
+  // 備用：使用本地版本（從靜態 API）
+  try {
+    const packageResponse = await fetch('/api/version.json');
+    if (packageResponse.ok) {
+      const packageData = await packageResponse.json();
+      return {
+        version: packageData.version,
+        formattedVersion: packageData.version.startsWith('0.') ? `Beta ${packageData.version}` : `v${packageData.version}`,
+        status: packageData.version.startsWith('0.') ? 'beta' : 'stable',
+        releaseUrl: null,
+        publishedAt: null
+      };
+    }
+  } catch (error) {
+    console.warn('無法獲取本地版本信息:', error);
+  }
+  
+  // 最終備用：硬編碼版本
+  return {
+    version: '0.0.6',
+    formattedVersion: 'Beta 0.0.6',
+    status: 'beta',
+    releaseUrl: null,
+    publishedAt: null
+  };
+}
+
 // 生成 manifest 對象
-function generateManifest(language = 'en') {
+async function generateManifest(language = 'en') {
   const translation = manifestTranslations[language] || manifestTranslations['en'];
+  const versionInfo = await getVersionInfo();
   
   return {
-    name: translation.name,
+    name: `${translation.name} (${versionInfo.formattedVersion})`,
     short_name: translation.short_name,
-    description: translation.description,
+    description: `${translation.description} - ${versionInfo.formattedVersion}`,
+    version: versionInfo.version,
+    version_name: versionInfo.formattedVersion,
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -245,13 +303,36 @@ function generateManifest(language = 'en') {
 // 如果在瀏覽器環境中運行
 if (typeof window !== 'undefined') {
   // 動態更新 manifest link
-  function updateManifestLink() {
+  async function updateManifestLink() {
     const language = detectUserLanguage();
     const manifestLink = document.querySelector('link[rel="manifest"]');
     
     if (manifestLink) {
-      // 更新 manifest URL 包含語言參數
-      manifestLink.href = `/manifest.json?lang=${language}&t=${Date.now()}`;
+      try {
+        // 生成動態 manifest
+        const manifest = await generateManifest(language);
+        
+        // 創建 blob URL
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], {
+          type: 'application/json'
+        });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        
+        // 更新 manifest link
+        manifestLink.href = manifestUrl;
+        
+        console.log(`🔄 PWA Manifest 已更新 (${language}):`, manifest.name);
+        
+        // 觸發自定義事件通知其他組件
+        window.dispatchEvent(new CustomEvent('manifestUpdated', {
+          detail: { language, manifest }
+        }));
+        
+      } catch (error) {
+        console.error('❌ 更新 PWA Manifest 失敗:', error);
+        // 備用：使用靜態 manifest
+        manifestLink.href = `/manifest.json?lang=${language}&t=${Date.now()}`;
+      }
     }
   }
 
@@ -287,11 +368,8 @@ window.LingUBibleManifest = {
   generateManifest,
   detectUserLanguage,
   manifestTranslations,
-  updateManifestLink: () => {
-    const language = detectUserLanguage();
-    const manifestLink = document.querySelector('link[rel="manifest"]');
-    if (manifestLink) {
-      manifestLink.href = `/manifest.json?lang=${language}&t=${Date.now()}`;
-    }
+  getVersionInfo,
+  updateManifestLink: async () => {
+    await updateManifestLink();
   }
 }; 

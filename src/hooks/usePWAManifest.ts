@@ -5,6 +5,8 @@ interface PWAManifestData {
   name: string;
   short_name: string;
   description: string;
+  version?: string;
+  version_name?: string;
   lang: string;
   dir: string;
   theme_color: string;
@@ -139,6 +141,16 @@ export function usePWAManifest() {
     return state.manifest.icons[0]?.src || null;
   };
 
+  // 獲取應用版本
+  const getAppVersion = () => {
+    return state.manifest?.version || null;
+  };
+
+  // 獲取格式化的版本名稱
+  const getAppVersionName = () => {
+    return state.manifest?.version_name || null;
+  };
+
   // 檢查 manifest 是否已載入且為當前語言
   const isManifestReady = () => {
     return !state.loading && 
@@ -154,6 +166,8 @@ export function usePWAManifest() {
     getAppDescription,
     getAppShortName,
     getAppIcon,
+    getAppVersion,
+    getAppVersionName,
     isManifestReady,
     currentLanguage: language
   };

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run pwa:update-version && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -37,7 +37,9 @@
     "release:auto": "node tools/scripts/version/manual-release.js patch --yes",
     "release:check": "echo '🔍 檢查發布狀態...' && git status && echo '' && echo '📋 最近的標籤:' && git tag --sort=-version:refname | head -5",
     "release:create-missing": "node tools/scripts/version/create-missing-release.js",
-    "version:test": "node tools/scripts/version/test-version-system.js"
+    "version:test": "node tools/scripts/version/test-version-system.js",
+    "pwa:update-version": "node tools/scripts/version/update-pwa-version.js",
+    "pwa:test-version": "npm run pwa:update-version && echo '✅ PWA 版本已更新'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

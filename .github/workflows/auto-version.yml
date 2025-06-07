@@ -62,12 +62,19 @@ jobs:
         echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "Version updated to: $NEW_VERSION"
         
+    - name: Update PWA version
+      if: steps.should_update.outputs.SHOULD_UPDATE == 'true'
+      run: |
+        # 更新 PWA 版本信息
+        npm run pwa:update-version
+        echo "PWA version information updated"
+        
     - name: Commit version update
       if: steps.should_update.outputs.SHOULD_UPDATE == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add package.json
+        git add package.json public/api/version.json
         git commit -m "🔖 [version] Auto update version to ${{ steps.update_version.outputs.NEW_VERSION }}"
         git push
         
