@@ -131,13 +131,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden">
+    <div className="bg-background relative overflow-x-hidden">
       <FloatingCircles zIndex={0} />
       {/* 在桌面版顯示 FloatingGlare，手機版跳過以減少重疊 */}
       {!isMobile && <FloatingGlare count={3} className="fixed inset-0 top-16 z-0" />}
-      <div className="container mx-auto px-4 py-8 space-y-8 relative z-10">
+      <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">
         {/* Hero Section */}
-        <div className="text-center py-12 animate-fade-in relative overflow-visible z-30">
+        <div className="text-center py-8 md:py-12 animate-fade-in relative overflow-visible z-30">
           {/* 在桌面版才顯示額外的 FloatingCircles */}
           {!isMobile && <FloatingCircles zIndex={0} className="absolute inset-0 w-full h-full" />}
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
@@ -163,19 +163,21 @@ const Index = () => {
           </p>
           
           {/* Rolling Text Animation */}
-          <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center gap-0">
+          <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center">
             <span className="text-foreground">{t('hero.comeHereTo')}</span>
+            <span className="w-1"></span>
             <RollingText 
               texts={actionTexts} 
               interval={2000}
             />
           </div>
           
-          <div className="relative z-50">
+          <div className="relative z-50" style={{ zIndex: 9999 }}>
             <WingedButton 
               size="lg" 
-              className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8"
+              className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8 relative z-50"
               onClick={handleGetStartedClick}
+              style={{ zIndex: 9999 }}
             >
               {t('hero.getStarted')}
             </WingedButton>
@@ -221,21 +223,21 @@ const Index = () => {
 
         {/* Content Tabs */}
         <Tabs defaultValue="courses" className="space-y-6 relative z-20">
-          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
-            <TabsTrigger value="courses" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              {t('tabs.popularCourses')}
-            </TabsTrigger>
-            <TabsTrigger value="lecturers" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              {t('tabs.topLecturers')}
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="courses" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                {t('tabs.popularCourses')}
+              </TabsTrigger>
+              <TabsTrigger value="lecturers" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t('tabs.topLecturers')}
+              </TabsTrigger>
+            </TabsList>
+            <Button variant="outline">{t('button.viewAll')}</Button>
+          </div>
 
           <TabsContent value="courses" className="space-y-6">
-            <div className="flex justify-end">
-              <Button variant="outline">{t('button.viewAll')}</Button>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course, index) => (
                 <div key={course.code} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
@@ -246,10 +248,6 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="lecturers" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">{t('tabs.topLecturers')}</h2>
-              <Button variant="outline">{t('button.viewAll')}</Button>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lecturers.map((lecturer, index) => (
                 <div key={lecturer.name} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>

@@ -1,0 +1,9 @@
+[build]
+# 強制使用 npm 而不是 bun
+command = "npm ci && npm run build"
+
+[build.environment]
+# 指定 Node.js 版本
+NODE_VERSION = "20"
+# 強制使用 npm
+NPM_FLAGS = "--prefer-offline --no-audit" 

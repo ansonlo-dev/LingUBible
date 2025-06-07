@@ -10,6 +10,9 @@
   "dependencies": {
     "node-appwrite": "^13.0.0"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "keywords": ["appwrite", "function", "user-stats"],
   "author": "LingUBible",
   "license": "MIT"

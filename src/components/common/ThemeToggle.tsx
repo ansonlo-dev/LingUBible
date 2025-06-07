@@ -72,7 +72,7 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
         <Sun className="h-4 w-4 text-muted-foreground" />
         <button
           onClick={toggleTheme}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
             isDark ? 'bg-primary' : 'bg-secondary'
           }`}
           role="switch"
@@ -90,7 +90,7 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
   }
 
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+    <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground focus-visible:ring-0 focus-visible:ring-offset-0">
       {isDark ? (
         <Moon className="h-[1.2rem] w-[1.2rem]" />
       ) : (

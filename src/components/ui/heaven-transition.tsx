@@ -57,21 +57,7 @@ export const HeavenTransition: React.FC<HeavenTransitionProps> = ({
         ))}
       </div>
       
-      {/* 減少羽毛數量 - 只保留6根 */}
-      <div className="heaven-feathers">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className={`heaven-feather heaven-feather-${i + 1}`}>
-            <svg viewBox="0 0 20 60" className="feather-svg">
-              <path
-                d="M10,5 Q8,10 6,20 Q5,30 7,40 Q9,50 10,55 Q11,50 13,40 Q15,30 14,20 Q12,10 10,5 Z"
-                fill="rgba(255,255,255,0.8)"
-                stroke="rgba(255,215,0,0.4)"
-                strokeWidth="0.5"
-              />
-            </svg>
-          </div>
-        ))}
-      </div>
+
       
       {/* 減少粒子數量 - 只保留8個 */}
       <div className="heaven-particles">

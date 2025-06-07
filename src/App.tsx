@@ -13,6 +13,7 @@ import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
 import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
 import { PWAPromptTrigger } from "@/components/common/PWAPromptTrigger";
+import { BetaNotice } from "@/components/common/BetaNotice";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -315,7 +316,7 @@ const AppContent = () => {
               >
                 {/* 手機版透明滾動方向動畫指示器 */}
                 {isInitialized && isMobile && !isMobileSidebarOpen && showSwipeHint && (
-                  <div className="fixed inset-0 z-30 pointer-events-none">
+                  <div className="fixed inset-0 z-50 pointer-events-none">
                     {/* 透明覆蓋層 */}
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm swipe-overlay-animation" />
                     
@@ -356,6 +357,9 @@ const AppContent = () => {
                   onToggleSidebar={handleSidebarToggle}
                   isSidebarCollapsed={isSidebarCollapsed}
                 />
+                
+                {/* 測試版通知橫幅 */}
+                <BetaNotice />
                 
                 {/* 頁面內容 */}
                 <main className="content-area">

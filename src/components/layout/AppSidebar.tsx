@@ -1,5 +1,6 @@
 import { Home, BookOpen, Users, Star, TrendingUp, Settings, Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
@@ -32,6 +33,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileToggle }: AppSidebarProps) {
   const { t, language, setLanguage } = useLanguage();
+  const { user } = useAuth();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -60,7 +62,8 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
     { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
     { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
     { name: t('sidebar.trending'), href: '#', icon: TrendingUp, current: false },
-    { name: t('sidebar.settings'), href: '/settings', icon: Settings, current: location.pathname === '/settings' },
+    // 只有在用戶已登入時才顯示設定選項
+    ...(user ? [{ name: t('sidebar.settings'), href: '/settings', icon: Settings, current: location.pathname === '/settings' }] : []),
   ];
 
   return (
@@ -68,7 +71,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
       {/* 側邊欄內容 - 直接使用 flex 佈局，不再包裝額外的 div */}
       <div className="flex flex-col h-full">
         {/* Logo 區域 - 所有設備都顯示 */}
-        <div className="p-4 md:p-2 md:h-16 md:flex md:items-center">
+        <div className="p-4 md:p-2 md:h-16 md:flex md:items-center mt-2">
           {shouldShowText && (
             <Link 
               to="/" 
@@ -104,7 +107,6 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                       href={item.href}
                       className={`
                         flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                        ${!shouldShowText ? 'justify-center' : ''}
                         ${item.current 
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
                           : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -121,7 +123,6 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                       to={item.href}
                       className={`
                         flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                        ${!shouldShowText ? 'justify-center' : ''}
                         ${item.current 
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
                           : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'

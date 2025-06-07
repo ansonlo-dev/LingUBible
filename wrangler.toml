@@ -1,0 +1,16 @@
+name = "lingubible"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "npm ci && npm run build"
+
+[vars]
+# 環境變數將在 Cloudflare Dashboard 中設置
+# APPWRITE_API_KEY = "your_api_key_here"
+# APPWRITE_PROJECT_ID = "your_project_id_here"
+# APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"
+
+# 靜態資源配置 - 用於 SPA
+[assets]
+bucket = "./dist"
+not_found_handling = "single-page-application"

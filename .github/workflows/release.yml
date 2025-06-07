@@ -1,0 +1,98 @@
+name: Create Release and Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'  # 當推送 v* 標籤時觸發
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      env:
+        VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
+        VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}
+        VITE_APP_ENV: production
+        VITE_DEV_MODE: false
+        VITE_DEV_BYPASS_PASSWORD: false
+        
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: Get package version
+      id: package_version
+      run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+    - name: Determine release type
+      id: release_type
+      run: |
+        if [[ "${{ steps.package_version.outputs.PACKAGE_VERSION }}" =~ ^0\. ]]; then
+          echo "PRERELEASE=true" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=Beta ${{ steps.package_version.outputs.PACKAGE_VERSION }}" >> $GITHUB_OUTPUT
+        else
+          echo "PRERELEASE=false" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=Version ${{ steps.package_version.outputs.PACKAGE_VERSION }}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # 簡單的 changelog 生成
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "## 🚀 新功能和改進" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### ✨ 主要更新" >> $GITHUB_OUTPUT
+        echo "- 版本更新至 ${{ steps.package_version.outputs.PACKAGE_VERSION }}" >> $GITHUB_OUTPUT
+        echo "- 性能優化和錯誤修復" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🔧 技術改進" >> $GITHUB_OUTPUT
+        echo "- 自動化部署流程" >> $GITHUB_OUTPUT
+        echo "- 代碼質量提升" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📱 用戶體驗" >> $GITHUB_OUTPUT
+        echo "- UI/UX 優化" >> $GITHUB_OUTPUT
+        echo "- 響應式設計改進" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "---" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "🌐 **線上體驗**: [lingubible.com](https://lingubible.com)" >> $GITHUB_OUTPUT
+        echo "📚 **文檔**: [部署指南](https://github.com/${{ github.repository }}/tree/main/docs)" >> $GITHUB_OUTPUT
+        echo "🐛 **問題回報**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: ${{ steps.release_type.outputs.RELEASE_NAME }}
+        body: ${{ steps.changelog.outputs.CHANGELOG }}
+        draft: false
+        prerelease: ${{ steps.release_type.outputs.PRERELEASE }}
+        
+    - name: Upload build artifacts
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist
+        asset_name: lingubible-${{ steps.package_version.outputs.PACKAGE_VERSION }}-build.zip
+        asset_content_type: application/zip 

@@ -37,6 +37,7 @@ Welcome to the LingUBible project documentation! This folder contains comprehens
 專案部署相關文檔：
 - [APPWRITE_GIT_DEPLOYMENT_GUIDE.md](./deployment/APPWRITE_GIT_DEPLOYMENT_GUIDE.md) - Appwrite Git 部署指南
 - [DEPLOYMENT_SUCCESS_GUIDE.md](./deployment/DEPLOYMENT_SUCCESS_GUIDE.md) - 部署成功指南
+- [CLOUDFLARE_PAGES_DEPLOYMENT.md](./deployment/CLOUDFLARE_PAGES_DEPLOYMENT.md) - Cloudflare Pages 部署指南
 
 ### 🧪 [testing/](./testing/) - 測試文檔
 測試相關文檔和工具：
@@ -63,6 +64,7 @@ Welcome to the LingUBible project documentation! This folder contains comprehens
 ### 部署上線
 1. 參考 [APPWRITE_GIT_DEPLOYMENT_GUIDE.md](./deployment/APPWRITE_GIT_DEPLOYMENT_GUIDE.md)
 2. 檢查 [DEPLOYMENT_SUCCESS_GUIDE.md](./deployment/DEPLOYMENT_SUCCESS_GUIDE.md)
+3. Cloudflare Pages 部署：[CLOUDFLARE_PAGES_DEPLOYMENT.md](./deployment/CLOUDFLARE_PAGES_DEPLOYMENT.md)
 
 ---
 

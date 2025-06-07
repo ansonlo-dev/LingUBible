@@ -75,6 +75,10 @@ const translations = {
     'site.name': 'LingUBible',
     'site.title': 'LingUBible - Course & Lecturer Reviews',
     'site.description': 'Platform for college students to review courses and lecturers',
+    // Beta notice
+    'beta.notice.title': 'Beta Version Notice',
+    'beta.notice.message': 'This website is currently in beta testing. Some features may be incomplete or unstable, and data loss may occur. Thank you for your understanding.',
+    'beta.notice.dismiss': 'I understand',
     'hero.title': 'Welcome to',
     'hero.subtitle': 'Your platform for honest course and lecturer reviews. Help fellow students make informed decisions',
     'hero.subtitleDesktop': 'Browse reviews widely, choose courses wisely.',
@@ -664,6 +668,10 @@ const translations = {
     'site.name': 'LingUBible',
     'site.title': 'LingUBible - 課程與講師評價平台',
     'site.description': '真實可靠的Reg科聖經，幫助同學們作出明智的選擇',
+    // Beta notice
+    'beta.notice.title': '測試版通知',
+    'beta.notice.message': '本網站目前處於測試階段，部分功能可能不完整或不穩定，並可能出現數據丟失的情況。感謝您的理解與支持。',
+    'beta.notice.dismiss': '我知道了',
     'hero.title': '歡迎來到',
           'hero.subtitle': '博覽群評，明智選課',
       'hero.subtitleDesktop': '博覽群評，明智選課',
@@ -1253,6 +1261,10 @@ const translations = {
     'site.name': 'LingUBible',
     'site.title': 'LingUBible - 课程与讲师评价平台',
     'site.description': '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定',
+    // Beta notice
+    'beta.notice.title': '测试版通知',
+    'beta.notice.message': '本网站目前处于测试阶段，部分功能可能不完整或不稳定，并可能出现数据丢失的情况。感谢您的理解与支持。',
+    'beta.notice.dismiss': '我知道了',
     'hero.title': '欢迎来到',
           'hero.subtitle': '博览群评，明智选课',
       'hero.subtitleDesktop': '博览群评，明智选课',

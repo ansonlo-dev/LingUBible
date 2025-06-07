@@ -1,1 +1,5 @@
+# WWW 重定向到非 WWW（SEO 優化）
+https://www.lingubible.com/* https://lingubible.com/:splat 301!
+
+# SPA 路由處理
 /*    /index.html   200 

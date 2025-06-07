@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>佈局修復測試 - LingUBible</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <h1 class="text-3xl font-bold text-center mb-8">主頁佈局修復測試</h1>
+        
+        <!-- 修復前的佈局 (錯誤示例) -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4 text-red-600">❌ 修復前 - Popular Courses (不一致)</h2>
+            <div class="space-y-4">
+                <!-- 標籤 -->
+                <div class="border-b">
+                    <button class="px-4 py-2 bg-blue-500 text-white rounded-t">Popular Courses</button>
+                </div>
+                <!-- 按鈕單獨一行 -->
+                <div class="flex justify-end">
+                    <button class="px-4 py-2 border border-gray-300 rounded">View All</button>
+                </div>
+                <!-- 內容 -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-gray-200 p-4 rounded">Course 1</div>
+                    <div class="bg-gray-200 p-4 rounded">Course 2</div>
+                    <div class="bg-gray-200 p-4 rounded">Course 3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修復後的佈局 (正確示例) -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4 text-green-600">✅ 修復後 - Popular Courses (一致)</h2>
+            <div class="space-y-4">
+                <!-- 標籤 -->
+                <div class="border-b">
+                    <button class="px-4 py-2 bg-blue-500 text-white rounded-t">Popular Courses</button>
+                </div>
+                <!-- 標題和按鈕在同一行 -->
+                <div class="flex items-center justify-between">
+                    <h3 class="text-2xl font-bold">Popular Courses</h3>
+                    <button class="px-4 py-2 border border-gray-300 rounded">View All</button>
+                </div>
+                <!-- 內容 -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-gray-200 p-4 rounded">Course 1</div>
+                    <div class="bg-gray-200 p-4 rounded">Course 2</div>
+                    <div class="bg-gray-200 p-4 rounded">Course 3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Lecturers 佈局 (參考) -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4 text-blue-600">📚 參考 - Top Lecturers (原本正確)</h2>
+            <div class="space-y-4">
+                <!-- 標籤 -->
+                <div class="border-b">
+                    <button class="px-4 py-2 bg-green-500 text-white rounded-t">Top Lecturers</button>
+                </div>
+                <!-- 標題和按鈕在同一行 -->
+                <div class="flex items-center justify-between">
+                    <h3 class="text-2xl font-bold">Top Lecturers</h3>
+                    <button class="px-4 py-2 border border-gray-300 rounded">View All</button>
+                </div>
+                <!-- 內容 -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-gray-200 p-4 rounded">Lecturer 1</div>
+                    <div class="bg-gray-200 p-4 rounded">Lecturer 2</div>
+                    <div class="bg-gray-200 p-4 rounded">Lecturer 3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修復說明 -->
+        <div class="bg-blue-50 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">🔧 修復說明</h2>
+            <div class="space-y-2 text-sm">
+                <p><strong>問題：</strong>Popular Courses 標籤中的「View All」按鈕單獨在一行</p>
+                <p><strong>解決：</strong>改為與標題在同一行，使用 <code class="bg-gray-200 px-1 rounded">flex items-center justify-between</code></p>
+                <p><strong>結果：</strong>兩個標籤的佈局現在完全一致</p>
+            </div>
+        </div>
+
+        <!-- 檢查步驟 -->
+        <div class="bg-yellow-50 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">🔍 如何驗證修復</h2>
+            <ol class="list-decimal list-inside space-y-2 text-sm">
+                <li>打開主頁 (http://localhost:8080)</li>
+                <li>滾動到 Popular Courses / Top Lecturers 標籤區域</li>
+                <li>點擊兩個標籤切換</li>
+                <li>確認兩個標籤中的「View All」按鈕都與標題在同一行</li>
+                <li>如果沒有變化，請硬刷新瀏覽器 (Ctrl+F5)</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html> 

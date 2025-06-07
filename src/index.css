@@ -22,7 +22,7 @@
     --destructive-foreground: 255, 255, 255;
     --border: 209, 213, 219;
     --input: 209, 213, 219;
-    --ring: 220, 38, 38;
+    --ring: 59, 130, 246;
     --radius: 0.5rem;
     --sidebar-background: 255, 255, 255;
     --sidebar-foreground: 0, 0, 0;
@@ -57,7 +57,7 @@
     --destructive-foreground: 255, 255, 255;
     --border: 63, 63, 70;
     --input: 63, 63, 70;
-    --ring: 220, 38, 38;
+    --ring: 59, 130, 246;
     --sidebar-background: 0, 0, 0;
     --sidebar-foreground: 255, 255, 255;
     --sidebar-primary: 220, 38, 38;
@@ -119,6 +119,28 @@
     white-space: nowrap;
     overflow: hidden;
     min-width: 0; /* 允許 flex 項目縮小 */
+    position: relative;
+    transition: all 0.2s ease;
+  }
+
+  /* 側邊欄項目懸停效果 */
+  .sidebar-container nav a:hover {
+    transform: translateX(4px);
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .sidebar-container nav a:hover {
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  /* 側邊欄項目圖標懸停效果 */
+  .sidebar-container nav a:hover svg {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
   }
 
   .sidebar-container nav a span {
@@ -131,6 +153,38 @@
   .sidebar-container.collapsed nav a span {
     opacity: 0;
     width: 0;
+  }
+
+  /* 摺疊狀態下的懸停效果 */
+  .sidebar-container.collapsed nav a:hover {
+    transform: translateX(2px);
+  }
+
+  /* 摺疊狀態下圖標的特殊懸停效果 */
+  .sidebar-container.collapsed nav a:hover svg {
+    transform: scale(1.2);
+  }
+
+
+
+  /* 活動狀態項目的特殊懸停效果 */
+  .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
+    transform: translateX(6px);
+    box-shadow: 
+      0 4px 12px rgba(220, 38, 38, 0.2),
+      0 2px 6px rgba(220, 38, 38, 0.1);
+  }
+
+  .dark .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
+    box-shadow: 
+      0 4px 12px rgba(220, 38, 38, 0.3),
+      0 2px 6px rgba(220, 38, 38, 0.2);
+  }
+
+  /* 活動狀態項目圖標的特殊懸停效果 */
+  .sidebar-container nav a[class*="bg-sidebar-accent"]:hover svg {
+    transform: scale(1.15);
+    filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3));
   }
 
   /* 摺疊狀態 */
@@ -172,6 +226,17 @@
     .sidebar-container nav {
       flex: 1;
       overflow-y: auto;
+    }
+
+    /* 手機版懸停效果調整 */
+    .sidebar-container nav a:hover {
+      transform: none; /* 手機版不使用 translateX */
+    }
+
+    /* 手機版觸摸反饋 */
+    .sidebar-container nav a:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
     }
   }
 
@@ -245,7 +310,6 @@
 
   .content-area {
     flex: 1;
-    min-height: calc(100vh - var(--header-height));
     background: rgb(var(--background));
     position: relative;
     z-index: 1;
@@ -259,7 +323,7 @@
       0 8px 32px rgba(0, 0, 0, 0.12),
       0 4px 16px rgba(0, 0, 0, 0.08),
       0 2px 8px rgba(0, 0, 0, 0.04);
-    border-radius: 12px;
+    border-radius: 16px;
     transition: all 0.2s ease;
     position: relative;
     opacity: 1;
@@ -295,7 +359,7 @@
   .stats-card {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 
       0 2px 8px rgba(0, 0, 0, 0.08),
       0 1px 4px rgba(0, 0, 0, 0.04);
@@ -339,7 +403,7 @@
   .course-card {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 
       0 2px 8px rgba(0, 0, 0, 0.08),
       0 1px 4px rgba(0, 0, 0, 0.04);
@@ -598,7 +662,7 @@
     max-height: 70vh;
     background: rgb(var(--background));
     border: 1px solid rgb(var(--border));
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     z-index: 50;
   }
@@ -1207,9 +1271,7 @@
   .pwa-install-button {
     background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%) !important;
     border: none !important;
-    box-shadow: 
-      0 4px 15px rgba(220, 38, 38, 0.3),
-      0 0 20px rgba(220, 38, 38, 0.2) !important;
+    box-shadow: none !important;
     transition: all 0.3s ease !important;
     font-weight: 700 !important;
   }
@@ -1272,9 +1334,7 @@
 
   /* 暗色主題下的調整 */
   .dark .pwa-install-button {
-    box-shadow: 
-      0 4px 15px rgba(220, 38, 38, 0.4),
-      0 0 25px rgba(220, 38, 38, 0.3) !important;
+    box-shadow: none !important;
   }
 
   .dark .pwa-install-button:hover {
@@ -1311,6 +1371,8 @@
     transform: translateZ(0);
     /* 確保按鈕可以點擊 */
     pointer-events: auto;
+    /* 確保按鈕始終在最上層 */
+    z-index: 9999 !important;
   }
 
   .wing {
@@ -1370,6 +1432,13 @@
       0 0 40px rgba(220, 38, 38, 0.2);
   }
 
+  /* 為 Get Started 按鈕添加發光效果 */
+  .winged-button-container .winged-button {
+    box-shadow: 
+      0 4px 15px rgba(220, 38, 38, 0.3),
+      0 0 20px rgba(220, 38, 38, 0.2);
+  }
+
   /* 確保非懸停狀態穩定 */
   .winged-button-container:not(:hover) .wing {
     animation: none !important;
@@ -1384,7 +1453,7 @@
   .winged-button {
     pointer-events: auto;
     position: relative;
-    z-index: 10;
+    z-index: 9999 !important;
   }
 
   /* 禁用翅膀按鈕的霓虹燈效果 */
@@ -1467,6 +1536,13 @@
       0 0 40px rgba(248, 113, 113, 0.3);
   }
 
+  /* 暗色主題下的 Get Started 按鈕發光效果 */
+  .dark .winged-button-container .winged-button {
+    box-shadow: 
+      0 4px 15px rgba(220, 38, 38, 0.4),
+      0 0 25px rgba(220, 38, 38, 0.3);
+  }
+
   /* 響應式設計 */
   @media (max-width: 768px) {
     .wing {
@@ -1540,14 +1616,10 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 40;
+    z-index: 30;
     pointer-events: none;
     overflow: hidden;
-    background: linear-gradient(45deg, 
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 215, 0, 0.15) 50%,
-      rgba(255, 255, 255, 0.2) 100%);
-    animation: heaven-background-glow 1.2s ease-out;
+    background: transparent;
   }
 
   /* 主要光芒爆發效果 */
@@ -1762,13 +1834,13 @@
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
   }
 
-  /* 羽毛位置和延遲 */
-  .heaven-feather-1 { top: -50px; left: 20%; animation-delay: 0.2s; }
-  .heaven-feather-2 { top: -50px; left: 40%; animation-delay: 0.4s; }
-  .heaven-feather-3 { top: -50px; left: 60%; animation-delay: 0.6s; }
-  .heaven-feather-4 { top: -50px; left: 80%; animation-delay: 0.8s; }
-  .heaven-feather-5 { top: -50px; left: 30%; animation-delay: 0.3s; }
-  .heaven-feather-6 { top: -50px; left: 70%; animation-delay: 0.5s; }
+  /* 羽毛位置和延遲 - 調整為更集中在中央區域 */
+  .heaven-feather-1 { top: -50px; left: 45%; animation-delay: 0.2s; }
+  .heaven-feather-2 { top: -50px; left: 50%; animation-delay: 0.4s; }
+  .heaven-feather-3 { top: -50px; left: 55%; animation-delay: 0.6s; }
+  .heaven-feather-4 { top: -50px; left: 60%; animation-delay: 0.8s; }
+  .heaven-feather-5 { top: -50px; left: 40%; animation-delay: 0.3s; }
+  .heaven-feather-6 { top: -50px; left: 65%; animation-delay: 0.5s; }
 
   /* 金色粒子容器 */
   .heaven-particles {

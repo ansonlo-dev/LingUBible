@@ -96,7 +96,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       </DialogTrigger>
       <DialogContent className="max-w-none max-h-none w-screen h-screen sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl bg-white dark:bg-gray-900 shadow-xl sm:rounded-2xl border-0 sm:border p-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className="flex-shrink-0 p-4 sm:p-6 pb-3">
+          <DialogHeader className="flex-shrink-0 p-4 sm:p-6 pb-1">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
               <Palette className="h-5 w-5 text-primary" />
               {t('avatar.customize')}

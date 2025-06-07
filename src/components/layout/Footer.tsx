@@ -3,9 +3,12 @@ import { Github } from 'lucide-react';
 import { UserStatsDisplay } from '@/components/user/UserStatsDisplay';
 import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';
 import { Link } from 'react-router-dom';
+import { getFormattedVersion, getVersionStatus } from '@/utils/version';
 
 export function Footer() {
   const { t } = useLanguage();
+  const version = getFormattedVersion();
+  const versionStatus = getVersionStatus();
 
   return (
     <footer className="bg-background">
@@ -64,11 +67,12 @@ export function Footer() {
             {/* Right side - Navigation Links and OpenStatus Badge */}
             <div className="flex items-center space-x-6 text-sm">
               <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-muted-foreground text-xs rounded font-medium">
-                {t('footer.beta')}
-              </span>
-              <span className="text-gray-600 dark:text-muted-foreground text-xs">
-                {t('footer.version')}
+              <span className={`px-2 py-1 text-xs rounded font-medium ${
+                versionStatus === 'beta' 
+                  ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' 
+                  : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+              }`}>
+                {version}
               </span>
               <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.contact')}
@@ -93,11 +97,12 @@ export function Footer() {
           
           {/* Status badges row */}
           <div className="flex justify-center items-center space-x-3">
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-muted-foreground text-xs rounded font-medium">
-              {t('footer.beta')}
-            </span>
-            <span className="text-gray-600 dark:text-muted-foreground text-xs">
-              {t('footer.version')}
+            <span className={`px-2 py-1 text-xs rounded font-medium ${
+              versionStatus === 'beta' 
+                ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' 
+                : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+            }`}>
+              {version}
             </span>
           </div>
           
