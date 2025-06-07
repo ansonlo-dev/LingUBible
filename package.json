@@ -36,6 +36,7 @@
     "release:major": "node tools/scripts/version/manual-release.js major",
     "release:auto": "node tools/scripts/version/manual-release.js patch --yes",
     "release:check": "echo '🔍 檢查發布狀態...' && git status && echo '' && echo '📋 最近的標籤:' && git tag --sort=-version:refname | head -5",
+    "release:create-missing": "node tools/scripts/version/create-missing-release.js",
     "version:test": "node tools/scripts/version/test-version-system.js"
   },
   "dependencies": {
