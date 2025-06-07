@@ -32,6 +32,7 @@ import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePingSystem } from '@/hooks/usePingSystem';
+import { useVisitorSession } from '@/hooks/useVisitorSession';
 
 
 const queryClient = new QueryClient();
@@ -90,6 +91,9 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
+
+  // 初始化訪客會話（如果用戶未登入）
+  useVisitorSession();
 
   // 啟動 ping 系統來追蹤用戶在線狀態
   usePingSystem({

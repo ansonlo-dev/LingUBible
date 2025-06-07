@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface UserStats {
   totalUsers: number;
   onlineUsers: number;
+  onlineVisitors: number;
   todayLogins: number;
   thisMonthLogins: number;
   lastUpdated: string;
@@ -15,6 +16,7 @@ export function useUserStats() {
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
     onlineUsers: 0,
+    onlineVisitors: 0,
     todayLogins: 0,
     thisMonthLogins: 0,
     lastUpdated: new Date().toISOString()
@@ -31,6 +33,7 @@ export function useUserStats() {
       setStats({
         totalUsers: 0,
         onlineUsers: 0,
+        onlineVisitors: 0,
         todayLogins: 0,
         thisMonthLogins: 0,
         lastUpdated: new Date().toISOString()

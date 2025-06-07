@@ -26,9 +26,8 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
           <span className="font-medium text-green-600 dark:text-green-400">
-            {stats.onlineUsers}
+            {stats.onlineUsers} {t('stats.users')}{stats.onlineVisitors > 0 && `, ${stats.onlineVisitors} ${t('stats.visitors')}`} {t('stats.online')}
           </span>
-          <span className="ml-1">{t('stats.usersOnline')}</span>
         </div>
       </div>
     );
@@ -36,7 +35,7 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
 
   return (
     <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${className}`}>
-      {/* 在線用戶 */}
+      {/* 在線用戶和訪客 */}
       <div className="flex items-center space-x-2 text-sm">
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
@@ -44,10 +43,10 @@ export function UserStatsDisplay({ variant = 'compact', className = '' }: UserSt
         </div>
         <div>
           <div className="font-semibold text-green-600 dark:text-green-400">
-            {stats.onlineUsers}
+            {stats.onlineUsers + stats.onlineVisitors}
           </div>
           <div className="text-xs text-muted-foreground">
-            {t('stats.onlineUsers')}
+            {stats.onlineUsers} {t('stats.users')}, {stats.onlineVisitors} {t('stats.visitors')}
           </div>
         </div>
       </div>

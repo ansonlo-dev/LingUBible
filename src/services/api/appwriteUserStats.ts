@@ -3,6 +3,7 @@ import { Client, Databases, Functions, ID, Query } from 'appwrite';
 interface UserStats {
   totalUsers: number;
   onlineUsers: number;
+  onlineVisitors: number;
   todayLogins: number;
   thisMonthLogins: number;
   lastUpdated: string;
@@ -24,7 +25,7 @@ class AppwriteUserStatsService {
   private databases: Databases;
   private functions: Functions;
   private activeSessions: Map<string, string> = new Map(); // userId -> sessionId
-  private pingIntervals: Map<string, NodeJS.Timeout> = new Map(); // sessionId -> interval
+  private pingIntervals: Map<string, number> = new Map(); // sessionId -> interval
   private readonly SESSION_TIMEOUT = 5 * 60 * 1000; // 5 分鐘（配合 2 分鐘 ping）
   private readonly PING_INTERVAL = 120 * 1000; // 120 秒（2 分鐘）
   private readonly BACKGROUND_PING_INTERVAL = 60 * 1000; // 背景標籤頁：60 秒
@@ -236,6 +237,7 @@ class AppwriteUserStatsService {
         return {
           totalUsers: 0,
           onlineUsers: 0,
+          onlineVisitors: 0,
           todayLogins: 0,
           thisMonthLogins: 0,
           lastUpdated: new Date().toISOString()
@@ -260,6 +262,7 @@ class AppwriteUserStatsService {
       return {
         totalUsers: statsDoc.totalUsers || 0,
         onlineUsers: activeSessions.documents.length,
+        onlineVisitors: statsDoc.onlineVisitors || 0,
         todayLogins: statsDoc.todayLogins || 0,
         thisMonthLogins: statsDoc.thisMonthLogins || 0,
         lastUpdated: new Date().toISOString()
@@ -270,6 +273,7 @@ class AppwriteUserStatsService {
       return {
         totalUsers: 0,
         onlineUsers: 0,
+        onlineVisitors: 0,
         todayLogins: 0,
         thisMonthLogins: 0,
         lastUpdated: new Date().toISOString()

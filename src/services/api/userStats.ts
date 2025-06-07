@@ -1,16 +1,18 @@
 interface UserStats {
   totalUsers: number;
   onlineUsers: number;
+  onlineVisitors: number;
   todayLogins: number;
   thisMonthLogins: number;
   lastUpdated: string;
 }
 
 interface UserSession {
-  userId: string;
+  userId: string | null;
   loginTime: number;
   lastPing: number;
   sessionId: string;
+  isVisitor: boolean;
 }
 
 class UserStatsService {
@@ -32,6 +34,12 @@ class UserStatsService {
     this.startPingSystem();
     this.setupBeforeUnloadHandler();
     this.isInitialized = true;
+    
+    // 如果當前沒有會話，創建訪客會話
+    if (!this.currentSessionId) {
+      this.createVisitorSession();
+    }
+    
     console.log('UserStatsService 初始化完成 (基於 Ping 系統)');
   }
 
@@ -58,6 +66,11 @@ class UserStatsService {
           console.log('新的一天，重置今日登入統計');
         }
         
+        // 確保有 onlineVisitors 欄位
+        if (parsed.onlineVisitors === undefined) {
+          parsed.onlineVisitors = 0;
+        }
+        
         return parsed;
       }
     } catch (error) {
@@ -67,6 +80,7 @@ class UserStatsService {
     return {
       totalUsers: 0,
       onlineUsers: 0,
+      onlineVisitors: 0,
       todayLogins: 0,
       thisMonthLogins: 0,
       lastUpdated: new Date().toISOString()
@@ -121,6 +135,35 @@ class UserStatsService {
   public userLogin(userId: string): string {
     const now = Date.now();
     
+    // 檢查當前是否有訪客會話，如果有則轉換為用戶會話
+    if (this.currentSessionId) {
+      const currentSession = this.sessions.get(this.currentSessionId);
+      if (currentSession && currentSession.isVisitor) {
+        // 將訪客會話轉換為用戶會話
+        currentSession.userId = userId;
+        currentSession.isVisitor = false;
+        currentSession.loginTime = now;
+        currentSession.lastPing = now;
+        
+        // 新登入統計
+        this.stats.todayLogins++;
+        this.stats.thisMonthLogins++;
+        
+        // 檢查是否是新用戶
+        if (!this.hasUserLoggedInBefore(userId)) {
+          this.stats.totalUsers++;
+          console.log(`新用戶 ${userId} 註冊，總用戶數: ${this.stats.totalUsers}`);
+        }
+        
+        this.updateOnlineUsersCount();
+        this.saveStatsToStorage();
+        this.saveSessionsToStorage();
+        
+        console.log(`訪客轉換為用戶 ${userId}，會話 ID: ${this.currentSessionId}，在線用戶數: ${this.stats.onlineUsers}`);
+        return this.currentSessionId;
+      }
+    }
+    
     // 每次登入都創建新會話，不檢查是否已有活躍會話
     // 這樣可以正確追蹤不同設備上的同一用戶
     
@@ -143,7 +186,8 @@ class UserStatsService {
       userId,
       loginTime: now,
       lastPing: now,
-      sessionId
+      sessionId,
+      isVisitor: false
     });
     
     this.updateOnlineUsersCount();
@@ -241,12 +285,27 @@ class UserStatsService {
 
   // 更新在線用戶數
   private updateOnlineUsersCount(): void {
-    const previousCount = this.stats.onlineUsers;
-    this.stats.onlineUsers = this.sessions.size;
+    const previousUserCount = this.stats.onlineUsers;
+    const previousVisitorCount = this.stats.onlineVisitors;
+    
+    // 分別計算登入用戶和訪客
+    let userCount = 0;
+    let visitorCount = 0;
+    
+    this.sessions.forEach(session => {
+      if (session.isVisitor) {
+        visitorCount++;
+      } else {
+        userCount++;
+      }
+    });
+    
+    this.stats.onlineUsers = userCount;
+    this.stats.onlineVisitors = visitorCount;
     this.stats.lastUpdated = new Date().toISOString();
     
-    if (previousCount !== this.stats.onlineUsers) {
-      console.log(`在線用戶數更新: ${previousCount} -> ${this.stats.onlineUsers}`);
+    if (previousUserCount !== this.stats.onlineUsers || previousVisitorCount !== this.stats.onlineVisitors) {
+      console.log(`在線統計更新: 用戶 ${previousUserCount} -> ${this.stats.onlineUsers}, 訪客 ${previousVisitorCount} -> ${this.stats.onlineVisitors}`);
     }
   }
 
@@ -338,6 +397,7 @@ class UserStatsService {
     this.stats = {
       totalUsers: 0,
       onlineUsers: 0,
+      onlineVisitors: 0,
       todayLogins: 0,
       thisMonthLogins: 0,
       lastUpdated: new Date().toISOString()
@@ -385,6 +445,35 @@ class UserStatsService {
   public updateUserActivity(sessionId: string): void {
     // 將活動更新轉換為 ping
     this.sendPing(sessionId);
+  }
+
+  // 創建訪客會話
+  private createVisitorSession(): string {
+    const sessionId = this.generateSessionId();
+    this.currentSessionId = sessionId;
+    
+    this.sessions.set(sessionId, {
+      userId: null,
+      loginTime: Date.now(),
+      lastPing: Date.now(),
+      sessionId,
+      isVisitor: true
+    });
+    
+    this.updateOnlineUsersCount();
+    this.saveStatsToStorage();
+    this.saveSessionsToStorage();
+    
+    console.log(`訪客會話創建，會話 ID: ${sessionId}，在線訪客數: ${this.stats.onlineVisitors}`);
+    return sessionId;
+  }
+
+  // 公開方法：為訪客創建會話（供外部調用）
+  public initVisitorSession(): string {
+    if (!this.currentSessionId || !this.sessions.has(this.currentSessionId)) {
+      return this.createVisitorSession();
+    }
+    return this.currentSessionId;
   }
 }
 
