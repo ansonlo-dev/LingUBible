@@ -18,6 +18,8 @@ export default defineConfig(({ command, mode }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
+      // 在 Cloudflare Workers 環境中禁用 Service Worker
+      disable: process.env.CF_PAGES === '1' || process.env.NODE_ENV === 'production',
       workbox: {
         globPatterns: [
           '**/*.{js,css,html,woff2}',
