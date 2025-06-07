@@ -1,14 +1,12 @@
 {
   "name": "get-user-stats",
   "version": "1.0.0",
-  "description": "Appwrite function to get user statistics using server SDK",
+  "description": "Appwrite function to get user statistics using REST API",
   "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js"
   },
-  "dependencies": {
-    "node-appwrite": "^15.0.0"
-  },
+  "dependencies": {},
   "engines": {
     "node": ">=18.0.0"
   },

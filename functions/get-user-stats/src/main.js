@@ -1,23 +1,29 @@
-const { Client, Databases, Users } = require('node-appwrite');
-
+// 使用 fetch API 而不是 node-appwrite SDK
 // 這是一個 Appwrite 函數，用於獲取用戶統計
-// 使用服務器 SDK 來避免客戶端的隱私限制
 module.exports = async ({ req, res, log, error }) => {
   try {
-    // 初始化 Appwrite 客戶端（服務器端）
-    const client = new Client()
-      .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://fra.cloud.appwrite.io/v1')
-      .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-      .setKey(process.env.APPWRITE_API_KEY); // 使用 API 密鑰
-
-    const users = new Users(client);
-    const databases = new Databases(client);
+    const endpoint = process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://fra.cloud.appwrite.io/v1';
+    const projectId = process.env.APPWRITE_FUNCTION_PROJECT_ID;
+    const apiKey = process.env.APPWRITE_API_KEY;
 
     log('開始獲取用戶統計...');
 
-    // 獲取總用戶數
-    const usersList = await users.list();
-    const totalUsers = usersList.total;
+    // 使用 REST API 獲取用戶列表
+    const usersResponse = await fetch(`${endpoint}/users`, {
+      method: 'GET',
+      headers: {
+        'X-Appwrite-Project': projectId,
+        'X-Appwrite-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!usersResponse.ok) {
+      throw new Error(`Failed to fetch users: ${usersResponse.status} ${usersResponse.statusText}`);
+    }
+
+    const usersData = await usersResponse.json();
+    const totalUsers = usersData.total;
 
     log(`獲取到總用戶數: ${totalUsers}`);
 
@@ -30,14 +36,13 @@ module.exports = async ({ req, res, log, error }) => {
     let verifiedUsers = 0;
 
     // 遍歷用戶來計算統計數據
-    for (const user of usersList.users) {
+    for (const user of usersData.users) {
       // 計算已驗證用戶數（保留用於其他用途）
       if (user.emailVerification) {
         verifiedUsers++;
       }
 
       // 計算過去30天的新註冊用戶
-      // user.registration 是用戶註冊時間的 ISO 字符串
       if (user.registration && user.registration >= thirtyDaysAgoISO) {
         newUsersLast30Days++;
       }
@@ -47,7 +52,7 @@ module.exports = async ({ req, res, log, error }) => {
     const stats = {
       totalRegisteredUsers: totalUsers,
       newUsersLast30Days: newUsersLast30Days,
-      verifiedUsers: verifiedUsers, // 保留但不在前端顯示
+      verifiedUsers: verifiedUsers,
       lastUpdated: new Date().toISOString()
     };
 
@@ -55,32 +60,47 @@ module.exports = async ({ req, res, log, error }) => {
 
     // 可選：將統計數據緩存到數據庫中
     try {
-      await databases.createDocument(
-        'user-stats-db',
-        'user-stats-cache',
-        'latest-stats',
-        {
-          ...stats,
-          cachedAt: new Date().toISOString()
+      const cacheData = {
+        ...stats,
+        cachedAt: new Date().toISOString()
+      };
+
+      // 嘗試創建或更新緩存文檔
+      const cacheResponse = await fetch(`${endpoint}/databases/user-stats-db/collections/user-stats-cache/documents`, {
+        method: 'POST',
+        headers: {
+          'X-Appwrite-Project': projectId,
+          'X-Appwrite-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          documentId: 'latest-stats',
+          data: cacheData
+        })
+      });
+
+      if (!cacheResponse.ok && cacheResponse.status === 409) {
+        // 文檔已存在，嘗試更新
+        const updateResponse = await fetch(`${endpoint}/databases/user-stats-db/collections/user-stats-cache/documents/latest-stats`, {
+          method: 'PATCH',
+          headers: {
+            'X-Appwrite-Project': projectId,
+            'X-Appwrite-Key': apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            data: cacheData
+          })
+        });
+
+        if (updateResponse.ok) {
+          log('統計數據已更新到數據庫');
         }
-      );
-      log('統計數據已緩存到數據庫');
-    } catch (cacheError) {
-      // 如果文檔已存在，嘗試更新
-      try {
-        await databases.updateDocument(
-          'user-stats-db',
-          'user-stats-cache',
-          'latest-stats',
-          {
-            ...stats,
-            cachedAt: new Date().toISOString()
-          }
-        );
-        log('統計數據已更新到數據庫');
-      } catch (updateError) {
-        log('緩存統計數據失敗:', updateError.message);
+      } else if (cacheResponse.ok) {
+        log('統計數據已緩存到數據庫');
       }
+    } catch (cacheError) {
+      log('緩存統計數據失敗:', cacheError.message);
     }
 
     return res.json({
