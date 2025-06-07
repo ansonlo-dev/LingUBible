@@ -23,8 +23,8 @@ interface VersionInfo {
 }
 
 const GITHUB_API_BASE = 'https://api.github.com';
-const REPO_OWNER = 'ansonlo-dev';  // 替換為您的 GitHub 用戶名
-const REPO_NAME = 'LingUBible';    // 替換為您的倉庫名
+const REPO_OWNER = 'ansonlo';      // 您的 GitHub 用戶名
+const REPO_NAME = 'LingUBible';    // 您的倉庫名
 
 /**
  * 獲取最新的 GitHub Release

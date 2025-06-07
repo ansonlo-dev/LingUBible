@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 獲取命令行參數
 const args = process.argv.slice(2);
@@ -102,7 +106,7 @@ function updatePackageVersion() {
 }
 
 // 確認發布
-function confirmRelease(currentVersion, newVersion) {
+async function confirmRelease(currentVersion, newVersion) {
   if (skipConfirmation) return true;
   
   console.log(colors.bold('\n📋 發布摘要:'));
@@ -110,8 +114,8 @@ function confirmRelease(currentVersion, newVersion) {
   console.log(`   新版本:   ${colors.green(newVersion)}`);
   console.log(`   版本類型: ${colors.yellow(newVersion.startsWith('0.') ? 'Beta' : 'Stable')}`);
   
-  const readline = require('readline');
-  const rl = readline.createInterface({
+  const { createInterface } = await import('readline');
+  const rl = createInterface({
     input: process.stdin,
     output: process.stdout
   });
@@ -156,7 +160,7 @@ function showSuccessMessage(currentVersion, newVersion, tagName) {
   
   console.log(colors.bold('\n🚀 後續步驟:'));
   console.log(`   • GitHub Release 將自動創建`);
-  console.log(`   • 查看發布: https://github.com/ansonlo-dev/LingUBible/releases/tag/${tagName}`);
+  console.log(`   • 查看發布: https://github.com/ansonlo/LingUBible/releases/tag/${tagName}`);
   console.log(`   • 部署將自動觸發`);
 }
 

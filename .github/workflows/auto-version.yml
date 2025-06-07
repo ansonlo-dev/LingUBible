@@ -13,6 +13,9 @@ jobs:
   auto-version:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, '[skip version]') }}
+    permissions:
+      contents: write
+      actions: read
     
     steps:
     - name: Checkout code
@@ -24,7 +27,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install dependencies
