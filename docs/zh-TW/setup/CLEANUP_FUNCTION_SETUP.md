@@ -189,26 +189,60 @@ APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
 
 ## 🔍 故障排除
 
-### 1. 部署失敗
-```bash
-# 檢查 wrangler 配置
-wrangler whoami
+### 1. Lockfile 錯誤（常見）
 
-# 重新登入
-wrangler logout
-wrangler login
+**錯誤信息**：`lockfile had changes, but lockfile is frozen`
+
+**解決方案**：
+```bash
+# 更新 lockfile
+bun install
+# 或使用 npm
+npm install
+
+# 提交更改
+git add bun.lockb package-lock.json
+git commit -m "Update lockfile"
+git push
 ```
 
-### 2. 環境變數問題
+### 2. 構建工具衝突
+
+如果 Cloudflare 自動檢測到 bun 但您想使用 npm：
+
+**方案 A**：刪除 `bun.lockb`
+```bash
+rm bun.lockb
+npm install
+git add package-lock.json
+git commit -m "Switch to npm"
+```
+
+**方案 B**：使用 `.cloudflare/build.toml` 強制使用 npm（已配置）
+
+### 3. 部署失敗
+```bash
+# 檢查 wrangler 配置
+npx wrangler whoami
+
+# 重新登入
+npx wrangler logout
+npx wrangler login
+```
+
+### 4. 環境變數問題
 - 確認在 Cloudflare Dashboard 中正確設置了環境變數
 - 檢查變數名稱拼寫是否正確
 
-### 3. 構建問題
+### 5. 本地構建測試
 ```bash
 # 清理並重新構建
 rm -rf dist node_modules
 npm install
 npm run build
+
+# 測試構建結果
+npm run preview
 ```
 
 ## 📊 監控和日誌
