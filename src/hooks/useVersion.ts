@@ -59,11 +59,20 @@ export const useVersion = (options: UseVersionOptions = {}) => {
         lastChecked: new Date()
       }));
     } catch (error) {
+      // 如果無法獲取 GitHub 版本，創建一個備用版本資訊
+      const currentVersion = state.currentVersion;
       setState(prev => ({
         ...prev,
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to check for updates',
-        lastChecked: new Date()
+        lastChecked: new Date(),
+        latestVersion: {
+          version: currentVersion,
+          formattedVersion: currentVersion.startsWith('0.') ? `Beta ${currentVersion}` : `v${currentVersion}`,
+          status: currentVersion.startsWith('0.') ? 'beta' : 'stable',
+          publishedAt: new Date().toISOString(),
+          releaseUrl: `https://github.com/ansonlo-dev/LingUBible/releases/tag/v${currentVersion}`
+        }
       }));
     }
   };
@@ -150,15 +159,36 @@ export const useLatestVersion = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const createFallbackVersion = () => {
+    const currentVersion = getAppVersion();
+    return {
+      version: currentVersion,
+      formattedVersion: currentVersion.startsWith('0.') ? `Beta ${currentVersion}` : `v${currentVersion}`,
+      status: currentVersion.startsWith('0.') ? 'beta' as const : 'stable' as const,
+      publishedAt: new Date().toISOString(),
+      releaseUrl: `https://github.com/ansonlo-dev/LingUBible/releases/tag/v${currentVersion}`
+    };
+  };
+
   const fetchLatestVersion = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
       const versionInfo = await getLatestVersionInfo();
-      setLatestVersion(versionInfo);
+      if (versionInfo) {
+        setLatestVersion(versionInfo);
+      } else {
+        // GitHub API 失敗，使用備用版本
+        console.log('GitHub API failed, using fallback version');
+        setLatestVersion(createFallbackVersion());
+        setError('Using local version (GitHub API unavailable)');
+      }
     } catch (err) {
+      console.log('Error fetching version, using fallback:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch version');
+      // 如果無法獲取 GitHub 版本，創建一個備用版本資訊
+      setLatestVersion(createFallbackVersion());
     } finally {
       setIsLoading(false);
     }

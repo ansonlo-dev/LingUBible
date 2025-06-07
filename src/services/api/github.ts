@@ -23,8 +23,28 @@ interface VersionInfo {
 }
 
 const GITHUB_API_BASE = 'https://api.github.com';
-const REPO_OWNER = 'ansonlo';      // 您的 GitHub 用戶名
+const REPO_OWNER = 'ansonlo-dev';  // 您的 GitHub 用戶名
 const REPO_NAME = 'LingUBible';    // 您的倉庫名
+
+// GitHub Token（可選，用於私有倉庫或提高 API 限制）
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+
+/**
+ * 創建 API 請求的 headers
+ */
+const createHeaders = () => {
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'LingUBible-App'
+  };
+
+  // 如果有 GitHub Token，添加認證 header
+  if (GITHUB_TOKEN) {
+    headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`;
+  }
+
+  return headers;
+};
 
 /**
  * 獲取最新的 GitHub Release
@@ -34,15 +54,18 @@ export const getLatestRelease = async (): Promise<GitHubRelease | null> => {
     const response = await fetch(
       `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
       {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'LingUBible-App'
-        }
+        headers: createHeaders()
       }
     );
 
     if (!response.ok) {
-      console.warn('Failed to fetch latest release:', response.status);
+      if (response.status === 403) {
+        console.warn('GitHub API rate limit exceeded or repository access denied');
+      } else if (response.status === 404) {
+        console.warn('No releases found or repository not found');
+      } else {
+        console.warn('Failed to fetch latest release:', response.status, response.statusText);
+      }
       return null;
     }
 
@@ -62,10 +85,7 @@ export const getAllReleases = async (): Promise<GitHubRelease[]> => {
     const response = await fetch(
       `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/releases`,
       {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'LingUBible-App'
-        }
+        headers: createHeaders()
       }
     );
 
@@ -107,22 +127,14 @@ export const getLatestVersionInfo = async (): Promise<VersionInfo | null> => {
     // 首先嘗試獲取最新的穩定版
     const latestRelease = await getLatestRelease();
     
-    if (latestRelease && !latestRelease.prerelease) {
+    if (latestRelease) {
       return parseVersionInfo(latestRelease);
     }
 
-    // 如果最新版是 pre-release，獲取所有 releases 並找到最新的穩定版
-    const allReleases = await getAllReleases();
-    
-    if (allReleases.length === 0) {
-      return null;
-    }
-
-    // 如果沒有穩定版，返回最新的 pre-release
-    const latestStable = allReleases.find(release => !release.prerelease);
-    const releaseToUse = latestStable || allReleases[0];
-    
-    return parseVersionInfo(releaseToUse);
+    // 如果第一個 API 失敗（可能是 403 或其他錯誤），直接返回 null
+    // 避免繼續嘗試其他 API 導致更多錯誤
+    console.log('Latest release API failed, not attempting getAllReleases to avoid additional API errors');
+    return null;
   } catch (error) {
     console.error('Error getting latest version info:', error);
     return null;

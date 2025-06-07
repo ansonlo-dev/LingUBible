@@ -160,7 +160,7 @@ function showSuccessMessage(currentVersion, newVersion, tagName) {
   
   console.log(colors.bold('\n🚀 後續步驟:'));
   console.log(`   • GitHub Release 將自動創建`);
-  console.log(`   • 查看發布: https://github.com/ansonlo/LingUBible/releases/tag/${tagName}`);
+  console.log(`   • 查看發布: https://github.com/ansonlo-dev/LingUBible/releases/tag/${tagName}`);
   console.log(`   • 部署將自動觸發`);
 }
 
