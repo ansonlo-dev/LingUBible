@@ -2,12 +2,9 @@ name = "lingubible"
 compatibility_date = "2024-01-01"
 
 [build]
-command = "npm ci && npm run build"
+command = "npm ci && VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible npm run build"
 
-[vars]
-# Appwrite 配置
-VITE_APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"
-VITE_APPWRITE_PROJECT_ID = "lingubible"
+# 環境變數在構建命令中設置
 
 # 靜態資源配置 - 用於 SPA
 [assets]
