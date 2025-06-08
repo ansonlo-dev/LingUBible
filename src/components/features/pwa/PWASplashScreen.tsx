@@ -20,6 +20,14 @@ export function PWASplashScreen({
   useEffect(() => {
     if (!isVisible) return;
 
+    // 添加全局緊急退出函數到 window 對象
+    (window as any).emergencyExitSplash = () => {
+      console.log('緊急退出 PWA 啟動畫面 - 通過控制台命令');
+      sessionStorage.setItem('pwa-splash-disabled', 'true');
+      sessionStorage.setItem('app-loaded', 'true');
+      onComplete?.();
+    };
+
     const timer1 = setTimeout(() => {
       setAnimationPhase('main');
     }, 500);
@@ -36,18 +44,30 @@ export function PWASplashScreen({
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      // 清理全局函數
+      delete (window as any).emergencyExitSplash;
     };
   }, [isVisible, duration, onComplete]);
 
   if (!isVisible) return null;
 
   return (
-    <div className={`
-      fixed inset-0 z-[100000] flex flex-col items-center justify-center
-      bg-gradient-to-br from-red-600 via-red-500 to-red-700
-      transition-all duration-500 ease-in-out
-      ${animationPhase === 'exit' ? 'opacity-0 scale-110' : 'opacity-100 scale-100'}
-    `}>
+    <div 
+      className={`
+        fixed inset-0 z-[100000] flex flex-col items-center justify-center
+        bg-gradient-to-br from-red-600 via-red-500 to-red-700
+        transition-all duration-500 ease-in-out cursor-pointer
+        ${animationPhase === 'exit' ? 'opacity-0 scale-110' : 'opacity-100 scale-100'}
+      `}
+      onClick={() => {
+        console.log('PWA 啟動畫面被點擊，強制關閉');
+        onComplete?.();
+      }}
+      onTouchStart={() => {
+        console.log('PWA 啟動畫面被觸摸，強制關閉');
+        onComplete?.();
+      }}
+    >
       {/* 背景動畫效果 */}
       <div className="absolute inset-0 overflow-hidden">
         {/* 漸變光暈 */}

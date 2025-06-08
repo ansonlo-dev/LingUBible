@@ -95,7 +95,20 @@ const AppContent = () => {
   const [isDark, setIsDark] = useState(initialIsDark);
 
   // PWA 啟動畫面管理
-  const { isVisible: showSplashScreen, hideSplashScreen } = usePWASplashScreen();
+  const { isVisible: showSplashScreen, hideSplashScreen, emergencyDisable } = usePWASplashScreen();
+
+  // 緊急退出機制：按 ESC 鍵或 Ctrl+X 強制關閉啟動畫面
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (showSplashScreen && (event.key === 'Escape' || (event.ctrlKey && event.key === 'x'))) {
+        console.log('緊急退出 PWA 啟動畫面');
+        emergencyDisable();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSplashScreen, emergencyDisable]);
 
   // 初始化訪客會話（如果用戶未登入）
   useVisitorSession();
@@ -310,7 +323,7 @@ const AppContent = () => {
       <PWASplashScreen 
         isVisible={showSplashScreen}
         onComplete={hideSplashScreen}
-        duration={3000}
+        duration={2000}
       />
       
       <BrowserRouter

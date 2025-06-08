@@ -16,6 +16,18 @@ export function usePWASplashScreen() {
   });
 
   useEffect(() => {
+    // 緊急修復：檢查是否有強制禁用標記
+    const forceDisabled = sessionStorage.getItem('pwa-splash-disabled') === 'true';
+    if (forceDisabled) {
+      setState({
+        isVisible: false,
+        shouldShow: false,
+        isStandalone: false,
+        isFirstLaunch: false
+      });
+      return;
+    }
+
     // 檢測是否為 PWA 模式（獨立模式）
     const isStandalone = 
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -37,10 +49,11 @@ export function usePWASplashScreen() {
       (window.matchMedia('(display-mode: standalone)').matches && 
        /iPad|iPhone|iPod/.test(navigator.userAgent));
 
-    // 決定是否顯示啟動畫面
+    // 決定是否顯示啟動畫面 - 更保守的檢測
     const shouldShow = 
       (isStandalone || isIOSPWA) && 
-      (isFirstLaunch || isFromHomeScreen);
+      isFirstLaunch && // 只在真正的首次啟動時顯示
+      !sessionStorage.getItem('app-loaded'); // 確保應用未加載過
 
     setState({
       isVisible: shouldShow,
@@ -52,6 +65,17 @@ export function usePWASplashScreen() {
     // 標記已啟動
     if (shouldShow) {
       sessionStorage.setItem('pwa-launched', 'true');
+    }
+
+    // 添加緊急退出機制 - 5秒後強制隱藏
+    if (shouldShow) {
+      const emergencyTimer = setTimeout(() => {
+        console.warn('PWA 啟動畫面緊急退出機制觸發');
+        setState(prev => ({ ...prev, isVisible: false }));
+        sessionStorage.setItem('app-loaded', 'true');
+      }, 5000);
+
+      return () => clearTimeout(emergencyTimer);
     }
 
     // 監聽顯示模式變化
@@ -75,6 +99,8 @@ export function usePWASplashScreen() {
       ...prev,
       isVisible: false
     }));
+    // 標記應用已加載，防止啟動畫面再次顯示
+    sessionStorage.setItem('app-loaded', 'true');
   };
 
   const showSplashScreen = () => {
@@ -93,10 +119,24 @@ export function usePWASplashScreen() {
     }));
   };
 
+  // 緊急禁用啟動畫面
+  const emergencyDisable = () => {
+    setState({
+      isVisible: false,
+      shouldShow: false,
+      isStandalone: false,
+      isFirstLaunch: false
+    });
+    sessionStorage.setItem('pwa-splash-disabled', 'true');
+    sessionStorage.setItem('app-loaded', 'true');
+    console.log('PWA 啟動畫面已緊急禁用');
+  };
+
   return {
     ...state,
     hideSplashScreen,
     showSplashScreen,
-    triggerSplashScreen
+    triggerSplashScreen,
+    emergencyDisable
   };
 } 
