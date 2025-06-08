@@ -152,14 +152,25 @@
           const userLanguage = detectUserLanguage();
           const manifestLink = document.getElementById('manifest-link');
           if (manifestLink) {
-            // 根據用戶語言設置動態 manifest
-            manifestLink.href = `/manifest-dynamic.json?lang=${userLanguage}&v=${Date.now()}`;
+            // 根據用戶語言設置動態 manifest，添加時間戳確保更新
+            const timestamp = Date.now();
+            manifestLink.href = `/manifest-dynamic.json?lang=${userLanguage}&v=${timestamp}`;
             console.log(`🌐 PWA Manifest 已更新為語言: ${userLanguage}`);
+            console.log(`📄 Manifest URL: ${manifestLink.href}`);
+            
+            // 觸發 manifest 更新事件
+            window.dispatchEvent(new CustomEvent('manifestUpdated', {
+              detail: { language: userLanguage, timestamp }
+            }));
           }
         }
 
         // 當 DOM 載入後設置正確的 manifest
-        document.addEventListener('DOMContentLoaded', updateManifestLink);
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', updateManifestLink);
+        } else {
+          updateManifestLink();
+        }
         
         // 監聽語言變更事件
         window.addEventListener('languageChanged', function(event) {
@@ -169,6 +180,17 @@
         
         // 全局函數供其他腳本使用
         window.updatePWAManifest = updateManifestLink;
+        
+        // 定期檢查 manifest 是否需要更新（僅在生產環境）
+        if (window.location.hostname !== 'localhost' && !window.location.hostname.includes('localhost')) {
+          setInterval(() => {
+            const manifestLink = document.getElementById('manifest-link');
+            if (manifestLink && !manifestLink.href.includes('v=')) {
+              console.log('🔄 定期更新 PWA Manifest');
+              updateManifestLink();
+            }
+          }, 30000); // 每30秒檢查一次
+        }
       })();
     </script>
     

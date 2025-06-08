@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桌面 PWA 安裝診斷工具 - LingUBible</title>
+    <link rel="manifest" href="/manifest-dynamic.json" id="manifest-link">
+    <meta name="theme-color" content="#dc2626">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success { background: rgba(76, 175, 80, 0.3); border-left: 4px solid #4CAF50; }
+        .status.error { background: rgba(244, 67, 54, 0.3); border-left: 4px solid #f44336; }
+        .status.warning { background: rgba(255, 193, 7, 0.3); border-left: 4px solid #ffc107; }
+        .status.info { background: rgba(33, 150, 243, 0.3); border-left: 4px solid #2196f3; }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .install-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            font-size: 18px;
+            padding: 20px 40px;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .metric {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .browser-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .install-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ 桌面 PWA 安裝診斷工具</h1>
+        
+        <div class="section">
+            <h2>📊 即時狀態</h2>
+            <div class="grid">
+                <div class="metric">
+                    <div class="metric-value" id="install-available">❌</div>
+                    <div class="metric-label">安裝提示可用</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="sw-status">❌</div>
+                    <div class="metric-label">Service Worker</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="manifest-status">❌</div>
+                    <div class="metric-label">Manifest 文件</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="https-status">❌</div>
+                    <div class="metric-label">HTTPS 連接</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 安裝測試</h2>
+            <button id="install-btn" class="install-btn" disabled>等待安裝提示...</button>
+            <button onclick="runFullDiagnostics()">🔍 完整診斷</button>
+            <button onclick="testManifest()">📄 測試 Manifest</button>
+            <button onclick="checkIcons()">🖼️ 檢查圖標</button>
+            <button onclick="showBrowserInstructions()">📖 瀏覽器指引</button>
+        </div>
+
+        <div class="section">
+            <h2>📋 診斷結果</h2>
+            <div id="results"></div>
+        </div>
+
+        <div class="section">
+            <h2>🌐 瀏覽器信息</h2>
+            <div class="browser-info" id="browser-info"></div>
+        </div>
+
+        <div class="section">
+            <h2>📝 即時日誌</h2>
+            <div class="log" id="log"></div>
+        </div>
+
+        <div id="install-instructions" class="install-instructions hidden">
+            <h3>📖 手動安裝指引</h3>
+            <p id="instructions-text"></p>
+        </div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        const results = document.getElementById('results');
+        const log = document.getElementById('log');
+        const installBtn = document.getElementById('install-btn');
+        const browserInfo = document.getElementById('browser-info');
+
+        // 日誌函數
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            log.textContent += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+            console.log(message);
+        }
+
+        // 結果函數
+        function addResult(type, message) {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        // 更新狀態指標
+        function updateStatus(id, status, value = null) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = status ? '✅' : '❌';
+                if (value) element.textContent = value;
+            }
+        }
+
+        // 監聽 PWA 事件
+        window.addEventListener('beforeinstallprompt', (e) => {
+            addLog('💡 收到 beforeinstallprompt 事件');
+            addLog(`🖥️ 支援的平台: ${e.platforms.join(', ')}`);
+            
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            updateStatus('install-available', true);
+            installBtn.disabled = false;
+            installBtn.textContent = '🚀 安裝 PWA';
+            
+            addResult('success', '✅ PWA 安裝提示可用！瀏覽器應該顯示安裝圖標。');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            addLog('🎉 PWA 安裝成功');
+            addResult('success', '🎉 PWA 安裝成功！');
+            installBtn.style.display = 'none';
+            updateStatus('install-available', false, '已安裝');
+        });
+
+        // 安裝按鈕事件
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                addLog('🚀 觸發安裝提示');
+                try {
+                    await deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    addLog(`👤 用戶選擇: ${outcome}`);
+                    addResult('info', `用戶選擇: ${outcome}`);
+                    deferredPrompt = null;
+                    if (outcome === 'dismissed') {
+                        installBtn.textContent = '用戶取消安裝';
+                        installBtn.disabled = true;
+                    }
+                } catch (error) {
+                    addLog(`❌ 安裝錯誤: ${error.message}`);
+                    addResult('error', `安裝錯誤: ${error.message}`);
+                }
+            } else {
+                showBrowserInstructions();
+            }
+        });
+
+        // 完整診斷
+        async function runFullDiagnostics() {
+            results.innerHTML = '';
+            addLog('🔍 開始完整診斷...');
+            
+            // 1. 檢查 HTTPS
+            const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+            updateStatus('https-status', isHTTPS);
+            addResult(isHTTPS ? 'success' : 'error', 
+                     isHTTPS ? '✅ HTTPS 連接正常' : '❌ 需要 HTTPS 連接');
+
+            // 2. 檢查 Service Worker
+            const hasSW = 'serviceWorker' in navigator;
+            updateStatus('sw-status', hasSW);
+            addResult(hasSW ? 'success' : 'error', 
+                     hasSW ? '✅ 瀏覽器支援 Service Worker' : '❌ 瀏覽器不支援 Service Worker');
+
+            if (hasSW) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        addResult('success', `✅ Service Worker 已註冊: ${registration.scope}`);
+                        addLog(`📄 SW 狀態: ${registration.active ? '活躍' : '未活躍'}`);
+                    } else {
+                        addResult('warning', '⚠️ Service Worker 未註冊');
+                    }
+                } catch (error) {
+                    addResult('error', `❌ Service Worker 檢查失敗: ${error.message}`);
+                }
+            }
+
+            // 3. 檢查 Manifest
+            await testManifest();
+
+            // 4. 檢查圖標
+            await checkIcons();
+
+            // 5. 檢查 PWA 條件
+            checkPWAConditions();
+
+            addLog('✅ 診斷完成');
+        }
+
+        // 測試 Manifest
+        async function testManifest() {
+            try {
+                addLog('📄 測試 Manifest 文件...');
+                const response = await fetch('/manifest-dynamic.json?v=' + Date.now());
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const manifest = await response.json();
+                updateStatus('manifest-status', true);
+                addResult('success', '✅ Manifest 文件載入成功');
+                
+                // 檢查必要字段
+                const required = ['name', 'start_url', 'display', 'icons'];
+                const missing = required.filter(field => !manifest[field]);
+                
+                if (missing.length === 0) {
+                    addResult('success', '✅ Manifest 包含所有必要字段');
+                } else {
+                    addResult('error', `❌ Manifest 缺少字段: ${missing.join(', ')}`);
+                }
+
+                // 檢查圖標
+                if (manifest.icons && manifest.icons.length > 0) {
+                    const hasLargeIcon = manifest.icons.some(icon => 
+                        icon.sizes.includes('512') || icon.sizes.includes('192')
+                    );
+                    if (hasLargeIcon) {
+                        addResult('success', '✅ Manifest 包含大尺寸圖標');
+                    } else {
+                        addResult('warning', '⚠️ Manifest 缺少大尺寸圖標 (192x192 或 512x512)');
+                    }
+                    
+                    addLog(`🖼️ 圖標數量: ${manifest.icons.length}`);
+                    manifest.icons.forEach((icon, index) => {
+                        addLog(`   ${index + 1}. ${icon.src} (${icon.sizes})`);
+                    });
+                } else {
+                    addResult('error', '❌ Manifest 沒有圖標');
+                }
+
+                // 顯示 Manifest 詳情
+                addLog(`📝 應用名稱: ${manifest.name}`);
+                addLog(`📝 簡稱: ${manifest.short_name}`);
+                addLog(`📝 顯示模式: ${manifest.display}`);
+                addLog(`📝 起始 URL: ${manifest.start_url}`);
+                
+            } catch (error) {
+                updateStatus('manifest-status', false);
+                addResult('error', `❌ Manifest 載入失敗: ${error.message}`);
+                addLog(`❌ Manifest 錯誤: ${error.message}`);
+            }
+        }
+
+        // 檢查圖標
+        async function checkIcons() {
+            addLog('🖼️ 檢查圖標文件...');
+            
+            const iconPaths = [
+                '/favicon.ico',
+                '/favicon.svg',
+                '/favicon-96x96.png',
+                '/apple-touch-icon.png',
+                '/android/android-launchericon-192-192.png',
+                '/android/android-launchericon-512-512.png'
+            ];
+
+            let successCount = 0;
+            
+            for (const path of iconPaths) {
+                try {
+                    const response = await fetch(path, { method: 'HEAD' });
+                    if (response.ok) {
+                        addLog(`✅ ${path} - 可訪問`);
+                        successCount++;
+                    } else {
+                        addLog(`❌ ${path} - HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    addLog(`❌ ${path} - 載入失敗`);
+                }
+            }
+            
+            const percentage = Math.round((successCount / iconPaths.length) * 100);
+            addResult(percentage > 80 ? 'success' : 'warning', 
+                     `🖼️ 圖標文件可用性: ${successCount}/${iconPaths.length} (${percentage}%)`);
+        }
+
+        // 檢查 PWA 條件
+        function checkPWAConditions() {
+            addLog('🔍 檢查 PWA 安裝條件...');
+            
+            const conditions = [
+                {
+                    name: 'HTTPS 或 localhost',
+                    check: location.protocol === 'https:' || location.hostname === 'localhost',
+                    required: true
+                },
+                {
+                    name: 'Service Worker 支援',
+                    check: 'serviceWorker' in navigator,
+                    required: true
+                },
+                {
+                    name: 'Manifest 文件',
+                    check: document.querySelector('link[rel="manifest"]') !== null,
+                    required: true
+                },
+                {
+                    name: '未在 PWA 模式',
+                    check: !window.matchMedia('(display-mode: standalone)').matches,
+                    required: true
+                },
+                {
+                    name: '桌面瀏覽器',
+                    check: !(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)),
+                    required: false
+                },
+                {
+                    name: 'Chrome 或 Edge',
+                    check: /Chrome|Edg/i.test(navigator.userAgent) && !/OPR/i.test(navigator.userAgent),
+                    required: false
+                }
+            ];
+
+            let passedRequired = 0;
+            let totalRequired = 0;
+            
+            conditions.forEach(condition => {
+                const status = condition.check ? '✅' : '❌';
+                const type = condition.required ? (condition.check ? 'success' : 'error') : 
+                           (condition.check ? 'success' : 'warning');
+                
+                addResult(type, `${status} ${condition.name}${condition.required ? ' (必需)' : ' (建議)'}`);
+                
+                if (condition.required) {
+                    totalRequired++;
+                    if (condition.check) passedRequired++;
+                }
+            });
+
+            if (passedRequired === totalRequired) {
+                addResult('success', '🎉 滿足所有 PWA 安裝條件！');
+            } else {
+                addResult('error', `❌ 未滿足 ${totalRequired - passedRequired} 個必需條件`);
+            }
+        }
+
+        // 顯示瀏覽器指引
+        function showBrowserInstructions() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            let instructions = '';
+            
+            if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
+                instructions = '在 Chrome 中：\n1. 查看地址欄右側是否有安裝圖標 ⊕\n2. 或點擊右上角三點菜單 → 「安裝 LingUBible...」\n3. 如果沒有看到，請確保滿足所有 PWA 條件';
+            } else if (userAgent.includes('edg')) {
+                instructions = '在 Edge 中：\n1. 查看地址欄右側是否有安裝圖標 ⊕\n2. 或點擊右上角三點菜單 → 「應用程式」→ 「將此網站安裝為應用程式」\n3. 如果沒有看到，請確保滿足所有 PWA 條件';
+            } else if (userAgent.includes('firefox')) {
+                instructions = '在 Firefox 中：\n1. PWA 安裝支援有限\n2. 可以嘗試點擊地址欄的安裝圖標\n3. 建議使用 Chrome 或 Edge 獲得更好的 PWA 體驗';
+            } else if (userAgent.includes('safari')) {
+                instructions = '在 Safari 中：\n1. 點擊分享按鈕 📤\n2. 選擇「加入主畫面」\n3. 注意：Safari 的 PWA 支援與其他瀏覽器不同';
+            } else {
+                instructions = '在您的瀏覽器中：\n1. 查看地址欄是否有安裝圖標\n2. 檢查瀏覽器菜單中的安裝選項\n3. 建議使用 Chrome 或 Edge 獲得最佳體驗';
+            }
+            
+            document.getElementById('instructions-text').textContent = instructions;
+            document.getElementById('install-instructions').classList.remove('hidden');
+            
+            addLog('📖 顯示瀏覽器安裝指引');
+        }
+
+        // 更新瀏覽器信息
+        function updateBrowserInfo() {
+            const info = {
+                '用戶代理': navigator.userAgent,
+                '平台': navigator.platform,
+                '語言': navigator.language,
+                '在線狀態': navigator.onLine ? '在線' : '離線',
+                '當前 URL': location.href,
+                '協議': location.protocol,
+                '主機名': location.hostname,
+                '顯示模式': window.matchMedia('(display-mode: standalone)').matches ? 'PWA 模式' : '瀏覽器模式',
+                '視窗大小': `${window.innerWidth} x ${window.innerHeight}`,
+                '螢幕大小': `${screen.width} x ${screen.height}`,
+                'Service Worker': 'serviceWorker' in navigator ? '支援' : '不支援',
+                'Push 通知': 'PushManager' in window ? '支援' : '不支援',
+                'Notification': 'Notification' in window ? '支援' : '不支援'
+            };
+            
+            browserInfo.innerHTML = Object.entries(info)
+                .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+                .join('<br>');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 桌面 PWA 診斷工具已載入');
+            updateBrowserInfo();
+            
+            // 延遲運行診斷，等待 PWA 事件
+            setTimeout(() => {
+                if (!deferredPrompt) {
+                    addLog('⚠️ 5秒後仍未收到安裝提示，開始診斷...');
+                    runFullDiagnostics();
+                }
+            }, 5000);
+        });
+
+        // 定期檢查狀態
+        setInterval(() => {
+            updateStatus('install-available', !!deferredPrompt);
+        }, 1000);
+    </script>
+</body>
+</html> 

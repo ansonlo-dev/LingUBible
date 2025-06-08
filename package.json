@@ -21,6 +21,7 @@
     "pwa:test": "node tools/scripts/build/test-pwa.js",
     "pwa:test-dev": "node tools/scripts/build/test-pwa-dev.js",
     "pwa:build-test": "npm run build && npm run pwa:test",
+    "pwa:test-desktop": "node scripts/test-pwa-desktop.js",
     "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2",
     "readme:generate-assets": "node tools/scripts/build/generate-readme-assets.js",
     "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/LingUBible'",

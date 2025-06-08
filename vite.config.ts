@@ -18,22 +18,27 @@ export default defineConfig(({ command, mode }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      // 重新啟用 PWA，但針對 Cloudflare Workers 優化配置
+      // 確保 PWA 在生產環境中啟用
       disable: false,
-      // 使用 generateSW 策略但配置嚴格規則來減少日誌
+      // 使用 generateSW 策略，針對生產環境優化
       workbox: {
         globPatterns: [
           '**/*.{js,css,html,woff2}',
-          ...(mode === 'production' ? ['*.{ico,png,svg}', 'assets/**/*.{png,svg,jpg,jpeg,gif,webp}'] : [])
+          // 生產環境包含所有必要的圖標文件
+          ...(mode === 'production' ? [
+            '*.{ico,png,svg}',
+            'assets/**/*.{png,svg,jpg,jpeg,gif,webp}',
+            'android/*.png',
+            'ios/*.png'
+          ] : [])
         ],
-        // 在開發模式下簡化 globPatterns 以避免警告
+        // 開發模式下簡化配置
         ...(mode === 'development' && {
           globPatterns: ['**/*.{js,css,html}'],
-          // 開發模式下減少日誌輸出
           mode: 'development'
         }),
-        // 針對 Cloudflare Workers 的特殊配置
-        navigateFallback: null, // 禁用導航回退，讓 Cloudflare Workers 處理 SPA 路由
+        // 生產環境優化配置
+        navigateFallback: mode === 'production' ? '/index.html' : null,
         skipWaiting: true,
         clientsClaim: true,
         // 運行時緩存配置
@@ -60,19 +65,31 @@ export default defineConfig(({ command, mode }) => ({
               }
             }
           },
-          // 緩存圖標文件（開發和生產模式都需要）
+          // 緩存圖標文件
           {
             urlPattern: /\.(ico|png|svg)$/,
             handler: 'CacheFirst' as const,
             options: {
               cacheName: 'icons-cache',
               expiration: {
-                maxEntries: 20,
+                maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           },
-          // 忽略 Appwrite API 請求，避免緩存認證相關請求
+          // 緩存 manifest 文件
+          {
+            urlPattern: /\/manifest.*\.json$/,
+            handler: 'StaleWhileRevalidate' as const,
+            options: {
+              cacheName: 'manifest-cache',
+              expiration: {
+                maxEntries: 5,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
+              }
+            }
+          },
+          // 忽略 Appwrite API 請求
           {
             urlPattern: /^https:\/\/fra\.cloud\.appwrite\.io\/v1\/.*/i,
             handler: 'NetworkOnly' as const
@@ -86,7 +103,7 @@ export default defineConfig(({ command, mode }) => ({
             urlPattern: /^https:\/\/api\.openstatus\.dev\/.*/i,
             handler: 'NetworkOnly' as const
           },
-          // 開發環境：忽略所有 Vite 相關請求，減少日誌
+          // 開發環境：忽略 Vite 相關請求
           ...(mode === 'development' ? [
             {
               urlPattern: /\/@vite\/|\/src\/|\/node_modules\/|\?t=|\.tsx?$/,
@@ -94,13 +111,14 @@ export default defineConfig(({ command, mode }) => ({
             }
           ] : [])
         ],
-        // 忽略不需要的文件和開發環境文件
+        // 忽略不需要的文件
         globIgnores: [
           '**/dev/**',
-          '**/icons/**',
           'pwa-test.html',
+          'pwa-debug.html',
+          'pwa-language-test.html',
+          'pwa-install-test.html',
           'manifest.js',
-          'manifest.json',
           // 開發環境特定文件
           '**/@vite/**',
           '**/src/**',
@@ -116,11 +134,19 @@ export default defineConfig(({ command, mode }) => ({
           '**/@react-refresh',
           '**/@vite-plugin-pwa/**',
           '**/registerSW.js',
-          '**/ping-worker.js'
+          '**/ping-worker.js',
+          // 忽略測試和調試文件
+          '**/test-*.html',
+          '**/debug-*.html',
+          '**/*-test.html',
+          '**/hide-*.js',
+          '**/hide-*.css',
+          '**/badge-*.js',
+          '**/recaptcha-*.js',
+          '**/recaptcha-*.css'
         ]
       },
-      // includeAssets 已通過 globPatterns 處理，避免重複
-      includeAssets: [],
+      // 生產環境的 manifest 配置
       manifest: {
         name: 'LingUBible - Course & Lecturer Reviews',
         short_name: 'LingUBible',
@@ -128,15 +154,18 @@ export default defineConfig(({ command, mode }) => ({
         theme_color: '#dc2626',
         background_color: '#ffffff',
         display: 'standalone',
+        display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
         orientation: 'any',
         scope: '/',
         start_url: '/',
         id: '/',
+        // 確保包含所有必要的圖標尺寸
         icons: [
           {
             src: 'favicon-96x96.png',
             sizes: '96x96',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: 'android/android-launchericon-192-192.png',
@@ -153,7 +182,8 @@ export default defineConfig(({ command, mode }) => ({
           {
             src: 'apple-touch-icon.png',
             sizes: '180x180',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: 'favicon.svg',
@@ -161,19 +191,55 @@ export default defineConfig(({ command, mode }) => ({
             type: 'image/svg+xml',
             purpose: 'any maskable'
           }
-        ]
+        ],
+        // 添加截圖以提高安裝提示的顯示機率
+        screenshots: [
+          {
+            src: '/screenshot-desktop.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Desktop view of LingUBible'
+          },
+          {
+            src: '/screenshot-mobile.png',
+            sizes: '390x844',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Mobile view of LingUBible'
+          }
+        ],
+        // 添加快捷方式
+        shortcuts: [
+          {
+            name: 'Search Courses',
+            short_name: 'Search',
+            description: 'Search for courses and reviews',
+            url: '/?action=search',
+            icons: [
+              {
+                src: '/android/android-launchericon-192-192.png',
+                sizes: '192x192',
+                type: 'image/png'
+              }
+            ]
+          }
+        ],
+        categories: ['education', 'social', 'productivity'],
+        lang: 'en',
+        dir: 'ltr'
       },
       devOptions: {
         enabled: true,
-        // 在開發模式下減少日誌輸出
         suppressWarnings: true,
         navigateFallback: 'index.html',
         navigateFallbackAllowlist: [/^(?!\/@vite|\/@react-refresh|\/src|\/node_modules).*/],
-        // 開發環境下的額外配置
         type: 'module'
       },
-      // 不阻止瀏覽器原生安裝提示
-      injectRegister: 'auto'
+      // 確保不阻止瀏覽器原生安裝提示
+      injectRegister: 'auto',
+      // 生產環境使用自定義 SW 文件名
+      filename: mode === 'production' ? 'sw.js' : 'dev-sw.js'
     }),
     // 簡化的 manifest 處理，避免與 VitePWA 衝突
     {
