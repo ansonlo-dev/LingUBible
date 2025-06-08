@@ -2,15 +2,9 @@
   <!-- 圓角紅色背景 -->
   <rect x="2" y="2" width="28" height="28" rx="6" fill="#dc2626"/>
   
-  <!-- 書本圖示 (白色) -->
-  <g transform="translate(8, 10)">
-    <!-- 左頁 -->
-    <path d="M0 1.5 C0 0.7 0.7 0 1.5 0 L6.5 0 C7.3 0 8 0.7 8 1.5 L8 11 C8 11.8 7.3 12.5 6.5 12.5 L1.5 12.5 C0.7 12.5 0 11.8 0 11 Z" fill="white"/>
-    <!-- 右頁 -->
-    <path d="M8 1.5 C8 0.7 8.7 0 9.5 0 L14.5 0 C15.3 0 16 0.7 16 1.5 L16 11 C16 11.8 15.3 12.5 14.5 12.5 L9.5 12.5 C8.7 12.5 8 11.8 8 11 Z" fill="white"/>
-    <!-- 中間裝訂線 -->
-    <line x1="8" y1="1.5" x2="8" y2="12.5" stroke="#dc2626" stroke-width="0.8"/>
-    <!-- 書籤 -->
-    <path d="M7.2 12.5 L7.2 15.5 L8 14.8 L8.8 15.5 L8.8 12.5" fill="#dc2626"/>
+  <!-- 標準化 BookOpen 圖示 (白色，粗體輪廓) -->
+  <g transform="translate(8, 8) scale(0.67)">
+    <path d="M12 7v14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
   </g>
 </svg> 

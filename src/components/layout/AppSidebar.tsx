@@ -1,9 +1,10 @@
-import { Home, BookOpen, Users, Star, TrendingUp, Settings, Menu, X } from 'lucide-react';
+import { Home, Users, Star, TrendingUp, Settings, Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useState, useEffect } from 'react';
 
 // 自定義 Home 圖示組件
@@ -89,7 +90,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   
   const navigation = [
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
-    { name: t('nav.courses'), href: '#', icon: BookOpen, current: false },
+    { name: t('nav.courses'), href: '#', icon: BookOpenIcon, current: false },
     { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
     { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
     { name: t('sidebar.trending'), href: '#', icon: TrendingUp, current: false },
@@ -109,7 +110,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
               className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={() => onMobileToggle && onMobileToggle()}
             >
-              <BookOpen className="h-6 w-6 flex-shrink-0" />
+              <BookOpenIcon className="h-6 w-6 flex-shrink-0" />
               <span className="text-xl font-bold">LingUBible</span>
             </Link>
           )}
@@ -119,7 +120,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
               className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={() => onMobileToggle && onMobileToggle()}
             >
-              <BookOpen className="h-6 w-6" />
+              <BookOpenIcon className="h-6 w-6" />
             </Link>
           )}
         </div>

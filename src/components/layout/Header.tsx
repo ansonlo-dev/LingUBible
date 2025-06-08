@@ -1,4 +1,5 @@
-import { BookOpen, PanelLeft, Search } from 'lucide-react';
+import { PanelLeft, Search } from 'lucide-react';
+import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';

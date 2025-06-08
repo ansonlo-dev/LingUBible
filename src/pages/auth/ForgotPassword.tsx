@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Mail, CheckCircle, AlertTriangle, BookOpen, Lock } from 'lucide-react';
+import { ArrowLeft, Mail, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
+import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // 檢查郵件是否為有效的學生郵件
@@ -60,7 +61,7 @@ export default function ForgotPassword() {
           {/* Logo and Title */}
           <div className="text-center mb-4 flex-shrink-0">
             <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-              <BookOpen className="h-8 w-8" />
+              <BookOpenIcon className="h-8 w-8" />
               LingUBible
             </Link>
             <p className="text-muted-foreground mt-2">{t('auth.checkYourEmail')}</p>
@@ -133,7 +134,7 @@ export default function ForgotPassword() {
         {/* Logo and Title */}
         <div className="text-center mb-4 flex-shrink-0">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookOpen className="h-8 w-8" />
+            <BookOpenIcon className="h-8 w-8" />
             LingUBible
           </Link>
           <p className="text-muted-foreground mt-2">{t('auth.resetPassword')}</p>

@@ -1,26 +1,19 @@
-<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+<svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- BookOpen 圖示 (紅色背景) -->
+  <g transform="translate(20, 16)">
+    <!-- 圓角紅色背景 -->
+    <rect x="0" y="0" width="48" height="48" rx="10" fill="#dc2626"/>
+    
+    <!-- BookOpen 圖示 (白色) - 使用相同的 SVG 路徑 -->
+    <g transform="translate(24, 24)">
+      <!-- 縮放並居中 BookOpen 圖示 -->
+      <g transform="scale(0.83) translate(-12, -12)">
+              <path d="M12 7v14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
+    </g>
+  </g>
   
-  <!-- 背景圓形 -->
-  <circle cx="60" cy="60" r="55" fill="url(#logoGradient)" stroke="#ffffff" stroke-width="2"/>
-  
-  <!-- 書本圖標 -->
-  <rect x="35" y="40" width="50" height="35" rx="3" fill="#ffffff" opacity="0.9"/>
-  <rect x="38" y="43" width="44" height="29" rx="2" fill="#3b82f6"/>
-  
-  <!-- 評分星星 -->
-  <polygon points="60,25 62,31 68,31 63,35 65,41 60,37 55,41 57,35 52,31 58,31" fill="#fbbf24"/>
-  
-  <!-- 對話氣泡 -->
-  <circle cx="85" cy="45" r="12" fill="#ffffff" opacity="0.9"/>
-  <polygon points="78,50 85,55 85,50" fill="#ffffff" opacity="0.9"/>
-  <circle cx="85" cy="45" r="2" fill="#3b82f6"/>
-  
-  <!-- 文字 -->
-  <text x="60" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#ffffff">LingUBible</text>
+  <!-- LingUBible 文字 -->
+  <text x="88" y="50" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="32" font-weight="700" fill="#1f2937">LingUBible</text>
 </svg>

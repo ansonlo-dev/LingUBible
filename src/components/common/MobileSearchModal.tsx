@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, BookOpen, Users, TrendingUp, Hash, X } from 'lucide-react';
+import { Search, Users, TrendingUp, Hash, X } from 'lucide-react';
+import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   const searchResults = [
     {
       category: t('nav.courses'),
-      icon: BookOpen,
+      icon: BookOpenIcon,
       items: [
         { title: t('course.introCS'), subtitle: 'CS101 - Dr. Sarah Johnson', href: '#' },
         { title: t('course.advancedMath'), subtitle: 'MATH301 - Prof. Michael Chen', href: '#' },

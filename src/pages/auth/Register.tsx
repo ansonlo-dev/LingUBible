@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, CheckCircle, Lock, AlertTriangle, User, Lightbulb } from 'lucide-react';
+import { CheckCircle, Lock, AlertTriangle, User, Lightbulb } from 'lucide-react';
+import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { StudentVerificationInput } from "@/components/auth/StudentVerificationInput";
 import { PasswordStrengthChecker } from "@/components/auth/PasswordStrengthChecker";
 import { isValidEmailForRegistration, getEmailType, DEV_MODE } from '@/config/devMode';
@@ -171,7 +172,7 @@ export default function Register() {
         {/* Logo and Title */}
         <div className="text-center mb-4 flex-shrink-0">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookOpen className="h-8 w-8" />
+            <BookOpenIcon className="h-8 w-8" />
             LingUBible
           </Link>
           <p className="text-muted-foreground mt-2">{t('auth.createStudentAccount')}</p>

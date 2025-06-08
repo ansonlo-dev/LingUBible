@@ -1,19 +1,16 @@
 <svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 書本圖示 (紅色背景) -->
+  <!-- BookOpen 圖示 (紅色背景) -->
   <g transform="translate(20, 16)">
     <!-- 圓角紅色背景 -->
     <rect x="0" y="0" width="48" height="48" rx="10" fill="#dc2626"/>
     
-    <!-- 書本圖示 (白色) -->
-    <g transform="translate(12, 15)">
-      <!-- 左頁 -->
-      <path d="M0 2.25 C0 1.05 1.05 0 2.25 0 L9.75 0 C10.95 0 12 1.05 12 2.25 L12 16.5 C12 17.7 10.95 18.75 9.75 18.75 L2.25 18.75 C1.05 18.75 0 17.7 0 16.5 Z" fill="white"/>
-      <!-- 右頁 -->
-      <path d="M12 2.25 C12 1.05 13.05 0 14.25 0 L21.75 0 C22.95 0 24 1.05 24 2.25 L24 16.5 C24 17.7 22.95 18.75 21.75 18.75 L14.25 18.75 C13.05 18.75 12 17.7 12 16.5 Z" fill="white"/>
-      <!-- 中間裝訂線 -->
-      <line x1="12" y1="2.25" x2="12" y2="18.75" stroke="#dc2626" stroke-width="1.2"/>
-      <!-- 書籤 -->
-      <path d="M10.8 18.75 L10.8 23.25 L12 22.2 L13.2 23.25 L13.2 18.75" fill="#dc2626"/>
+    <!-- BookOpen 圖示 (白色) - 使用相同的 SVG 路徑 -->
+    <g transform="translate(24, 24)">
+      <!-- 縮放並居中 BookOpen 圖示 -->
+      <g transform="scale(0.83) translate(-12, -12)">
+              <path d="M12 7v14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
     </g>
   </g>
   
