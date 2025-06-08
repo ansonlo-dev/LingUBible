@@ -1,0 +1,57 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 專業漸變背景 -->
+  <defs>
+    <linearGradient id="professionalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#b91c1c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7f1d1d;stop-opacity:1" />
+    </linearGradient>
+    <filter id="professionalShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- 圓角背景 -->
+  <rect x="0" y="0" width="512" height="512" rx="80" fill="url(#professionalGradient)"/>
+  
+  <!-- 專業書本圖標 -->
+  <g transform="translate(256, 180)">
+    <!-- 主書本 -->
+    <g transform="scale(10)">
+      <!-- 書本封面 -->
+      <rect x="-12" y="-10" width="24" height="20" rx="2" fill="white" fill-opacity="0.95" filter="url(#professionalShadow)"/>
+      
+      <!-- 書頁效果 -->
+      <rect x="-11" y="-9" width="22" height="18" rx="1" fill="white" fill-opacity="0.8"/>
+      <rect x="-10" y="-8" width="20" height="16" rx="1" fill="white" fill-opacity="0.9"/>
+      
+      <!-- 書脊 -->
+      <line x1="0" y1="-10" x2="0" y2="10" stroke="#dc2626" stroke-width="1.5"/>
+      
+      <!-- 裝飾線條 -->
+      <line x1="-8" y1="-6" x2="8" y2="-6" stroke="#dc2626" stroke-width="0.5" stroke-opacity="0.6"/>
+      <line x1="-8" y1="-3" x2="8" y2="-3" stroke="#dc2626" stroke-width="0.5" stroke-opacity="0.6"/>
+      <line x1="-8" y1="0" x2="8" y2="0" stroke="#dc2626" stroke-width="0.5" stroke-opacity="0.6"/>
+      <line x1="-8" y1="3" x2="8" y2="3" stroke="#dc2626" stroke-width="0.5" stroke-opacity="0.6"/>
+      <line x1="-8" y1="6" x2="8" y2="6" stroke="#dc2626" stroke-width="0.5" stroke-opacity="0.6"/>
+    </g>
+  </g>
+  
+  <!-- 專業文字標識 -->
+  <g transform="translate(256, 350)">
+    <text x="0" y="0" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-size="48" font-weight="700" fill="white" text-anchor="middle">LingU</text>
+    <text x="0" y="35" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-size="20" font-weight="400" fill="white" text-anchor="middle" fill-opacity="0.8">BIBLE</text>
+  </g>
+  
+  <!-- 專業裝飾元素 -->
+  <g transform="translate(256, 256)">
+    <!-- 知識之光 -->
+    <circle cx="0" cy="-120" r="2" fill="white" fill-opacity="0.4"/>
+    <circle cx="80" cy="-80" r="1.5" fill="white" fill-opacity="0.3"/>
+    <circle cx="-80" cy="-80" r="1.5" fill="white" fill-opacity="0.3"/>
+    <circle cx="100" cy="0" r="1" fill="white" fill-opacity="0.2"/>
+    <circle cx="-100" cy="0" r="1" fill="white" fill-opacity="0.2"/>
+  </g>
+</svg> 

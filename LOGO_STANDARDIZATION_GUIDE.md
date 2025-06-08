@@ -8,8 +8,10 @@ I have successfully standardized all logos throughout your LingUBible applicatio
 
 All logos now use this exact SVG path:
 ```svg
-<path d="M12 7v14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-<path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 7v14"></path>
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+</svg>
 ```
 
 ## 📁 Files Modified
@@ -53,7 +55,7 @@ All logos now use this exact SVG path:
 
 All logos now maintain:
 - ✅ **Identical icon shape** - Same SVG paths across all instances
-- ✅ **Consistent stroke width** - 3px stroke width everywhere
+- ✅ **Consistent stroke width** - 2px stroke width everywhere
 - ✅ **Uniform styling** - Round line caps and joins
 - ✅ **Brand colors** - Red background (#dc2626) with white icon
 - ✅ **Proper scaling** - Appropriate sizes for different contexts

@@ -41,8 +41,8 @@
       <g transform="translate(40, 40)">
         <!-- 縮放並居中 BookOpen 圖示 -->
         <g transform="scale(1.67) translate(-12, -12)">
-                <path d="M12 7v14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <path d="M12 7v14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
         </g>
       </g>
     </g>
@@ -98,5 +98,5 @@
   <rect x="0" y="608" width="1200" height="20" fill="url(#accentGradient)"/>
   
   <!-- 版本標記 -->
-  <text x="1080" y="580" font-family="Inter, sans-serif" font-size="14" font-weight="500" fill="#9ca3af">v0.0.8</text>
+  <text x="1080" y="580" font-family="Inter, sans-serif" font-size="14" font-weight="500" fill="#9ca3af">v0.1.0</text>
 </svg> 

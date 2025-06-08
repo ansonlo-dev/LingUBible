@@ -15,7 +15,7 @@ export const BookOpenIcon: React.FC<BookOpenIconProps> = ({
   height = 24,
   fill = "none",
   stroke = "currentColor",
-  strokeWidth = 3,
+  strokeWidth = 2,
   ...props
 }) => {
   return (
