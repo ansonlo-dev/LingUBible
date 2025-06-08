@@ -1,7 +1,7 @@
 {
   "name": "lingubible",
   "private": true,
-  "version": "0.0.10",
+  "version": "--yes",
   "type": "module",
   "scripts": {
     "dev": "vite",
