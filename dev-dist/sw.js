@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-2c7d8ba0'], (function (workbox) { 'use strict';
+define(['./workbox-b895fc45'], (function (workbox) { 'use strict';
 
 	self.skipWaiting();
 	workbox.clientsClaim();
@@ -88,8 +88,15 @@ define(['./workbox-2c7d8ba0'], (function (workbox) { 'use strict';
 	workbox.registerRoute(/\.(ico|png|svg)$/, new workbox.CacheFirst({
 	  "cacheName": "icons-cache",
 	  plugins: [new workbox.ExpirationPlugin({
-	    maxEntries: 20,
+	    maxEntries: 50,
 	    maxAgeSeconds: 2592000
+	  })]
+	}), 'GET');
+	workbox.registerRoute(/\/manifest.*\.json$/, new workbox.StaleWhileRevalidate({
+	  "cacheName": "manifest-cache",
+	  plugins: [new workbox.ExpirationPlugin({
+	    maxEntries: 5,
+	    maxAgeSeconds: 86400
 	  })]
 	}), 'GET');
 	workbox.registerRoute(/^https:\/\/fra\.cloud\.appwrite\.io\/v1\/.*/i, new workbox.NetworkOnly(), 'GET');
