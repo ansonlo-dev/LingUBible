@@ -1556,6 +1556,31 @@
     font-weight: 700 !important;
   }
 
+  /* PWA Splash Screen Animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(120deg); }
+    66% { transform: translateY(5px) rotate(240deg); }
+  }
+
+  @keyframes progress-bar {
+    0% { width: 0%; }
+    50% { width: 60%; }
+    100% { width: 100%; }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-progress-bar {
+    animation: progress-bar 2.5s ease-out forwards;
+  }
+
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
   /* Winged Button Styles */
   .winged-button-container {
     @apply relative inline-block;

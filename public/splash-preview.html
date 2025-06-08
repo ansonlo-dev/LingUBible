@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA 啟動畫面預覽 - 修復後</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .preview-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .preview-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .before {
+            border-left: 4px solid #ef4444;
+        }
+
+        .after {
+            border-left: 4px solid #10b981;
+        }
+
+        .device-frame {
+            width: 200px;
+            height: 350px;
+            margin: 0 auto;
+            border: 8px solid #333;
+            border-radius: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .device-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .changes-list {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .changes-list h2 {
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+
+        .changes-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .changes-list li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .changes-list li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+
+        .note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .note strong {
+            color: #92400e;
+        }
+
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 PWA 啟動畫面 - 修復後預覽</h1>
+        
+        <div class="comparison">
+            <div class="preview-section before">
+                <div class="preview-title">修復前 (問題)</div>
+                <div style="text-align: center; color: #666; margin: 20px 0;">
+                    <p>❌ Logo 沒有垂直居中</p>
+                    <p>❌ 書本圖標垂直線太長</p>
+                    <p>❌ 圖標比例不協調</p>
+                </div>
+            </div>
+            
+            <div class="preview-section after">
+                <div class="preview-title">修復後 (改善)</div>
+                <div class="device-frame">
+                    <iframe src="/splash/default.svg"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div class="changes-list">
+            <h2>🔧 修復內容</h2>
+            <ul>
+                <li>調整書本圖標的垂直線長度：從 28px 縮短到 16px</li>
+                <li>優化圖標整體比例：調整書本形狀使其更加協調</li>
+                <li>減少線條粗細：從 3px 調整到 2.5px，看起來更精緻</li>
+                <li>確保 Logo 在白色背景框中完美居中對齊</li>
+                <li>同步更新 React 組件和 SVG 生成腳本</li>
+                <li>重新生成所有 28 種設備尺寸的啟動畫面</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <strong>測試建議：</strong>
+            <p>請在實際設備上測試啟動畫面效果。在 iOS 設備上，將網站添加到主畫面後啟動；在 Android 設備上，安裝 PWA 後從主畫面啟動。</p>
+        </div>
+    </div>
+</body>
+</html> 

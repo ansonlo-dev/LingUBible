@@ -33,6 +33,8 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
+import { PWASplashScreen } from '@/components/features/pwa/PWASplashScreen';
+import { usePWASplashScreen } from '@/hooks/usePWASplashScreen';
 
 
 const queryClient = new QueryClient();
@@ -91,6 +93,9 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
+
+  // PWA 啟動畫面管理
+  const { isVisible: showSplashScreen, hideSplashScreen } = usePWASplashScreen();
 
   // 初始化訪客會話（如果用戶未登入）
   useVisitorSession();
@@ -300,14 +305,22 @@ const AppContent = () => {
   });
 
   return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}
-    >
-      {/* 動態文檔標題和元數據 */}
-      <DocumentHead />
+    <>
+      {/* PWA 啟動畫面 */}
+      <PWASplashScreen 
+        isVisible={showSplashScreen}
+        onComplete={hideSplashScreen}
+        duration={3000}
+      />
+      
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
+        {/* 動態文檔標題和元數據 */}
+        <DocumentHead />
       
       <Routes>
         {/* 登入和註冊頁面使用獨立佈局 */}
@@ -421,6 +434,7 @@ const AppContent = () => {
         />
       </Routes>
     </BrowserRouter>
+    </>
   );
 };
 
