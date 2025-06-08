@@ -107,7 +107,6 @@ export function useUserStats() {
   const updateStats = useCallback(async (forceUpdate = false, showLoading = false) => {
     // 開發環境使用模擬數據，避免調用 Appwrite
     if (isDevelopment) {
-      console.log('Hook: 開發環境，使用模擬統計數據');
       const devStats = {
         ...mockStats,
         onlineUsers: Math.floor(Math.random() * 5) + 1,
@@ -121,13 +120,11 @@ export function useUserStats() {
 
     // 如果正在獲取中，直接返回
     if (isCurrentlyFetching && !forceUpdate) {
-      console.log('Hook: 正在獲取統計數據中，跳過重複請求');
       return;
     }
 
     // 檢查緩存是否仍然有效
     if (!forceUpdate && !shouldUpdateCache()) {
-      console.log('Hook: 使用緩存的統計數據');
       if (globalStatsCache) {
         // 確保緩存數據的合理性：至少有當前訪客
         const adjustedCacheStats = {
@@ -150,23 +147,17 @@ export function useUserStats() {
     isCurrentlyFetching = true;
     
     try {
-      console.log('Hook: 獲取全球統計數據...');
-      
       // 優先使用 Function 方法（更安全）
       let globalStats;
       try {
         globalStats = await appwriteUserStatsService.getStatsViaFunction();
-        console.log('Hook: 通過 Function 獲取全球統計數據', globalStats);
         
         // 保存原始後端數據
         if (globalStats._backendData) {
           globalBackendStatsCache = globalStats._backendData;
-          console.log('Hook: 保存原始後端數據', globalBackendStatsCache);
         }
       } catch (error) {
-        console.warn('Hook: Function 方法失敗，回退到直接查詢:', error);
         globalStats = await appwriteUserStatsService.getStats();
-        console.log('Hook: 通過直接查詢獲取全球統計數據', globalStats);
       }
       
       // 更新全局緩存
@@ -183,7 +174,6 @@ export function useUserStats() {
       
       setStats(adjustedStats);
       setIsLoading(false);
-      console.log('Hook: 使用全球統計數據並更新緩存', adjustedStats);
       
     } catch (error) {
       console.error('Hook: 獲取統計數據失敗:', error);
@@ -198,7 +188,6 @@ export function useUserStats() {
           totalUsers: Math.max(globalStatsCache.totalUsers || 0, 0)
         };
         setStats(adjustedCacheStats);
-        console.log('Hook: 使用緩存的統計數據（獲取失敗）');
       } else {
         // 返回默認值，但保持當前訪客數
         const defaultStats = {
@@ -210,7 +199,6 @@ export function useUserStats() {
           lastUpdated: new Date().toISOString()
         };
         setStats(defaultStats);
-        console.log('Hook: 使用默認統計數據');
       }
       setIsLoading(false);
     } finally {
@@ -258,8 +246,6 @@ export function useUserStats() {
 
   // 初始化和定期更新 - 使用單一全局定時器
   useEffect(() => {
-    console.log(`Hook: 初始化統計系統 (實例 ${instanceIdRef.current})`, { user: !!user, isDevelopment });
-    
     // 開發環境直接設置為已載入
     if (isDevelopment) {
       setIsLoading(false);
@@ -273,9 +259,7 @@ export function useUserStats() {
 
     // 只在第一個實例中設置定時器（生產環境）
     if (!globalIntervalId && instanceIdRef.current === 1) {
-      console.log('Hook: 設置全局定期更新定時器');
       globalIntervalId = setInterval(() => {
-        console.log('Hook: 定期更新統計數據');
         updateStats(false, false); // 定期更新也不顯示載入狀態
       }, UPDATE_INTERVAL); // 2分鐘更新一次，大幅減少頻率
     }
@@ -284,12 +268,10 @@ export function useUserStats() {
     const handleStatsUpdate = () => {
       const now = Date.now();
       if (now - lastEventTime < EVENT_THROTTLE_TIME) {
-        console.log('Hook: 事件被節流，跳過更新');
         return;
       }
       lastEventTime = now;
       
-      console.log('Hook: 收到統計更新事件，強制刷新');
       if (!isDevelopment) {
         updateStats(true, false); // 強制更新但不顯示載入
       }
@@ -300,7 +282,6 @@ export function useUserStats() {
     // 清理函數
     return () => {
       window.removeEventListener('userStatsUpdated', handleStatsUpdate);
-      console.log(`Hook: 清理事件監聽 (實例 ${instanceIdRef.current})`);
       
       // 減少實例計數
       instanceCount--;
@@ -309,7 +290,6 @@ export function useUserStats() {
       if (instanceCount === 0 && globalIntervalId) {
         clearInterval(globalIntervalId);
         globalIntervalId = null;
-        console.log('Hook: 清理全局定時器');
       }
     };
   }, [updateStats]);
@@ -317,7 +297,6 @@ export function useUserStats() {
   // 標記初始化完成
   useEffect(() => {
     if (!isInitializedRef.current && !isLoading) {
-      console.log(`Hook: 初始化完成 (實例 ${instanceIdRef.current})`);
       isInitializedRef.current = true;
     }
   }, [isLoading]);

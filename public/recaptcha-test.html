@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA 測試 - LingUBible</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .test-section h2 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        .info-box {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning-box {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid rgba(255, 152, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .test-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #4ecdc4;
+        }
+        .footer-simulation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .recaptcha-info {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            max-width: 250px;
+            z-index: 40;
+        }
+        
+        /* 模擬 reCAPTCHA 圖標 */
+        .mock-recaptcha {
+            position: fixed;
+            bottom: 14px;
+            right: 14px;
+            width: 70px;
+            height: 60px;
+            background: #f9f9f9;
+            border: 1px solid #d3d3d3;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #555;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+            cursor: pointer;
+            transition: bottom 0.3s ease;
+        }
+        
+        /* 應用我們的 CSS 修復 - 加強版 */
+        .mock-recaptcha.fixed,
+        .grecaptcha-badge,
+        div[style*="position: fixed"][style*="bottom"][style*="right"] {
+            bottom: 80px !important;
+        }
+        
+        @media (max-width: 768px) {
+            .mock-recaptcha.fixed,
+            .grecaptcha-badge,
+            div[style*="position: fixed"][style*="bottom"][style*="right"] {
+                bottom: 100px !important;
+                right: 10px !important;
+            }
+        }
+        
+        /* 強制覆蓋 Google 的內聯樣式 */
+        body .grecaptcha-badge,
+        body div[style*="position: fixed"][style*="bottom: 14px"] {
+            bottom: 80px !important;
+            z-index: 30 !important;
+        }
+        
+        @media (max-width: 768px) {
+            body .grecaptcha-badge,
+            body div[style*="position: fixed"][style*="bottom: 14px"] {
+                bottom: 100px !important;
+                right: 10px !important;
+            }
+        }
+        
+        .toggle-btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status.good {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        
+        .status.bad {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ reCAPTCHA 測試頁面</h1>
+        
+        <div class="test-section">
+            <h2>📍 位置修復測試</h2>
+            <div class="info-box">
+                <strong>✅ 修復內容：</strong><br>
+                • 將 reCAPTCHA 圖標從底部 14px 移動到 80px<br>
+                • 手機版移動到 100px，避免遮擋頁腳<br>
+                • 添加平滑過渡動畫效果
+            </div>
+            
+            <div class="test-item">
+                <strong>🎯 測試步驟：</strong><br>
+                1. 觀察右下角的模擬 reCAPTCHA 圖標<br>
+                2. 點擊下方按鈕切換修復狀態<br>
+                3. 檢查圖標是否不再遮擋頁腳
+            </div>
+            
+            <button class="toggle-btn" onclick="toggleRecaptchaFix()">
+                🔧 切換 reCAPTCHA 位置修復
+            </button>
+            <span id="fix-status" class="status good">已修復</span>
+        </div>
+        
+        <div class="test-section">
+            <h2>🌐 多語言支援說明</h2>
+            <div class="info-box">
+                <strong>✅ 多語言實現：</strong><br>
+                • reCAPTCHA 現在會根據網站語言自動切換<br>
+                • 支援：英文 (en)、繁體中文 (zh-TW)、簡體中文 (zh-CN)<br>
+                • 當用戶切換網站語言時，reCAPTCHA 也會相應更新
+            </div>
+            
+            <div class="test-item">
+                <strong>🎮 語言對應：</strong><br>
+                • <strong>英文</strong>：reCAPTCHA 顯示英文界面<br>
+                • <strong>繁體中文</strong>：reCAPTCHA 顯示繁體中文界面<br>
+                • <strong>簡體中文</strong>：reCAPTCHA 顯示簡體中文界面
+            </div>
+            
+            <div class="warning-box">
+                <strong>⚠️ 注意：</strong><br>
+                reCAPTCHA 的語言是由 Google 控制的，我們只能設置語言代碼。
+                實際的多語言效果需要在真實的 reCAPTCHA 環境中測試。
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 技術實現詳情</h2>
+            <div class="test-item">
+                <strong>CSS 修復：</strong><br>
+                <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">
+                .grecaptcha-badge { bottom: 80px !important; }
+                </code>
+            </div>
+            
+            <div class="test-item">
+                <strong>多語言實現：</strong><br>
+                <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">
+                &lt;GoogleReCaptchaProvider language={recaptchaLanguage} /&gt;
+                </code>
+            </div>
+            
+            <div class="test-item">
+                <strong>響應式設計：</strong><br>
+                • 桌面版：底部 80px<br>
+                • 手機版：底部 100px，右側 10px
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📱 測試建議</h2>
+            <div class="test-item">
+                <strong>1. 位置測試：</strong><br>
+                • 在不同螢幕尺寸下測試<br>
+                • 檢查是否遮擋頁腳內容<br>
+                • 驗證手機版的位置調整
+            </div>
+            
+            <div class="test-item">
+                <strong>2. 語言測試：</strong><br>
+                • 切換網站語言設定<br>
+                • 觸發 reCAPTCHA 驗證<br>
+                • 確認 reCAPTCHA 界面語言正確
+            </div>
+            
+            <div class="test-item">
+                <strong>3. 功能測試：</strong><br>
+                • 測試註冊表單的 reCAPTCHA<br>
+                • 測試聯絡表單的 reCAPTCHA<br>
+                • 確認驗證流程正常運作
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模擬頁腳 -->
+    <div class="footer-simulation">
+        <strong>📄 模擬頁腳</strong> - 檢查 reCAPTCHA 圖標是否遮擋此區域
+    </div>
+    
+    <!-- reCAPTCHA 位置提示 -->
+    <div class="recaptcha-info">
+        💡 reCAPTCHA 圖標位置<br>
+        修復後應該不會遮擋頁腳
+    </div>
+    
+    <!-- 模擬 reCAPTCHA 圖標 -->
+    <div class="mock-recaptcha fixed" id="mockRecaptcha">
+        reCAPTCHA<br>
+        <small>模擬圖標</small>
+    </div>
+    
+    <script>
+        let isFixed = true;
+        
+        function toggleRecaptchaFix() {
+            const mockRecaptcha = document.getElementById('mockRecaptcha');
+            const status = document.getElementById('fix-status');
+            
+            if (isFixed) {
+                mockRecaptcha.classList.remove('fixed');
+                status.textContent = '未修復';
+                status.className = 'status bad';
+                isFixed = false;
+            } else {
+                mockRecaptcha.classList.add('fixed');
+                status.textContent = '已修復';
+                status.className = 'status good';
+                isFixed = true;
+            }
+        }
+        
+        // 模擬語言切換效果
+        function simulateLanguageChange() {
+            const languages = ['en', 'zh-TW', 'zh-CN'];
+            const currentLang = languages[Math.floor(Math.random() * languages.length)];
+            
+            console.log(`🌐 模擬語言切換到: ${currentLang}`);
+            
+            // 這裡在真實環境中會觸發 reCAPTCHA 語言更新
+            alert(`模擬語言切換到: ${currentLang}\n\n在真實環境中，reCAPTCHA 會自動切換到對應語言。`);
+        }
+        
+        // 強制修復 reCAPTCHA 位置
+        function forceFixRecaptcha() {
+            const elements = document.querySelectorAll('.mock-recaptcha, .grecaptcha-badge, div[style*="position: fixed"][style*="bottom"]');
+            const deviceType = window.innerWidth <= 768 ? 'mobile' : 'desktop';
+            const bottom = deviceType === 'mobile' ? '100px' : '80px';
+            const right = deviceType === 'mobile' ? '10px' : '14px';
+            
+            elements.forEach(el => {
+                el.style.setProperty('bottom', bottom, 'important');
+                el.style.setProperty('right', right, 'important');
+                el.style.setProperty('z-index', '30', 'important');
+                el.classList.add('recaptcha-adjusted');
+            });
+            
+            console.log(`🔧 強制修復了 ${elements.length} 個元素`);
+            alert(`已強制修復 ${elements.length} 個 reCAPTCHA 元素的位置`);
+        }
+        
+        // 檢查當前 reCAPTCHA 狀態
+        function checkRecaptchaStatus() {
+            const elements = document.querySelectorAll('.mock-recaptcha, .grecaptcha-badge, div[style*="position: fixed"][style*="bottom"]');
+            const status = [];
+            
+            elements.forEach((el, index) => {
+                const style = window.getComputedStyle(el);
+                status.push({
+                    element: index + 1,
+                    bottom: style.bottom,
+                    right: style.right,
+                    position: style.position,
+                    zIndex: style.zIndex
+                });
+            });
+            
+            console.table(status);
+            alert(`找到 ${elements.length} 個元素，詳情請查看控制台`);
+        }
+        
+        // 添加語言切換按鈕
+        document.addEventListener('DOMContentLoaded', function() {
+            const lastSection = document.querySelector('.test-section:last-child');
+            
+            const languageBtn = document.createElement('button');
+            languageBtn.className = 'toggle-btn';
+            languageBtn.textContent = '🌐 模擬語言切換';
+            languageBtn.onclick = simulateLanguageChange;
+            lastSection.appendChild(languageBtn);
+            
+            const forceFixBtn = document.createElement('button');
+            forceFixBtn.className = 'toggle-btn';
+            forceFixBtn.textContent = '🔧 強制修復位置';
+            forceFixBtn.onclick = forceFixRecaptcha;
+            lastSection.appendChild(forceFixBtn);
+            
+            const checkBtn = document.createElement('button');
+            checkBtn.className = 'toggle-btn';
+            checkBtn.textContent = '🔍 檢查狀態';
+            checkBtn.onclick = checkRecaptchaStatus;
+            lastSection.appendChild(checkBtn);
+        });
+        
+        // 響應式測試
+        function checkResponsive() {
+            const width = window.innerWidth;
+            const info = document.querySelector('.recaptcha-info');
+            
+            if (width <= 768) {
+                info.innerHTML = '📱 手機版模式<br>reCAPTCHA 位置已調整';
+            } else {
+                info.innerHTML = '💻 桌面版模式<br>reCAPTCHA 標準位置';
+            }
+        }
+        
+        window.addEventListener('resize', checkResponsive);
+        checkResponsive();
+    </script>
+</body>
+</html> 

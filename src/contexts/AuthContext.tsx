@@ -10,13 +10,14 @@ interface AuthContextType {
     user: AuthUser | null;
     loading: boolean;
     login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-    register: (email: string, password: string, name: string) => Promise<void>;
+    register: (email: string, password: string, name: string, recaptchaToken?: string) => Promise<void>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
     sendStudentVerificationCode: (email: string) => Promise<{ success: boolean; message: string }>;
     verifyStudentCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
     isStudentEmailVerified: (email: string) => Promise<boolean>;
     getVerificationRemainingTime: (email: string) => number;
+    sendPasswordReset: (email: string, recaptchaToken?: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -122,9 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const register = async (email: string, password: string, name: string) => {
+    const register = async (email: string, password: string, name: string, recaptchaToken?: string) => {
         try {
-            await authService.createAccount(email, password, name);
+            await authService.createAccount(email, password, name, recaptchaToken);
             await checkUser();
             
             // 獲取當前用戶
@@ -164,6 +165,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const verifyStudentCode = async (email: string, code: string) => {
         return await authService.verifyStudentCode(email, code);
+    };
+
+    const sendPasswordReset = async (email: string, recaptchaToken?: string) => {
+        return await authService.sendPasswordReset(email, recaptchaToken);
     };
 
     const isStudentEmailVerified = async (email: string) => {
@@ -242,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verifyStudentCode,
         isStudentEmailVerified,
         getVerificationRemainingTime,
+        sendPasswordReset,
     };
 
     return (

@@ -90,7 +90,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   
   const navigation = [
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
-    { name: t('nav.courses'), href: '#', icon: BookOpenIcon, current: false },
+    { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
     { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
     { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
     { name: t('sidebar.trending'), href: '#', icon: TrendingUp, current: false },

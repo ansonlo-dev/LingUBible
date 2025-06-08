@@ -116,29 +116,37 @@ function detectUserLanguage() {
 
 // 獲取版本信息
 async function getVersionInfo() {
-  try {
-    // 嘗試從 GitHub API 獲取最新版本
-    const response = await fetch('https://api.github.com/repos/ansonlo-dev/LingUBible/releases/latest', {
-      headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        ...(window.VITE_GITHUB_TOKEN && {
-          'Authorization': `token ${window.VITE_GITHUB_TOKEN}`
-        })
+  // 檢查是否為開發環境
+  const isDevelopment = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.hostname.includes('localhost');
+  
+  // 在開發環境中跳過 GitHub API 調用，避免 CORS 錯誤
+  if (!isDevelopment) {
+    try {
+      // 嘗試從 GitHub API 獲取最新版本
+      const response = await fetch('https://api.github.com/repos/ansonlo-dev/LingUBible/releases/latest', {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          ...(window.VITE_GITHUB_TOKEN && {
+            'Authorization': `token ${window.VITE_GITHUB_TOKEN}`
+          })
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          version: data.tag_name.replace(/^v/, ''), // 移除 v 前綴
+          formattedVersion: data.tag_name.startsWith('v0.') ? `Beta ${data.tag_name.replace(/^v/, '')}` : data.tag_name,
+          status: data.tag_name.startsWith('v0.') ? 'beta' : 'stable',
+          releaseUrl: data.html_url,
+          publishedAt: data.published_at
+        };
       }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        version: data.tag_name.replace(/^v/, ''), // 移除 v 前綴
-        formattedVersion: data.tag_name.startsWith('v0.') ? `Beta ${data.tag_name.replace(/^v/, '')}` : data.tag_name,
-        status: data.tag_name.startsWith('v0.') ? 'beta' : 'stable',
-        releaseUrl: data.html_url,
-        publishedAt: data.published_at
-      };
+    } catch (error) {
+      console.warn('無法從 GitHub 獲取版本信息，使用本地版本:', error);
     }
-  } catch (error) {
-    console.warn('無法從 GitHub 獲取版本信息，使用本地版本:', error);
   }
   
   // 備用：使用本地版本（從靜態 API）

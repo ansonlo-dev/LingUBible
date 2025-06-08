@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA 調試工具 - LingUBible</title>
+    <link rel="manifest" href="/manifest-dynamic.json">
+    <meta name="theme-color" content="#dc2626">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #b91c1c; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .icon-test {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .icon-test img {
+            width: 48px;
+            height: 48px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 PWA 調試工具</h1>
+    <p>這個頁面幫助診斷 PWA 安裝圖標不顯示的問題。</p>
+
+    <div id="results"></div>
+
+    <h2>📱 手動安裝測試</h2>
+    <button id="install-btn" style="display: none;">安裝 PWA</button>
+    <button onclick="runDiagnostics()">重新檢測</button>
+    <button onclick="testManifest()">測試 Manifest</button>
+    
+    <h2>🌐 多語言測試</h2>
+    <button onclick="testLanguage('en')">測試英文 Manifest</button>
+    <button onclick="testLanguage('zh-TW')">測試繁體中文 Manifest</button>
+    <button onclick="testLanguage('zh-CN')">測試簡體中文 Manifest</button>
+
+    <h2>🖼️ 圖標測試</h2>
+    <div id="icon-tests"></div>
+
+    <h2>📋 詳細信息</h2>
+    <pre id="details"></pre>
+
+    <script>
+        let deferredPrompt;
+        const results = document.getElementById('results');
+        const details = document.getElementById('details');
+        const installBtn = document.getElementById('install-btn');
+        const iconTests = document.getElementById('icon-tests');
+
+        // 監聽安裝提示事件
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💡 beforeinstallprompt 事件觸發');
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+            addResult('success', '✅ PWA 安裝提示可用！瀏覽器應該顯示安裝圖標。');
+        });
+
+        // 安裝按鈕點擊事件
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                addResult('info', `用戶選擇: ${outcome}`);
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+
+        // 安裝完成事件
+        window.addEventListener('appinstalled', () => {
+            addResult('success', '🎉 PWA 安裝成功！');
+            installBtn.style.display = 'none';
+        });
+
+        function addResult(type, message) {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        async function runDiagnostics() {
+            results.innerHTML = '';
+            
+            // 1. 檢查基本支援
+            addResult('info', '🔍 開始 PWA 診斷...');
+            
+            if ('serviceWorker' in navigator) {
+                addResult('success', '✅ 瀏覽器支援 Service Worker');
+            } else {
+                addResult('error', '❌ 瀏覽器不支援 Service Worker');
+            }
+
+            // 2. 檢查 manifest
+            try {
+                const response = await fetch('/manifest-dynamic.json');
+                if (response.ok) {
+                    const manifest = await response.json();
+                    addResult('success', '✅ 動態 Manifest 文件載入成功');
+                    
+                    // 檢查必要字段
+                    const required = ['name', 'start_url', 'display', 'icons'];
+                    const missing = required.filter(field => !manifest[field]);
+                    
+                    if (missing.length === 0) {
+                        addResult('success', '✅ Manifest 包含所有必要字段');
+                    } else {
+                        addResult('error', `❌ Manifest 缺少字段: ${missing.join(', ')}`);
+                    }
+
+                    // 檢查圖標
+                    if (manifest.icons && manifest.icons.length > 0) {
+                        const hasLargeIcon = manifest.icons.some(icon => 
+                            icon.sizes.includes('512') || icon.sizes.includes('192')
+                        );
+                        if (hasLargeIcon) {
+                            addResult('success', '✅ Manifest 包含大尺寸圖標');
+                        } else {
+                            addResult('warning', '⚠️ Manifest 缺少大尺寸圖標 (192x192 或 512x512)');
+                        }
+                    } else {
+                        addResult('error', '❌ Manifest 沒有圖標');
+                    }
+                } else {
+                    addResult('error', '❌ 無法載入 Manifest 文件');
+                }
+            } catch (error) {
+                addResult('error', `❌ Manifest 載入錯誤: ${error.message}`);
+            }
+
+            // 3. 檢查 Service Worker
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    addResult('success', '✅ Service Worker 已註冊');
+                } else {
+                    addResult('warning', '⚠️ Service Worker 未註冊');
+                }
+            } catch (error) {
+                addResult('error', `❌ Service Worker 檢查錯誤: ${error.message}`);
+            }
+
+            // 4. 檢查 HTTPS
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                addResult('success', '✅ 運行在安全環境 (HTTPS/localhost)');
+            } else {
+                addResult('error', '❌ PWA 需要 HTTPS 環境');
+            }
+
+            // 5. 檢查是否已安裝
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                addResult('info', '📱 當前運行在 PWA 模式');
+            } else {
+                addResult('info', '🌐 當前運行在瀏覽器模式');
+            }
+
+            // 6. 更新詳細信息
+            updateDetails();
+        }
+
+        async function testManifest() {
+            try {
+                const response = await fetch('/manifest-dynamic.json');
+                const manifest = await response.json();
+                details.textContent = JSON.stringify(manifest, null, 2);
+                
+                // 測試圖標載入
+                iconTests.innerHTML = '<h3>圖標載入測試:</h3>';
+                for (const icon of manifest.icons || []) {
+                    const div = document.createElement('div');
+                    div.className = 'icon-test';
+                    
+                    const img = document.createElement('img');
+                    img.src = icon.src;
+                    img.alt = `${icon.sizes} 圖標`;
+                    img.onerror = () => {
+                        div.style.color = 'red';
+                        div.innerHTML += ' ❌ 載入失敗';
+                    };
+                    img.onload = () => {
+                        div.style.color = 'green';
+                        div.innerHTML += ' ✅ 載入成功';
+                    };
+                    
+                    div.appendChild(img);
+                    div.innerHTML += `${icon.sizes} - ${icon.src}`;
+                    iconTests.appendChild(div);
+                }
+            } catch (error) {
+                details.textContent = `錯誤: ${error.message}`;
+            }
+        }
+
+        async function testLanguage(lang) {
+            try {
+                addResult('info', `🌐 測試 ${lang} 語言的 Manifest...`);
+                const response = await fetch(`/manifest-dynamic.json?lang=${lang}&v=${Date.now()}`);
+                const manifest = await response.json();
+                
+                addResult('success', `✅ ${lang} Manifest 載入成功`);
+                addResult('info', `📝 名稱: ${manifest.name}`);
+                addResult('info', `📝 描述: ${manifest.description}`);
+                addResult('info', `📝 語言: ${manifest.lang || 'undefined'}`);
+                
+                details.textContent = JSON.stringify(manifest, null, 2);
+            } catch (error) {
+                addResult('error', `❌ ${lang} Manifest 載入失敗: ${error.message}`);
+            }
+        }
+
+        function updateDetails() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                serviceWorkerSupport: 'serviceWorker' in navigator,
+                currentURL: location.href,
+                protocol: location.protocol,
+                hostname: location.hostname,
+                displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
+            };
+            
+            details.textContent = JSON.stringify(info, null, 2);
+        }
+
+        // 頁面載入時自動運行診斷
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnostics, 1000);
+        });
+    </script>
+</body>
+</html> 

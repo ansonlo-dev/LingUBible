@@ -5,7 +5,7 @@ import { generateEmailTemplate } from './email-template.js';
 // 開發模式配置
 const DEV_MODE = {
   // 臨時硬編碼開發模式為 true，因為環境變數設置有問題
-  enabled: true, // process.env.DEV_MODE === 'true',
+  enabled: false, // process.env.DEV_MODE === 'true',
   
   // 開發模式下允許的測試郵件域名（現在允許所有域名）
   allowedTestDomains: [
@@ -94,6 +94,97 @@ const isDisposableEmail = (email) => {
   return disposableDomains.some(domain => emailLower.endsWith(`@${domain}`));
 };
 
+// 驗證 reCAPTCHA token
+const verifyRecaptcha = async (token, ipAddress, log, error) => {
+  try {
+    // 如果沒有提供 token，在開發模式下跳過驗證
+    if (!token) {
+      if (DEV_MODE.enabled) {
+        log('🔧 開發模式：跳過 reCAPTCHA 驗證（無 token）');
+        return { success: true, score: 1.0 };
+      } else {
+        return { success: false, error: '缺少 reCAPTCHA token' };
+      }
+    }
+
+    // 如果沒有配置密鑰，在開發模式下跳過驗證
+    if (!process.env.RECAPTCHA_SECRET_KEY) {
+      if (DEV_MODE.enabled) {
+        log('🔧 開發模式：跳過 reCAPTCHA 驗證（無密鑰配置）');
+        return { success: true, score: 1.0 };
+      } else {
+        error('❌ reCAPTCHA 密鑰未配置');
+        return { success: false, error: 'reCAPTCHA 服務配置錯誤' };
+      }
+    }
+
+    log('🔐 開始驗證 reCAPTCHA token');
+
+    // 調用 Google reCAPTCHA API
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret: process.env.RECAPTCHA_SECRET_KEY,
+        response: token,
+        remoteip: ipAddress || ''
+      })
+    });
+
+    if (!response.ok) {
+      error('❌ reCAPTCHA API 請求失敗:', response.status, response.statusText);
+      return { success: false, error: 'reCAPTCHA 驗證服務暫時不可用' };
+    }
+
+    const result = await response.json();
+    log('🔍 reCAPTCHA 驗證結果:', { 
+      success: result.success, 
+      score: result.score, 
+      action: result.action,
+      hostname: result.hostname 
+    });
+
+    if (!result.success) {
+      log('❌ reCAPTCHA 驗證失敗:', result['error-codes']);
+      return { 
+        success: false, 
+        error: 'reCAPTCHA 驗證失敗，請重試',
+        errorCodes: result['error-codes']
+      };
+    }
+
+    // 檢查分數（reCAPTCHA v3）
+    if (result.score !== undefined) {
+      const minScore = 0.5; // 最低接受分數
+      if (result.score < minScore) {
+        log(`⚠️ reCAPTCHA 分數過低: ${result.score} < ${minScore}`);
+        return { 
+          success: false, 
+          error: '安全驗證未通過，請稍後重試',
+          score: result.score
+        };
+      }
+    }
+
+    log('✅ reCAPTCHA 驗證成功');
+    return { 
+      success: true, 
+      score: result.score,
+      action: result.action,
+      hostname: result.hostname
+    };
+
+  } catch (err) {
+    error('💥 reCAPTCHA 驗證異常:', err);
+    return { 
+      success: false, 
+      error: 'reCAPTCHA 驗證過程中發生錯誤' 
+    };
+  }
+};
+
 export default async ({ req, res, log, error }) => {
   try {
     log('🚀 Function 開始執行');
@@ -141,7 +232,7 @@ export default async ({ req, res, log, error }) => {
     const users = new Users(client);
 
     // 根據 action 參數決定執行發送、驗證或創建帳戶
-    const { action = 'send', email, code, password, name, language = 'zh-TW', ipAddress, userAgent } = requestData;
+    const { action = 'send', email, code, password, name, language = 'zh-TW', ipAddress, userAgent, recaptchaToken } = requestData;
     
     log('🎯 Action 參數:', action);
     log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, language });
@@ -151,10 +242,13 @@ export default async ({ req, res, log, error }) => {
       return await verifyCode(databases, email, code, ipAddress, userAgent, log, error, res);
     } else if (action === 'createAccount') {
       // 創建帳戶並自動設置為已驗證
-      return await createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, log, error, res);
+      return await createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, recaptchaToken, log, error, res);
     } else if (action === 'reactivateAccount') {
       // 重新啟用被禁用的帳戶
       return await reactivateAccount(users, email, password, log, error, res);
+    } else if (action === 'sendPasswordReset') {
+      // 發送密碼重設郵件
+      return await sendPasswordReset(users, email, ipAddress, userAgent, recaptchaToken, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
@@ -495,7 +589,7 @@ async function sendEmail(email, code, language, apiKey, log, error) {
 }
 
 // 創建帳戶並自動設置為已驗證
-async function createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, log, error, res) {
+async function createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, recaptchaToken, log, error, res) {
   try {
     log('🚀 開始創建已驗證的帳戶:', { email, name, devMode: DEV_MODE.enabled });
 
@@ -525,6 +619,19 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
       } else {
         log('🔧 開發模式：允許測試郵件地址', email);
       }
+    }
+
+    // 驗證 reCAPTCHA（如果提供了 token）
+    if (recaptchaToken || !DEV_MODE.enabled) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, ipAddress, log, error);
+      if (!recaptchaResult.success) {
+        log('❌ reCAPTCHA 驗證失敗:', recaptchaResult.error);
+        return res.json({
+          success: false,
+          message: recaptchaResult.error || 'reCAPTCHA 驗證失敗'
+        }, 400);
+      }
+      log('✅ reCAPTCHA 驗證通過，分數:', recaptchaResult.score);
     }
 
     // 檢查郵件是否已通過驗證
@@ -778,5 +885,110 @@ async function reactivateAccount(users, email, password, log, error, res) {
       success: false,
       message: `重新啟用帳戶失敗: ${err.message || '請稍後再試'}`
     }, 500);
+  }
+}
+
+// 發送密碼重設郵件
+async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaToken, log, error, res) {
+  try {
+    log('🚀 開始發送密碼重設郵件:', { email });
+
+    // 驗證參數
+    if (!email) {
+      return res.json({
+        success: false,
+        message: '缺少郵件地址'
+      }, 400);
+    }
+
+    // 驗證郵件格式
+    if (!isValidEmailForRegistration(email)) {
+      log('❌ 郵件格式驗證失敗:', email);
+      return res.json({
+        success: false,
+        message: '請使用有效的嶺南人郵件地址（@ln.hk 或 @ln.edu.hk）'
+      }, 400);
+    }
+
+    // 驗證 reCAPTCHA（如果提供了 token）
+    if (recaptchaToken || !DEV_MODE.enabled) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, ipAddress, log, error);
+      if (!recaptchaResult.success) {
+        log('❌ reCAPTCHA 驗證失敗:', recaptchaResult.error);
+        return res.json({
+          success: false,
+          message: recaptchaResult.error || 'reCAPTCHA 驗證失敗'
+        }, 400);
+      }
+      log('✅ reCAPTCHA 驗證通過，分數:', recaptchaResult.score);
+    }
+
+    try {
+      // 檢查用戶是否存在
+      log('🔍 檢查用戶是否存在');
+      const usersList = await users.list([
+        Query.equal('email', email),
+        Query.limit(1)
+      ]);
+
+      // 為了保護隱私，無論用戶是否存在都返回成功訊息
+      // 但只有當用戶存在時才真正發送郵件
+      if (usersList.users.length > 0) {
+        const user = usersList.users[0];
+        log('✅ 找到用戶:', user.$id);
+
+        // 使用 Appwrite 內建的密碼重設功能
+        log('📧 發送密碼重設郵件');
+        const { Client, Account } = await import('node-appwrite');
+        
+        const tempClient = new Client()
+          .setEndpoint('https://fra.cloud.appwrite.io/v1')
+          .setProject('lingubible');
+        
+        const tempAccount = new Account(tempClient);
+        
+        // 發送密碼重設郵件
+        await tempAccount.createRecovery(
+          email,
+          'https://lingubible.com/reset-password' // 重設密碼頁面的 URL
+        );
+
+        log('✅ 密碼重設郵件已發送');
+      } else {
+        log('⚠️ 用戶不存在，但為了保護隱私仍返回成功訊息');
+      }
+
+      // 無論用戶是否存在，都返回成功訊息以保護隱私
+      return res.json({
+        success: true,
+        message: '如果該郵件地址已註冊，我們已向您發送密碼重設連結。請檢查您的郵箱（包括垃圾郵件資料夾）。'
+      });
+
+    } catch (resetError) {
+      error('❌ 發送密碼重設郵件失敗:', resetError);
+      
+      // 處理常見錯誤
+      if (resetError.message && resetError.message.includes('Rate limit')) {
+        return res.json({
+          success: false,
+          message: '請求過於頻繁，請稍後再試'
+        }, 429);
+      }
+
+      // 為了保護隱私，即使發生錯誤也返回成功訊息
+      return res.json({
+        success: true,
+        message: '如果該郵件地址已註冊，我們已向您發送密碼重設連結。請檢查您的郵箱（包括垃圾郵件資料夾）。'
+      });
+    }
+
+  } catch (err) {
+    error('💥 發送密碼重設郵件異常:', err);
+    
+    // 為了保護隱私，即使發生異常也返回成功訊息
+    return res.json({
+      success: true,
+      message: '如果該郵件地址已註冊，我們已向您發送密碼重設連結。請檢查您的郵箱（包括垃圾郵件資料夾）。'
+    });
   }
 } 

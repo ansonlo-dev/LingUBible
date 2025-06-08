@@ -37,9 +37,6 @@ const getInitialLanguage = (): Language => {
   let detectedLanguage: Language = 'en'; // 默認英文
   
   if (browserLang) {
-    console.log('🌐 檢測到的瀏覽器語言:', browserLang);
-    console.log('🌐 所有瀏覽器語言:', navigator.languages);
-    
     if (browserLang.startsWith('zh-TW') || 
         browserLang.startsWith('zh-Hant') || 
         browserLang === 'zh-HK' || 
@@ -60,11 +57,8 @@ const getInitialLanguage = (): Language => {
     }
   }
   
-  console.log('🎯 自動檢測語言設定為:', detectedLanguage);
-  
   // 自動保存檢測到的語言到 cookie
   setCookie('language', detectedLanguage);
-  console.log('💾 語言已保存到 Cookie:', detectedLanguage);
   
   return detectedLanguage;
 };
@@ -87,6 +81,7 @@ const translations = {
     'hero.action': 'comment',
     'hero.actions': ['comment', 'vote', 'ask', 'answer'],
     'hero.getStarted': 'Get Started',
+    'hero.explore': 'Explore',
     'hero.comeHereTo': 'Come here to',
     'nav.home': 'Home',
     'nav.courses': 'Courses',
@@ -178,12 +173,28 @@ const translations = {
     'toast.goodbye': 'Goodbye, {username}! Looking forward to your next visit.',
     // Search
     'search.placeholder': 'Search courses, lecturers...',
+    'search.coursesPlaceholder': 'Search courses by name, code, or lecturer...',
     'search.search': 'Search',
     // Buttons
     'button.viewAll': 'View All',
     'button.review': 'Review',
     'button.viewDetails': 'View Details',
     'button.viewProfile': 'View Profile',
+    // Pages
+    'pages.courses.title': 'All Courses',
+    'pages.courses.subtitle': 'Discover and explore all available courses with reviews and ratings',
+    'pages.courses.showingResults': 'Showing {count} of {total} courses',
+    'pages.courses.noResults': 'No courses found',
+    'pages.courses.noResultsDesc': 'Try adjusting your search criteria or filters',
+    'pages.courses.clearFilters': 'Clear All Filters',
+    // Filters and Sorting
+    'filter.allDepartments': 'All Departments',
+    'filter.selectDepartment': 'Select Department',
+    'sort.byRating': 'By Rating',
+    'sort.byReviews': 'By Review Count',
+    'sort.byStudents': 'By Student Count',
+    'sort.byCourseCode': 'By Course Code',
+    'sort.selectSort': 'Sort By',
     // Course/Lecturer Cards
     'card.reviews': 'reviews',
     'card.students': 'students',
@@ -275,6 +286,8 @@ const translations = {
         'auth.enterUsername': 'Please enter a username',
         'auth.validUsername': 'Please enter a valid username',
         'auth.registrationFailed': 'Registration failed. Please check your information and try again.',
+    'auth.captchaFailed': 'Security verification failed. Please try again.',
+    'auth.recaptchaLoaded': 'reCAPTCHA security verification loaded',
     // Processing
     'auth.processing': 'Processing...',
     // Email placeholder
@@ -359,9 +372,18 @@ const translations = {
     'pwa.manual.safari': 'Safari: Share → Add to Home Screen',
     'pwa.manual.edge': 'Edge: Menu → Apps → Install this site as an app',
     'pwa.manual.browserSpecific': 'Browser-specific instructions:',
+    'pwa.manual.title': 'How to Install',
+    'pwa.manual.description': 'Follow these steps to install the app on your device:',
     'pwa.updateAvailable': 'App update available',
     'pwa.updateNow': 'Update Now',
     'pwa.updateLater': 'Update Later',
+    'pwa.install.title': 'Install App',
+    'pwa.install.benefits.title': 'Benefits of Installing',
+    'pwa.install.benefits.homeScreen': 'Quick access from home screen',
+    'pwa.install.benefits.faster': 'Faster loading times',
+    'pwa.install.benefits.offline': 'Works offline',
+    'pwa.install.benefits.storage': 'Less storage usage',
+    'pwa.install.button': 'Install Now',
     // PWA Detailed Descriptions
     'pwa.detailedDescription': 'Your trusted course and lecturer review platform. Access honest reviews, make informed decisions about your courses, and share your experiences with fellow students. Get faster loading, offline access, and a native app experience.',
     'pwa.features.offline': 'Browse reviews offline',
@@ -701,6 +723,7 @@ const translations = {
     'hero.action': '評論',
     'hero.actions': ['發表評價', '投票', '提出問題', '回答問題'],
     'hero.getStarted': '開始使用',
+    'hero.explore': '探索',
     'hero.comeHereTo': '來這裡',
     'nav.home': '首頁',
     'nav.courses': '課程',
@@ -796,8 +819,23 @@ const translations = {
     // Buttons
     'button.viewAll': '查看全部',
     'button.review': '評價',
-    'button.viewDetails': '查看詳情',
-    'button.viewProfile': '查看檔案',
+          'button.viewDetails': '查看詳情',
+      'button.viewProfile': '查看檔案',
+      // Pages
+      'pages.courses.title': '所有課程',
+      'pages.courses.subtitle': '探索所有可用課程，查看評價和評分',
+      'pages.courses.showingResults': '顯示 {count} / {total} 門課程',
+      'pages.courses.noResults': '找不到課程',
+      'pages.courses.noResultsDesc': '請嘗試調整搜索條件或篩選器',
+      'pages.courses.clearFilters': '清除所有篩選',
+      // Filters and Sorting
+      'filter.allDepartments': '所有學系',
+      'filter.selectDepartment': '選擇學系',
+      'sort.byRating': '按評分排序',
+      'sort.byReviews': '按評價數排序',
+      'sort.byStudents': '按學生數排序',
+      'sort.byCourseCode': '按課程代碼排序',
+      'sort.selectSort': '排序方式',
     // Course/Lecturer Cards
     'card.reviews': '評價',
     'card.students': '學生',
@@ -889,6 +927,8 @@ const translations = {
         'auth.enterUsername': '請輸入用戶名',
         'auth.validUsername': '請輸入有效的用戶名',
         'auth.registrationFailed': '註冊失敗，請檢查資料後重試',
+        'auth.captchaFailed': '安全驗證失敗，請重試',
+    'auth.recaptchaLoaded': 'reCAPTCHA 安全驗證已載入',
     // Processing
     'auth.processing': '處理中...',
     // Email placeholder
@@ -973,9 +1013,18 @@ const translations = {
     'pwa.manual.safari': 'Safari：分享 → 加入主畫面',
     'pwa.manual.edge': 'Edge：選單 → 應用程式 → 將此網站安裝為應用程式',
     'pwa.manual.browserSpecific': '瀏覽器特定指引：',
+    'pwa.manual.title': '安裝方法',
+    'pwa.manual.description': '請按照以下步驟將應用程式安裝到您的裝置：',
     'pwa.updateAvailable': '應用更新可用',
     'pwa.updateNow': '立即更新',
     'pwa.updateLater': '稍後更新',
+    'pwa.install.title': '安裝應用',
+    'pwa.install.benefits.title': '安裝好處',
+    'pwa.install.benefits.homeScreen': '主畫面快速存取',
+    'pwa.install.benefits.faster': '更快載入速度',
+    'pwa.install.benefits.offline': '離線使用',
+    'pwa.install.benefits.storage': '節省儲存空間',
+    'pwa.install.button': '立即安裝',
     // PWA Detailed Descriptions
     'pwa.detailedDescription': '真實可靠的Reg科聖經，幫助同學們作出明智的選擇。瀏覽誠實的評價，分享您的課程體驗，享受更快的載入速度、離線存取和原生應用體驗。',
     'pwa.features.offline': '離線瀏覽評價',
@@ -1180,16 +1229,16 @@ const translations = {
     'privacy.userRights.deletion': '• 要求刪除您的個人數據',
     'privacy.userRights.portability': '• 要求導出您的數據',
     'privacy.cookies.title': '6. Cookie 使用',
-    'privacy.cookies.content': '我們使用 Cookie 來改善您的瀏覽體驗。詳細信息請參閱我們的 Cookie 政策。',
+    'privacy.cookies.content': 'We use cookies to improve your browsing experience. For detailed information, please refer to our Cookie Policy.',
     'privacy.changes.title': '7. 政策變更',
-    'privacy.changes.content': '我們可能會不時更新此隱私政策。重大變更將通過網站公告通知用戶。',
+    'privacy.changes.content': 'We may update this privacy policy from time to time. Major changes will be announced through website notifications.',
     'privacy.contact.title': '8. 聯繫我們',
-    'privacy.contact.content': '如果您對此隱私政策有任何疑問或需要行使您的權利，請通過網站聯繫功能與我們聯繫。',
+    'privacy.contact.content': 'If you have any questions about this privacy policy or need to exercise your rights, please contact us through the website contact feature.',
     // Privacy badges and labels
-    'privacy.important': '重要',
-    'privacy.days30': '30 天',
-    'privacy.days90': '90 天',
-    'privacy.anytime': '隨時',
+    'privacy.important': 'Important',
+    'privacy.days30': '30 days',
+    'privacy.days90': '90 days',
+    'privacy.anytime': 'Anytime',
     // Common
     'common.backToHome': '返回首頁',
     'common.lastUpdated': '最後更新',
@@ -1205,42 +1254,42 @@ const translations = {
     'auth.privacyPolicy': '隱私政策',
     'auth.mustAgreeTerms': '您必須同意使用條款和隱私政策才能繼續',
     // Contact Page
-    'contact.title': '聯繫我們',
-    'contact.subtitle': '有任何問題或建議？我們很樂意聽取您的意見',
-    'contact.methods': '聯繫方式',
-    'contact.email': '電子郵件',
+    'contact.title': 'Contact Us',
+    'contact.subtitle': 'Have any questions or suggestions? We\'d love to hear from you',
+    'contact.methods': 'Contact Methods',
+    'contact.email': 'Email',
     'contact.github': 'GitHub',
-    'contact.developer': '開發者',
-    'contact.privacy': '隱私保護',
-    'contact.privacyMessage': '我們承諾保護您的隱私。您的聯繫信息僅用於回復您的查詢，不會與第三方分享。',
-    'contact.faq': '常見問題',
-    'contact.faqReport': '如何報告不當內容？',
-    'contact.faqReportAnswer': '請發送電子郵件至 <a href="mailto:support@lingubible.com" class="underline hover:no-underline">support@lingubible.com</a> 向我們報告任何違反社區準則的內容。',
-    'contact.faqDelete': '如何刪除我的評論？',
-    'contact.faqDeleteAnswer': '請聯繫我們並提供相關信息，我們會協助您處理。',
-    'contact.faqTechnical': '技術問題回報',
-    'contact.faqTechnicalAnswer': '遇到網站技術問題？請詳細描述問題並發送給我們。',
-    'contact.sendMessage': '發送消息',
-    'contact.name': '姓名',
-    'contact.namePlaceholder': '請輸入您的姓名',
-    'contact.emailPlaceholder': '請輸入您的電子郵件',
-    'contact.subject': '主題',
-    'contact.subjectPlaceholder': '請輸入消息主題',
-    'contact.message': '消息內容',
-    'contact.messagePlaceholder': '請詳細描述您的問題或建議...',
-    'contact.sending': '發送中...',
-    'contact.send': '發送消息',
-    'contact.successMessage': '消息發送成功！我們會盡快回復您。',
-    'contact.errorMessage': '發送失敗，請稍後再試或直接發送郵件至 support@lingubible.com',
+    'contact.developer': 'Developer',
+    'contact.privacy': 'Privacy Protection',
+    'contact.privacyMessage': 'We promise to protect your privacy. Your contact information will only be used to reply to your inquiries and will not be shared with third parties.',
+    'contact.faq': 'Frequently Asked Questions',
+    'contact.faqReport': 'How to report inappropriate content?',
+    'contact.faqReportAnswer': 'Please report any content that violates community guidelines by sending an email to <a href="mailto:support@lingubible.com" class="underline hover:no-underline">support@lingubible.com</a>.',
+    'contact.faqDelete': 'How to delete my comments?',
+    'contact.faqDeleteAnswer': 'Please contact us with relevant information and we will assist you.',
+    'contact.faqTechnical': 'Technical Issue Reports',
+    'contact.faqTechnicalAnswer': 'Encountered website technical issues? Please describe the problem in detail and send it to us.',
+    'contact.sendMessage': 'Send Message',
+    'contact.name': 'Name',
+    'contact.namePlaceholder': 'Please enter your name',
+    'contact.emailPlaceholder': 'Please enter your email',
+    'contact.subject': 'Subject',
+    'contact.subjectPlaceholder': 'Please enter message subject',
+    'contact.message': 'Message Content',
+    'contact.messagePlaceholder': 'Please describe your questions or suggestions in detail...',
+    'contact.sending': 'Sending...',
+    'contact.send': 'Send Message',
+    'contact.successMessage': 'Message sent successfully! We will reply to you as soon as possible.',
+    'contact.errorMessage': 'Send failed, please try again later or send email directly to support@lingubible.com',
     // User Settings Page
-    'settings.title': '用戶設定',
-    'settings.subtitle': '管理您的個人資料和偏好設定',
-    'settings.backToHome': '返回首頁',
-    'settings.profile': '個人資料',
-    'settings.profileDescription': '更新您的個人資料信息',
-    'settings.email': '電子郵件',
-    'settings.emailReadOnly': '電子郵件地址無法修改',
-    'settings.username': '用戶名',
+    'settings.title': 'User Settings',
+    'settings.subtitle': 'Manage your personal information and preferences',
+    'settings.backToHome': 'Back to Home',
+    'settings.profile': 'Profile',
+    'settings.profileDescription': 'Update your personal information',
+    'settings.email': 'Email',
+    'settings.emailReadOnly': 'Email address cannot be modified',
+    'settings.username': 'Username',
     'settings.usernamePlaceholder': 'Enter your username (2-10 characters, can be empty)',
     'settings.usernameAvailable': 'Username available',
     'settings.usernameRules': 'Username Rules:',
@@ -1282,21 +1331,21 @@ const translations = {
     'auth.showPassword': 'Show password',
     'auth.hidePassword': 'Hide password',
     // 404 Page
-    '404.title': '糟糕！找不到頁面',
-    '404.description': '您要尋找的頁面可能已被移除、更名或暫時無法使用。',
-    '404.path': '請求路徑',
-    '404.backToHome': '返回首頁',
-    '404.refresh': '重新整理頁面',
-    '404.goBack': '返回上頁',
-    '404.quickLinks.title': '快速導航',
-    '404.quickLinks.subtitle': '以下是一些有用的連結，幫助您重新回到正軌',
-    '404.quickLinks.homeDesc': '返回主頁面',
-    '404.quickLinks.coursesDesc': '瀏覽可用課程',
-    '404.quickLinks.lecturersDesc': '查找講師資訊',
-    '404.quickLinks.searchDesc': '搜尋內容',
-    '404.help.title': '需要幫助？',
-    '404.help.description': '如果您認為這是一個錯誤或需要協助，請不要猶豫與我們聯繫。',
-    '404.help.contact': '聯繫我們：',
+    '404.title': 'Oops! Page Not Found',
+    '404.description': 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.',
+    '404.path': 'Requested path',
+    '404.backToHome': 'Back to Home',
+    '404.refresh': 'Refresh Page',
+    '404.goBack': 'Go Back',
+    '404.quickLinks.title': 'Quick Navigation',
+    '404.quickLinks.subtitle': 'Here are some helpful links to get you back on track',
+    '404.quickLinks.homeDesc': 'Return to the main page',
+    '404.quickLinks.coursesDesc': 'Browse available courses',
+    '404.quickLinks.lecturersDesc': 'Find lecturer information',
+    '404.quickLinks.searchDesc': 'Search for content',
+    '404.help.title': 'Need Help?',
+    '404.help.description': 'If you believe this is an error or need assistance, please don\'t hesitate to reach out.',
+    '404.help.contact': '聯絡我們：',
   },
   'zh-CN': {
     // Site metadata
@@ -1315,6 +1364,7 @@ const translations = {
     'hero.action': '评论',
     'hero.actions': ['评论', '投票', '提出问题', '回答问题'],
     'hero.getStarted': '开始使用',
+    'hero.explore': '探索',
     'hero.comeHereTo': '来这里',
     'nav.home': '首页',
     'nav.courses': '课程',
@@ -1410,8 +1460,23 @@ const translations = {
     // Buttons
     'button.viewAll': '查看全部',
     'button.review': '评价',
-    'button.viewDetails': '查看详情',
-    'button.viewProfile': '查看档案',
+          'button.viewDetails': '查看详情',
+      'button.viewProfile': '查看档案',
+      // Pages
+      'pages.courses.title': '所有课程',
+      'pages.courses.subtitle': '探索所有可用课程，查看评价和评分',
+      'pages.courses.showingResults': '显示 {count} / {total} 门课程',
+      'pages.courses.noResults': '找不到课程',
+      'pages.courses.noResultsDesc': '请尝试调整搜索条件或筛选器',
+      'pages.courses.clearFilters': '清除所有筛选',
+      // Filters and Sorting
+      'filter.allDepartments': '所有学系',
+      'filter.selectDepartment': '选择学系',
+      'sort.byRating': '按评分排序',
+      'sort.byReviews': '按评价数排序',
+      'sort.byStudents': '按学生数排序',
+      'sort.byCourseCode': '按课程代码排序',
+      'sort.selectSort': '排序方式',
     // Course/Lecturer Cards
     'card.reviews': '评价',
     'card.students': '学生',
@@ -1503,6 +1568,8 @@ const translations = {
         'auth.enterUsername': '请输入用户名',
         'auth.validUsername': '请输入有效的用户名',
         'auth.registrationFailed': '注册失败，请检查资料后重试',
+        'auth.captchaFailed': '安全验证失败，请重试',
+    'auth.recaptchaLoaded': 'reCAPTCHA 安全验证已加载',
     // Processing
     'auth.processing': '处理中...',
     // Email placeholder
@@ -1587,9 +1654,18 @@ const translations = {
     'pwa.manual.safari': 'Safari：分享 → 添加到主屏幕',
     'pwa.manual.edge': 'Edge：菜单 → 应用 → 将此站点安装为应用',
     'pwa.manual.browserSpecific': '浏览器特定指引：',
+    'pwa.manual.title': '安装方法',
+    'pwa.manual.description': '请按照以下步骤将应用程序安装到您的设备：',
     'pwa.updateAvailable': '应用更新可用',
     'pwa.updateNow': '立即更新',
     'pwa.updateLater': '稍后更新',
+    'pwa.install.title': '安装应用',
+    'pwa.install.benefits.title': '安装好处',
+    'pwa.install.benefits.homeScreen': '主屏幕快速访问',
+    'pwa.install.benefits.faster': '更快加载速度',
+    'pwa.install.benefits.offline': '离线使用',
+    'pwa.install.benefits.storage': '节省存储空间',
+    'pwa.install.button': '立即安装',
     // PWA Detailed Descriptions
     'pwa.detailedDescription': '您诚实的课程和讲师评价平台，帮助同学们做出明智的决定。浏览诚实的评价，分享您的课程体验，享受更快的加载速度、离线访问和原生应用体验。',
     'pwa.features.offline': '离线浏览评价',
@@ -1922,11 +1998,20 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     setCookie('language', newLanguage);
     console.log('💾 新語言已保存到 Cookie:', newLanguage);
     
-    // 觸發 PWA manifest 更新
-    if (typeof window !== 'undefined' && window.updatePWAManifest) {
-      setTimeout(() => {
-        window.updatePWAManifest();
-      }, 100); // 稍微延遲確保 cookie 已設置
+    // 觸發語言變更事件
+    if (typeof window !== 'undefined') {
+      // 發送自定義事件通知語言變更
+      const languageChangeEvent = new CustomEvent('languageChanged', {
+        detail: { language: newLanguage, previousLanguage: language }
+      });
+      window.dispatchEvent(languageChangeEvent);
+      
+      // 觸發 PWA manifest 更新
+      if (window.updatePWAManifest) {
+        setTimeout(() => {
+          window.updatePWAManifest();
+        }, 100); // 稍微延遲確保 cookie 已設置
+      }
     }
   };
 

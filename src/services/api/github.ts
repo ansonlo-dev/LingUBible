@@ -47,9 +47,27 @@ const createHeaders = () => {
 };
 
 /**
+ * 檢查是否為開發環境
+ */
+const isDevelopmentEnvironment = (): boolean => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' || 
+           window.location.hostname === '127.0.0.1' || 
+           window.location.hostname.includes('localhost');
+  }
+  return false;
+};
+
+/**
  * 獲取最新的 GitHub Release
  */
 export const getLatestRelease = async (): Promise<GitHubRelease | null> => {
+  // 在開發環境中跳過 GitHub API 調用，避免 CORS 錯誤
+  if (isDevelopmentEnvironment()) {
+    console.log('Development environment detected, skipping GitHub API call to avoid CORS issues');
+    return null;
+  }
+
   try {
     const response = await fetch(
       `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
@@ -81,6 +99,12 @@ export const getLatestRelease = async (): Promise<GitHubRelease | null> => {
  * 獲取所有 releases（包括 pre-releases）
  */
 export const getAllReleases = async (): Promise<GitHubRelease[]> => {
+  // 在開發環境中跳過 GitHub API 調用，避免 CORS 錯誤
+  if (isDevelopmentEnvironment()) {
+    console.log('Development environment detected, skipping GitHub API call to avoid CORS issues');
+    return [];
+  }
+
   try {
     const response = await fetch(
       `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/releases`,

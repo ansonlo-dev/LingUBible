@@ -59,7 +59,6 @@ export function usePWAManifest() {
     
     try {
       const manifestUrl = `/manifest-dynamic.json?lang=${lang}&t=${Date.now()}`;
-      console.log(`🔄 正在獲取 PWA Manifest: ${manifestUrl}`);
       
       const response = await fetch(manifestUrl);
       if (!response.ok) {
@@ -75,7 +74,6 @@ export function usePWAManifest() {
         lastUpdated: Date.now()
       });
       
-      console.log(`✅ PWA Manifest 獲取成功 (${lang}):`, manifestData.name);
       return manifestData;
       
     } catch (error) {
@@ -101,7 +99,6 @@ export function usePWAManifest() {
   useEffect(() => {
     const handleManifestUpdate = (event: CustomEvent) => {
       const { language: newLang } = event.detail;
-      console.log(`🌐 PWA Manifest Hook: 收到更新事件 (${newLang})`);
       
       // 重新獲取 manifest
       fetchManifest(newLang);

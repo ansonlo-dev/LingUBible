@@ -31,7 +31,15 @@ export function Footer() {
             {/* Left side - CC-BY-SA License and Social Icons */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono">MIT</span>
+                <a 
+                  href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  title="View MIT License"
+                >
+                  MIT
+                </a>
                 <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
               </div>
               
@@ -126,7 +134,15 @@ export function Footer() {
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono">MIT</span>
+                  <a 
+                    href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title="View MIT License"
+                  >
+                    MIT
+                  </a>
                   <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
                 </div>
                 
@@ -301,9 +317,15 @@ export function Footer() {
           <div className="flex flex-col items-center space-y-3 pb-2">
             {/* License info */}
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full font-mono">
+              <a 
+                href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="View MIT License"
+              >
                 MIT
-              </span>
+              </a>
                              <span className="text-xs text-gray-600 dark:text-muted-foreground">
                  2025 LingUBible
                </span>

@@ -87,21 +87,17 @@ export function usePWAInstall() {
     setInstallState(newState);
     saveInstallState(newState);
 
-    console.log('PWA: 初始化狀態', {
-      current: newState,
-      saved: savedState,
-      restored: !!savedState
-    });
+
 
     // 暫時禁用 beforeinstallprompt 事件監聽，避免與 PWAContext 衝突
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('PWA: beforeinstallprompt 事件觸發 (已禁用處理)');
+
       // 不處理事件，讓 PWAContext 處理
     };
 
     // 監聽應用安裝事件
     const handleAppInstalled = () => {
-      console.log('PWA: 應用已安裝');
+
       setInstallPrompt(null);
       setInstallState(prev => {
         const newState = {
@@ -128,12 +124,7 @@ export function usePWAInstall() {
 
   // 觸發安裝提示
   const promptInstall = async () => {
-    console.log('PWA: 準備顯示自定義安裝對話框');
-    console.log('PWA: installPrompt 狀態:', !!installPrompt);
-    
-    // 記錄當前語言
-    const currentLang = document.documentElement.lang || 'en';
-    console.log('PWA: 當前頁面語言:', currentLang);
+
     
     // 即使沒有 installPrompt，也顯示自定義對話框
     // 對話框內部會處理沒有 installPrompt 的情況
@@ -179,36 +170,38 @@ export function usePWAInstall() {
     }
   };
 
-  // 獲取安裝指引文字
+  // 獲取安裝指引文字（現在使用翻譯系統）
   const getInstallInstructions = () => {
+    // 這個函數現在主要用於向後兼容
+    // 實際的翻譯應該在組件中使用 useLanguage hook
     const { platform } = installState;
     
     switch (platform) {
       case 'iOS':
         return {
-          title: '安裝到主畫面',
+          title: 'Install to Home Screen',
           steps: [
-            '點擊分享按鈕 📤',
-            '選擇「加入主畫面」',
-            '點擊「新增」確認'
+            'Tap the Share button 📤',
+            'Select "Add to Home Screen"',
+            'Tap "Add" to confirm'
           ]
         };
       case 'Android':
         return {
-          title: '安裝應用',
+          title: 'Install App',
           steps: [
-            '點擊瀏覽器選單 ⋮',
-            '選擇「安裝應用」或「加到主畫面」',
-            '點擊「安裝」確認'
+            'Tap browser menu ⋮',
+            'Select "Install app" or "Add to Home screen"',
+            'Tap "Install" to confirm'
           ]
         };
       default:
         return {
-          title: '安裝應用',
+          title: 'Install App',
           steps: [
-            '點擊地址欄右側的安裝圖標',
-            '或使用瀏覽器選單中的「安裝」選項',
-            '按照提示完成安裝'
+            'Click the install icon in the address bar',
+            'Or use "Install" option in browser menu',
+            'Follow the prompts to complete installation'
           ]
         };
     }
@@ -217,11 +210,8 @@ export function usePWAInstall() {
   // 監聽 manifest 更新事件
   useEffect(() => {
     const handleManifestUpdate = (event: CustomEvent) => {
-      console.log('PWA: Manifest 已更新', event.detail);
-      
       // 當 manifest 更新時，不要重置 installPrompt
       // 保持現有的安裝提示可用，因為瀏覽器不會重新觸發 beforeinstallprompt
-      console.log('PWA: Manifest 更新完成，保持現有安裝提示可用');
     };
 
     window.addEventListener('manifestUpdated', handleManifestUpdate as EventListener);

@@ -18,7 +18,7 @@ export function usePingSystem(options: PingSystemOptions = {}) {
   const { user } = useAuth();
   const { sendPing } = useUserStats();
   const lastActivityRef = useRef<number>(Date.now());
-  const pingIntervalRef = useRef<number | null>(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const activityListenersRef = useRef<boolean>(false);
 
   // 記錄用戶活動
@@ -38,7 +38,6 @@ export function usePingSystem(options: PingSystemOptions = {}) {
     });
 
     activityListenersRef.current = true;
-    console.log('Ping 系統: 活動監聽器已設置');
   };
 
   // 清除活動監聽器
@@ -50,7 +49,6 @@ export function usePingSystem(options: PingSystemOptions = {}) {
     });
 
     activityListenersRef.current = false;
-    console.log('Ping 系統: 活動監聽器已清除');
   };
 
   // 啟動 ping 系統
@@ -64,19 +62,14 @@ export function usePingSystem(options: PingSystemOptions = {}) {
       // 只有在最近有活動時才發送 ping（避免無意義的 ping）
       if (timeSinceLastActivity < pingInterval * 2) {
         try {
-          const success = await sendPing();
-          if (success) {
-            console.log('Ping 系統: 自動 ping 發送成功');
-          }
+          await sendPing();
         } catch (error) {
           console.error('Ping 系統: 自動 ping 發送失敗', error);
         }
-      } else {
-        console.log('Ping 系統: 用戶無活動，跳過 ping');
       }
     }, pingInterval);
 
-    console.log(`Ping 系統: 已啟動，間隔 ${pingInterval / 1000} 秒`);
+
   };
 
   // 停止 ping 系統
@@ -84,7 +77,6 @@ export function usePingSystem(options: PingSystemOptions = {}) {
     if (pingIntervalRef.current) {
       clearInterval(pingIntervalRef.current);
       pingIntervalRef.current = null;
-      console.log('Ping 系統: 已停止');
     }
   };
 
@@ -108,7 +100,6 @@ export function usePingSystem(options: PingSystemOptions = {}) {
 
   useEffect(() => {
     if (!enabled || !user) {
-      console.log('Ping 系統: 已禁用或用戶未登入，跳過初始化');
       return;
     }
 
@@ -118,10 +109,8 @@ export function usePingSystem(options: PingSystemOptions = {}) {
     // 頁面可見性變化處理
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log('Ping 系統: 頁面隱藏，停止 ping');
         stopPingSystem();
       } else {
-        console.log('Ping 系統: 頁面可見，重新啟動 ping');
         recordActivity(); // 記錄活動
         startPingSystem();
       }

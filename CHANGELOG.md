@@ -1,5 +1,89 @@
 # 更新日誌 (Changelog)
 
+## [0.1.3] - 2024-01-XX - reCAPTCHA 安全驗證系統全面升級
+
+### 🔐 主要新功能
+
+#### 🛡️ 全面 reCAPTCHA 安全保護
+- **登入表單 reCAPTCHA 支援**：智能驗證系統，只在多次登入失敗後啟用
+- **忘記密碼表單 reCAPTCHA 支援**：高風險表單，總是需要安全驗證
+- **統一 reCAPTCHA 體驗**：三個認證表單（註冊、登入、忘記密碼）都具有一致的安全保護
+
+#### 🧠 智能 reCAPTCHA 系統
+- **風險等級分類**：
+  - 高風險：註冊、忘記密碼（總是需要驗證）
+  - 中風險：登入（多次失敗後啟用）
+  - 低風險：搜索、篩選（通常不需要）
+- **用戶行為追蹤**：記錄登入失敗次數、快速提交行為、可疑活動
+- **動態驗證邏輯**：根據用戶行為智能決定是否需要 reCAPTCHA
+
+#### 🌍 多語言 reCAPTCHA 支援
+- **完整翻譯**：reCAPTCHA 狀態指示器支援繁體中文、簡體中文、英文
+- **動態語言切換**：reCAPTCHA 介面會根據用戶選擇的語言自動調整
+
+### 🚀 新增功能
+
+#### 🔑 忘記密碼功能完整實作
+- **真實 API 端點**：使用 Appwrite 內建密碼重設功能
+- **隱私保護**：無論用戶是否存在都返回成功訊息
+- **reCAPTCHA 保護**：防止惡意密碼重設請求
+
+#### 📱 優化的用戶介面
+- **統一狀態指示器**：所有表單都顯示 "reCAPTCHA 安全驗證已載入"
+- **合理佈局**：忘記密碼表單中 reCAPTCHA 指示器位於按鈕上方
+- **視覺一致性**：藍色主題的安全驗證提示
+
+### 🔧 技術改進
+
+#### 新增 Hooks
+- **`useLoginRecaptcha`**：登入表單專用的 reCAPTCHA hook
+- **`useForgotPasswordRecaptcha`**：忘記密碼表單專用的 reCAPTCHA hook
+- **智能驗證邏輯**：自動判斷是否需要 reCAPTCHA 驗證
+
+#### 後端 API 擴展
+- **`sendPasswordReset`** 函數：處理密碼重設請求
+- **reCAPTCHA 驗證整合**：後端驗證 reCAPTCHA token
+- **錯誤處理優化**：更好的錯誤訊息和用戶體驗
+
+#### CSS 和 JavaScript 更新
+- **表單選擇器擴展**：支援 `.login-form` 和 `.forgot-password-form`
+- **reCAPTCHA 隱藏腳本更新**：確保表單中的 reCAPTCHA 保持可見
+- **跨瀏覽器兼容性**：改善不同設備上的表現
+
+### 📁 新增文件
+- `src/hooks/useSmartRecaptcha.ts` - 智能 reCAPTCHA 系統（新增 hooks）
+- 後端函數擴展：`sendPasswordReset` 功能
+
+### 📝 修改文件
+- `src/pages/auth/Login.tsx` - 添加 reCAPTCHA 支援
+- `src/pages/auth/ForgotPassword.tsx` - 完整重構，添加真實 API 和 reCAPTCHA
+- `src/contexts/AuthContext.tsx` - 新增 `sendPasswordReset` 方法
+- `src/services/api/auth.ts` - 新增密碼重設 API 調用
+- `src/contexts/LanguageContext.tsx` - 新增 reCAPTCHA 相關翻譯
+- `functions/send-verification-email/src/main.js` - 新增密碼重設端點
+- `public/hide-*.js` - 更新 reCAPTCHA 隱藏腳本
+
+### 🛡️ 安全性提升
+- **reCAPTCHA v3 分數驗證**：最低接受分數 0.5
+- **智能威脅檢測**：根據用戶行為動態調整安全等級
+- **隱私保護**：密碼重設功能不洩露用戶存在性
+- **開發模式支援**：便於開發和測試
+
+### ✨ 用戶體驗提升
+- 🎯 **智能驗證**：減少不必要的 reCAPTCHA 挑戰
+- 🌍 **多語言支援**：完整的本地化體驗
+- 🔒 **安全感提升**：清晰的安全驗證狀態提示
+- 📱 **一致性**：所有認證表單具有統一的安全保護
+
+### 🔍 測試覆蓋
+- ✅ 登入表單 reCAPTCHA 智能驗證
+- ✅ 忘記密碼表單 reCAPTCHA 保護
+- ✅ 多語言 reCAPTCHA 介面
+- ✅ 後端密碼重設 API
+- ✅ 隱私保護機制
+
+---
+
 ## [2024-01-XX] - 控制台日誌優化與移動端搜索體驗大幅改善
 
 ### 🚀 主要新功能

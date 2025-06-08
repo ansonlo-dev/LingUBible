@@ -6,15 +6,38 @@ const BETA_NOTICE_DISMISSED_KEY = 'beta-notice-dismissed';
 
 export const BetaNotice: React.FC = () => {
   const { t } = useLanguage();
-  const [isDismissed, setIsDismissed] = useState(false);
-
-  useEffect(() => {
-    // 檢查用戶是否已經關閉過通知
-    const dismissed = localStorage.getItem(BETA_NOTICE_DISMISSED_KEY);
-    if (dismissed === 'true') {
-      setIsDismissed(true);
+  
+  // 在初始化時就同步檢查 localStorage，避免閃爍
+  const [isDismissed, setIsDismissed] = useState(() => {
+    // 檢查是否在瀏覽器環境中
+    if (typeof window === 'undefined') {
+      return false; // SSR 環境，默認不顯示
     }
-  }, []);
+    
+    try {
+      return localStorage.getItem(BETA_NOTICE_DISMISSED_KEY) === 'true';
+    } catch {
+      // 如果 localStorage 不可用，默認為 false
+      return false;
+    }
+  });
+  
+  // 添加 hydration 保護，確保客戶端和服務端狀態一致
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  useEffect(() => {
+    setIsHydrated(true);
+    
+    // 在客戶端 hydration 後再次檢查 localStorage
+    try {
+      const dismissed = localStorage.getItem(BETA_NOTICE_DISMISSED_KEY) === 'true';
+      if (dismissed !== isDismissed) {
+        setIsDismissed(dismissed);
+      }
+    } catch {
+      // localStorage 不可用時忽略
+    }
+  }, [isDismissed]);
 
   // 開發者工具：重置測試版通知（按 Ctrl/Cmd + Shift + B）
   useEffect(() => {
@@ -39,6 +62,17 @@ export const BetaNotice: React.FC = () => {
   // 如果已被關閉，不顯示通知
   if (isDismissed) {
     return null;
+  }
+  
+  // 在客戶端但 hydration 未完成時，額外檢查 localStorage 避免閃爍
+  if (typeof window !== 'undefined' && !isHydrated) {
+    try {
+      if (localStorage.getItem(BETA_NOTICE_DISMISSED_KEY) === 'true') {
+        return null;
+      }
+    } catch {
+      // localStorage 不可用時繼續顯示
+    }
   }
 
   return (

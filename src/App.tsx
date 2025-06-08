@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PWAProvider } from "@/contexts/PWAContext";
 import { AuthProvider } from '@/contexts/AuthContext';
+import { RecaptchaProvider } from '@/contexts/RecaptchaContext';
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -15,6 +16,7 @@ import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
 import { PWAPromptTrigger } from "@/components/common/PWAPromptTrigger";
 import { BetaNotice } from "@/components/common/BetaNotice";
 import Index from "./pages/Index";
+import Courses from "./pages/Courses";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -429,6 +431,7 @@ const AppContent = () => {
                   />
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/courses" element={<Courses />} />
                     <Route path="/settings" element={<UserSettings />} />
                     <Route path="/avatar-demo" element={<AvatarDemo />} />
                     <Route path="/terms" element={<Terms />} />
@@ -485,14 +488,16 @@ const App = () => {
       <TooltipProvider>
         <PWAProvider>
           <LanguageProvider>
-            <AuthProvider>
-              <AppContent />
-              <Toaster />
-              <Sonner />
-              <CookieConsent />
-              {/* <DevModeIndicator /> */}
-              <PWAPromptTrigger />
-            </AuthProvider>
+            <RecaptchaProvider>
+              <AuthProvider>
+                <AppContent />
+                <Toaster />
+                <Sonner />
+                <CookieConsent />
+                {/* <DevModeIndicator /> */}
+                <PWAPromptTrigger />
+              </AuthProvider>
+            </RecaptchaProvider>
           </LanguageProvider>
         </PWAProvider>
       </TooltipProvider>

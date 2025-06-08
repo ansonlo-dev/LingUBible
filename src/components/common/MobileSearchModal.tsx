@@ -25,6 +25,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         { title: t('course.introCS'), subtitle: 'CS101 - Dr. Sarah Johnson', href: '#' },
         { title: t('course.advancedMath'), subtitle: 'MATH301 - Prof. Michael Chen', href: '#' },
         { title: t('course.englishLit'), subtitle: 'ENG201 - Dr. Emily Davis', href: '#' },
+        { title: '數據結構與算法', subtitle: 'CS201 - Prof. Alex Wang', href: '#' },
+        { title: '機器學習基礎', subtitle: 'CS301 - Dr. Lisa Zhang', href: '#' },
+        { title: '網頁開發', subtitle: 'CS202 - Prof. John Smith', href: '#' },
+        { title: '數據庫系統', subtitle: 'CS203 - Dr. Maria Garcia', href: '#' },
       ]
     },
     {
@@ -34,6 +38,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         { title: 'Dr. Sarah Johnson', subtitle: t('department.computerScience'), href: '#' },
         { title: 'Prof. Michael Chen', subtitle: t('department.mathematics'), href: '#' },
         { title: 'Dr. Emily Davis', subtitle: t('department.english'), href: '#' },
+        { title: 'Prof. Alex Wang', subtitle: t('department.computerScience'), href: '#' },
+        { title: 'Dr. Lisa Zhang', subtitle: t('department.computerScience'), href: '#' },
+        { title: 'Prof. John Smith', subtitle: t('department.computerScience'), href: '#' },
+        { title: 'Dr. Maria Garcia', subtitle: t('department.computerScience'), href: '#' },
       ]
     },
     {
@@ -43,6 +51,11 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         { title: '計算機科學導論', subtitle: '最受歡迎的入門課程', href: '#' },
         { title: '高等數學', subtitle: '挑戰性課程', href: '#' },
         { title: '英國文學', subtitle: '文學愛好者首選', href: '#' },
+        { title: '數據結構', subtitle: '程式設計必修', href: '#' },
+        { title: '機器學習', subtitle: '人工智能入門', href: '#' },
+        { title: '網頁設計', subtitle: '前端開發基礎', href: '#' },
+        { title: '數據庫', subtitle: '後端開發核心', href: '#' },
+        { title: '軟體工程', subtitle: '團隊協作必備', href: '#' },
       ]
     },
     {
@@ -52,6 +65,9 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         { title: '撰寫評論', subtitle: '分享您的課程體驗', href: '#' },
         { title: '查看我的評論', subtitle: '管理您的評論', href: '#' },
         { title: '瀏覽熱門課程', subtitle: '發現受歡迎的課程', href: '#' },
+        { title: '查看講師評分', subtitle: '了解講師教學風格', href: '#' },
+        { title: '課程比較', subtitle: '比較不同課程', href: '#' },
+        { title: '學習計劃', subtitle: '制定學習路線', href: '#' },
       ]
     }
   ];
@@ -119,9 +135,9 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-white dark:bg-black">
+    <div className="fixed inset-0 z-[9999] bg-white dark:bg-black flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border bg-white dark:bg-black">
+      <div className="flex items-center gap-3 p-4 border-b border-border bg-white dark:bg-black flex-shrink-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
@@ -146,13 +162,19 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-black">
+      <div 
+        className="flex-1 overflow-y-auto bg-white dark:bg-black min-h-0 overscroll-behavior-y-contain"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y'
+        }}
+      >
         {filteredResults.length === 0 ? (
           <div className="text-center text-muted-foreground py-8 px-4">
             找不到相關結果
           </div>
         ) : (
-          <div className="space-y-3 p-3">
+          <div className="space-y-3 p-3 pb-6">
             {filteredResults.map((group, groupIndex) => (
               <div key={group.category}>
                 <div className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">

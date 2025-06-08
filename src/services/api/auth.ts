@@ -65,10 +65,10 @@ export const authService = {
     },
 
     // 註冊新用戶（需要先驗證嶺南人郵件）
-    async createAccount(email: string, password: string, name: string) {
+    async createAccount(email: string, password: string, name: string, recaptchaToken?: string) {
         try {
             // 使用後端 API 創建已驗證的帳戶
-            const result = await studentVerificationService.createVerifiedAccount(email, password, name);
+            const result = await studentVerificationService.createVerifiedAccount(email, password, name, recaptchaToken);
             
             if (!result.success) {
                 throw new Error(result.message);
@@ -283,6 +283,64 @@ export const authService = {
             return {
                 success: false,
                 message: error.message || '重新啟用帳戶失敗，請稍後再試'
+            };
+        }
+    },
+
+    // 發送密碼重設郵件
+    async sendPasswordReset(email: string, recaptchaToken?: string): Promise<{ success: boolean; message: string }> {
+        try {
+            console.log('🔄 發送密碼重設郵件:', email);
+            
+            // 調用後端 API 發送密碼重設郵件
+            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': 'lingubible',
+                },
+                body: JSON.stringify({
+                    body: JSON.stringify({
+                        action: 'sendPasswordReset',
+                        email,
+                        recaptchaToken
+                    }),
+                    async: false,
+                    method: 'POST'
+                }),
+            });
+
+            console.log('📡 密碼重設 API 回應狀態:', response.status, response.statusText);
+
+            if (!response.ok) {
+                console.error('❌ API 請求失敗:', response.status, response.statusText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📦 密碼重設 API 回應數據:', data);
+
+            // 解析 Appwrite Function 的回應
+            let result;
+            try {
+                result = JSON.parse(data.responseBody || data.response || '{}');
+                console.log('📋 解析後的結果:', result);
+            } catch (parseError) {
+                console.error('❌ 解析回應失敗:', parseError);
+                console.log('🔍 原始回應數據:', data);
+                result = { success: false, message: '解析回應失敗' };
+            }
+
+            return {
+                success: result.success || false,
+                message: result.message || '發送密碼重設郵件失敗'
+            };
+
+        } catch (error: any) {
+            console.error('❌ 發送密碼重設郵件錯誤:', error);
+            return {
+                success: false,
+                message: error.message || '發送密碼重設郵件失敗，請稍後再試'
             };
         }
     },

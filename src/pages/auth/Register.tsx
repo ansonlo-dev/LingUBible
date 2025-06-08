@@ -15,6 +15,7 @@ import { StudentVerificationInput } from "@/components/auth/StudentVerificationI
 import { PasswordStrengthChecker } from "@/components/auth/PasswordStrengthChecker";
 import { isValidEmailForRegistration, getEmailType, DEV_MODE } from '@/config/devMode';
 import { UsernameValidator } from "@/utils/auth/usernameValidator";
+import { useRecaptchaVerification } from '@/contexts/RecaptchaContext';
 
 // 檢查郵件是否為有效的學生郵件（保留以兼容性）
 const isValidStudentEmail = (email: string): boolean => {
@@ -39,6 +40,7 @@ export default function Register() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   
   const { t } = useLanguage();
+  const { verifyRecaptcha, isRecaptchaLoaded } = useRecaptchaVerification();
   const { 
     register, 
     sendStudentVerificationCode, 
@@ -87,8 +89,17 @@ export default function Register() {
     setError('');
 
     try {
+      // 執行 reCAPTCHA 驗證
+      const recaptchaResult = await verifyRecaptcha('register');
+      if (!recaptchaResult.success) {
+        setError(recaptchaResult.error || t('auth.captchaFailed'));
+        setLoading(false);
+        return;
+      }
+
       // 創建帳戶並登入，使用用戶名作為 name
-      await register(email, password, username);
+      // 將 reCAPTCHA token 傳遞給註冊函數
+      await register(email, password, username, recaptchaResult.token);
       
       // 重定向到首頁
       navigate('/');
@@ -367,6 +378,16 @@ export default function Register() {
                   </Link>
                 </Label>
               </div>
+
+              {/* reCAPTCHA 狀態指示器 */}
+              {isRecaptchaLoaded && (
+                <div className="text-center">
+                  <div className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-700 dark:text-blue-300">
+                    <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span>{t('auth.recaptchaLoaded')}</span>
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-col space-y-4">
                 <Button 

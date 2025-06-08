@@ -8,6 +8,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Mail, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
 import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRecaptcha } from '@/contexts/RecaptchaContext';
+import { useForgotPasswordRecaptcha } from '@/hooks/useSmartRecaptcha';
 
 // 檢查郵件是否為有效的學生郵件
 const isValidStudentEmail = (email: string): boolean => {
@@ -23,6 +26,9 @@ export default function ForgotPassword() {
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [error, setError] = useState('');
   const { t } = useLanguage();
+  const { sendPasswordReset } = useAuth();
+  const { isRecaptchaLoaded } = useRecaptcha();
+  const { verifyForgotPassword } = useForgotPasswordRecaptcha();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +42,24 @@ export default function ForgotPassword() {
         return;
       }
 
-      // 模擬發送重設密碼郵件
-      // 無論郵件是否存在，都顯示成功訊息以保護隱私
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 執行 reCAPTCHA 驗證
+      const recaptchaResult = await verifyForgotPassword({
+        onError: (error) => {
+          setError(error);
+        }
+      });
+      if (!recaptchaResult.success) {
+        return;
+      }
+
+      // 發送密碼重設郵件
+      const result = await sendPasswordReset(email, recaptchaResult.token);
       
-      setIsEmailSent(true);
+      if (result.success) {
+        setIsEmailSent(true);
+      } else {
+        setError(result.message || t('auth.sendResetFailed'));
+      }
     } catch (err: any) {
       setError(err.message || t('auth.sendResetFailed'));
     } finally {
@@ -152,7 +171,7 @@ export default function ForgotPassword() {
           </CardHeader>
           
           <CardContent className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 forgot-password-form">
               <div className="space-y-2">
                 <Label htmlFor="email">{t('auth.studentEmailAddress')}</Label>
                 <Input
@@ -180,6 +199,16 @@ export default function ForgotPassword() {
                 <p>• {t('auth.useSchoolEmail')}</p>
                 <p>• {t('auth.resetLinkWillExpire')}</p>
               </div>
+
+              {/* reCAPTCHA 狀態指示器 */}
+              {isRecaptchaLoaded && (
+                <div className="text-center">
+                  <div className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-700 dark:text-blue-300">
+                    <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span>{t('auth.recaptchaLoaded')}</span>
+                  </div>
+                </div>
+              )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? t('auth.sending') : t('auth.sendResetLink')}

@@ -63,7 +63,7 @@ export const theme = {
     // 同時保存到 localStorage 和 cookies
     localStorage.setItem('theme', value);
     cookies.set('theme', value, 365);
-    console.log('主題已保存:', value);
+  
   },
   
   getSystemPreference: (): 'light' | 'dark' => {
@@ -79,8 +79,7 @@ export const theme = {
     
     // 如果沒有存儲的主題，檢測系統主題並自動保存
     const systemTheme = theme.getSystemPreference();
-    console.log('首次訪問，檢測到系統主題:', systemTheme);
-    console.log('自動保存系統主題為默認主題');
+
     
     // 自動保存檢測到的系統主題
     theme.set(systemTheme);

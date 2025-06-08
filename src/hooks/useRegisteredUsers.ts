@@ -22,9 +22,6 @@ export const useRegisteredUsers = () => {
   // 將 userStats 轉換為 RegisteredUsersStats 格式
   useEffect(() => {
     if (!userStatsLoading && userStats) {
-      console.log('useRegisteredUsers: 使用 userStats 數據', userStats);
-      console.log('useRegisteredUsers: 使用原始後端數據', backendStats);
-      
       const convertedStats: RegisteredUsersStats = {
         totalRegisteredUsers: userStats.totalUsers || 0,
         // 優先使用原始後端數據中的 newUsersLast30Days
@@ -32,8 +29,6 @@ export const useRegisteredUsers = () => {
         verifiedUsers: backendStats?.verifiedUsers || userStats.totalUsers || 0,
         lastUpdated: userStats.lastUpdated
       };
-      
-      console.log('useRegisteredUsers: 轉換後的統計數據', convertedStats);
       
       setStats(convertedStats);
       setLoading(false);
@@ -43,7 +38,6 @@ export const useRegisteredUsers = () => {
 
   // 手動刷新（實際上會觸發 userStats 的刷新）
   const refreshStats = useCallback(async () => {
-    console.log('useRegisteredUsers: 手動刷新統計數據');
     setLoading(true);
     setError(null);
     

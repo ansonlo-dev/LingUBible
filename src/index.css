@@ -390,6 +390,63 @@
       0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
+  /* Google reCAPTCHA 樣式調整 - 使用更強的選擇器 */
+  .grecaptcha-badge,
+  div[style*="position: fixed"][style*="bottom"][style*="right"],
+  iframe[src*="recaptcha"] + div,
+  div[data-sitekey] {
+    bottom: 80px !important; /* 將 reCAPTCHA 圖標向上移動，避免遮擋頁腳 */
+    z-index: 30 !important; /* 確保在適當的層級 */
+    transition: bottom 0.3s ease !important;
+  }
+
+  /* 更強的 reCAPTCHA 選擇器 */
+  body .grecaptcha-badge,
+  body div[style*="position: fixed"][style*="bottom: 14px"],
+  body div[style*="position: fixed"][style*="right: 14px"] {
+    bottom: 80px !important;
+    z-index: 30 !important;
+  }
+
+  /* 手機版 reCAPTCHA 調整 */
+  @media (max-width: 768px) {
+    .grecaptcha-badge,
+    div[style*="position: fixed"][style*="bottom"][style*="right"],
+    body .grecaptcha-badge,
+    body div[style*="position: fixed"][style*="bottom: 14px"] {
+      bottom: 100px !important; /* 手機版需要更多空間 */
+      right: 10px !important; /* 稍微向左移動 */
+    }
+  }
+
+  /* 平板版 reCAPTCHA 調整 */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .grecaptcha-badge,
+    div[style*="position: fixed"][style*="bottom"][style*="right"] {
+      bottom: 90px !important;
+    }
+  }
+
+  /* 確保頁腳有足夠的底部間距和層級 */
+  footer {
+    padding-bottom: 20px !important;
+    margin-bottom: 0 !important;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  /* 使用 JavaScript 動態調整的備用方案 */
+  .recaptcha-adjusted {
+    bottom: 80px !important;
+  }
+
+  @media (max-width: 768px) {
+    .recaptcha-adjusted {
+      bottom: 100px !important;
+      right: 10px !important;
+    }
+  }
+
   /* 統計卡片樣式 - 淺色模式使用純白背景 */
   .stats-card {
     background: #ffffff !important;

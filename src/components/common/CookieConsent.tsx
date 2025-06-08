@@ -10,12 +10,9 @@ export function CookieConsent() {
   const { t, language } = useLanguage();
 
   useEffect(() => {
-    console.log('CookieConsent: 組件初始化，當前語言:', language);
-    
     // 檢查是否已經同意過 cookies
     const hasConsented = localStorage.getItem('cookieConsent');
     if (hasConsented) {
-      console.log('CookieConsent: 用戶已同意 Cookie，不顯示彈窗');
       return;
     }
 
@@ -26,7 +23,6 @@ export function CookieConsent() {
     // 通過檢查翻譯函數是否返回正確的值來判斷
     const checkLanguageInitialized = () => {
       const testTranslation = t('cookie.title');
-      console.log('CookieConsent: 測試翻譯結果:', testTranslation, '語言:', language);
       // 如果翻譯返回的不是 key 本身，說明語言已經初始化
       return testTranslation !== 'cookie.title' && testTranslation.length > 0;
     };
@@ -41,29 +37,44 @@ export function CookieConsent() {
       return swipeHintCookie.hasBeenUsed();
     };
 
+    let timeoutId: NodeJS.Timeout;
+    let attempts = 0;
+    const maxAttempts = 100; // 最多嘗試 100 次（10 秒）
+
     // 等待語言初始化和滑動提示關閉
     const waitForConditions = () => {
+      attempts++;
+      
+      // 防止無限循環
+      if (attempts > maxAttempts) {
+        console.warn('CookieConsent: 等待條件超時，強制顯示彈窗');
+        setIsVisible(true);
+        return;
+      }
+
       const languageReady = checkLanguageInitialized();
       const swipeHintClosed = checkSwipeHintClosed();
       
-      console.log('CookieConsent: 條件檢查 - 語言準備:', languageReady, '滑動提示已關閉:', swipeHintClosed, '是否手機版:', isMobile);
-      
       if (languageReady && swipeHintClosed) {
-        console.log('CookieConsent: 所有條件滿足，準備顯示彈窗');
         // 所有條件都滿足，延遲顯示 Cookie 同意
-        setTimeout(() => {
-          console.log('CookieConsent: 顯示 Cookie 彈窗，語言:', language);
+        timeoutId = setTimeout(() => {
           setIsVisible(true);
         }, 1000);
       } else {
-        console.log('CookieConsent: 條件未滿足，繼續等待...');
-        // 條件未滿足，繼續等待
-        setTimeout(waitForConditions, 100);
+        // 條件未滿足，繼續等待（減少日誌輸出）
+        timeoutId = setTimeout(waitForConditions, 200); // 增加間隔到 200ms
       }
     };
 
     // 開始等待條件滿足
     waitForConditions();
+
+    // 清理函數
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [t, language]);
 
   const handleAccept = () => {
@@ -74,14 +85,14 @@ export function CookieConsent() {
   };
 
   const handleDecline = () => {
-    console.log('CookieConsent: 用戶拒絕 Cookie');
+
     localStorage.setItem('cookieConsent', 'declined');
     setIsVisible(false);
     setShowDetails(false);
   };
 
   const handleClose = () => {
-    console.log('CookieConsent: 用戶關閉 Cookie 彈窗');
+
     setIsVisible(false);
     setShowDetails(false);
   };
@@ -95,9 +106,6 @@ export function CookieConsent() {
   };
 
   if (!isVisible) return null;
-
-  // 在渲染時也記錄當前語言和翻譯
-  console.log('CookieConsent: 渲染彈窗，語言:', language, '標題翻譯:', t('cookie.title'));
 
   return (
     <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-md z-[100000]">

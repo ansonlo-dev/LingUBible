@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA 調試工具 - LingUBible</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .debug-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-panel h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #b91c1c;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .status.warning {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fed7aa;
+        }
+        .footer-simulation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            z-index: 5;
+        }
+        .mock-recaptcha {
+            position: fixed;
+            bottom: 14px;
+            right: 14px;
+            width: 70px;
+            height: 60px;
+            background: #f9f9f9;
+            border: 1px solid #d3d3d3;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #555;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+            cursor: pointer;
+        }
+        .code {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .element-info {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-panel">
+        <h2>🔧 reCAPTCHA 位置調試工具</h2>
+        <p>這個工具可以幫助你檢查和修復 reCAPTCHA 圖標的位置問題。</p>
+        
+        <div class="btn-group">
+            <button class="btn" onclick="findRecaptchaElements()">🔍 尋找 reCAPTCHA 元素</button>
+            <button class="btn" onclick="forceFixPosition()">🔧 強制修復位置</button>
+            <button class="btn" onclick="checkCurrentStatus()">📊 檢查當前狀態</button>
+            <button class="btn" onclick="toggleMockRecaptcha()">🎭 切換模擬圖標</button>
+        </div>
+        
+        <div id="status-display"></div>
+    </div>
+    
+    <div class="debug-panel">
+        <h2>📋 檢測結果</h2>
+        <div id="detection-results">
+            <p>點擊上方按鈕開始檢測...</p>
+        </div>
+    </div>
+    
+    <div class="debug-panel">
+        <h2>🛠️ 修復方案</h2>
+        <p>我們使用了多層修復方案：</p>
+        <ol>
+            <li><strong>CSS 覆蓋</strong>：使用高優先級選擇器覆蓋 Google 的內聯樣式</li>
+            <li><strong>JavaScript 動態調整</strong>：監控 DOM 變化並強制調整位置</li>
+            <li><strong>響應式設計</strong>：針對不同螢幕尺寸調整位置</li>
+        </ol>
+        
+        <div class="code">
+/* CSS 修復 */
+.grecaptcha-badge {
+    bottom: 80px !important; /* 桌面版 */
+}
+
+@media (max-width: 768px) {
+    .grecaptcha-badge {
+        bottom: 100px !important; /* 手機版 */
+    }
+}
+        </div>
+    </div>
+    
+    <!-- 模擬頁腳 -->
+    <div class="footer-simulation">
+        📄 這是模擬的頁腳 - reCAPTCHA 圖標不應該遮擋這裡
+    </div>
+    
+    <!-- 模擬 reCAPTCHA 圖標 -->
+    <div class="mock-recaptcha" id="mockRecaptcha">
+        reCAPTCHA<br>
+        <small>模擬</small>
+    </div>
+    
+    <script>
+        let mockVisible = true;
+        
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status-display');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function findRecaptchaElements() {
+            const selectors = [
+                '.grecaptcha-badge',
+                'div[style*="position: fixed"][style*="bottom"]',
+                'iframe[src*="recaptcha"]',
+                '.mock-recaptcha'
+            ];
+            
+            let found = [];
+            let html = '<h3>🔍 檢測到的元素：</h3>';
+            
+            selectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach((el, index) => {
+                    const style = window.getComputedStyle(el);
+                    const rect = el.getBoundingClientRect();
+                    
+                    found.push({
+                        selector,
+                        element: el,
+                        bottom: style.bottom,
+                        right: style.right,
+                        position: style.position,
+                        zIndex: style.zIndex,
+                        width: rect.width,
+                        height: rect.height
+                    });
+                    
+                    html += `
+                        <div class="element-info">
+                            <strong>元素 ${found.length}:</strong> ${selector}<br>
+                            位置: bottom: ${style.bottom}, right: ${style.right}<br>
+                            尺寸: ${Math.round(rect.width)}x${Math.round(rect.height)}px<br>
+                            z-index: ${style.zIndex}
+                        </div>
+                    `;
+                });
+            });
+            
+            if (found.length === 0) {
+                html += '<p class="status warning">⚠️ 未找到任何 reCAPTCHA 元素</p>';
+            } else {
+                html += `<p class="status success">✅ 找到 ${found.length} 個相關元素</p>`;
+            }
+            
+            document.getElementById('detection-results').innerHTML = html;
+            showStatus(`檢測完成，找到 ${found.length} 個元素`);
+        }
+        
+        function forceFixPosition() {
+            const elements = document.querySelectorAll('.grecaptcha-badge, div[style*="position: fixed"][style*="bottom"], .mock-recaptcha');
+            const isMobile = window.innerWidth <= 768;
+            const bottom = isMobile ? '100px' : '80px';
+            const right = isMobile ? '10px' : '14px';
+            
+            let fixed = 0;
+            elements.forEach(el => {
+                if (el.style.position === 'fixed' || window.getComputedStyle(el).position === 'fixed') {
+                    el.style.setProperty('bottom', bottom, 'important');
+                    el.style.setProperty('right', right, 'important');
+                    el.style.setProperty('z-index', '30', 'important');
+                    el.classList.add('recaptcha-adjusted');
+                    fixed++;
+                }
+            });
+            
+            showStatus(`✅ 已強制修復 ${fixed} 個元素的位置 (${isMobile ? '手機版' : '桌面版'})`);
+            
+            // 重新檢測
+            setTimeout(findRecaptchaElements, 100);
+        }
+        
+        function checkCurrentStatus() {
+            const elements = document.querySelectorAll('.grecaptcha-badge, div[style*="position: fixed"][style*="bottom"], .mock-recaptcha');
+            let html = '<h3>📊 當前狀態：</h3>';
+            
+            if (elements.length === 0) {
+                html += '<p class="status warning">⚠️ 未找到任何固定位置元素</p>';
+            } else {
+                elements.forEach((el, index) => {
+                    const style = window.getComputedStyle(el);
+                    const isFixed = style.position === 'fixed';
+                    const bottom = parseInt(style.bottom) || 0;
+                    const isProperlyPositioned = bottom >= 80;
+                    
+                    html += `
+                        <div class="element-info">
+                            <strong>元素 ${index + 1}:</strong><br>
+                            位置: ${style.bottom} (${isProperlyPositioned ? '✅ 正確' : '❌ 需要修復'})<br>
+                            類型: ${el.className || el.tagName}<br>
+                            狀態: ${isFixed ? '固定定位' : '非固定定位'}
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('detection-results').innerHTML = html;
+            showStatus('狀態檢查完成');
+        }
+        
+        function toggleMockRecaptcha() {
+            const mock = document.getElementById('mockRecaptcha');
+            if (mockVisible) {
+                mock.style.display = 'none';
+                mockVisible = false;
+                showStatus('已隱藏模擬 reCAPTCHA 圖標');
+            } else {
+                mock.style.display = 'flex';
+                mockVisible = true;
+                showStatus('已顯示模擬 reCAPTCHA 圖標');
+            }
+        }
+        
+        // 自動檢測
+        document.addEventListener('DOMContentLoaded', function() {
+            showStatus('調試工具已載入，請點擊按鈕開始檢測', 'warning');
+            
+            // 監聽窗口大小變化
+            window.addEventListener('resize', function() {
+                showStatus('窗口大小已變化，建議重新檢測', 'warning');
+            });
+        });
+        
+        // 全局函數供控制台使用
+        window.debugRecaptcha = {
+            find: findRecaptchaElements,
+            fix: forceFixPosition,
+            check: checkCurrentStatus
+        };
+    </script>
+</body>
+</html> 

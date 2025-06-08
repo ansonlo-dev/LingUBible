@@ -1,0 +1,201 @@
+/* 完全隱藏 reCAPTCHA 圖標和彈窗 */
+/* 使用最高優先級來隱藏所有 reCAPTCHA 相關元素 */
+
+/* 基本 reCAPTCHA 選擇器 - 完全隱藏 */
+.grecaptcha-badge,
+div.grecaptcha-badge,
+#grecaptcha-badge,
+[class*="grecaptcha"],
+[id*="grecaptcha"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    z-index: -1 !important;
+}
+
+/* 通過屬性選擇器隱藏內聯樣式元素 */
+div[style*="position: fixed"][style*="bottom"],
+div[style*="position: fixed"][style*="right"],
+div[style*="position: fixed"][style*="bottom: 14px"],
+div[style*="position: fixed"][style*="right: 14px"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 使用 body 增加選擇器權重 */
+body .grecaptcha-badge,
+body div[style*="position: fixed"][style*="bottom: 14px"],
+body div[style*="position: fixed"][style*="right: 14px"],
+html body .grecaptcha-badge,
+html body div[style*="position: fixed"][style*="bottom: 14px"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* 隱藏 reCAPTCHA iframe */
+iframe[src*="recaptcha"],
+iframe[src*="google.com/recaptcha"],
+iframe[title*="recaptcha"],
+iframe[name*="recaptcha"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* 隱藏 reCAPTCHA 容器 */
+iframe[src*="recaptcha"] + div,
+iframe[src*="recaptcha"] ~ div,
+div[data-sitekey],
+div[data-callback] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 針對特定的 Google reCAPTCHA 結構 */
+div[style*="width: 70px"][style*="height: 60px"][style*="position: fixed"],
+div[style*="width: 256px"][style*="height: 60px"][style*="position: fixed"],
+div[style*="background-color: rgb(255, 255, 255)"][style*="position: fixed"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 隱藏 reCAPTCHA 彈窗和覆蓋層 */
+div[style*="position: fixed"][style*="z-index"][style*="background"],
+div[role="dialog"][aria-label*="recaptcha"],
+div[role="dialog"][aria-label*="reCAPTCHA"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 針對可能的動態生成元素 */
+[class*="recaptcha"]:not(.recaptcha-adjusted),
+[id*="recaptcha"]:not(.recaptcha-adjusted) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 使用 CSS 自定義屬性 */
+:root {
+    --recaptcha-display: none;
+    --recaptcha-visibility: hidden;
+    --recaptcha-opacity: 0;
+}
+
+/* 應用自定義屬性 */
+.grecaptcha-badge,
+div[style*="position: fixed"][style*="bottom"] {
+    display: var(--recaptcha-display) !important;
+    visibility: var(--recaptcha-visibility) !important;
+    opacity: var(--recaptcha-opacity) !important;
+}
+
+/* 針對所有可能的固定定位元素（在右下角的小元素） */
+div[style*="position: fixed"]:not(.keep-visible) {
+    /* 檢查是否在右下角且尺寸較小 */
+}
+
+/* 使用 CSS 層疊來確保優先級 */
+@layer recaptcha-hide {
+    .grecaptcha-badge,
+    div[style*="position: fixed"][style*="bottom"],
+    iframe[src*="recaptcha"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+}
+
+/* 針對可能的 reCAPTCHA v3 隱藏元素 */
+.grecaptcha-badge[data-style="none"],
+.grecaptcha-badge[style*="display: none"] {
+    /* 確保即使是隱藏的 badge 也完全不可見 */
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 隱藏任何包含 "recaptcha" 文字的固定定位元素 */
+div[style*="position: fixed"]:has-text("recaptcha"),
+div[style*="position: fixed"]:has-text("reCAPTCHA") {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 針對可能的第三方 reCAPTCHA 實現 */
+.g-recaptcha,
+.recaptcha-container,
+.captcha-widget,
+.google-recaptcha {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 確保沒有任何 reCAPTCHA 相關元素顯示 */
+*[class*="recaptcha" i],
+*[id*="recaptcha" i],
+*[data-sitekey],
+*[data-callback] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* 最終的全局隱藏規則 */
+body *[style*="position: fixed"][style*="bottom"][style*="right"] {
+    /* 檢查元素尺寸，如果是小元素且在右下角，可能是 reCAPTCHA */
+    /* 這個規則需要謹慎使用，避免隱藏其他重要元素 */
+}
+
+/* 針對特定尺寸的固定定位元素（reCAPTCHA 的典型尺寸） */
+div[style*="width: 70px"][style*="height: 60px"],
+div[style*="width: 256px"][style*="height: 60px"],
+div[style*="width: 300px"][style*="height: 76px"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* 媒體查詢確保在所有設備上都隱藏 */
+@media screen and (max-width: 768px) {
+    .grecaptcha-badge,
+    div[style*="position: fixed"][style*="bottom"],
+    iframe[src*="recaptcha"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+}
+
+@media screen and (min-width: 769px) {
+    .grecaptcha-badge,
+    div[style*="position: fixed"][style*="bottom"],
+    iframe[src*="recaptcha"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+} 

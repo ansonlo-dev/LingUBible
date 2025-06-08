@@ -281,7 +281,7 @@ class StudentVerificationService {
   }
 
   // 創建已驗證的帳戶（使用後端 API）
-  async createVerifiedAccount(email: string, password: string, name: string): Promise<{ success: boolean; message: string }> {
+  async createVerifiedAccount(email: string, password: string, name: string, recaptchaToken?: string): Promise<{ success: boolean; message: string }> {
     try {
       // 基本參數檢查
       if (!email || !password || !name) {
@@ -310,6 +310,7 @@ class StudentVerificationService {
         email,
         password,
         name,
+        recaptchaToken,
         ...userInfo
       };
       

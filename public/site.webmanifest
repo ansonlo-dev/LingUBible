@@ -1,21 +1,42 @@
 {
-  "name": "LingUBible",
+  "name": "LingUBible - 嶺南大學課程與講師評價平台",
   "short_name": "LingUBible",
+  "description": "讓每一次評價都成為學習路上的指路明燈。專為嶺南大學學生設計的課程和講師評價平台。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#dc2626",
+  "background_color": "#ffffff",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android/android-launchericon-192-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android/android-launchericon-512-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "theme_color": "#bcbec0",
-  "background_color": "#bcbec0",
-  "display": "standalone"
+  "categories": ["education", "social", "productivity"],
+  "lang": "zh-TW",
+  "dir": "ltr"
 }

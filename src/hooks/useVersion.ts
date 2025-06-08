@@ -46,6 +46,37 @@ export const useVersion = (options: UseVersionOptions = {}) => {
   });
 
   const checkVersion = async () => {
+    // 檢查是否為開發環境
+    const isDevelopmentEnvironment = () => {
+      if (typeof window !== 'undefined') {
+        return window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1' || 
+               window.location.hostname.includes('localhost');
+      }
+      return false;
+    };
+
+    // 在開發環境中跳過版本檢查，避免 CORS 錯誤
+    if (isDevelopmentEnvironment()) {
+      console.log('Development environment detected, skipping version check to avoid CORS issues');
+      const currentVersion = state.currentVersion;
+      setState(prev => ({
+        ...prev,
+        hasUpdate: false,
+        isLoading: false,
+        error: null,
+        lastChecked: new Date(),
+        latestVersion: {
+          version: currentVersion,
+          formattedVersion: currentVersion.startsWith('0.') ? `Beta ${currentVersion}` : `v${currentVersion}`,
+          status: currentVersion.startsWith('0.') ? 'beta' : 'stable',
+          publishedAt: new Date().toISOString(),
+          releaseUrl: `https://github.com/ansonlo-dev/LingUBible/releases/tag/v${currentVersion}`
+        }
+      }));
+      return;
+    }
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -78,6 +109,36 @@ export const useVersion = (options: UseVersionOptions = {}) => {
   };
 
   const getLatestVersion = async () => {
+    // 檢查是否為開發環境
+    const isDevelopmentEnvironment = () => {
+      if (typeof window !== 'undefined') {
+        return window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1' || 
+               window.location.hostname.includes('localhost');
+      }
+      return false;
+    };
+
+    // 在開發環境中跳過 GitHub API 調用，避免 CORS 錯誤
+    if (isDevelopmentEnvironment()) {
+      console.log('Development environment detected, skipping GitHub API call to avoid CORS issues');
+      const currentVersion = state.currentVersion;
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: null,
+        lastChecked: new Date(),
+        latestVersion: {
+          version: currentVersion,
+          formattedVersion: currentVersion.startsWith('0.') ? `Beta ${currentVersion}` : `v${currentVersion}`,
+          status: currentVersion.startsWith('0.') ? 'beta' : 'stable',
+          publishedAt: new Date().toISOString(),
+          releaseUrl: `https://github.com/ansonlo-dev/LingUBible/releases/tag/v${currentVersion}`
+        }
+      }));
+      return;
+    }
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -159,6 +220,16 @@ export const useLatestVersion = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 檢查是否為開發環境
+  const isDevelopmentEnvironment = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.hostname === 'localhost' || 
+             window.location.hostname === '127.0.0.1' || 
+             window.location.hostname.includes('localhost');
+    }
+    return false;
+  };
+
   const createFallbackVersion = () => {
     const currentVersion = getAppVersion();
     return {
@@ -171,6 +242,15 @@ export const useLatestVersion = () => {
   };
 
   const fetchLatestVersion = async () => {
+    // 在開發環境中直接使用本地版本，避免 CORS 錯誤
+    if (isDevelopmentEnvironment()) {
+      console.log('Development environment detected, using local version to avoid CORS issues');
+      setLatestVersion(createFallbackVersion());
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 

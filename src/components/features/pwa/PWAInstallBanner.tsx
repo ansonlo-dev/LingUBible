@@ -268,7 +268,7 @@ export function PWAInstallBanner({
         <Card className="max-w-md w-full">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{instructions.title}</h3>
+              <h3 className="text-lg font-semibold">{t('pwa.manual.title')}</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -277,15 +277,35 @@ export function PWAInstallBanner({
                 <X className="h-4 w-4" />
               </Button>
             </div>
+            <p className="text-sm text-gray-600 mb-4">{t('pwa.manual.description')}</p>
             <div className="space-y-3">
-              {instructions.steps.map((step, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                    {index + 1}
-                  </div>
-                  <p className="text-sm text-gray-700">{step}</p>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  1
                 </div>
-              ))}
+                <p className="text-sm text-gray-700">{t('pwa.manual.step1')}</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  2
+                </div>
+                <p className="text-sm text-gray-700">{t('pwa.manual.step2')}</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  3
+                </div>
+                <p className="text-sm text-gray-700">{t('pwa.manual.step3')}</p>
+              </div>
+              <div className="border-t pt-3 mt-4">
+                <p className="text-xs text-gray-500 font-medium mb-2">{t('pwa.manual.browserSpecific')}</p>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>• {t('pwa.manual.chrome')}</p>
+                  <p>• {t('pwa.manual.firefox')}</p>
+                  <p>• {t('pwa.manual.safari')}</p>
+                  <p>• {t('pwa.manual.edge')}</p>
+                </div>
+              </div>
             </div>
             <div className="mt-6 flex gap-2">
               <Button

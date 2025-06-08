@@ -41,7 +41,7 @@ class UserStatsService {
       this.createVisitorSession();
     }
     
-    console.log('UserStatsService 初始化完成 (基於 Ping 系統)');
+
   }
 
   public static getInstance(): UserStatsService {
@@ -105,7 +105,7 @@ class UserStatsService {
           }
         });
         
-        console.log(`載入了 ${loadedCount} 個活躍會話`);
+    
         this.updateOnlineUsersCount();
       }
     } catch (error) {
@@ -250,7 +250,7 @@ class UserStatsService {
       }
     }, this.PING_INTERVAL);
     
-    console.log(`Ping 系統已啟動，間隔: ${this.PING_INTERVAL / 1000} 秒`);
+
   }
 
   // 獲取統計數據（不觸發更新，避免重複計算）
@@ -309,7 +309,7 @@ class UserStatsService {
     this.stats.lastUpdated = new Date().toISOString();
     
     if (previousUserCount !== this.stats.onlineUsers || previousVisitorCount !== this.stats.onlineVisitors) {
-      console.log(`在線統計更新: 用戶 ${previousUserCount} -> ${this.stats.onlineUsers}, 訪客 ${previousVisitorCount} -> ${this.stats.onlineVisitors}`);
+  
     }
   }
 
@@ -355,7 +355,7 @@ class UserStatsService {
       });
     }, this.UPDATE_INTERVAL);
     
-    console.log(`統計更新系統已啟動，間隔: ${this.UPDATE_INTERVAL / 1000} 秒`);
+
   }
 
   // 設置頁面關閉處理
@@ -492,7 +492,7 @@ class UserStatsService {
     this.saveSessionsToStorage();
     this.notifyStatsUpdate();
     
-    console.log(`訪客會話創建，會話 ID: ${sessionId}，在線訪客數: ${this.stats.onlineVisitors}`);
+
     return sessionId;
   }
 
@@ -558,7 +558,7 @@ class UserStatsService {
     //   detail: this.getStats()
     // });
     // window.dispatchEvent(event);
-    console.log('UserStats: 統計更新通知已禁用，避免重複調用');
+
   }
 }
 

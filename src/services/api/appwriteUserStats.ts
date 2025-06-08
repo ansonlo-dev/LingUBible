@@ -67,7 +67,7 @@ class AppwriteUserStatsService {
       this.sendFinalPings();
     });
 
-    console.log('AppwriteUserStatsService 初始化完成');
+
   }
 
   public static getInstance(): AppwriteUserStatsService {
@@ -306,7 +306,7 @@ class AppwriteUserStatsService {
   // 獲取統計數據 - 使用 Function（更安全）
   async getStatsViaFunction(): Promise<UserStats & { _backendData?: any }> {
     try {
-      console.log('AppwriteUserStats: 通過 Function 獲取統計數據...');
+  
       
       // 移除每次獲取統計時的清理操作，避免頻繁調用
       // await this.cleanupExpiredSessions();
@@ -319,7 +319,7 @@ class AppwriteUserStatsService {
       
       if (result.responseStatusCode === 200) {
         const response = JSON.parse(result.responseBody);
-        console.log('AppwriteUserStats: Function 原始統計數據', response);
+
         
         // 檢查響應格式並提取數據
         if (response.success && response.data) {
@@ -336,7 +336,7 @@ class AppwriteUserStatsService {
             _backendData: backendData // 保存原始後端數據
           };
           
-          console.log('AppwriteUserStats: 轉換後的前端統計數據', frontendStats);
+  
           return frontendStats;
         } else {
           throw new Error(`Function 返回錯誤: ${response.error || 'Unknown error'}`);
@@ -471,7 +471,7 @@ class AppwriteUserStatsService {
       }
     }, this.CLEANUP_INTERVAL);
 
-    console.log(`🕒 定期清理已啟動，間隔: ${this.CLEANUP_INTERVAL / 1000 / 60} 分鐘`);
+    
   }
 
   // 停止定期清理
@@ -612,13 +612,13 @@ class AppwriteUserStatsService {
           this.pingWorker = null;
         };
 
-        console.log('Web Worker 初始化成功');
+
       } catch (error) {
         console.error('Web Worker 初始化失敗:', error);
         this.useWebWorker = false;
       }
     } else {
-      console.log('Web Worker 不可用，使用傳統 ping 方式');
+      
       this.useWebWorker = false;
     }
   }
@@ -747,7 +747,7 @@ class AppwriteUserStatsService {
     }, interval);
 
     this.pingIntervals.set(sessionId, pingInterval);
-    console.log(`Ping 系統已啟動，會話: ${sessionId}，間隔: ${interval / 1000} 秒`);
+    
   }
 
   private stopPingForSession(sessionId: string): void {
@@ -813,7 +813,7 @@ class AppwriteUserStatsService {
       const currentDeviceInfo = this.getDeviceInfo();
       const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       
-      console.log('AppwriteUserStats: 檢查現有訪客會話...');
+  
       
       // 首先檢查是否已有當前設備的活躍訪客會話
       const existingVisitorSessions = await this.databases.listDocuments(
@@ -845,7 +845,7 @@ class AppwriteUserStatsService {
         // 開始 ping 系統
         this.startPingForSession(currentDeviceSession.sessionId);
         
-        console.log('AppwriteUserStats: 重用現有訪客會話', currentDeviceSession.sessionId);
+
         return currentDeviceSession.sessionId;
       }
 

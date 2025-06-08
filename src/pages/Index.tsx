@@ -12,11 +12,13 @@ import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
   const [showHeavenTransition, setShowHeavenTransition] = useState(false);
@@ -104,12 +106,18 @@ const Index = () => {
   const actions = t('hero.actions');
   const actionTexts = Array.isArray(actions) ? actions : [actions];
 
-  // Handle heaven transition to register page
+  // Handle heaven transition to register page or navigate to courses
   const handleGetStartedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Get Started button clicked!'); // 調試信息
+    console.log('Button clicked!'); // 調試信息
+    
+    // 如果用戶已登入，導航到課程頁面
+    if (user) {
+      navigate('/courses');
+      return;
+    }
     
     // 獲取按鈕位置
     const button = e.currentTarget;
@@ -179,7 +187,7 @@ const Index = () => {
               onClick={handleGetStartedClick}
               style={{ zIndex: 9999 }}
             >
-              {t('hero.getStarted')}
+              {user ? t('hero.explore') : t('hero.getStarted')}
             </WingedButton>
           </div>
         </div>
@@ -222,7 +230,7 @@ const Index = () => {
         </div>
 
         {/* Content Tabs */}
-        <Tabs defaultValue="courses" className="space-y-6 relative z-20">
+        <Tabs defaultValue="courses" className="space-y-6 relative z-20" data-section="courses">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <TabsList className="grid grid-cols-2 w-full sm:w-auto min-w-0">
               <TabsTrigger value="courses" className="flex items-center gap-2 min-w-0">
@@ -234,7 +242,13 @@ const Index = () => {
                 <span className="truncate">{t('tabs.topLecturers')}</span>
               </TabsTrigger>
             </TabsList>
-            <Button variant="outline" className="w-full sm:w-auto">{t('button.viewAll')}</Button>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              onClick={() => navigate('/courses')}
+            >
+              {t('button.viewAll')}
+            </Button>
           </div>
 
           <TabsContent value="courses" className="space-y-6">

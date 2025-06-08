@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Lock, AlertTriangle } from 'lucide-react';
+import { useRecaptcha } from '@/contexts/RecaptchaContext';
+import { useLoginRecaptcha } from '@/hooks/useSmartRecaptcha';
+import { BookOpen, Lock, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // 檢查郵件是否為有效的學生郵件
 const isValidStudentEmail = (email: string): boolean => {
@@ -29,6 +31,8 @@ export default function Login() {
   const { t } = useLanguage();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { isRecaptchaLoaded } = useRecaptcha();
+  const { verifyLogin, recordFailure, resetFailures, needsRecaptcha } = useLoginRecaptcha();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +40,30 @@ export default function Login() {
     setLoading(true);
     
     try {
+      // 執行 reCAPTCHA 驗證（智能判斷是否需要）
+      const recaptchaResult = await verifyLogin({
+        onError: (error) => {
+          setError(error);
+          setLoading(false);
+        }
+      });
+
+      if (!recaptchaResult.success) {
+        // 錯誤已在 onError 回調中處理
+        return;
+      }
+
       await login(email, password, rememberMe);
+      
+      // 登入成功，重置失敗計數
+      resetFailures();
       
       navigate('/'); // 登入成功後導向首頁
     } catch (err: any) {
       console.error('Auth error:', err);
+      
+      // 記錄登入失敗
+      recordFailure();
       
       // 提供更詳細的錯誤處理
       if (err?.message?.includes('Invalid credentials')) {
@@ -107,7 +130,7 @@ export default function Login() {
           </CardHeader>
           
           <CardContent className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 login-form">
               <div className="space-y-2">
                 <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
@@ -158,6 +181,16 @@ export default function Login() {
                     {error}
                   </AlertDescription>
                 </Alert>
+              )}
+
+              {/* reCAPTCHA 狀態指示器 */}
+              {isRecaptchaLoaded && (
+                <div className="text-center">
+                  <div className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-700 dark:text-blue-300">
+                    <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span>{t('auth.recaptchaLoaded')}</span>
+                  </div>
+                </div>
               )}
               
               <Button 
