@@ -73,6 +73,8 @@
   // PWA 安裝提示處理
   let deferredPrompt;
   let installPromptShown = false;
+  let userInteractionCount = 0;
+  let hasUserEngagement = false;
   
   // 監聽 beforeinstallprompt 事件
   window.addEventListener('beforeinstallprompt', function(e) {
@@ -234,6 +236,20 @@
     showManualInstructions: showManualInstallInstructions
   };
 
+  // 監聽用戶互動
+  function trackUserInteraction() {
+    userInteractionCount++;
+    if (userInteractionCount >= 3) {
+      hasUserEngagement = true;
+      console.log('👤 用戶互動足夠，PWA 安裝條件可能已滿足');
+    }
+  }
+
+  // 添加用戶互動監聽器
+  ['click', 'scroll', 'keydown', 'touchstart'].forEach(eventType => {
+    document.addEventListener(eventType, trackUserInteraction, { once: true, passive: true });
+  });
+
   // 頁面載入完成後檢查 PWA 狀態
   window.addEventListener('load', function() {
     setTimeout(() => {
@@ -241,17 +257,18 @@
       console.log('  - PWA 模式:', isPWAMode());
       console.log('  - Service Worker 支援:', 'serviceWorker' in navigator);
       console.log('  - 安裝提示可用:', !!deferredPrompt);
+      console.log('  - 用戶互動次數:', userInteractionCount);
       console.log('  - 用戶代理:', navigator.userAgent);
       
-      // 如果 10 秒後仍沒有安裝提示，記錄診斷信息（僅在生產環境）
+      // 如果 15 秒後仍沒有安裝提示，記錄診斷信息（僅在生產環境）
       setTimeout(() => {
         if (!deferredPrompt && !isPWAMode() && window.location.protocol === 'https:') {
           console.warn('⚠️ PWA 安裝提示未出現，可能的原因:');
           console.warn('  1. 應用已安裝');
-          console.warn('  2. 不滿足 PWA 安裝條件');
+          console.warn('  2. 需要更多用戶互動 (點擊、滾動等) - 當前:', userInteractionCount);
           console.warn('  3. 瀏覽器不支援 PWA 安裝');
-          console.warn('  4. HTTPS 要求未滿足');
-          console.warn('  5. Manifest 文件有問題');
+          console.warn('  4. Manifest 文件有問題');
+          console.warn('  5. 網站訪問頻率不足');
           
           // 提供更詳細的診斷信息
           console.log('🔍 PWA 診斷信息:');
@@ -260,8 +277,24 @@
           console.log('  - 用戶代理:', navigator.userAgent);
           console.log('  - Service Worker 支援:', 'serviceWorker' in navigator);
           console.log('  - 顯示模式:', window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser');
+          console.log('  - 用戶互動:', hasUserEngagement ? '充足' : '不足');
+          
+          // 檢查 manifest 連結
+          const manifestLink = document.querySelector('link[rel="manifest"]');
+          console.log('  - Manifest 連結:', manifestLink ? manifestLink.href : '未找到');
+          
+          // 檢查是否為支援的瀏覽器
+          const isChrome = navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Edg');
+          const isEdge = navigator.userAgent.includes('Edg');
+          console.log('  - 支援的瀏覽器:', isChrome ? 'Chrome' : isEdge ? 'Edge' : '可能不支援');
+          
+          // 提示用戶如何手動安裝
+          if (isChrome || isEdge) {
+            console.log('💡 手動安裝提示: 請嘗試在地址欄右側尋找安裝圖標，或在瀏覽器菜單中選擇「安裝應用程式」');
+            console.log('💡 或者嘗試: 瀏覽器菜單 → 更多工具 → 建立捷徑/安裝應用程式');
+          }
         }
-      }, 10000);
+      }, 15000);
     }, 1000);
   });
 })(); 
