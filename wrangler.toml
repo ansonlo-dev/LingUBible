@@ -10,3 +10,8 @@ command = "bun install --frozen-lockfile && VITE_APPWRITE_ENDPOINT=https://fra.c
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+# 路由配置
+[[routes]]
+pattern = "*"
+zone_name = "lingubible.com"
