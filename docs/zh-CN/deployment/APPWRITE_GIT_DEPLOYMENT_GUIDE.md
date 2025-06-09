@@ -31,7 +31,7 @@ functions/
 │   ├── src/
 │   │   └── main.js             # 入口點文件
 │   ├── package.json            # 依賴配置
-│   └── package-lock.json       # 鎖定版本
+│   └── bun.lockb       # 鎖定版本
 ├── verify-student-code/         # 驗證學生代碼函數
 │   └── ...
 └── cleanup-expired-codes/       # 清理過期代碼函數

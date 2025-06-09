@@ -156,8 +156,8 @@ function main() {
   
   if (totalUpdated > 0) {
     console.log('\n📝 建議執行以下命令檢查是否有錯誤：');
-    console.log('npm run type-check');
-    console.log('npm run build');
+    console.log('bun run type-check');
+console.log('bun run build');
   }
 }
 

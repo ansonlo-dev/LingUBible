@@ -92,7 +92,7 @@
 
 1. 啟動開發伺服器：
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 2. 訪問不存在的路徑，例如：

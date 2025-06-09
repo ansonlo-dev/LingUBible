@@ -114,13 +114,13 @@ VitePWA({
 
 ```bash
 # 運行生產模式 PWA 測試
-npm run pwa:test
+bun run pwa:test
 
 # 運行開發模式 PWA 測試
-npm run pwa:test-dev
+bun run pwa:test-dev
 
 # 構建並測試
-npm run pwa:build-test
+bun run pwa:build-test
 ```
 
 測試腳本功能：
@@ -154,7 +154,7 @@ npm run pwa:build-test
 
 1. 啟動開發服務器：
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 2. 在瀏覽器中打開 `http://localhost:8080`
@@ -168,12 +168,12 @@ npm run pwa:build-test
 
 1. 構建項目：
    ```bash
-   npm run build
+   bun run build
    ```
 
 2. 運行 PWA 測試：
    ```bash
-   npm run pwa:test
+   bun run pwa:test
    ```
 
 3. 測試 PWA 安裝：
@@ -200,7 +200,7 @@ npm run pwa:build-test
 如果仍然出現 Workbox 錯誤：
 
 1. 清除瀏覽器緩存和 Service Worker
-2. 重新構建項目：`npm run build`
+2. 重新構建項目：`bun run build`
 3. 檢查圖標文件是否存在於 `public/` 目錄
-4. 運行 PWA 測試：`npm run pwa:test`
+4. 運行 PWA 測試：`bun run pwa:test`
 5. 檢查 `dist/sw.js` 中的預緩存清單 

@@ -13,7 +13,7 @@
 ### 1. 安裝 Wrangler CLI
 
 ```bash
-npm install -g wrangler
+bun install -g wrangler
 ```
 
 ### 2. 登入 Cloudflare
@@ -32,7 +32,7 @@ main = "dist/index.js"
 compatibility_date = "2024-01-01"
 
 [build]
-command = "npm run build"
+command = "bun run build"
 
 [vars]
 # 環境變數將在 Cloudflare Dashboard 中設置
@@ -57,7 +57,7 @@ bucket = "./dist"
 
 ```bash
 # 升級 Vite 到 6.x
-npm install --save-dev vite@^6.1.0 @cloudflare/vite-plugin
+bun install --save-dev vite@^6.1.0 @cloudflare/vite-plugin
 
 # 更新 vite.config.ts
 ```
@@ -76,7 +76,7 @@ main = "dist/index.js"
 compatibility_date = "2024-01-01"
 
 [build]
-command = "npm run build"
+command = "bun run build"
 
 [vars]
 # 環境變數將在 Cloudflare Dashboard 中設置
@@ -121,10 +121,10 @@ APPWRITE_ENDPOINT: https://fra.cloud.appwrite.io/v1
 
 ```bash
 # 本地安裝（推薦）
-npm install --save-dev wrangler
+bun install --save-dev wrangler
 
 # 或全域安裝（需要 sudo 權限）
-# sudo npm install -g wrangler
+# sudo bun install -g wrangler
 ```
 
 ### 7. 登入 Cloudflare 並部署
@@ -134,10 +134,10 @@ npm install --save-dev wrangler
 npx wrangler login
 
 # 首次部署
-npm run deploy
+bun run deploy
 
 # 或分步驟執行
-npm run build
+bun run build
 npx wrangler deploy
 ```
 
@@ -175,7 +175,7 @@ npx wrangler deploy
 wrangler dev
 
 # 或使用 Vite（推薦）
-npm run dev
+bun run dev
 ```
 
 ### 環境變數管理
@@ -198,10 +198,10 @@ APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
 # 更新 lockfile
 bun install
 # 或使用 npm
-npm install
+bun install
 
 # 提交更改
-git add bun.lockb package-lock.json
+git add bun.lockb bun.lockb
 git commit -m "Update lockfile"
 git push
 ```
@@ -213,8 +213,8 @@ git push
 **方案 A**：刪除 `bun.lockb`
 ```bash
 rm bun.lockb
-npm install
-git add package-lock.json
+bun install
+git add bun.lockb
 git commit -m "Switch to npm"
 ```
 
@@ -238,11 +238,11 @@ npx wrangler login
 ```bash
 # 清理並重新構建
 rm -rf dist node_modules
-npm install
-npm run build
+bun install
+bun run build
 
 # 測試構建結果
-npm run preview
+bun run preview
 ```
 
 ## 📊 監控和日誌

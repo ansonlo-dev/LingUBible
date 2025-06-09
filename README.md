@@ -112,7 +112,8 @@
 | **🔧 Backend** | Appwrite | 18.1.1 | BaaS Platform |
 | | Email Services | - | Communication |
 | | Authentication | - | User Management |
-| **📦 Tools** | ESLint | Latest | Code Linting |
+| **📦 Tools** | Bun | Latest | Package Manager & Runtime |
+| | ESLint | Latest | Code Linting |
 | | PostCSS | Latest | CSS Processing |
 | | PWA | - | Progressive Web App |
 | | i18n | - | Internationalization |
@@ -241,8 +242,18 @@ graph TD
 ### 📋 System Requirements
 
 - **Node.js**: >= 18.0.0
-- **npm**: >= 8.0.0 or **yarn**: >= 1.22.0
+- **bun**: >= 1.0.0 (Fast JavaScript runtime & package manager)
 - **Git**: Latest version
+
+### ⚡ Why Bun?
+
+We've migrated from npm to **Bun** for enhanced development experience:
+
+- 🚀 **Lightning Fast**: Up to 25x faster than npm for package installation
+- 🔧 **All-in-One**: Runtime, bundler, test runner, and package manager
+- 📦 **Drop-in Replacement**: Compatible with npm packages and scripts
+- 🛡️ **Built-in Security**: Automatic lockfile verification
+- 💾 **Efficient Caching**: Smart dependency caching reduces install times
 
 ### ⚡ Quick Installation
 
@@ -252,17 +263,15 @@ git clone https://github.com/ansonlo/LingUBible.git
 cd LingUBible
 
 # 2️⃣ Install dependencies
-npm install
-# or use yarn
-yarn install
+bun install
+# Fast and reliable package manager
 
 # 3️⃣ Environment setup
 cp env.example .env.local
 
 # 4️⃣ Start development server
-npm run dev
-# or use yarn
-yarn dev
+bun run dev
+# Lightning fast development experience
 ```
 
 ### 🔧 Environment Configuration
@@ -299,22 +308,22 @@ yarn dev
 
 ```bash
 # 🚀 Development
-npm run dev              # Start development server
-npm run build            # Build production version
-npm run preview          # Preview production build
+bun run dev              # Start development server
+bun run build            # Build production version
+bun run preview          # Preview production build
 
 # 🔍 Code Quality
-npm run lint             # Code linting
-npm run refactor:check   # Refactoring check
+bun run lint             # Code linting
+bun run refactor:check   # Refactoring check
 
 # 📚 Documentation
-npm run docs:structure   # View documentation structure
-npm run project:structure # View project structure
+bun run docs:structure   # View documentation structure
+bun run project:structure # View project structure
 
 # 🛠️ Tools
-npm run docs:setup       # Setup multi-language documentation
-npm run refactor:update-imports # Update import paths
-npm run readme:generate-assets  # Generate README assets
+bun run docs:setup       # Setup multi-language documentation
+bun run refactor:update-imports # Update import paths
+bun run readme:generate-assets  # Generate README assets
 ```
 
 ---

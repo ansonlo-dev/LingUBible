@@ -16,7 +16,7 @@
 
 ```bash
 # 全局安裝 Appwrite CLI
-npm install -g appwrite-cli
+bun install -g appwrite-cli
 
 # 驗證安裝
 appwrite --version
@@ -427,7 +427,7 @@ jobs:
           node-version: '18'
           
       - name: Install Appwrite CLI
-        run: npm install -g appwrite-cli
+        run: bun install -g appwrite-cli
         
       - name: Deploy Functions
         run: |

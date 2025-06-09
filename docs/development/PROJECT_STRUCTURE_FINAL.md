@@ -152,7 +152,7 @@ LingUBible/
 - 🔍 **文件查找效率**: 提升了 70% 的開發效率
 - 🛠️ **維護便利性**: 增強了 90% 的可維護性
 
-## 🚀 新增的 npm 腳本
+## 🚀 新增的 bun 腳本
 
 ```json
 {
@@ -161,7 +161,7 @@ LingUBible/
     "docs:create-english": "node tools/scripts/docs/create-english-docs.js",
     "docs:structure": "tree docs/ -I 'node_modules|*.backup'",
     "refactor:update-imports": "node tools/scripts/refactor/update-imports.js",
-    "refactor:check": "npm run build && echo '✅ Refactoring check passed!'",
+    "refactor:check": "bun run build && echo '✅ Refactoring check passed!'",
     "project:structure": "tree src/ -I 'node_modules|*.backup' -L 3",
     "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2"
   }

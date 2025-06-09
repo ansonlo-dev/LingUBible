@@ -43,7 +43,7 @@
    ```yaml
    Project name: lingubible
    Production branch: main
-   Build command: npm run build
+   Build command: bun run build
    Build output directory: dist
    Root directory: (留空)
    ```
@@ -130,7 +130,7 @@ VITE_DEV_BYPASS_PASSWORD=false
 
 ### 1. 本地構建
 ```bash
-npm run build
+bun run build
 ```
 
 ### 2. 上傳 dist 文件夾
@@ -145,7 +145,7 @@ npm run build
 
 ```yaml
 # 構建命令
-Build command: npm run build
+Build command: bun run build
 
 # 構建輸出目錄
 Build output directory: dist
@@ -154,7 +154,7 @@ Build output directory: dist
 Node.js version: 18 或 20
 
 # 安裝命令（自動檢測）
-Install command: npm install
+Install command: bun install
 ```
 
 ## 📄 部署配置文件
@@ -245,19 +245,19 @@ www.lingubible.com → CNAME 指向 lingubible.com
 
 ```bash
 # 增加補丁版本（0.0.1 → 0.0.2）
-npm run version:patch
+bun run version:patch
 
 # 增加次要版本（0.1.0 → 0.2.0）
-npm run version:minor
+bun run version:minor
 
 # 增加主要版本（0.9.0 → 1.0.0）
-npm run version:major
+bun run version:major
 
 # 設置自定義版本
-npm run version:set 0.1.0
+bun run version:set 0.1.0
 
 # 查看當前版本信息
-npm run version:info
+bun run version:info
 ```
 
 ### GitHub Releases 工作流程
@@ -265,7 +265,7 @@ npm run version:info
 #### 1. 創建新版本
 ```bash
 # 更新版本號
-npm run version:patch
+bun run version:patch
 
 # 提交更改
 git add package.json
@@ -444,7 +444,7 @@ Cloudflare Pages (React App)
 - [ ] `VITE_DEV_BYPASS_PASSWORD=false` 已設置
 
 ### ✅ 構建配置
-- [ ] 構建命令設為 `npm run build`
+- [ ] 構建命令設為 `bun run build`
 - [ ] 輸出目錄設為 `dist`
 - [ ] Node.js 版本設為 18 或 20
 - [ ] `_redirects` 文件已創建
@@ -478,7 +478,7 @@ Cloudflare Pages (React App)
 
 **本地開發**：
 ```bash
-npm install && npm run dev
+bun install && bun run dev
 ```
 
 **部署**：

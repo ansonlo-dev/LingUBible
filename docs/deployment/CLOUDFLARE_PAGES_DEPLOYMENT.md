@@ -34,7 +34,7 @@ Configure in Cloudflare Pages:
 
 ```yaml
 # Build Command
-Build command: npm run build
+Build command: bun run build
 
 # Build Output Directory
 Build output directory: dist
@@ -43,7 +43,7 @@ Build output directory: dist
 Node.js version: 18 or 20
 
 # Install Command (auto-detected)
-Install command: npm install
+Install command: bun install
 ```
 
 ### 3. Deployment Configuration File

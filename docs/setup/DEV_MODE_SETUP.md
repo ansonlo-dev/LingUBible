@@ -30,7 +30,7 @@ VITE_DEV_BYPASS_PASSWORD=true
 ### 2. Restart Development Server
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 ### 3. Verify Setup

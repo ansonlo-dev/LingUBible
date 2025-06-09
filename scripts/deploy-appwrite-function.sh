@@ -8,7 +8,7 @@ echo "🚀 開始部署 Appwrite 函數..."
 # 檢查是否安裝了 Appwrite CLI
 if ! command -v appwrite &> /dev/null; then
     echo "❌ Appwrite CLI 未安裝"
-    echo "請先安裝 Appwrite CLI: npm install -g appwrite-cli"
+    echo "請先安裝 Appwrite CLI: bun install -g appwrite-cli"
     exit 1
 fi
 

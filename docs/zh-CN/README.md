@@ -247,8 +247,18 @@ graph TD
 ### 📋 系统要求
 
 - **Node.js**: >= 18.0.0
-- **npm**: >= 8.0.0 或 **yarn**: >= 1.22.0
+- **bun**: >= 1.0.0 (快速的 JavaScript 运行时与包管理器)
 - **Git**: 最新版本
+
+### ⚡ 为什么选择 Bun？
+
+我们从 npm 迁移到 **Bun** 以提升开发体验：
+
+- 🚀 **闪电般快速**: 包安装速度比 npm 快达 25 倍
+- 🔧 **一体化工具**: 运行时、打包器、测试运行器和包管理器
+- 📦 **无缝替换**: 与 npm 包和脚本完全兼容
+- 🛡️ **内置安全性**: 自动锁定文件验证
+- 💾 **高效缓存**: 智能依赖缓存减少安装时间
 
 ### ⚡ 快速安装
 
@@ -258,17 +268,15 @@ git clone https://github.com/ansonlo/LingUBible.git
 cd LingUBible
 
 # 2️⃣ 安装依赖
-npm install
-# 或使用 yarn
-yarn install
+bun install
+# 快速且可靠的包管理器
 
 # 3️⃣ 环境配置
 cp env.example .env.local
 
 # 4️⃣ 启动开发服务器
-npm run dev
-# 或使用 yarn
-yarn dev
+bun run dev
+# 闪电般快速的开发体验
 ```
 
 ### 🔧 环境配置
@@ -305,22 +313,22 @@ yarn dev
 
 ```bash
 # 🚀 开发
-npm run dev              # 启动开发服务器
-npm run build            # 构建生产版本
-npm run preview          # 预览生产构建
+bun run dev              # 启动开发服务器
+bun run build            # 构建生产版本
+bun run preview          # 预览生产构建
 
 # 🔍 代码质量
-npm run lint             # 代码检查
-npm run refactor:check   # 重构检查
+bun run lint             # 代码检查
+bun run refactor:check   # 重构检查
 
 # 📚 文档
-npm run docs:structure   # 查看文档结构
-npm run project:structure # 查看项目结构
+bun run docs:structure   # 查看文档结构
+bun run project:structure # 查看项目结构
 
 # 🛠️ 工具
-npm run docs:setup       # 设置多语言文档
-npm run refactor:update-imports # 更新导入路径
-npm run readme:generate-assets  # 生成 README 资产
+bun run docs:setup       # 设置多语言文档
+bun run refactor:update-imports # 更新导入路径
+bun run readme:generate-assets  # 生成 README 资产
 ```
 
 ---

@@ -67,10 +67,10 @@
 ### 1. 性能優化
 ```bash
 # 測試 PWA 性能
-npm run pwa:test
+bun run pwa:test
 
 # 構建並測試
-npm run pwa:build-test
+bun run pwa:build-test
 ```
 
 ### 2. 緩存策略
@@ -128,13 +128,13 @@ npm run pwa:build-test
 ### 測試 PWA
 ```bash
 # 本地測試
-npm run dev
+bun run dev
 
 # 構建測試
-npm run build && npm run preview
+bun run build && bun run preview
 
 # PWA 功能測試
-npm run pwa:test
+bun run pwa:test
 ```
 
 ### 部署
@@ -143,7 +143,7 @@ npm run pwa:test
 git push origin main
 
 # 手動部署
-npm run deploy
+bun run deploy
 ```
 
 ### 監控

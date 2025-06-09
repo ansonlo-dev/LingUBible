@@ -50,31 +50,31 @@ git push origin main
 
 ```bash
 # 增加 patch 版本（0.0.1 → 0.0.2）
-npm run release:patch
+bun run release:patch
 
 # 增加 minor 版本（0.0.1 → 0.1.0）
-npm run release:minor
+bun run release:minor
 
 # 增加 major 版本（0.0.1 → 1.0.0）
-npm run release:major
+bun run release:major
 
 # 自動發布（跳過確認）
-npm run release:auto
+bun run release:auto
 
 # 檢查發布狀態
-npm run release:check
+bun run release:check
 ```
 
 ### 版本資訊查詢
 
 ```bash
 # 查看當前版本資訊
-npm run version:info
+bun run version:info
 
 # 只更新版本號（不發布）
-npm run version:patch
-npm run version:minor
-npm run version:major
+bun run version:patch
+bun run version:minor
+bun run version:major
 ```
 
 ## 🔧 技術實現
@@ -139,7 +139,7 @@ graph TD
 
 ```mermaid
 graph TD
-    A[執行 npm run release:patch] --> B[檢查 Git 狀態]
+    A[執行 bun run release:patch] --> B[檢查 Git 狀態]
     B --> C[拉取最新更改]
     C --> D[更新版本號]
     D --> E[確認發布]

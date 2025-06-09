@@ -32,7 +32,7 @@
 套件已經安裝在您的專案中：
 
 ```bash
-npm install @openstatus/react
+bun install @openstatus/react
 ```
 
 ## 使用方法

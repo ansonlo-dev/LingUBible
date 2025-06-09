@@ -100,13 +100,13 @@ window.dispatchEvent(new CustomEvent('manifestUpdated', {
 #### 新增文件：
 - ✅ `public/pwa-desktop-debug.html` - 桌面 PWA 診斷頁面
 - ✅ `scripts/test-pwa-desktop.js` - PWA 配置檢查腳本
-- ✅ `npm run pwa:test-desktop` - 新的測試命令
+- ✅ `bun run pwa:test-desktop` - 新的測試命令
 
 ## 測試和驗證
 
 ### 1. 運行配置檢查
 ```bash
-npm run pwa:test-desktop
+bun run pwa:test-desktop
 ```
 
 ### 2. 訪問診斷頁面
@@ -186,13 +186,13 @@ npm run pwa:test-desktop
 
 1. **構建前檢查**
    ```bash
-   npm run pwa:test-desktop
+   bun run pwa:test-desktop
    ```
 
 2. **構建和部署**
    ```bash
-   npm run build
-   npm run deploy
+   bun run build
+   bun run deploy
    ```
 
 3. **部署後驗證**

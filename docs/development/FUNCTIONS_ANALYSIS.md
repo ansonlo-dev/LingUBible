@@ -95,7 +95,7 @@ functions/
      "schedule": "",
      "timeout": 15,
      "entrypoint": "src/main.js",
-     "commands": "npm install",
+     "commands": "bun install",
      "specification": "s-0.5vcpu-512mb",
      "path": "functions/send-contact-email"
    }

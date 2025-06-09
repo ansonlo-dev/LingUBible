@@ -39,8 +39,8 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'node-appwrite' imported from 
 2. **重新安裝依賴**：
    ```bash
    cd functions/your-function
-   rm package-lock.json
-   npm install
+   rm bun.lockb
+   bun install
    ```
 
 3. **重新部署函數**：
@@ -177,14 +177,14 @@ Deployment failed to build
    ├── src/
    │   └── main.js
    ├── package.json
-   └── package-lock.json
+   └── bun.lockb
    ```
 
 3. **本地測試**：
    ```bash
    cd functions/your-function
-   npm install
-   npm start
+   bun install
+   bun start
    ```
 
 ## 調試技巧

@@ -46,7 +46,7 @@ VITE_GITHUB_TOKEN=ghp_your_actual_token_here
 
 ### 步驟 2：重啟開發服務器
 ```bash
-npm run dev
+bun run dev
 ```
 
 ## 🧪 測試設置

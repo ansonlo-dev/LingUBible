@@ -77,7 +77,7 @@ LingUBible 實現了完整的 PWA 版本同步系統，確保 PWA manifest 中�
 ```yaml
 - name: Update PWA version
   run: |
-    npm run pwa:update-version
+    bun run pwa:update-version
     echo "PWA version information updated"
 
 - name: Commit version update
@@ -91,7 +91,7 @@ LingUBible 實現了完整的 PWA 版本同步系統，確保 PWA manifest 中�
 ```json
 {
   "scripts": {
-    "build": "npm run pwa:update-version && vite build",
+    "build": "bun run pwa:update-version && vite build",
     "pwa:update-version": "node tools/scripts/version/update-pwa-version.js"
   }
 }
@@ -102,13 +102,13 @@ LingUBible 實現了完整的 PWA 版本同步系統，確保 PWA manifest 中�
 ### 1. 手動更新 PWA 版本
 
 ```bash
-npm run pwa:update-version
+bun run pwa:update-version
 ```
 
 ### 2. 測試版本同步
 
 ```bash
-npm run pwa:test-version
+bun run pwa:test-version
 ```
 
 ### 3. 在代碼中使用
@@ -183,7 +183,7 @@ await window.LingUBibleManifest.updateManifestLink();
    - 備用機制：自動使用本地版本
 
 2. **版本不同步**
-   - 檢查：運行 `npm run pwa:update-version`
+   - 檢查：運行 `bun run pwa:update-version`
    - 驗證：訪問測試頁面檢查版本狀態
 
 3. **PWA Manifest 未更新**
@@ -206,12 +206,12 @@ window.addEventListener('manifestUpdated', console.log);
 ## 最佳實踐
 
 1. **版本發布流程**
-   - 使用 `npm run release:patch` 自動發布
+   - 使用 `bun run release:patch` 自動發布
    - GitHub Actions 自動更新 PWA 版本
    - 確保所有版本源同步
 
 2. **開發環境**
-   - 定期運行 `npm run pwa:update-version`
+   - 定期運行 `bun run pwa:update-version`
    - 使用測試頁面驗證功能
    - 檢查控制台日誌
 

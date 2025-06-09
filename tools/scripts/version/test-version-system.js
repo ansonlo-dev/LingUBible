@@ -136,7 +136,7 @@ async function testVersionSystem() {
       }
     },
     {
-      name: '檢查 NPM 腳本',
+              name: '檢查 Bun 腳本',
       test: () => {
         const packageJsonPath = path.join(process.cwd(), 'package.json');
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -155,7 +155,7 @@ async function testVersionSystem() {
         
         return {
           success: missingScripts.length === 0,
-          message: 'NPM 腳本設定',
+          message: 'Bun 腳本設定',
           details: missingScripts.length === 0 ? '所有腳本都已設定' : `缺少腳本: ${missingScripts.join(', ')}`
         };
       }
@@ -198,7 +198,7 @@ async function testVersionSystem() {
   // 顯示使用建議
   console.log(colors.bold('\n💡 使用建議:'));
   console.log('   1. 推送代碼到 main 分支將自動更新版本');
-  console.log('   2. 使用 npm run release:patch 手動發布');
+      console.log('   2. 使用 bun run release:patch 手動發布');
   console.log('   3. 在 commit 訊息中添加 [skip version] 跳過自動更新');
   console.log('   4. 查看頁腳的版本號，應該會從 GitHub 獲取最新版本');
 }

@@ -151,7 +151,7 @@ GitHub Actions 中的 Appwrite 函數部署失敗，錯誤訊息：
 3. **檢查 CLI 版本**：
    ```bash
    # 確保使用最新版本的 Appwrite CLI
-   npm install -g appwrite-cli@latest
+   bun install -g appwrite-cli@latest
    appwrite --version
    ```
 

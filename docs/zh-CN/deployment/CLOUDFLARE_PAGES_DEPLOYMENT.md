@@ -34,7 +34,7 @@ VITE_APP_ENV=production
 
 ```yaml
 # 构建命令
-Build command: npm run build
+Build command: bun run build
 
 # 构建输出目录
 Build output directory: dist
@@ -43,7 +43,7 @@ Build output directory: dist
 Node.js version: 18 或 20
 
 # 安装命令（自动检测）
-Install command: npm install
+Install command: bun install
 ```
 
 ### 3. 部署配置文件

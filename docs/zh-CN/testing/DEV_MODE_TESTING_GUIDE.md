@@ -152,7 +152,7 @@ VITE_DEV_BYPASS_PASSWORD=true
 
 2. 重新啟動開發伺服器：
 ```bash
-npm run dev
+bun run dev
 ```
 
 3. 清除瀏覽器緩存並重新載入頁面

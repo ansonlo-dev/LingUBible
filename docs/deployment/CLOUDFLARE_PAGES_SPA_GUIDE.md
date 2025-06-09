@@ -47,7 +47,7 @@ Cloudflare Pages 會自動：
 如果 SPA 路由仍不工作：
 
 1. **檢查 Cloudflare Pages 設置**：
-   - 確保 Build command: `npm run build`
+   - 確保 Build command: `bun run build`
    - 確保 Output directory: `dist`
    - 確保 Framework preset: `Vite`
 

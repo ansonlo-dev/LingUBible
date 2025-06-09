@@ -146,7 +146,7 @@ const result = await resend.emails.send({
 ```bash
 # 安裝依賴
 cd functions/send-verification-email
-npm install
+bun install
 
 # 部署函數
 cd ../..

@@ -26,7 +26,7 @@ VITE_DEV_BYPASS_PASSWORD=true
 ### 2. 重新啟動開發伺服器
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 ### 3. 驗證設置
@@ -155,7 +155,7 @@ VITE_DEV_BYPASS_PASSWORD=false
 
 2. 重新啟動開發伺服器：
 ```bash
-npm run dev
+bun run dev
 ```
 
 3. 驗證：
