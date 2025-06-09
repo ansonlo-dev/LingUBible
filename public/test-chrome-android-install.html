@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 Chrome Android 安裝橫幅測試 - LingUBible</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
+        }
+        .status.warning {
+            background: rgba(255, 193, 7, 0.3);
+            border: 1px solid #FFC107;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid #F44336;
+        }
+        .status.info {
+            background: rgba(33, 150, 243, 0.3);
+            border: 1px solid #2196F3;
+        }
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 300px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .chrome-android-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            font-size: 18px;
+            padding: 20px 40px;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .info-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        .banner-demo {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .banner-demo h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .banner-demo p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .banner-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .banner-buttons button {
+            padding: 10px 20px;
+            font-size: 14px;
+            max-width: none;
+            width: auto;
+        }
+        .install-banner {
+            background: #4285f4;
+            color: white;
+        }
+        .dismiss-banner {
+            background: #666;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Chrome Android 安裝橫幅測試</h1>
+        <p>此頁面專門測試 Chrome Android 瀏覽器的 PWA 安裝橫幅功能</p>
+
+        <div class="test-section">
+            <h2>🔍 環境檢測</h2>
+            <div id="environment-status"></div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-value" id="is-chrome-android">檢查中...</div>
+                    <div class="info-label">Chrome Android</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="has-https">檢查中...</div>
+                    <div class="info-label">HTTPS 協議</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="has-manifest">檢查中...</div>
+                    <div class="info-label">Manifest 文件</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="has-service-worker">檢查中...</div>
+                    <div class="info-label">Service Worker</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="user-engagement">檢查中...</div>
+                    <div class="info-label">用戶互動</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="install-prompt">檢查中...</div>
+                    <div class="info-label">安裝提示</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 安裝橫幅模擬</h2>
+            <div class="banner-demo">
+                <h3>🚀 LingUBible 安裝橫幅預覽</h3>
+                <p>📱 這是 Chrome Android 安裝橫幅的外觀示例</p>
+                <p>🎯 真實的橫幅會在滿足條件時自動顯示</p>
+                <div class="banner-buttons">
+                    <button class="install-banner" onclick="simulateInstall()">安裝</button>
+                    <button class="dismiss-banner" onclick="simulateDismiss()">不了，謝謝</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 測試功能</h2>
+            <button onclick="triggerUserInteraction()" class="chrome-android-button">👤 觸發用戶互動</button>
+            <button onclick="checkInstallPrompt()">🔍 檢查安裝提示</button>
+            <button onclick="forceInstallBanner()">🚀 強制觸發安裝橫幅</button>
+            <button onclick="testManualInstall()">📖 顯示手動安裝指引</button>
+            <button onclick="refreshStatus()">🔄 刷新狀態</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 實時日誌</h2>
+            <button onclick="clearLog()">清除日誌</button>
+            <div id="log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>💡 Chrome Android 安裝條件</h2>
+            <div style="text-align: left; font-size: 14px; line-height: 1.6;">
+                <p><strong>Chrome Android 顯示安裝橫幅需要滿足：</strong></p>
+                <ul>
+                    <li>✅ 使用 Chrome Android 瀏覽器</li>
+                    <li>✅ 網站使用 HTTPS 協議</li>
+                    <li>✅ 有效的 Web App Manifest</li>
+                    <li>✅ 註冊了 Service Worker</li>
+                    <li>✅ 用戶與頁面有互動（點擊、滾動等）</li>
+                    <li>✅ 應用未安裝</li>
+                    <li>✅ 滿足 PWA 安裝條件</li>
+                </ul>
+                <p><strong>安裝橫幅通常會在：</strong></p>
+                <ul>
+                    <li>🕐 首次訪問後 30 秒內</li>
+                    <li>👆 用戶有互動行為後</li>
+                    <li>📱 滿足所有 PWA 條件時</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入 Service Worker 註冊腳本 -->
+    <script src="/sw-register.js"></script>
+
+    <script>
+        let logEntries = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            logEntries.push(entry);
+            
+            const logElement = document.getElementById('log');
+            logElement.textContent = logEntries.slice(-30).join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(message);
+        }
+
+        function clearLog() {
+            logEntries = [];
+            document.getElementById('log').textContent = '';
+        }
+
+        function checkEnvironment() {
+            const isChromeAndroid = window.PWAInstaller?.isChromeAndroid() || 
+                                   (navigator.userAgent.includes('Chrome') && 
+                                    navigator.userAgent.includes('Android') && 
+                                    !navigator.userAgent.includes('Edge'));
+            
+            const isHTTPS = window.location.protocol === 'https:';
+            const hasManifest = !!document.querySelector('link[rel="manifest"]');
+            const hasServiceWorker = 'serviceWorker' in navigator;
+            const hasUserEngagement = window.PWAInstaller?.hasUserEngagement() || false;
+            const hasInstallPrompt = window.PWAInstaller?.hasPrompt() || false;
+
+            // 更新狀態顯示
+            document.getElementById('is-chrome-android').textContent = isChromeAndroid ? '✅ 是' : '❌ 否';
+            document.getElementById('has-https').textContent = isHTTPS ? '✅ 是' : '❌ 否';
+            document.getElementById('has-manifest').textContent = hasManifest ? '✅ 是' : '❌ 否';
+            document.getElementById('has-service-worker').textContent = hasServiceWorker ? '✅ 是' : '❌ 否';
+            document.getElementById('user-engagement').textContent = hasUserEngagement ? '✅ 充足' : '❌ 不足';
+            document.getElementById('install-prompt').textContent = hasInstallPrompt ? '✅ 可用' : '❌ 不可用';
+
+            // 環境狀態總結
+            const statusElement = document.getElementById('environment-status');
+            let statusClass = 'info';
+            let statusText = '';
+
+            if (isChromeAndroid && isHTTPS && hasManifest && hasServiceWorker) {
+                if (hasInstallPrompt) {
+                    statusClass = 'success';
+                    statusText = '✅ 完美！所有條件都滿足，安裝橫幅應該會顯示';
+                } else if (hasUserEngagement) {
+                    statusClass = 'warning';
+                    statusText = '⚠️ 條件滿足，等待瀏覽器觸發安裝提示';
+                } else {
+                    statusClass = 'info';
+                    statusText = '💡 條件滿足，需要用戶互動來觸發安裝提示';
+                }
+            } else {
+                statusClass = 'error';
+                statusText = '❌ 部分條件不滿足，安裝橫幅可能不會顯示';
+            }
+
+            statusElement.innerHTML = `<div class="status ${statusClass}">${statusText}</div>`;
+
+            log(`環境檢測: Chrome Android=${isChromeAndroid}, HTTPS=${isHTTPS}, Manifest=${hasManifest}, SW=${hasServiceWorker}, 互動=${hasUserEngagement}, 提示=${hasInstallPrompt}`);
+        }
+
+        function triggerUserInteraction() {
+            log('👤 觸發用戶互動事件...');
+            
+            // 觸發各種用戶互動事件
+            document.body.click();
+            window.scrollBy(0, 1);
+            
+            const keyEvent = new KeyboardEvent('keydown', { key: 'Space' });
+            document.dispatchEvent(keyEvent);
+            
+            const touchEvent = new TouchEvent('touchstart', {
+                touches: [new Touch({
+                    identifier: 0,
+                    target: document.body,
+                    clientX: 100,
+                    clientY: 100
+                })]
+            });
+            document.dispatchEvent(touchEvent);
+            
+            log('已觸發用戶互動事件');
+            
+            // 延遲檢查狀態
+            setTimeout(() => {
+                checkEnvironment();
+            }, 1000);
+        }
+
+        function checkInstallPrompt() {
+            log('🔍 檢查安裝提示狀態...');
+            
+            if (window.PWAInstaller) {
+                const hasPrompt = window.PWAInstaller.hasPrompt();
+                const hasEngagement = window.PWAInstaller.hasUserEngagement();
+                const isChromeAndroid = window.PWAInstaller.isChromeAndroid();
+                
+                log(`安裝提示狀態: 可用=${hasPrompt}, 互動=${hasEngagement}, Chrome Android=${isChromeAndroid}`);
+                
+                if (hasPrompt) {
+                    log('✅ 安裝提示可用，可以觸發安裝');
+                } else {
+                    log('❌ 安裝提示不可用');
+                }
+            } else {
+                log('❌ PWAInstaller 不可用');
+            }
+            
+            checkEnvironment();
+        }
+
+        function forceInstallBanner() {
+            log('🚀 嘗試強制觸發安裝橫幅...');
+            
+            if (window.PWAInstaller?.triggerInstallBanner) {
+                log('觸發 Chrome Android 安裝橫幅...');
+                window.PWAInstaller.triggerInstallBanner();
+            } else if (window.PWAInstaller?.triggerInstallPrompt) {
+                log('觸發通用安裝提示...');
+                window.PWAInstaller.triggerInstallPrompt();
+            } else {
+                log('❌ 安裝功能不可用');
+                alert('安裝功能不可用，請檢查環境條件。');
+            }
+        }
+
+        function testManualInstall() {
+            log('📖 顯示手動安裝指引...');
+            
+            if (window.PWAInstaller?.showManualInstructions) {
+                window.PWAInstaller.showManualInstructions();
+            } else {
+                alert('手動安裝指引功能不可用。');
+            }
+        }
+
+        function simulateInstall() {
+            log('✅ 模擬用戶點擊「安裝」按鈕');
+            alert('🎉 模擬安裝成功！在真實環境中，應用會被安裝到設備上。');
+        }
+
+        function simulateDismiss() {
+            log('❌ 模擬用戶點擊「不了，謝謝」按鈕');
+            alert('😔 模擬用戶拒絕安裝。Chrome 會記住這個選擇。');
+        }
+
+        function refreshStatus() {
+            log('🔄 刷新狀態...');
+            checkEnvironment();
+        }
+
+        // 監聽 PWA 相關事件
+        window.addEventListener('beforeinstallprompt', function(event) {
+            log('💡 收到 beforeinstallprompt 事件！');
+            log('🎯 這意味著 Chrome 準備顯示安裝橫幅');
+            checkEnvironment();
+        });
+
+        window.addEventListener('pwaInstallAvailable', function(event) {
+            log('📱 收到 PWA 安裝可用事件: ' + JSON.stringify(event.detail));
+            checkEnvironment();
+        });
+
+        window.addEventListener('pwaInstallAccepted', function() {
+            log('✅ PWA 安裝被接受');
+            checkEnvironment();
+        });
+
+        window.addEventListener('pwaInstallDismissed', function() {
+            log('❌ PWA 安裝被拒絕');
+            checkEnvironment();
+        });
+
+        window.addEventListener('appinstalled', function() {
+            log('🎉 PWA 安裝完成');
+            checkEnvironment();
+        });
+
+        // 頁面載入時初始化
+        window.addEventListener('load', function() {
+            log('📱 Chrome Android 安裝橫幅測試頁面已載入');
+            
+            // 延遲檢查環境，等待 Service Worker 載入
+            setTimeout(() => {
+                checkEnvironment();
+                log('初始化完成');
+                
+                // 如果是 Chrome Android，顯示特別提示
+                if (window.PWAInstaller?.isChromeAndroid()) {
+                    log('🎯 檢測到 Chrome Android，安裝橫幅應該會在用戶互動後顯示');
+                }
+            }, 2000);
+        });
+
+        // 自動觸發用戶互動（用於測試）
+        setTimeout(() => {
+            if (window.PWAInstaller?.isChromeAndroid()) {
+                log('🤖 自動觸發用戶互動（測試用）');
+                triggerUserInteraction();
+            }
+        }, 3000);
+    </script>
+</body>
+</html> 

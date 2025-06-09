@@ -240,9 +240,19 @@
   let installPromptTimeout;
   let forceShowInstallButton = false;
   
+  // 檢查是否為 Chrome Android
+  function isChromeAndroid() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('chrome') && 
+           userAgent.includes('android') && 
+           !userAgent.includes('edg') && 
+           !userAgent.includes('firefox');
+  }
+  
   // 檢查是否應該強制顯示安裝按鈕
   function shouldForceShowInstallButton() {
     const isDesktop = window.innerWidth >= 768;
+    const isMobile = window.innerWidth < 768;
     const isHTTPS = window.location.protocol === 'https:';
     const isPWAMode = window.matchMedia('(display-mode: standalone)').matches ||
                      window.navigator.standalone === true ||
@@ -251,44 +261,97 @@
                               navigator.userAgent.includes('Edge') ||
                               navigator.userAgent.includes('Firefox');
     
+    // Chrome Android 特殊處理：更積極地顯示安裝提示
+    if (isChromeAndroid() && isHTTPS && !isPWAMode) {
+      return true;
+    }
+    
+    // 桌面環境處理
     return isDesktop && isHTTPS && !isPWAMode && isSupportedBrowser;
   }
   
-  // 用戶互動追蹤
+  // 用戶互動追蹤（Chrome Android 優化）
   function trackUserInteraction() {
     userInteractionCount++;
     hasUserEngagement = true;
     
     // 移除事件監聽器，避免重複計算
     if (userInteractionCount === 1) {
-      ['click', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+      ['click', 'keydown', 'scroll', 'touchstart', 'touchend'].forEach(event => {
         document.removeEventListener(event, trackUserInteraction, { passive: true });
       });
       
       console.log('👤 用戶開始互動，PWA 安裝提示準備就緒');
       
-      // 檢查是否應該強制顯示安裝按鈕
-      if (shouldForceShowInstallButton()) {
+      // Chrome Android 特殊處理：更快顯示安裝提示
+      if (isChromeAndroid()) {
+        console.log('📱 Chrome Android 檢測到，快速顯示安裝提示');
+        forceShowInstallButton = true;
+        
+        clearTimeout(installPromptTimeout);
+        installPromptTimeout = setTimeout(() => {
+          showInstallButtons();
+          // 嘗試觸發原生安裝橫幅
+          if (deferredPrompt) {
+            triggerInstallBanner();
+          }
+        }, 500); // Chrome Android 0.5秒後顯示
+      } else if (shouldForceShowInstallButton()) {
         console.log('🖥️ 桌面環境檢測到，強制顯示安裝按鈕');
         forceShowInstallButton = true;
         
         clearTimeout(installPromptTimeout);
         installPromptTimeout = setTimeout(() => {
           showInstallButtons();
-        }, 1000); // 1秒後顯示
+        }, 1000); // 桌面 1秒後顯示
       } else if (deferredPrompt && !installPromptShown) {
         clearTimeout(installPromptTimeout);
         installPromptTimeout = setTimeout(() => {
           showInstallButtons();
-        }, 2000); // 2秒後顯示
+        }, 2000); // 其他情況 2秒後顯示
       }
     }
   }
   
-  // 添加用戶互動監聽器
-  ['click', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+  // 添加用戶互動監聽器（包含觸摸事件）
+  ['click', 'keydown', 'scroll', 'touchstart', 'touchend'].forEach(event => {
     document.addEventListener(event, trackUserInteraction, { passive: true });
   });
+  
+  // Chrome Android 安裝橫幅觸發
+  function triggerInstallBanner() {
+    if (isChromeAndroid() && deferredPrompt && !installPromptShown) {
+      console.log('📱 Chrome Android: 嘗試觸發安裝橫幅');
+      
+      // 延遲一點時間，確保用戶看到頁面內容
+      setTimeout(() => {
+        if (deferredPrompt && !installPromptShown) {
+          console.log('📱 Chrome Android: 顯示安裝橫幅');
+          installPromptShown = true;
+          
+          deferredPrompt.prompt();
+          
+          deferredPrompt.userChoice.then(function(choiceResult) {
+            console.log('👤 Chrome Android 用戶選擇:', choiceResult.outcome);
+            
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ Chrome Android: 用戶接受了 PWA 安裝');
+              window.dispatchEvent(new CustomEvent('pwaInstallAccepted'));
+            } else {
+              console.log('❌ Chrome Android: 用戶拒絕了 PWA 安裝');
+              window.dispatchEvent(new CustomEvent('pwaInstallDismissed'));
+            }
+            
+            deferredPrompt = null;
+          }).catch(function(error) {
+            console.error('❌ Chrome Android 安裝橫幅出錯:', error);
+            deferredPrompt = null;
+            installPromptShown = false;
+          });
+        }
+      }, 1500); // Chrome Android 1.5秒後顯示橫幅
+    }
+  }
   
   // 顯示安裝按鈕
   function showInstallButtons() {
@@ -316,16 +379,18 @@
         platforms: deferredPrompt?.platforms || ['web'],
         canInstall: true,
         hasUserEngagement: hasUserEngagement,
-        forceShow: forceShowInstallButton
+        forceShow: forceShowInstallButton,
+        isChromeAndroid: isChromeAndroid()
       }
     }));
   }
   
-  // 監聽 beforeinstallprompt 事件
+  // 監聽 beforeinstallprompt 事件（Chrome Android 優化）
   window.addEventListener('beforeinstallprompt', function(e) {
     console.log('💡 PWA 安裝提示可用');
     console.log('🖥️ 平台:', e.platforms);
     console.log('👤 用戶互動狀態:', hasUserEngagement);
+    console.log('📱 Chrome Android:', isChromeAndroid());
     
     // 防止瀏覽器自動顯示安裝提示
     e.preventDefault();
@@ -334,8 +399,23 @@
     deferredPrompt = e;
     installPromptShown = false;
     
-    // 如果用戶已經有互動，立即顯示安裝按鈕
-    if (hasUserEngagement) {
+    // Chrome Android 特殊處理
+    if (isChromeAndroid()) {
+      console.log('📱 Chrome Android: 準備顯示安裝橫幅');
+      
+      if (hasUserEngagement) {
+        // 如果用戶已經有互動，快速顯示
+        clearTimeout(installPromptTimeout);
+        installPromptTimeout = setTimeout(() => {
+          showInstallButtons();
+          triggerInstallBanner();
+        }, 300); // 0.3秒後顯示
+      } else {
+        // 等待用戶互動
+        console.log('⏳ Chrome Android: 等待用戶互動後顯示安裝橫幅');
+      }
+    } else if (hasUserEngagement) {
+      // 其他平台的處理
       clearTimeout(installPromptTimeout);
       installPromptTimeout = setTimeout(() => {
         showInstallButtons();
@@ -390,21 +470,77 @@
     }
   }
 
-  // 顯示手動安裝指引
+  // 顯示手動安裝指引（針對 Chrome Android 優化）
   function showManualInstallInstructions() {
     const userAgent = navigator.userAgent.toLowerCase();
     let instructions = '';
     
-    if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
-      instructions = '請點擊地址欄右側的安裝圖標，或使用瀏覽器選單中的「安裝 LingUBible」選項。';
+    if (isChromeAndroid()) {
+      instructions = `
+        <div style="text-align: left; line-height: 1.6;">
+          <p><strong>Chrome Android 安裝方法：</strong></p>
+          <p>• 點擊瀏覽器右上角的三點選單 ⋮</p>
+          <p>• 選擇「安裝應用程式」或「加到主畫面」</p>
+          <p>• 確認安裝即可在桌面找到 LingUBible 圖標</p>
+          <br>
+          <p><strong>或者：</strong></p>
+          <p>• 查看地址欄是否有安裝圖標 📱</p>
+          <p>• 點擊該圖標即可快速安裝</p>
+        </div>
+      `;
+    } else if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
+      instructions = `
+        <div style="text-align: left; line-height: 1.6;">
+          <p><strong>方法 1：地址欄安裝圖標</strong></p>
+          <p>• 查看地址欄右側是否有安裝圖標 📱</p>
+          <p>• 點擊該圖標即可安裝</p>
+          <br>
+          <p><strong>方法 2：瀏覽器選單</strong></p>
+          <p>• 點擊瀏覽器右上角的三點選單 ⋮</p>
+          <p>• 選擇「安裝 LingUBible」或「建立捷徑」</p>
+          <p>• 確認安裝即可</p>
+        </div>
+      `;
     } else if (userAgent.includes('edg')) {
-      instructions = '請點擊地址欄右側的安裝圖標，或使用瀏覽器選單中的「安裝此網站為應用程式」選項。';
+      instructions = `
+        <div style="text-align: left; line-height: 1.6;">
+          <p><strong>方法 1：地址欄安裝圖標</strong></p>
+          <p>• 查看地址欄右側的安裝圖標 📱</p>
+          <p>• 點擊該圖標即可安裝</p>
+          <br>
+          <p><strong>方法 2：瀏覽器選單</strong></p>
+          <p>• 點擊瀏覽器右上角的三點選單 ⋯</p>
+          <p>• 選擇「應用程式」→「將此網站安裝為應用程式」</p>
+          <p>• 確認安裝即可</p>
+        </div>
+      `;
     } else if (userAgent.includes('firefox')) {
-      instructions = '請使用瀏覽器選單中的「安裝」選項，或將此頁面加入書籤以便快速訪問。';
+      instructions = `
+        <div style="text-align: left; line-height: 1.6;">
+          <p><strong>Firefox 安裝方法：</strong></p>
+          <p>• 點擊瀏覽器右上角的選單 ☰</p>
+          <p>• 選擇「安裝」或「加入主畫面」</p>
+          <p>• 或者將此頁面加入書籤以便快速訪問</p>
+        </div>
+      `;
     } else if (userAgent.includes('safari')) {
-      instructions = '請點擊分享按鈕 📤，然後選擇「加入主畫面」。';
+      instructions = `
+        <div style="text-align: left; line-height: 1.6;">
+          <p><strong>Safari 安裝方法：</strong></p>
+          <p>• 點擊分享按鈕 📤</p>
+          <p>• 選擇「加入主畫面」</p>
+          <p>• 確認安裝即可</p>
+        </div>
+      `;
     } else {
-      instructions = '請使用瀏覽器選單中的安裝選項，或將此頁面加入書籤。';
+      instructions = `
+        <div style="text-align: left; line-height: 1.6;">
+          <p><strong>通用安裝方法：</strong></p>
+          <p>• 查看地址欄是否有安裝圖標</p>
+          <p>• 或在瀏覽器選單中尋找「安裝」選項</p>
+          <p>• 也可以將此頁面加入書籤</p>
+        </div>
+      `;
     }
     
     // 創建簡單的提示
@@ -495,23 +631,34 @@
     // 不在 PWA 模式下，檢查是否應該強制顯示安裝按鈕
     setTimeout(() => {
       if (shouldForceShowInstallButton()) {
-        console.log('🖥️ 桌面環境檢測到，準備強制顯示安裝按鈕');
+        if (isChromeAndroid()) {
+          console.log('📱 Chrome Android 環境檢測到，準備強制顯示安裝按鈕');
+        } else {
+          console.log('🖥️ 桌面環境檢測到，準備強制顯示安裝按鈕');
+        }
         forceShowInstallButton = true;
         
         // 如果用戶已經有互動，立即顯示
         if (hasUserEngagement) {
           showInstallButtons();
+          
+          // Chrome Android 特殊處理：嘗試觸發橫幅
+          if (isChromeAndroid() && deferredPrompt) {
+            triggerInstallBanner();
+          }
         }
       }
-    }, 2000); // 2秒後檢查
+    }, 1000); // 1秒後檢查
   }
 
   // 暴露全局函數供測試使用
   window.PWAInstaller = {
     triggerInstallPrompt,
+    triggerInstallBanner,
     hasPrompt: () => !!deferredPrompt || forceShowInstallButton,
     hasUserEngagement: () => hasUserEngagement,
     isPWAMode,
+    isChromeAndroid,
     showManualInstructions: showManualInstallInstructions,
     getVersion: () => CURRENT_VERSION,
     forceShow: () => forceShowInstallButton

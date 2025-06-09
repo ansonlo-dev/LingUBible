@@ -292,7 +292,33 @@ async function generateManifest(language = 'en') {
         protocol: "web+lingubible",
         url: "/?handler=%s"
       }
-    ]
+    ],
+    // Chrome Android 安裝橫幅優化
+    id: "/",
+    related_applications: [],
+    iarc_rating_id: "",
+    // 確保 PWA 安裝條件
+    display_mode: "standalone",
+    // 添加更多 PWA 特性
+    file_handlers: [
+      {
+        action: "/",
+        accept: {
+          "text/plain": [".txt"],
+          "application/json": [".json"]
+        }
+      }
+    ],
+    share_target: {
+      action: "/share",
+      method: "POST",
+      enctype: "multipart/form-data",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url"
+      }
+    }
   };
 
   // 根據環境添加不同的 screenshots
