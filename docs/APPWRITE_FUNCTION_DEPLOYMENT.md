@@ -74,7 +74,7 @@ appwrite functions create-deployment \
 
 ```bash
 # 部署所有函數
-appwrite deploy functions
+appwrite push functions
 ```
 
 ## 🔧 故障排除

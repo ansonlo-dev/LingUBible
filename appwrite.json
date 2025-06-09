@@ -47,7 +47,7 @@
             "name": "Send Verification Email",
             "enabled": true,
             "logging": true,
-            "runtime": "node-18.0",
+            "runtime": "bun-1.1",
             "scopes": [
                 "databases.read",
                 "databases.write"
@@ -68,7 +68,7 @@
             "name": "Cleanup Expired Codes",
             "enabled": true,
             "logging": true,
-            "runtime": "node-18.0",
+            "runtime": "bun-1.1",
             "scopes": [
                 "databases.read",
                 "databases.write"
@@ -89,7 +89,7 @@
             "name": "Get User Statistics",
             "enabled": true,
             "logging": true,
-            "runtime": "node-18.0",
+            "runtime": "bun-1.1",
             "scopes": [
                 "users.read",
                 "databases.read",
