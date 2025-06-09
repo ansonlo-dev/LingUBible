@@ -20,11 +20,13 @@
             if (response.ok && response.headers.get('content-type')?.includes('javascript')) {
               registerServiceWorker(swPath);
             } else {
-              console.warn('⚠️ 開發環境 Service Worker 檔案不存在或格式不正確，跳過註冊');
+              // 靜默處理開發環境 SW 文件格式問題
+              // console.warn('⚠️ 開發環境 Service Worker 檔案不存在或格式不正確，跳過註冊');
             }
           })
           .catch(() => {
-            console.warn('⚠️ 開發環境 Service Worker 檔案不存在，跳過註冊');
+            // 靜默處理開發環境 SW 文件不存在的情況
+            // console.warn('⚠️ 開發環境 Service Worker 檔案不存在，跳過註冊');
           });
       } else {
         // 生產環境直接註冊
@@ -241,17 +243,25 @@
       console.log('  - 安裝提示可用:', !!deferredPrompt);
       console.log('  - 用戶代理:', navigator.userAgent);
       
-      // 如果 5 秒後仍沒有安裝提示，記錄診斷信息
+      // 如果 10 秒後仍沒有安裝提示，記錄診斷信息（僅在生產環境）
       setTimeout(() => {
-        if (!deferredPrompt && !isPWAMode()) {
+        if (!deferredPrompt && !isPWAMode() && window.location.protocol === 'https:') {
           console.warn('⚠️ PWA 安裝提示未出現，可能的原因:');
           console.warn('  1. 應用已安裝');
           console.warn('  2. 不滿足 PWA 安裝條件');
           console.warn('  3. 瀏覽器不支援 PWA 安裝');
           console.warn('  4. HTTPS 要求未滿足');
           console.warn('  5. Manifest 文件有問題');
+          
+          // 提供更詳細的診斷信息
+          console.log('🔍 PWA 診斷信息:');
+          console.log('  - 當前 URL:', window.location.href);
+          console.log('  - 協議:', window.location.protocol);
+          console.log('  - 用戶代理:', navigator.userAgent);
+          console.log('  - Service Worker 支援:', 'serviceWorker' in navigator);
+          console.log('  - 顯示模式:', window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser');
         }
-      }, 5000);
+      }, 10000);
     }, 1000);
   });
 })(); 

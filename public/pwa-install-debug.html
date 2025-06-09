@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA 安裝調試 - LingUBible</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .icon-test {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .icon-test img {
+            width: 32px;
+            height: 32px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 PWA 安裝調試工具</h1>
+    <p>此頁面用於診斷 PWA 安裝問題，檢查所有必要條件。</p>
+
+    <div class="test-section">
+        <h2>📋 基本檢查</h2>
+        <div id="basic-checks"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📄 Manifest 檢查</h2>
+        <div id="manifest-checks"></div>
+        <button onclick="testManifest()">重新檢查 Manifest</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Service Worker 檢查</h2>
+        <div id="sw-checks"></div>
+        <button onclick="testServiceWorker()">重新檢查 SW</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🖼️ 圖標檢查</h2>
+        <div id="icon-checks"></div>
+        <button onclick="testIcons()">檢查圖標</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 PWA 安裝檢查</h2>
+        <div id="install-checks"></div>
+        <button onclick="triggerInstall()" id="install-btn" disabled>觸發安裝</button>
+        <button onclick="checkInstallability()">檢查可安裝性</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 詳細信息</h2>
+        <pre id="detailed-info"></pre>
+        <button onclick="refreshInfo()">刷新信息</button>
+    </div>
+
+    <script>
+        let deferredPrompt = null;
+        let manifestData = null;
+
+        // 基本檢查
+        function performBasicChecks() {
+            const checks = document.getElementById('basic-checks');
+            let html = '';
+
+            // HTTPS 檢查
+            const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+            html += `<div class="status ${isHTTPS ? 'success' : 'error'}">
+                HTTPS: ${isHTTPS ? '✅ 已啟用' : '❌ 未啟用 (必需)'}
+            </div>`;
+
+            // Service Worker 支援
+            const hasSW = 'serviceWorker' in navigator;
+            html += `<div class="status ${hasSW ? 'success' : 'error'}">
+                Service Worker 支援: ${hasSW ? '✅ 支援' : '❌ 不支援'}
+            </div>`;
+
+            // 瀏覽器檢查
+            const userAgent = navigator.userAgent;
+            const isChrome = userAgent.includes('Chrome') && !userAgent.includes('Edg');
+            const isEdge = userAgent.includes('Edg');
+            const isFirefox = userAgent.includes('Firefox');
+            const isSafari = userAgent.includes('Safari') && !userAgent.includes('Chrome');
+            
+            let browserSupport = 'unknown';
+            if (isChrome) browserSupport = 'Chrome (完全支援)';
+            else if (isEdge) browserSupport = 'Edge (完全支援)';
+            else if (isFirefox) browserSupport = 'Firefox (部分支援)';
+            else if (isSafari) browserSupport = 'Safari (部分支援)';
+
+            html += `<div class="status info">
+                瀏覽器: ${browserSupport}
+            </div>`;
+
+            // 顯示模式檢查
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            html += `<div class="status ${isStandalone ? 'warning' : 'info'}">
+                顯示模式: ${isStandalone ? '⚠️ 已安裝 (Standalone)' : '🌐 瀏覽器模式'}
+            </div>`;
+
+            checks.innerHTML = html;
+        }
+
+        // Manifest 檢查
+        async function testManifest() {
+            const checks = document.getElementById('manifest-checks');
+            let html = '';
+
+            try {
+                // 檢查 manifest link
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                if (!manifestLink) {
+                    html += `<div class="status error">❌ 未找到 manifest link 標籤</div>`;
+                    checks.innerHTML = html;
+                    return;
+                }
+
+                html += `<div class="status success">✅ Manifest link: ${manifestLink.href}</div>`;
+
+                // 獲取 manifest 內容
+                const response = await fetch(manifestLink.href);
+                if (!response.ok) {
+                    html += `<div class="status error">❌ 無法載入 manifest: ${response.status}</div>`;
+                    checks.innerHTML = html;
+                    return;
+                }
+
+                manifestData = await response.json();
+                html += `<div class="status success">✅ Manifest 載入成功</div>`;
+
+                // 檢查必要欄位
+                const requiredFields = ['name', 'short_name', 'start_url', 'display', 'icons'];
+                for (const field of requiredFields) {
+                    const hasField = manifestData[field];
+                    html += `<div class="status ${hasField ? 'success' : 'error'}">
+                        ${hasField ? '✅' : '❌'} ${field}: ${hasField ? '已設定' : '缺少'}
+                    </div>`;
+                }
+
+                // 檢查圖標
+                if (manifestData.icons && manifestData.icons.length > 0) {
+                    const hasLargeIcon = manifestData.icons.some(icon => 
+                        icon.sizes && (icon.sizes.includes('192x192') || icon.sizes.includes('512x512'))
+                    );
+                    html += `<div class="status ${hasLargeIcon ? 'success' : 'warning'}">
+                        ${hasLargeIcon ? '✅' : '⚠️'} 大尺寸圖標 (192x192 或 512x512): ${hasLargeIcon ? '已設定' : '建議添加'}
+                    </div>`;
+                }
+
+                // 檢查截圖
+                if (manifestData.screenshots && manifestData.screenshots.length > 0) {
+                    html += `<div class="status success">✅ 截圖: ${manifestData.screenshots.length} 個</div>`;
+                } else {
+                    html += `<div class="status warning">⚠️ 截圖: 未設定 (建議添加以提高安裝率)</div>`;
+                }
+
+            } catch (error) {
+                html += `<div class="status error">❌ Manifest 檢查失敗: ${error.message}</div>`;
+            }
+
+            checks.innerHTML = html;
+        }
+
+        // Service Worker 檢查
+        async function testServiceWorker() {
+            const checks = document.getElementById('sw-checks');
+            let html = '';
+
+            if (!('serviceWorker' in navigator)) {
+                html += `<div class="status error">❌ 瀏覽器不支援 Service Worker</div>`;
+                checks.innerHTML = html;
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    html += `<div class="status success">✅ Service Worker 已註冊</div>`;
+                    html += `<div class="status info">📄 Scope: ${registration.scope}</div>`;
+                    
+                    if (registration.active) {
+                        html += `<div class="status success">✅ Service Worker 已激活</div>`;
+                        html += `<div class="status info">📄 Script URL: ${registration.active.scriptURL}</div>`;
+                    } else {
+                        html += `<div class="status warning">⚠️ Service Worker 未激活</div>`;
+                    }
+                } else {
+                    html += `<div class="status warning">⚠️ Service Worker 未註冊</div>`;
+                    
+                    // 嘗試檢查 SW 文件
+                    const swPaths = ['/sw.js', '/dev-sw.js'];
+                    for (const path of swPaths) {
+                        try {
+                            const response = await fetch(path, { method: 'HEAD' });
+                            html += `<div class="status ${response.ok ? 'info' : 'warning'}">
+                                ${response.ok ? '📄' : '⚠️'} ${path}: ${response.ok ? '存在' : '不存在'}
+                            </div>`;
+                        } catch (e) {
+                            html += `<div class="status warning">⚠️ ${path}: 檢查失敗</div>`;
+                        }
+                    }
+                }
+            } catch (error) {
+                html += `<div class="status error">❌ Service Worker 檢查失敗: ${error.message}</div>`;
+            }
+
+            checks.innerHTML = html;
+        }
+
+        // 圖標檢查
+        async function testIcons() {
+            const checks = document.getElementById('icon-checks');
+            let html = '';
+
+            if (!manifestData) {
+                html += `<div class="status warning">⚠️ 請先檢查 Manifest</div>`;
+                checks.innerHTML = html;
+                return;
+            }
+
+            if (!manifestData.icons || manifestData.icons.length === 0) {
+                html += `<div class="status error">❌ Manifest 中沒有圖標</div>`;
+                checks.innerHTML = html;
+                return;
+            }
+
+            html += `<div class="status info">📊 總共 ${manifestData.icons.length} 個圖標</div>`;
+
+            for (const icon of manifestData.icons) {
+                try {
+                    const response = await fetch(icon.src, { method: 'HEAD' });
+                    const status = response.ok ? 'success' : 'error';
+                    const statusText = response.ok ? '✅' : '❌';
+                    
+                    html += `<div class="status ${status}">
+                        ${statusText} ${icon.sizes || 'any'} (${icon.type || 'unknown'}): ${icon.src}
+                        ${icon.purpose ? ` - ${icon.purpose}` : ''}
+                    </div>`;
+
+                    // 顯示圖標預覽
+                    if (response.ok && icon.type && icon.type.startsWith('image/')) {
+                        html += `<div class="icon-test">
+                            <img src="${icon.src}" alt="${icon.sizes}" title="${icon.src}">
+                            <br><small>${icon.sizes}</small>
+                        </div>`;
+                    }
+                } catch (error) {
+                    html += `<div class="status error">❌ ${icon.sizes || 'any'}: 檢查失敗 - ${error.message}</div>`;
+                }
+            }
+
+            checks.innerHTML = html;
+        }
+
+        // PWA 安裝檢查
+        function checkInstallability() {
+            const checks = document.getElementById('install-checks');
+            let html = '';
+
+            // 檢查是否已安裝
+            const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+            html += `<div class="status ${isInstalled ? 'warning' : 'info'}">
+                ${isInstalled ? '⚠️ PWA 已安裝' : '📱 PWA 未安裝'}
+            </div>`;
+
+            // 檢查安裝提示
+            html += `<div class="status ${deferredPrompt ? 'success' : 'warning'}">
+                ${deferredPrompt ? '✅ 安裝提示可用' : '⚠️ 安裝提示不可用'}
+            </div>`;
+
+            // 檢查瀏覽器支援
+            const userAgent = navigator.userAgent;
+            const supportsInstall = userAgent.includes('Chrome') || userAgent.includes('Edg');
+            html += `<div class="status ${supportsInstall ? 'success' : 'warning'}">
+                ${supportsInstall ? '✅' : '⚠️'} 瀏覽器安裝支援: ${supportsInstall ? '支援' : '可能不支援'}
+            </div>`;
+
+            document.getElementById('install-btn').disabled = !deferredPrompt;
+            checks.innerHTML = html;
+        }
+
+        // 觸發安裝
+        async function triggerInstall() {
+            if (!deferredPrompt) {
+                alert('安裝提示不可用');
+                return;
+            }
+
+            try {
+                deferredPrompt.prompt();
+                const choiceResult = await deferredPrompt.userChoice;
+                
+                const checks = document.getElementById('install-checks');
+                checks.innerHTML += `<div class="status info">
+                    👤 用戶選擇: ${choiceResult.outcome}
+                </div>`;
+
+                deferredPrompt = null;
+                document.getElementById('install-btn').disabled = true;
+            } catch (error) {
+                alert('安裝失敗: ' + error.message);
+            }
+        }
+
+        // 刷新詳細信息
+        function refreshInfo() {
+            const info = {
+                url: location.href,
+                protocol: location.protocol,
+                hostname: location.hostname,
+                userAgent: navigator.userAgent,
+                serviceWorkerSupport: 'serviceWorker' in navigator,
+                displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                screen: `${screen.width}x${screen.height}`,
+                pixelRatio: window.devicePixelRatio,
+                online: navigator.onLine,
+                cookieEnabled: navigator.cookieEnabled,
+                language: navigator.language,
+                languages: navigator.languages,
+                platform: navigator.platform,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                maxTouchPoints: navigator.maxTouchPoints,
+                manifestData: manifestData
+            };
+
+            document.getElementById('detailed-info').textContent = JSON.stringify(info, null, 2);
+        }
+
+        // 監聽 beforeinstallprompt 事件
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('💡 PWA 安裝提示可用', e);
+            
+            const checks = document.getElementById('install-checks');
+            checks.innerHTML += `<div class="status success">✅ 安裝提示事件已觸發</div>`;
+            document.getElementById('install-btn').disabled = false;
+        });
+
+        // 監聽安裝完成事件
+        window.addEventListener('appinstalled', (e) => {
+            console.log('🎉 PWA 安裝完成', e);
+            const checks = document.getElementById('install-checks');
+            checks.innerHTML += `<div class="status success">🎉 PWA 安裝完成</div>`;
+        });
+
+        // 頁面載入時執行檢查
+        window.addEventListener('load', () => {
+            performBasicChecks();
+            testManifest();
+            testServiceWorker();
+            checkInstallability();
+            refreshInfo();
+        });
+    </script>
+</body>
+</html> 

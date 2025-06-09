@@ -151,40 +151,46 @@ export default defineConfig(({ command, mode }) => ({
         // 確保包含所有必要的圖標尺寸，符合 PWA 安裝要求
         icons: [
           {
+            src: 'favicon-32.png',
+            sizes: '32x32',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
             src: 'favicon-96x96.png',
             sizes: '96x96',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'android/android-launchericon-192-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'android/android-launchericon-192-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: 'android/android-launchericon-512-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'android/android-launchericon-512-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
             src: 'apple-touch-icon.png',
             sizes: '180x180',
             type: 'image/png',
             purpose: 'any'
+          },
+          {
+            src: 'icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'android/android-launchericon-192-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'android/android-launchericon-512-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           },
           {
             src: 'favicon.svg',
@@ -219,8 +225,21 @@ export default defineConfig(({ command, mode }) => ({
             url: '/?action=search',
             icons: [
               {
-                src: 'android/android-launchericon-192-192.png',
-                sizes: '192x192',
+                src: 'icon-search.png',
+                sizes: '96x96',
+                type: 'image/png'
+              }
+            ]
+          },
+          {
+            name: 'My Reviews',
+            short_name: 'Reviews',
+            description: 'View my course reviews',
+            url: '/?action=reviews',
+            icons: [
+              {
+                src: 'icon-reviews.png',
+                sizes: '96x96',
                 type: 'image/png'
               }
             ]
@@ -346,6 +365,12 @@ export default defineConfig(({ command, mode }) => ({
             prefer_related_applications: false,
             icons: [
               {
+                src: "/favicon-32.png",
+                sizes: "32x32",
+                type: "image/png",
+                purpose: "any"
+              },
+              {
                 src: "/favicon-96x96.png",
                 sizes: "96x96",
                 type: "image/png",
@@ -358,22 +383,34 @@ export default defineConfig(({ command, mode }) => ({
                 purpose: "any"
               },
               {
+                src: "/icon-192.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any"
+              },
+              {
                 src: "/android/android-launchericon-192-192.png",
                 sizes: "192x192",
                 type: "image/png",
-                purpose: "any maskable"
+                purpose: "maskable"
+              },
+              {
+                src: "/icon-512.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "any"
               },
               {
                 src: "/android/android-launchericon-512-512.png",
                 sizes: "512x512",
                 type: "image/png",
-                purpose: "any maskable"
+                purpose: "maskable"
               },
               {
                 src: "/favicon.svg",
                 sizes: "any",
                 type: "image/svg+xml",
-                purpose: "any maskable"
+                purpose: "any"
               }
             ],
             shortcuts: [

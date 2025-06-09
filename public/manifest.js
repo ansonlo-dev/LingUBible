@@ -207,20 +207,14 @@ async function generateManifest(language = 'en') {
     prefer_related_applications: false,
     icons: [
       {
-        src: "/favicon.svg?v=2",
-        sizes: "32x32",
-        type: "image/svg+xml",
-        purpose: "any"
-      },
-      {
         src: "/favicon-32.png?v=2",
         sizes: "32x32",
         type: "image/png",
         purpose: "any"
       },
       {
-        src: "/apple-touch-icon.svg?v=2",
-        sizes: "180x180",
+        src: "/favicon.svg?v=2",
+        sizes: "32x32",
         type: "image/svg+xml",
         purpose: "any"
       },
@@ -240,7 +234,7 @@ async function generateManifest(language = 'en') {
         src: "/logo.svg?v=2",
         sizes: "192x192",
         type: "image/svg+xml",
-        purpose: "any maskable"
+        purpose: "maskable"
       },
       {
         src: "/icon-512.png?v=2",
@@ -252,7 +246,7 @@ async function generateManifest(language = 'en') {
         src: "/logo.svg?v=2",
         sizes: "512x512",
         type: "image/svg+xml",
-        purpose: "any maskable"
+        purpose: "maskable"
       }
     ],
     shortcuts: [
