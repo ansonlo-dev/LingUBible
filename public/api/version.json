@@ -1,9 +1,9 @@
 {
-  "version": "0.1.17",
+  "version": "0.1.18",
   "name": "lingubible",
   "description": "Course and lecturer review platform",
-  "buildTime": "2025-06-09T01:31:02.191Z",
+  "buildTime": "2025-06-09T01:43:28.626Z",
   "environment": "development",
-  "gitCommit": "13454140e59d676df059cb96daaba6965a4fc0d2",
+  "gitCommit": "d3d0ed26f921b89ffef01f5ab21d6343e2292b89",
   "gitRef": "refs/heads/main"
 }
