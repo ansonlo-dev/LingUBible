@@ -1,1 +1,22 @@
+# SPA 路由重定向 - 只對不存在的文件進行重定向
+/api/* 200
+/assets/* 200
+/*.html 200
+/*.js 200
+/*.css 200
+/*.json 200
+/*.png 200
+/*.jpg 200
+/*.jpeg 200
+/*.gif 200
+/*.svg 200
+/*.ico 200
+/*.webp 200
+/*.woff 200
+/*.woff2 200
+/*.ttf 200
+/*.eot 200
+/*.xml 200
+/*.txt 200
+/*.pdf 200
 /* /index.html 200 
