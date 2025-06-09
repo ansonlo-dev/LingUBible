@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>_redirects 修復測試 - LingUBible</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .test-item {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .code {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 _redirects 修復測試</h1>
+        
+        <div class="info">
+            <strong>測試目的：</strong>驗證 _redirects 文件修復是否解決了無限循環問題
+        </div>
+
+        <h2>📋 修復詳情</h2>
+        <div class="test-item">
+            <h3>問題：</h3>
+            <div class="code">/* /index.html 200</div>
+            <p>❌ 這個規則會導致無限循環，因為它會將所有請求（包括對 /index.html 的請求）都重定向到 /index.html</p>
+        </div>
+
+        <div class="test-item">
+            <h3>解決方案：</h3>
+            <div class="code">
+# SPA 路由重定向 - 只對不存在的文件進行重定向<br>
+/api/* 200<br>
+/assets/* 200<br>
+/*.html 200<br>
+/*.js 200<br>
+/*.css 200<br>
+/*.json 200<br>
+/*.png 200<br>
+/*.jpg 200<br>
+/*.jpeg 200<br>
+/*.gif 200<br>
+/*.svg 200<br>
+/*.ico 200<br>
+/*.webp 200<br>
+/*.woff 200<br>
+/*.woff2 200<br>
+/*.ttf 200<br>
+/*.eot 200<br>
+/*.xml 200<br>
+/*.txt 200<br>
+/*.pdf 200<br>
+/* /index.html 200
+            </div>
+            <p>✅ 這個配置首先匹配所有靜態文件類型，只有當請求不匹配任何靜態文件時才重定向到 /index.html</p>
+        </div>
+
+        <h2>🧪 測試項目</h2>
+        
+        <div class="test-item">
+            <h3>1. 靜態文件訪問測試</h3>
+            <button onclick="testStaticFiles()">測試靜態文件</button>
+            <div id="static-test-result"></div>
+        </div>
+
+        <div class="test-item">
+            <h3>2. SPA 路由測試</h3>
+            <button onclick="testSPARoutes()">測試 SPA 路由</button>
+            <div id="spa-test-result"></div>
+        </div>
+
+        <div class="test-item">
+            <h3>3. 部署狀態檢查</h3>
+            <button onclick="checkDeploymentStatus()">檢查部署狀態</button>
+            <div id="deployment-status"></div>
+        </div>
+
+        <h2>📊 測試結果</h2>
+        <div id="overall-result" class="status info">
+            點擊上方按鈕開始測試...
+        </div>
+
+        <h2>🔗 相關連結</h2>
+        <div class="test-item">
+            <a href="/" target="_blank">🏠 主頁</a><br>
+            <a href="/auth/login" target="_blank">🔐 登入頁面</a><br>
+            <a href="/user/profile" target="_blank">👤 用戶資料</a><br>
+            <a href="/api/version.json" target="_blank">📦 版本信息</a><br>
+            <a href="/assets/index.css" target="_blank">🎨 CSS 文件</a>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            static: null,
+            spa: null,
+            deployment: null
+        };
+
+        async function testStaticFiles() {
+            const result = document.getElementById('static-test-result');
+            result.innerHTML = '<div class="info">測試中...</div>';
+            
+            const tests = [
+                { url: '/api/version.json', type: 'JSON API' },
+                { url: '/manifest.webmanifest', type: 'Web Manifest' },
+                { url: '/favicon.ico', type: 'Favicon' },
+                { url: '/sw-register.js', type: 'Service Worker' }
+            ];
+            
+            let passed = 0;
+            let total = tests.length;
+            let details = '';
+            
+            for (const test of tests) {
+                try {
+                    const response = await fetch(test.url);
+                    if (response.ok) {
+                        passed++;
+                        details += `✅ ${test.type}: ${response.status}<br>`;
+                    } else {
+                        details += `❌ ${test.type}: ${response.status}<br>`;
+                    }
+                } catch (error) {
+                    details += `❌ ${test.type}: 錯誤 - ${error.message}<br>`;
+                }
+            }
+            
+            testResults.static = passed === total;
+            const status = passed === total ? 'success' : 'error';
+            result.innerHTML = `
+                <div class="${status}">
+                    <strong>靜態文件測試結果: ${passed}/${total}</strong><br>
+                    ${details}
+                </div>
+            `;
+            
+            updateOverallResult();
+        }
+
+        async function testSPARoutes() {
+            const result = document.getElementById('spa-test-result');
+            result.innerHTML = '<div class="info">測試中...</div>';
+            
+            const routes = [
+                '/auth/login',
+                '/user/profile',
+                '/demo/features',
+                '/legal/privacy'
+            ];
+            
+            let passed = 0;
+            let total = routes.length;
+            let details = '';
+            
+            for (const route of routes) {
+                try {
+                    const response = await fetch(route);
+                    if (response.ok) {
+                        passed++;
+                        details += `✅ ${route}: ${response.status}<br>`;
+                    } else {
+                        details += `❌ ${route}: ${response.status}<br>`;
+                    }
+                } catch (error) {
+                    details += `❌ ${route}: 錯誤 - ${error.message}<br>`;
+                }
+            }
+            
+            testResults.spa = passed === total;
+            const status = passed === total ? 'success' : 'error';
+            result.innerHTML = `
+                <div class="${status}">
+                    <strong>SPA 路由測試結果: ${passed}/${total}</strong><br>
+                    ${details}
+                </div>
+            `;
+            
+            updateOverallResult();
+        }
+
+        async function checkDeploymentStatus() {
+            const result = document.getElementById('deployment-status');
+            result.innerHTML = '<div class="info">檢查中...</div>';
+            
+            try {
+                const response = await fetch('/api/version.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    testResults.deployment = true;
+                    result.innerHTML = `
+                        <div class="success">
+                            <strong>✅ 部署成功</strong><br>
+                            版本: ${data.version}<br>
+                            構建時間: ${new Date(data.buildTime).toLocaleString('zh-TW')}<br>
+                            環境: ${data.environment}
+                        </div>
+                    `;
+                } else {
+                    testResults.deployment = false;
+                    result.innerHTML = `
+                        <div class="error">
+                            <strong>❌ 部署檢查失敗</strong><br>
+                            狀態碼: ${response.status}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                testResults.deployment = false;
+                result.innerHTML = `
+                    <div class="error">
+                        <strong>❌ 部署檢查錯誤</strong><br>
+                        錯誤: ${error.message}
+                    </div>
+                `;
+            }
+            
+            updateOverallResult();
+        }
+
+        function updateOverallResult() {
+            const result = document.getElementById('overall-result');
+            const completed = Object.values(testResults).filter(r => r !== null).length;
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const total = Object.keys(testResults).length;
+            
+            if (completed === 0) {
+                return;
+            }
+            
+            if (completed < total) {
+                result.innerHTML = `
+                    <div class="info">
+                        <strong>測試進行中...</strong><br>
+                        已完成: ${completed}/${total} | 通過: ${passed}
+                    </div>
+                `;
+            } else {
+                const allPassed = passed === total;
+                const status = allPassed ? 'success' : 'error';
+                const message = allPassed ? 
+                    '🎉 所有測試通過！_redirects 修復成功！' : 
+                    '⚠️ 部分測試失敗，請檢查具體項目';
+                
+                result.innerHTML = `
+                    <div class="${status}">
+                        <strong>${message}</strong><br>
+                        通過率: ${passed}/${total}
+                    </div>
+                `;
+            }
+        }
+
+        // 頁面載入時顯示當前 URL 信息
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 _redirects 修復測試頁面已載入');
+            console.log('📍 當前 URL:', window.location.href);
+            console.log('🌐 User Agent:', navigator.userAgent);
+        });
+    </script>
+</body>
+</html> 
