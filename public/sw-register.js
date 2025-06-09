@@ -239,6 +239,53 @@
   let hasUserEngagement = false;
   let installPromptTimeout;
   let forceShowInstallButton = false;
+  let userDismissedInstall = false; // 記錄用戶是否拒絕過安裝
+  let dismissalTimestamp = null; // 記錄拒絕時間
+  let installAttemptCount = 0; // 記錄安裝嘗試次數
+  
+  // 檢查用戶是否最近拒絕過安裝
+  function checkUserDismissalStatus() {
+    try {
+      const dismissalData = localStorage.getItem('pwa_install_dismissed');
+      if (dismissalData) {
+        const data = JSON.parse(dismissalData);
+        const now = Date.now();
+        const dismissalAge = now - data.timestamp;
+        
+        // 如果用戶在 24 小時內拒絕過，不再顯示
+        if (dismissalAge < 24 * 60 * 60 * 1000) {
+          userDismissedInstall = true;
+          dismissalTimestamp = data.timestamp;
+          console.log('⏰ 用戶在 24 小時內拒絕過安裝，暫不顯示安裝提示');
+          return true;
+        } else {
+          // 超過 24 小時，清除記錄
+          localStorage.removeItem('pwa_install_dismissed');
+          userDismissedInstall = false;
+          dismissalTimestamp = null;
+        }
+      }
+    } catch (error) {
+      console.warn('檢查用戶拒絕狀態時出錯:', error);
+    }
+    return false;
+  }
+  
+  // 記錄用戶拒絕安裝
+  function recordUserDismissal() {
+    try {
+      const dismissalData = {
+        timestamp: Date.now(),
+        count: (JSON.parse(localStorage.getItem('pwa_install_dismissed') || '{}').count || 0) + 1
+      };
+      localStorage.setItem('pwa_install_dismissed', JSON.stringify(dismissalData));
+      userDismissedInstall = true;
+      dismissalTimestamp = dismissalData.timestamp;
+      console.log('📝 已記錄用戶拒絕安裝，24 小時內不再顯示');
+    } catch (error) {
+      console.warn('記錄用戶拒絕狀態時出錯:', error);
+    }
+  }
   
   // 檢查是否為 Chrome Android
   function isChromeAndroid() {
@@ -251,6 +298,11 @@
   
   // 檢查是否應該強制顯示安裝按鈕
   function shouldForceShowInstallButton() {
+    // 如果用戶最近拒絕過，不顯示
+    if (userDismissedInstall) {
+      return false;
+    }
+    
     const isDesktop = window.innerWidth >= 768;
     const isMobile = window.innerWidth < 768;
     const isHTTPS = window.location.protocol === 'https:';
@@ -283,6 +335,12 @@
       
       console.log('👤 用戶開始互動，PWA 安裝提示準備就緒');
       
+      // 檢查用戶拒絕狀態
+      if (checkUserDismissalStatus()) {
+        console.log('⏸️ 用戶最近拒絕過安裝，跳過安裝提示');
+        return;
+      }
+      
       // Chrome Android 特殊處理：更快顯示安裝提示
       if (isChromeAndroid()) {
         console.log('📱 Chrome Android 檢測到，快速顯示安裝提示');
@@ -292,7 +350,7 @@
         installPromptTimeout = setTimeout(() => {
           showInstallButtons();
           // 嘗試觸發原生安裝橫幅
-          if (deferredPrompt) {
+          if (deferredPrompt && !installPromptShown) {
             triggerInstallBanner();
           }
         }, 500); // Chrome Android 0.5秒後顯示
@@ -320,32 +378,44 @@
   
   // Chrome Android 安裝橫幅觸發
   function triggerInstallBanner() {
-    if (isChromeAndroid() && deferredPrompt && !installPromptShown) {
+    if (isChromeAndroid() && deferredPrompt && !installPromptShown && !userDismissedInstall) {
       console.log('📱 Chrome Android: 嘗試觸發安裝橫幅');
       
       // 延遲一點時間，確保用戶看到頁面內容
       setTimeout(() => {
-        if (deferredPrompt && !installPromptShown) {
+        if (deferredPrompt && !installPromptShown && !userDismissedInstall) {
           console.log('📱 Chrome Android: 顯示安裝橫幅');
           installPromptShown = true;
+          installAttemptCount++;
           
-          deferredPrompt.prompt();
+          // 創建 deferredPrompt 的副本，避免被清空
+          const promptToShow = deferredPrompt;
           
-          deferredPrompt.userChoice.then(function(choiceResult) {
+          promptToShow.prompt();
+          
+          promptToShow.userChoice.then(function(choiceResult) {
             console.log('👤 Chrome Android 用戶選擇:', choiceResult.outcome);
             
             if (choiceResult.outcome === 'accepted') {
               console.log('✅ Chrome Android: 用戶接受了 PWA 安裝');
               window.dispatchEvent(new CustomEvent('pwaInstallAccepted'));
+              
+              // 清除拒絕記錄
+              try {
+                localStorage.removeItem('pwa_install_dismissed');
+              } catch (error) {
+                console.warn('清除拒絕記錄時出錯:', error);
+              }
             } else {
               console.log('❌ Chrome Android: 用戶拒絕了 PWA 安裝');
+              recordUserDismissal();
               window.dispatchEvent(new CustomEvent('pwaInstallDismissed'));
             }
             
-            deferredPrompt = null;
+            // 重置狀態，但不清空 deferredPrompt（讓瀏覽器管理）
+            installPromptShown = false;
           }).catch(function(error) {
             console.error('❌ Chrome Android 安裝橫幅出錯:', error);
-            deferredPrompt = null;
             installPromptShown = false;
           });
         }
@@ -355,6 +425,12 @@
   
   // 顯示安裝按鈕
   function showInstallButtons() {
+    // 如果用戶拒絕過，不顯示按鈕
+    if (userDismissedInstall) {
+      console.log('⏸️ 用戶拒絕過安裝，不顯示安裝按鈕');
+      return;
+    }
+    
     const installButtons = document.querySelectorAll('.pwa-install-button, #pwa-install-button');
     installButtons.forEach(button => {
       if (button) {
@@ -380,7 +456,8 @@
         canInstall: true,
         hasUserEngagement: hasUserEngagement,
         forceShow: forceShowInstallButton,
-        isChromeAndroid: isChromeAndroid()
+        isChromeAndroid: isChromeAndroid(),
+        userDismissed: userDismissedInstall
       }
     }));
   }
@@ -391,6 +468,12 @@
     console.log('🖥️ 平台:', e.platforms);
     console.log('👤 用戶互動狀態:', hasUserEngagement);
     console.log('📱 Chrome Android:', isChromeAndroid());
+    
+    // 檢查用戶拒絕狀態
+    if (checkUserDismissalStatus()) {
+      console.log('⏸️ 用戶最近拒絕過安裝，不處理 beforeinstallprompt 事件');
+      return;
+    }
     
     // 防止瀏覽器自動顯示安裝提示
     e.preventDefault();
@@ -427,15 +510,26 @@
 
   // 觸發安裝提示的函數
   function triggerInstallPrompt() {
+    // 檢查用戶拒絕狀態
+    if (userDismissedInstall) {
+      console.log('⏸️ 用戶拒絕過安裝，顯示手動安裝指引');
+      showManualInstallInstructions();
+      return;
+    }
+    
     if (deferredPrompt && !installPromptShown) {
       console.log('🚀 觸發 PWA 安裝提示');
       installPromptShown = true;
+      installAttemptCount++;
+      
+      // 創建 deferredPrompt 的副本，避免被清空
+      const promptToShow = deferredPrompt;
       
       // 顯示安裝提示
-      deferredPrompt.prompt();
+      promptToShow.prompt();
       
       // 等待用戶回應
-      deferredPrompt.userChoice.then(function(choiceResult) {
+      promptToShow.userChoice.then(function(choiceResult) {
         console.log('👤 用戶選擇:', choiceResult.outcome);
         
         if (choiceResult.outcome === 'accepted') {
@@ -449,24 +543,42 @@
             }
           });
           
+          // 清除拒絕記錄
+          try {
+            localStorage.removeItem('pwa_install_dismissed');
+          } catch (error) {
+            console.warn('清除拒絕記錄時出錯:', error);
+          }
+          
           // 觸發安裝成功事件
           window.dispatchEvent(new CustomEvent('pwaInstallAccepted'));
         } else {
           console.log('❌ 用戶拒絕了 PWA 安裝');
+          recordUserDismissal();
+          
+          // 隱藏安裝按鈕
+          const installButtons = document.querySelectorAll('.pwa-install-button, #pwa-install-button');
+          installButtons.forEach(button => {
+            if (button) {
+              button.style.display = 'none';
+            }
+          });
           
           // 觸發安裝拒絕事件
           window.dispatchEvent(new CustomEvent('pwaInstallDismissed'));
         }
         
-        deferredPrompt = null;
+        // 重置狀態，但不清空 deferredPrompt
+        installPromptShown = false;
       }).catch(function(error) {
         console.error('❌ 安裝提示出錯:', error);
-        deferredPrompt = null;
         installPromptShown = false;
       });
     } else if (!deferredPrompt) {
       console.warn('⚠️ 沒有可用的安裝提示');
       showManualInstallInstructions();
+    } else if (installPromptShown) {
+      console.warn('⚠️ 安裝提示已經顯示過，請等待用戶回應');
     }
   }
 
@@ -474,9 +586,20 @@
   function showManualInstallInstructions() {
     const userAgent = navigator.userAgent.toLowerCase();
     let instructions = '';
+    let title = '安裝 LingUBible 應用';
+    
+    // 如果用戶拒絕過，調整標題和說明
+    if (userDismissedInstall) {
+      title = '手動安裝 LingUBible';
+      instructions = `
+        <div style="text-align: left; line-height: 1.6; margin-bottom: 15px;">
+          <p style="color: #666; font-size: 13px;">您之前選擇了不安裝，但仍可以手動安裝：</p>
+        </div>
+      `;
+    }
     
     if (isChromeAndroid()) {
-      instructions = `
+      instructions += `
         <div style="text-align: left; line-height: 1.6;">
           <p><strong>Chrome Android 安裝方法：</strong></p>
           <p>• 點擊瀏覽器右上角的三點選單 ⋮</p>
@@ -489,7 +612,7 @@
         </div>
       `;
     } else if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
-      instructions = `
+      instructions += `
         <div style="text-align: left; line-height: 1.6;">
           <p><strong>方法 1：地址欄安裝圖標</strong></p>
           <p>• 查看地址欄右側是否有安裝圖標 📱</p>
@@ -502,7 +625,7 @@
         </div>
       `;
     } else if (userAgent.includes('edg')) {
-      instructions = `
+      instructions += `
         <div style="text-align: left; line-height: 1.6;">
           <p><strong>方法 1：地址欄安裝圖標</strong></p>
           <p>• 查看地址欄右側的安裝圖標 📱</p>
@@ -515,7 +638,7 @@
         </div>
       `;
     } else if (userAgent.includes('firefox')) {
-      instructions = `
+      instructions += `
         <div style="text-align: left; line-height: 1.6;">
           <p><strong>Firefox 安裝方法：</strong></p>
           <p>• 點擊瀏覽器右上角的選單 ☰</p>
@@ -524,7 +647,7 @@
         </div>
       `;
     } else if (userAgent.includes('safari')) {
-      instructions = `
+      instructions += `
         <div style="text-align: left; line-height: 1.6;">
           <p><strong>Safari 安裝方法：</strong></p>
           <p>• 點擊分享按鈕 📤</p>
@@ -533,7 +656,7 @@
         </div>
       `;
     } else {
-      instructions = `
+      instructions += `
         <div style="text-align: left; line-height: 1.6;">
           <p><strong>通用安裝方法：</strong></p>
           <p>• 查看地址欄是否有安裝圖標</p>
@@ -561,10 +684,29 @@
       max-width: 400px;
       text-align: center;
     `;
-    notification.innerHTML = `
-      <div style="margin-bottom: 16px; font-size: 24px;">📱</div>
-      <div style="font-weight: bold; margin-bottom: 12px; font-size: 16px;">安裝 LingUBible</div>
-      <div style="margin-bottom: 20px; line-height: 1.5;">${instructions}</div>
+    
+    const buttons = userDismissedInstall ? `
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="this.parentNode.parentNode.parentNode.remove()" style="
+          background: #4CAF50;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+        ">知道了</button>
+        <button onclick="window.PWAInstaller?.resetDismissal?.(); this.parentNode.parentNode.parentNode.remove();" style="
+          background: #2196F3;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+        ">重新啟用提示</button>
+      </div>
+    ` : `
       <button onclick="this.parentNode.remove()" style="
         background: #4CAF50;
         color: white;
@@ -576,14 +718,40 @@
       ">知道了</button>
     `;
     
+    notification.innerHTML = `
+      <div style="margin-bottom: 16px; font-size: 24px;">📱</div>
+      <div style="font-weight: bold; margin-bottom: 12px; font-size: 16px;">${title}</div>
+      <div style="margin-bottom: 20px; line-height: 1.5;">${instructions}</div>
+      ${buttons}
+    `;
+    
     document.body.appendChild(notification);
     
-    // 10秒後自動移除
+    // 15秒後自動移除
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
       }
-    }, 10000);
+    }, 15000);
+  }
+
+  // 重置用戶拒絕狀態的函數
+  function resetUserDismissal() {
+    try {
+      localStorage.removeItem('pwa_install_dismissed');
+      userDismissedInstall = false;
+      dismissalTimestamp = null;
+      console.log('🔄 已重置用戶拒絕狀態，重新啟用安裝提示');
+      
+      // 重新檢查是否應該顯示安裝按鈕
+      if (hasUserEngagement && shouldForceShowInstallButton()) {
+        setTimeout(() => {
+          showInstallButtons();
+        }, 1000);
+      }
+    } catch (error) {
+      console.warn('重置用戶拒絕狀態時出錯:', error);
+    }
   }
 
   // 檢查是否在 PWA 模式下運行
@@ -605,6 +773,13 @@
       }
     });
     
+    // 清除拒絕記錄
+    try {
+      localStorage.removeItem('pwa_install_dismissed');
+    } catch (error) {
+      console.warn('清除拒絕記錄時出錯:', error);
+    }
+    
     // 觸發安裝完成事件
     window.dispatchEvent(new CustomEvent('pwaInstalled'));
     
@@ -612,6 +787,7 @@
     deferredPrompt = null;
     installPromptShown = false;
     forceShowInstallButton = false;
+    userDismissedInstall = false;
   });
 
   // 如果已經在 PWA 模式下，隱藏安裝按鈕
@@ -628,6 +804,9 @@
       });
     }, 1000);
   } else {
+    // 初始化時檢查用戶拒絕狀態
+    checkUserDismissalStatus();
+    
     // 不在 PWA 模式下，檢查是否應該強制顯示安裝按鈕
     setTimeout(() => {
       if (shouldForceShowInstallButton()) {
@@ -643,7 +822,7 @@
           showInstallButtons();
           
           // Chrome Android 特殊處理：嘗試觸發橫幅
-          if (isChromeAndroid() && deferredPrompt) {
+          if (isChromeAndroid() && deferredPrompt && !userDismissedInstall) {
             triggerInstallBanner();
           }
         }
@@ -660,8 +839,14 @@
     isPWAMode,
     isChromeAndroid,
     showManualInstructions: showManualInstallInstructions,
+    resetDismissal: resetUserDismissal,
     getVersion: () => CURRENT_VERSION,
-    forceShow: () => forceShowInstallButton
+    forceShow: () => forceShowInstallButton,
+    getDismissalStatus: () => ({
+      dismissed: userDismissedInstall,
+      timestamp: dismissalTimestamp,
+      attemptCount: installAttemptCount
+    })
   };
 
 })(); 

@@ -188,6 +188,10 @@
                     <div class="info-value" id="install-prompt">檢查中...</div>
                     <div class="info-label">安裝提示</div>
                 </div>
+                <div class="info-item">
+                    <div class="info-value" id="user-dismissed">檢查中...</div>
+                    <div class="info-label">用戶拒絕狀態</div>
+                </div>
             </div>
         </div>
 
@@ -210,6 +214,8 @@
             <button onclick="checkInstallPrompt()">🔍 檢查安裝提示</button>
             <button onclick="forceInstallBanner()">🚀 強制觸發安裝橫幅</button>
             <button onclick="testManualInstall()">📖 顯示手動安裝指引</button>
+            <button onclick="simulateUserDismissal()">❌ 模擬用戶拒絕</button>
+            <button onclick="resetDismissalStatus()">🔄 重置拒絕狀態</button>
             <button onclick="refreshStatus()">🔄 刷新狀態</button>
         </div>
 
@@ -276,6 +282,7 @@
             const hasServiceWorker = 'serviceWorker' in navigator;
             const hasUserEngagement = window.PWAInstaller?.hasUserEngagement() || false;
             const hasInstallPrompt = window.PWAInstaller?.hasPrompt() || false;
+            const dismissalStatus = window.PWAInstaller?.getDismissalStatus?.() || { dismissed: false };
 
             // 更新狀態顯示
             document.getElementById('is-chrome-android').textContent = isChromeAndroid ? '✅ 是' : '❌ 否';
@@ -284,6 +291,7 @@
             document.getElementById('has-service-worker').textContent = hasServiceWorker ? '✅ 是' : '❌ 否';
             document.getElementById('user-engagement').textContent = hasUserEngagement ? '✅ 充足' : '❌ 不足';
             document.getElementById('install-prompt').textContent = hasInstallPrompt ? '✅ 可用' : '❌ 不可用';
+            document.getElementById('user-dismissed').textContent = dismissalStatus.dismissed ? '❌ 已拒絕' : '✅ 未拒絕';
 
             // 環境狀態總結
             const statusElement = document.getElementById('environment-status');
@@ -308,7 +316,7 @@
 
             statusElement.innerHTML = `<div class="status ${statusClass}">${statusText}</div>`;
 
-            log(`環境檢測: Chrome Android=${isChromeAndroid}, HTTPS=${isHTTPS}, Manifest=${hasManifest}, SW=${hasServiceWorker}, 互動=${hasUserEngagement}, 提示=${hasInstallPrompt}`);
+            log(`環境檢測: Chrome Android=${isChromeAndroid}, HTTPS=${isHTTPS}, Manifest=${hasManifest}, SW=${hasServiceWorker}, 互動=${hasUserEngagement}, 提示=${hasInstallPrompt}, 拒絕=${dismissalStatus.dismissed}`);
         }
 
         function triggerUserInteraction() {
@@ -394,6 +402,36 @@
         function simulateDismiss() {
             log('❌ 模擬用戶點擊「不了，謝謝」按鈕');
             alert('😔 模擬用戶拒絕安裝。Chrome 會記住這個選擇。');
+        }
+
+        function simulateUserDismissal() {
+            log('❌ 模擬用戶拒絕安裝');
+            
+            // 模擬用戶拒絕，觸發拒絕事件
+            window.dispatchEvent(new CustomEvent('pwaInstallDismissed'));
+            
+            // 延遲檢查狀態
+            setTimeout(() => {
+                checkEnvironment();
+                log('已模擬用戶拒絕，24 小時內不會再顯示安裝提示');
+            }, 500);
+        }
+
+        function resetDismissalStatus() {
+            log('🔄 重置拒絕狀態');
+            
+            if (window.PWAInstaller?.resetDismissal) {
+                window.PWAInstaller.resetDismissal();
+                log('✅ 拒絕狀態已重置，重新啟用安裝提示');
+                
+                // 延遲檢查狀態
+                setTimeout(() => {
+                    checkEnvironment();
+                }, 500);
+            } else {
+                log('❌ 重置功能不可用');
+                alert('重置功能不可用，請檢查 PWAInstaller。');
+            }
         }
 
         function refreshStatus() {
