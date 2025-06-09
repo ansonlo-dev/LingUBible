@@ -1,6 +1,6 @@
 <div align="center">
 
-![LingUBible Logo](public/banner.png)
+<img src="public/banner.png" alt="LingUBible Logo" width="50%">
 
 ### *Let every review be a guiding light on your learning journey*
 
@@ -117,7 +117,6 @@
 | **📦 Tools** | Bun | Latest | Package Manager & Runtime |
 | | ESLint | Latest | Code Linting |
 | | PostCSS | Latest | CSS Processing |
-| | PWA | - | Progressive Web App |
 | | i18n | - | Internationalization |
 
 </div>
@@ -141,8 +140,7 @@ graph TD
     subgraph "📦 Development Tools"
         I[ESLint]
         J[PostCSS]
-        K[PWA Support]
-        L[i18n]
+        K[i18n]
     end
     
     style A fill:#61dafb
@@ -155,8 +153,7 @@ graph TD
     style H fill:#4285f4
     style I fill:#4b32c3
     style J fill:#dd3a0a
-    style K fill:#5a0fc8
-    style L fill:#009688
+    style K fill:#009688
 ```
 
 ### 🏛️ Project Architecture
@@ -436,7 +433,7 @@ We welcome all forms of contributions, whether it's code, documentation, design,
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/ansonlo-dev/LingUBible?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/ansonlo-dev/LingUBible?style=flat-square)
 
-![Lines of code](https://img.shields.io/tokei/lines/github/ansonlo-dev/LingUBible?style=flat-square)
+![GitHub code size](https://img.shields.io/github/languages/code-size/ansonlo-dev/LingUBible?style=flat-square)
 ![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo-dev/LingUBible?style=flat-square)
 
 </div>

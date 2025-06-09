@@ -1,6 +1,6 @@
 <div align="center">
 
-![LingUBible Logo](../../assets/logo-banner.svg)
+<img src="../../public/banner.png" alt="LingUBible Logo" width="50%">
 
 # 📚 LingUBible
 
@@ -119,7 +119,6 @@
 | **📦 工具** | Bun | 最新 | 包管理器与运行时 |
 | | ESLint | 最新 | 代码检查 |
 | | PostCSS | 最新 | CSS 处理 |
-| | PWA | - | 渐进式网页应用 |
 | | i18n | - | 国际化 |
 
 </div>
@@ -143,8 +142,7 @@ graph TD
     subgraph "📦 开发工具"
         I[ESLint]
         J[PostCSS]
-        K[PWA 支持]
-        L[国际化]
+        K[国际化]
     end
     
     style A fill:#61dafb
@@ -157,8 +155,7 @@ graph TD
     style H fill:#4285f4
     style I fill:#4b32c3
     style J fill:#dd3a0a
-    style K fill:#5a0fc8
-    style L fill:#009688
+    style K fill:#009688
 ```
 
 ### 🏛️ 项目架构
@@ -442,7 +439,7 @@ bun run readme:generate-assets  # 生成 README 资产
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/ansonlo/LingUBible?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/ansonlo/LingUBible?style=flat-square)
 
-![Lines of code](https://img.shields.io/tokei/lines/github/ansonlo/LingUBible?style=flat-square)
+![GitHub code size](https://img.shields.io/github/languages/code-size/ansonlo-dev/LingUBible?style=flat-square)
 ![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo/LingUBible?style=flat-square)
 
 </div>
