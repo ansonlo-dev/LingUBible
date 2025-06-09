@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getStatus } from "@openstatus/react";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OpenStatusWidgetProps {
   slug: string;
@@ -10,6 +11,7 @@ interface OpenStatusWidgetProps {
 type Status = "unknown" | "operational" | "degraded_performance" | "partial_outage" | "major_outage" | "under_maintenance" | "incident";
 
 export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidgetProps) {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<Status>('unknown');
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +40,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
     switch (status) {
       case 'operational':
         return {
-          text: 'Operational',
+          text: t('status.operational'),
           bgColor: 'bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800',
           textColor: 'text-green-800 dark:text-green-400',
           dotColor: 'bg-green-500',
@@ -46,7 +48,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
         };
       case 'degraded_performance':
         return {
-          text: 'Degraded',
+          text: t('status.degraded'),
           bgColor: 'bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800',
           textColor: 'text-yellow-800 dark:text-yellow-400',
           dotColor: 'bg-yellow-500',
@@ -55,7 +57,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
       case 'partial_outage':
       case 'major_outage':
         return {
-          text: 'Down',
+          text: t('status.down'),
           bgColor: 'bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800',
           textColor: 'text-red-800 dark:text-red-400',
           dotColor: 'bg-red-500',
@@ -63,7 +65,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
         };
       case 'under_maintenance':
         return {
-          text: 'Maintenance',
+          text: t('status.maintenance'),
           bgColor: 'bg-blue-100 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800',
           textColor: 'text-blue-800 dark:text-blue-400',
           dotColor: 'bg-blue-500',
@@ -71,7 +73,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
         };
       case 'incident':
         return {
-          text: 'Incident',
+          text: t('status.incident'),
           bgColor: 'bg-orange-100 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800',
           textColor: 'text-orange-800 dark:text-orange-400',
           dotColor: 'bg-orange-500',
@@ -80,7 +82,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
       case 'unknown':
       default:
         return {
-          text: loading ? 'Checking' : 'Unknown',
+          text: loading ? t('status.checking') : t('status.unknown'),
           bgColor: 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
           textColor: 'text-gray-600 dark:text-gray-400',
           dotColor: 'bg-gray-400',
@@ -98,7 +100,7 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
       target="_blank"
       rel="noopener noreferrer"
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-105 ${config.bgColor} ${config.textColor} ${config.hoverColor} ${className}`}
-      title={`Service Status: ${config.text} - Powered by OpenStatus`}
+      title={`${t('status.serviceStatus')}: ${config.text} - ${t('status.poweredBy')} OpenStatus`}
     >
       <div 
         className={`w-2 h-2 rounded-full ${config.dotColor} ${loading ? 'animate-pulse' : ''}`} 
