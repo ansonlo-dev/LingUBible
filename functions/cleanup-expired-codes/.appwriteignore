@@ -1,8 +1,10 @@
-# Dependencies
+# Dependencies - CRITICAL: These must be excluded
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+yarn.lock
 
 # Runtime data
 pids
@@ -73,4 +75,30 @@ deployment.tar.gz
 
 # Logs
 logs
-*.log 
+*.log
+
+# Git files
+.git/
+.gitignore
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+
+# Documentation
+README.md
+*.md
+
+# Large binary files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Temporary files
+tmp/
+temp/
+.tmp/ 

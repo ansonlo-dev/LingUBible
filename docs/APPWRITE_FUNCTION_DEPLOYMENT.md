@@ -28,6 +28,21 @@ pwd
 ls -la appwrite.json
 ```
 
+## 🧹 部署前清理 (重要!)
+
+**在部署前，請務必運行清理腳本以確保函數大小最小：**
+
+```bash
+# 運行清理腳本
+./scripts/clean-functions.sh
+```
+
+這個腳本會：
+- 刪除所有 `node_modules` 目錄
+- 清理舊的部署檔案 (*.tar.gz, *.zip)
+- 移除日誌文件和臨時文件
+- 檢查是否有大文件
+
 ## 📦 函數部署步驟
 
 ### 方法 1: 使用 Appwrite CLI 部署單個函數
