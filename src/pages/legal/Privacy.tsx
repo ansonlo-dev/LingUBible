@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Shield, Database, Eye, Clock, Lock, UserCheck, Cookie, FileText, Mail } from 'lucide-react';
+import { Shield, Database, Eye, Clock, Lock, UserCheck, Cookie, FileText, Mail, Server, Users, Timer, ShieldCheck, Scale, Zap, ScrollText, MessageCircle, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,7 @@ export default function Privacy() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-blue-600" />
+                <Server className="h-5 w-5 text-blue-600" />
                 {t('privacy.dataCollection.title')}
               </CardTitle>
             </CardHeader>
@@ -93,11 +93,33 @@ export default function Privacy() {
             </CardContent>
           </Card>
 
-          {/* 2. Anonymity Protection */}
+          {/* 2. Data Security */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-green-600" />
+                <ShieldCheck className="h-5 w-5 text-red-600" />
+                {t('privacy.dataSecurity.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                {t('privacy.dataSecurity.content')}
+              </p>
+              
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.encryption')}</p>
+                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.accessControl')}</p>
+                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.monitoring')}</p>
+                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.updates')}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 3. Anonymity Protection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-green-600" />
                 {t('privacy.anonymity.title')}
                 <Badge variant="secondary" className="ml-2 bg-gray-700 text-white hover:bg-gray-600">{t('privacy.important')}</Badge>
               </CardTitle>
@@ -141,11 +163,11 @@ export default function Privacy() {
             </CardContent>
           </Card>
 
-          {/* 3. Data Retention */}
+          {/* 4. Data Retention */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-orange-600" />
+                <Timer className="h-5 w-5 text-orange-600" />
                 {t('privacy.dataRetention.title')}
               </CardTitle>
             </CardHeader>
@@ -173,33 +195,26 @@ export default function Privacy() {
             </CardContent>
           </Card>
 
-          {/* 4. Data Security */}
+          {/* 5. Cookie Usage */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5 text-red-600" />
-                {t('privacy.dataSecurity.title')}
+                <Zap className="h-5 w-5 text-yellow-600" />
+                {t('privacy.cookies.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <p className="text-muted-foreground leading-relaxed">
-                {t('privacy.dataSecurity.content')}
+                {t('privacy.cookies.content')}
               </p>
-              
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.encryption')}</p>
-                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.accessControl')}</p>
-                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.monitoring')}</p>
-                <p className="text-sm text-muted-foreground">{t('privacy.dataSecurity.updates')}</p>
-              </div>
             </CardContent>
           </Card>
 
-          {/* 5. User Rights */}
+          {/* 6. User Rights */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-indigo-600" />
+                <Scale className="h-5 w-5 text-indigo-600" />
                 {t('privacy.userRights.title')}
               </CardTitle>
             </CardHeader>
@@ -217,26 +232,11 @@ export default function Privacy() {
             </CardContent>
           </Card>
 
-          {/* 6. Cookie Usage */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Cookie className="h-5 w-5 text-yellow-600" />
-                {t('privacy.cookies.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                {t('privacy.cookies.content')}
-              </p>
-            </CardContent>
-          </Card>
-
           {/* 7. Policy Changes */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-teal-600" />
+                <ScrollText className="h-5 w-5 text-teal-600" />
                 {t('privacy.changes.title')}
               </CardTitle>
             </CardHeader>
@@ -251,13 +251,46 @@ export default function Privacy() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-pink-600" />
+                <MessageCircle className="h-5 w-5 text-pink-600" />
                 {t('privacy.contact.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
                 {t('privacy.contact.content')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* 9. reCAPTCHA Notice */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-purple-600" />
+                {t('privacy.recaptcha.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                {t('privacy.recaptcha.content')}{' '}
+                <a 
+                  href="https://policies.google.com/privacy" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  {t('privacy.recaptcha.privacyPolicy')}
+                </a>{' '}
+                {t('privacy.recaptcha.and')}{' '}
+                <a 
+                  href="https://policies.google.com/terms" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  {t('privacy.recaptcha.termsOfService')}
+                </a>{' '}
+                {t('privacy.recaptcha.apply')}
               </p>
             </CardContent>
           </Card>

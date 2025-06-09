@@ -1,109 +1,78 @@
-// Web Worker for background ping
-let pingInterval = null;
-let isActive = false;
-let currentConfig = null;
+// Web Worker for background ping functionality
+let pingIntervals = new Map();
+let endpoint = '';
+let projectId = '';
 
 // 監聽主線程消息
-self.addEventListener('message', function(e) {
+self.onmessage = function(e) {
   const { type, data } = e.data;
-
+  
   switch (type) {
     case 'START_PING':
       startPing(data);
       break;
     case 'STOP_PING':
-      stopPing();
+      stopAllPings();
       break;
-    case 'PING_NOW':
-      sendPing(data);
+    case 'WORKER_STATUS':
+      sendStatus();
       break;
     default:
       console.log('Unknown message type:', type);
   }
-});
+};
 
-function startPing(config) {
-  if (isActive) {
-    stopPing();
+// 開始 ping
+function startPing(data) {
+  const { sessionId, interval, endpoint: ep, projectId: pid } = data;
+  
+  endpoint = ep;
+  projectId = pid;
+  
+  // 如果已經有這個會話的 ping，先停止它
+  if (pingIntervals.has(sessionId)) {
+    clearInterval(pingIntervals.get(sessionId));
   }
-
-  isActive = true;
-  currentConfig = config;
-  const { sessionId, interval } = config;
-
-  console.log(`Worker: 開始 ping，會話: ${sessionId}，間隔: ${interval / 1000} 秒`);
-
-  // 立即發送一次 ping
-  sendPing(config);
-
-  // 設置定期 ping
-  pingInterval = setInterval(() => {
-    sendPing(config);
+  
+  // 開始新的 ping 間隔
+  const intervalId = setInterval(() => {
+    sendPing(sessionId);
   }, interval);
+  
+  pingIntervals.set(sessionId, intervalId);
+  
+  // 立即發送一次 ping
+  sendPing(sessionId);
+  
+  self.postMessage({
+    type: 'WORKER_STATUS',
+    data: { message: `Started ping for session ${sessionId}`, sessionId }
+  });
 }
 
-function stopPing() {
-  if (pingInterval) {
-    clearInterval(pingInterval);
-    pingInterval = null;
-  }
-  isActive = false;
-  currentConfig = null;
-  console.log('Worker: Ping 已停止');
-}
-
-async function sendPing(config) {
-  const { sessionId, endpoint, projectId } = config;
-
+// 發送 ping 請求
+async function sendPing(sessionId) {
   try {
-    // 首先嘗試獲取現有會話
-    const listResponse = await fetch(`${endpoint}/databases/user-stats-db/collections/user-sessions/documents`, {
-      method: 'GET',
+    const response = await fetch(`${endpoint}/databases/${projectId}/collections/user-sessions/documents/${sessionId}`, {
+      method: 'PATCH',
       headers: {
-        'X-Appwrite-Project': projectId,
         'Content-Type': 'application/json',
-      }
+        'X-Appwrite-Project': projectId
+      },
+      body: JSON.stringify({
+        lastPing: new Date().toISOString()
+      })
     });
-
-    if (!listResponse.ok) {
-      throw new Error(`獲取會話列表失敗: HTTP ${listResponse.status}`);
-    }
-
-    const sessions = await listResponse.json();
-    const existingSession = sessions.documents.find(doc => doc.sessionId === sessionId);
-
-    if (existingSession) {
-      // 更新現有會話的 lastPing
-      const updateResponse = await fetch(`${endpoint}/databases/user-stats-db/collections/user-sessions/documents/${existingSession.$id}`, {
-        method: 'PATCH',
-        headers: {
-          'X-Appwrite-Project': projectId,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lastPing: new Date().toISOString()
-        })
-      });
-
-      if (updateResponse.ok) {
-        self.postMessage({
-          type: 'PING_SUCCESS',
-          data: { sessionId, timestamp: new Date().toISOString(), action: 'updated' }
-        });
-      } else {
-        throw new Error(`更新會話失敗: HTTP ${updateResponse.status}`);
-      }
-    } else {
-      // 會話不存在，可能已過期或被清理
-      console.warn(`Worker: 會話 ${sessionId} 不存在，可能已過期`);
+    
+    if (response.ok) {
       self.postMessage({
-        type: 'PING_ERROR',
-        data: { sessionId, error: '會話不存在或已過期' }
+        type: 'PING_SUCCESS',
+        data: { sessionId, timestamp: new Date().toISOString() }
       });
+    } else {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-
   } catch (error) {
-    console.error('Worker ping 失敗:', error);
     self.postMessage({
       type: 'PING_ERROR',
       data: { sessionId, error: error.message }
@@ -111,24 +80,33 @@ async function sendPing(config) {
   }
 }
 
-// 定期向主線程報告狀態
-setInterval(() => {
-  if (isActive && currentConfig) {
+// 停止所有 ping
+function stopAllPings() {
+  pingIntervals.forEach((intervalId, sessionId) => {
+    clearInterval(intervalId);
     self.postMessage({
       type: 'WORKER_STATUS',
-      data: { 
-        isActive, 
-        sessionId: currentConfig.sessionId,
-        timestamp: new Date().toISOString() 
-      }
+      data: { message: `Stopped ping for session ${sessionId}`, sessionId }
     });
-  }
-}, 30000); // 每 30 秒報告一次
+  });
+  pingIntervals.clear();
+}
 
-// Worker 啟動消息
-self.postMessage({
-  type: 'WORKER_READY',
-  data: { timestamp: new Date().toISOString() }
-});
+// 發送狀態信息
+function sendStatus() {
+  self.postMessage({
+    type: 'WORKER_STATUS',
+    data: {
+      activeSessions: Array.from(pingIntervals.keys()),
+      totalSessions: pingIntervals.size
+    }
+  });
+}
 
-console.log('Ping Worker 已啟動並準備就緒'); 
+// 錯誤處理
+self.onerror = function(error) {
+  self.postMessage({
+    type: 'WORKER_ERROR',
+    data: { error: error.message }
+  });
+}; 

@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { PWAProvider } from "@/contexts/PWAContext";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RecaptchaProvider } from '@/contexts/RecaptchaContext';
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -13,7 +12,6 @@ import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
 import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
-import { PWAPromptTrigger } from "@/components/common/PWAPromptTrigger";
 import { BetaNotice } from "@/components/common/BetaNotice";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
@@ -23,6 +21,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import UserSettings from "./pages/user/UserSettings";
 import AvatarDemo from "./pages/user/AvatarDemo";
 import LecturerDemo from "./pages/demo/LecturerDemo";
+
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
@@ -35,8 +34,7 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
-import { PWASplashScreen } from '@/components/features/pwa/PWASplashScreen';
-import { usePWASplashScreen } from '@/hooks/usePWASplashScreen';
+
 
 
 const queryClient = new QueryClient();
@@ -96,21 +94,7 @@ const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
 
-  // PWA 啟動畫面管理
-  const { isVisible: showSplashScreen, hideSplashScreen, emergencyDisable } = usePWASplashScreen();
 
-  // 緊急退出機制：按 ESC 鍵或 Ctrl+X 強制關閉啟動畫面
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (showSplashScreen && (event.key === 'Escape' || (event.ctrlKey && event.key === 'x'))) {
-        console.log('緊急退出 PWA 啟動畫面');
-        emergencyDisable();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSplashScreen, emergencyDisable]);
 
   // 初始化訪客會話（如果用戶未登入）
   useVisitorSession();
@@ -321,12 +305,7 @@ const AppContent = () => {
 
   return (
     <>
-      {/* PWA 啟動畫面 */}
-      <PWASplashScreen 
-        isVisible={showSplashScreen}
-        onComplete={hideSplashScreen}
-        duration={2000}
-      />
+
       
       <BrowserRouter
         future={{
@@ -433,12 +412,13 @@ const AppContent = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/settings" element={<UserSettings />} />
-                    <Route path="/avatar-demo" element={<AvatarDemo />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/privacy" element={<Privacy />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/lecturer-demo" element={<LecturerDemo />} />
-                    <Route path="*" element={<NotFound />} />
+                                    <Route path="/avatar-demo" element={<AvatarDemo />} />
+
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/lecturer-demo" element={<LecturerDemo />} />
+                <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
                 
@@ -486,20 +466,17 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <PWAProvider>
-          <LanguageProvider>
-            <RecaptchaProvider>
-              <AuthProvider>
-                <AppContent />
-                <Toaster />
-                <Sonner />
-                <CookieConsent />
-                {/* <DevModeIndicator /> */}
-                <PWAPromptTrigger />
-              </AuthProvider>
-            </RecaptchaProvider>
-          </LanguageProvider>
-        </PWAProvider>
+        <LanguageProvider>
+          <RecaptchaProvider>
+            <AuthProvider>
+              <AppContent />
+              <Toaster />
+              <Sonner />
+              <CookieConsent />
+              {/* <DevModeIndicator /> */}
+            </AuthProvider>
+          </RecaptchaProvider>
+        </LanguageProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -12,6 +12,23 @@ export function useTheme() {
   });
 
   /**
+   * 觸發主題變化事件
+   */
+  const dispatchThemeChangeEvent = () => {
+    // 觸發自定義主題變化事件
+    window.dispatchEvent(new CustomEvent('themechange', {
+      detail: { isDark }
+    }));
+    
+    // 觸發 storage 事件（用於跨標籤頁同步）
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'theme',
+      newValue: isDark ? 'dark' : 'light',
+      storageArea: localStorage
+    }));
+  };
+
+  /**
    * 設置主題
    */
   const setTheme = (isDarkMode: boolean) => {
@@ -35,6 +52,11 @@ export function useTheme() {
     // 保存主題設定
     theme.set(themeName);
     setIsDark(isDarkMode);
+    
+    // 觸發主題變化事件
+    setTimeout(() => {
+      dispatchThemeChangeEvent();
+    }, 100);
   };
 
   /**
@@ -61,6 +83,12 @@ export function useTheme() {
     }
     
     setIsDark(shouldUseDark);
+    
+    // 觸發初始主題事件
+    setTimeout(() => {
+      dispatchThemeChangeEvent();
+    }, 100);
+    
     return shouldUseDark;
   };
 

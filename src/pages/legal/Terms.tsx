@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Shield, Users, FileText, AlertTriangle, Scale, Mail, UserCheck, MessageSquareX } from 'lucide-react';
+import { Shield, Users, FileText, AlertTriangle, Scale, Mail, UserCheck, MessageSquareX, CheckCircle, ShieldCheck, Lock, UserX, ScrollText, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
@@ -36,26 +36,11 @@ export default function Terms() {
 
         {/* Terms Sections */}
         <div className="space-y-6">
-          {/* 1. Acceptance of Terms */}
+          {/* 1. User Conduct Guidelines */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                {t('terms.acceptance.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                {t('terms.acceptance.content')}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 2. User Conduct Guidelines */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-green-600" />
+                <UserCheck className="h-5 w-5 text-green-600" />
                 {t('terms.conduct.title')}
               </CardTitle>
             </CardHeader>
@@ -80,94 +65,7 @@ export default function Terms() {
             </CardContent>
           </Card>
 
-          {/* 3. Content Moderation */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-purple-600" />
-                {t('terms.moderation.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground leading-relaxed">
-                {t('terms.moderation.content')}
-              </p>
-              
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{t('terms.moderation.removal')}</p>
-                <p className="text-sm text-muted-foreground">{t('terms.moderation.standards')}</p>
-                <p className="text-sm text-muted-foreground">{t('terms.moderation.discretion')}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 4. Privacy Protection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-indigo-600" />
-                {t('terms.privacy.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground leading-relaxed">
-                {t('terms.privacy.content')}
-              </p>
-              
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{t('terms.privacy.anonymity')}</p>
-                <p className="text-sm text-muted-foreground">{t('terms.privacy.noDisclosure')}</p>
-                <p className="text-sm text-muted-foreground">{t('terms.privacy.dataCollection')}</p>
-              </div>
-              
-              <div className="text-center">
-                <Link 
-                  to="/privacy" 
-                  className="inline-flex items-center text-primary hover:underline"
-                >
-                  {t('privacy.title')} →
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 5. Terms Changes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Scale className="h-5 w-5 text-orange-600" />
-                {t('terms.changes.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                {t('terms.changes.content')}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 6. Username Policy */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-cyan-600" />
-                {t('terms.username.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground leading-relaxed">
-                {t('terms.username.content')}
-              </p>
-              
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{t('terms.username.offensive')}</p>
-                <p className="text-sm text-muted-foreground">{t('terms.username.discretion')}</p>
-                <p className="text-sm text-muted-foreground">{t('terms.username.responsibility')}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 7. Content Policy */}
+          {/* 2. Content Policy */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -196,11 +94,98 @@ export default function Terms() {
             </CardContent>
           </Card>
 
-          {/* 8. Contact Us */}
+          {/* 3. Username Policy */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-teal-600" />
+                <UserX className="h-5 w-5 text-cyan-600" />
+                {t('terms.username.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                {t('terms.username.content')}
+              </p>
+              
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">{t('terms.username.offensive')}</p>
+                <p className="text-sm text-muted-foreground">{t('terms.username.discretion')}</p>
+                <p className="text-sm text-muted-foreground">{t('terms.username.responsibility')}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 4. Content Moderation */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-purple-600" />
+                {t('terms.moderation.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                {t('terms.moderation.content')}
+              </p>
+              
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">{t('terms.moderation.removal')}</p>
+                <p className="text-sm text-muted-foreground">{t('terms.moderation.standards')}</p>
+                <p className="text-sm text-muted-foreground">{t('terms.moderation.discretion')}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 5. Privacy Protection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-indigo-600" />
+                {t('terms.privacy.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground leading-relaxed">
+                {t('terms.privacy.content')}
+              </p>
+              
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">{t('terms.privacy.anonymity')}</p>
+                <p className="text-sm text-muted-foreground">{t('terms.privacy.noDisclosure')}</p>
+                <p className="text-sm text-muted-foreground">{t('terms.privacy.dataCollection')}</p>
+              </div>
+              
+              <div className="text-center">
+                <Link 
+                  to="/privacy" 
+                  className="inline-flex items-center text-primary hover:underline"
+                >
+                  {t('privacy.title')} →
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 6. Terms Changes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScrollText className="h-5 w-5 text-orange-600" />
+                {t('terms.changes.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('terms.changes.content')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* 7. Contact Us */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-pink-600" />
                 {t('terms.contact.title')}
               </CardTitle>
             </CardHeader>

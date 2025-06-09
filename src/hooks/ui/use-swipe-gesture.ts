@@ -55,10 +55,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       target.closest('button') ||
       target.closest('a[href]') ||
       target.closest('[cmdk-root]') ||
-      target.closest('.fixed.left-4.right-4') || // 搜索結果下拉框
-      target.closest('.pwa-install-banner') || // PWA 安裝橫幅
-      target.closest('.pwa-install-dialog') || // PWA 安裝對話框
-      target.closest('[data-pwa-install]') // PWA 相關元素
+      target.closest('.fixed.left-4.right-4') // 搜索結果下拉框
     )) {
 
       return;
@@ -143,10 +140,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       target.closest('button') ||
       target.closest('a[href]') ||
       target.closest('[cmdk-root]') ||
-      target.closest('.fixed.left-4.right-4') || // 搜索結果下拉框
-      target.closest('.pwa-install-banner') || // PWA 安裝橫幅
-      target.closest('.pwa-install-dialog') || // PWA 安裝對話框
-      target.closest('[data-pwa-install]') // PWA 相關元素
+      target.closest('.fixed.left-4.right-4') // 搜索結果下拉框
     )) {
 
       return;

@@ -15,7 +15,7 @@
     <link rel="shortcut icon" href="favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="LingUBible" />
-    <link rel="manifest" href="/manifest-dynamic.json" id="manifest-link" />
+
     <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash_screens/iPhone_16_Pro_Max_landscape.png">
     <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash_screens/iPhone_16_Pro_landscape.png">
     <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash_screens/iPhone_16_Plus__iPhone_15_Pro_Max__iPhone_15_Plus__iPhone_14_Pro_Max_landscape.png">
@@ -91,108 +91,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- reCAPTCHA 圖標隱藏樣式（保留表單功能） -->
-    <link rel="stylesheet" href="/hide-recaptcha-badge-only.css">
+
     
-    <!-- PWA Service Worker 註冊 -->
-    <script src="/sw-register.js" defer></script>
-    
-    <!-- reCAPTCHA 圖標隱藏腳本（保留表單功能） -->
-    <script src="/badge-hide.js" defer></script>
-    
-    <!-- 動態 manifest 腳本 - 必須在主題腳本之前 -->
-    <script>
-      (function() {
-        // 檢測用戶語言偏好
-        function detectUserLanguage() {
-          // 1. 檢查 URL 參數
-          const urlParams = new URLSearchParams(window.location.search);
-          const langParam = urlParams.get('lang');
-          if (langParam && ['en', 'zh-TW', 'zh-CN'].includes(langParam)) {
-            return langParam;
-          }
 
-          // 2. 檢查 Cookie
-          function getCookie(name) {
-            const value = "; " + document.cookie;
-            const parts = value.split("; " + name + "=");
-            if (parts.length === 2) return parts.pop().split(";").shift();
-            return null;
-          }
-          
-          const savedLanguage = getCookie('language');
-          if (savedLanguage && ['en', 'zh-TW', 'zh-CN'].includes(savedLanguage)) {
-            return savedLanguage;
-          }
-
-          // 3. 檢查瀏覽器語言
-          const browserLang = navigator.language || navigator.languages?.[0];
-          if (browserLang) {
-            if (browserLang.startsWith('zh-TW') || 
-                browserLang.startsWith('zh-Hant') || 
-                browserLang === 'zh-HK' || 
-                browserLang === 'zh-MO') {
-              return 'zh-TW';
-            } else if (browserLang.startsWith('zh-CN') || 
-                       browserLang.startsWith('zh-Hans') || 
-                       browserLang.startsWith('zh-SG') || 
-                       browserLang === 'zh') {
-              return 'zh-CN';
-            } else if (browserLang.startsWith('en')) {
-              return 'en';
-            }
-          }
-
-          // 4. 默認英文
-          return 'en';
-        }
-
-        // 動態 manifest 處理
-        function updateManifestLink() {
-          const userLanguage = detectUserLanguage();
-          const manifestLink = document.getElementById('manifest-link');
-          if (manifestLink) {
-            // 根據用戶語言設置動態 manifest，添加時間戳確保更新
-            const timestamp = Date.now();
-            manifestLink.href = `/manifest-dynamic.json?lang=${userLanguage}&v=${timestamp}`;
-            console.log(`🌐 PWA Manifest 已更新為語言: ${userLanguage}`);
-            console.log(`📄 Manifest URL: ${manifestLink.href}`);
-            
-            // 觸發 manifest 更新事件
-            window.dispatchEvent(new CustomEvent('manifestUpdated', {
-              detail: { language: userLanguage, timestamp }
-            }));
-          }
-        }
-
-        // 當 DOM 載入後設置正確的 manifest
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', updateManifestLink);
-        } else {
-          updateManifestLink();
-        }
-        
-        // 監聽語言變更事件
-        window.addEventListener('languageChanged', function(event) {
-          console.log('🔄 語言變更，更新 PWA Manifest:', event.detail.language);
-          updateManifestLink();
-        });
-        
-        // 全局函數供其他腳本使用
-        window.updatePWAManifest = updateManifestLink;
-        
-        // 定期檢查 manifest 是否需要更新（僅在生產環境）
-        if (window.location.hostname !== 'localhost' && !window.location.hostname.includes('localhost')) {
-          setInterval(() => {
-            const manifestLink = document.getElementById('manifest-link');
-            if (manifestLink && !manifestLink.href.includes('v=')) {
-              console.log('🔄 定期更新 PWA Manifest');
-              updateManifestLink();
-            }
-          }, 30000); // 每30秒檢查一次
-        }
-      })();
-    </script>
     
     <!-- 主題初始化腳本 - 必須在頁面載入前執行 -->
     <script>

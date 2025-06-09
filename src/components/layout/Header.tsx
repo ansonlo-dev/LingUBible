@@ -3,7 +3,7 @@ import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { PWAInstallIcon } from '@/components/common/PWAInstallIcon';
+
 import { SearchDropdown } from '@/components/common/SearchDialog';
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
 import { useState, useEffect } from 'react';
@@ -75,8 +75,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
         {/* 右側區域 */}
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           
-          {/* PWA 安裝圖標 - 所有設備都顯示 */}
-          <PWAInstallIcon />
+
           
           {/* 用戶菜單或登入按鈕 - 最高優先級，始終顯示 */}
           {user ? (

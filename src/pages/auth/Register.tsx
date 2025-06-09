@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, Lock, AlertTriangle, User, Lightbulb } from 'lucide-react';
+import { Lock, AlertTriangle, User, Lightbulb, CheckCircle } from 'lucide-react';
 import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { StudentVerificationInput } from "@/components/auth/StudentVerificationInput";
 import { PasswordStrengthChecker } from "@/components/auth/PasswordStrengthChecker";
@@ -379,15 +379,7 @@ export default function Register() {
                 </Label>
               </div>
 
-              {/* reCAPTCHA 狀態指示器 */}
-              {isRecaptchaLoaded && (
-                <div className="text-center">
-                  <div className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-700 dark:text-blue-300">
-                    <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span>{t('auth.recaptchaLoaded')}</span>
-                  </div>
-                </div>
-              )}
+
 
               <div className="flex flex-col space-y-4">
                 <Button 

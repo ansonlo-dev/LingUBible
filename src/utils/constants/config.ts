@@ -43,11 +43,7 @@ export const APP_CONFIG = {
     COOKIE_CONSENT: 'cookie-consent',
   },
   
-  // PWA 配置
-  PWA: {
-    INSTALL_PROMPT_DELAY: 3000, // ms
-    UPDATE_CHECK_INTERVAL: 60000, // ms
-  }
+
 } as const;
 
 export type SupportedLanguage = typeof APP_CONFIG.LANGUAGE.SUPPORTED[number];

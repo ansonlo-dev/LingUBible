@@ -1,6 +1,7 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { useLanguage } from './LanguageContext';
+import { theme } from '@/lib/utils';
 
 // reCAPTCHA 配置
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
@@ -136,10 +137,56 @@ const getRecaptchaLanguage = (currentLanguage: string): string => {
   }
 };
 
-// 動態語言 Provider 組件
+// 獲取 reCAPTCHA 主題
+const getRecaptchaTheme = (isDark: boolean): 'light' | 'dark' => {
+  return isDark ? 'dark' : 'light';
+};
+
+// 動態語言和主題 Provider 組件
 const DynamicRecaptchaProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { language } = useLanguage();
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
+    return theme.getEffectiveTheme();
+  });
+  
   const recaptchaLanguage = getRecaptchaLanguage(language);
+  const recaptchaTheme = getRecaptchaTheme(currentTheme === 'dark');
+
+  // 監聽主題變化
+  useEffect(() => {
+    const updateTheme = () => {
+      const newTheme = theme.getEffectiveTheme();
+      setCurrentTheme(newTheme);
+    };
+
+    // 初始設定
+    updateTheme();
+
+    // 監聽主題變化事件
+    const handleThemeChange = () => {
+      updateTheme();
+    };
+
+    // 監聽 localStorage 變化
+    window.addEventListener('storage', handleThemeChange);
+    
+    // 監聽自定義主題變化事件
+    window.addEventListener('themechange', handleThemeChange);
+
+    // 定期檢查主題變化（備用方案）
+    const themeCheckInterval = setInterval(updateTheme, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleThemeChange);
+      window.removeEventListener('themechange', handleThemeChange);
+      clearInterval(themeCheckInterval);
+    };
+  }, []);
+
+  // 當主題或語言變化時重新載入 reCAPTCHA
+  useEffect(() => {
+    console.log(`🎨 reCAPTCHA 主題已更新為: ${recaptchaTheme} (語言: ${recaptchaLanguage})`);
+  }, [recaptchaTheme, recaptchaLanguage]);
 
   return (
     <GoogleReCaptchaProvider

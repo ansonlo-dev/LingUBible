@@ -9,13 +9,14 @@ export const getAppVersion = (): string => {
 
 /**
  * 獲取格式化的版本號（用於顯示）
+ * @param betaText - Beta 文字的翻譯，如果不提供則使用英文 "Beta"
  */
-export const getFormattedVersion = (): string => {
+export const getFormattedVersion = (betaText?: string): string => {
   const version = getAppVersion();
   
   // 如果是 0.x.x 版本，顯示為 Beta
   if (version.startsWith('0.')) {
-    return `Beta ${version}`;
+    return `${betaText || 'Beta'} ${version}`;
   }
   
   // 如果是 1.x.x 或更高版本，顯示為正式版

@@ -8,14 +8,25 @@ import { useLatestVersion } from '@/hooks/useVersion';
 
 export function Footer() {
   const { t } = useLanguage();
-  const localVersion = getFormattedVersion();
+  const localVersion = getFormattedVersion(t('footer.beta'));
   const localVersionStatus = getVersionStatus();
   
   // 嘗試從 GitHub 獲取最新版本，如果失敗則使用本地版本
   const { latestVersion, isLoading, error } = useLatestVersion();
   
-  // 決定要顯示的版本資訊
-  const version = latestVersion?.formattedVersion || localVersion;
+  // 決定要顯示的版本資訊，並處理翻譯
+  const formatVersionWithTranslation = (versionInfo: typeof latestVersion) => {
+    if (!versionInfo) return localVersion;
+    
+    // 如果是 beta 版本，替換 "Beta" 為翻譯文字
+    if (versionInfo.status === 'beta' && versionInfo.formattedVersion.startsWith('Beta ')) {
+      return versionInfo.formattedVersion.replace('Beta ', `${t('footer.beta')} `);
+    }
+    
+    return versionInfo.formattedVersion;
+  };
+  
+  const version = formatVersionWithTranslation(latestVersion) || localVersion;
   const versionStatus = latestVersion?.status || localVersionStatus;
   const releaseUrl = latestVersion?.releaseUrl;
 

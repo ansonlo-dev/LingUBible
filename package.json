@@ -1,11 +1,11 @@
 {
   "name": "lingubible",
   "private": true,
-  "version": "0.1.22",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run pwa:update-version && vite build",
+    "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -18,10 +18,7 @@
     "refactor:update-imports": "node tools/scripts/refactor/update-imports.js",
     "refactor:check": "npm run build && echo '✅ Refactoring check passed!'",
     "project:structure": "tree src/ -I 'node_modules|*.backup' -L 3",
-    "pwa:test": "node tools/scripts/build/test-pwa.js",
-    "pwa:test-dev": "node tools/scripts/build/test-pwa-dev.js",
-    "pwa:build-test": "npm run build && npm run pwa:test",
-    "pwa:test-desktop": "node scripts/test-pwa-desktop.js",
+
     "project:full-structure": "tree . -I 'node_modules|*.backup|dist|dev-dist|.git' -L 2",
     "readme:generate-assets": "node tools/scripts/build/generate-readme-assets.js",
     "readme:preview": "echo '📖 README preview available at: https://github.com/ansonlo/LingUBible'",
@@ -39,10 +36,9 @@
     "release:check": "echo '🔍 檢查發布狀態...' && git status && echo '' && echo '📋 最近的標籤:' && git tag --sort=-version:refname | head -5",
     "release:create-missing": "node tools/scripts/version/create-missing-release.js",
     "version:test": "node tools/scripts/version/test-version-system.js",
-    "pwa:update-version": "node tools/scripts/version/update-pwa-version.js",
-    "pwa:test-version": "npm run pwa:update-version && echo '✅ PWA 版本已更新'",
+
     "sync:version": "node scripts/sync-version.js",
-    "prebuild": "npm run sync:version"
+    "prebuild": "echo 'Building...'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -122,7 +118,6 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
-    "vite-plugin-pwa": "^1.0.0",
     "wrangler": "^4.19.1"
   }
 }
