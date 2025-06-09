@@ -47,7 +47,7 @@ export function Footer() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title="View MIT License"
+                  title={t('footer.mitTooltip')}
                 >
                   MIT
                 </a>
@@ -61,7 +61,7 @@ export function Footer() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
-                  title="GitHub Repository"
+                  title={t('footer.githubTooltip')}
                 >
                   <Github className="h-4 w-4" />
                 </a>
@@ -150,7 +150,7 @@ export function Footer() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    title="View MIT License"
+                    title={t('footer.mitTooltip')}
                   >
                     MIT
                   </a>
@@ -163,7 +163,7 @@ export function Footer() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
-                    title="GitHub Repository"
+                    title={t('footer.githubTooltip')}
                   >
                     <Github className="h-4 w-4" />
                   </a>
@@ -333,7 +333,7 @@ export function Footer() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="View MIT License"
+                title={t('footer.mitTooltip')}
               >
                 MIT
               </a>
@@ -348,7 +348,7 @@ export function Footer() {
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center space-x-2 text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors group"
-              title="GitHub Repository"
+              title={t('footer.githubTooltip')}
             >
               <Github className="h-4 w-4 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-medium">GitHub</span>

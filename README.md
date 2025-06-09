@@ -1,8 +1,6 @@
 <div align="center">
 
-![LingUBible Logo](assets/logo-banner.svg)
-
-# 📚 LingUBible
+![LingUBible Logo](public/banner.png)
 
 ### *Let every review be a guiding light on your learning journey*
 
@@ -219,10 +217,6 @@ graph TD
 
 <table align="center">
 <tr>
-<td align="center">
-<img src="https://img.shields.io/badge/Lighthouse-100-brightgreen?style=flat-square&logo=lighthouse" alt="Lighthouse Score"/>
-<br><strong>Performance Score</strong>
-</td>
 <td align="center">
 <img src="https://img.shields.io/badge/Bundle_Size-<500KB-blue?style=flat-square" alt="Bundle Size"/>
 <br><strong>Bundle Size</strong>
@@ -493,9 +487,5 @@ This website has no official affiliation with Lingnan University. All reviews an
 ---
 
 *Built with ❤️ by [ansonlo.dev](https://ansonlo.dev) | Powered by Open Source*
-
----
-
-*Last updated: GitHub Actions configured for API Key authentication*
 
 </div> 

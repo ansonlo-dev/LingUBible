@@ -1,4 +1,4 @@
-import { Home, BookOpen, Users, Star, TrendingUp, Settings, X } from 'lucide-react';
+import { Home, BookOpen, Users, Star, Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,6 @@ const navigation = [
   { name: 'Courses', href: '#', icon: BookOpen, current: false },
   { name: 'Lecturers', href: '#', icon: Users, current: false },
   { name: 'My Reviews', href: '#', icon: Star, current: false },
-  { name: 'Trending', href: '#', icon: TrendingUp, current: false },
   { name: 'Settings', href: '#', icon: Settings, current: false },
 ];
 
