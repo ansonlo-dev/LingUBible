@@ -19,10 +19,9 @@ interface PWAProviderProps {
   children: ReactNode;
 }
 
-// 開發模式下的日誌控制
-const isDev = import.meta.env.DEV;
+// 調試日誌函數
 const log = (...args: any[]) => {
-  if (!isDev) console.log(...args);
+  console.log('[PWA Context]', ...args);
 };
 
 export function PWAProvider({ children }: PWAProviderProps) {
@@ -30,6 +29,7 @@ export function PWAProvider({ children }: PWAProviderProps) {
   const [isInstalled, setIsInstalled] = useState(false);
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
 
+  // 保存 PWA 狀態到 sessionStorage
   const savePWAState = (hasPrompt: boolean, installed: boolean) => {
     try {
       const state = {
@@ -76,37 +76,61 @@ export function PWAProvider({ children }: PWAProviderProps) {
     };
 
     const installed = checkIfInstalled();
+    setIsInstalled(installed);
     
-    // 如果未安裝，嘗試恢復之前的狀態
-    if (!installed) {
-      const savedState = loadPWAState();
-      if (savedState && savedState.hasPrompt && !savedState.installed) {
-        log('PWA Context: 恢復之前的安裝提示狀態');
-        // 創建一個虛擬的 prompt 狀態，表示之前有過安裝提示
-        const virtualPrompt = {
+    // 如果已安裝，不需要監聽安裝事件
+    if (installed) {
+      log('應用已在 PWA 模式下運行');
+      return;
+    }
+
+    // 監聽來自 Service Worker 的 PWA 事件
+    const handlePWAInstallAvailable = (event: CustomEvent) => {
+      log('收到 PWA 安裝可用事件:', event.detail);
+      
+      // 檢查是否有真實的安裝提示
+      if ((window as any).PWAInstaller?.hasPrompt()) {
+        // 創建一個代理事件對象
+        const proxyPrompt = {
           prompt: async () => {
-            log('PWA Context: 使用虛擬提示 - 顯示手動安裝指引');
+            return (window as any).PWAInstaller?.triggerInstallPrompt();
           },
           userChoice: Promise.resolve({ outcome: 'dismissed' as const }),
-          platforms: ['web'],
+          platforms: event.detail.platforms || ['web'],
           preventDefault: () => {},
-          isTrusted: false,
+          isTrusted: true,
           type: 'beforeinstallprompt'
         } as any;
         
-        deferredPromptRef.current = virtualPrompt;
-        setDeferredPrompt(virtualPrompt);
+        deferredPromptRef.current = proxyPrompt;
+        setDeferredPrompt(proxyPrompt);
+        savePWAState(true, false);
       }
-    }
+    };
 
-    // 監聽 beforeinstallprompt 事件
+    const handlePWAInstallAccepted = () => {
+      log('PWA 安裝被接受');
+      setIsInstalled(true);
+      deferredPromptRef.current = null;
+      setDeferredPrompt(null);
+      savePWAState(false, true);
+    };
+
+    const handlePWAInstalled = () => {
+      log('PWA 安裝完成');
+      setIsInstalled(true);
+      deferredPromptRef.current = null;
+      setDeferredPrompt(null);
+      savePWAState(false, true);
+    };
+
+    // 監聽 beforeinstallprompt 事件（備用）
     const handleBeforeInstallPrompt = (e: Event) => {
-      log('PWA Context: beforeinstallprompt 事件觸發');
+      log('原生 beforeinstallprompt 事件觸發');
       
-      // 阻止瀏覽器的自動提示，我們將手動控制
-      e.preventDefault();
+      // 不阻止事件，讓 Service Worker 處理
+      // e.preventDefault();
       
-      // 總是保存新的事件，因為語言變更後舊的事件可能失效
       const promptEvent = e as BeforeInstallPromptEvent;
       deferredPromptRef.current = promptEvent;
       setDeferredPrompt(promptEvent);
@@ -114,12 +138,12 @@ export function PWAProvider({ children }: PWAProviderProps) {
       // 保存狀態到 sessionStorage
       savePWAState(true, false);
       
-      log('PWA Context: 已保存安裝提示事件');
+      log('已保存原生安裝提示事件');
     };
 
     // 監聽應用安裝事件
     const handleAppInstalled = () => {
-      log('PWA Context: 應用已安裝');
+      log('應用已安裝');
       setIsInstalled(true);
       deferredPromptRef.current = null;
       setDeferredPrompt(null);
@@ -128,32 +152,57 @@ export function PWAProvider({ children }: PWAProviderProps) {
       savePWAState(false, true);
     };
 
+    // 添加事件監聽器
+    window.addEventListener('pwaInstallAvailable', handlePWAInstallAvailable as EventListener);
+    window.addEventListener('pwaInstallAccepted', handlePWAInstallAccepted);
+    window.addEventListener('pwaInstalled', handlePWAInstalled);
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
+    // 檢查是否有來自 Service Worker 的現有狀態
+    setTimeout(() => {
+      if ((window as any).PWAInstaller?.hasPrompt() && !deferredPrompt) {
+        log('檢測到 Service Worker 中有可用的安裝提示');
+        handlePWAInstallAvailable(new CustomEvent('pwaInstallAvailable', {
+          detail: { platforms: ['web'], canInstall: true }
+        }));
+      }
+    }, 1000);
+
     return () => {
+      window.removeEventListener('pwaInstallAvailable', handlePWAInstallAvailable as EventListener);
+      window.removeEventListener('pwaInstallAccepted', handlePWAInstallAccepted);
+      window.removeEventListener('pwaInstalled', handlePWAInstalled);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [deferredPrompt]);
 
   const promptInstall = async () => {
-    log('PWA Context: promptInstall 被調用');
+    log('promptInstall 被調用');
     
-    if (!deferredPrompt) {
-      console.error('PWA Context: 沒有 deferredPrompt，無法觸發安裝');
-      return;
+    // 優先使用 Service Worker 的安裝方法
+    if ((window as any).PWAInstaller?.hasPrompt()) {
+      log('使用 Service Worker 的安裝方法');
+      try {
+        await (window as any).PWAInstaller.triggerInstallPrompt();
+        return;
+      } catch (error) {
+        log('Service Worker 安裝方法失敗:', error);
+      }
     }
-
-    // 檢查是否是虛擬提示
-    if (!deferredPrompt.isTrusted) {
-      log('PWA Context: 使用虛擬提示，顯示手動安裝指引');
-      alert('請使用瀏覽器選單中的「安裝應用」或「加到主畫面」選項來安裝此應用。');
+    
+    // 備用：使用原生方法
+    if (!deferredPrompt) {
+      log('沒有 deferredPrompt，顯示手動安裝指引');
+      if ((window as any).PWAInstaller?.showManualInstructions) {
+        (window as any).PWAInstaller.showManualInstructions();
+      }
       return;
     }
 
     try {
-      log('PWA Context: 準備調用 deferredPrompt.prompt()');
+      log('準備調用 deferredPrompt.prompt()');
       
       const promptResult = deferredPrompt.prompt();
       
@@ -168,7 +217,7 @@ export function PWAProvider({ children }: PWAProviderProps) {
         await Promise.race([promptResult, timeoutPromise]);
       } catch (timeoutError) {
         if (timeoutError.message.includes('超時')) {
-          console.error('PWA Context: prompt() 超時');
+          log('prompt() 超時，嘗試等待 userChoice');
           
           const userChoiceTimeout = new Promise((_, reject) => {
             setTimeout(() => {
@@ -179,7 +228,7 @@ export function PWAProvider({ children }: PWAProviderProps) {
           try {
             const result = await Promise.race([deferredPrompt.userChoice, userChoiceTimeout]);
             const { outcome } = result as { outcome: 'accepted' | 'dismissed' };
-            log('PWA Context: 用戶選擇結果:', outcome);
+            log('用戶選擇結果:', outcome);
             
             if (outcome === 'accepted') {
               setIsInstalled(true);
@@ -189,7 +238,7 @@ export function PWAProvider({ children }: PWAProviderProps) {
             setDeferredPrompt(null);
             return;
           } catch (userChoiceError) {
-            console.error('PWA Context: 安裝提示完全失效');
+            log('安裝提示完全失效');
             throw timeoutError;
           }
         } else {
@@ -198,7 +247,7 @@ export function PWAProvider({ children }: PWAProviderProps) {
       }
       
       const { outcome } = await deferredPrompt.userChoice;
-      log('PWA Context: 用戶選擇結果:', outcome);
+      log('用戶選擇結果:', outcome);
       
       if (outcome === 'accepted') {
         setIsInstalled(true);
@@ -214,11 +263,16 @@ export function PWAProvider({ children }: PWAProviderProps) {
         console.error('PWA Context: deferredPrompt 可能已失效');
         deferredPromptRef.current = null;
         setDeferredPrompt(null);
+        
+        // 嘗試使用手動安裝指引
+        if ((window as any).PWAInstaller?.showManualInstructions) {
+          (window as any).PWAInstaller.showManualInstructions();
+        }
       }
     }
   };
 
-  const canInstall = !isInstalled && !!deferredPrompt;
+  const canInstall = !isInstalled && (!!deferredPrompt || (window as any).PWAInstaller?.hasPrompt());
 
   return (
     <PWAContext.Provider value={{

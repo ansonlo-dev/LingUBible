@@ -3,385 +3,597 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>部署修復測試 - LingUBible</title>
+    <title>🔧 部署修復測試 - LingUBible</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
             padding: 20px;
-            background: #f8fafc;
+            min-height: 100vh;
         }
         .container {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         h1 {
-            color: #1e293b;
-            margin-bottom: 24px;
-            border-bottom: 2px solid #dc2626;
-            padding-bottom: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        h2 {
-            color: #374151;
-            margin-top: 32px;
-            margin-bottom: 16px;
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .test-item {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .test-item h3 {
-            margin: 0 0 8px 0;
-            color: #1e293b;
-        }
-        .test-item p {
-            margin: 0 0 12px 0;
-            color: #64748b;
+        .test-section h2 {
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
         }
         .status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
             font-size: 14px;
-            font-weight: 500;
         }
         .status.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .status.error {
-            background: #fef2f2;
-            color: #dc2626;
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
         }
         .status.warning {
-            background: #fef3c7;
-            color: #d97706;
+            background: rgba(255, 193, 7, 0.3);
+            border: 1px solid #FFC107;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid #F44336;
         }
         .status.info {
-            background: #dbeafe;
-            color: #2563eb;
+            background: rgba(33, 150, 243, 0.3);
+            border: 1px solid #2196F3;
         }
         button {
-            background: #dc2626;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 12px 24px;
+            border-radius: 25px;
             cursor: pointer;
-            margin-right: 8px;
-            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         button:hover {
-            background: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .pwa-install-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
         }
         .log {
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 16px;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
-            max-height: 300px;
+            font-size: 12px;
+            max-height: 200px;
             overflow-y: auto;
             white-space: pre-wrap;
         }
-        .link-test {
-            display: block;
-            color: #2563eb;
-            text-decoration: none;
-            padding: 8px 12px;
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 6px;
-            margin-bottom: 8px;
+        .metric {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
         }
-        .link-test:hover {
-            background: #e0f2fe;
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        .version-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .version-info h3 {
+            margin-top: 0;
+            color: #4CAF50;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 部署修復測試</h1>
-        <p>此頁面用於測試部署相關問題的修復效果。</p>
-        
-        <h2>📄 靜態文件訪問測試</h2>
-        <div class="test-item">
-            <h3>HTML 文件直接訪問</h3>
-            <p>測試 .html 後綴是否被正確處理</p>
-            <div id="html-access-status" class="status info">測試中...</div>
-            <br><br>
-            <a href="/pwa-install-debug.html" class="link-test" target="_blank">
-                📱 PWA 安裝調試頁面 (.html)
-            </a>
-            <a href="/pwa-engagement-test.html" class="link-test" target="_blank">
-                🎯 PWA 參與度測試頁面 (.html)
-            </a>
-            <a href="/test-console-errors.html" class="link-test" target="_blank">
-                🐛 控制台錯誤測試頁面 (.html)
-            </a>
+        <h1>🔧 部署修復測試工具</h1>
+        <p style="text-align: center; opacity: 0.9;">測試版本檢測、緩存清理和 PWA 安裝功能</p>
+
+        <div class="test-grid">
+            <!-- 版本檢測測試 -->
+            <div class="test-section">
+                <h2>📦 版本檢測測試</h2>
+                <div id="version-status"></div>
+                <button onclick="testVersionDetection()">檢測版本</button>
+                <button onclick="simulateVersionUpdate()">模擬版本更新</button>
+                <button onclick="clearVersionData()">清除版本數據</button>
+                <div class="version-info">
+                    <h3>版本信息</h3>
+                    <div id="version-details"></div>
+                </div>
+            </div>
+
+            <!-- 緩存測試 -->
+            <div class="test-section">
+                <h2>🗄️ 緩存管理測試</h2>
+                <div id="cache-status"></div>
+                <button onclick="testCacheStatus()">檢查緩存</button>
+                <button onclick="forceClearCache()">強制清理緩存</button>
+                <button onclick="testCacheClearing()">測試緩存清理</button>
+                <div id="cache-details"></div>
+            </div>
+
+            <!-- PWA 安裝測試 -->
+            <div class="test-section">
+                <h2>📱 PWA 安裝測試</h2>
+                <div id="pwa-status"></div>
+                <button onclick="testPWAInstall()" class="pwa-install-button">測試 PWA 安裝</button>
+                <button onclick="checkPWAStatus()">檢查 PWA 狀態</button>
+                <button onclick="simulateUserInteraction()">模擬用戶互動</button>
+                <div id="pwa-details"></div>
+            </div>
+
+            <!-- Service Worker 測試 -->
+            <div class="test-section">
+                <h2>⚙️ Service Worker 測試</h2>
+                <div id="sw-status"></div>
+                <button onclick="testServiceWorker()">檢查 SW</button>
+                <button onclick="updateServiceWorker()">更新 SW</button>
+                <button onclick="unregisterServiceWorker()">註銷 SW</button>
+                <div id="sw-details"></div>
+            </div>
         </div>
 
-        <h2>🔄 版本檢測和緩存清理測試</h2>
-        <div class="test-item">
-            <h3>當前版本信息</h3>
-            <p>檢查版本檢測機制是否正常工作</p>
-            <div id="version-info" class="status info">載入中...</div>
-            <br><br>
-            <button onclick="checkVersion()">🔍 檢查版本</button>
-            <button onclick="simulateVersionUpdate()">🆕 模擬版本更新</button>
-            <button onclick="clearAllCaches()">🗑️ 清理所有緩存</button>
+        <!-- 實時日誌 -->
+        <div class="test-section">
+            <h2>📋 實時日誌</h2>
+            <button onclick="clearLog()">清除日誌</button>
+            <button onclick="exportLog()">導出日誌</button>
+            <div id="log" class="log"></div>
         </div>
 
-        <div class="test-item">
-            <h3>Service Worker 狀態</h3>
-            <p>檢查 Service Worker 註冊和更新狀態</p>
-            <div id="sw-status" class="status info">檢查中...</div>
-            <br><br>
-            <button onclick="checkServiceWorker()">🔄 檢查 SW 狀態</button>
-            <button onclick="updateServiceWorker()">⬆️ 強制更新 SW</button>
+        <!-- 系統信息 -->
+        <div class="test-section">
+            <h2>💻 系統信息</h2>
+            <div id="system-info"></div>
+            <button onclick="refreshSystemInfo()">刷新信息</button>
         </div>
-
-        <h2>📊 緩存狀態檢查</h2>
-        <div class="test-item">
-            <h3>瀏覽器緩存</h3>
-            <div id="cache-info" class="status info">檢查中...</div>
-            <br><br>
-            <button onclick="listCaches()">📋 列出所有緩存</button>
-            <button onclick="checkCacheSize()">📏 檢查緩存大小</button>
-        </div>
-
-        <h2>📝 測試日誌</h2>
-        <div id="test-log" class="log">等待測試開始...\n</div>
-        <button onclick="clearLog()">🧹 清理日誌</button>
-        <button onclick="exportLog()">💾 導出日誌</button>
     </div>
 
     <script>
-        let testLog = '';
+        let logEntries = [];
 
-        function log(message) {
+        function log(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
-            const logMessage = `[${timestamp}] ${message}`;
-            testLog += logMessage + '\n';
-            document.getElementById('test-log').textContent = testLog;
-            console.log(logMessage);
+            const entry = `[${timestamp}] ${message}`;
+            logEntries.push(entry);
+            
+            const logElement = document.getElementById('log');
+            logElement.textContent = logEntries.slice(-50).join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(message);
         }
 
-        function updateStatus(elementId, status, className) {
-            const element = document.getElementById(elementId);
-            element.textContent = status;
-            element.className = `status ${className}`;
+        function clearLog() {
+            logEntries = [];
+            document.getElementById('log').textContent = '';
         }
 
-        // 初始化測試
-        window.addEventListener('load', function() {
-            log('🚀 部署修復測試開始');
-            checkVersion();
-            checkServiceWorker();
-            listCaches();
-            testHtmlAccess();
-        });
+        function exportLog() {
+            const logText = logEntries.join('\n');
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lingubible-test-log-${new Date().toISOString().slice(0, 19)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
-        function checkVersion() {
-            const currentVersion = localStorage.getItem('app_version') || '未知';
-            const packageVersion = '0.1.8'; // 從 package.json 同步
+        // 版本檢測測試
+        function testVersionDetection() {
+            log('🔍 開始版本檢測測試...');
             
-            log(`📦 Package.json 版本: ${packageVersion}`);
-            log(`💾 本地存儲版本: ${currentVersion}`);
+            const currentVersion = localStorage.getItem('app_version');
+            const cacheCleared = localStorage.getItem('cache_cleared_for_version');
+            const swVersion = window.PWAInstaller?.getVersion();
             
-            if (currentVersion === packageVersion) {
-                updateStatus('version-info', `版本一致: ${currentVersion}`, 'success');
+            const status = document.getElementById('version-status');
+            const details = document.getElementById('version-details');
+            
+            let html = '';
+            if (currentVersion) {
+                html += `<div class="status success">✅ 當前版本: ${currentVersion}</div>`;
             } else {
-                updateStatus('version-info', `版本不一致: 本地 ${currentVersion} vs 包 ${packageVersion}`, 'warning');
+                html += `<div class="status warning">⚠️ 未找到版本信息</div>`;
             }
+            
+            if (cacheCleared) {
+                html += `<div class="status info">🧹 緩存清理版本: ${cacheCleared}</div>`;
+            }
+            
+            if (swVersion) {
+                html += `<div class="status info">⚙️ Service Worker 版本: ${swVersion}</div>`;
+            }
+            
+            status.innerHTML = html;
+            
+            details.innerHTML = `
+                <p><strong>localStorage 版本:</strong> ${currentVersion || '未設置'}</p>
+                <p><strong>緩存清理標記:</strong> ${cacheCleared || '未設置'}</p>
+                <p><strong>SW 版本:</strong> ${swVersion || '未知'}</p>
+                <p><strong>版本一致性:</strong> ${currentVersion === swVersion ? '✅ 一致' : '❌ 不一致'}</p>
+            `;
+            
+            log(`版本檢測完成: localStorage=${currentVersion}, SW=${swVersion}`);
         }
 
         function simulateVersionUpdate() {
             log('🔄 模擬版本更新...');
-            localStorage.setItem('app_version', '0.1.7'); // 設置舊版本
-            log('✅ 已設置舊版本號，刷新頁面將觸發更新');
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        }
-
-        async function clearAllCaches() {
-            log('🗑️ 開始清理所有緩存...');
             
-            try {
-                if ('caches' in window) {
-                    const cacheNames = await caches.keys();
-                    log(`📋 找到 ${cacheNames.length} 個緩存`);
-                    
-                    for (const cacheName of cacheNames) {
-                        await caches.delete(cacheName);
-                        log(`🗑️ 已刪除緩存: ${cacheName}`);
-                    }
-                }
-                
-                // 清理 localStorage（保留重要數據）
-                const importantKeys = ['user_session', 'auth_token', 'user_preferences'];
-                const backupData = {};
-                importantKeys.forEach(key => {
-                    if (localStorage.getItem(key)) {
-                        backupData[key] = localStorage.getItem(key);
-                    }
-                });
-                
-                localStorage.clear();
-                
-                Object.keys(backupData).forEach(key => {
-                    localStorage.setItem(key, backupData[key]);
-                });
-                
-                log('✅ 緩存清理完成');
-                updateStatus('cache-info', '緩存已清理', 'success');
-                
-            } catch (error) {
-                log(`❌ 清理緩存時發生錯誤: ${error.message}`);
-                updateStatus('cache-info', '清理失敗', 'error');
-            }
+            // 設置一個舊版本
+            const oldVersion = '0.1.16';
+            localStorage.setItem('app_version', oldVersion);
+            localStorage.removeItem('cache_cleared_for_version');
+            
+            log(`設置舊版本: ${oldVersion}`);
+            
+            // 重新載入頁面觸發版本檢測
+            setTimeout(() => {
+                log('重新載入頁面以觸發版本檢測...');
+                window.location.reload();
+            }, 1000);
         }
 
-        function checkServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistration().then(registration => {
-                    if (registration) {
-                        log('✅ Service Worker 已註冊');
-                        log(`📄 SW 腳本: ${registration.scope}`);
-                        log(`🔄 狀態: ${registration.active ? '活躍' : '未活躍'}`);
-                        updateStatus('sw-status', 'Service Worker 正常', 'success');
-                    } else {
-                        log('⚠️ Service Worker 未註冊');
-                        updateStatus('sw-status', 'SW 未註冊', 'warning');
-                    }
-                }).catch(error => {
-                    log(`❌ 檢查 Service Worker 時發生錯誤: ${error.message}`);
-                    updateStatus('sw-status', 'SW 檢查失敗', 'error');
-                });
-            } else {
-                log('❌ 瀏覽器不支援 Service Worker');
-                updateStatus('sw-status', '不支援 SW', 'error');
-            }
+        function clearVersionData() {
+            log('🗑️ 清除版本數據...');
+            
+            localStorage.removeItem('app_version');
+            localStorage.removeItem('cache_cleared_for_version');
+            
+            log('版本數據已清除');
+            testVersionDetection();
         }
 
-        function updateServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistration().then(registration => {
-                    if (registration) {
-                        log('🔄 強制更新 Service Worker...');
-                        registration.update().then(() => {
-                            log('✅ Service Worker 更新完成');
-                        }).catch(error => {
-                            log(`❌ 更新 Service Worker 失敗: ${error.message}`);
-                        });
-                    } else {
-                        log('⚠️ 沒有找到 Service Worker 註冊');
-                    }
-                });
-            }
-        }
-
-        async function listCaches() {
+        // 緩存測試
+        async function testCacheStatus() {
+            log('🗄️ 檢查緩存狀態...');
+            
+            const status = document.getElementById('cache-status');
+            const details = document.getElementById('cache-details');
+            
             if ('caches' in window) {
                 try {
                     const cacheNames = await caches.keys();
-                    log(`📋 找到 ${cacheNames.length} 個緩存:`);
                     
+                    let html = `<div class="status success">✅ 找到 ${cacheNames.length} 個緩存</div>`;
+                    status.innerHTML = html;
+                    
+                    let detailsHtml = '<h4>緩存詳情:</h4>';
                     for (const cacheName of cacheNames) {
                         const cache = await caches.open(cacheName);
                         const keys = await cache.keys();
-                        log(`  - ${cacheName}: ${keys.length} 個項目`);
+                        detailsHtml += `<p><strong>${cacheName}:</strong> ${keys.length} 個項目</p>`;
                     }
+                    details.innerHTML = detailsHtml;
                     
-                    updateStatus('cache-info', `${cacheNames.length} 個緩存`, 'info');
+                    log(`找到 ${cacheNames.length} 個緩存: ${cacheNames.join(', ')}`);
                 } catch (error) {
-                    log(`❌ 列出緩存時發生錯誤: ${error.message}`);
-                    updateStatus('cache-info', '檢查失敗', 'error');
+                    status.innerHTML = `<div class="status error">❌ 緩存檢查失敗: ${error.message}</div>`;
+                    log(`緩存檢查失敗: ${error.message}`);
                 }
             } else {
-                log('❌ 瀏覽器不支援 Cache API');
-                updateStatus('cache-info', '不支援緩存', 'error');
+                status.innerHTML = `<div class="status warning">⚠️ 瀏覽器不支援 Cache API</div>`;
+                log('瀏覽器不支援 Cache API');
             }
         }
 
-        async function checkCacheSize() {
-            if ('caches' in window && 'storage' in navigator && 'estimate' in navigator.storage) {
+        async function forceClearCache() {
+            log('🧹 強制清理所有緩存...');
+            
+            if ('caches' in window) {
                 try {
-                    const estimate = await navigator.storage.estimate();
-                    const usedMB = (estimate.usage / 1024 / 1024).toFixed(2);
-                    const quotaMB = (estimate.quota / 1024 / 1024).toFixed(2);
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
                     
-                    log(`💾 存儲使用量: ${usedMB} MB / ${quotaMB} MB`);
-                    updateStatus('cache-info', `使用 ${usedMB} MB`, 'info');
+                    log(`已清理 ${cacheNames.length} 個緩存`);
+                    testCacheStatus();
                 } catch (error) {
-                    log(`❌ 檢查存儲大小時發生錯誤: ${error.message}`);
+                    log(`清理緩存失敗: ${error.message}`);
                 }
             } else {
-                log('⚠️ 瀏覽器不支援存儲估算 API');
+                log('瀏覽器不支援 Cache API');
             }
         }
 
-        function testHtmlAccess() {
-            // 測試 HTML 文件是否可以直接訪問
-            const testUrls = [
-                '/pwa-install-debug.html',
-                '/pwa-engagement-test.html',
-                '/test-console-errors.html'
-            ];
+        function testCacheClearing() {
+            log('🧪 測試緩存清理邏輯...');
+            
+            // 模擬版本更新觸發緩存清理
+            const currentVersion = localStorage.getItem('app_version');
+            if (currentVersion) {
+                localStorage.setItem('app_version', '0.1.16'); // 設置舊版本
+                localStorage.removeItem('cache_cleared_for_version');
+                
+                log('已設置舊版本，重新載入頁面將觸發緩存清理');
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                log('未找到當前版本，無法測試');
+            }
+        }
 
-            let successCount = 0;
-            let totalTests = testUrls.length;
+        // PWA 安裝測試
+        function testPWAInstall() {
+            log('📱 測試 PWA 安裝功能...');
+            
+            const status = document.getElementById('pwa-status');
+            const details = document.getElementById('pwa-details');
+            
+            // 檢查 PWA 安裝狀態
+            const isPWAMode = window.matchMedia('(display-mode: standalone)').matches ||
+                             window.navigator.standalone === true;
+            
+            const hasPrompt = window.PWAInstaller?.hasPrompt();
+            const hasEngagement = window.PWAInstaller?.hasUserEngagement();
+            
+            let html = '';
+            if (isPWAMode) {
+                html += `<div class="status success">✅ 已在 PWA 模式下運行</div>`;
+            } else if (hasPrompt) {
+                html += `<div class="status success">✅ PWA 安裝提示可用</div>`;
+            } else {
+                html += `<div class="status warning">⚠️ PWA 安裝提示不可用</div>`;
+            }
+            
+            status.innerHTML = html;
+            
+            details.innerHTML = `
+                <p><strong>PWA 模式:</strong> ${isPWAMode ? '✅ 是' : '❌ 否'}</p>
+                <p><strong>安裝提示:</strong> ${hasPrompt ? '✅ 可用' : '❌ 不可用'}</p>
+                <p><strong>用戶互動:</strong> ${hasEngagement ? '✅ 充足' : '❌ 不足'}</p>
+                <p><strong>瀏覽器:</strong> ${navigator.userAgent.split(' ').pop()}</p>
+            `;
+            
+            // 嘗試觸發安裝
+            if (hasPrompt && !isPWAMode) {
+                log('嘗試觸發 PWA 安裝提示...');
+                window.PWAInstaller?.triggerInstallPrompt();
+            } else if (isPWAMode) {
+                log('應用已在 PWA 模式下運行');
+            } else {
+                log('PWA 安裝提示不可用，顯示手動安裝指引');
+                window.PWAInstaller?.showManualInstructions();
+            }
+        }
 
-            testUrls.forEach(url => {
-                fetch(url, { method: 'HEAD' })
-                    .then(response => {
-                        if (response.ok) {
-                            log(`✅ HTML 文件可訪問: ${url}`);
-                            successCount++;
-                        } else {
-                            log(`❌ HTML 文件訪問失敗: ${url} (${response.status})`);
-                        }
+        function checkPWAStatus() {
+            log('🔍 檢查 PWA 狀態...');
+            
+            const status = document.getElementById('pwa-status');
+            const details = document.getElementById('pwa-details');
+            
+            const isPWAMode = window.PWAInstaller?.isPWAMode();
+            const hasPrompt = window.PWAInstaller?.hasPrompt();
+            const hasEngagement = window.PWAInstaller?.hasUserEngagement();
+            
+            let html = `<div class="status info">📊 PWA 狀態檢查完成</div>`;
+            status.innerHTML = html;
+            
+            details.innerHTML = `
+                <h4>PWA 狀態詳情:</h4>
+                <p><strong>PWA 模式:</strong> ${isPWAMode}</p>
+                <p><strong>安裝提示:</strong> ${hasPrompt}</p>
+                <p><strong>用戶互動:</strong> ${hasEngagement}</p>
+                <p><strong>顯示模式:</strong> ${window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'}</p>
+                <p><strong>平台:</strong> ${navigator.platform}</p>
+                <p><strong>用戶代理:</strong> ${navigator.userAgent}</p>
+            `;
+            
+            log(`PWA 狀態: 模式=${isPWAMode}, 提示=${hasPrompt}, 互動=${hasEngagement}`);
+        }
+
+        function simulateUserInteraction() {
+            log('👤 模擬用戶互動...');
+            
+            // 觸發點擊事件
+            document.body.click();
+            
+            // 觸發滾動事件
+            window.scrollBy(0, 1);
+            
+            // 觸發鍵盤事件
+            const keyEvent = new KeyboardEvent('keydown', { key: 'Space' });
+            document.dispatchEvent(keyEvent);
+            
+            log('已模擬用戶互動（點擊、滾動、鍵盤）');
+            
+            setTimeout(() => {
+                checkPWAStatus();
+            }, 1000);
+        }
+
+        // Service Worker 測試
+        async function testServiceWorker() {
+            log('⚙️ 檢查 Service Worker 狀態...');
+            
+            const status = document.getElementById('sw-status');
+            const details = document.getElementById('sw-details');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    
+                    if (registration) {
+                        const sw = registration.active || registration.installing || registration.waiting;
                         
-                        if (successCount === totalTests) {
-                            updateStatus('html-access-status', '所有 HTML 文件正常', 'success');
-                        } else if (successCount > 0) {
-                            updateStatus('html-access-status', `${successCount}/${totalTests} 文件正常`, 'warning');
-                        } else {
-                            updateStatus('html-access-status', 'HTML 文件訪問失敗', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        log(`❌ 測試 HTML 文件時發生錯誤: ${url} - ${error.message}`);
-                    });
-            });
+                        let html = `<div class="status success">✅ Service Worker 已註冊</div>`;
+                        status.innerHTML = html;
+                        
+                        details.innerHTML = `
+                            <h4>Service Worker 詳情:</h4>
+                            <p><strong>狀態:</strong> ${sw?.state || '未知'}</p>
+                            <p><strong>腳本 URL:</strong> ${sw?.scriptURL || '未知'}</p>
+                            <p><strong>範圍:</strong> ${registration.scope}</p>
+                            <p><strong>更新時間:</strong> ${registration.updateViaCache}</p>
+                        `;
+                        
+                        log(`Service Worker 已註冊: ${sw?.state}`);
+                    } else {
+                        status.innerHTML = `<div class="status warning">⚠️ Service Worker 未註冊</div>`;
+                        log('Service Worker 未註冊');
+                    }
+                } catch (error) {
+                    status.innerHTML = `<div class="status error">❌ Service Worker 檢查失敗: ${error.message}</div>`;
+                    log(`Service Worker 檢查失敗: ${error.message}`);
+                }
+            } else {
+                status.innerHTML = `<div class="status error">❌ 瀏覽器不支援 Service Worker</div>`;
+                log('瀏覽器不支援 Service Worker');
+            }
         }
 
-        function clearLog() {
-            testLog = '';
-            document.getElementById('test-log').textContent = '日誌已清理\n';
+        async function updateServiceWorker() {
+            log('🔄 更新 Service Worker...');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        await registration.update();
+                        log('Service Worker 更新請求已發送');
+                    } else {
+                        log('未找到 Service Worker 註冊');
+                    }
+                } catch (error) {
+                    log(`Service Worker 更新失敗: ${error.message}`);
+                }
+            }
         }
 
-        function exportLog() {
-            const blob = new Blob([testLog], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `deployment-test-log-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            log('💾 測試日誌已導出');
+        async function unregisterServiceWorker() {
+            log('🗑️ 註銷 Service Worker...');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        await registration.unregister();
+                        log('Service Worker 已註銷');
+                        testServiceWorker();
+                    } else {
+                        log('未找到 Service Worker 註冊');
+                    }
+                } catch (error) {
+                    log(`Service Worker 註銷失敗: ${error.message}`);
+                }
+            }
         }
+
+        // 系統信息
+        function refreshSystemInfo() {
+            log('💻 刷新系統信息...');
+            
+            const info = document.getElementById('system-info');
+            
+            info.innerHTML = `
+                <div class="metric">
+                    <div class="metric-value">${navigator.userAgent.includes('Chrome') ? 'Chrome' : 
+                                                navigator.userAgent.includes('Firefox') ? 'Firefox' : 
+                                                navigator.userAgent.includes('Safari') ? 'Safari' : '其他'}</div>
+                    <div class="metric-label">瀏覽器</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${window.location.protocol}</div>
+                    <div class="metric-label">協議</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${navigator.onLine ? '在線' : '離線'}</div>
+                    <div class="metric-label">網絡狀態</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${window.innerWidth}x${window.innerHeight}</div>
+                    <div class="metric-label">視窗大小</div>
+                </div>
+                <p><strong>用戶代理:</strong> ${navigator.userAgent}</p>
+                <p><strong>語言:</strong> ${navigator.language}</p>
+                <p><strong>平台:</strong> ${navigator.platform}</p>
+                <p><strong>Cookie 啟用:</strong> ${navigator.cookieEnabled ? '是' : '否'}</p>
+                <p><strong>本地存儲:</strong> ${typeof(Storage) !== "undefined" ? '支援' : '不支援'}</p>
+            `;
+            
+            log('系統信息已刷新');
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', function() {
+            log('🚀 部署修復測試工具已載入');
+            
+            // 初始化所有測試
+            testVersionDetection();
+            testCacheStatus();
+            checkPWAStatus();
+            testServiceWorker();
+            refreshSystemInfo();
+            
+            log('所有初始測試已完成');
+        });
+
+        // 監聽 PWA 事件
+        window.addEventListener('pwaInstallAvailable', function(event) {
+            log('📱 收到 PWA 安裝可用事件: ' + JSON.stringify(event.detail));
+        });
+
+        window.addEventListener('pwaInstallAccepted', function() {
+            log('✅ PWA 安裝被接受');
+        });
+
+        window.addEventListener('pwaInstalled', function() {
+            log('🎉 PWA 安裝完成');
+        });
+
+        // 監聽版本更新事件
+        window.addEventListener('beforeunload', function() {
+            log('📄 頁面即將卸載');
+        });
     </script>
 </body>
 </html> 
