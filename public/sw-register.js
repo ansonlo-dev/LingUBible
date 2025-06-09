@@ -238,6 +238,21 @@
   let userInteractionCount = 0;
   let hasUserEngagement = false;
   let installPromptTimeout;
+  let forceShowInstallButton = false;
+  
+  // 檢查是否應該強制顯示安裝按鈕
+  function shouldForceShowInstallButton() {
+    const isDesktop = window.innerWidth >= 768;
+    const isHTTPS = window.location.protocol === 'https:';
+    const isPWAMode = window.matchMedia('(display-mode: standalone)').matches ||
+                     window.navigator.standalone === true ||
+                     document.referrer.includes('android-app://');
+    const isSupportedBrowser = navigator.userAgent.includes('Chrome') || 
+                              navigator.userAgent.includes('Edge') ||
+                              navigator.userAgent.includes('Firefox');
+    
+    return isDesktop && isHTTPS && !isPWAMode && isSupportedBrowser;
+  }
   
   // 用戶互動追蹤
   function trackUserInteraction() {
@@ -252,8 +267,16 @@
       
       console.log('👤 用戶開始互動，PWA 安裝提示準備就緒');
       
-      // 如果已經有 deferredPrompt，延遲顯示安裝按鈕
-      if (deferredPrompt && !installPromptShown) {
+      // 檢查是否應該強制顯示安裝按鈕
+      if (shouldForceShowInstallButton()) {
+        console.log('🖥️ 桌面環境檢測到，強制顯示安裝按鈕');
+        forceShowInstallButton = true;
+        
+        clearTimeout(installPromptTimeout);
+        installPromptTimeout = setTimeout(() => {
+          showInstallButtons();
+        }, 1000); // 1秒後顯示
+      } else if (deferredPrompt && !installPromptShown) {
         clearTimeout(installPromptTimeout);
         installPromptTimeout = setTimeout(() => {
           showInstallButtons();
@@ -292,7 +315,8 @@
       detail: { 
         platforms: deferredPrompt?.platforms || ['web'],
         canInstall: true,
-        hasUserEngagement: hasUserEngagement
+        hasUserEngagement: hasUserEngagement,
+        forceShow: forceShowInstallButton
       }
     }));
   }
@@ -315,7 +339,7 @@
       clearTimeout(installPromptTimeout);
       installPromptTimeout = setTimeout(() => {
         showInstallButtons();
-      }, 1000); // 1秒後顯示
+      }, 500); // 0.5秒後顯示
     } else {
       console.log('⏳ 等待用戶互動後顯示安裝按鈕');
     }
@@ -451,6 +475,7 @@
     // 清理
     deferredPrompt = null;
     installPromptShown = false;
+    forceShowInstallButton = false;
   });
 
   // 如果已經在 PWA 模式下，隱藏安裝按鈕
@@ -466,16 +491,30 @@
         }
       });
     }, 1000);
+  } else {
+    // 不在 PWA 模式下，檢查是否應該強制顯示安裝按鈕
+    setTimeout(() => {
+      if (shouldForceShowInstallButton()) {
+        console.log('🖥️ 桌面環境檢測到，準備強制顯示安裝按鈕');
+        forceShowInstallButton = true;
+        
+        // 如果用戶已經有互動，立即顯示
+        if (hasUserEngagement) {
+          showInstallButtons();
+        }
+      }
+    }, 2000); // 2秒後檢查
   }
 
   // 暴露全局函數供測試使用
   window.PWAInstaller = {
     triggerInstallPrompt,
-    hasPrompt: () => !!deferredPrompt,
+    hasPrompt: () => !!deferredPrompt || forceShowInstallButton,
     hasUserEngagement: () => hasUserEngagement,
     isPWAMode,
     showManualInstructions: showManualInstallInstructions,
-    getVersion: () => CURRENT_VERSION
+    getVersion: () => CURRENT_VERSION,
+    forceShow: () => forceShowInstallButton
   };
 
 })(); 

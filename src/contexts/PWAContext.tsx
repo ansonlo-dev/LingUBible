@@ -88,23 +88,36 @@ export function PWAProvider({ children }: PWAProviderProps) {
     const handlePWAInstallAvailable = (event: CustomEvent) => {
       log('收到 PWA 安裝可用事件:', event.detail);
       
-      // 檢查是否有真實的安裝提示
-      if ((window as any).PWAInstaller?.hasPrompt()) {
+      // 檢查是否有真實的安裝提示或強制顯示
+      const hasRealPrompt = (window as any).PWAInstaller?.hasPrompt();
+      const shouldForceShow = event.detail.forceShow || (window as any).PWAInstaller?.forceShow();
+      
+      if (hasRealPrompt || shouldForceShow) {
         // 創建一個代理事件對象
         const proxyPrompt = {
           prompt: async () => {
-            return (window as any).PWAInstaller?.triggerInstallPrompt();
+            // 優先使用 Service Worker 的安裝方法
+            if ((window as any).PWAInstaller?.triggerInstallPrompt) {
+              return (window as any).PWAInstaller.triggerInstallPrompt();
+            }
+            // 備用：顯示手動安裝指引
+            if ((window as any).PWAInstaller?.showManualInstructions) {
+              (window as any).PWAInstaller.showManualInstructions();
+            }
           },
           userChoice: Promise.resolve({ outcome: 'dismissed' as const }),
           platforms: event.detail.platforms || ['web'],
           preventDefault: () => {},
-          isTrusted: true,
-          type: 'beforeinstallprompt'
+          isTrusted: hasRealPrompt,
+          type: 'beforeinstallprompt',
+          forceShow: shouldForceShow
         } as any;
         
         deferredPromptRef.current = proxyPrompt;
         setDeferredPrompt(proxyPrompt);
         savePWAState(true, false);
+        
+        log('已創建代理安裝提示:', { hasRealPrompt, shouldForceShow });
       }
     };
 

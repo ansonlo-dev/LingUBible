@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 強制 PWA 安裝測試 - LingUBible</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
+        }
+        .status.warning {
+            background: rgba(255, 193, 7, 0.3);
+            border: 1px solid #FFC107;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid #F44336;
+        }
+        .status.info {
+            background: rgba(33, 150, 243, 0.3);
+            border: 1px solid #2196F3;
+        }
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .pwa-install-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            font-size: 18px;
+            padding: 20px 40px;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .info-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 強制 PWA 安裝測試</h1>
+        <p>此頁面用於測試強制顯示 PWA 安裝按鈕的功能</p>
+
+        <div class="test-section">
+            <h2>📱 PWA 安裝狀態</h2>
+            <div id="pwa-status"></div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-value" id="pwa-mode">檢查中...</div>
+                    <div class="info-label">PWA 模式</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="has-prompt">檢查中...</div>
+                    <div class="info-label">安裝提示</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="force-show">檢查中...</div>
+                    <div class="info-label">強制顯示</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="user-engagement">檢查中...</div>
+                    <div class="info-label">用戶互動</div>
+                </div>
+            </div>
+
+            <button onclick="testPWAInstall()" class="pwa-install-button">🚀 測試 PWA 安裝</button>
+            <button onclick="forceShowInstallButton()">💪 強制顯示安裝按鈕</button>
+            <button onclick="checkPWAStatus()">🔍 檢查 PWA 狀態</button>
+            <button onclick="simulateUserInteraction()">👤 模擬用戶互動</button>
+        </div>
+
+        <div class="test-section">
+            <h2>🖥️ 環境信息</h2>
+            <div id="environment-info"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 實時日誌</h2>
+            <button onclick="clearLog()">清除日誌</button>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <!-- 載入 Service Worker 註冊腳本 -->
+    <script src="/sw-register.js"></script>
+
+    <script>
+        let logEntries = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            logEntries.push(entry);
+            
+            const logElement = document.getElementById('log');
+            logElement.textContent = logEntries.slice(-30).join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(message);
+        }
+
+        function clearLog() {
+            logEntries = [];
+            document.getElementById('log').textContent = '';
+        }
+
+        function checkPWAStatus() {
+            log('🔍 檢查 PWA 狀態...');
+            
+            const isPWAMode = window.matchMedia('(display-mode: standalone)').matches ||
+                             window.navigator.standalone === true;
+            const hasPrompt = window.PWAInstaller?.hasPrompt();
+            const forceShow = window.PWAInstaller?.forceShow();
+            const hasEngagement = window.PWAInstaller?.hasUserEngagement();
+            
+            // 更新狀態顯示
+            document.getElementById('pwa-mode').textContent = isPWAMode ? '✅ 是' : '❌ 否';
+            document.getElementById('has-prompt').textContent = hasPrompt ? '✅ 有' : '❌ 無';
+            document.getElementById('force-show').textContent = forceShow ? '✅ 是' : '❌ 否';
+            document.getElementById('user-engagement').textContent = hasEngagement ? '✅ 充足' : '❌ 不足';
+            
+            const statusElement = document.getElementById('pwa-status');
+            let statusClass = 'info';
+            let statusText = '';
+            
+            if (isPWAMode) {
+                statusClass = 'success';
+                statusText = '✅ 應用已在 PWA 模式下運行';
+            } else if (hasPrompt || forceShow) {
+                statusClass = 'success';
+                statusText = '✅ PWA 安裝功能可用';
+            } else {
+                statusClass = 'warning';
+                statusText = '⚠️ PWA 安裝功能不可用';
+            }
+            
+            statusElement.innerHTML = `<div class="status ${statusClass}">${statusText}</div>`;
+            
+            log(`PWA 狀態: 模式=${isPWAMode}, 提示=${hasPrompt}, 強制=${forceShow}, 互動=${hasEngagement}`);
+        }
+
+        function testPWAInstall() {
+            log('📱 測試 PWA 安裝功能...');
+            
+            if (window.PWAInstaller?.triggerInstallPrompt) {
+                log('觸發 PWA 安裝提示...');
+                window.PWAInstaller.triggerInstallPrompt();
+            } else {
+                log('❌ PWA 安裝功能不可用');
+                alert('PWA 安裝功能不可用，請檢查瀏覽器支援和網站配置。');
+            }
+        }
+
+        function forceShowInstallButton() {
+            log('💪 嘗試強制顯示安裝按鈕...');
+            
+            // 觸發用戶互動
+            simulateUserInteraction();
+            
+            // 等待一下再檢查狀態
+            setTimeout(() => {
+                checkPWAStatus();
+                
+                // 嘗試觸發安裝按鈕顯示
+                if (window.PWAInstaller) {
+                    log('觸發 PWA 安裝可用事件...');
+                    window.dispatchEvent(new CustomEvent('pwaInstallAvailable', {
+                        detail: { 
+                            platforms: ['web'],
+                            canInstall: true,
+                            forceShow: true
+                        }
+                    }));
+                }
+            }, 1000);
+        }
+
+        function simulateUserInteraction() {
+            log('👤 模擬用戶互動...');
+            
+            // 觸發各種用戶互動事件
+            document.body.click();
+            window.scrollBy(0, 1);
+            
+            const keyEvent = new KeyboardEvent('keydown', { key: 'Space' });
+            document.dispatchEvent(keyEvent);
+            
+            const touchEvent = new TouchEvent('touchstart', {
+                touches: [new Touch({
+                    identifier: 0,
+                    target: document.body,
+                    clientX: 100,
+                    clientY: 100
+                })]
+            });
+            document.dispatchEvent(touchEvent);
+            
+            log('已模擬用戶互動事件');
+        }
+
+        function updateEnvironmentInfo() {
+            const info = document.getElementById('environment-info');
+            
+            const isDesktop = window.innerWidth >= 768;
+            const isHTTPS = window.location.protocol === 'https:';
+            const browserName = navigator.userAgent.includes('Chrome') ? 'Chrome' : 
+                               navigator.userAgent.includes('Firefox') ? 'Firefox' : 
+                               navigator.userAgent.includes('Safari') ? 'Safari' : 
+                               navigator.userAgent.includes('Edge') ? 'Edge' : '其他';
+            
+            info.innerHTML = `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-value">${isDesktop ? '✅ 桌面' : '❌ 移動'}</div>
+                        <div class="info-label">設備類型</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">${isHTTPS ? '✅ HTTPS' : '❌ HTTP'}</div>
+                        <div class="info-label">協議</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">${browserName}</div>
+                        <div class="info-label">瀏覽器</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">${window.innerWidth}x${window.innerHeight}</div>
+                        <div class="info-label">視窗大小</div>
+                    </div>
+                </div>
+                <p style="font-size: 12px; opacity: 0.8; margin-top: 15px;">
+                    <strong>用戶代理:</strong> ${navigator.userAgent}
+                </p>
+            `;
+        }
+
+        // 監聽 PWA 相關事件
+        window.addEventListener('pwaInstallAvailable', function(event) {
+            log('📱 收到 PWA 安裝可用事件: ' + JSON.stringify(event.detail));
+            checkPWAStatus();
+        });
+
+        window.addEventListener('pwaInstallAccepted', function() {
+            log('✅ PWA 安裝被接受');
+            checkPWAStatus();
+        });
+
+        window.addEventListener('pwaInstalled', function() {
+            log('🎉 PWA 安裝完成');
+            checkPWAStatus();
+        });
+
+        window.addEventListener('beforeinstallprompt', function(event) {
+            log('💡 收到原生 beforeinstallprompt 事件');
+            checkPWAStatus();
+        });
+
+        // 頁面載入時初始化
+        window.addEventListener('load', function() {
+            log('🚀 強制 PWA 安裝測試頁面已載入');
+            
+            updateEnvironmentInfo();
+            
+            // 延遲檢查 PWA 狀態，等待 Service Worker 載入
+            setTimeout(() => {
+                checkPWAStatus();
+                log('初始化完成');
+            }, 2000);
+        });
+
+        // 監聽視窗大小變化
+        window.addEventListener('resize', updateEnvironmentInfo);
+    </script>
+</body>
+</html> 
