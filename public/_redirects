@@ -1,51 +1,44 @@
 # Cloudflare Pages 重定向配置
 
 # 靜態 HTML 文件 - 直接提供，不重定向
-/pwa-install-debug.html /pwa-install-debug.html 200
-/pwa-engagement-test.html /pwa-engagement-test.html 200
-/test-console-errors.html /test-console-errors.html 200
-/test-pwa-install.html /test-pwa-install.html 200
-/pwa-desktop-debug.html /pwa-desktop-debug.html 200
-/pwa-language-test.html /pwa-language-test.html 200
-/pwa-debug.html /pwa-debug.html 200
-/meta-image.html /meta-image.html 200
-/debug-registered-users.html /debug-registered-users.html 200
-
-# 測試和調試文件
-/test-*.html /test-*.html 200
-/debug-*.html /debug-*.html 200
-/pwa-*.html /pwa-*.html 200
+/pwa-install-debug.html 200
+/pwa-engagement-test.html 200
+/test-console-errors.html 200
+/test-pwa-install.html 200
+/pwa-desktop-debug.html 200
+/pwa-language-test.html 200
+/pwa-debug.html 200
+/meta-image.html 200
+/debug-registered-users.html 200
+/test-deployment-fixes.html 200
 
 # API 路由
-/api/* /api/:splat 200
+/api/* 200
 
 # 靜態資源
-/assets/* /assets/:splat 200
-/android/* /android/:splat 200
-/ios/* /ios/:splat 200
-/windows11/* /windows11/:splat 200
-/splash_screens/* /splash_screens/:splat 200
+/assets/* 200
+/android/* 200
+/ios/* 200
+/windows11/* 200
+/splash_screens/* 200
 
 # Manifest 和 PWA 文件
-/manifest.json /manifest.json 200
-/manifest.js /manifest.js 200
-/manifest-dynamic.json /manifest-dynamic.json 200
-/site.webmanifest /site.webmanifest 200
-/sw.js /sw.js 200
-/sw-register.js /sw-register.js 200
+/manifest.json 200
+/manifest.js 200
+/manifest-dynamic.json 200
+/site.webmanifest 200
+/sw.js 200
+/sw-register.js 200
 
 # 圖標和圖片
-/*.png /:splat.png 200
-/*.svg /:splat.svg 200
-/*.ico /:splat.ico 200
-/*.webp /:splat.webp 200
+/*.png 200
+/*.svg 200
+/*.ico 200
+/*.webp 200
 
 # 其他靜態文件
-/robots.txt /robots.txt 200
-/favicon.* /favicon.:splat 200
+/robots.txt 200
+/favicon.* 200
 
-# WWW 重定向到非 WWW（SEO 優化）
-https://www.lingubible.com/* https://lingubible.com/:splat 301!
-
-# SPA 路由處理 - 所有其他路由都返回 index.html
+# SPA 路由處理 - 所有其他路由都返回 index.html（但排除靜態文件）
 /* /index.html 200 

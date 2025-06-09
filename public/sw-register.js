@@ -3,7 +3,7 @@
   'use strict';
 
   // 版本檢測和緩存清理
-  const CURRENT_VERSION = '0.1.8'; // 從 package.json 同步
+  const CURRENT_VERSION = '0.1.9'; // 從 package.json 同步
   const VERSION_KEY = 'app_version';
   
   // 檢查是否需要清理緩存
