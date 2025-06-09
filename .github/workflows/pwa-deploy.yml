@@ -1,0 +1,48 @@
+name: 🌐 PWA Deploy to Cloudflare
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy-pwa:
+    name: 🚀 Deploy PWA
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 🔧 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🏗️ Build PWA
+        run: bun run build
+        env:
+          VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
+          VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}
+          VITE_APP_ENV: production
+          VITE_DEV_MODE: false
+
+      - name: 🚀 Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME || 'lingubible' }}
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ Deployment Success
+        run: |
+          echo "🎉 PWA 部署成功！"
+          echo "🌐 網站: https://lingubible.com"
+          echo "📱 用戶可以通過瀏覽器安裝 PWA"
+          echo "⚡ 部署時間: $(date)" 
