@@ -40,7 +40,9 @@
     "release:create-missing": "node tools/scripts/version/create-missing-release.js",
     "version:test": "node tools/scripts/version/test-version-system.js",
     "pwa:update-version": "node tools/scripts/version/update-pwa-version.js",
-    "pwa:test-version": "npm run pwa:update-version && echo '✅ PWA 版本已更新'"
+    "pwa:test-version": "npm run pwa:update-version && echo '✅ PWA 版本已更新'",
+    "sync:version": "node scripts/sync-version.js",
+    "prebuild": "npm run sync:version"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

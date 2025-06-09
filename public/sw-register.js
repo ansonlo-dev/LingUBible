@@ -1,6 +1,73 @@
-// PWA Service Worker 註冊腳本
+  // PWA Service Worker 註冊腳本
 (function() {
   'use strict';
+
+  // 版本檢測和緩存清理
+  const CURRENT_VERSION = '0.1.8'; // 從 package.json 同步
+  const VERSION_KEY = 'app_version';
+  
+  // 檢查是否需要清理緩存
+  function checkVersionAndClearCache() {
+    const storedVersion = localStorage.getItem(VERSION_KEY);
+    
+    if (storedVersion && storedVersion !== CURRENT_VERSION) {
+      console.log(`🔄 檢測到版本更新: ${storedVersion} → ${CURRENT_VERSION}`);
+      
+      // 清理所有緩存
+      if ('caches' in window) {
+        caches.keys().then(cacheNames => {
+          return Promise.all(
+            cacheNames.map(cacheName => {
+              console.log(`🗑️ 清理緩存: ${cacheName}`);
+              return caches.delete(cacheName);
+            })
+          );
+        }).then(() => {
+          console.log('✅ 所有緩存已清理');
+          
+          // 清理其他存儲
+          try {
+            // 清理 sessionStorage（保留重要數據）
+            const importantKeys = ['user_session', 'auth_token', 'user_preferences'];
+            const sessionData = {};
+            importantKeys.forEach(key => {
+              if (sessionStorage.getItem(key)) {
+                sessionData[key] = sessionStorage.getItem(key);
+              }
+            });
+            
+            sessionStorage.clear();
+            
+            // 恢復重要數據
+            Object.keys(sessionData).forEach(key => {
+              sessionStorage.setItem(key, sessionData[key]);
+            });
+            
+            console.log('🧹 已清理 sessionStorage（保留重要數據）');
+          } catch (error) {
+            console.warn('⚠️ 清理 sessionStorage 時發生錯誤:', error);
+          }
+          
+          // 更新版本號
+          localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+          
+          // 強制刷新頁面（自動刷新，不需要用戶確認）
+          console.log('🔄 自動刷新頁面以載入最新內容...');
+          setTimeout(() => {
+            window.location.reload(true);
+          }, 1000); // 延遲 1 秒刷新，讓用戶看到提示
+        }).catch(error => {
+          console.error('❌ 清理緩存時發生錯誤:', error);
+        });
+      }
+    } else if (!storedVersion) {
+      // 首次訪問，記錄版本
+      localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+    }
+  }
+  
+  // 頁面載入時檢查版本
+  checkVersionAndClearCache();
 
   // 檢查瀏覽器是否支援 Service Worker
   if ('serviceWorker' in navigator) {
@@ -56,6 +123,10 @@
 
           // 強制檢查更新（僅在生產環境）
           if (path === '/sw.js') {
+            // 立即檢查更新
+            registration.update();
+            
+            // 定期檢查更新
             setInterval(() => {
               registration.update();
             }, 60000); // 每分鐘檢查一次更新
