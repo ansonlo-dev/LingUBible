@@ -1,0 +1,52 @@
+<svg width="390" height="844" viewBox="0 0 390 844" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="390" height="844" fill="#f8fafc"/>
+  
+  <!-- Status Bar -->
+  <rect x="0" y="0" width="390" height="44" fill="#000000"/>
+  <text x="20" y="28" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">9:41</text>
+  <text x="370" y="28" text-anchor="end" fill="white" font-family="Arial, sans-serif" font-size="14">100%</text>
+  
+  <!-- Header -->
+  <rect x="0" y="44" width="390" height="80" fill="#dc2626"/>
+  <text x="195" y="90" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">LingUBible</text>
+  
+  <!-- Search Bar -->
+  <rect x="20" y="144" width="350" height="44" rx="22" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="40" y="170" fill="#64748b" font-family="Arial, sans-serif" font-size="14">搜尋課程...</text>
+  
+  <!-- Course List -->
+  <rect x="20" y="208" width="350" height="120" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="40" y="228" width="310" height="16" rx="4" fill="#dc2626"/>
+  <rect x="40" y="252" width="200" height="12" rx="4" fill="#f1f5f9"/>
+  <rect x="40" y="272" width="150" height="12" rx="4" fill="#f1f5f9"/>
+  <rect x="40" y="296" width="60" height="20" rx="10" fill="#fef3c7"/>
+  <rect x="110" y="296" width="60" height="20" rx="10" fill="#dcfce7"/>
+  
+  <rect x="20" y="348" width="350" height="120" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="40" y="368" width="310" height="16" rx="4" fill="#dc2626"/>
+  <rect x="40" y="392" width="200" height="12" rx="4" fill="#f1f5f9"/>
+  <rect x="40" y="412" width="150" height="12" rx="4" fill="#f1f5f9"/>
+  <rect x="40" y="436" width="60" height="20" rx="10" fill="#fef3c7"/>
+  <rect x="110" y="436" width="60" height="20" rx="10" fill="#dcfce7"/>
+  
+  <rect x="20" y="488" width="350" height="120" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="40" y="508" width="310" height="16" rx="4" fill="#dc2626"/>
+  <rect x="40" y="532" width="200" height="12" rx="4" fill="#f1f5f9"/>
+  <rect x="40" y="552" width="150" height="12" rx="4" fill="#f1f5f9"/>
+  <rect x="40" y="576" width="60" height="20" rx="10" fill="#fef3c7"/>
+  <rect x="110" y="576" width="60" height="20" rx="10" fill="#dcfce7"/>
+  
+  <!-- Bottom Navigation -->
+  <rect x="0" y="744" width="390" height="100" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="50" y="764" width="60" height="40" rx="8" fill="#f1f5f9"/>
+  <rect x="140" y="764" width="60" height="40" rx="8" fill="#dc2626"/>
+  <rect x="230" y="764" width="60" height="40" rx="8" fill="#f1f5f9"/>
+  <rect x="320" y="764" width="60" height="40" rx="8" fill="#f1f5f9"/>
+  
+  <!-- Footer Text -->
+  <text x="195" y="660" text-anchor="middle" fill="#64748b" font-family="Arial, sans-serif" font-size="10">手機版預覽</text>
+  <text x="195" y="680" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="8">此為佔位符截圖</text>
+  
+  <!-- Home Indicator -->
+  <rect x="165" y="820" width="60" height="4" rx="2" fill="#000000"/>
+</svg> 

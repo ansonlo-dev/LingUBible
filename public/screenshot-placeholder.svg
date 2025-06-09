@@ -1,0 +1,50 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  <rect x="40" y="40" width="1200" height="640" rx="8" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+  
+  <!-- Header -->
+  <rect x="80" y="80" width="200" height="40" rx="4" fill="#dc2626"/>
+  <text x="180" y="105" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">LingUBible</text>
+  
+  <!-- Navigation -->
+  <rect x="320" y="85" width="60" height="30" rx="4" fill="#f1f5f9"/>
+  <rect x="400" y="85" width="60" height="30" rx="4" fill="#f1f5f9"/>
+  <rect x="480" y="85" width="60" height="30" rx="4" fill="#f1f5f9"/>
+  
+  <!-- Search Bar -->
+  <rect x="80" y="160" width="800" height="50" rx="25" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="100" y="190" fill="#64748b" font-family="Arial, sans-serif" font-size="14">搜尋課程或講師...</text>
+  
+  <!-- Course Cards -->
+  <rect x="80" y="240" width="360" height="200" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="100" y="260" width="320" height="20" rx="4" fill="#dc2626"/>
+  <rect x="100" y="290" width="200" height="16" rx="4" fill="#f1f5f9"/>
+  <rect x="100" y="315" width="150" height="16" rx="4" fill="#f1f5f9"/>
+  <rect x="100" y="360" width="80" height="24" rx="12" fill="#fef3c7"/>
+  <rect x="190" y="360" width="80" height="24" rx="12" fill="#dcfce7"/>
+  <rect x="280" y="360" width="80" height="24" rx="12" fill="#dbeafe"/>
+  
+  <rect x="480" y="240" width="360" height="200" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="500" y="260" width="320" height="20" rx="4" fill="#dc2626"/>
+  <rect x="500" y="290" width="200" height="16" rx="4" fill="#f1f5f9"/>
+  <rect x="500" y="315" width="150" height="16" rx="4" fill="#f1f5f9"/>
+  <rect x="500" y="360" width="80" height="24" rx="12" fill="#fef3c7"/>
+  <rect x="590" y="360" width="80" height="24" rx="12" fill="#dcfce7"/>
+  <rect x="680" y="360" width="80" height="24" rx="12" fill="#dbeafe"/>
+  
+  <rect x="880" y="240" width="360" height="200" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="900" y="260" width="320" height="20" rx="4" fill="#dc2626"/>
+  <rect x="900" y="290" width="200" height="16" rx="4" fill="#f1f5f9"/>
+  <rect x="900" y="315" width="150" height="16" rx="4" fill="#f1f5f9"/>
+  <rect x="900" y="360" width="80" height="24" rx="12" fill="#fef3c7"/>
+  <rect x="990" y="360" width="80" height="24" rx="12" fill="#dcfce7"/>
+  <rect x="1080" y="360" width="80" height="24" rx="12" fill="#dbeafe"/>
+  
+  <!-- Footer -->
+  <rect x="80" y="480" width="1120" height="160" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="640" y="520" text-anchor="middle" fill="#64748b" font-family="Arial, sans-serif" font-size="12">課程評價平台 - 開發中</text>
+  <text x="640" y="540" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="10">此為佔位符截圖，實際截圖將在項目完成後添加</text>
+  
+  <!-- Watermark -->
+  <text x="1200" y="700" text-anchor="end" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="10">LingUBible Preview</text>
+</svg> 

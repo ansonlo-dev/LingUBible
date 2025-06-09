@@ -121,18 +121,21 @@ async function getVersionInfo() {
                        window.location.hostname === '127.0.0.1' || 
                        window.location.hostname.includes('localhost');
   
-  // 在開發環境中跳過 GitHub API 調用，避免 CORS 錯誤
+  // 在生產環境中嘗試從 GitHub API 獲取版本，但不阻塞
   if (!isDevelopment) {
     try {
-      // 嘗試從 GitHub API 獲取最新版本
+      // 設置較短的超時時間，避免阻塞
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超時
+      
       const response = await fetch('https://api.github.com/repos/ansonlo-dev/LingUBible/releases/latest', {
         headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          ...(window.VITE_GITHUB_TOKEN && {
-            'Authorization': `token ${window.VITE_GITHUB_TOKEN}`
-          })
-        }
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (response.ok) {
         const data = await response.json();
@@ -145,7 +148,8 @@ async function getVersionInfo() {
         };
       }
     } catch (error) {
-      console.warn('無法從 GitHub 獲取版本信息，使用本地版本:', error);
+      // 靜默處理錯誤，不在控制台顯示
+      // console.warn('無法從 GitHub 獲取版本信息，使用本地版本:', error);
     }
   }
   
@@ -181,7 +185,13 @@ async function generateManifest(language = 'en') {
   const translation = manifestTranslations[language] || manifestTranslations['en'];
   const versionInfo = await getVersionInfo();
   
-  return {
+  // 檢查是否為開發環境
+  const isDevelopment = typeof window !== 'undefined' && 
+                       (window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname.includes('localhost'));
+  
+  const manifest = {
     name: `${translation.name} (${versionInfo.formattedVersion})`,
     short_name: translation.short_name,
     description: `${translation.description} - ${versionInfo.formattedVersion}`,
@@ -245,22 +255,6 @@ async function generateManifest(language = 'en') {
         purpose: "any maskable"
       }
     ],
-    screenshots: [
-      {
-        src: "/screenshot-desktop.png",
-        sizes: "1280x720",
-        type: "image/png",
-        form_factor: "wide",
-        label: translation.screenshots.desktop
-      },
-      {
-        src: "/screenshot-mobile.png",
-        sizes: "390x844",
-        type: "image/png",
-        form_factor: "narrow",
-        label: translation.screenshots.mobile
-      }
-    ],
     shortcuts: [
       {
         name: translation.shortcuts.search.name,
@@ -306,6 +300,47 @@ async function generateManifest(language = 'en') {
       }
     ]
   };
+
+  // 根據環境添加不同的 screenshots
+  if (isDevelopment) {
+    // 開發環境使用佔位符截圖
+    manifest.screenshots = [
+      {
+        src: "/screenshot-placeholder.svg",
+        sizes: "1280x720",
+        type: "image/svg+xml",
+        form_factor: "wide",
+        label: `${translation.screenshots.desktop} (開發預覽)`
+      },
+      {
+        src: "/screenshot-mobile-placeholder.svg",
+        sizes: "390x844",
+        type: "image/svg+xml",
+        form_factor: "narrow",
+        label: `${translation.screenshots.mobile} (開發預覽)`
+      }
+    ];
+  } else {
+    // 生產環境使用實際截圖
+    manifest.screenshots = [
+      {
+        src: "/screenshot-desktop.png",
+        sizes: "1280x720",
+        type: "image/png",
+        form_factor: "wide",
+        label: translation.screenshots.desktop
+      },
+      {
+        src: "/screenshot-mobile.png",
+        sizes: "390x844",
+        type: "image/png",
+        form_factor: "narrow",
+        label: translation.screenshots.mobile
+      }
+    ];
+  }
+
+  return manifest;
 }
 
 // 如果在瀏覽器環境中運行

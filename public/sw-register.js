@@ -6,42 +6,63 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       // 根據環境選擇正確的 Service Worker 文件
-      const swPath = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1' || 
-                     window.location.hostname.includes('localhost') 
-                     ? '/dev-sw.js' 
-                     : '/sw.js';
+      const isDevelopment = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' || 
+                           window.location.hostname.includes('localhost');
       
-      // 註冊 Service Worker
-      navigator.serviceWorker.register(swPath, {
-        scope: '/'
-      }).then(function(registration) {
-        console.log('✅ Service Worker 註冊成功:', registration.scope);
-        console.log('📄 使用的 SW 文件:', swPath);
-        
-        // 檢查更新
-        registration.addEventListener('updatefound', function() {
-          console.log('🔄 發現 Service Worker 更新');
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', function() {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('🆕 新的 Service Worker 已安裝，等待激活');
-              }
-            });
-          }
-        });
+      // 在開發環境中，首先檢查 dev-sw.js 是否存在
+      const swPath = isDevelopment ? '/dev-sw.js' : '/sw.js';
+      
+      // 在開發環境中先檢查檔案是否存在
+      if (isDevelopment) {
+        fetch(swPath, { method: 'HEAD' })
+          .then(response => {
+            if (response.ok && response.headers.get('content-type')?.includes('javascript')) {
+              registerServiceWorker(swPath);
+            } else {
+              console.warn('⚠️ 開發環境 Service Worker 檔案不存在或格式不正確，跳過註冊');
+            }
+          })
+          .catch(() => {
+            console.warn('⚠️ 開發環境 Service Worker 檔案不存在，跳過註冊');
+          });
+      } else {
+        // 生產環境直接註冊
+        registerServiceWorker(swPath);
+      }
+      
+      function registerServiceWorker(path) {
+        // 註冊 Service Worker
+        navigator.serviceWorker.register(path, {
+          scope: '/'
+        }).then(function(registration) {
+          console.log('✅ Service Worker 註冊成功:', registration.scope);
+          console.log('📄 使用的 SW 文件:', path);
+          
+          // 檢查更新
+          registration.addEventListener('updatefound', function() {
+            console.log('🔄 發現 Service Worker 更新');
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('🆕 新的 Service Worker 已安裝，等待激活');
+                }
+              });
+            }
+          });
 
-        // 強制檢查更新（僅在生產環境）
-        if (swPath === '/sw.js') {
-          setInterval(() => {
-            registration.update();
-          }, 60000); // 每分鐘檢查一次更新
-        }
-        
-      }).catch(function(error) {
-        console.log('❌ Service Worker 註冊失敗:', error);
-      });
+          // 強制檢查更新（僅在生產環境）
+          if (path === '/sw.js') {
+            setInterval(() => {
+              registration.update();
+            }, 60000); // 每分鐘檢查一次更新
+          }
+          
+        }).catch(function(error) {
+          console.log('❌ Service Worker 註冊失敗:', error);
+        });
+      }
     });
   } else {
     console.warn('⚠️ 此瀏覽器不支援 Service Worker');

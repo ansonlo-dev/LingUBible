@@ -22,27 +22,22 @@ export default defineConfig(({ command, mode }) => ({
       disable: false,
       // 使用 generateSW 策略，針對生產環境優化
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,woff2}',
-          // 生產環境包含所有必要的圖標文件
-          ...(mode === 'production' ? [
-            '*.{ico,png,svg}',
-            'assets/**/*.{png,svg,jpg,jpeg,gif,webp}',
-            'android/*.png',
-            'ios/*.png'
-          ] : [])
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+        // 確保 index.html 被正確 precache
+        additionalManifestEntries: [
+          {
+            url: '/',
+            revision: null
+          },
+          {
+            url: '/index.html',
+            revision: null
+          }
         ],
-        // 開發模式下簡化配置
-        ...(mode === 'development' && {
-          globPatterns: ['**/*.{js,css,html}'],
-          mode: 'development'
-        }),
-        // 生產環境優化配置
-        navigateFallback: mode === 'production' ? '/index.html' : null,
-        skipWaiting: true,
-        clientsClaim: true,
-        // 運行時緩存配置
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
         runtimeCaching: [
+          // Google Fonts
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst' as const,
@@ -65,42 +60,34 @@ export default defineConfig(({ command, mode }) => ({
               }
             }
           },
-          // 緩存圖標文件
+          // 圖標和圖片
           {
             urlPattern: /\.(ico|png|svg)$/,
             handler: 'CacheFirst' as const,
             options: {
               cacheName: 'icons-cache',
               expiration: {
-                maxEntries: 50,
+                maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           },
-          // 緩存 manifest 文件
-          {
-            urlPattern: /\/manifest.*\.json$/,
-            handler: 'StaleWhileRevalidate' as const,
-            options: {
-              cacheName: 'manifest-cache',
-              expiration: {
-                maxEntries: 5,
-                maxAgeSeconds: 60 * 60 * 24 // 1 day
-              }
-            }
-          },
-          // 忽略 Appwrite API 請求
+          // API 請求 - 網絡優先
           {
             urlPattern: /^https:\/\/fra\.cloud\.appwrite\.io\/v1\/.*/i,
             handler: 'NetworkOnly' as const
           },
-          // 忽略外部 API 請求
           {
             urlPattern: /^https:\/\/api\.ipify\.org\/.*/i,
             handler: 'NetworkOnly' as const
           },
           {
             urlPattern: /^https:\/\/api\.openstatus\.dev\/.*/i,
+            handler: 'NetworkOnly' as const
+          },
+          // GitHub API - 網絡優先，失敗時不緩存
+          {
+            urlPattern: /^https:\/\/api\.github\.com\/.*/i,
             handler: 'NetworkOnly' as const
           },
           // 開發環境：忽略 Vite 相關請求
@@ -143,7 +130,9 @@ export default defineConfig(({ command, mode }) => ({
           '**/hide-*.css',
           '**/badge-*.js',
           '**/recaptcha-*.js',
-          '**/recaptcha-*.css'
+          '**/recaptcha-*.css',
+          // 忽略佔位符檔案
+          '**/screenshot-*-placeholder.svg'
         ]
       },
       // 生產環境的 manifest 配置
@@ -159,7 +148,7 @@ export default defineConfig(({ command, mode }) => ({
         scope: '/',
         start_url: '/',
         id: '/',
-        // 確保包含所有必要的圖標尺寸
+        // 確保包含所有必要的圖標尺寸，符合 PWA 安裝要求
         icons: [
           {
             src: 'favicon-96x96.png',
@@ -171,13 +160,25 @@ export default defineConfig(({ command, mode }) => ({
             src: 'android/android-launchericon-192-192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: 'android/android-launchericon-192-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
           },
           {
             src: 'android/android-launchericon-512-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: 'android/android-launchericon-512-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           },
           {
             src: 'apple-touch-icon.png',
@@ -189,20 +190,20 @@ export default defineConfig(({ command, mode }) => ({
             src: 'favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
           }
         ],
         // 添加截圖以提高安裝提示的顯示機率
         screenshots: [
           {
-            src: '/screenshot-desktop.png',
+            src: 'screenshot-desktop.png',
             sizes: '1280x720',
             type: 'image/png',
             form_factor: 'wide',
             label: 'Desktop view of LingUBible'
           },
           {
-            src: '/screenshot-mobile.png',
+            src: 'screenshot-mobile.png',
             sizes: '390x844',
             type: 'image/png',
             form_factor: 'narrow',
@@ -218,7 +219,7 @@ export default defineConfig(({ command, mode }) => ({
             url: '/?action=search',
             icons: [
               {
-                src: '/android/android-launchericon-192-192.png',
+                src: 'android/android-launchericon-192-192.png',
                 sizes: '192x192',
                 type: 'image/png'
               }
@@ -227,7 +228,9 @@ export default defineConfig(({ command, mode }) => ({
         ],
         categories: ['education', 'social', 'productivity'],
         lang: 'en',
-        dir: 'ltr'
+        dir: 'ltr',
+        // 添加 PWA 安裝提示相關配置
+        prefer_related_applications: false
       },
       devOptions: {
         enabled: true,
@@ -239,7 +242,11 @@ export default defineConfig(({ command, mode }) => ({
       // 確保不阻止瀏覽器原生安裝提示
       injectRegister: 'auto',
       // 生產環境使用自定義 SW 文件名
-      filename: mode === 'production' ? 'sw.js' : 'dev-sw.js'
+      filename: mode === 'production' ? 'sw.js' : 'dev-sw.js',
+      // 確保 PWA 安裝提示正常工作
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'android/*.png'],
+      // 確保 manifest 正確生成
+      useCredentials: false
     }),
     // 簡化的 manifest 處理，避免與 VitePWA 衝突
     {
@@ -367,22 +374,6 @@ export default defineConfig(({ command, mode }) => ({
                 sizes: "any",
                 type: "image/svg+xml",
                 purpose: "any maskable"
-              }
-            ],
-            screenshots: [
-              {
-                src: "/screenshot-desktop.png",
-                sizes: "1280x720",
-                type: "image/png",
-                form_factor: "wide",
-                label: translation.screenshots.desktop
-              },
-              {
-                src: "/screenshot-mobile.png",
-                sizes: "390x844",
-                type: "image/png",
-                form_factor: "narrow",
-                label: translation.screenshots.mobile
               }
             ],
             shortcuts: [

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制台錯誤測試 - LingUBible</title>
+    <link rel="manifest" href="/manifest-dynamic.json?lang=zh-TW" id="manifest-link" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #dc2626;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .success {
+            background-color: #f0fdf4;
+            border-color: #22c55e;
+        }
+        .error {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+        }
+        .info {
+            background-color: #f0f9ff;
+            border-color: #3b82f6;
+        }
+        pre {
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #b91c1c;
+        }
+        .log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 控制台錯誤修復測試</h1>
+        
+        <div class="test-section info">
+            <h3>📋 測試項目</h3>
+            <ul>
+                <li>✅ Service Worker 註冊（避免 MIME type 錯誤）</li>
+                <li>✅ PWA Manifest 截圖載入（使用佔位符）</li>
+                <li>✅ JavaScript 檔案載入檢查</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Service Worker 測試</h3>
+            <button onclick="testServiceWorker()">測試 Service Worker</button>
+            <div id="sw-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 PWA Manifest 測試</h3>
+            <button onclick="testManifest()">測試 Manifest</button>
+            <button onclick="loadScreenshots()">載入截圖</button>
+            <div id="manifest-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📜 JavaScript 檔案測試</h3>
+            <button onclick="testJSFiles()">測試 JS 檔案</button>
+            <div id="js-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🖥️ 控制台日誌</h3>
+            <button onclick="clearLog()">清除日誌</button>
+            <div id="console-log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 攔截控制台輸出
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        const logDiv = document.getElementById('console-log');
+
+        function addToLog(type, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${type}: ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToLog('LOG', args.join(' '));
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToLog('WARN', args.join(' '));
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToLog('ERROR', args.join(' '));
+        };
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        async function testServiceWorker() {
+            const resultDiv = document.getElementById('sw-result');
+            resultDiv.innerHTML = '<p>測試中...</p>';
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    // 檢查是否已註冊
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h4>✅ Service Worker 已註冊</h4>
+                                <p>Scope: ${registration.scope}</p>
+                                <p>狀態: ${registration.active ? '活躍' : '未活躍'}</p>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="info">
+                                <h4>ℹ️ Service Worker 未註冊</h4>
+                                <p>這在開發環境中是正常的，如果 dev-sw.js 不存在的話</p>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Service Worker 測試失敗</h4>
+                            <pre>${error.message}</pre>
+                        </div>
+                    `;
+                }
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 瀏覽器不支援 Service Worker</h4>
+                    </div>
+                `;
+            }
+        }
+
+        async function testManifest() {
+            const resultDiv = document.getElementById('manifest-result');
+            resultDiv.innerHTML = '<p>測試中...</p>';
+
+            try {
+                const manifestLink = document.getElementById('manifest-link');
+                const response = await fetch(manifestLink.href);
+                
+                if (response.ok) {
+                    const manifest = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Manifest 載入成功</h4>
+                            <p>名稱: ${manifest.name}</p>
+                            <p>截圖數量: ${manifest.screenshots ? manifest.screenshots.length : 0}</p>
+                            <pre>${JSON.stringify(manifest.screenshots, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Manifest 載入失敗</h4>
+                            <p>狀態碼: ${response.status}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Manifest 測試失敗</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadScreenshots() {
+            const resultDiv = document.getElementById('manifest-result');
+            
+            try {
+                // 測試載入佔位符截圖
+                const desktopImg = new Image();
+                const mobileImg = new Image();
+                
+                const desktopPromise = new Promise((resolve, reject) => {
+                    desktopImg.onload = () => resolve('desktop');
+                    desktopImg.onerror = () => reject('desktop');
+                    desktopImg.src = '/screenshot-placeholder.svg';
+                });
+
+                const mobilePromise = new Promise((resolve, reject) => {
+                    mobileImg.onload = () => resolve('mobile');
+                    mobileImg.onerror = () => reject('mobile');
+                    mobileImg.src = '/screenshot-mobile-placeholder.svg';
+                });
+
+                const results = await Promise.allSettled([desktopPromise, mobilePromise]);
+                
+                let html = '<div class="success"><h4>📸 截圖載入測試結果</h4>';
+                results.forEach((result, index) => {
+                    const type = index === 0 ? '桌面版' : '手機版';
+                    if (result.status === 'fulfilled') {
+                        html += `<p>✅ ${type}截圖載入成功</p>`;
+                    } else {
+                        html += `<p>❌ ${type}截圖載入失敗</p>`;
+                    }
+                });
+                html += '</div>';
+                
+                resultDiv.innerHTML += html;
+                
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <div class="error">
+                        <h4>❌ 截圖載入測試失敗</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testJSFiles() {
+            const resultDiv = document.getElementById('js-result');
+            resultDiv.innerHTML = '<p>測試中...</p>';
+
+            const jsFiles = [
+                '/sw-register.js',
+                '/badge-hide.js',
+                '/manifest.js'
+            ];
+
+            let html = '<div class="info"><h4>📄 JavaScript 檔案測試</h4>';
+            
+            for (const file of jsFiles) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    const contentType = response.headers.get('content-type');
+                    
+                    if (response.ok && contentType && contentType.includes('javascript')) {
+                        html += `<p>✅ ${file} - OK (${contentType})</p>`;
+                    } else {
+                        html += `<p>⚠️ ${file} - 狀態: ${response.status}, 類型: ${contentType}</p>`;
+                    }
+                } catch (error) {
+                    html += `<p>❌ ${file} - 錯誤: ${error.message}</p>`;
+                }
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+
+        // 頁面載入時自動執行基本測試
+        window.addEventListener('load', function() {
+            console.log('🚀 控制台錯誤測試頁面已載入');
+            console.log('📍 當前 URL:', window.location.href);
+            console.log('🌐 User Agent:', navigator.userAgent);
+        });
+    </script>
+
+    <!-- 載入實際的腳本來測試 -->
+    <script src="/sw-register.js" defer></script>
+    <script src="/badge-hide.js" defer></script>
+</body>
+</html> 
