@@ -14,7 +14,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Appwrite](https://img.shields.io/badge/Appwrite-18.1.1-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
 
-[![Deployed to Cloudflare](https://img.shields.io/badge/Deployed%20to-Cloudflare%20Pages-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://lingubible.com)
+[![Deployed to Cloudflare](https://img.shields.io/badge/Deployed%20to-Cloudflare%20Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://lingubible.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
