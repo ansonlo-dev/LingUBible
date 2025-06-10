@@ -17,7 +17,7 @@ interface AuthContextType {
     verifyStudentCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
     isStudentEmailVerified: (email: string) => Promise<boolean>;
     getVerificationRemainingTime: (email: string) => number;
-    sendPasswordReset: (email: string, recaptchaToken?: string) => Promise<{ success: boolean; message: string }>;
+    sendPasswordReset: (email: string, recaptchaToken?: string, language?: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -167,9 +167,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return await authService.verifyStudentCode(email, code);
     };
 
-    const sendPasswordReset = async (email: string, recaptchaToken?: string) => {
-        return await authService.sendPasswordReset(email, recaptchaToken);
-    };
+      const sendPasswordReset = async (email: string, recaptchaToken?: string, language?: string) => {
+    return await authService.sendPasswordReset(email, recaptchaToken, language);
+  };
 
     const isStudentEmailVerified = async (email: string) => {
         return authService.isStudentEmailVerified(email);

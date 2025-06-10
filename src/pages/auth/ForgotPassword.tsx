@@ -25,7 +25,7 @@ export default function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [error, setError] = useState('');
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { sendPasswordReset } = useAuth();
   const { isRecaptchaLoaded } = useRecaptcha();
   const { verifyForgotPassword } = useForgotPasswordRecaptcha();
@@ -53,7 +53,7 @@ export default function ForgotPassword() {
       }
 
       // 發送密碼重設郵件
-      const result = await sendPasswordReset(email, recaptchaResult.token);
+      const result = await sendPasswordReset(email, recaptchaResult.token, language);
       
       if (result.success) {
         setIsEmailSent(true);

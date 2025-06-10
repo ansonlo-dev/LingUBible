@@ -191,9 +191,9 @@ export const authService = {
     },
 
     // 發送密碼重設郵件
-    async sendPasswordReset(email: string, recaptchaToken?: string): Promise<{ success: boolean; message: string }> {
+    async sendPasswordReset(email: string, recaptchaToken?: string, language: string = 'zh-TW'): Promise<{ success: boolean; message: string }> {
         try {
-            console.log('🔄 發送密碼重設郵件:', email);
+            console.log('🔄 發送密碼重設郵件:', email, '語言:', language);
             
             // 調用後端 API 發送密碼重設郵件
             const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
@@ -206,7 +206,8 @@ export const authService = {
                     body: JSON.stringify({
                         action: 'sendPasswordReset',
                         email,
-                        recaptchaToken
+                        recaptchaToken,
+                        language
                     }),
                     async: false,
                     method: 'POST'

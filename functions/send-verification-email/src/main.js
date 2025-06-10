@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { Client, Databases, Query, ID, Users } from 'node-appwrite';
 import { generateEmailTemplate } from './email-template.js';
+import { generatePasswordResetEmailTemplate } from './password-reset-template.js';
 
 // 開發模式配置
 const DEV_MODE = {
@@ -246,7 +247,7 @@ export default async ({ req, res, log, error }) => {
 
     } else if (action === 'sendPasswordReset') {
       // 發送密碼重設郵件
-      return await sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, log, error, res);
+      return await sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, language, log, error, res);
     } else if (action === 'checkUsername') {
       // 檢查用戶名是否已被使用
       return await checkUsernameAvailability(users, username, log, error, res);
@@ -900,9 +901,9 @@ async function checkUsernameAvailability(users, username, log, error, res) {
 }
 
 // 發送密碼重設郵件
-async function sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, log, error, res) {
+async function sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, language = 'zh-TW', log, error, res) {
   try {
-    log('🚀 開始發送密碼重設郵件:', { email });
+    log('🚀 開始發送密碼重設郵件:', { email, language });
 
     // 驗證參數
     if (!email) {
@@ -990,7 +991,7 @@ async function sendPasswordReset(client, users, email, ipAddress, userAgent, rec
         
         // 使用 Resend 發送自定義的密碼重設郵件
         log('📧 使用 Resend 發送密碼重設郵件');
-        const resetEmailResult = await sendPasswordResetEmail(email, user.$id, resetToken, log, error);
+        const resetEmailResult = await sendPasswordResetEmail(email, user.$id, resetToken, language, log, error);
         
         if (!resetEmailResult.success) {
           log('❌ 發送密碼重設郵件失敗:', resetEmailResult.message);
@@ -1143,7 +1144,7 @@ async function cleanupExpiredResets(databases, log, error) {
 }
 
 // 發送密碼重設郵件函數
-async function sendPasswordResetEmail(email, userId, resetToken, log, error) {
+async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-TW', log, error) {
   try {
     // 檢查 Resend API 金鑰
     const apiKey = process.env.RESEND_API_KEY;
@@ -1160,9 +1161,9 @@ async function sendPasswordResetEmail(email, userId, resetToken, log, error) {
     // 生成密碼重設郵件內容
     const resetUrl = `https://lingubible.com/reset-password?userId=${userId}&token=${resetToken}`;
     
-    const emailTemplate = generatePasswordResetEmailTemplate(email, resetUrl);
+    const emailTemplate = generatePasswordResetEmailTemplate(email, resetUrl, language);
 
-    log('📬 準備發送密碼重設郵件:', { to: email, subject: emailTemplate.subject });
+    log('📬 準備發送密碼重設郵件:', { to: email, subject: emailTemplate.subject, language });
 
     const result = await resend.emails.send({
       from: 'LingUBible <noreply@lingubible.com>',
@@ -1206,178 +1207,7 @@ async function sendPasswordResetEmail(email, userId, resetToken, log, error) {
   }
 }
 
-// 生成密碼重設郵件模板
-function generatePasswordResetEmailTemplate(email, resetUrl) {
-  const subject = 'LingUBible 密碼重設 / Password Reset';
-  
-  const html = `
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>密碼重設 - LingUBible</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8fafc;
-        }
-        .container {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
-        }
-        .title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 20px;
-        }
-        .content {
-            margin-bottom: 30px;
-        }
-        .reset-button {
-            display: inline-block;
-            background-color: #2563eb;
-            color: white;
-            padding: 14px 28px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .reset-button:hover {
-            background-color: #1d4ed8;
-        }
-        .warning {
-            background-color: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            padding: 16px;
-            margin: 20px 0;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #6b7280;
-        }
-        .divider {
-            margin: 30px 0;
-            border-top: 1px solid #e5e7eb;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📖 LingUBible</div>
-            <h1 class="title">密碼重設請求 / Password Reset Request</h1>
-        </div>
-        
-        <div class="content">
-            <p><strong>繁體中文：</strong></p>
-            <p>您好，</p>
-            <p>我們收到了您的密碼重設請求。請點擊下方按鈕來重設您的密碼：</p>
-            
-            <div style="text-align: center;">
-                <a href="${resetUrl}" class="reset-button">重設密碼</a>
-            </div>
-            
-            <div class="warning">
-                <strong>⚠️ 安全提醒：</strong>
-                <ul>
-                    <li>此連結將在 24 小時後過期</li>
-                    <li>如果您沒有請求密碼重設，請忽略此郵件</li>
-                    <li>請勿將此連結分享給他人</li>
-                </ul>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <p><strong>English:</strong></p>
-            <p>Hello,</p>
-            <p>We received a password reset request for your account. Please click the button below to reset your password:</p>
-            
-            <div style="text-align: center;">
-                <a href="${resetUrl}" class="reset-button">Reset Password</a>
-            </div>
-            
-            <div class="warning">
-                <strong>⚠️ Security Notice:</strong>
-                <ul>
-                    <li>This link will expire in 24 hours</li>
-                    <li>If you didn't request a password reset, please ignore this email</li>
-                    <li>Do not share this link with others</li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>如果按鈕無法點擊，請複製以下連結到瀏覽器：<br>
-            If the button doesn't work, copy this link to your browser:</p>
-            <p style="word-break: break-all; color: #2563eb;">${resetUrl}</p>
-            
-            <p style="margin-top: 20px;">
-                此郵件由 LingUBible 系統自動發送，請勿回覆。<br>
-                This email was sent automatically by LingUBible system, please do not reply.
-            </p>
-        </div>
-    </div>
-</body>
-</html>`;
 
-  const text = `
-LingUBible 密碼重設 / Password Reset
-
-繁體中文：
-您好，我們收到了您的密碼重設請求。
-請點擊以下連結來重設您的密碼：
-${resetUrl}
-
-安全提醒：
-- 此連結將在 24 小時後過期
-- 如果您沒有請求密碼重設，請忽略此郵件
-- 請勿將此連結分享給他人
-
-English:
-Hello, we received a password reset request for your account.
-Please click the following link to reset your password:
-${resetUrl}
-
-Security Notice:
-- This link will expire in 24 hours
-- If you didn't request a password reset, please ignore this email
-- Do not share this link with others
-
-此郵件由 LingUBible 系統自動發送，請勿回覆。
-This email was sent automatically by LingUBible system, please do not reply.
-`;
-
-  return {
-    subject,
-    html,
-    text
-  };
-}
 
 // 完成密碼重設函數
 async function completePasswordReset(databases, users, userId, token, password, ipAddress, log, error, res) {

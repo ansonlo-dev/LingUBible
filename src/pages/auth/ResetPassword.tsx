@@ -30,6 +30,7 @@ export default function ResetPassword() {
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [countdown, setCountdown] = useState(3);
 
   // 驗證 URL 參數
   useEffect(() => {
@@ -71,15 +72,22 @@ export default function ResetPassword() {
       
       setIsSuccess(true);
       
-      // 3秒後自動跳轉到登入頁面
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            message: t('auth.passwordResetSuccess'),
-            email: userEmail 
+      // 開始倒計時動畫
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigate('/login', { 
+              state: { 
+                message: t('auth.passwordResetSuccess'),
+                email: userEmail 
+              }
+            });
+            return 0;
           }
+          return prev - 1;
         });
-      }, 3000);
+      }, 1000);
       
     } catch (err: any) {
       console.error('密碼重設失敗:', err);
@@ -126,6 +134,14 @@ export default function ResetPassword() {
             <CardContent className="space-y-4 flex-1 overflow-y-auto">
               <div className="text-center text-sm text-muted-foreground">
                 <p>{t('auth.redirectingToLogin')}</p>
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-blue-700 dark:text-blue-300 font-medium">
+                      {countdown}s
+                    </span>
+                  </div>
+                </div>
               </div>
               
               <div className="flex flex-col space-y-2">
