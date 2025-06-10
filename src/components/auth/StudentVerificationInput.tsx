@@ -45,6 +45,16 @@ export function StudentVerificationInput({
 
   const { t, language } = useLanguage();
 
+  // 輔助函數：處理後端回應的翻譯
+  const getTranslatedMessage = (result: any) => {
+    if (result.messageKey) {
+      const params: Record<string, any> = {};
+      if (result.remainingMinutes) params.remainingMinutes = result.remainingMinutes;
+      return t(result.messageKey, params);
+    }
+    return result.message;
+  };
+
   // 倒數計時器
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -73,7 +83,7 @@ export function StudentVerificationInput({
     // 使用新的開發模式郵件驗證
     if (!isValidEmailForRegistration(email)) {
       if (DEV_MODE.enabled) {
-        setMessage('請輸入有效的郵件地址格式');
+        setMessage(t('verification.validEmailFormat'));
       } else {
         setMessage(t('verification.onlyStudentEmails'));
       }
@@ -98,7 +108,7 @@ export function StudentVerificationInput({
       if (result.success) {
         setIsCodeSent(true);
         setCountdown(600); // 10 分鐘倒數
-        setMessage(result.message);
+        setMessage(getTranslatedMessage(result));
         setMessageType('success');
         
         // 額外的成功提示
@@ -109,19 +119,19 @@ export function StudentVerificationInput({
           console.log('🔧 開發模式：自動完成驗證');
           setTimeout(() => {
             setIsVerified(true);
-            setMessage('開發模式：驗證已自動完成');
+            setMessage(t('verification.devModeAutoVerified'));
             setMessageType('success');
             onCodeVerified();
           }, 500); // 短暫延遲以顯示發送成功訊息
         }
       } else {
-        setMessage(result.message);
+        setMessage(getTranslatedMessage(result));
         setMessageType('error');
         console.error('❌ 發送失敗:', result.message);
       }
     } catch (error: any) {
       console.error('💥 發送過程中發生異常:', error);
-      setMessage(`發送失敗: ${error.message || '未知錯誤'}`);
+      setMessage(`${t('verification.sendFailed')}: ${error.message || t('common.unknownError')}`);
       setMessageType('error');
     } finally {
       setIsSending(false);
@@ -140,11 +150,11 @@ export function StudentVerificationInput({
       
       if (result.success) {
         setIsVerified(true);
-        setMessage(result.message);
+        setMessage(getTranslatedMessage(result));
         setMessageType('success');
         onCodeVerified();
       } else {
-        setMessage(result.message);
+        setMessage(getTranslatedMessage(result));
         setMessageType('error');
       }
     } catch (error: any) {
@@ -207,14 +217,14 @@ export function StudentVerificationInput({
               return (
                 <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
                   <CheckCircle className="h-3 w-3" />
-                  <span>嶺南人郵件地址</span>
+                  <span>{t('verification.studentEmail')}</span>
                 </div>
               );
             } else if (emailType === 'disposable') {
               return (
                 <div className="flex items-center space-x-1 text-purple-600 dark:text-purple-400">
                   <Zap className="h-3 w-3" />
-                  <span>一次性郵件地址 - 適合測試使用</span>
+                  <span>{t('verification.disposableEmail')}</span>
                 </div>
               );
             } else if (emailType === 'test') {

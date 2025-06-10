@@ -197,7 +197,8 @@ export default async ({ req, res, log, error }) => {
       log('❌ 請求方法錯誤:', req.method);
       return res.json({ 
         success: false, 
-        message: '只允許 POST 請求' 
+        message: 'Only POST requests are allowed',
+        messageKey: 'error.methodNotAllowed'
       }, 405);
     }
 
@@ -208,7 +209,8 @@ export default async ({ req, res, log, error }) => {
         log('❌ 請求體為空');
         return res.json({
           success: false,
-          message: '請求數據為空'
+          message: 'Request data is empty',
+          messageKey: 'error.emptyRequest'
         }, 400);
       }
 
@@ -219,7 +221,8 @@ export default async ({ req, res, log, error }) => {
       error('❌ JSON 解析失敗:', parseError);
       return res.json({
         success: false,
-        message: '請求數據格式錯誤'
+        message: 'Invalid request data format',
+        messageKey: 'error.invalidFormat'
       }, 400);
     }
 
@@ -264,7 +267,8 @@ export default async ({ req, res, log, error }) => {
     error('💥 Function 執行異常:', err);
     return res.json({
       success: false,
-      message: `服務異常: ${err.message || '請稍後再試'}`
+      message: `Service error: ${err.message || 'Please try again later'}`,
+      messageKey: 'error.serviceError'
     }, 500);
   }
 };
@@ -278,7 +282,8 @@ async function sendVerificationCode(databases, email, language, theme, ipAddress
     if (!email) {
       return res.json({
         success: false,
-        message: '缺少郵件地址'
+        message: 'Email address is required',
+        messageKey: 'error.emailRequired'
       }, 400);
     }
 
@@ -333,7 +338,9 @@ async function sendVerificationCode(databases, email, language, theme, ipAddress
         log('⏰ 驗證碼尚未過期，剩餘時間:', remainingMinutes, '分鐘');
         return res.json({
           success: false,
-          message: `驗證碼已發送，請檢查您的信箱或等待 ${remainingMinutes} 分鐘後重新發送`
+          message: `Verification code already sent. Please check your inbox or wait ${remainingMinutes} minutes before resending`,
+          messageKey: 'verification.codeAlreadySent',
+          remainingMinutes
         }, 400);
       } else {
         // 刪除過期的驗證碼
@@ -359,7 +366,8 @@ async function sendVerificationCode(databases, email, language, theme, ipAddress
       error('❌ RESEND_API_KEY 環境變數未設定');
       return res.json({
         success: false,
-        message: '郵件服務配置錯誤'
+        message: 'Email service configuration error',
+        messageKey: 'error.emailServiceConfig'
       }, 500);
     }
 
@@ -394,14 +402,16 @@ async function sendVerificationCode(databases, email, language, theme, ipAddress
     log('✅ 驗證碼已安全存儲到資料庫');
     return res.json({
       success: true,
-      message: '驗證碼已發送到您的嶺南人信箱，請檢查郵件（包括垃圾郵件資料夾）'
+      message: 'Verification code has been sent to your email address, please check your inbox',
+      messageKey: 'verification.codeSent'
     });
 
   } catch (err) {
     error('💥 發送驗證碼異常:', err);
     return res.json({
       success: false,
-      message: `發送失敗: ${err.message || '請稍後再試'}`
+      message: `Send failed: ${err.message || 'Please try again later'}`,
+      messageKey: 'verification.sendFailed'
     }, 500);
   }
 }
@@ -415,14 +425,16 @@ async function verifyCode(databases, email, code, ipAddress, userAgent, log, err
     if (!email || !code) {
       return res.json({
         success: false,
-        message: '缺少必要參數'
+        message: 'Missing required parameters',
+        messageKey: 'error.missingParameters'
       }, 400);
     }
 
     if (code.length !== 6 || !/^\d{6}$/.test(code)) {
       return res.json({
         success: false,
-        message: '驗證碼必須是 6 位數字'
+        message: 'Verification code must be 6 digits',
+        messageKey: 'verification.invalidCodeFormat'
       }, 400);
     }
 

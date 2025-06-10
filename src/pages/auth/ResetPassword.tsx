@@ -90,7 +90,7 @@ export default function ResetPassword() {
       }, 1000);
       
     } catch (err: any) {
-      console.error('密碼重設失敗:', err);
+      console.error('Password reset failed:', err);
       
       if (err.message?.includes('Invalid credentials') || 
           err.message?.includes('Invalid recovery')) {

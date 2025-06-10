@@ -116,7 +116,9 @@ class StudentVerificationService {
             
             return {
               success: functionResponse.success,
-              message: functionResponse.message || (functionResponse.success ? `${action === 'send' ? '驗證碼已發送' : '驗證成功'}` : `${action === 'send' ? '發送' : '驗證'}失敗`)
+              message: functionResponse.message || (functionResponse.success ? `${action === 'send' ? '驗證碼已發送' : '驗證成功'}` : `${action === 'send' ? '發送' : '驗證'}失敗`),
+              ...(functionResponse.messageKey && { messageKey: functionResponse.messageKey }),
+              ...(functionResponse.remainingMinutes && { remainingMinutes: functionResponse.remainingMinutes })
             };
           } catch (parseError) {
             console.error('❌ 解析 Function 回應失敗:', parseError);
