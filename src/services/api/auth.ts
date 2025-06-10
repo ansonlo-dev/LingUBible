@@ -281,6 +281,80 @@ export const authService = {
         }
     },
 
+    // 完成自定義密碼重設
+    async completeCustomPasswordReset(userId: string, token: string, password: string) {
+        try {
+            console.log('🔄 完成自定義密碼重設:', { userId: userId.substring(0, 8) + '...' });
+            
+            // 調用後端 API 完成密碼重設
+            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': 'lingubible',
+                },
+                body: JSON.stringify({
+                    body: JSON.stringify({
+                        action: 'completePasswordReset',
+                        userId,
+                        token,
+                        password
+                    }),
+                    async: false,
+                    method: 'POST'
+                }),
+            });
+
+            console.log('📡 密碼重設完成 API 回應狀態:', response.status, response.statusText);
+
+            if (!response.ok) {
+                console.error('❌ API 請求失敗:', response.status, response.statusText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📦 密碼重設完成 API 回應數據:', data);
+
+            // 解析 Appwrite Function 的回應
+            let result;
+            try {
+                result = JSON.parse(data.responseBody || data.response || '{}');
+                console.log('📋 解析後的結果:', result);
+            } catch (parseError) {
+                console.error('❌ 解析回應失敗:', parseError);
+                console.log('🔍 原始回應數據:', data);
+                result = { success: false, message: '解析回應失敗' };
+            }
+
+            if (!result.success) {
+                throw new Error(result.message || '密碼重設失敗');
+            }
+
+            console.log('✅ 自定義密碼重設完成');
+            return { success: true };
+            
+        } catch (error: any) {
+            console.error('❌ 完成自定義密碼重設錯誤:', error);
+            
+            // 處理常見的錯誤情況
+            if (error?.message?.includes('Invalid token') || 
+                error?.message?.includes('Token expired') ||
+                error?.message?.includes('Token not found')) {
+                throw new Error('重設連結無效或已過期，請重新申請密碼重設');
+            }
+            
+            if (error?.message?.includes('Password must be between 8 and 256 characters')) {
+                throw new Error('密碼長度必須在8-256字符之間');
+            }
+            
+            if (error?.message?.includes('Too many requests')) {
+                throw new Error('請求過於頻繁，請稍後再試');
+            }
+            
+            throw error;
+        }
+    },
+
     // 獲取當前用戶
     async getCurrentUser() {
         try {

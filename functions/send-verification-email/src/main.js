@@ -250,6 +250,10 @@ export default async ({ req, res, log, error }) => {
     } else if (action === 'checkUsername') {
       // 檢查用戶名是否已被使用
       return await checkUsernameAvailability(users, username, log, error, res);
+    } else if (action === 'completePasswordReset') {
+      // 完成密碼重設
+      const { userId, token, password } = requestData;
+      return await completePasswordReset(databases, users, userId, token, password, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
@@ -944,27 +948,34 @@ async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaTo
         const user = usersList.users[0];
         log('✅ 找到用戶:', user.$id);
 
-        // 使用 Appwrite 內建的密碼重設功能生成重設 token
-        log('📧 生成密碼重設 token');
-        const { Client, Account } = await import('node-appwrite');
+        // 生成自定義的密碼重設 token 並使用 Resend 發送郵件
+        log('📧 生成自定義密碼重設 token');
         
-        const tempClient = new Client()
-          .setEndpoint('https://fra.cloud.appwrite.io/v1')
-          .setProject('lingubible');
+        // 生成一個安全的重設 token
+        const resetToken = generateSecureToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24小時後過期
         
-        const tempAccount = new Account(tempClient);
-        
-        // 生成密碼重設 token
-        const recovery = await tempAccount.createRecovery(
-          email,
-          'https://lingubible.com/reset-password' // 重設密碼頁面的 URL
+        // 將重設 token 存儲到資料庫
+        const resetRecord = await databases.createDocument(
+          'verification_system',
+          'password_resets', // 需要創建這個集合
+          ID.unique(),
+          {
+            email: email,
+            userId: user.$id,
+            token: resetToken,
+            expiresAt: expiresAt.toISOString(),
+            isUsed: false,
+            ipAddress: ipAddress || null,
+            userAgent: userAgent || null
+          }
         );
-
-        log('✅ 密碼重設 token 已生成');
+        
+        log('✅ 密碼重設 token 已生成並存儲:', resetRecord.$id);
         
         // 使用 Resend 發送自定義的密碼重設郵件
         log('📧 使用 Resend 發送密碼重設郵件');
-        const resetEmailResult = await sendPasswordResetEmail(email, recovery, log, error);
+        const resetEmailResult = await sendPasswordResetEmail(email, user.$id, resetToken, log, error);
         
         if (!resetEmailResult.success) {
           log('❌ 發送密碼重設郵件失敗:', resetEmailResult.message);
@@ -1011,8 +1022,18 @@ async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaTo
   }
 }
 
+// 生成安全的重設 token
+function generateSecureToken() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 64; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
 // 發送密碼重設郵件函數
-async function sendPasswordResetEmail(email, recovery, log, error) {
+async function sendPasswordResetEmail(email, userId, resetToken, log, error) {
   try {
     // 檢查 Resend API 金鑰
     const apiKey = process.env.RESEND_API_KEY;
@@ -1027,7 +1048,7 @@ async function sendPasswordResetEmail(email, recovery, log, error) {
     const resend = new Resend(apiKey);
 
     // 生成密碼重設郵件內容
-    const resetUrl = `https://lingubible.com/reset-password?userId=${recovery.userId}&secret=${recovery.secret}`;
+    const resetUrl = `https://lingubible.com/reset-password?userId=${userId}&token=${resetToken}`;
     
     const emailTemplate = generatePasswordResetEmailTemplate(email, resetUrl);
 
@@ -1246,4 +1267,134 @@ This email was sent automatically by LingUBible system, please do not reply.
     html,
     text
   };
+}
+
+// 完成密碼重設函數
+async function completePasswordReset(databases, users, userId, token, password, log, error, res) {
+  try {
+    log('🔐 開始完成密碼重設:', { userId: userId ? userId.substring(0, 8) + '...' : 'undefined', token: token ? token.substring(0, 8) + '...' : 'undefined' });
+
+    // 驗證參數
+    if (!userId || !token || !password) {
+      return res.json({
+        success: false,
+        message: '缺少必要參數'
+      }, 400);
+    }
+
+    // 驗證密碼長度
+    if (password.length < 8 || password.length > 256) {
+      return res.json({
+        success: false,
+        message: '密碼長度必須在8-256字符之間'
+      }, 400);
+    }
+
+    // 查找重設記錄
+    log('🔍 查找密碼重設記錄');
+    const resetRecords = await databases.listDocuments(
+      'verification_system',
+      'password_resets',
+      [
+        Query.equal('userId', userId),
+        Query.equal('token', token),
+        Query.equal('isUsed', false),
+        Query.orderDesc('$createdAt'),
+        Query.limit(1)
+      ]
+    );
+
+    if (resetRecords.documents.length === 0) {
+      log('❌ 找不到有效的重設記錄');
+      return res.json({
+        success: false,
+        message: '重設連結無效或已過期'
+      }, 400);
+    }
+
+    const resetRecord = resetRecords.documents[0];
+    log('📋 找到重設記錄:', resetRecord.$id);
+
+    // 檢查是否已過期
+    const now = new Date();
+    const expiresAt = new Date(resetRecord.expiresAt);
+    
+    if (expiresAt < now) {
+      log('⏰ 重設連結已過期');
+      await databases.deleteDocument(
+        'verification_system',
+        'password_resets',
+        resetRecord.$id
+      );
+      
+      return res.json({
+        success: false,
+        message: '重設連結已過期，請重新申請密碼重設'
+      }, 400);
+    }
+
+    // 檢查是否已使用
+    if (resetRecord.isUsed) {
+      log('🚫 重設連結已使用');
+      return res.json({
+        success: false,
+        message: '重設連結已使用，請重新申請密碼重設'
+      }, 400);
+    }
+
+    try {
+      // 更新用戶密碼
+      log('🔐 更新用戶密碼');
+      await users.updatePassword(userId, password);
+      
+      log('✅ 密碼更新成功');
+
+      // 標記重設記錄為已使用
+      log('📝 標記重設記錄為已使用');
+      await databases.updateDocument(
+        'verification_system',
+        'password_resets',
+        resetRecord.$id,
+        {
+          isUsed: true,
+          usedAt: new Date().toISOString()
+        }
+      );
+
+      return res.json({
+        success: true,
+        message: '密碼重設成功！您現在可以使用新密碼登入'
+      });
+
+    } catch (updateError) {
+      error('❌ 更新密碼失敗:', updateError);
+      
+      // 處理常見錯誤
+      if (updateError.message && updateError.message.includes('Password must be between 8 and 256 characters')) {
+        return res.json({
+          success: false,
+          message: '密碼長度必須在8-256字符之間'
+        }, 400);
+      }
+
+      if (updateError.message && updateError.message.includes('User not found')) {
+        return res.json({
+          success: false,
+          message: '用戶不存在'
+        }, 400);
+      }
+
+      return res.json({
+        success: false,
+        message: `更新密碼失敗: ${updateError.message || '請稍後再試'}`
+      }, 500);
+    }
+
+  } catch (err) {
+    error('💥 完成密碼重設異常:', err);
+    return res.json({
+      success: false,
+      message: `密碼重設失敗: ${err.message || '請稍後再試'}`
+    }, 500);
+  }
 } 

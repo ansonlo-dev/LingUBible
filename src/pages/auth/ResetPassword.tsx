@@ -20,7 +20,7 @@ export default function ResetPassword() {
   
   // URL 參數
   const userId = searchParams.get('userId');
-  const secret = searchParams.get('secret');
+  const token = searchParams.get('token');
   
   // 表單狀態
   const [password, setPassword] = useState('');
@@ -33,10 +33,10 @@ export default function ResetPassword() {
 
   // 驗證 URL 參數
   useEffect(() => {
-    if (!userId || !secret) {
+    if (!userId || !token) {
       setError(t('auth.invalidResetLink'));
     }
-  }, [userId, secret, t]);
+  }, [userId, token, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +58,7 @@ export default function ResetPassword() {
       return;
     }
 
-    if (!userId || !secret) {
+    if (!userId || !token) {
       setError(t('auth.invalidResetLink'));
       return;
     }
@@ -66,8 +66,8 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      // 使用 Appwrite 的密碼重設完成功能
-      await authService.completePasswordReset(userId, secret, password);
+      // 使用自定義的密碼重設完成功能
+      await authService.completeCustomPasswordReset(userId, token, password);
       
       setIsSuccess(true);
       
@@ -242,7 +242,7 @@ export default function ResetPassword() {
                   !isPasswordValid || 
                   password !== confirmPassword ||
                   !userId ||
-                  !secret
+                  !token
                 }
               >
                 {isLoading ? t('auth.resetting') : t('auth.resetPassword')}
