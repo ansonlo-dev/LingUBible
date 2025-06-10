@@ -934,6 +934,21 @@ async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaTo
       log('✅ reCAPTCHA 驗證通過，分數:', recaptchaResult.score);
     }
 
+    // 初始化 databases 實例
+    const databases = new Databases(client);
+
+    // 檢查速率限制
+    const rateLimitResult = await checkPasswordResetRateLimit(databases, email, ipAddress, log, error);
+    if (!rateLimitResult.allowed) {
+      return res.json({
+        success: false,
+        message: rateLimitResult.message
+      }, 429);
+    }
+
+    // 清理過期記錄（異步執行，不影響主流程）
+    cleanupExpiredResets(databases, log, error).catch(() => {});
+
     try {
       // 檢查用戶是否存在
       log('🔍 檢查用戶是否存在');
@@ -954,18 +969,6 @@ async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaTo
         // 生成一個安全的重設 token
         const resetToken = generateSecureToken();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24小時後過期
-        
-        // 檢查速率限制
-        const rateLimitResult = await checkPasswordResetRateLimit(databases, email, ipAddress, log, error);
-        if (!rateLimitResult.allowed) {
-          return res.json({
-            success: false,
-            message: rateLimitResult.message
-          }, 429);
-        }
-
-        // 清理過期記錄（異步執行，不影響主流程）
-        cleanupExpiredResets(databases, log, error).catch(() => {});
 
         // 將重設 token 存儲到資料庫
         const resetRecord = await databases.createDocument(
