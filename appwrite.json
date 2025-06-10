@@ -57,7 +57,7 @@
             "timeout": 15,
             "entrypoint": "src/main.js",
             "commands": "bun install",
-            "specification": "s-0.5vcpu-512mb",
+            "specification": "s-4cpu-4096mb",
             "path": "functions/send-verification-email"
         },
         {
@@ -78,7 +78,7 @@
             "timeout": 30,
             "entrypoint": "src/main.js",
             "commands": "bun install",
-            "specification": "s-0.5vcpu-512mb",
+            "specification": "s-4cpu-4096mb",
             "path": "functions/cleanup-expired-codes"
         },
         {
@@ -100,7 +100,7 @@
             "timeout": 15,
             "entrypoint": "src/main.js",
             "commands": "bun install",
-            "specification": "s-0.5vcpu-512mb",
+            "specification": "s-4cpu-4096mb",
             "path": "functions/get-user-stats"
         }
     ],
