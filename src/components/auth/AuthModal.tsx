@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, AlertTriangle, User, Lightbulb } from 'lucide-react';
+import { CheckCircle, AlertTriangle, User, Lightbulb, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentVerificationInput } from './StudentVerificationInput';
@@ -33,6 +33,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isUsernameValid, setIsUsernameValid] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [usernameSuggestion, setUsernameSuggestion] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
   const { t } = useLanguage();
   const { 
     login, 
@@ -154,6 +156,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setUsernameError('');
     setUsernameSuggestion('');
     setTermsAccepted(false);
+    setIsCheckingUsername(false);
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout);
+      setUsernameCheckTimeout(null);
+    }
     onClose();
   };
 
@@ -169,16 +176,69 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setUsernameError('');
     setUsernameSuggestion('');
     setTermsAccepted(false);
+    setIsCheckingUsername(false);
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout);
+      setUsernameCheckTimeout(null);
+    }
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value;
     setUsername(newUsername);
     
-    // 驗證用戶名
+    // 清除之前的檢查超時
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout);
+    }
+    
+    if (newUsername.trim() === '') {
+      setIsUsernameValid(false);
+      setUsernameError('');
+      setIsCheckingUsername(false);
+      return;
+    }
+    
+    // 先進行基本驗證
     const validation = UsernameValidator.validate(newUsername);
-    setIsUsernameValid(validation.isValid);
-    setUsernameError(validation.error || '');
+    if (!validation.isValid) {
+      setIsUsernameValid(false);
+      // 使用翻譯鍵值或回退到原始訊息
+      const errorMessage = validation.errorKey ? t(validation.errorKey) : validation.error || '';
+      setUsernameError(errorMessage);
+      setIsCheckingUsername(false);
+      return;
+    }
+    
+    // 基本驗證通過，開始檢查唯一性
+    setIsCheckingUsername(true);
+    setUsernameError('');
+    
+    // 設置延遲檢查，避免頻繁請求
+    const timeout = setTimeout(async () => {
+      try {
+        const { authService } = await import('@/services/api/auth');
+        const result = await authService.checkUsernameAvailability(newUsername.trim());
+        
+        if (result.available) {
+          setIsUsernameValid(true);
+          setUsernameError('');
+        } else {
+          setIsUsernameValid(false);
+          // 使用翻譯鍵值或回退到原始訊息
+          const errorMessage = result.messageKey ? t(result.messageKey) : result.message;
+          setUsernameError(errorMessage);
+        }
+      } catch (error) {
+        console.error('檢查用戶名失敗:', error);
+        setIsUsernameValid(false);
+        setUsernameError(t('username.checkError'));
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 800); // 800ms 延遲
+    
+    setUsernameCheckTimeout(timeout);
   };
 
   const handleUseSuggestion = () => {
@@ -186,7 +246,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setUsername(usernameSuggestion);
       const validation = UsernameValidator.validate(usernameSuggestion);
       setIsUsernameValid(validation.isValid);
-      setUsernameError(validation.error || '');
+      // 使用翻譯鍵值或回退到原始訊息
+      const errorMessage = validation.errorKey ? t(validation.errorKey) : validation.error || '';
+      setUsernameError(errorMessage);
       setUsernameSuggestion('');
     }
   };
@@ -267,18 +329,26 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 autoComplete="username"
                 required
                 disabled={loading}
-                className={usernameError ? 'border-red-500' : isUsernameValid && username ? 'border-green-500' : ''}
+                className={usernameError ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : isUsernameValid && username ? 'border-green-500' : ''}
               />
               
+              {/* 檢查中提示 */}
+              {isCheckingUsername && (
+                <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t('settings.usernameChecking')}
+                </p>
+              )}
+              
               {/* 用戶名驗證提示 */}
-              {usernameError && (
+              {!isCheckingUsername && usernameError && (
                 <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
                   {usernameError}
                 </p>
               )}
               
-              {isUsernameValid && username && (
+              {!isCheckingUsername && isUsernameValid && username && (
                 <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
                   <CheckCircle className="h-3 w-3" />
                   {t('auth.usernameAvailable')}

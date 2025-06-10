@@ -137,15 +137,16 @@ const Index = () => {
   };
 
   return (
-    <div className="bg-background relative overflow-x-hidden">
-      <FloatingCircles zIndex={0} />
+    <>
+      {/* 全頁面浮動效果 - 固定定位覆蓋整個視窗，放在最外層 */}
+      <FloatingCircles zIndex={-1} className="fixed inset-0 w-full h-full" style={{ zIndex: -1 }} />
       {/* 在桌面版顯示 FloatingGlare，手機版跳過以減少重疊 */}
-      {!isMobile && <FloatingGlare count={3} className="fixed inset-0 top-16 z-0" />}
+      {!isMobile && <FloatingGlare count={4} className="fixed inset-0 w-full h-full" style={{ zIndex: -2 }} />}
+      
+      <div className="bg-background relative overflow-x-hidden min-h-screen">
       <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">
         {/* Hero Section */}
         <div className="text-center py-8 md:py-12 animate-fade-in relative overflow-visible z-30">
-          {/* 在桌面版才顯示額外的 FloatingCircles */}
-          {!isMobile && <FloatingCircles zIndex={0} className="absolute inset-0 w-full h-full" />}
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             <span className="neon-glow-text">{t('hero.title')}</span>{' '}
             <span className="red-neon-glow-text">LingUBible</span>
@@ -271,14 +272,15 @@ const Index = () => {
         </Tabs>
       </div>
       
-      {/* Heaven Transition Effect */}
-      <HeavenTransition 
-        isActive={showHeavenTransition}
-        onComplete={handleTransitionComplete}
-        duration={1200}
-        buttonPosition={buttonPosition}
-      />
-    </div>
+        {/* Heaven Transition Effect */}
+        <HeavenTransition 
+          isActive={showHeavenTransition}
+          onComplete={handleTransitionComplete}
+          duration={1200}
+          buttonPosition={buttonPosition}
+        />
+      </div>
+    </>
   );
 };
 

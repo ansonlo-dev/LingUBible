@@ -289,8 +289,15 @@ const translations = {
         'auth.registrationFailed': 'Registration failed. Please check your information and try again.',
     'auth.captchaFailed': 'Security verification failed. Please try again.',
     
-    // Processing
-    'auth.processing': 'Processing...',
+    // Reset password page
+    'auth.setNewPassword': 'Set New Password',
+    'auth.setNewPasswordDescription': 'Enter your new password to complete the reset process',
+    'auth.invalidResetLink': 'Invalid reset link',
+    'auth.passwordResetComplete': 'Password Reset Complete',
+    'auth.redirectingToLogin': 'Redirecting to login page...',
+    'auth.passwordRequirements': 'Password must be 8-40 characters with uppercase, lowercase, number, and special character',
+    'auth.passwordSecurityTip': 'Use a strong, unique password for better security',
+    'auth.resetting': 'Resetting...',
     // Email placeholder
     'auth.emailPlaceholder': 'student@ln.hk or student@ln.edu.hk',
     // Email validation
@@ -621,6 +628,21 @@ const translations = {
     'settings.username': 'Username',
     'settings.usernamePlaceholder': 'Enter your username (2-10 characters, can be empty)',
     'settings.usernameAvailable': 'Username available',
+    'settings.usernameChecking': 'Checking username availability...',
+    'settings.usernameNotAvailable': 'This username is already taken',
+    'username.alreadyTaken': 'This username is already taken, please choose another one',
+    'username.inappropriateContent': 'Username contains inappropriate content, please re-enter',
+    'username.systemReserved': 'This username is reserved by the system, please choose another one',
+    'username.cannotBeEmpty': 'Username cannot be empty',
+    'username.cannotBeWhitespaceOnly': 'Username cannot contain only spaces or invisible characters',
+    'username.tooShort': 'Username must be at least 2 characters long',
+    'username.tooLong': 'Username cannot exceed 10 characters',
+    'username.mustContainValidChars': 'Username must contain at least one Chinese character, letter, or number',
+    'username.checkError': 'Error checking username availability, please try again later',
+    'username.available': 'Username is available',
+    'username.lengthError': 'Username length must be between 2-10 characters',
+    'username.invalidParameter': 'Invalid username parameter',
+    'username.invalidQuery': 'Invalid query parameter',
     'settings.usernameRules': 'Username Rules:',
     'settings.usernameLength': '• Length: 2-10 characters (can be empty)',
     'settings.usernameSupported': '• Supports: Chinese, English, numbers, symbols, spaces',
@@ -636,27 +658,31 @@ const translations = {
     'settings.updateError': 'Error occurred while updating username, please try again later',
     'settings.loginRequired': 'Please log in to access user settings',
     'settings.login': 'Log In',
-    // Danger Zone
-    'settings.dangerZone.title': 'Danger Zone',
-    'settings.dangerZone.description': 'Account management actions',
-    'settings.dangerZone.warning': 'This action will temporarily disable your account. Please proceed with caution.',
-    'settings.dangerZone.deleteAccount': 'Disable Account',
-    'settings.dangerZone.confirmDelete': 'Confirm Account Disabling',
-    'settings.dangerZone.confirmDeleteDesc': 'This action will temporarily disable your account. You will not be able to log in until you re-enable it.',
-    'settings.dangerZone.irreversibleWarning': 'Your account will be temporarily disabled. You can re-enable it by logging in again.',
-    'settings.dangerZone.confirmEmailLabel': 'Type your email address to confirm',
-    'settings.dangerZone.confirmEmailDesc': 'Please type your email address exactly as shown above to confirm disabling.',
-    'settings.dangerZone.cancel': 'Cancel',
-    'settings.dangerZone.confirmDeleteButton': 'Disable My Account',
-    'settings.dangerZone.deleting': 'Disabling...',
-    'settings.dangerZone.completeDeleteInfo': 'If you want to completely delete your account, please send an email to contact@lingubible.com',
-    'settings.dangerZone.reEnableInfo': 'To re-enable your disabled account, simply log in again with your credentials.',
-    'settings.deleteAccount.emailMismatch': 'Email Mismatch',
-    'settings.deleteAccount.emailMismatchDesc': 'The email address you entered does not match your account email.',
-    'settings.deleteAccount.success': 'Account Disabled',
-    'settings.deleteAccount.successDesc': 'Your account has been temporarily disabled. You can re-enable it by logging in again.',
-    'settings.deleteAccount.failed': 'Disabling Failed',
-    'settings.deleteAccount.failedDesc': 'Failed to disable account, please try again later.',
+    // Avatar
+    'settings.avatar': 'Avatar',
+    'settings.avatarDescription': 'Customize your profile avatar',
+    'settings.currentAvatar': 'Current Avatar',
+    'settings.customAvatar': 'Custom avatar',
+    'settings.defaultAvatar': 'Default avatar',
+    // Change Password
+    'settings.changePassword': 'Change Password',
+    'settings.password': 'Password',
+    'settings.changePasswordDescription': 'Update your account password',
+    'settings.currentPassword': 'Current Password',
+    'settings.currentPasswordPlaceholder': 'Enter your current password',
+    'settings.newPassword': 'New Password',
+    'settings.newPasswordPlaceholder': 'Enter your new password',
+    'settings.confirmPassword': 'Confirm New Password',
+    'settings.confirmPasswordPlaceholder': 'Confirm your new password',
+    'settings.passwordMismatch': 'Passwords do not match',
+    'settings.passwordSameAsOld': 'New password cannot be the same as current password',
+    'settings.passwordUpdateSuccess': 'Password updated successfully',
+    'settings.passwordUpdateFailed': 'Failed to update password',
+    'settings.currentPasswordRequired': 'Current password is required',
+    'settings.newPasswordRequired': 'New password is required',
+    'settings.passwordTooWeak': 'New password does not meet security requirements',
+    'settings.wrongCurrentPassword': 'Current password is incorrect',
+
     'auth.showPassword': 'Show password',
     'auth.hidePassword': 'Hide password',
     // 404 Page
@@ -1065,7 +1091,7 @@ const translations = {
     'animal.🐓': '公雞',
     'animal.🦃': '火雞',
     'animal.🕊️': '鴿子',
-    'animal.🦜': '鸚鵡',
+    'animal.🦜': '鸚鴿',
     'animal.🐠': '熱帶魚',
     'animal.🐟': '魚兒',
     'animal.🦈': '鯊魚',
@@ -1158,37 +1184,37 @@ const translations = {
     'privacy.dataSecurity.updates': '• 定期更新安全措施和系統補丁',
     'privacy.userRights.title': '6. 用戶權利',
     'privacy.userRights.content': '您擁有以下權利：',
-    'privacy.userRights.access': '• 查詢我們收集的關於您的信息',
-    'privacy.userRights.correction': '• 要求更正不準確的個人信息',
-    'privacy.userRights.deletion': '• 要求刪除您的個人數據',
-        'privacy.userRights.portability': '• 要求導出您的數據',
+    'privacy.userRights.access': '• Query information we have collected about you',
+    'privacy.userRights.correction': '• Request correction of inaccurate personal information',
+    'privacy.userRights.deletion': '• Request deletion of your personal data',
+    'privacy.userRights.portability': '• Request export of your data',
     'privacy.cookies.title': '5. Cookie 使用',
-        'privacy.cookies.content': '我們使用 Cookie 來改善您的瀏覽體驗。詳細資訊請參閱我們的 Cookie 政策。',
-        'privacy.changes.title': '7. 政策變更',
-        'privacy.changes.content': '我們可能會不時更新此隱私政策。重大變更將透過網站公告通知用戶。',
-        'privacy.contact.title': '8. 聯繫我們',
-        'privacy.contact.content': '如果您對此隱私政策有任何疑問或需要行使您的權利，請透過網站聯繫功能與我們聯繫。',
+    'privacy.cookies.content': 'We use cookies to improve your browsing experience. For detailed information, please refer to our Cookie Policy.',
+    'privacy.changes.title': '7. 政策變更',
+    'privacy.changes.content': 'We may update this privacy policy from time to time. Major changes will be announced through website notifications.',
+            'privacy.contact.title': '8. 聯繫我們',
+        'privacy.contact.content': 'If you have any questions about this privacy policy or need to exercise your rights, please contact us through the website contact feature.',
             'privacy.recaptcha.title': '9. reCAPTCHA 保護',
-    'privacy.recaptcha.content': '本網站受 reCAPTCHA 保護，並適用 Google',
-    'privacy.recaptcha.apply': '。',
-    'privacy.recaptcha.privacyPolicy': '隱私政策',
-    'privacy.recaptcha.termsOfService': '服務條款',
-    'privacy.recaptcha.and': '和',
+    'privacy.recaptcha.content': 'This site is protected by reCAPTCHA and the Google',
+    'privacy.recaptcha.apply': 'apply.',
+    'privacy.recaptcha.privacyPolicy': 'Privacy Policy',
+    'privacy.recaptcha.termsOfService': 'Terms of Service',
+    'privacy.recaptcha.and': 'and',
     // Privacy badges and labels
-    'privacy.important': '重要',
-    'privacy.days30': '30 天',
-    'privacy.days90': '90 天',
-    'privacy.anytime': '隨時',
+    'privacy.important': 'Important',
+    'privacy.days30': '30 days',
+    'privacy.days90': '90 days',
+    'privacy.anytime': 'Anytime',
     // Common
-    'common.backToHome': '返回首頁',
-    'common.lastUpdated': '最後更新',
-    'common.user': '用戶',
-    'common.language': '語言',
-    'common.installing': '安裝中...',
+    'common.backToHome': 'Back to Home',
+    'common.lastUpdated': 'Last updated',
+    'common.user': 'User',
+    'common.language': 'Language',
+    'common.installing': 'Installing...',
     // Terms agreement
     'auth.termsAgreement': '註冊即表示您同意我們的使用條款和隱私政策',
     'auth.termsAgreementShort': '註冊即表示您同意我們的',
-    'auth.and': '和',
+    'auth.and': 'and',
     'auth.termsCheckbox': '我已閱讀並同意',
     'auth.termsOfService': '使用條款',
     'auth.privacyPolicy': '隱私政策',
@@ -1230,46 +1256,65 @@ const translations = {
     'settings.email': '電子郵件',
     'settings.emailReadOnly': '電子郵件地址無法修改',
     'settings.username': '用戶名',
-    'settings.usernamePlaceholder': '輸入您的用戶名 (2-10字符，可留空)',
-    'settings.usernameAvailable': '用戶名可用',
-    'settings.usernameRules': '用戶名規則：',
-    'settings.usernameLength': '• 長度：2-10 個字符（可留空）',
-    'settings.usernameSupported': '• 支援：中文、英文、數字、符號、空格',
-    'settings.usernameEmpty': '• 留空時，將顯示電子郵件前綴作為用戶名',
-    'settings.usernameDisplay': '• 用戶名將顯示在個人資料和評論中',
-    'settings.saving': '儲存中...',
-    'settings.saveChanges': '儲存變更',
-    'settings.reset': '重設',
-    'settings.saveSuccess': '✅ 儲存成功',
-    'settings.saveFailed': '儲存失敗',
-    'settings.usernameUpdated': '用戶名已更新為：{username}',
-    'settings.usernameCleared': '用戶名已清除，將顯示電子郵件前綴',
-    'settings.updateError': '更新用戶名時發生錯誤，請稍後再試',
-    'settings.loginRequired': '請登入以存取用戶設定',
-    'settings.login': '登入',
-    // Danger Zone
-    'settings.dangerZone.title': '危險區域',
-    'settings.dangerZone.description': '帳戶管理操作',
-    'settings.dangerZone.warning': '此操作將暫時停用您的帳戶。請謹慎操作。',
-    'settings.dangerZone.deleteAccount': '停用帳戶',
-    'settings.dangerZone.confirmDelete': '確認停用帳戶',
-    'settings.dangerZone.confirmDeleteDesc': '此操作將暫時停用您的帳戶。您將無法登入，直到重新啟用為止。',
-    'settings.dangerZone.irreversibleWarning': '您的帳戶將被暫時停用。您可以透過重新登入來重新啟用。',
-    'settings.dangerZone.confirmEmailLabel': '輸入您的電子郵件地址以確認',
-    'settings.dangerZone.confirmEmailDesc': '請輸入與上方顯示完全相同的電子郵件地址以確認停用。',
-    'settings.dangerZone.cancel': '取消',
-    'settings.dangerZone.confirmDeleteButton': '停用我的帳戶',
-    'settings.dangerZone.deleting': '停用中...',
-    'settings.dangerZone.completeDeleteInfo': '如需完全刪除帳戶，請發送郵件至 contact@lingubible.com',
-    'settings.dangerZone.reEnableInfo': '如需重新啟用被停用的帳戶，只需使用您的憑證重新登入即可。',
-    'settings.deleteAccount.emailMismatch': '電子郵件不匹配',
-    'settings.deleteAccount.emailMismatchDesc': '您輸入的電子郵件地址與您的帳戶電子郵件地址不匹配。',
-    'settings.deleteAccount.success': '帳戶已停用',
-    'settings.deleteAccount.successDesc': '您的帳戶已暫時停用。您可以透過重新登入來重新啟用。',
-    'settings.deleteAccount.failed': '停用失敗',
-    'settings.deleteAccount.failedDesc': '停用帳戶失敗，請稍後再試。',
-    'auth.showPassword': '顯示密碼',
-    'auth.hidePassword': '隱藏密碼',
+    'settings.usernamePlaceholder': 'Enter your username (2-10 characters, can be empty)',
+    'settings.usernameAvailable': 'Username available',
+    'settings.usernameChecking': 'Checking username availability...',
+    'settings.usernameNotAvailable': 'This username is already taken',
+    'username.alreadyTaken': 'This username is already taken, please choose another one',
+    'username.inappropriateContent': 'Username contains inappropriate content, please re-enter',
+    'username.systemReserved': 'This username is reserved by the system, please choose another one',
+    'username.cannotBeEmpty': 'Username cannot be empty',
+    'username.cannotBeWhitespaceOnly': 'Username cannot contain only spaces or invisible characters',
+    'username.tooShort': 'Username must be at least 2 characters long',
+    'username.tooLong': 'Username cannot exceed 10 characters',
+    'username.mustContainValidChars': 'Username must contain at least one Chinese character, letter, or number',
+    'username.checkError': 'Error checking username availability, please try again later',
+    'username.available': 'Username is available',
+    'username.lengthError': 'Username length must be between 2-10 characters',
+    'username.invalidParameter': 'Invalid username parameter',
+    'username.invalidQuery': 'Invalid query parameter',
+    'settings.usernameRules': 'Username Rules:',
+    'settings.usernameLength': '• Length: 2-10 characters (can be empty)',
+    'settings.usernameSupported': '• Supports: Chinese, English, numbers, symbols, spaces',
+    'settings.usernameEmpty': '• When empty, email prefix will be displayed as username',
+    'settings.usernameDisplay': '• Username will be displayed in profile and comments',
+    'settings.saving': 'Saving...',
+    'settings.saveChanges': 'Save Changes',
+    'settings.reset': 'Reset',
+    'settings.saveSuccess': '✅ Save Successful',
+    'settings.saveFailed': 'Save Failed',
+    'settings.usernameUpdated': 'Username updated to: {username}',
+    'settings.usernameCleared': 'Username cleared, email prefix will be displayed',
+    'settings.updateError': 'Error occurred while updating username, please try again later',
+    'settings.loginRequired': 'Please log in to access user settings',
+    'settings.login': 'Log In',
+    // Avatar
+    'settings.avatar': 'Avatar',
+    'settings.avatarDescription': 'Customize your profile avatar',
+    'settings.currentAvatar': 'Current Avatar',
+    'settings.customAvatar': 'Custom avatar',
+    'settings.defaultAvatar': 'Default avatar',
+    // Change Password
+    'settings.changePassword': 'Change Password',
+    'settings.password': 'Password',
+    'settings.changePasswordDescription': 'Update your account password',
+    'settings.currentPassword': 'Current Password',
+    'settings.currentPasswordPlaceholder': 'Enter your current password',
+    'settings.newPassword': 'New Password',
+    'settings.newPasswordPlaceholder': 'Enter your new password',
+    'settings.confirmPassword': 'Confirm New Password',
+    'settings.confirmPasswordPlaceholder': 'Confirm your new password',
+    'settings.passwordMismatch': 'Passwords do not match',
+    'settings.passwordSameAsOld': 'New password cannot be the same as current password',
+    'settings.passwordUpdateSuccess': 'Password updated successfully',
+    'settings.passwordUpdateFailed': 'Failed to update password',
+    'settings.currentPasswordRequired': 'Current password is required',
+    'settings.newPasswordRequired': 'New password is required',
+    'settings.passwordTooWeak': 'New password does not meet security requirements',
+    'settings.wrongCurrentPassword': 'Current password is incorrect',
+
+    'auth.showPassword': 'Show password',
+    'auth.hidePassword': 'Hide password',
     // 404 Page
     '404.title': '糟糕！找不到頁面',
     '404.description': '您尋找的頁面可能已被移除、更名或暫時無法使用。',
@@ -1286,6 +1331,22 @@ const translations = {
     '404.help.title': '需要幫助？',
     '404.help.description': '如果您認為這是錯誤或需要協助，請隨時與我們聯絡。',
     '404.help.contact': '聯絡我們：',
+    // Reset password page
+    'auth.setNewPassword': '設定新密碼',
+    'auth.setNewPasswordDescription': '輸入您的新密碼以完成重設流程',
+    'auth.newPassword': '新密碼',
+    'auth.newPasswordPlaceholder': '請輸入您的新密碼',
+    'auth.invalidResetLink': '重設連結參數無效或缺失',
+    'auth.invalidOrExpiredResetLink': '重設連結無效或已過期。請重新申請密碼重設。',
+    'auth.passwordLengthError': '密碼長度必須在8-256字符之間',
+    'auth.passwordResetFailed': '密碼重設失敗，請重試',
+    'auth.resetting': '重設中...',
+    'auth.passwordResetSuccess': '密碼重設成功',
+    'auth.passwordResetComplete': '密碼重設完成',
+    'auth.passwordResetSuccessDescription': '您的密碼已成功重設。現在您可以使用新密碼登入。',
+    'auth.redirectingToLogin': '3秒後自動跳轉到登入頁面...',
+    'auth.passwordRequirements': '密碼必須為8-40字符，包含大寫、小寫、數字和特殊字符',
+    'auth.passwordSecurityTip': '請使用您在其他地方未使用過的獨特密碼',
   },
   'zh-CN': {
     // Site metadata
@@ -1836,6 +1897,21 @@ const translations = {
     'settings.username': '用户名',
     'settings.usernamePlaceholder': '输入您的用户名 (2-10字符，可留空)',
     'settings.usernameAvailable': '用户名可用',
+    'settings.usernameChecking': '正在检查用户名可用性...',
+    'settings.usernameNotAvailable': '此用户名已被使用',
+    'username.alreadyTaken': '此用户名已被使用，请选择其他用户名',
+    'username.inappropriateContent': '用户名包含不当内容，请重新输入',
+    'username.systemReserved': '此用户名为系统保留，请选择其他用户名',
+    'username.cannotBeEmpty': '用户名不能为空',
+    'username.cannotBeWhitespaceOnly': '用户名不能只包含空格或不可见字符',
+    'username.tooShort': '用户名长度不能少于 2 个字符',
+    'username.tooLong': '用户名长度不能超过 10 个字符',
+    'username.mustContainValidChars': '用户名必须包含至少一个中文字符、英文字母或数字',
+    'username.checkError': '检查用户名时发生错误，请稍后再试',
+    'username.available': '用户名可用',
+    'username.lengthError': '用户名长度必须在2-10个字符之间',
+    'username.invalidParameter': '用户名参数无效',
+    'username.invalidQuery': '查询参数错误',
     'settings.usernameRules': '用户名规则：',
     'settings.usernameLength': '• 长度：2-10 个字符（可留空）',
     'settings.usernameSupported': '• 支持：中文、英文、数字、符号、空格',
@@ -1851,27 +1927,31 @@ const translations = {
     'settings.updateError': '更新用户名时发生错误，请稍后再试',
     'settings.loginRequired': '请先登录以访问用户设置',
     'settings.login': '登录',
-    // Danger Zone
-    'settings.dangerZone.title': '危险区',
-    'settings.dangerZone.description': '账户管理操作',
-    'settings.dangerZone.warning': '此操作将暂时禁用您的账户。请谨慎进行。',
-    'settings.dangerZone.deleteAccount': '禁用账户',
-    'settings.dangerZone.confirmDelete': '确认账户禁用',
-    'settings.dangerZone.confirmDeleteDesc': '此操作将暂时禁用您的账户。您将无法登录，直到重新启用为止。',
-    'settings.dangerZone.irreversibleWarning': '您的账户将被暂时禁用。您可以通过重新登录来重新启用。',
-    'settings.dangerZone.confirmEmailLabel': '输入您的电子邮件地址以确认',
-    'settings.dangerZone.confirmEmailDesc': '请输入您的电子邮件地址完全相同以确认禁用。',
-    'settings.dangerZone.cancel': '取消',
-    'settings.dangerZone.confirmDeleteButton': '禁用我的账户',
-    'settings.dangerZone.deleting': '禁用中...',
-    'settings.dangerZone.completeDeleteInfo': '如需完全删除账户，请发送邮件至 contact@lingubible.com',
-    'settings.dangerZone.reEnableInfo': '如需重新启用被禁用的账户，只需使用您的凭证重新登录即可。',
-    'settings.deleteAccount.emailMismatch': '电子邮件不匹配',
-    'settings.deleteAccount.emailMismatchDesc': '您输入的电子邮件地址与您的账户电子邮件地址不匹配。',
-    'settings.deleteAccount.success': '账户已禁用',
-    'settings.deleteAccount.successDesc': '您的账户已暂时禁用。您可以通过重新登录来重新启用。',
-    'settings.deleteAccount.failed': '禁用失败',
-    'settings.deleteAccount.failedDesc': '禁用账户失败，请稍后再试。',
+    // Avatar
+    'settings.avatar': '头像',
+    'settings.avatarDescription': '自定义您的个人资料头像',
+    'settings.currentAvatar': '当前头像',
+    'settings.customAvatar': '自定义头像',
+    'settings.defaultAvatar': '默认头像',
+    // Change Password
+    'settings.changePassword': '更改密码',
+    'settings.password': '密码',
+    'settings.changePasswordDescription': '更新您的账户密码',
+    'settings.currentPassword': '当前密码',
+    'settings.currentPasswordPlaceholder': '请输入您的当前密码',
+    'settings.newPassword': '新密码',
+    'settings.newPasswordPlaceholder': '请输入您的新密码',
+    'settings.confirmPassword': '确认新密码',
+    'settings.confirmPasswordPlaceholder': '请再次输入您的新密码',
+    'settings.passwordMismatch': '密码不一致',
+    'settings.passwordSameAsOld': '新密码不能与当前密码相同',
+    'settings.passwordUpdateSuccess': '密码更新成功',
+    'settings.passwordUpdateFailed': '密码更新失败',
+    'settings.currentPasswordRequired': '请输入当前密码',
+    'settings.newPasswordRequired': '请输入新密码',
+    'settings.passwordTooWeak': '新密码不符合安全要求',
+    'settings.wrongCurrentPassword': '当前密码不正确',
+
     'auth.showPassword': '显示密码',
     'auth.hidePassword': '隐藏密码',
     // 404 Page
@@ -1890,6 +1970,23 @@ const translations = {
     '404.help.title': '需要帮助？',
     '404.help.description': '如果您认为这是一个错误或需要协助，请不要犹豫与我们联系。',
     '404.help.contact': '联系我们：',
+    // Reset password page
+    'auth.setNewPassword': '设置新密码',
+    'auth.setNewPasswordDescription': '输入您的新密码以完成重设流程',
+    'auth.newPassword': '新密码',
+    'auth.newPasswordPlaceholder': '请输入您的新密码',
+    'auth.passwordRequired': '密码为必填项目',
+    'auth.invalidResetLink': '重设链接参数无效或缺失',
+    'auth.invalidOrExpiredResetLink': '重设链接无效或已过期。请重新申请密码重设。',
+    'auth.passwordLengthError': '密码长度必须在8-256字符之间',
+    'auth.passwordResetFailed': '密码重设失败，请重试',
+    'auth.resetting': '重设中...',
+    'auth.passwordResetSuccess': '密码重设成功',
+    'auth.passwordResetComplete': '密码重设完成',
+    'auth.passwordResetSuccessDescription': '您的密码已成功重设。现在您可以使用新密码登录。',
+    'auth.redirectingToLogin': '3秒后自动跳转到登录页面...',
+    'auth.passwordRequirements': '密码必须为8-40字符，包含大写、小写、数字和特殊字符',
+    'auth.passwordSecurityTip': '请使用您在其他地方未使用过的独特密码',
   },
 };
 
@@ -1902,15 +1999,15 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Update language and save to cookie
   const setLanguage = (newLanguage: Language) => {
-    console.log('🔄 切換語言到:', newLanguage);
-    console.log('🔄 當前語言狀態:', language);
+    console.log('🔄 切换语言到:', newLanguage);
+    console.log('🔄 当前语言状态:', language);
     setLanguageState(newLanguage);
     setCookie('language', newLanguage);
-    console.log('💾 新語言已保存到 Cookie:', newLanguage);
+    console.log('💾 新语言已保存到 Cookie:', newLanguage);
     
-    // 觸發語言變更事件
+    // 触发语言变更事件
     if (typeof window !== 'undefined') {
-      // 發送自定義事件通知語言變更
+      // 发送自定义事件通知语言变更
       const languageChangeEvent = new CustomEvent('languageChanged', {
         detail: { language: newLanguage, previousLanguage: language }
       });
@@ -1920,10 +2017,10 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   };
 
-  // 監聽系統語言變化（可選功能）
+  // 监听系统语言变化（可选功能）
   useEffect(() => {
     const handleLanguageChange = () => {
-      // 只有在沒有手動設置語言時才響應系統語言變化
+      // 只有在没有手动设置语言时才响应系统语言变化
       const savedLanguage = getCookie('language');
       if (!savedLanguage) {
         const newLanguage = getInitialLanguage();
@@ -1931,7 +2028,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       }
     };
 
-    // 監聽語言變化事件（某些瀏覽器支持）
+    // 监听语言变化事件（某些浏览器支持）
     window.addEventListener('languagechange', handleLanguageChange);
     
     return () => {
@@ -1942,21 +2039,21 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const t = (key: string, params?: Record<string, any>): any => {
     let translation = translations[language][key] || key;
     
-    // 調試 toast 相關的翻譯
+    // 调试 toast 相关的翻译
     if (key.startsWith('toast.')) {
-      console.log(`🌐 翻譯 "${key}" (語言: ${language}):`, translation);
+      console.log(`🌐 翻译 "${key}" (语言: ${language}):`, translation);
     }
     
-    // 如果有參數，進行字符串替換
+    // 如果有参数，进行字符串替换
     if (params && typeof translation === 'string') {
       Object.keys(params).forEach(paramKey => {
         const placeholder = `{${paramKey}}`;
         translation = translation.replace(new RegExp(placeholder, 'g'), params[paramKey]);
       });
       
-      // 調試參數替換後的結果
+      // 调试参数替换后的结果
       if (key.startsWith('toast.')) {
-        console.log(`🌐 參數替換後 "${key}":`, translation);
+        console.log(`🌐 参数替换后 "${key}":`, translation);
       }
     }
     

@@ -92,9 +92,11 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
     { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
     { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
-    { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
-    // 只有在用戶已登入時才顯示設定選項
-    ...(user ? [{ name: t('sidebar.settings'), href: '/settings', icon: Settings, current: location.pathname === '/settings' }] : []),
+    // 只有在用戶已登入時才顯示我的評價和設定選項
+    ...(user ? [
+      { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
+      { name: t('sidebar.settings'), href: '/settings', icon: Settings, current: location.pathname === '/settings' }
+    ] : []),
   ];
 
   return (

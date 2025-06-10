@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 interface FloatingGlareProps {
   count?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 interface GlareItem {
@@ -15,7 +16,7 @@ interface GlareItem {
   delay: number;
 }
 
-export function FloatingGlare({ count = 6, className = '' }: FloatingGlareProps) {
+export function FloatingGlare({ count = 6, className = '', style = {} }: FloatingGlareProps) {
   const [glares, setGlares] = useState<GlareItem[]>([]);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function FloatingGlare({ count = 6, className = '' }: FloatingGlareProps)
           x: Math.random() * 100, // 0-100% 位置（更分散）
           y: Math.random() * 100, // 0-100% 位置（更分散）
           size: Math.random() * 200 + 80, // 80-280px 大小（更大範圍）
-          opacity: Math.random() * 0.4 + 0.2, // 0.2-0.6 透明度（提高可見度）
+          opacity: Math.random() * 0.5 + 0.3, // 0.3-0.8 透明度（提高可見度）
           duration: Math.random() * 10 + 8, // 8-18秒動畫時間（更慢）
           delay: Math.random() * 6, // 0-6秒延遲（更分散）
         });
@@ -39,7 +40,16 @@ export function FloatingGlare({ count = 6, className = '' }: FloatingGlareProps)
   }, [count]);
 
   return (
-    <div className={`absolute inset-0 pointer-events-none ${className}`} style={{ contain: 'layout style', transform: 'translateZ(0)' }}>
+    <div 
+      className={`absolute inset-0 pointer-events-none ${className}`} 
+      style={{ 
+        contain: 'layout style', 
+        transform: 'translateZ(0)', 
+        minHeight: '100vh',
+        minWidth: '100vw',
+        ...style
+      }}
+    >
       {glares.map((glare) => (
         <div
           key={glare.id}

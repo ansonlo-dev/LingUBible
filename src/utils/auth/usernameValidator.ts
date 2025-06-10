@@ -23,15 +23,35 @@ const cantoneseSwearWords = [
   '硬膠', '硬胶', '無厘頭', '黐線', '黐㞗線'
 ];
 
+// 管理員相關的禁用詞彙（包含各種變體）
+const adminRelatedWords = [
+  // 基本管理員詞彙
+  'admin', 'administrator', 'administrators', 'admins',
+  'root', 'system', 'sysadmin', 'systemadmin',
+  'moderator', 'moderators', 'mod', 'mods',
+  'staff', 'staffs', 'official', 'officials',
+  'manager', 'managers', 'supervisor', 'supervisors',
+  'owner', 'owners', 'master', 'masters',
+  // 服務相關
+  'service', 'services', 'support', 'supports',
+  'help', 'helper', 'helpers', 'bot', 'bots',
+  'api', 'apis', 'server', 'servers',
+  // 測試相關
+  'test', 'tests', 'testing', 'tester', 'testers',
+  'demo', 'demos', 'sample', 'samples',
+  'guest', 'guests', 'user', 'users',
+  'null', 'undefined', 'none', 'empty',
+  // 品牌相關
+  'lingubible', 'ln', 'hk', 'lingnan',
+  // 常見變體
+  'webmaster', 'postmaster', 'hostmaster'
+];
+
 // 初始化壞詞過濾器，包含粵語髒話
 const filter = new Filter({
   placeHolder: '*',
-  // 添加一些常見的不當詞彙
-  englishList: [
-    'admin', 'administrator', 'root', 'system', 'test', 'guest', 'user',
-    'null', 'undefined', 'bot', 'api', 'service', 'support', 'help',
-    'moderator', 'mod', 'staff', 'official', 'lingubible', 'ln', 'hk'
-  ],
+  // 添加管理員相關的禁用詞彙
+  englishList: adminRelatedWords,
   chineseList: [
     '管理員', '管理者', '系統', '測試', '客服', '官方', '嶺南', '嶺大',
     '版主', '助理', '老師', '教授', '校長', '主任',
@@ -43,12 +63,36 @@ const filter = new Filter({
 export interface UsernameValidationResult {
   isValid: boolean;
   error?: string;
+  errorKey?: string;
   cleanedUsername?: string;
 }
 
 export class UsernameValidator {
   private static readonly MIN_LENGTH = 2;
   private static readonly MAX_LENGTH = 10; // 擴展到10個字符
+  
+  /**
+   * 檢查用戶名是否包含管理員相關詞彙（不區分大小寫）
+   * @param username 要檢查的用戶名
+   * @returns 是否包含管理員相關詞彙
+   */
+  private static containsAdminWords(username: string): boolean {
+    const lowerUsername = username.toLowerCase();
+    
+    // 檢查是否完全匹配管理員詞彙
+    if (adminRelatedWords.some(word => lowerUsername === word.toLowerCase())) {
+      return true;
+    }
+    
+    // 檢查是否包含管理員詞彙（作為子字符串）
+    const strictAdminWords = [
+      'admin', 'administrator', 'root', 'system', 'moderator', 'mod',
+      'staff', 'official', 'manager', 'supervisor', 'owner', 'master',
+      'support', 'service', 'bot', 'api', 'lingubible'
+    ];
+    
+    return strictAdminWords.some(word => lowerUsername.includes(word.toLowerCase()));
+  }
   
   /**
    * 檢查字符串是否只包含空格或不可見字符
@@ -72,7 +116,8 @@ export class UsernameValidator {
     if (!username || username.length === 0) {
       return {
         isValid: false,
-        error: '用戶名不能為空'
+        error: '用戶名不能為空',
+        errorKey: 'username.cannotBeEmpty'
       };
     }
 
@@ -80,7 +125,8 @@ export class UsernameValidator {
     if (this.isOnlyWhitespaceOrInvisible(username)) {
       return {
         isValid: false,
-        error: '用戶名不能只包含空格或不可見字符'
+        error: '用戶名不能只包含空格或不可見字符',
+        errorKey: 'username.cannotBeWhitespaceOnly'
       };
     }
 
@@ -90,7 +136,8 @@ export class UsernameValidator {
     if (trimmedUsername.length === 0) {
       return {
         isValid: false,
-        error: '用戶名不能只包含空格'
+        error: '用戶名不能只包含空格',
+        errorKey: 'username.cannotBeWhitespaceOnly'
       };
     }
 
@@ -98,14 +145,25 @@ export class UsernameValidator {
     if (trimmedUsername.length < this.MIN_LENGTH) {
       return {
         isValid: false,
-        error: `用戶名長度不能少於 ${this.MIN_LENGTH} 個字符`
+        error: `用戶名長度不能少於 ${this.MIN_LENGTH} 個字符`,
+        errorKey: 'username.tooShort'
       };
     }
 
     if (trimmedUsername.length > this.MAX_LENGTH) {
       return {
         isValid: false,
-        error: `用戶名長度不能超過 ${this.MAX_LENGTH} 個字符`
+        error: `用戶名長度不能超過 ${this.MAX_LENGTH} 個字符`,
+        errorKey: 'username.tooLong'
+      };
+    }
+
+    // 檢查是否包含管理員相關詞彙
+    if (this.containsAdminWords(trimmedUsername)) {
+      return {
+        isValid: false,
+        error: '此用戶名為系統保留，請選擇其他用戶名',
+        errorKey: 'username.systemReserved'
       };
     }
 
@@ -113,7 +171,8 @@ export class UsernameValidator {
     if (filter.isProfane(trimmedUsername)) {
       return {
         isValid: false,
-        error: '用戶名包含不當內容，請重新輸入'
+        error: '用戶名包含不當內容，請重新輸入',
+        errorKey: 'username.inappropriateContent'
       };
     }
 
@@ -121,7 +180,8 @@ export class UsernameValidator {
     if (!/[\u4e00-\u9fa5a-zA-Z0-9]/.test(trimmedUsername)) {
       return {
         isValid: false,
-        error: '用戶名必須包含至少一個中文字符、英文字母或數字'
+        error: '用戶名必須包含至少一個中文字符、英文字母或數字',
+        errorKey: 'username.mustContainValidChars'
       };
     }
 

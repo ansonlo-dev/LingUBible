@@ -232,10 +232,10 @@ export default async ({ req, res, log, error }) => {
     const users = new Users(client);
 
     // 根據 action 參數決定執行發送、驗證或創建帳戶
-    const { action = 'send', email, code, password, name, language = 'zh-TW', ipAddress, userAgent, recaptchaToken } = requestData;
+    const { action = 'send', email, code, password, name, username, language = 'zh-TW', ipAddress, userAgent, recaptchaToken } = requestData;
     
     log('🎯 Action 參數:', action);
-    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, language });
+    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, username, language });
 
     if (action === 'verify') {
       // 驗證驗證碼
@@ -243,12 +243,13 @@ export default async ({ req, res, log, error }) => {
     } else if (action === 'createAccount') {
       // 創建帳戶並自動設置為已驗證
       return await createVerifiedAccount(databases, users, email, password, name, ipAddress, userAgent, recaptchaToken, log, error, res);
-    } else if (action === 'reactivateAccount') {
-      // 重新啟用被禁用的帳戶
-      return await reactivateAccount(users, email, password, log, error, res);
+
     } else if (action === 'sendPasswordReset') {
       // 發送密碼重設郵件
       return await sendPasswordReset(users, email, ipAddress, userAgent, recaptchaToken, log, error, res);
+    } else if (action === 'checkUsername') {
+      // 檢查用戶名是否已被使用
+      return await checkUsernameAvailability(users, username, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
@@ -755,135 +756,141 @@ async function createVerifiedAccount(databases, users, email, password, name, ip
   }
 }
 
-// 重新啟用被禁用的帳戶
-async function reactivateAccount(users, email, password, log, error, res) {
+// 管理員相關的禁用詞彙
+const adminRelatedWords = [
+  // 基本管理員詞彙
+  'admin', 'administrator', 'administrators', 'admins',
+  'root', 'system', 'sysadmin', 'systemadmin',
+  'moderator', 'moderators', 'mod', 'mods',
+  'staff', 'staffs', 'official', 'officials',
+  'manager', 'managers', 'supervisor', 'supervisors',
+  'owner', 'owners', 'master', 'masters',
+  // 服務相關
+  'service', 'services', 'support', 'supports',
+  'help', 'helper', 'helpers', 'bot', 'bots',
+  'api', 'apis', 'server', 'servers',
+  // 測試相關
+  'test', 'tests', 'testing', 'tester', 'testers',
+  'demo', 'demos', 'sample', 'samples',
+  'guest', 'guests', 'user', 'users',
+  'null', 'undefined', 'none', 'empty',
+  // 品牌相關
+  'lingubible', 'ln', 'hk', 'lingnan',
+  // 常見變體
+  'webmaster', 'postmaster', 'hostmaster'
+];
+
+// 檢查用戶名是否包含管理員相關詞彙
+function containsAdminWords(username) {
+  const lowerUsername = username.toLowerCase();
+  
+  // 檢查是否完全匹配管理員詞彙
+  if (adminRelatedWords.some(word => lowerUsername === word.toLowerCase())) {
+    return true;
+  }
+  
+  // 檢查是否包含管理員詞彙（作為子字符串）
+  const strictAdminWords = [
+    'admin', 'administrator', 'root', 'system', 'moderator', 'mod',
+    'staff', 'official', 'manager', 'supervisor', 'owner', 'master',
+    'support', 'service', 'bot', 'api', 'lingubible'
+  ];
+  
+  return strictAdminWords.some(word => lowerUsername.includes(word.toLowerCase()));
+}
+
+// 檢查用戶名是否已被使用
+async function checkUsernameAvailability(users, username, log, error, res) {
   try {
-    log('🚀 開始重新啟用被禁用的帳戶:', { email });
+    log('🔍 開始檢查用戶名可用性:', { username });
 
     // 驗證參數
-    if (!email || !password) {
+    if (!username || typeof username !== 'string') {
       return res.json({
-        success: false,
-        message: '缺少必要參數'
+        available: false,
+        message: 'Invalid username parameter',
+        messageKey: 'username.invalidParameter'
       }, 400);
     }
 
+    const trimmedUsername = username.trim();
+    
+    // 檢查用戶名長度
+    if (trimmedUsername.length < 2 || trimmedUsername.length > 10) {
+      return res.json({
+        available: false,
+        message: 'Username length must be between 2-10 characters',
+        messageKey: 'username.lengthError'
+      }, 400);
+    }
+
+    // 檢查是否包含管理員相關詞彙
+    if (containsAdminWords(trimmedUsername)) {
+      log('❌ 用戶名包含管理員詞彙:', trimmedUsername);
+              return res.json({
+          available: false,
+          message: 'This username is reserved by the system, please choose another one',
+          messageKey: 'username.systemReserved'
+        });
+    }
+
     try {
-      // 首先嘗試通過郵件查找用戶
-      log('🔍 查找用戶');
+      // 查找是否有用戶使用相同的用戶名
+      // 注意：我們需要查找 name 字段，而不是 email
       const usersList = await users.list([
-        Query.equal('email', email),
+        Query.equal('name', trimmedUsername),
         Query.limit(1)
       ]);
 
-      if (usersList.users.length === 0) {
-        log('❌ 找不到用戶');
-        return res.json({
-          success: false,
-          message: '找不到對應的用戶帳戶'
-        }, 400);
-      }
-
-      const user = usersList.users[0];
-      log('✅ 找到用戶:', user.$id, '狀態:', user.status);
-
-      // 檢查用戶狀態
-      if (user.status === true) {
-        log('ℹ️ 用戶帳戶已經是啟用狀態');
-        return res.json({
-          success: false,
-          message: '您的帳戶已經是啟用狀態，無需重新啟用'
-        }, 400);
-      }
-
-      // 驗證密碼 - 創建一個臨時客戶端來測試憑證
-      log('🔐 驗證用戶憑證');
-      const { Client, Account } = await import('node-appwrite');
-      
-      const tempClient = new Client()
-        .setEndpoint('https://fra.cloud.appwrite.io/v1')
-        .setProject('lingubible');
-      
-      const tempAccount = new Account(tempClient);
-      
-      try {
-        // 嘗試創建 session 來驗證憑證
-        // 這會失敗因為帳戶被禁用，但我們可以從錯誤類型判斷密碼是否正確
-        await tempAccount.createEmailPasswordSession(email, password);
-        
-        // 如果到這裡，說明帳戶沒有被禁用，不應該執行重新啟用
-        log('⚠️ 帳戶似乎沒有被禁用');
-        return res.json({
-          success: false,
-          message: '您的帳戶狀態正常，無需重新啟用'
-        }, 400);
-        
-      } catch (authError) {
-        log('🔍 驗證憑證錯誤:', authError.message, 'Code:', authError.code);
-        
-        // 首先檢查是否是帳戶被禁用的錯誤（優先級最高）
-        if (authError.message && (
-          authError.message.includes('user is blocked') ||
-          authError.message.includes('user is disabled') ||
-          authError.message.includes('account is disabled') ||
-          authError.message.includes('User account is blocked') ||
-          authError.message.includes('The current user has been blocked')
-        )) {
-          log('✅ 確認帳戶被禁用，密碼正確，可以重新啟用');
-          // 繼續執行重新啟用邏輯
-        } else if (authError.message && (
-          authError.message.includes('Invalid credentials') ||
-          authError.message.includes('Invalid email or password') ||
-          authError.message.includes('user with the requested ID could not be found')
-        )) {
-          log('❌ 密碼錯誤');
-          return res.json({
-            success: false,
-            message: '郵件地址或密碼錯誤'
-          }, 401);
-        } else {
-          // 其他未知錯誤
-          log('❌ 未知驗證錯誤:', authError);
-          return res.json({
-            success: false,
-            message: '驗證失敗，請稍後再試'
-          }, 500);
-        }
-      }
-
-      // 重新啟用帳戶
-      log('🔓 重新啟用帳戶');
-      await users.updateStatus(user.$id, true);
-
-      log('✅ 帳戶已重新啟用');
-
-      return res.json({
-        success: true,
-        message: '帳戶已成功重新啟用，您現在可以正常登入了'
+      log('📋 查找結果:', {
+        username: trimmedUsername,
+        foundUsers: usersList.users.length,
+        users: usersList.users.map(u => ({ id: u.$id, name: u.name, email: u.email }))
       });
 
-    } catch (reactivateError) {
-      error('❌ 重新啟用帳戶失敗:', reactivateError);
+      if (usersList.users.length > 0) {
+        // 找到相同用戶名的用戶
+        log('❌ 用戶名已被使用:', trimmedUsername);
+        return res.json({
+          available: false,
+          message: 'This username is already taken, please choose another one',
+          messageKey: 'username.alreadyTaken'
+        });
+      } else {
+        // 用戶名可用
+        log('✅ 用戶名可用:', trimmedUsername);
+        return res.json({
+          available: true,
+          message: 'Username is available',
+          messageKey: 'username.available'
+        });
+      }
+
+    } catch (queryError) {
+      error('❌ 查詢用戶名失敗:', queryError);
       
       // 處理常見錯誤
-      if (reactivateError.message && reactivateError.message.includes('User not found')) {
+      if (queryError.message && queryError.message.includes('Invalid query')) {
         return res.json({
-          success: false,
-          message: '找不到對應的用戶帳戶'
+          available: false,
+          message: 'Invalid query parameter',
+          messageKey: 'username.invalidQuery'
         }, 400);
       }
 
       return res.json({
-        success: false,
-        message: `重新啟用帳戶失敗: ${reactivateError.message || '請稍後再試'}`
+        available: false,
+        message: `Error checking username: ${queryError.message || 'Please try again later'}`,
+        messageKey: 'username.checkError'
       }, 500);
     }
 
   } catch (err) {
-    error('💥 重新啟用帳戶異常:', err);
+    error('💥 檢查用戶名異常:', err);
     return res.json({
-      success: false,
-      message: `重新啟用帳戶失敗: ${err.message || '請稍後再試'}`
+      available: false,
+      message: `Username check failed: ${err.message || 'Please try again later'}`,
+      messageKey: 'username.checkError'
     }, 500);
   }
 }

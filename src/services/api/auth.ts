@@ -157,46 +157,7 @@ export const authService = {
             );
             
             if (isAccountDisabled) {
-                console.log('🚫 檢測到帳戶被禁用，嘗試重新啟用...');
-                
-                try {
-                    // 嘗試重新啟用帳戶
-                    const reactivateResult = await this.reactivateAccount(email, password);
-                    
-                    if (reactivateResult.success) {
-                        console.log('✅ 帳戶重新啟用成功，重新嘗試登入...');
-                        
-                        // 等待一小段時間確保狀態更新
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        
-                        // 重新嘗試登入
-                        const session = await account.createEmailPasswordSession(email, password);
-                        
-                        // 設置記住我狀態
-                        if (!rememberMe) {
-                            localStorage.setItem('rememberMe', 'false');
-                            sessionStorage.setItem('sessionOnly', 'true');
-                        } else {
-                            localStorage.setItem('rememberMe', 'true');
-                            localStorage.setItem('savedEmail', email);
-                            sessionStorage.removeItem('sessionOnly');
-                        }
-                        
-                        return session;
-                    } else {
-                        console.error('❌ 帳戶重新啟用失敗:', reactivateResult.message);
-                        throw new Error(reactivateResult.message || '帳戶重新啟用失敗');
-                    }
-                } catch (reactivateError: any) {
-                    console.error('💥 帳戶重新啟用過程中發生錯誤:', reactivateError);
-                    
-                    // 如果是密碼錯誤，顯示原始錯誤
-                    if (reactivateError.message && reactivateError.message.includes('密碼錯誤')) {
-                        throw new Error('郵件地址或密碼錯誤');
-                    }
-                    
-                    throw new Error('您的帳戶已被禁用。重新啟用失敗，請聯繫客服。');
-                }
+                throw new Error('您的帳戶已被停用。如需重新啟用，請聯繫客服。');
             }
             
             // 如果仍然是 session 衝突錯誤，嘗試強制清理所有 sessions
@@ -226,64 +187,6 @@ export const authService = {
             }
             
             throw error;
-        }
-    },
-
-    // 重新啟用被禁用的帳戶
-    async reactivateAccount(email: string, password: string): Promise<{ success: boolean; message: string }> {
-        try {
-            console.log('🔄 嘗試重新啟用帳戶:', email);
-            
-            // 調用後端 API 重新啟用帳戶
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Appwrite-Project': 'lingubible',
-                },
-                body: JSON.stringify({
-                    body: JSON.stringify({
-                        action: 'reactivateAccount',
-                        email,
-                        password
-                    }),
-                    async: false,
-                    method: 'POST'
-                }),
-            });
-
-            console.log('📡 重新啟用帳戶 API 回應狀態:', response.status, response.statusText);
-
-            if (!response.ok) {
-                console.error('❌ API 請求失敗:', response.status, response.statusText);
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('📦 重新啟用帳戶 API 回應數據:', data);
-
-            // 解析 Appwrite Function 的回應
-            let result;
-            try {
-                result = JSON.parse(data.responseBody || data.response || '{}');
-                console.log('📋 解析後的結果:', result);
-            } catch (parseError) {
-                console.error('❌ 解析回應失敗:', parseError);
-                console.log('🔍 原始回應數據:', data);
-                result = { success: false, message: '解析回應失敗' };
-            }
-
-            return {
-                success: result.success || false,
-                message: result.message || '重新啟用帳戶失敗'
-            };
-
-        } catch (error: any) {
-            console.error('❌ 重新啟用帳戶錯誤:', error);
-            return {
-                success: false,
-                message: error.message || '重新啟用帳戶失敗，請稍後再試'
-            };
         }
     },
 
@@ -345,6 +248,39 @@ export const authService = {
         }
     },
 
+    // 完成密碼重設
+    async completePasswordReset(userId: string, secret: string, password: string) {
+        try {
+            console.log('🔄 完成密碼重設:', { userId: userId.substring(0, 8) + '...' });
+            
+            // 使用 Appwrite 的密碼重設完成功能
+            await account.updateRecovery(userId, secret, password);
+            
+            console.log('✅ 密碼重設完成');
+            return { success: true };
+            
+        } catch (error: any) {
+            console.error('❌ 完成密碼重設錯誤:', error);
+            
+            // 處理常見的錯誤情況
+            if (error?.message?.includes('Invalid credentials') || 
+                error?.message?.includes('Invalid recovery') ||
+                error?.code === 401) {
+                throw new Error('重設連結無效或已過期，請重新申請密碼重設');
+            }
+            
+            if (error?.message?.includes('Password must be between 8 and 256 characters')) {
+                throw new Error('密碼長度必須在8-256字符之間');
+            }
+            
+            if (error?.message?.includes('Too many requests')) {
+                throw new Error('請求過於頻繁，請稍後再試');
+            }
+            
+            throw error;
+        }
+    },
+
     // 獲取當前用戶
     async getCurrentUser() {
         try {
@@ -372,22 +308,86 @@ export const authService = {
         }
     },
 
-    // 禁用帳戶（客戶端無法完全刪除帳戶，只能禁用）
-    async deleteAccount() {
+    // 更新密碼
+    async updatePassword(newPassword: string, oldPassword: string) {
         try {
-            // 使用 Appwrite 的 account.updateStatus() 方法禁用帳戶
-            // 客戶端 SDK 無法完全刪除帳戶，只能禁用
-            await account.updateStatus();
-            
-            // 清理本地存儲
-            localStorage.removeItem('rememberMe');
-            localStorage.removeItem('savedEmail');
-            sessionStorage.removeItem('sessionOnly');
-            
-            return { success: true };
+            return await account.updatePassword(newPassword, oldPassword);
         } catch (error: any) {
-            console.error('禁用帳戶錯誤:', error);
-            throw new Error(error.message || '禁用帳戶失敗，請稍後再試');
+            console.error('更新密碼錯誤:', error);
+            
+            // 處理常見的錯誤情況
+            if (error?.message?.includes('Invalid credentials') || 
+                error?.message?.includes('password is invalid') ||
+                error?.code === 401) {
+                throw new Error('目前密碼不正確');
+            }
+            
+            if (error?.message?.includes('Password must be between 8 and 256 characters')) {
+                throw new Error('新密碼長度必須在8-256字符之間');
+            }
+            
+            if (error?.message?.includes('Too many requests')) {
+                throw new Error('請求過於頻繁，請稍後再試');
+            }
+            
+            throw error;
+        }
+    },
+
+    // 檢查用戶名是否已被使用
+    async checkUsernameAvailability(username: string): Promise<{ available: boolean; message: string; messageKey?: string }> {
+        try {
+            console.log('🔍 檢查用戶名可用性:', username);
+            
+            // 調用後端 API 檢查用戶名
+            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': 'lingubible',
+                },
+                body: JSON.stringify({
+                    body: JSON.stringify({
+                        action: 'checkUsername',
+                        username: username.trim()
+                    }),
+                    async: false,
+                    method: 'POST'
+                }),
+            });
+
+            console.log('📡 用戶名檢查 API 回應狀態:', response.status, response.statusText);
+
+            if (!response.ok) {
+                console.error('❌ API 請求失敗:', response.status, response.statusText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📦 用戶名檢查 API 回應數據:', data);
+
+            // 解析 Appwrite Function 的回應
+            let result;
+            try {
+                result = JSON.parse(data.responseBody || data.response || '{}');
+                console.log('📋 解析後的結果:', result);
+            } catch (parseError) {
+                console.error('❌ 解析回應失敗:', parseError);
+                console.log('🔍 原始回應數據:', data);
+                result = { available: false, message: '檢查用戶名時發生錯誤' };
+            }
+
+            return {
+                available: result.available || false,
+                message: result.message || '檢查用戶名時發生錯誤'
+            };
+
+        } catch (error: any) {
+            console.error('❌ 檢查用戶名錯誤:', error);
+            return {
+                available: false,
+                message: error.message || '檢查用戶名時發生錯誤，請稍後再試'
+            };
         }
     },
 

@@ -12,12 +12,14 @@ import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
 import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
+import { SEOTester } from "@/components/dev/SEOTester";
 import { BetaNotice } from "@/components/common/BetaNotice";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import UserSettings from "./pages/user/UserSettings";
 
 import NotFound from "./pages/NotFound";
@@ -32,6 +34,7 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
+import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 
 
 
@@ -91,8 +94,6 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
-
-
 
   // 初始化訪客會話（如果用戶未登入）
   useVisitorSession();
@@ -303,22 +304,90 @@ const AppContent = () => {
 
   return (
     <>
-
-      
       <BrowserRouter
         future={{
           v7_startTransition: true,
           v7_relativeSplatPath: true
         }}
       >
-        {/* 動態文檔標題和元數據 */}
-        <DocumentHead />
+        <RouterContent 
+          isDark={isDark}
+          setIsDark={setIsDark}
+          isSidebarCollapsed={isSidebarCollapsed}
+          setIsSidebarCollapsed={setIsSidebarCollapsed}
+          isMobileSidebarOpen={isMobileSidebarOpen}
+          setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+          isMobile={isMobile}
+          setIsMobile={setIsMobile}
+          showSwipeHint={showSwipeHint}
+          setShowSwipeHint={setShowSwipeHint}
+          isInitialized={isInitialized}
+          toggleSidebar={toggleSidebar}
+          toggleMobileSidebar={toggleMobileSidebar}
+          handleSidebarToggle={handleSidebarToggle}
+          swipeRef={swipeRef}
+          forceSwipeReinit={forceSwipeReinit}
+        />
+      </BrowserRouter>
+    </>
+  );
+};
+
+// Router 內部的內容組件
+const RouterContent = ({ 
+  isDark, 
+  setIsDark, 
+  isSidebarCollapsed, 
+  setIsSidebarCollapsed, 
+  isMobileSidebarOpen, 
+  setIsMobileSidebarOpen, 
+  isMobile, 
+  setIsMobile, 
+  showSwipeHint, 
+  setShowSwipeHint, 
+  isInitialized,
+  toggleSidebar,
+  toggleMobileSidebar,
+  handleSidebarToggle,
+  swipeRef,
+  forceSwipeReinit
+}: {
+  isDark: boolean;
+  setIsDark: (value: boolean) => void;
+  isSidebarCollapsed: boolean;
+  setIsSidebarCollapsed: (value: boolean) => void;
+  isMobileSidebarOpen: boolean;
+  setIsMobileSidebarOpen: (value: boolean) => void;
+  isMobile: boolean;
+  setIsMobile: (value: boolean) => void;
+  showSwipeHint: boolean;
+  setShowSwipeHint: (value: boolean) => void;
+  isInitialized: boolean;
+  toggleSidebar: () => void;
+  toggleMobileSidebar: () => void;
+  handleSidebarToggle: () => void;
+  swipeRef: React.RefObject<HTMLDivElement>;
+  forceSwipeReinit: () => void;
+}) => {
+  const { t } = useLanguage();
+
+  // 處理 URL 語言參數 - 現在在 Router 內部
+  useLanguageFromUrl();
+
+  return (
+    <>
+      {/* 動態文檔標題和元數據 */}
+      <DocumentHead />
+      
+      {/* SEO 測試器 - 僅開發模式 */}
+      {/* {import.meta.env.DEV && <SEOTester />} */}
       
       <Routes>
         {/* 登入和註冊頁面使用獨立佈局 */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* 其他頁面使用主要佈局 */}
         <Route 
@@ -425,7 +494,6 @@ const AppContent = () => {
           } 
         />
       </Routes>
-    </BrowserRouter>
     </>
   );
 };

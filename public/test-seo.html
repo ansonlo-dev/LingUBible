@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO 測試頁面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-link { display: inline-block; margin: 10px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .test-link:hover { background: #0056b3; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 LingUBible 多語言 SEO 測試</h1>
+    
+    <div class="test-section">
+        <h2>📄 語言切換測試</h2>
+        <p>點擊以下連結測試不同語言版本的 SEO meta 標籤：</p>
+        
+        <a href="/?lang=en" class="test-link">🇺🇸 English</a>
+        <a href="/?lang=zh-TW" class="test-link">🇹🇼 繁體中文</a>
+        <a href="/?lang=zh-CN" class="test-link">🇨🇳 简体中文</a>
+        
+        <p><strong>測試方法：</strong></p>
+        <ol>
+            <li>點擊上方連結</li>
+            <li>開啟瀏覽器開發者工具 (F12)</li>
+            <li>查看右下角的 SEO 調試面板</li>
+            <li>檢查 <code>&lt;head&gt;</code> 中的 meta 標籤</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔗 Hreflang 測試</h2>
+        <p>檢查以下 hreflang 標籤是否正確生成：</p>
+        <ul>
+            <li><code>&lt;link rel="alternate" hreflang="en" href="https://lingubible.com/?lang=en" /&gt;</code></li>
+            <li><code>&lt;link rel="alternate" hreflang="zh-TW" href="https://lingubible.com/?lang=zh-TW" /&gt;</code></li>
+            <li><code>&lt;link rel="alternate" hreflang="zh-CN" href="https://lingubible.com/?lang=zh-CN" /&gt;</code></li>
+            <li><code>&lt;link rel="alternate" hreflang="x-default" href="https://lingubible.com/?lang=en" /&gt;</code></li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 結構化數據測試</h2>
+        <p>檢查 JSON-LD 結構化數據：</p>
+        <ol>
+            <li>開啟開發者工具</li>
+            <li>搜尋 <code>application/ld+json</code></li>
+            <li>驗證 <code>inLanguage</code> 屬性是否正確</li>
+        </ol>
+        
+        <p><strong>線上驗證工具：</strong></p>
+        <ul>
+            <li><a href="https://search.google.com/test/rich-results" target="_blank">Google Rich Results Test</a></li>
+            <li><a href="https://validator.schema.org/" target="_blank">Schema.org Validator</a></li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🗺️ Sitemap 測試</h2>
+        <p>檢查多語言 sitemap：</p>
+        <a href="/sitemap.xml" class="test-link">查看 Sitemap</a>
+        <a href="/robots.txt" class="test-link">查看 Robots.txt</a>
+    </div>
+    
+    <div class="test-section">
+        <h2>✅ 預期結果</h2>
+        <h3>英文版本 (/?lang=en)</h3>
+        <ul>
+            <li><strong>Title:</strong> LingUBible - Course & Lecturer Reviews</li>
+            <li><strong>Description:</strong> Browse reviews widely, choose courses wisely...</li>
+            <li><strong>Keywords:</strong> Lingnan University,Course Reviews,Lecturer Ratings...</li>
+        </ul>
+        
+        <h3>繁體中文版本 (/?lang=zh-TW)</h3>
+        <ul>
+            <li><strong>Title:</strong> LingUBible - 課程與講師評價平台</li>
+            <li><strong>Description:</strong> 博覽群評，明智選課...</li>
+            <li><strong>Keywords:</strong> 嶺南大學,課程評價,講師評分...</li>
+        </ul>
+        
+        <h3>簡體中文版本 (/?lang=zh-CN)</h3>
+        <ul>
+            <li><strong>Title:</strong> LingUBible - 课程与讲师评价平台</li>
+            <li><strong>Description:</strong> 博览群评，明智选课...</li>
+            <li><strong>Keywords:</strong> 岭南大学,课程评价,讲师评分...</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🚀 返回應用程序</h2>
+        <a href="/" class="test-link">← 返回 LingUBible</a>
+    </div>
+    
+    <footer style="margin-top: 40px; text-align: center; color: #666;">
+        <p>LingUBible SEO 測試頁面 | 版本 1.0.0</p>
+    </footer>
+</body>
+</html> 

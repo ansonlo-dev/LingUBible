@@ -6,12 +6,18 @@ const CIRCLES_DESKTOP = [
   { size: 100, top: '60%', left: '20%', duration: 16, delay: 4 },
   { size: 60, top: '75%', left: '65%', duration: 20, delay: 1 },
   { size: 140, top: '50%', left: '45%', duration: 26, delay: 3 },
+  { size: 90, top: '85%', left: '30%', duration: 24, delay: 5 },
+  { size: 110, top: '25%', left: '90%', duration: 20, delay: 6 },
+  { size: 70, top: '90%', left: '80%', duration: 18, delay: 7 },
+  { size: 85, top: '5%', left: '50%', duration: 28, delay: 8 },
 ];
 
 const CIRCLES_MOBILE = [
   { size: 80, top: '15%', left: '15%', duration: 20, delay: 0 },
   { size: 60, top: '70%', left: '70%', duration: 24, delay: 3 },
   { size: 100, top: '45%', left: '80%', duration: 18, delay: 1 },
+  { size: 70, top: '85%', left: '25%', duration: 22, delay: 4 },
+  { size: 90, top: '30%', left: '85%', duration: 26, delay: 2 },
 ];
 
 export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
@@ -55,8 +61,15 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 w-full h-full overflow-hidden select-none ${className}`}
-      style={{ zIndex, contain: 'layout style', transform: 'translateZ(0)', ...style }}
+      className={`pointer-events-none absolute inset-0 w-full h-full select-none ${className}`}
+      style={{ 
+        zIndex, 
+        contain: 'layout style', 
+        transform: 'translateZ(0)', 
+        minHeight: '100vh',
+        minWidth: '100vw',
+        ...style 
+      }}
       aria-hidden="true"
     >
       {filteredCircles.map((c, i) => (
@@ -68,7 +81,7 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
             height: c.size,
             top: c.top,
             left: `calc(${c.left} - ${c.size / 2}px)`,
-            background: `radial-gradient(circle, rgba(220,38,38,0.15) 0%, rgba(185,28,28,0.08) 70%, transparent 100%)`,
+            background: `radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(185,28,28,0.15) 70%, transparent 100%)`,
             animationDuration: `${c.duration}s`,
             animationDelay: `${c.delay}s`,
             transform: 'translateX(0) translateY(0) translateZ(0)',
