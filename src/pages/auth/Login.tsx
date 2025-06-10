@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptcha } from '@/contexts/RecaptchaContext';
 import { useLoginRecaptcha } from '@/hooks/useSmartRecaptcha';
 import { BookOpen, Lock, AlertTriangle } from 'lucide-react';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
 // 檢查郵件是否為有效的學生郵件
 const isValidStudentEmail = (email: string): boolean => {
@@ -192,6 +193,21 @@ export default function Login() {
               >
                 {loading ? t('auth.processing') : t('auth.signIn')}
               </Button>
+
+              {/* 分隔線 */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    {t('auth.or')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Google 登入按鈕 */}
+              <GoogleLoginButton disabled={loading} />
               
               <p className="text-center text-sm text-muted-foreground">
                 {t('auth.noAccount')}{' '}

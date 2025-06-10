@@ -24,7 +24,8 @@
                 "anonymous": true,
                 "email-otp": true,
                 "magic-url": true,
-                "email-password": true
+                "email-password": true,
+                "oauth2-google": true
             },
             "security": {
                 "duration": 31536000,

@@ -16,6 +16,7 @@ import { PasswordStrengthChecker } from '@/components/auth/PasswordStrengthCheck
 import { AvatarCustomizer } from '@/components/user/AvatarCustomizer';
 import { SmartAvatar } from '@/components/ui/smart-avatar';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
+import { GoogleAccountLink } from '@/components/user/GoogleAccountLink';
 
 export default function UserSettings() {
   const { user, refreshUser } = useAuth();
@@ -562,6 +563,9 @@ export default function UserSettings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Google 帳戶連結 */}
+        <GoogleAccountLink />
       </div>
     </div>
   );

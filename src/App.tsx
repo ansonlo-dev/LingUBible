@@ -21,6 +21,8 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import UserSettings from "./pages/user/UserSettings";
+import OAuthCallback from "./pages/auth/OAuthCallback";
+import OAuthLoginCallback from "./pages/auth/OAuthLoginCallback";
 
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/legal/Terms";
@@ -346,6 +348,8 @@ const RouterContent = ({
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
+        <Route path="/oauth/login-callback" element={<OAuthLoginCallback />} />
         
         {/* 其他頁面使用主要佈局 */}
         <Route 
