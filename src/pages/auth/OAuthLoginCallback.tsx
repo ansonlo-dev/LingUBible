@@ -36,16 +36,17 @@ export default function OAuthLoginCallback() {
           
           // 3秒後重定向到登入頁面
           setTimeout(() => {
-            navigate('/auth/login');
+            navigate('/login');
           }, 3000);
           return;
         }
 
-        // 檢查是否有授權碼或其他成功指標
-        const code = searchParams.get('code');
+        // 對於 createOAuth2Session，Appwrite 會自動處理會話創建
+        // 我們只需要等待一下讓處理完成，然後刷新用戶資料
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (code) {
-          // OAuth 登入成功，刷新用戶資料
+        try {
+          // 刷新用戶資料以確認登入成功
           await refreshUser();
           
           setStatus('success');
@@ -62,13 +63,20 @@ export default function OAuthLoginCallback() {
           setTimeout(() => {
             navigate('/');
           }, 2000);
-        } else {
-          // 沒有找到預期的參數
+        } catch (refreshError) {
+          console.error('刷新用戶資料失敗:', refreshError);
           setStatus('error');
-          setMessage(t('oauth.invalidCallback'));
+          setMessage(t('oauth.loginFailed'));
+          
+          toast({
+            variant: "destructive",
+            title: t('oauth.loginFailed'),
+            description: t('oauth.callbackError'),
+            duration: 5000,
+          });
           
           setTimeout(() => {
-            navigate('/auth/login');
+            navigate('/login');
           }, 3000);
         }
       } catch (error: any) {
@@ -84,7 +92,7 @@ export default function OAuthLoginCallback() {
         });
         
         setTimeout(() => {
-          navigate('/auth/login');
+          navigate('/login');
         }, 3000);
       }
     };
@@ -93,7 +101,7 @@ export default function OAuthLoginCallback() {
   }, [searchParams, navigate, refreshUser, t]);
 
   const handleReturnToLogin = () => {
-    navigate('/auth/login');
+    navigate('/login');
   };
 
   return (

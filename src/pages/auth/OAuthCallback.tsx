@@ -11,7 +11,7 @@ import { account } from '@/lib/appwrite';
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useLanguage();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
@@ -48,11 +48,20 @@ export default function OAuthCallback() {
         
         if (userId && secret) {
           try {
-            // 使用 token 創建會話來完成帳戶連結
-            await account.createSession(userId, secret);
-            
-            // 刷新用戶資料
-            await refreshUser();
+            // 檢查用戶是否已經登入
+            if (user) {
+              // 用戶已登入，這是帳戶連結操作
+              // 對於帳戶連結，我們不需要創建新會話
+              // 只需要等待一下讓 Appwrite 處理連結，然後刷新用戶資料
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              // 刷新用戶資料以獲取最新的身份提供者信息
+              await refreshUser();
+            } else {
+              // 用戶未登入，這可能是登入操作，創建會話
+              await account.createSession(userId, secret);
+              await refreshUser();
+            }
             
             setStatus('success');
             setMessage(t('oauth.linkSuccess'));
@@ -68,8 +77,33 @@ export default function OAuthCallback() {
             setTimeout(() => {
               navigate('/user/settings');
             }, 2000);
-          } catch (sessionError) {
-            console.error('創建會話失敗:', sessionError);
+          } catch (sessionError: any) {
+            console.error('處理會話失敗:', sessionError);
+            
+            // 如果是帳戶連結操作，即使創建會話失敗也可能連結成功了
+            if (user) {
+              // 嘗試刷新用戶資料看看連結是否成功
+              try {
+                await refreshUser();
+                setStatus('success');
+                setMessage(t('oauth.linkSuccess'));
+                
+                toast({
+                  variant: "success",
+                  title: t('oauth.linkSuccess'),
+                  description: t('oauth.googleAccountLinked'),
+                  duration: 5000,
+                });
+                
+                setTimeout(() => {
+                  navigate('/user/settings');
+                }, 2000);
+                return;
+              } catch (refreshError) {
+                console.error('刷新用戶資料失敗:', refreshError);
+              }
+            }
+            
             setStatus('error');
             setMessage(t('oauth.sessionCreationFailed'));
             
@@ -119,7 +153,7 @@ export default function OAuthCallback() {
     };
 
     handleCallback();
-  }, [searchParams, navigate, refreshUser, t]);
+  }, [searchParams, navigate, user, refreshUser, t]);
 
   const handleReturnToSettings = () => {
     navigate('/user/settings');
