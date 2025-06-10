@@ -15,6 +15,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasAddedHistoryEntry = useRef(false);
 
   // Mock search results data
   const searchResults = [
@@ -114,6 +115,42 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
     }
   };
 
+  // 處理瀏覽器返回鍵
+  useEffect(() => {
+    if (isOpen) {
+      // 添加一個虛擬的歷史記錄條目
+      if (!hasAddedHistoryEntry.current) {
+        window.history.pushState({ searchModal: true }, '', window.location.href);
+        hasAddedHistoryEntry.current = true;
+      }
+
+      // 監聽 popstate 事件（返回鍵）
+      const handlePopState = (event: PopStateEvent) => {
+        // 如果是我們的搜索模態框狀態，關閉模態框
+        if (event.state?.searchModal || hasAddedHistoryEntry.current) {
+          event.preventDefault();
+          onClose();
+          hasAddedHistoryEntry.current = false;
+        }
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    } else {
+      // 模態框關閉時，如果我們添加了歷史記錄條目，需要清理
+      if (hasAddedHistoryEntry.current) {
+        // 檢查當前狀態是否是我們添加的
+        if (window.history.state?.searchModal) {
+          window.history.back();
+        }
+        hasAddedHistoryEntry.current = false;
+      }
+    }
+  }, [isOpen, onClose]);
+
   // Auto focus when modal opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -209,9 +246,9 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 </div>
               </div>
             ))}
-                     </div>
-         )}
-       </div>
-     </div>
-   );
- } 
+          </div>
+        )}
+      </div>
+    </div>
+  );
+} 

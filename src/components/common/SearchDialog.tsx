@@ -4,6 +4,7 @@ import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface SearchDropdownProps {
   isOpen: boolean;
@@ -22,8 +23,9 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   const inputRef = useRef<HTMLInputElement>(null);
   const blurTimeoutRef = useRef<number | null>(null);
 
-  // Check if this is desktop mode (always open)
-  const isDesktopMode = isDesktop;
+  // 使用統一的設備檢測 hook，避免閃爍問題
+  const { isDesktop: isDesktopDetected } = useDeviceDetection();
+  const isDesktopMode = isDesktopDetected;
   
   // 檢查是否是初始載入（桌面版在初始載入時不應該自動獲得焦點）
   const isInitialLoad = isDesktopMode && !isInitialized;
@@ -355,7 +357,6 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           onClick={handleInputClick}
-
           autoFocus={false}
           autoComplete="off"
           className={`pl-10 h-9 text-base transition-all text-center placeholder:text-center ${
@@ -363,6 +364,10 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
               ? 'border border-muted-foreground/20 focus:border-primary pr-10' 
               : 'border border-muted-foreground/20 focus:border-primary pr-10'
           }`}
+          style={{
+            // 確保佔位符文字在初始化時就正確顯示
+            '--placeholder-opacity': '1'
+          } as React.CSSProperties}
         />
         {/* Clear/Close button - show for both desktop and mobile */}
         {(searchQuery.trim() !== '' || !isDesktopMode) && (

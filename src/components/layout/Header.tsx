@@ -6,12 +6,13 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 
 import { SearchDropdown } from '@/components/common/SearchDialog';
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from "@/components/user/UserMenu";
 import { Link } from 'react-router-dom';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -21,19 +22,8 @@ interface HeaderProps {
 export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { language, setLanguage, t } = useLanguage();
   const { user } = useAuth();
-  const [isDesktop, setIsDesktop] = useState(true);
+  const { isDesktop } = useDeviceDetection();
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-
-  useEffect(() => {
-    const checkIsDesktop = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    
-    checkIsDesktop();
-    window.addEventListener('resize', checkIsDesktop);
-    
-    return () => window.removeEventListener('resize', checkIsDesktop);
-  }, []);
 
   return (
     <>
@@ -64,7 +54,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
           ) : (
             <button
               onClick={() => setIsMobileSearchOpen(true)}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left text-muted-foreground bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
             >
               <Search className="h-4 w-4" />
               <span>{t('search.search')}</span>

@@ -35,6 +35,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 
 
@@ -94,6 +95,7 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t } = useLanguage();
   const [isDark, setIsDark] = useState(initialIsDark);
+  const { isDesktop, isMobile } = useDeviceDetection();
 
   // 初始化訪客會話（如果用戶未登入）
   useVisitorSession();
@@ -107,14 +109,13 @@ const AppContent = () => {
   // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     // 只在桌面版時從 cookie 讀取狀態
-    if (window.innerWidth >= 768) {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
       return sidebarStateCookie.getState();
     }
     // 手機版默認收縮
     return false;
   });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -207,55 +208,15 @@ const AppContent = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // 監聽視窗大小變化
+  // 監聽設備類型變化，處理側邊欄狀態
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      const wasMobile = isMobile;
-      setIsMobile(mobile);
-      
-      // 當從手機版切換到桌面版時
-      if (wasMobile && !mobile) {
-        // 關閉手機版側邊欄
-        setIsMobileSidebarOpen(false);
-        // 從 cookie 讀取桌面版側邊欄狀態
-        setIsSidebarCollapsed(sidebarStateCookie.getState());
-      }
-      // 當從桌面版切換到手機版時，不需要特殊處理
-    };
-
-    // 處理方向變化的函數，添加延遲確保視窗大小正確更新
-    const handleOrientationChange = () => {
-      // 立即檢測一次
-      handleResize();
-      
-      // 延遲檢測，確保視窗大小已經更新
-      setTimeout(() => {
-        handleResize();
-      }, 100);
-      
-      // 再次延遲檢測，處理某些設備的延遲更新
-      setTimeout(() => {
-        handleResize();
-      }, 300);
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleOrientationChange);
-    
-    // 監聽視覺視窗變化（PWA 特有）
-    if ('visualViewport' in window) {
-      window.visualViewport?.addEventListener('resize', handleResize);
+    // 當從手機版切換到桌面版時，關閉手機版側邊欄並恢復桌面版狀態
+    if (isDesktop && isMobileSidebarOpen) {
+      setIsMobileSidebarOpen(false);
+      // 從 cookie 讀取桌面版側邊欄狀態
+      setIsSidebarCollapsed(sidebarStateCookie.getState());
     }
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleOrientationChange);
-      if ('visualViewport' in window) {
-        window.visualViewport?.removeEventListener('resize', handleResize);
-      }
-    };
-  }, [isMobile, isMobileSidebarOpen]);
+  }, [isDesktop, isMobileSidebarOpen]);
 
   const toggleSidebar = () => {
     const newCollapsedState = !isSidebarCollapsed;
@@ -318,7 +279,6 @@ const AppContent = () => {
           isMobileSidebarOpen={isMobileSidebarOpen}
           setIsMobileSidebarOpen={setIsMobileSidebarOpen}
           isMobile={isMobile}
-          setIsMobile={setIsMobile}
           showSwipeHint={showSwipeHint}
           setShowSwipeHint={setShowSwipeHint}
           isInitialized={isInitialized}
@@ -342,7 +302,6 @@ const RouterContent = ({
   isMobileSidebarOpen, 
   setIsMobileSidebarOpen, 
   isMobile, 
-  setIsMobile, 
   showSwipeHint, 
   setShowSwipeHint, 
   isInitialized,
@@ -359,7 +318,6 @@ const RouterContent = ({
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (value: boolean) => void;
   isMobile: boolean;
-  setIsMobile: (value: boolean) => void;
   showSwipeHint: boolean;
   setShowSwipeHint: (value: boolean) => void;
   isInitialized: boolean;
