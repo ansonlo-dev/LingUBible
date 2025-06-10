@@ -96,27 +96,18 @@ export function generatePasswordResetEmailTemplate(email, resetUrl, language = '
         }
         
         .logo-container {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          margin-bottom: 8px;
+          display: inline-block;
           text-decoration: none;
           color: inherit;
+          margin-bottom: 8px;
         }
         
-        .logo {
-          width: 48px;
-          height: 48px;
-          vertical-align: middle;
-        }
-        
-        .brand-name {
-          margin: 0;
-          color: #dc2626;
-          font-size: 28px;
-          font-weight: bold;
-          vertical-align: middle;
+        .banner-logo {
+          width: 300px;
+          height: auto;
+          max-width: 100%;
+          display: block;
+          margin: 0 auto;
         }
         
         .platform-text {
@@ -239,9 +230,7 @@ export function generatePasswordResetEmailTemplate(email, resetUrl, language = '
             border-bottom: 1px solid #404040 !important;
           }
           
-          .brand-name {
-            color: #ef4444 !important;
-          }
+
           
           .platform-text {
             color: #a0a0a0 !important;
@@ -316,9 +305,7 @@ export function generatePasswordResetEmailTemplate(email, resetUrl, language = '
           color: #e0e0e0 !important;
         }
         
-        [data-ogsc] .brand-name {
-          color: #ef4444 !important;
-        }
+
         
         [data-ogsc] .platform-text,
         [data-ogsc] .footer-text,
@@ -359,6 +346,10 @@ export function generatePasswordResetEmailTemplate(email, resetUrl, language = '
             padding: 20px;
           }
           
+          .banner-logo {
+            width: 250px;
+          }
+          
           .reset-button {
             padding: 14px 24px;
             font-size: 14px;
@@ -371,16 +362,7 @@ export function generatePasswordResetEmailTemplate(email, resetUrl, language = '
         <!-- Header -->
         <div class="header">
           <a href="https://lingubible.com" class="logo-container">
-            <svg class="logo" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="32" y="32" width="448" height="448" rx="80" fill="#dc2626"/>
-              <g transform="translate(128, 160)">
-                <path d="M0 24 C0 12 12 0 24 0 L104 0 C116 0 128 12 128 24 L128 176 C128 188 116 200 104 200 L24 200 C12 200 0 188 0 176 Z" fill="white"/>
-                <path d="M128 24 C128 12 140 0 152 0 L232 0 C244 0 256 12 256 24 L256 176 C256 188 244 200 232 200 L152 200 C140 200 128 188 128 176 Z" fill="white"/>
-                <line x1="128" y1="24" x2="128" y2="200" stroke="#dc2626" stroke-width="6"/>
-                <path d="M116 200 L116 256 L128 244 L140 256 L140 200" fill="#dc2626"/>
-              </g>
-            </svg>
-            <h1 class="brand-name">LingUBible</h1>
+            <img src="https://lingubible.com/email-banner.png" alt="LingUBible" class="banner-logo" />
           </a>
           <p class="platform-text">${t.platform}</p>
         </div>
