@@ -246,7 +246,7 @@ export default async ({ req, res, log, error }) => {
 
     } else if (action === 'sendPasswordReset') {
       // 發送密碼重設郵件
-      return await sendPasswordReset(users, email, ipAddress, userAgent, recaptchaToken, log, error, res);
+      return await sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, log, error, res);
     } else if (action === 'checkUsername') {
       // 檢查用戶名是否已被使用
       return await checkUsernameAvailability(users, username, log, error, res);
@@ -900,7 +900,7 @@ async function checkUsernameAvailability(users, username, log, error, res) {
 }
 
 // 發送密碼重設郵件
-async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaToken, log, error, res) {
+async function sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, log, error, res) {
   try {
     log('🚀 開始發送密碼重設郵件:', { email });
 
