@@ -1069,30 +1069,42 @@ async function checkPasswordResetRateLimit(databases, email, ipAddress, log, err
       };
     }
     
-    // 檢查同一IP的請求頻率（1小時內最多10次）
-    const ipRequests = await databases.listDocuments(
-      'verification_system',
-      'password_resets',
-      [
-        Query.equal('ipAddress', ipAddress),
-        Query.greaterThan('$createdAt', oneHourAgo.toISOString()),
-        Query.limit(15)
-      ]
-    );
-    
-    if (ipRequests.documents.length >= 10) {
-      log('🚫 IP請求頻率超限:', ipAddress);
-      return {
-        allowed: false,
-        message: '請求過於頻繁，請稍後再試'
-      };
+    // 檢查同一IP的請求頻率（1小時內最多10次）- 只有當 IP 地址存在時才檢查
+    if (ipAddress && ipAddress !== 'unknown') {
+      const ipRequests = await databases.listDocuments(
+        'verification_system',
+        'password_resets',
+        [
+          Query.equal('ipAddress', ipAddress),
+          Query.greaterThan('$createdAt', oneHourAgo.toISOString()),
+          Query.limit(15)
+        ]
+      );
+      
+      if (ipRequests.documents.length >= 10) {
+        log('🚫 IP請求頻率超限:', ipAddress);
+        return {
+          allowed: false,
+          message: '請求過於頻繁，請稍後再試'
+        };
+      }
+    } else {
+      log('⚠️ IP地址未提供，跳過IP速率限制檢查');
     }
     
     return { allowed: true };
     
   } catch (err) {
     error('❌ 檢查速率限制失敗:', err);
-    // 為了安全起見，如果檢查失敗則拒絕請求
+    log('🔍 錯誤詳情:', { email, ipAddress, errorMessage: err.message });
+    
+    // 如果是查詢錯誤但不是嚴重錯誤，允許繼續（但記錄警告）
+    if (err.message && err.message.includes('Invalid query')) {
+      log('⚠️ 查詢參數問題，允許請求繼續但記錄警告');
+      return { allowed: true };
+    }
+    
+    // 其他錯誤則拒絕請求
     return {
       allowed: false,
       message: '系統繁忙，請稍後再試'
