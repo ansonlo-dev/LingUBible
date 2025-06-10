@@ -6,6 +6,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { account } from '@/lib/appwrite';
 
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
@@ -41,32 +42,59 @@ export default function OAuthCallback() {
           return;
         }
 
-        // 檢查是否有授權碼或其他成功指標
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
+        // 檢查是否有 createOAuth2Token 返回的參數
+        const userId = searchParams.get('userId');
+        const secret = searchParams.get('secret');
         
-        if (code) {
-          // OAuth 授權成功，刷新用戶資料
-          await refreshUser();
-          
-          setStatus('success');
-          setMessage(t('oauth.linkSuccess'));
-          
-          toast({
-            variant: "success",
-            title: t('oauth.linkSuccess'),
-            description: t('oauth.googleAccountLinked'),
-            duration: 5000,
-          });
-          
-          // 2秒後重定向到設置頁面
-          setTimeout(() => {
-            navigate('/user/settings');
-          }, 2000);
+        if (userId && secret) {
+          try {
+            // 使用 token 創建會話來完成帳戶連結
+            await account.createSession(userId, secret);
+            
+            // 刷新用戶資料
+            await refreshUser();
+            
+            setStatus('success');
+            setMessage(t('oauth.linkSuccess'));
+            
+            toast({
+              variant: "success",
+              title: t('oauth.linkSuccess'),
+              description: t('oauth.googleAccountLinked'),
+              duration: 5000,
+            });
+            
+            // 2秒後重定向到設置頁面
+            setTimeout(() => {
+              navigate('/user/settings');
+            }, 2000);
+          } catch (sessionError) {
+            console.error('創建會話失敗:', sessionError);
+            setStatus('error');
+            setMessage(t('oauth.sessionCreationFailed'));
+            
+            toast({
+              variant: "destructive",
+              title: t('oauth.linkFailed'),
+              description: t('oauth.sessionCreationFailed'),
+              duration: 5000,
+            });
+            
+            setTimeout(() => {
+              navigate('/user/settings');
+            }, 3000);
+          }
         } else {
           // 沒有找到預期的參數
           setStatus('error');
           setMessage(t('oauth.invalidCallback'));
+          
+          toast({
+            variant: "destructive",
+            title: t('oauth.linkFailed'),
+            description: t('oauth.invalidCallback'),
+            duration: 5000,
+          });
           
           setTimeout(() => {
             navigate('/user/settings');

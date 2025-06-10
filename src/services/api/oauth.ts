@@ -13,10 +13,17 @@ export const oauthService = {
    */
   async linkGoogleAccount(): Promise<void> {
     try {
-      // 創建 OAuth2 session 來連結帳戶
-      // 這會重定向到 Google 授權頁面
+      // 對於帳戶連結，我們需要使用 createOAuth2Token
+      // 這會返回 token 和 userId 參數到回調 URL
       const redirectUrl = `${window.location.origin}/oauth/callback`;
       
+      // 檢查用戶是否已登入
+      const currentUser = await account.get();
+      if (!currentUser) {
+        throw new Error('User must be logged in to link Google account');
+      }
+      
+      // 使用 createOAuth2Token 來連結帳戶
       await account.createOAuth2Token(
         OAuthProvider.Google,
         redirectUrl,
