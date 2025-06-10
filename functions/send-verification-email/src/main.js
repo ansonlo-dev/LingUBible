@@ -253,7 +253,7 @@ export default async ({ req, res, log, error }) => {
     } else if (action === 'completePasswordReset') {
       // 完成密碼重設
       const { userId, token, password } = requestData;
-      return await completePasswordReset(databases, users, userId, token, password, log, error, res);
+      return await completePasswordReset(databases, users, userId, token, password, ipAddress, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
@@ -955,6 +955,18 @@ async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaTo
         const resetToken = generateSecureToken();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24小時後過期
         
+        // 檢查速率限制
+        const rateLimitResult = await checkPasswordResetRateLimit(databases, email, ipAddress, log, error);
+        if (!rateLimitResult.allowed) {
+          return res.json({
+            success: false,
+            message: rateLimitResult.message
+          }, 429);
+        }
+
+        // 清理過期記錄（異步執行，不影響主流程）
+        cleanupExpiredResets(databases, log, error).catch(() => {});
+
         // 將重設 token 存儲到資料庫
         const resetRecord = await databases.createDocument(
           'verification_system',
@@ -1024,12 +1036,95 @@ async function sendPasswordReset(users, email, ipAddress, userAgent, recaptchaTo
 
 // 生成安全的重設 token
 function generateSecureToken() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
-  for (let i = 0; i < 64; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  // 使用密碼學安全的隨機數生成器
+  const crypto = require('crypto');
+  return crypto.randomBytes(48).toString('base64url'); // 64個字符的URL安全字符串
+}
+
+// 檢查速率限制
+async function checkPasswordResetRateLimit(databases, email, ipAddress, log, error) {
+  try {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    
+    // 檢查同一郵箱的請求頻率（1小時內最多3次）
+    const emailRequests = await databases.listDocuments(
+      'verification_system',
+      'password_resets',
+      [
+        Query.equal('email', email),
+        Query.greaterThan('$createdAt', oneHourAgo.toISOString()),
+        Query.limit(10)
+      ]
+    );
+    
+    if (emailRequests.documents.length >= 3) {
+      log('🚫 郵箱請求頻率超限:', email);
+      return {
+        allowed: false,
+        message: '請求過於頻繁，請1小時後再試'
+      };
+    }
+    
+    // 檢查同一IP的請求頻率（1小時內最多10次）
+    const ipRequests = await databases.listDocuments(
+      'verification_system',
+      'password_resets',
+      [
+        Query.equal('ipAddress', ipAddress),
+        Query.greaterThan('$createdAt', oneHourAgo.toISOString()),
+        Query.limit(15)
+      ]
+    );
+    
+    if (ipRequests.documents.length >= 10) {
+      log('🚫 IP請求頻率超限:', ipAddress);
+      return {
+        allowed: false,
+        message: '請求過於頻繁，請稍後再試'
+      };
+    }
+    
+    return { allowed: true };
+    
+  } catch (err) {
+    error('❌ 檢查速率限制失敗:', err);
+    // 為了安全起見，如果檢查失敗則拒絕請求
+    return {
+      allowed: false,
+      message: '系統繁忙，請稍後再試'
+    };
   }
-  return token;
+}
+
+// 清理過期的重設記錄
+async function cleanupExpiredResets(databases, log, error) {
+  try {
+    const now = new Date();
+    const expiredResets = await databases.listDocuments(
+      'verification_system',
+      'password_resets',
+      [
+        Query.lessThan('expiresAt', now.toISOString()),
+        Query.limit(100)
+      ]
+    );
+    
+    for (const reset of expiredResets.documents) {
+      await databases.deleteDocument(
+        'verification_system',
+        'password_resets',
+        reset.$id
+      );
+    }
+    
+    if (expiredResets.documents.length > 0) {
+      log(`🧹 清理了 ${expiredResets.documents.length} 個過期的重設記錄`);
+    }
+    
+  } catch (err) {
+    error('❌ 清理過期記錄失敗:', err);
+  }
 }
 
 // 發送密碼重設郵件函數
@@ -1270,7 +1365,7 @@ This email was sent automatically by LingUBible system, please do not reply.
 }
 
 // 完成密碼重設函數
-async function completePasswordReset(databases, users, userId, token, password, log, error, res) {
+async function completePasswordReset(databases, users, userId, token, password, ipAddress, log, error, res) {
   try {
     log('🔐 開始完成密碼重設:', { userId: userId ? userId.substring(0, 8) + '...' : 'undefined', token: token ? token.substring(0, 8) + '...' : 'undefined' });
 
@@ -1282,7 +1377,7 @@ async function completePasswordReset(databases, users, userId, token, password, 
       }, 400);
     }
 
-    // 驗證密碼長度
+    // 驗證密碼強度
     if (password.length < 8 || password.length > 256) {
       return res.json({
         success: false,
@@ -1290,7 +1385,20 @@ async function completePasswordReset(databases, users, userId, token, password, 
       }, 400);
     }
 
-    // 查找重設記錄
+    // 檢查密碼複雜度
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
+      return res.json({
+        success: false,
+        message: '密碼必須包含大寫字母、小寫字母和數字'
+      }, 400);
+    }
+
+    // 查找重設記錄（使用原子操作防止競態條件）
     log('🔍 查找密碼重設記錄');
     const resetRecords = await databases.listDocuments(
       'verification_system',
@@ -1321,11 +1429,16 @@ async function completePasswordReset(databases, users, userId, token, password, 
     
     if (expiresAt < now) {
       log('⏰ 重設連結已過期');
-      await databases.deleteDocument(
-        'verification_system',
-        'password_resets',
-        resetRecord.$id
-      );
+      // 清理過期記錄
+      try {
+        await databases.deleteDocument(
+          'verification_system',
+          'password_resets',
+          resetRecord.$id
+        );
+      } catch (deleteError) {
+        error('❌ 清理過期記錄失敗:', deleteError);
+      }
       
       return res.json({
         success: false,
@@ -1333,13 +1446,34 @@ async function completePasswordReset(databases, users, userId, token, password, 
       }, 400);
     }
 
-    // 檢查是否已使用
+    // 檢查是否已使用（雙重檢查防止競態條件）
     if (resetRecord.isUsed) {
       log('🚫 重設連結已使用');
       return res.json({
         success: false,
         message: '重設連結已使用，請重新申請密碼重設'
       }, 400);
+    }
+
+    // 先標記為已使用（防止重複使用）
+    try {
+      log('🔒 先標記重設記錄為已使用');
+      await databases.updateDocument(
+        'verification_system',
+        'password_resets',
+        resetRecord.$id,
+        {
+          isUsed: true,
+          usedAt: new Date().toISOString(),
+          usedFromIp: ipAddress || 'unknown'
+        }
+      );
+    } catch (markError) {
+      error('❌ 標記重設記錄失敗:', markError);
+      return res.json({
+        success: false,
+        message: '重設連結處理失敗，請重新申請密碼重設'
+      }, 500);
     }
 
     try {
@@ -1349,17 +1483,33 @@ async function completePasswordReset(databases, users, userId, token, password, 
       
       log('✅ 密碼更新成功');
 
-      // 標記重設記錄為已使用
-      log('📝 標記重設記錄為已使用');
-      await databases.updateDocument(
-        'verification_system',
-        'password_resets',
-        resetRecord.$id,
-        {
-          isUsed: true,
-          usedAt: new Date().toISOString()
+      // 清理該用戶的所有其他重設記錄
+      try {
+        const otherResets = await databases.listDocuments(
+          'verification_system',
+          'password_resets',
+          [
+            Query.equal('userId', userId),
+            Query.notEqual('$id', resetRecord.$id),
+            Query.limit(50)
+          ]
+        );
+
+        for (const otherReset of otherResets.documents) {
+          await databases.deleteDocument(
+            'verification_system',
+            'password_resets',
+            otherReset.$id
+          );
         }
-      );
+
+        if (otherResets.documents.length > 0) {
+          log(`🧹 清理了該用戶的 ${otherResets.documents.length} 個其他重設記錄`);
+        }
+      } catch (cleanupError) {
+        error('❌ 清理其他重設記錄失敗:', cleanupError);
+        // 不影響主流程
+      }
 
       return res.json({
         success: true,
@@ -1368,6 +1518,22 @@ async function completePasswordReset(databases, users, userId, token, password, 
 
     } catch (updateError) {
       error('❌ 更新密碼失敗:', updateError);
+      
+      // 如果密碼更新失敗，恢復重設記錄狀態
+      try {
+        await databases.updateDocument(
+          'verification_system',
+          'password_resets',
+          resetRecord.$id,
+          {
+            isUsed: false,
+            usedAt: null,
+            usedFromIp: null
+          }
+        );
+      } catch (revertError) {
+        error('❌ 恢復重設記錄狀態失敗:', revertError);
+      }
       
       // 處理常見錯誤
       if (updateError.message && updateError.message.includes('Password must be between 8 and 256 characters')) {
