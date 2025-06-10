@@ -7,6 +7,7 @@ import { CheckCircle, Clock, AlertTriangle, Mail, Settings, Info, AlertCircle, Z
 import { studentVerificationService } from "@/services/external/studentVerification";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DEV_MODE, isValidEmailForRegistration, getEmailType, getDevModeMessage, isDisposableEmail } from '@/config/devMode';
+import { theme } from '@/lib/utils';
 
 interface StudentVerificationInputProps {
   email: string;
@@ -85,10 +86,12 @@ export function StudentVerificationInput({
     setMessageType('info');
 
     try {
-      console.log('🔄 開始發送驗證碼流程:', { email, language });
+      // 獲取當前主題
+      const currentTheme = theme.getEffectiveTheme();
+      console.log('🔄 開始發送驗證碼流程:', { email, language, theme: currentTheme });
       
-      // 使用多語言支援的發送函數
-      const result = await studentVerificationService.sendVerificationCode(email, language);
+      // 使用多語言和主題支援的發送函數
+      const result = await studentVerificationService.sendVerificationCode(email, language, currentTheme);
       
       console.log('📬 發送結果:', result);
       

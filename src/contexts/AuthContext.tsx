@@ -5,6 +5,7 @@ import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/contexts/LanguageContext';
 import AppwriteUserStatsService from '@/services/api/appwriteUserStats';
+import { theme } from '@/lib/utils';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -160,16 +161,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const sendStudentVerificationCode = async (email: string) => {
-        return await authService.sendStudentVerificationCode(email);
+        const currentTheme = theme.getEffectiveTheme();
+        const { language } = useLanguage();
+        return await authService.sendStudentVerificationCode(email, language, currentTheme);
     };
 
     const verifyStudentCode = async (email: string, code: string) => {
         return await authService.verifyStudentCode(email, code);
     };
 
-      const sendPasswordReset = async (email: string, recaptchaToken?: string, language?: string) => {
-    return await authService.sendPasswordReset(email, recaptchaToken, language);
-  };
+    const sendPasswordReset = async (email: string, recaptchaToken?: string, language?: string) => {
+        const currentTheme = theme.getEffectiveTheme();
+        return await authService.sendPasswordReset(email, recaptchaToken, language, currentTheme);
+    };
 
     const isStudentEmailVerified = async (email: string) => {
         return authService.isStudentEmailVerified(email);

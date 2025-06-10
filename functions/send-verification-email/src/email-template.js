@@ -1,5 +1,5 @@
 // 純 JavaScript 版本的郵件模板生成器
-export function generateEmailTemplate(code, language = 'zh-TW') {
+export function generateEmailTemplate(code, language = 'zh-TW', theme = 'light') {
   // 多語言翻譯
   const translations = {
     'en': {
@@ -51,6 +51,23 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
 
   const t = translations[language] || translations['zh-TW'];
 
+  // 根據主題決定顏色
+  const isDark = theme === 'dark';
+  const colors = {
+    body: isDark ? '#1a1a1a' : '#f6f9fc',
+    container: isDark ? '#2d2d2d' : '#ffffff',
+    text: isDark ? '#e0e0e0' : '#333',
+    title: isDark ? '#f0f0f0' : '#333',
+    platform: isDark ? '#a0a0a0' : '#666',
+    codeContainer: isDark ? '#1f1f1f' : '#f8f9fa',
+    codeBorder: isDark ? '#ef4444' : '#dc2626',
+    codeText: isDark ? '#ef4444' : '#dc2626',
+    footer: isDark ? '#1f1f1f' : '#f8f9fa',
+    footerText: isDark ? '#a0a0a0' : '#8898aa',
+    border: isDark ? '#404040' : '#eee',
+    shadow: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'
+  };
+
   // 生成 HTML 模板
   const htmlTemplate = `
     <!DOCTYPE html>
@@ -66,7 +83,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
           margin: 0;
           padding: 0;
           font-family: 'Inter', Arial, 'Microsoft JhengHei', sans-serif;
-          background-color: #f6f9fc;
+          background-color: ${colors.body};
           line-height: 1.6;
         }
         
@@ -75,15 +92,15 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
           padding: 20px 0;
           width: 600px;
           max-width: 100%;
-          background-color: #ffffff;
+          background-color: ${colors.container};
           border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 4px ${colors.shadow};
         }
         
         .header {
           padding: 40px 40px 30px;
           text-align: center;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid ${colors.border};
         }
         
         .logo-container {
@@ -103,7 +120,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
         
         .platform-text {
           margin: 5px 0 0;
-          color: #666;
+          color: ${colors.platform};
           font-size: 14px;
         }
         
@@ -113,7 +130,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
         
         .title {
           margin: 0 0 30px;
-          color: #333;
+          color: ${colors.title};
           text-align: center;
           font-size: 24px;
           font-weight: 600;
@@ -121,7 +138,7 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
         
         .text {
           margin: 0 0 30px;
-          color: #333;
+          color: ${colors.text};
           font-size: 16px;
         }
         
@@ -132,15 +149,15 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
         
         .code-container {
           margin: 0 auto;
-          background: #f8f9fa;
-          border: 2px solid #dc2626;
+          background: ${colors.codeContainer};
+          border: 2px solid ${colors.codeBorder};
           border-radius: 8px;
           padding: 20px 40px;
           display: inline-block;
         }
         
         .code-text {
-          color: #dc2626;
+          color: ${colors.codeText};
           font-family: 'Courier New', monospace;
           font-size: 32px;
           font-weight: bold;
@@ -150,14 +167,14 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
         
         .reminder-title {
           margin: 0 0 20px;
-          color: #333;
+          color: ${colors.title};
           font-size: 16px;
           font-weight: bold;
         }
         
         .reminder-list {
           margin: 0 0 30px;
-          color: #333;
+          color: ${colors.text};
           font-size: 16px;
           padding-left: 20px;
         }
@@ -168,133 +185,30 @@ export function generateEmailTemplate(code, language = 'zh-TW') {
         
         .notice {
           margin: 0 0 30px;
-          color: #333;
+          color: ${colors.title};
           font-size: 16px;
           font-weight: bold;
         }
         
         .footer {
           padding: 30px 40px;
-          background-color: #f8f9fa;
+          background-color: ${colors.footer};
           text-align: center;
           border-radius: 0 0 8px 8px;
-          border-top: 1px solid #eee;
+          border-top: 1px solid ${colors.border};
         }
         
         .footer-text {
           margin: 0 0 10px;
-          color: #8898aa;
+          color: ${colors.footerText};
           font-size: 12px;
         }
         
         .footer-link {
-          color: #8898aa;
+          color: ${colors.footerText};
           text-decoration: none;
         }
-        
-        /* 深色主題支援 */
-        @media (prefers-color-scheme: dark) {
-          body {
-            background-color: #1a1a1a !important;
-          }
-          
-          .container {
-            background-color: #2d2d2d !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
-          }
-          
-          .header {
-            border-bottom: 1px solid #404040 !important;
-          }
-          
 
-          
-          .platform-text {
-            color: #a0a0a0 !important;
-          }
-          
-          .title {
-            color: #f0f0f0 !important;
-          }
-          
-          .text {
-            color: #e0e0e0 !important;
-          }
-          
-          .code-container {
-            background: #1f1f1f !important;
-            border: 2px solid #ef4444 !important;
-          }
-          
-          .code-text {
-            color: #ef4444 !important;
-          }
-          
-          .reminder-title {
-            color: #f0f0f0 !important;
-          }
-          
-          .reminder-list {
-            color: #e0e0e0 !important;
-          }
-          
-          .notice {
-            color: #f0f0f0 !important;
-          }
-          
-          .footer {
-            background-color: #1f1f1f !important;
-            border-top: 1px solid #404040 !important;
-          }
-          
-          .footer-text {
-            color: #a0a0a0 !important;
-          }
-          
-          .footer-link {
-            color: #a0a0a0 !important;
-          }
-        }
-        
-        /* Outlook 深色主題支援 */
-        [data-ogsc] body {
-          background-color: #1a1a1a !important;
-        }
-        
-        [data-ogsc] .container {
-          background-color: #2d2d2d !important;
-        }
-        
-        [data-ogsc] .title,
-        [data-ogsc] .text,
-        [data-ogsc] .reminder-title,
-        [data-ogsc] .reminder-list,
-        [data-ogsc] .notice {
-          color: #e0e0e0 !important;
-        }
-        
-        [data-ogsc] .code-text {
-          color: #ef4444 !important;
-        }
-        
-        [data-ogsc] .platform-text,
-        [data-ogsc] .footer-text,
-        [data-ogsc] .footer-link {
-          color: #a0a0a0 !important;
-        }
-        
-        [data-ogsc] .code-container {
-          background: #1f1f1f !important;
-          border-color: #ef4444 !important;
-        }
-        
-        [data-ogsc] .footer {
-          background-color: #1f1f1f !important;
-        }
-        
-        [data-ogsc] .header {
-          border-bottom-color: #404040 !important;
-        }
         
         @media (max-width: 600px) {
           .container {

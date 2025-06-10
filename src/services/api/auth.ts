@@ -19,9 +19,9 @@ export const authService = {
     },
 
     // 發送嶺南人驗證碼
-    async sendStudentVerificationCode(email: string) {
+    async sendStudentVerificationCode(email: string, language: string = 'zh-TW', theme: 'light' | 'dark' = 'light') {
         try {
-            return await studentVerificationService.sendVerificationCode(email);
+            return await studentVerificationService.sendVerificationCode(email, language, theme);
         } catch (error) {
             console.error('發送驗證碼錯誤:', error);
             return {
@@ -191,9 +191,9 @@ export const authService = {
     },
 
     // 發送密碼重設郵件
-    async sendPasswordReset(email: string, recaptchaToken?: string, language: string = 'zh-TW'): Promise<{ success: boolean; message: string }> {
+    async sendPasswordReset(email: string, recaptchaToken?: string, language: string = 'zh-TW', theme: 'light' | 'dark' = 'light'): Promise<{ success: boolean; message: string }> {
         try {
-            console.log('🔄 發送密碼重設郵件:', email, '語言:', language);
+            console.log('🔄 發送密碼重設郵件:', email, '語言:', language, '主題:', theme);
             
             // 調用後端 API 發送密碼重設郵件
             const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
@@ -207,7 +207,8 @@ export const authService = {
                         action: 'sendPasswordReset',
                         email,
                         recaptchaToken,
-                        language
+                        language,
+                        theme
                     }),
                     async: false,
                     method: 'POST'

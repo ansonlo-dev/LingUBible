@@ -39,7 +39,7 @@ class StudentVerificationService {
   }
 
   // 調用 Appwrite Function
-  private async callFunction(action: 'send' | 'verify', email: string, code?: string, language?: string): Promise<{ success: boolean; message: string }> {
+  private async callFunction(action: 'send' | 'verify', email: string, code?: string, language?: string, theme?: 'light' | 'dark'): Promise<{ success: boolean; message: string }> {
     try {
       console.log(`🚀 開始${action === 'send' ? '發送' : '驗證'}流程:`, { email, action });
       
@@ -52,6 +52,7 @@ class StudentVerificationService {
         email,
         ...(code && { code }),
         ...(language && { language }),
+        ...(theme && { theme }),
         ...userInfo
       };
       
@@ -195,8 +196,8 @@ class StudentVerificationService {
     }
   }
 
-  // 發送驗證碼郵件（支援多語言）
-  async sendVerificationCode(email: string, language: string = 'zh-TW'): Promise<{ success: boolean; message: string }> {
+  // 發送驗證碼郵件（支援多語言和主題）
+  async sendVerificationCode(email: string, language: string = 'zh-TW', theme: 'light' | 'dark' = 'light'): Promise<{ success: boolean; message: string }> {
     try {
       // 開發模式繞過驗證
       if (DEV_MODE.enabled) {
@@ -229,7 +230,7 @@ class StudentVerificationService {
       }
 
       // 調用後端 API 發送驗證碼
-      return await this.callFunction('send', email, undefined, language);
+      return await this.callFunction('send', email, undefined, language, theme);
 
     } catch (error) {
       console.error('郵件服務錯誤:', error);

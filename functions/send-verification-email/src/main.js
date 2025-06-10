@@ -233,10 +233,10 @@ export default async ({ req, res, log, error }) => {
     const users = new Users(client);
 
     // 根據 action 參數決定執行發送、驗證或創建帳戶
-    const { action = 'send', email, code, password, name, username, language = 'zh-TW', ipAddress, userAgent, recaptchaToken } = requestData;
+    const { action = 'send', email, code, password, name, username, language = 'zh-TW', theme = 'light', ipAddress, userAgent, recaptchaToken } = requestData;
     
     log('🎯 Action 參數:', action);
-    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, username, language });
+    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, username, language, theme });
 
     if (action === 'verify') {
       // 驗證驗證碼
@@ -247,7 +247,7 @@ export default async ({ req, res, log, error }) => {
 
     } else if (action === 'sendPasswordReset') {
       // 發送密碼重設郵件
-      return await sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, language, log, error, res);
+      return await sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, language, theme, log, error, res);
     } else if (action === 'checkUsername') {
       // 檢查用戶名是否已被使用
       return await checkUsernameAvailability(users, username, log, error, res);
@@ -257,7 +257,7 @@ export default async ({ req, res, log, error }) => {
       return await completePasswordReset(databases, users, userId, token, password, ipAddress, log, error, res);
     } else {
       // 發送驗證碼
-      return await sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res);
+      return await sendVerificationCode(databases, email, language, theme, ipAddress, userAgent, log, error, res);
     }
 
   } catch (err) {
@@ -270,9 +270,9 @@ export default async ({ req, res, log, error }) => {
 };
 
 // 發送驗證碼函數
-async function sendVerificationCode(databases, email, language, ipAddress, userAgent, log, error, res) {
+async function sendVerificationCode(databases, email, language, theme, ipAddress, userAgent, log, error, res) {
   try {
-    log('📧 開始發送驗證碼流程:', { email, language, devMode: DEV_MODE.enabled });
+    log('📧 開始發送驗證碼流程:', { email, language, theme, devMode: DEV_MODE.enabled });
 
     // 驗證參數
     if (!email) {
@@ -364,7 +364,7 @@ async function sendVerificationCode(databases, email, language, ipAddress, userA
     }
 
     // 發送郵件
-    const emailResult = await sendEmail(email, code, language, apiKey, log, error);
+    const emailResult = await sendEmail(email, code, language, theme, apiKey, log, error);
     
     if (!emailResult.success) {
       return res.json(emailResult, 500);
@@ -542,13 +542,13 @@ async function verifyCode(databases, email, code, ipAddress, userAgent, log, err
 }
 
 // 發送郵件函數
-async function sendEmail(email, code, language, apiKey, log, error) {
+async function sendEmail(email, code, language, theme, apiKey, log, error) {
   try {
     const resend = new Resend(apiKey);
 
     // 使用新的郵件模板生成器
     log('🎨 使用改進的郵件模板生成器');
-    const emailTemplate = generateEmailTemplate(code, language);
+    const emailTemplate = generateEmailTemplate(code, language, theme);
 
     log('📬 準備發送郵件:', { to: email, subject: emailTemplate.subject });
 
@@ -901,7 +901,7 @@ async function checkUsernameAvailability(users, username, log, error, res) {
 }
 
 // 發送密碼重設郵件
-async function sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, language = 'zh-TW', log, error, res) {
+async function sendPasswordReset(client, users, email, ipAddress, userAgent, recaptchaToken, language = 'zh-TW', theme = 'light', log, error, res) {
   try {
     log('🚀 開始發送密碼重設郵件:', { email, language });
 
@@ -991,7 +991,7 @@ async function sendPasswordReset(client, users, email, ipAddress, userAgent, rec
         
         // 使用 Resend 發送自定義的密碼重設郵件
         log('📧 使用 Resend 發送密碼重設郵件');
-        const resetEmailResult = await sendPasswordResetEmail(email, user.$id, resetToken, language, log, error);
+        const resetEmailResult = await sendPasswordResetEmail(email, user.$id, resetToken, language, theme, log, error);
         
         if (!resetEmailResult.success) {
           log('❌ 發送密碼重設郵件失敗:', resetEmailResult.message);
@@ -1144,7 +1144,7 @@ async function cleanupExpiredResets(databases, log, error) {
 }
 
 // 發送密碼重設郵件函數
-async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-TW', log, error) {
+async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-TW', theme = 'light', log, error) {
   try {
     // 檢查 Resend API 金鑰
     const apiKey = process.env.RESEND_API_KEY;
@@ -1161,7 +1161,7 @@ async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-
     // 生成密碼重設郵件內容
     const resetUrl = `https://lingubible.com/reset-password?userId=${userId}&token=${resetToken}`;
     
-    const emailTemplate = generatePasswordResetEmailTemplate(email, resetUrl, language);
+    const emailTemplate = generatePasswordResetEmailTemplate(email, resetUrl, language, theme);
 
     log('📬 準備發送密碼重設郵件:', { to: email, subject: emailTemplate.subject, language });
 
