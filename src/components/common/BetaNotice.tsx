@@ -46,7 +46,6 @@ export const BetaNotice: React.FC = () => {
         event.preventDefault();
         localStorage.removeItem(BETA_NOTICE_DISMISSED_KEY);
         setIsDismissed(false);
-        console.log('🔄 測試版通知已重置');
       }
     };
 

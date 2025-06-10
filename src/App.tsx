@@ -19,8 +19,6 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import UserSettings from "./pages/user/UserSettings";
-import AvatarDemo from "./pages/user/AvatarDemo";
-import LecturerDemo from "./pages/demo/LecturerDemo";
 
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/legal/Terms";
@@ -412,12 +410,10 @@ const AppContent = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/settings" element={<UserSettings />} />
-                                    <Route path="/avatar-demo" element={<AvatarDemo />} />
 
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/lecturer-demo" element={<LecturerDemo />} />
                 <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

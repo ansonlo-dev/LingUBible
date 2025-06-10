@@ -201,7 +201,6 @@ class RegisteredUsersService {
 
         if (statsResponse.documents.length > 0) {
           const latestStats = statsResponse.documents[0];
-          console.log(`從 user-stats 集合獲取到 ${latestStats.totalUsers} 個用戶`);
           return latestStats.totalUsers || 0;
         }
       } catch (statsError) {

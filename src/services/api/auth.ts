@@ -235,7 +235,7 @@ export const authService = {
             console.log('🔄 嘗試重新啟用帳戶:', email);
             
             // 調用後端 API 重新啟用帳戶
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -293,7 +293,7 @@ export const authService = {
             console.log('🔄 發送密碼重設郵件:', email);
             
             // 調用後端 API 發送密碼重設郵件
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

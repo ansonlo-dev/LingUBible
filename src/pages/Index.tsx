@@ -111,7 +111,6 @@ const Index = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Button clicked!'); // 調試信息
     
     // 如果用戶已登入，導航到課程頁面
     if (user) {
@@ -125,7 +124,6 @@ const Index = () => {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     
-    console.log('Button position:', { x: centerX, y: centerY }); // 調試信息
     
     setButtonPosition({ x: centerX, y: centerY });
     setShowHeavenTransition(true);

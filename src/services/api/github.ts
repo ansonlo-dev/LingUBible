@@ -157,7 +157,6 @@ export const getLatestVersionInfo = async (): Promise<VersionInfo | null> => {
 
     // 如果第一個 API 失敗（可能是 403 或其他錯誤），直接返回 null
     // 避免繼續嘗試其他 API 導致更多錯誤
-    console.log('Latest release API failed, not attempting getAllReleases to avoid additional API errors');
     return null;
   } catch (error) {
     console.error('Error getting latest version info:', error);

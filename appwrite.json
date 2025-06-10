@@ -40,11 +40,11 @@
     },
     "functions": [
         {
-            "$id": "send-verification",
+            "$id": "send-verification-email",
             "execute": [
                 "any"
             ],
-            "name": "Send Verification Email",
+            "name": "send-verification-email",
             "enabled": true,
             "logging": true,
             "runtime": "bun-1.1",
@@ -65,7 +65,7 @@
             "execute": [
                 "any"
             ],
-            "name": "Cleanup Expired Codes",
+            "name": "cleanup-expired-codes",
             "enabled": true,
             "logging": true,
             "runtime": "bun-1.1",
@@ -86,7 +86,7 @@
             "execute": [
                 "any"
             ],
-            "name": "Get User Statistics",
+            "name": "get-user-stats",
             "enabled": true,
             "logging": true,
             "runtime": "bun-1.1",

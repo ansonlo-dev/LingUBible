@@ -58,7 +58,7 @@ class StudentVerificationService {
       console.log('📦 準備發送的數據:', requestData);
       
       // 調用 Appwrite Function
-      const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+      const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -317,7 +317,7 @@ class StudentVerificationService {
       console.log('📦 準備創建帳戶的數據:', { ...requestData, password: '***' });
       
       // 調用 Appwrite Function
-      const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification/executions`, {
+      const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,7 +453,6 @@ class StudentVerificationService {
       'test@ln.edu.hk',
       'admin@ln.edu.hk',
       'student@ln.hk',
-      'demo@ln.hk',
       'user@ln.edu.hk'
     ];
     

@@ -447,26 +447,7 @@ class UserStatsService {
     console.log('所有用戶統計數據已重置完成');
   }
 
-  // 模擬增加用戶數據（用於演示）
-  public simulateUserActivity(): void {
-    const demoUsers = ['demo_user_1', 'demo_user_2', 'demo_user_3', 'demo_user_4', 'demo_user_5'];
-    
-    // 20% 機率有新用戶登入
-    if (Math.random() > 0.8) {
-      const randomUser = demoUsers[Math.floor(Math.random() * demoUsers.length)];
-      this.userLogin(randomUser);
-    }
-    
-    // 模擬現有用戶的 ping 活動
-    const sessions = this.getActiveSessions();
-    sessions.forEach(session => {
-      if (Math.random() > 0.95) { // 5% 機率用戶登出
-        this.userLogout(session.sessionId);
-      } else if (Math.random() > 0.7) { // 30% 機率發送 ping
-        this.sendPing(session.sessionId);
-      }
-    });
-  }
+
 
   // 更新用戶活動（保持向後兼容）
   public updateUserActivity(sessionId: string): void {

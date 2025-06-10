@@ -13,10 +13,6 @@ export const ROUTES = {
   
   // 用戶相關
   USER_SETTINGS: '/settings',
-  AVATAR_DEMO: '/avatar-demo',
-  
-  // 演示頁面
-  LECTURER_DEMO: '/lecturer-demo',
   
   // 法律頁面
   TERMS: '/terms',

@@ -50,7 +50,6 @@ const importMappings = {
   '@/components/RollingText': '@/components/features/animations/RollingText',
   
   '@/components/DevModeIndicator': '@/components/dev/DevModeIndicator',
-  '@/components/PasswordDemo': '@/components/dev/PasswordDemo',
   
   // 頁面映射
   './pages/Login': './pages/auth/Login',
@@ -58,9 +57,6 @@ const importMappings = {
   './pages/ForgotPassword': './pages/auth/ForgotPassword',
   
   './pages/UserSettings': './pages/user/UserSettings',
-  './pages/AvatarDemo': './pages/user/AvatarDemo',
-  
-  './pages/LecturerDemo': './pages/demo/LecturerDemo',
   
   './pages/Terms': './pages/legal/Terms',
   './pages/Privacy': './pages/legal/Privacy',
