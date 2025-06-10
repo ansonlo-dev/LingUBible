@@ -1479,8 +1479,7 @@ async function completePasswordReset(databases, users, userId, token, password, 
         resetRecord.$id,
         {
           isUsed: true,
-          usedAt: new Date().toISOString(),
-          usedFromIp: ipAddress || 'unknown'
+          usedAt: new Date().toISOString()
         }
       );
     } catch (markError) {
@@ -1542,8 +1541,7 @@ async function completePasswordReset(databases, users, userId, token, password, 
           resetRecord.$id,
           {
             isUsed: false,
-            usedAt: null,
-            usedFromIp: null
+            usedAt: null
           }
         );
       } catch (revertError) {
