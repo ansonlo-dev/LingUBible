@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,14 @@ export default function OAuthLoginCallback() {
           
           setStatus('success');
           setMessage(t('oauth.loginSuccess'));
+          
+          // 顯示登入成功 toast
+          toast({
+            variant: "success",
+            title: t('oauth.loginSuccess'),
+            description: t('oauth.welcomeBack'),
+            duration: 3000,
+          });
           
           // 2秒後重定向到首頁
           setTimeout(() => {

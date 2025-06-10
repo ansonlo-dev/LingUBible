@@ -53,13 +53,24 @@ export function GoogleAccountLink() {
       
       // 處理不同類型的錯誤
       let errorMessage = t('oauth.linkError');
+      let errorTitle = t('oauth.linkFailed');
       
       if (error.message) {
-        // 檢查是否是帳戶已連結的錯誤
-        if (error.message.includes('already linked') || 
-            error.message.includes('already exists') ||
-            error.message.includes('already associated')) {
-          errorMessage = t('oauth.accountAlreadyLinked');
+        // 檢查是否是特定的錯誤類型
+        if (error.message === 'ACCOUNT_ALREADY_LINKED' || 
+            error.name === 'AccountAlreadyLinkedError') {
+          errorMessage = t('oauth.accountAlreadyLinkedToAnother');
+          errorTitle = t('oauth.accountAlreadyLinked');
+        } else if (error.message === 'MUST_BE_LOGGED_IN' || 
+                   error.name === 'AuthenticationRequiredError') {
+          errorMessage = t('oauth.mustBeLoggedIn');
+        } else if (error.message.includes('already linked') || 
+                   error.message.includes('already exists') ||
+                   error.message.includes('already associated') ||
+                   error.message.includes('user_already_exists') ||
+                   error.code === 409) {
+          errorMessage = t('oauth.accountAlreadyLinkedToAnother');
+          errorTitle = t('oauth.accountAlreadyLinked');
         } else if (error.message.includes('User must be logged in')) {
           errorMessage = t('oauth.mustBeLoggedIn');
         } else {
@@ -70,7 +81,7 @@ export function GoogleAccountLink() {
       
       toast({
         variant: "destructive",
-        title: t('oauth.linkFailed'),
+        title: errorTitle,
         description: errorMessage,
         duration: 5000,
       });
@@ -87,11 +98,9 @@ export function GoogleAccountLink() {
         setIsLinked(false);
         setGoogleAccount(null);
         
-        const message = result.messageKey ? t(result.messageKey) : result.message;
         toast({
           variant: "success",
           title: t('oauth.unlinkSuccess'),
-          description: message,
           duration: 5000,
         });
       } else {

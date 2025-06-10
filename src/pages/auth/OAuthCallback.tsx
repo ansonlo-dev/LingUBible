@@ -25,19 +25,35 @@ export default function OAuthCallback() {
         
         if (error) {
           console.error('OAuth 錯誤:', error, errorDescription);
+          
+          // 智能錯誤檢測和處理
+          let errorMessage = errorDescription || error;
+          let errorTitle = t('oauth.linkFailed');
+          
+          // 檢查是否是帳戶已存在的錯誤
+          if (error.includes('user_already_exists') || 
+              errorDescription?.includes('user_already_exists') ||
+              errorDescription?.includes('already exists') ||
+              error === 'access_denied') {
+            errorMessage = t('oauth.accountAlreadyLinkedToAnother');
+            errorTitle = t('oauth.accountAlreadyLinked');
+          } else if (error === 'access_denied') {
+            errorMessage = t('oauth.authorizationDenied');
+          }
+          
           setStatus('error');
-          setMessage(errorDescription || error);
+          setMessage(errorMessage);
           
           toast({
             variant: "destructive",
-            title: t('oauth.linkFailed'),
-            description: t('oauth.authorizationDenied'),
+            title: errorTitle,
+            description: errorMessage,
             duration: 5000,
           });
           
           // 3秒後重定向到設置頁面
           setTimeout(() => {
-            navigate('/user/settings');
+            navigate('/settings');
           }, 3000);
           return;
         }
@@ -71,7 +87,7 @@ export default function OAuthCallback() {
               
               // 2秒後重定向到設置頁面
               setTimeout(() => {
-                navigate('/user/settings');
+                navigate('/settings');
               }, 2000);
             } else {
               // 用戶未登入，這可能是登入操作，創建會話
@@ -91,11 +107,27 @@ export default function OAuthCallback() {
               
               // 2秒後重定向到設置頁面
               setTimeout(() => {
-                navigate('/user/settings');
+                navigate('/settings');
               }, 2000);
             }
           } catch (sessionError: any) {
             console.error('處理會話失敗:', sessionError);
+            
+            // 智能錯誤檢測和處理
+            let errorMessage = t('oauth.sessionCreationFailed');
+            let errorTitle = t('oauth.linkFailed');
+            
+            if (sessionError.message) {
+              // 檢查是否是 JSON 格式的錯誤
+              if (sessionError.message.includes('user_already_exists') || 
+                  sessionError.message.includes('already exists') ||
+                  sessionError.code === 409) {
+                errorMessage = t('oauth.accountAlreadyLinkedToAnother');
+                errorTitle = t('oauth.accountAlreadyLinked');
+              } else if (sessionError.message.includes('User must be logged in')) {
+                errorMessage = t('oauth.mustBeLoggedIn');
+              }
+            }
             
             // 如果是帳戶連結操作，即使創建會話失敗也可能連結成功了
             if (user) {
@@ -114,7 +146,7 @@ export default function OAuthCallback() {
                 });
                 
                 setTimeout(() => {
-                  navigate('/user/settings');
+                  navigate('/settings');
                 }, 2000);
                 return;
               } catch (refreshError) {
@@ -123,17 +155,17 @@ export default function OAuthCallback() {
             }
             
             setStatus('error');
-            setMessage(t('oauth.sessionCreationFailed'));
+            setMessage(errorMessage);
             
             toast({
               variant: "destructive",
-              title: t('oauth.linkFailed'),
-              description: t('oauth.sessionCreationFailed'),
+              title: errorTitle,
+              description: errorMessage,
               duration: 5000,
             });
             
             setTimeout(() => {
-              navigate('/user/settings');
+              navigate('/settings');
             }, 3000);
           }
         } else {
@@ -149,7 +181,7 @@ export default function OAuthCallback() {
           });
           
           setTimeout(() => {
-            navigate('/user/settings');
+            navigate('/settings');
           }, 3000);
         }
       } catch (error: any) {
@@ -165,7 +197,7 @@ export default function OAuthCallback() {
         });
         
         setTimeout(() => {
-          navigate('/user/settings');
+          navigate('/settings');
         }, 3000);
       }
     };
@@ -174,7 +206,7 @@ export default function OAuthCallback() {
   }, [searchParams, navigate, user, refreshUser, t]);
 
   const handleReturnToSettings = () => {
-    navigate('/user/settings');
+    navigate('/settings');
   };
 
   return (

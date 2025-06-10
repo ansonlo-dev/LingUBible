@@ -29,8 +29,28 @@ export const oauthService = {
         redirectUrl,
         redirectUrl // failure URL 也使用相同的 URL，在回調中處理錯誤
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google 帳戶連結失敗:', error);
+      
+      // 智能錯誤檢測和處理
+      if (error.message) {
+        // 檢查是否是帳戶已存在的錯誤
+        if (error.message.includes('user_already_exists') || 
+            error.message.includes('already exists') ||
+            error.code === 409) {
+          const enhancedError = new Error('ACCOUNT_ALREADY_LINKED');
+          enhancedError.name = 'AccountAlreadyLinkedError';
+          throw enhancedError;
+        }
+        
+        // 檢查是否是用戶未登入的錯誤
+        if (error.message.includes('User must be logged in')) {
+          const enhancedError = new Error('MUST_BE_LOGGED_IN');
+          enhancedError.name = 'AuthenticationRequiredError';
+          throw enhancedError;
+        }
+      }
+      
       throw error;
     }
   },
