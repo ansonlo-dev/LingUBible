@@ -1493,9 +1493,29 @@ async function completePasswordReset(databases, users, userId, token, password, 
     try {
       // 更新用戶密碼
       log('🔐 更新用戶密碼');
-      await users.updatePassword(userId, password);
+      log('🔍 密碼更新參數:', { 
+        userId: userId ? userId.substring(0, 8) + '...' : 'undefined', 
+        passwordLength: password ? password.length : 0,
+        passwordStartsWith: password ? password.substring(0, 2) + '...' : 'undefined'
+      });
+      
+      const updateResult = await users.updatePassword(userId, password);
       
       log('✅ 密碼更新成功');
+      log('📋 更新結果:', updateResult);
+
+      // 驗證密碼是否真的更新了 - 嘗試獲取用戶信息
+      try {
+        const updatedUser = await users.get(userId);
+        log('👤 密碼更新後的用戶信息:', {
+          id: updatedUser.$id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          passwordUpdate: updatedUser.passwordUpdate || 'N/A'
+        });
+      } catch (verifyError) {
+        error('❌ 驗證用戶信息失敗:', verifyError);
+      }
 
       // 清理該用戶的所有其他重設記錄
       try {
