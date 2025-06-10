@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,13 +26,6 @@ export default function OAuthLoginCallback() {
           setStatus('error');
           setMessage(errorDescription || error);
           
-          toast({
-            variant: "destructive",
-            title: t('oauth.loginFailed'),
-            description: t('oauth.authorizationDenied'),
-            duration: 5000,
-          });
-          
           // 3秒後重定向到登入頁面
           setTimeout(() => {
             navigate('/login');
@@ -52,13 +44,6 @@ export default function OAuthLoginCallback() {
           setStatus('success');
           setMessage(t('oauth.loginSuccess'));
           
-          toast({
-            variant: "success",
-            title: t('oauth.loginSuccess'),
-            description: t('oauth.welcomeBack'),
-            duration: 5000,
-          });
-          
           // 2秒後重定向到首頁
           setTimeout(() => {
             navigate('/');
@@ -68,13 +53,6 @@ export default function OAuthLoginCallback() {
           setStatus('error');
           setMessage(t('oauth.loginFailed'));
           
-          toast({
-            variant: "destructive",
-            title: t('oauth.loginFailed'),
-            description: t('oauth.callbackError'),
-            duration: 5000,
-          });
-          
           setTimeout(() => {
             navigate('/login');
           }, 3000);
@@ -83,13 +61,6 @@ export default function OAuthLoginCallback() {
         console.error('處理 OAuth 登入回調失敗:', error);
         setStatus('error');
         setMessage(error.message || t('oauth.callbackError'));
-        
-        toast({
-          variant: "destructive",
-          title: t('oauth.loginFailed'),
-          description: error.message || t('oauth.callbackError'),
-          duration: 5000,
-        });
         
         setTimeout(() => {
           navigate('/login');

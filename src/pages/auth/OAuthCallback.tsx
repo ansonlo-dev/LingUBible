@@ -53,35 +53,53 @@ export default function OAuthCallback() {
               // 用戶已登入，這是帳戶連結操作
               // 對於帳戶連結，我們不需要創建新會話
               // 只需要等待一下讓 Appwrite 處理連結，然後刷新用戶資料
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              console.log('用戶已登入，處理帳戶連結...');
+              await new Promise(resolve => setTimeout(resolve, 1500));
               
               // 刷新用戶資料以獲取最新的身份提供者信息
               await refreshUser();
+              
+              setStatus('success');
+              setMessage(t('oauth.linkSuccess'));
+              
+              toast({
+                variant: "success",
+                title: t('oauth.linkSuccess'),
+                description: t('oauth.googleAccountLinked'),
+                duration: 5000,
+              });
+              
+              // 2秒後重定向到設置頁面
+              setTimeout(() => {
+                navigate('/user/settings');
+              }, 2000);
             } else {
               // 用戶未登入，這可能是登入操作，創建會話
+              console.log('用戶未登入，創建新會話...');
               await account.createSession(userId, secret);
               await refreshUser();
+              
+              setStatus('success');
+              setMessage(t('oauth.linkSuccess'));
+              
+              toast({
+                variant: "success",
+                title: t('oauth.linkSuccess'),
+                description: t('oauth.googleAccountLinked'),
+                duration: 5000,
+              });
+              
+              // 2秒後重定向到設置頁面
+              setTimeout(() => {
+                navigate('/user/settings');
+              }, 2000);
             }
-            
-            setStatus('success');
-            setMessage(t('oauth.linkSuccess'));
-            
-            toast({
-              variant: "success",
-              title: t('oauth.linkSuccess'),
-              description: t('oauth.googleAccountLinked'),
-              duration: 5000,
-            });
-            
-            // 2秒後重定向到設置頁面
-            setTimeout(() => {
-              navigate('/user/settings');
-            }, 2000);
           } catch (sessionError: any) {
             console.error('處理會話失敗:', sessionError);
             
             // 如果是帳戶連結操作，即使創建會話失敗也可能連結成功了
             if (user) {
+              console.log('帳戶連結操作，嘗試刷新用戶資料確認連結狀態...');
               // 嘗試刷新用戶資料看看連結是否成功
               try {
                 await refreshUser();

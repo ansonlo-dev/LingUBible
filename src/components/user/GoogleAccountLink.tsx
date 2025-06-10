@@ -50,10 +50,28 @@ export function GoogleAccountLink() {
       // 重定向會在 oauthService.linkGoogleAccount() 中處理
     } catch (error: any) {
       console.error('連結 Google 帳戶失敗:', error);
+      
+      // 處理不同類型的錯誤
+      let errorMessage = t('oauth.linkError');
+      
+      if (error.message) {
+        // 檢查是否是帳戶已連結的錯誤
+        if (error.message.includes('already linked') || 
+            error.message.includes('already exists') ||
+            error.message.includes('already associated')) {
+          errorMessage = t('oauth.accountAlreadyLinked');
+        } else if (error.message.includes('User must be logged in')) {
+          errorMessage = t('oauth.mustBeLoggedIn');
+        } else {
+          // 其他錯誤，顯示通用錯誤訊息
+          errorMessage = t('oauth.linkError');
+        }
+      }
+      
       toast({
         variant: "destructive",
         title: t('oauth.linkFailed'),
-        description: error.message || t('oauth.linkError'),
+        description: errorMessage,
         duration: 5000,
       });
       setActionLoading(false);
