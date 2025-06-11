@@ -21,6 +21,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
 
+[![Ko-fi](https://img.shields.io/badge/支持我们-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+
 ---
 
 **🌟 一个专为岭南大学学生打造的课程与讲师评价平台**
@@ -441,6 +443,42 @@ bun run readme:generate-assets  # 生成 README 资产
 
 ![GitHub code size](https://img.shields.io/github/languages/code-size/ansonlo-dev/LingUBible?style=flat-square)
 ![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo/LingUBible?style=flat-square)
+
+</div>
+
+---
+
+## ❤️ 支持这个项目
+
+<div align="center">
+
+### 🌟 帮助我们让 LingUBible 持续成长！
+
+如果您觉得 **LingUBible** 对您的学习之路有所帮助，请考虑支持我们的开发工作。您的支持帮助我们：
+
+- 🚀 **新增功能** - 持续改进平台
+- 🐛 **修复错误** - 维持稳定的使用体验
+- 🌍 **扩展语言支持** - 服务更多学生
+- 📱 **提升性能** - 优化用户体验
+- 🎨 **改善界面** - 打造更美观的界面
+
+### ☕ 请我们喝杯咖啡
+
+<a href="https://ko-fi.com/lingubible" target="_blank">
+  <img src="https://cdn.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me A Coffee" height="50" width="210">
+</a>
+
+**每一份贡献，无论多小，都意义重大！🙏**
+
+[![Ko-fi](https://img.shields.io/badge/支持我们-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+
+### 🎯 其他支持方式
+
+- ⭐ **为此仓库点星** - 帮助其他人发现 LingUBible
+- 🐛 **报告错误** - 帮助我们改进平台
+- 💡 **建议功能** - 与我们分享您的想法
+- 📝 **贡献代码** - 加入我们的开发团队
+- 🌍 **推广宣传** - 告诉您的朋友关于 LingUBible
 
 </div>
 

@@ -14,6 +14,7 @@ export default {
     'nav.language': '語言',
     'nav.theme': '主題',
     'hero.title': '歡迎來到',
+    'hero.regBible': '一個屬於嶺南人的Reg科聖經',
     'hero.subtitle': '博覽群評，明智選課',
     'hero.subtitleDesktop': '博覽群評，明智選課',
     'hero.subtitleMobileLine1': '博覽群評，明智選課',
@@ -686,6 +687,8 @@ export default {
     // 8. COMMON ELEMENTS - 通用元素
     // =============================================================================
 
+    'kofi.donate': '贊助',
+    'kofi.supportProject': '支持這個專案',
     'common.backToHome': '返回首頁',
     'common.lastUpdated': '最後更新',
     'common.user': '用戶',

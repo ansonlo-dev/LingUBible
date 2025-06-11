@@ -2,6 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Github, ExternalLink, RefreshCw } from 'lucide-react';
 import { UserStatsDisplay } from '@/components/user/UserStatsDisplay';
 import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';
+import { FooterKofiButton } from '@/components/common/KofiWidget';
 import { Link } from 'react-router-dom';
 import { getFormattedVersion, getVersionStatus } from '@/utils/version';
 import { useLatestVersion } from '@/hooks/useVersion';
@@ -84,8 +85,7 @@ export function Footer() {
                   className="underline hover:text-foreground transition-colors"
                 >
                   ansonlo.dev
-                </a>{' '}
-                💝
+                </a>
               </div>
               <div className="text-xs text-gray-500 dark:text-muted-foreground">
                 {t('footer.disclaimer')}
@@ -94,6 +94,7 @@ export function Footer() {
             
             {/* Right side - Navigation Links and OpenStatus Badge */}
             <div className="flex items-center space-x-6 text-sm">
+              <FooterKofiButton />
               <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
               {releaseUrl ? (
                 <a
@@ -172,6 +173,7 @@ export function Footer() {
               
               <div className="flex items-center space-x-4">
                 <UserStatsDisplay variant="compact" />
+                <FooterKofiButton />
                 <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
                 {releaseUrl ? (
                   <a
@@ -218,8 +220,7 @@ export function Footer() {
                     className="underline hover:text-foreground transition-colors"
                   >
                     ansonlo.dev
-                  </a>{' '}
-                  💝
+                  </a>
                 </div>
                 <div className="text-xs text-gray-500 dark:text-muted-foreground">
                   {t('footer.disclaimer')}
@@ -246,7 +247,10 @@ export function Footer() {
           {/* User Stats and OpenStatus Badge - Mobile */}
           <div className="flex justify-between items-center py-2">
             <UserStatsDisplay variant="compact" />
-            <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
+            <div className="flex items-center space-x-2">
+              <FooterKofiButton />
+              <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
+            </div>
           </div>
           
           {/* Status badges row */}
@@ -306,8 +310,7 @@ export function Footer() {
               className="underline hover:text-foreground transition-colors"
             >
               ansonlo.dev
-            </a>{' '}
-            💝
+            </a>
           </div>
           
           {/* Disclaimer */}

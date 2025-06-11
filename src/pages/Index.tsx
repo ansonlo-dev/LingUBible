@@ -151,6 +151,9 @@ const Index = () => {
             <span className="neon-glow-text">{t('hero.title')}</span>{' '}
             <span className="red-neon-glow-text">LingUBible</span>
           </h1>
+          <h2 className="text-xl md:text-2xl font-bold text-muted-foreground mb-6">
+            {t('hero.regBible')}
+          </h2>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
             {/* 桌面版：一行顯示 */}
             <span className="hidden md:block">

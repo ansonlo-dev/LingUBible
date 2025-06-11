@@ -14,6 +14,7 @@ export default {
     'nav.language': '语言',
     'nav.theme': '主题',
     'hero.title': '欢迎来到',
+    'hero.regBible': '一个属于岭南人的选课圣经',
     'hero.subtitle': '博览群评，明智选课',
     'hero.subtitleDesktop': '博览群评，明智选课',
     'hero.subtitleMobileLine1': '博览群评，明智选课',
@@ -686,6 +687,8 @@ export default {
     // 8. COMMON ELEMENTS - 通用元素
     // =============================================================================
 
+    'kofi.donate': '赞助',
+    'kofi.supportProject': '支持这个项目',
     'common.backToHome': '返回首页',
     'common.lastUpdated': '最后更新',
     'common.user': '用户',

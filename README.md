@@ -19,6 +19,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
 
+[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+
 ---
 
 **🌟 A course and lecturer review platform designed specifically for Lingnan University students**
@@ -435,6 +437,42 @@ We welcome all forms of contributions, whether it's code, documentation, design,
 
 ![GitHub code size](https://img.shields.io/github/languages/code-size/ansonlo-dev/LingUBible?style=flat-square)
 ![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo-dev/LingUBible?style=flat-square)
+
+</div>
+
+---
+
+## ❤️ Support This Project
+
+<div align="center">
+
+### 🌟 Help Us Keep LingUBible Growing!
+
+If you find **LingUBible** helpful for your academic journey, consider supporting our development efforts. Your support helps us:
+
+- 🚀 **Add New Features** - Continuously improve the platform
+- 🐛 **Fix Bugs & Issues** - Maintain a stable experience
+- 🌍 **Expand Language Support** - Reach more students
+- 📱 **Improve Performance** - Optimize for better user experience
+- 🎨 **Enhance UI/UX** - Create a more beautiful interface
+
+### ☕ Buy Us a Coffee
+
+<a href="https://ko-fi.com/lingubible" target="_blank">
+  <img src="https://cdn.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me A Coffee" height="50" width="210">
+</a>
+
+**Every contribution, no matter how small, makes a difference! 🙏**
+
+[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+
+### 🎯 Other Ways to Support
+
+- ⭐ **Star this repository** - Help others discover LingUBible
+- 🐛 **Report bugs** - Help us improve the platform
+- 💡 **Suggest features** - Share your ideas with us
+- 📝 **Contribute code** - Join our development team
+- 🌍 **Spread the word** - Tell your friends about LingUBible
 
 </div>
 

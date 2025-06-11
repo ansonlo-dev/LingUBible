@@ -14,6 +14,7 @@ export default {
     'nav.language': 'Language',
     'nav.theme': 'Theme',
     'hero.title': 'Welcome to',
+    'hero.regBible': 'A Course Selection Bible for Lingnanians',
     'hero.subtitle': 'Your platform for honest course and lecturer reviews. Help fellow students make informed decisions',
     'hero.subtitleDesktop': 'Browse reviews widely, choose courses wisely.',
     'hero.subtitleMobileLine1': 'Browse reviews widely,',
@@ -686,6 +687,8 @@ export default {
     // 8. COMMON ELEMENTS - 通用元素
     // =============================================================================
 
+    'kofi.donate': 'Donate',
+    'kofi.supportProject': 'Support this project',
     'common.backToHome': 'Back to Home',
     'common.lastUpdated': 'Last updated',
     'common.user': 'User',

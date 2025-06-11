@@ -14,6 +14,7 @@ import { DocumentHead } from "@/components/common/DocumentHead";
 import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
 import { SEOTester } from "@/components/dev/SEOTester";
 import { BetaNotice } from "@/components/common/BetaNotice";
+
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import Login from "./pages/auth/Login";
