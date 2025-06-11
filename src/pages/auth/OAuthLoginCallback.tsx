@@ -206,6 +206,17 @@ export default function OAuthLoginCallback() {
             sessionOnly: 'removed'
           });
           
+          // 調試：檢查會話存儲狀態
+          const debugSessionInfo = {
+            cookies: document.cookie,
+            localStorage_cookieFallback: localStorage.getItem('cookieFallback'),
+            localStorage_appwriteSession: localStorage.getItem('appwrite-session'),
+            localStorage_rememberMe: localStorage.getItem('rememberMe'),
+            sessionStorage_oauthSession: sessionStorage.getItem('oauthSession'),
+            sessionStorage_sessionOnly: sessionStorage.getItem('sessionOnly')
+          };
+          console.log('OAuth 登入後會話調試信息:', debugSessionInfo);
+          
           // 設置一個短期標記，讓側邊欄知道需要等待狀態同步
           sessionStorage.setItem('oauthLoginComplete', Date.now().toString());
           

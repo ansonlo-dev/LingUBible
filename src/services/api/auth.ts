@@ -9,11 +9,40 @@ export const authService = {
     // 檢查是否有本地 session（避免 API 調用）
     hasLocalSession() {
         try {
-            // Appwrite 會在 localStorage 中存儲 session 信息
+            // 檢查多種可能的會話存儲方式
             const cookieString = document.cookie;
-            return cookieString.includes('a_session_') || 
-                   localStorage.getItem('cookieFallback') !== null;
-        } catch {
+            const hasCookieSession = cookieString.includes('a_session_');
+            const hasFallbackSession = localStorage.getItem('cookieFallback') !== null;
+            
+            // 檢查 Appwrite 可能使用的其他存儲方式
+            const hasAppwriteSession = localStorage.getItem('appwrite-session') !== null;
+            
+            // 檢查是否有任何形式的會話標記
+            const hasAnySession = hasCookieSession || hasFallbackSession || hasAppwriteSession;
+            
+            console.log('會話檢測結果:', {
+                hasCookieSession,
+                hasFallbackSession,
+                hasAppwriteSession,
+                hasAnySession,
+                cookieCount: cookieString.split('a_session_').length - 1
+            });
+            
+            return hasAnySession;
+        } catch (error) {
+            console.error('會話檢測失敗:', error);
+            return false;
+        }
+    },
+
+    // 更可靠的會話檢測（使用 API 調用）
+    async hasValidSession() {
+        try {
+            const user = await account.get();
+            console.log('API 會話檢測成功:', user?.email);
+            return true;
+        } catch (error) {
+            console.log('API 會話檢測失敗:', error);
             return false;
         }
     },

@@ -108,8 +108,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // 等待一下讓會話完全建立
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
+
+            // 首先嘗試直接獲取用戶信息（最可靠的方法）
+            let currentUser = null;
+            let hasValidSession = false;
             
-            if (authService.hasLocalSession()) {
+            try {
+                currentUser = await authService.getCurrentUser();
+                hasValidSession = true;
+                console.log('直接獲取用戶成功:', currentUser?.email);
+            } catch (directError) {
+                console.log('直接獲取用戶失敗:', directError);
+                // 如果直接獲取失敗，檢查本地會話標記
+                hasValidSession = authService.hasLocalSession();
+                console.log('本地會話檢測結果:', hasValidSession);
+            }
+            
+            if (hasValidSession) {
+                // 如果沒有用戶信息但有會話，再次嘗試獲取
+                if (!currentUser) {
+                    try {
+                        currentUser = await authService.getCurrentUser();
+                        console.log('重試獲取用戶成功:', currentUser?.email);
+                    } catch (retryError) {
+                        console.log('重試獲取用戶失敗:', retryError);
+                        // 會話可能已過期，清理狀態
+                        setUser(null);
+                        setUserSessionId(null);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 // 檢查是否為 session-only 模式且是新的瀏覽器 session
                 const sessionOnly = sessionStorage.getItem('sessionOnly');
                 const rememberMe = localStorage.getItem('rememberMe');
@@ -150,8 +180,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         rememberMe
                     });
                 }
-                
-                const currentUser = await authService.getCurrentUser();
                 
                 // 安全檢查：驗證主帳戶郵箱是否為學生郵箱
                 // 允許連結任何 Google 郵箱，但主帳戶必須是學生郵箱

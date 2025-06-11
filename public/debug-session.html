@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會話調試 - LingUBible</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .debug-item.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .debug-item.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 LingUBible 會話調試工具</h1>
+    
+    <div class="debug-section">
+        <h2>會話狀態檢查</h2>
+        <button onclick="checkSession()">檢查會話狀態</button>
+        <button onclick="clearAllStorage()">清理所有存儲</button>
+        <button onclick="window.location.reload()">重新載入頁面</button>
+        <div id="sessionStatus"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>存儲內容</h2>
+        <div id="storageContent"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Cookies</h2>
+        <div id="cookieContent"></div>
+    </div>
+
+    <script>
+        function checkSession() {
+            const statusDiv = document.getElementById('sessionStatus');
+            statusDiv.innerHTML = '<p>檢查中...</p>';
+
+            // 檢查各種會話標記
+            const cookies = document.cookie;
+            const hasCookieSession = cookies.includes('a_session_');
+            const hasFallbackSession = localStorage.getItem('cookieFallback') !== null;
+            const hasAppwriteSession = localStorage.getItem('appwrite-session') !== null;
+            const rememberMe = localStorage.getItem('rememberMe');
+            const sessionOnly = sessionStorage.getItem('sessionOnly');
+            const oauthSession = sessionStorage.getItem('oauthSession');
+
+            let html = '<h3>會話檢測結果</h3>';
+            html += `<div class="debug-item ${hasCookieSession ? 'success' : 'error'}">Cookie 會話: ${hasCookieSession ? '✅ 存在' : '❌ 不存在'}</div>`;
+            html += `<div class="debug-item ${hasFallbackSession ? 'success' : 'error'}">Fallback 會話: ${hasFallbackSession ? '✅ 存在' : '❌ 不存在'}</div>`;
+            html += `<div class="debug-item ${hasAppwriteSession ? 'success' : 'error'}">Appwrite 會話: ${hasAppwriteSession ? '✅ 存在' : '❌ 不存在'}</div>`;
+            html += `<div class="debug-item">記住我設置: ${rememberMe || '未設置'}</div>`;
+            html += `<div class="debug-item">僅會話模式: ${sessionOnly || '未設置'}</div>`;
+            html += `<div class="debug-item">OAuth 會話: ${oauthSession || '未設置'}</div>`;
+
+            statusDiv.innerHTML = html;
+            updateStorageDisplay();
+            updateCookieDisplay();
+        }
+
+        function updateStorageDisplay() {
+            const storageDiv = document.getElementById('storageContent');
+            
+            let html = '<h3>LocalStorage</h3><pre>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                html += `${key}: ${value}\n`;
+            }
+            html += '</pre>';
+
+            html += '<h3>SessionStorage</h3><pre>';
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                html += `${key}: ${value}\n`;
+            }
+            html += '</pre>';
+
+            storageDiv.innerHTML = html;
+        }
+
+        function updateCookieDisplay() {
+            const cookieDiv = document.getElementById('cookieContent');
+            const cookies = document.cookie.split(';');
+            
+            let html = '<pre>';
+            cookies.forEach(cookie => {
+                html += cookie.trim() + '\n';
+            });
+            html += '</pre>';
+
+            cookieDiv.innerHTML = html;
+        }
+
+        function clearAllStorage() {
+            if (confirm('確定要清理所有存儲嗎？這將登出所有會話。')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                alert('所有存儲已清理');
+                checkSession();
+            }
+        }
+
+        // 頁面載入時自動檢查
+        window.onload = function() {
+            checkSession();
+        };
+    </script>
+</body>
+</html> 
