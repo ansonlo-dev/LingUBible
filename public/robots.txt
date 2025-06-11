@@ -1,17 +1,28 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
 
-# Sitemap
+# 允許搜尋引擎訪問所有語言版本
+Allow: /?lang=en
+Allow: /?lang=zh-TW
+Allow: /?lang=zh-CN
+
+# 允許訪問主要頁面
+Allow: /courses
+Allow: /lecturers
+Allow: /login
+Allow: /register
+Allow: /privacy
+Allow: /terms
+
+# 禁止訪問開發和測試文件
+Disallow: /test-seo.html
+Disallow: /dev/
+Disallow: /_next/
+Disallow: /api/
+Disallow: /admin/
+
+# 網站地圖位置
 Sitemap: https://lingubible.com/sitemap.xml
+
+# 爬蟲延遲（可選）
+Crawl-delay: 1

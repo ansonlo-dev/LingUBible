@@ -21,7 +21,7 @@ export const SEO_CONFIG = {
     'zh-TW': {
       title: 'LingUBible - 課程與講師評價平台',
       description: '真實可靠的Reg科聖經，幫助同學們作出明智的選擇',
-      keywords: '嶺南大學,課程評價,講師評分,學生評價,大學課程,教學評估,選課指南,課程推薦',
+      keywords: 'Reg科聖經,嶺南大學,課程評價,講師評分,學生評價,大學課程,教學評估,選課指南,課程推薦,LingU,嶺大,選課神器',
       locale: 'zh_TW',
       lang: 'zh-TW'
     },
