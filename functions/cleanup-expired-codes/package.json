@@ -1,16 +1,20 @@
 {
   "name": "cleanup-expired-codes",
   "version": "1.0.0",
-  "description": "Cleanup expired verification codes",
+  "description": "Cleanup expired verification codes - Bun runtime",
   "main": "src/main.js",
   "type": "module",
   "scripts": {
-    "start": "node src/main.js"
+    "start": "bun run src/main.js",
+    "dev": "bun --watch src/main.js"
   },
   "dependencies": {
     "node-appwrite": "^13.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
-  }
+    "bun": ">=1.0.0"
+  },
+  "trustedDependencies": [
+    "node-appwrite"
+  ]
 } 

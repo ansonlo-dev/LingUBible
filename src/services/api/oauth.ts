@@ -7,6 +7,26 @@ export interface OAuthLinkResult {
   messageKey?: string;
 }
 
+// 檢查郵箱是否為學生郵箱
+const isStudentEmail = (email: string): boolean => {
+  return email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
+};
+
+// Google OAuth 郵箱預檢查
+const preCheckGoogleEmail = async (): Promise<{ isValid: boolean; email?: string }> => {
+  try {
+    // 使用 Google API 來獲取用戶郵箱信息，而不創建 Appwrite 會話
+    // 這需要前端 Google OAuth 實現
+    
+    // 由於我們無法在不創建會話的情況下獲取 Google 郵箱，
+    // 我們將在 OAuth 回調中立即檢查並清理
+    return { isValid: true }; // 暫時允許，在回調中檢查
+  } catch (error) {
+    console.error('Google 郵箱預檢查失敗:', error);
+    return { isValid: false };
+  }
+};
+
 export const oauthService = {
   /**
    * 連結 Google 帳戶到現有用戶
@@ -17,20 +37,53 @@ export const oauthService = {
       // 這會返回 token 和 userId 參數到回調 URL
       const redirectUrl = `${window.location.origin}/oauth/callback`;
       
-      // 檢查用戶是否已登入
-      const currentUser = await account.get();
-      if (!currentUser) {
-        throw new Error('User must be logged in to link Google account');
+      // 檢查用戶是否已登入（但不要因為權限錯誤而失敗）
+      let currentUser = null;
+      try {
+        currentUser = await account.get();
+        console.log('當前用戶:', currentUser?.email);
+      } catch (userError) {
+        console.log('無法獲取當前用戶:', userError.message);
+        
+        // 如果是權限錯誤，我們仍然可以嘗試創建 OAuth token
+        // 因為這可能是一個「連結並登入」的操作
+        if (userError.message && userError.message.includes('missing scope')) {
+          console.log('檢測到權限錯誤，但仍然嘗試 OAuth 流程...');
+        } else if (userError.message && userError.message.includes('User (role: guests)')) {
+          console.log('用戶是 guests 角色，嘗試 OAuth 流程...');
+        } else {
+          // 其他類型的錯誤，可能真的需要登入
+          throw new Error('User must be logged in to link Google account');
+        }
       }
       
+      console.log('開始 Google 帳戶連結流程...');
+      
       // 使用 createOAuth2Token 來連結帳戶
+      // 這個方法會觸發瀏覽器重定向，所以後續代碼可能不會執行
       await account.createOAuth2Token(
         OAuthProvider.Google,
         redirectUrl,
         redirectUrl // failure URL 也使用相同的 URL，在回調中處理錯誤
       );
+      
+      console.log('OAuth2Token 創建成功，應該已經重定向...');
     } catch (error: any) {
       console.error('Google 帳戶連結失敗:', error);
+      
+      // 檢查是否是重定向相關的錯誤（這些通常不是真正的錯誤）
+      if (error.message && (
+        error.message.includes('redirect') ||
+        error.message.includes('navigation') ||
+        error.message.includes('aborted') ||
+        error.message.includes('cancelled') ||
+        error.name === 'AbortError' ||
+        error.name === 'NavigationError'
+      )) {
+        // 這些錯誤通常是由於頁面重定向導致的，不需要拋出
+        console.log('檢測到重定向相關錯誤，這是正常的:', error.message);
+        return;
+      }
       
       // 智能錯誤檢測和處理
       if (error.message) {
@@ -43,8 +96,9 @@ export const oauthService = {
           throw enhancedError;
         }
         
-        // 檢查是否是用戶未登入的錯誤
-        if (error.message.includes('User must be logged in')) {
+        // 檢查是否是用戶未登入的錯誤（但排除權限錯誤）
+        if (error.message.includes('User must be logged in') && 
+            !error.message.includes('missing scope')) {
           const enhancedError = new Error('MUST_BE_LOGGED_IN');
           enhancedError.name = 'AuthenticationRequiredError';
           throw enhancedError;
@@ -56,18 +110,20 @@ export const oauthService = {
   },
 
   /**
-   * 使用 Google 登入（僅限已連結的帳戶）
+   * 使用 Google 登入
+   * 警告：這會創建用戶帳戶，郵箱驗證將在回調中進行
    */
   async loginWithGoogle(): Promise<void> {
     try {
       const redirectUrl = `${window.location.origin}/oauth/login-callback`;
       
+      // 創建 OAuth 會話（這會創建用戶帳戶）
       await account.createOAuth2Session(
         OAuthProvider.Google,
         redirectUrl,
         redirectUrl
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google 登入失敗:', error);
       throw error;
     }
@@ -118,9 +174,14 @@ export const oauthService = {
   async isGoogleLinked(): Promise<boolean> {
     try {
       const identities = await account.listIdentities();
-      return identities.identities.some(
+      console.log('當前身份提供者:', identities.identities.map(id => ({ provider: id.provider, email: id.providerEmail })));
+      
+      const hasGoogle = identities.identities.some(
         identity => identity.provider === 'google'
       );
+      
+      console.log('是否有 Google 身份提供者:', hasGoogle);
+      return hasGoogle;
     } catch (error) {
       console.error('檢查 Google 連結狀態失敗:', error);
       return false;
@@ -141,6 +202,55 @@ export const oauthService = {
     } catch (error) {
       console.error('獲取 Google 帳戶信息失敗:', error);
       return null;
+    }
+  },
+
+  /**
+   * 檢查郵箱是否為學生郵箱
+   */
+  isStudentEmail,
+
+  /**
+   * 驗證當前用戶的郵箱是否為學生郵箱
+   */
+  async validateCurrentUserEmail(): Promise<boolean> {
+    try {
+      const user = await account.get();
+      return isStudentEmail(user.email);
+    } catch (error) {
+      console.error('驗證用戶郵箱失敗:', error);
+      return false;
+    }
+  },
+
+  /**
+   * 強制清理當前非學生用戶會話
+   */
+  async forceCleanupNonStudentSession(): Promise<void> {
+    try {
+      const user = await account.get();
+      if (user && !isStudentEmail(user.email)) {
+        console.warn('檢測到非學生郵箱會話，立即清理:', user.email);
+        await account.deleteSession('current');
+        
+        // 調用清理函數
+        try {
+          await fetch('/api/functions/cleanup-expired-codes/executions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'immediate_cleanup',
+              userId: user.$id
+            })
+          });
+        } catch (cleanupError) {
+          console.error('調用清理函數失敗:', cleanupError);
+        }
+      }
+    } catch (error) {
+      console.error('強制清理會話失敗:', error);
     }
   }
 }; 

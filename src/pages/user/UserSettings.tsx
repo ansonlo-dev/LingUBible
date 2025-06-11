@@ -565,7 +565,9 @@ export default function UserSettings() {
         </Card>
 
         {/* Google 帳戶連結 */}
-        <GoogleAccountLink />
+        <div className="mt-8">
+          <GoogleAccountLink />
+        </div>
       </div>
     </div>
   );

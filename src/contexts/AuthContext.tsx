@@ -6,6 +6,7 @@ import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/contexts/LanguageContext';
 import AppwriteUserStatsService from '@/services/api/appwriteUserStats';
 import { theme } from '@/lib/utils';
+import { oauthService } from '@/services/api/oauth';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -44,34 +45,164 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         checkUser();
+        
+        // 設置定期清理非學生用戶的定時器（每5分鐘執行一次）
+        const cleanupInterval = setInterval(async () => {
+            try {
+                // 調用清理函數
+                const response = await fetch('/api/functions/cleanup-expired-codes/executions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'periodic_cleanup'
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('定期清理執行成功:', result);
+                } else {
+                    console.error('定期清理執行失敗:', response.status);
+                }
+            } catch (error) {
+                console.error('定期清理調用失敗:', error);
+            }
+        }, 5 * 60 * 1000); // 5分鐘
+
+        // 清理定時器
+        return () => {
+            clearInterval(cleanupInterval);
+        };
     }, []);
 
     const checkUser = async () => {
+        // 清理非學生用戶會話的輔助函數
+        const cleanupNonStudentSession = async (email: string) => {
+            try {
+                await oauthService.forceCleanupNonStudentSession();
+                
+                // 顯示警告 toast
+                toast({
+                    variant: "destructive",
+                    title: "安全警告",
+                    description: "檢測到非學生郵箱帳戶，已自動登出。請使用 @ln.hk 或 @ln.edu.hk 郵箱登入。",
+                    duration: 8000,
+                });
+            } catch (cleanupError) {
+                console.error('清理非學生用戶會話失敗:', cleanupError);
+            }
+            
+            setUser(null);
+            setUserSessionId(null);
+        };
+        
         try {
+            // 檢查是否需要刷新會話（來自 OAuth 回調）
+            const needSessionRefresh = localStorage.getItem('needSessionRefresh');
+            if (needSessionRefresh) {
+                console.log('檢測到需要刷新會話的標記，清理標記...');
+                localStorage.removeItem('needSessionRefresh');
+                
+                // 等待一下讓會話完全建立
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
             if (authService.hasLocalSession()) {
                 // 檢查是否為 session-only 模式且是新的瀏覽器 session
                 const sessionOnly = sessionStorage.getItem('sessionOnly');
                 const rememberMe = localStorage.getItem('rememberMe');
+                const googleLinkSuccess = localStorage.getItem('googleLinkSuccess');
+                const oauthSession = sessionStorage.getItem('oauthSession');
                 
-                // 如果之前選擇了不記住我，且現在是新的瀏覽器 session（sessionOnly 不存在）
-                // 這意味著瀏覽器被關閉並重新打開
-                if (rememberMe === 'false' && !sessionOnly) {
-                    // 清理 session 並登出
-                    await authService.logout();
-                    localStorage.removeItem('rememberMe');
-                    localStorage.removeItem('savedEmail');
-                    setUser(null);
-                    setUserSessionId(null);
-                    return;
+                // 檢查是否在 Google 連結過程中（通過檢查 URL 或最近的連結活動）
+                const isInOAuthFlow = window.location.pathname.includes('/oauth/') || 
+                                    window.location.pathname === '/settings' && 
+                                    (Date.now() - (parseInt(localStorage.getItem('lastOAuthAttempt') || '0'))) < 30000; // 30秒內
+                
+                // 如果是 Google 連結成功的情況、OAuth 會話或在 OAuth 流程中，跳過 rememberMe 檢查
+                // 因為 OAuth 流程不應該受到原始登入時的 rememberMe 設置影響
+                if (!googleLinkSuccess && !oauthSession && !isInOAuthFlow) {
+                    // 如果之前選擇了不記住我，且現在是新的瀏覽器 session（sessionOnly 不存在）
+                    // 這意味著瀏覽器被關閉並重新打開
+                    if (rememberMe === 'false' && !sessionOnly) {
+                        // 清理 session 並登出
+                        await authService.logout();
+                        localStorage.removeItem('rememberMe');
+                        localStorage.removeItem('savedEmail');
+                        setUser(null);
+                        setUserSessionId(null);
+                        return;
+                    }
                 }
                 
                 const currentUser = await authService.getCurrentUser();
+                
+                // 安全檢查：驗證主帳戶郵箱是否為學生郵箱
+                // 允許連結任何 Google 郵箱，但主帳戶必須是學生郵箱
+                if (currentUser && !oauthService.isStudentEmail(currentUser.email)) {
+                    console.warn('檢測到非學生主帳戶郵箱，檢查是否為 OAuth 連結操作:', currentUser.email);
+                    
+                    // 檢查是否有 Google 身份提供者連結
+                    try {
+                        const isGoogleLinked = await oauthService.isGoogleLinked();
+                        
+                        if (isGoogleLinked) {
+                            // 用戶有 Google 連結，檢查 Google 郵箱是否為學生郵箱
+                            const googleAccountInfo = await oauthService.getGoogleAccountInfo();
+                            const googleEmail = googleAccountInfo?.providerEmail;
+                            
+                            if (googleEmail && oauthService.isStudentEmail(googleEmail)) {
+                                // Google 郵箱是學生郵箱，允許繼續
+                                console.log('用戶通過學生 Google 郵箱驗證:', googleEmail);
+                            } else {
+                                // 主帳戶和 Google 郵箱都不是學生郵箱，清理會話
+                                console.warn('主帳戶和 Google 郵箱都不是學生郵箱，清理會話');
+                                await cleanupNonStudentSession(currentUser.email);
+                                return;
+                            }
+                        } else {
+                            // 沒有 Google 連結且主帳戶不是學生郵箱，清理會話
+                            console.warn('主帳戶不是學生郵箱且沒有 Google 連結，清理會話');
+                            await cleanupNonStudentSession(currentUser.email);
+                            return;
+                        }
+                    } catch (identityError) {
+                        console.error('檢查身份提供者失敗:', identityError);
+                        // 如果無法檢查身份提供者，為安全起見清理會話
+                        await cleanupNonStudentSession(currentUser.email);
+                        return;
+                    }
+                }
+                
                 setUser(currentUser);
+                
+                // 如果是剛剛完成 Google 連結的用戶，顯示歡迎消息
+                if (googleLinkSuccess && currentUser) {
+                    localStorage.removeItem('googleLinkSuccess');
+                    
+                    // 延遲清理 OAuth 會話標記，給系統時間穩定會話狀態
+                    // 延長時間到 10 秒，確保所有相關的頁面重新渲染都完成
+                    setTimeout(() => {
+                        sessionStorage.removeItem('oauthSession');
+                        console.log('OAuth 會話標記已清理，恢復正常會話管理');
+                    }, 10000); // 10秒後清理
+                    
+                    const username = getUserDisplayName(currentUser, t);
+                    toast({
+                        variant: "success",
+                        title: `🎉 ${t('oauth.linkSuccess')}`,
+                        description: t('toast.welcomeBack', { username }),
+                        duration: 4000,
+                    });
+                }
             } else {
                 setUser(null);
                 setUserSessionId(null);
             }
         } catch (error) {
+            console.error('檢查用戶狀態失敗:', error);
             setUser(null);
             setUserSessionId(null);
         } finally {

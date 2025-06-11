@@ -3,9 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { AuthProvider } from '@/contexts/AuthContext';
-import { RecaptchaProvider } from '@/contexts/RecaptchaContext';
+import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { RecaptchaProvider, useRecaptcha } from '@/contexts/RecaptchaContext';
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -33,7 +33,6 @@ import { theme } from '@/lib/utils';
 import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
 import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
@@ -95,7 +94,35 @@ const initialIsDark = initializeTheme();
 
 // 內部 App 組件，在 LanguageProvider 內部使用
 const AppContent = () => {
-  const { t } = useLanguage();
+  const { t, isLoading: translationsLoading } = useLanguage();
+  
+  // Show loading screen while translations are loading
+  if (translationsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const [showBetaNotice, setShowBetaNotice] = useState(false);
+  const [showCookieConsent, setShowCookieConsent] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showOfflineToast, setShowOfflineToast] = useState(false);
+  const [showOnlineToast, setShowOnlineToast] = useState(false);
+  const [lastOnlineState, setLastOnlineState] = useState(navigator.onLine);
   const [isDark, setIsDark] = useState(initialIsDark);
   const { isDesktop, isMobile } = useDeviceDetection();
 
@@ -118,7 +145,6 @@ const AppContent = () => {
     return false;
   });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -489,6 +515,7 @@ const RouteMonitor = ({
 };
 
 const App = () => {
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

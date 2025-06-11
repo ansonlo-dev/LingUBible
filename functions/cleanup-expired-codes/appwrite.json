@@ -1,0 +1,28 @@
+{
+  "projectId": "lingubible",
+  "functions": [
+    {
+      "name": "cleanup-expired-codes",
+      "runtime": "node-18.0",
+      "execute": ["any"],
+      "events": [
+        "users.*.create",
+        "users.*.sessions.*.create"
+      ],
+      "schedule": "0 */5 * * * *",
+      "timeout": 30,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "ignore": [
+        "node_modules",
+        ".npm"
+      ],
+      "variables": {
+        "APPWRITE_FUNCTION_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "APPWRITE_FUNCTION_PROJECT_ID": "lingubible"
+      }
+    }
+  ]
+} 

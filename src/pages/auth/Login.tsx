@@ -28,6 +28,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLinkSuccess, setGoogleLinkSuccess] = useState(false);
   
   const { t } = useLanguage();
   const { login } = useAuth();
@@ -111,6 +112,14 @@ export default function Login() {
       setEmail(savedEmail);
       setRememberMe(true);
     }
+    
+    // 檢查是否是 Google 帳戶連結成功後的重定向
+    const googleLinkSuccessNeedRelogin = localStorage.getItem('googleLinkSuccessNeedRelogin');
+    if (googleLinkSuccessNeedRelogin) {
+      localStorage.removeItem('googleLinkSuccessNeedRelogin');
+      setGoogleLinkSuccess(true);
+      setError(''); // 確保不是錯誤狀態
+    }
   }, []);
 
   return (
@@ -175,6 +184,15 @@ export default function Login() {
                 </Label>
               </div>
               
+              {googleLinkSuccess && (
+                <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+                  <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <AlertDescription className="text-green-600 dark:text-green-400">
+                    {t('oauth.linkSuccessNeedRelogin')}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               {error && (
                 <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
                   <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -184,8 +202,6 @@ export default function Login() {
                 </Alert>
               )}
 
-
-              
               <Button 
                 type="submit" 
                 className="w-full"
@@ -195,15 +211,12 @@ export default function Login() {
               </Button>
 
               {/* 分隔線 */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    {t('auth.or')}
-                  </span>
-                </div>
+              <div className="flex items-center">
+                <div className="flex-1 border-t border-border"></div>
+                <span className="px-4 text-xs uppercase text-muted-foreground">
+                  {t('auth.or')}
+                </span>
+                <div className="flex-1 border-t border-border"></div>
               </div>
 
               {/* Google 登入按鈕 */}
