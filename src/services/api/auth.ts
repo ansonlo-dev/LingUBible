@@ -17,15 +17,26 @@ export const authService = {
             // 檢查 Appwrite 可能使用的其他存儲方式
             const hasAppwriteSession = localStorage.getItem('appwrite-session') !== null;
             
+            // 檢查所有可能的 localStorage 鍵值
+            const appwriteKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('appwrite') || key.includes('session') || key.includes('a_session'))) {
+                    appwriteKeys.push(key);
+                }
+            }
+            
             // 檢查是否有任何形式的會話標記
-            const hasAnySession = hasCookieSession || hasFallbackSession || hasAppwriteSession;
+            const hasAnySession = hasCookieSession || hasFallbackSession || hasAppwriteSession || appwriteKeys.length > 0;
             
             console.log('會話檢測結果:', {
                 hasCookieSession,
                 hasFallbackSession,
                 hasAppwriteSession,
+                appwriteKeys,
                 hasAnySession,
-                cookieCount: cookieString.split('a_session_').length - 1
+                cookieCount: cookieString.split('a_session_').length - 1,
+                allCookies: cookieString
             });
             
             return hasAnySession;
