@@ -361,8 +361,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshUser = async () => {
         try {
-            const currentUser = await authService.getCurrentUser();
-            setUser(currentUser);
+            // 對於 OAuth 流程，可能需要多次嘗試才能獲取到用戶信息
+            let currentUser = null;
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            while (!currentUser && attempts < maxAttempts) {
+                try {
+                    currentUser = await authService.getCurrentUser();
+                    if (currentUser) {
+                        console.log(`刷新用戶資料成功 (嘗試 ${attempts + 1}):`, currentUser.email);
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`刷新用戶資料失敗 (嘗試 ${attempts + 1}):`, error);
+                    if (attempts < maxAttempts - 1) {
+                        // 等待一下再重試
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                attempts++;
+            }
+            
+            if (currentUser) {
+                setUser(currentUser);
+                console.log('用戶狀態已更新:', currentUser.email);
+            } else {
+                console.error('多次嘗試後仍無法獲取用戶信息');
+                // 如果刷新失敗，可能是 session 過期，設置為 null
+                setUser(null);
+                setUserSessionId(null);
+            }
         } catch (error) {
             console.error('刷新用戶資料失敗:', error);
             // 如果刷新失敗，可能是 session 過期，設置為 null

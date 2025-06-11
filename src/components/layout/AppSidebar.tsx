@@ -34,10 +34,56 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileToggle }: AppSidebarProps) {
   const { t, language, setLanguage } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [forceRender, setForceRender] = useState(0);
+  const [userStateReady, setUserStateReady] = useState(false);
+
+  // 監聽用戶狀態變化，特別是 OAuth 登入後的狀態同步
+  useEffect(() => {
+    // 如果正在載入，等待載入完成
+    if (loading) {
+      setUserStateReady(false);
+      return;
+    }
+
+    // 檢查是否剛完成 OAuth 流程
+    const isOAuthCallback = window.location.pathname.includes('/oauth/') || 
+                           sessionStorage.getItem('oauthSession') ||
+                           sessionStorage.getItem('oauthLoginComplete') ||
+                           localStorage.getItem('googleLinkSuccess');
+
+    if (isOAuthCallback && user) {
+      // OAuth 登入完成，但給一點時間讓狀態完全同步
+      const timer = setTimeout(() => {
+        setUserStateReady(true);
+        setForceRender(prev => prev + 1);
+        console.log('側邊欄: OAuth 用戶狀態同步完成');
+      }, 300); // 減少到 300ms，因為我們已經在回調中處理了主要的同步
+
+      return () => clearTimeout(timer);
+    } else {
+      // 正常情況，立即設置為就緒
+      setUserStateReady(true);
+    }
+  }, [user, loading]);
+
+  // 監聽 OAuth 登入完成事件
+  useEffect(() => {
+    const handleOAuthComplete = () => {
+      console.log('側邊欄: 收到 OAuth 完成事件，強制重新渲染');
+      setForceRender(prev => prev + 1);
+      setUserStateReady(true);
+    };
+
+    // 監聽自定義事件
+    window.addEventListener('oauthLoginComplete', handleOAuthComplete);
+    
+    return () => {
+      window.removeEventListener('oauthLoginComplete', handleOAuthComplete);
+    };
+  }, []);
 
   // 檢測移動設備並監聽方向變化
   useEffect(() => {
@@ -88,12 +134,13 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
   const shouldShowText = !isCollapsed || isMobile;
   
+  // 確保用戶狀態就緒後才顯示需要認證的導航項目
   const navigation = [
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
     { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
     { name: t('nav.lecturers'), href: '#', icon: GraduationCap, current: false },
-    // 只有在用戶已登入時才顯示我的評價和設定選項
-    ...(user ? [
+    // 只有在用戶已登入且狀態就緒時才顯示我的評價和設定選項
+    ...(user && userStateReady ? [
       { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },
       { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
     ] : []),

@@ -185,27 +185,40 @@ export default function OAuthLoginCallback() {
             return;
           }
           
-          // 郵箱驗證通過，刷新用戶資料
+          // 登入成功，刷新用戶狀態
+          console.log('OAuth 登入成功，刷新用戶狀態...');
+          
+          // 立即刷新用戶狀態
           await refreshUser();
+          
+          // 設置 OAuth 會話標記，幫助其他組件識別這是 OAuth 登入
+          sessionStorage.setItem('oauthSession', 'true');
+          
+          // 設置一個短期標記，讓側邊欄知道需要等待狀態同步
+          sessionStorage.setItem('oauthLoginComplete', Date.now().toString());
+          
+          // 觸發自定義事件，通知其他組件 OAuth 登入完成
+          window.dispatchEvent(new CustomEvent('oauthLoginComplete'));
           
           setStatus('success');
           setMessage(t('oauth.loginSuccess'));
           
-          // 顯示登入成功 toast
           if (!toastShownRef.current) {
             toastShownRef.current = true;
             toast({
               variant: "success",
               title: t('oauth.loginSuccess'),
               description: t('oauth.welcomeBack'),
-              duration: 3000,
+              duration: 4000,
             });
           }
           
-          // 2秒後重定向到首頁
+          // 延遲重定向，確保狀態同步完成
           setTimeout(() => {
+            // 清理短期標記
+            sessionStorage.removeItem('oauthLoginComplete');
             navigate('/');
-          }, 2000);
+          }, 1500); // 1.5秒延遲，確保狀態同步
           
         } catch (refreshError) {
           console.error('處理 OAuth 登入失敗:', refreshError);
