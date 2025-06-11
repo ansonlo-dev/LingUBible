@@ -1,4 +1,4 @@
-import { Home, Users, Star, Settings, Menu, X } from 'lucide-react';
+import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
@@ -91,11 +91,11 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   const navigation = [
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
     { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
-    { name: t('nav.lecturers'), href: '#', icon: Users, current: false },
+    { name: t('nav.lecturers'), href: '#', icon: GraduationCap, current: false },
     // 只有在用戶已登入時才顯示我的評價和設定選項
     ...(user ? [
-      { name: t('sidebar.myReviews'), href: '#', icon: Star, current: false },
-      { name: t('sidebar.settings'), href: '/settings', icon: Settings, current: location.pathname === '/settings' }
+      { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },
+      { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
     ] : []),
   ];
 
