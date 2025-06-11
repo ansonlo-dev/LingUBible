@@ -59,16 +59,16 @@ export function FooterKofiButton({ className = '' }: { className?: string }) {
   return (
     <button
       onClick={handleDonate}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 hover:shadow-md bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/30 dark:to-rose-900/30 border border-pink-200/60 dark:border-pink-700/60 text-pink-700 dark:text-red-400 hover:from-pink-200 hover:to-rose-200 dark:hover:from-pink-800/40 dark:hover:to-rose-800/40 hover:border-pink-300 dark:hover:border-pink-600 ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 hover:shadow-md bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/50 dark:to-rose-900/50 border border-pink-200/60 dark:border-pink-700/60 text-pink-700 dark:text-red-400 hover:from-pink-200 hover:to-rose-200 dark:hover:from-pink-800/60 dark:hover:to-rose-800/60 hover:border-pink-300 dark:hover:border-pink-600 whitespace-nowrap ${className}`}
       title={t('kofi.supportProject') || 'Support this project'}
     >
       {/* Ko-fi 標誌圖片 */}
       <img 
         src="/logomarkLogo.webp" 
         alt="Ko-fi" 
-        className="w-5 h-5 object-contain"
+        className="w-4 h-4 object-contain flex-shrink-0"
       />
-      <span className="font-semibold">{t('kofi.donate') || 'Donate'}</span>
+      <span className="font-semibold text-xs">{t('kofi.donate') || 'Donate'}</span>
     </button>
   );
 }

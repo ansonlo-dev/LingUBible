@@ -41,43 +41,43 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
       case 'operational':
         return {
           text: t('status.operational'),
-          bgColor: 'bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800',
+          bgColor: 'bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800',
           textColor: 'text-green-800 dark:text-green-400',
           dotColor: 'bg-green-500',
-          hoverColor: 'hover:bg-green-200 dark:hover:bg-green-900/30',
+          hoverColor: 'hover:bg-green-200 dark:hover:bg-green-900/50',
         };
       case 'degraded_performance':
         return {
           text: t('status.degraded'),
-          bgColor: 'bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800',
+          bgColor: 'bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800',
           textColor: 'text-yellow-800 dark:text-yellow-400',
           dotColor: 'bg-yellow-500',
-          hoverColor: 'hover:bg-yellow-200 dark:hover:bg-yellow-900/30',
+          hoverColor: 'hover:bg-yellow-200 dark:hover:bg-yellow-900/50',
         };
       case 'partial_outage':
       case 'major_outage':
         return {
           text: t('status.down'),
-          bgColor: 'bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800',
+          bgColor: 'bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800',
           textColor: 'text-red-800 dark:text-red-400',
           dotColor: 'bg-red-500',
-          hoverColor: 'hover:bg-red-200 dark:hover:bg-red-900/30',
+          hoverColor: 'hover:bg-red-200 dark:hover:bg-red-900/50',
         };
       case 'under_maintenance':
         return {
           text: t('status.maintenance'),
-          bgColor: 'bg-blue-100 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800',
+          bgColor: 'bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800',
           textColor: 'text-blue-800 dark:text-blue-400',
           dotColor: 'bg-blue-500',
-          hoverColor: 'hover:bg-blue-200 dark:hover:bg-blue-900/30',
+          hoverColor: 'hover:bg-blue-200 dark:hover:bg-blue-900/50',
         };
       case 'incident':
         return {
           text: t('status.incident'),
-          bgColor: 'bg-orange-100 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800',
+          bgColor: 'bg-orange-100 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800',
           textColor: 'text-orange-800 dark:text-orange-400',
           dotColor: 'bg-orange-500',
-          hoverColor: 'hover:bg-orange-200 dark:hover:bg-orange-900/30',
+          hoverColor: 'hover:bg-orange-200 dark:hover:bg-orange-900/50',
         };
       case 'unknown':
       default:

@@ -104,8 +104,8 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 ${
                     versionStatus === 'beta' 
-                      ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/30' 
-                      : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
+                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
                   }`}
                   title={t('footer.versionTooltip', { version })}
                 >
@@ -119,8 +119,8 @@ export function Footer() {
               ) : (
                 <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium ${
                   versionStatus === 'beta' 
-                    ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' 
-                    : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                    ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
+                    : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
                 }`}>
                   {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
                   {version}
@@ -186,8 +186,8 @@ export function Footer() {
                     rel="noopener noreferrer"
                     className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 ${
                       versionStatus === 'beta' 
-                        ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/30' 
-                        : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
+                        ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
                     }`}
                     title={t('footer.versionTooltip', { version })}
                   >
@@ -201,8 +201,8 @@ export function Footer() {
                 ) : (
                   <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium ${
                     versionStatus === 'beta' 
-                      ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' 
-                      : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
+                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
                   }`}>
                     {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
                     {version}
@@ -270,8 +270,8 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 ${
                   versionStatus === 'beta' 
-                    ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/30' 
-                    : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
+                    ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                    : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
                 }`}
                 title={t('footer.versionTooltip', { version })}
               >
@@ -285,8 +285,8 @@ export function Footer() {
             ) : (
               <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium ${
                 versionStatus === 'beta' 
-                  ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' 
-                  : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                  ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
+                  : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
               }`}>
                 {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
                 {version}

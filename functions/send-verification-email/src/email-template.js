@@ -1,314 +1,211 @@
 // 純 JavaScript 版本的郵件模板生成器
 export function generateEmailTemplate(code, language = 'zh-TW', theme = 'light') {
-  // 多語言翻譯
   const translations = {
-    'en': {
-      preview: 'Your LingUBible verification code',
-      title: 'Lingnanians Account Verification',
-      greeting: 'Dear Lingnanians,',
-      thankYou: 'Thank you for registering for a LingUBible Lingnanians account. To ensure account security, please use the following verification code to complete the registration process:',
-      importantReminder: 'Important Reminder:',
-      expiry: 'This verification code will expire in 10 minutes',
-      noShare: 'Do not share the verification code with others',
-      ignoreEmail: 'If you did not request this verification code, please ignore this email',
-      notice: 'Notice: Only Lingnan University Lingnanians with @ln.hk or @ln.edu.hk email addresses can register for LingUBible.',
-      support: 'If you have any questions, please contact our technical support team.',
-      platform: 'Lingnan University Course & Lecturer Review Platform',
-      license: 'Licensed under MIT',
-      team: 'LingUBible Team'
-    },
     'zh-TW': {
-      preview: '您的 LingUBible 驗證碼',
-      title: '嶺南人帳戶驗證',
-      greeting: '親愛的嶺南人，您好！',
-      thankYou: '感謝您註冊 LingUBible 嶺南人帳戶。為了確保帳戶安全，請使用以下驗證碼完成註冊程序：',
-      importantReminder: '重要提醒：',
-      expiry: '此驗證碼將在 10 分鐘後過期',
-      noShare: '請勿將驗證碼分享給他人',
-      ignoreEmail: '如果您沒有請求此驗證碼，請忽略此郵件',
-      notice: '注意事項：只有使用 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南大學嶺南人才能註冊 LingUBible。',
-      support: '如有任何問題，請聯繫我們的技術支援團隊。',
-      platform: '嶺南大學課程與講師評價平台',
-      license: '採用 MIT 授權',
-      team: 'LingUBible 團隊'
+      subject: '【LingUBible】您的驗證碼',
+      title: 'LingUBible 郵件驗證',
+      subtitle: '感謝您註冊 LingUBible！',
+      greeting: '您好！',
+      message: '請使用以下驗證碼完成您的帳戶註冊：',
+      codeLabel: '您的驗證碼',
+      expiry: '此驗證碼將在 15 分鐘後過期',
+      footer: '如果您沒有註冊 LingUBible 帳戶，請忽略此郵件。',
+      security: '為了您的帳戶安全，請勿將此驗證碼分享給他人。'
     },
     'zh-CN': {
-      preview: '您的 LingUBible 验证码',
-      title: '岭南人账户验证',
-      greeting: '亲爱的岭南人，您好！',
-      thankYou: '感谢您注册 LingUBible 岭南人账户。为了确保账户安全，请使用以下验证码完成注册程序：',
-      importantReminder: '重要提醒：',
-      expiry: '此验证码将在 10 分钟后过期',
-      noShare: '请勿将验证码分享给他人',
-      ignoreEmail: '如果您没有请求此验证码，请忽略此邮件',
-      notice: '注意事项：只有使用 @ln.hk 或 @ln.edu.hk 邮件地址的岭南大学岭南人才能注册 LingUBible。',
-      support: '如有任何问题，请联系我们的技术支持团队。',
-      platform: '岭南大学课程与讲师评价平台',
-      license: '采用 MIT 授权',
-      team: 'LingUBible 团队'
+      subject: '【LingUBible】您的验证码',
+      title: 'LingUBible 邮件验证',
+      subtitle: '感谢您注册 LingUBible！',
+      greeting: '您好！',
+      message: '请使用以下验证码完成您的账户注册：',
+      codeLabel: '您的验证码',
+      expiry: '此验证码将在 15 分钟后过期',
+      footer: '如果您没有注册 LingUBible 账户，请忽略此邮件。',
+      security: '为了您的账户安全，请勿将此验证码分享给他人。'
+    },
+    'en': {
+      subject: '【LingUBible】Your Verification Code',
+      title: 'LingUBible Email Verification',
+      subtitle: 'Thank you for registering with LingUBible!',
+      greeting: 'Hello!',
+      message: 'Please use the following verification code to complete your account registration:',
+      codeLabel: 'Your Verification Code',
+      expiry: 'This verification code will expire in 15 minutes',
+      footer: 'If you did not register for a LingUBible account, please ignore this email.',
+      security: 'For your account security, please do not share this verification code with others.'
     }
   };
 
   const t = translations[language] || translations['zh-TW'];
-
-  // 根據主題決定顏色
   const isDark = theme === 'dark';
+
   const colors = {
-    body: isDark ? '#1a1a1a' : '#f6f9fc',
-    container: isDark ? '#2d2d2d' : '#ffffff',
-    text: isDark ? '#e0e0e0' : '#333',
-    title: isDark ? '#f0f0f0' : '#333',
-    platform: isDark ? '#a0a0a0' : '#666',
-    codeContainer: isDark ? '#1f1f1f' : '#f8f9fa',
-    codeBorder: isDark ? '#ef4444' : '#dc2626',
-    codeText: isDark ? '#ef4444' : '#dc2626',
-    footer: isDark ? '#1f1f1f' : '#f8f9fa',
-    footerText: isDark ? '#a0a0a0' : '#8898aa',
-    border: isDark ? '#404040' : '#eee',
-    shadow: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'
+    background: isDark ? '#1f2937' : '#ffffff',
+    containerBg: isDark ? '#374151' : '#ffffff',
+    text: isDark ? '#f9fafb' : '#1f2937',
+    textSecondary: isDark ? '#d1d5db' : '#6b7280',
+    primary: '#dc2626',
+    primaryLight: isDark ? '#fca5a5' : '#fee2e2',
+    border: isDark ? '#4b5563' : '#e5e7eb',
+    codeBg: isDark ? '#1f2937' : '#f8fafc',
+    codeText: isDark ? '#fbbf24' : '#dc2626'
   };
 
-  // 生成 HTML 模板
-  const htmlTemplate = `
-    <!DOCTYPE html>
-    <html lang="${language === 'en' ? 'en' : language === 'zh-CN' ? 'zh-CN' : 'zh-HK'}">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>LingUBible ${t.title}</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
+  const html = `
+<!DOCTYPE html>
+<html lang="${language}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${t.title}</title>
+    <style>
         body {
-          margin: 0;
-          padding: 0;
-          font-family: 'Inter', Arial, 'Microsoft JhengHei', sans-serif;
-          background-color: ${colors.body};
-          line-height: 1.6;
-        }
-        
-        .container {
-          margin: 0 auto;
-          padding: 20px 0;
-          width: 600px;
-          max-width: 100%;
-          background-color: ${colors.container};
-          border-radius: 8px;
-          box-shadow: 0 2px 4px ${colors.shadow};
-        }
-        
-        .header {
-          padding: 40px 40px 30px;
-          text-align: center;
-          border-bottom: 1px solid ${colors.border};
-        }
-        
-        .logo-container {
-          display: inline-block;
-          text-decoration: none;
-          color: inherit;
-          margin-bottom: 8px;
-        }
-        
-        .banner-logo {
-          width: 300px;
-          height: auto;
-          max-width: 100%;
-          display: block;
-          margin: 0 auto;
-        }
-        
-        .platform-text {
-          margin: 5px 0 0;
-          color: ${colors.platform};
-          font-size: 14px;
-        }
-        
-        .content {
-          padding: 40px;
-        }
-        
-        .title {
-          margin: 0 0 30px;
-          color: ${colors.title};
-          text-align: center;
-          font-size: 24px;
-          font-weight: 600;
-        }
-        
-        .text {
-          margin: 0 0 30px;
-          color: ${colors.text};
-          font-size: 16px;
-        }
-        
-        .code-section {
-          text-align: center;
-          padding: 30px 0;
-        }
-        
-        .code-container {
-          margin: 0 auto;
-          background: ${colors.codeContainer};
-          border: 2px solid ${colors.codeBorder};
-          border-radius: 8px;
-          padding: 20px 40px;
-          display: inline-block;
-        }
-        
-        .code-text {
-          color: ${colors.codeText};
-          font-family: 'Courier New', monospace;
-          font-size: 32px;
-          font-weight: bold;
-          letter-spacing: 6px;
-          margin: 0;
-        }
-        
-        .reminder-title {
-          margin: 0 0 20px;
-          color: ${colors.title};
-          font-size: 16px;
-          font-weight: bold;
-        }
-        
-        .reminder-list {
-          margin: 0 0 30px;
-          color: ${colors.text};
-          font-size: 16px;
-          padding-left: 20px;
-        }
-        
-        .reminder-item {
-          margin-bottom: 8px;
-        }
-        
-        .notice {
-          margin: 0 0 30px;
-          color: ${colors.title};
-          font-size: 16px;
-          font-weight: bold;
-        }
-        
-        .footer {
-          padding: 30px 40px;
-          background-color: ${colors.footer};
-          text-align: center;
-          border-radius: 0 0 8px 8px;
-          border-top: 1px solid ${colors.border};
-        }
-        
-        .footer-text {
-          margin: 0 0 10px;
-          color: ${colors.footerText};
-          font-size: 12px;
-        }
-        
-        .footer-link {
-          color: ${colors.footerText};
-          text-decoration: none;
-        }
-
-        
-        @media (max-width: 600px) {
-          .container {
-            width: 100%;
-            margin: 0;
-            border-radius: 0;
-          }
-          
-          .header, .content, .footer {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: ${colors.text};
+            max-width: 600px;
+            margin: 0 auto;
             padding: 20px;
-          }
-          
-          .banner-logo {
-            width: 250px;
-          }
-          
-          .code-text {
-            font-size: 24px;
-            letter-spacing: 4px;
-          }
+            background-color: ${colors.background};
         }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <!-- Header -->
+        .container {
+            background-color: ${colors.containerBg};
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid ${colors.border};
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid ${colors.primary};
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: ${colors.primary};
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: ${colors.textSecondary};
+            font-size: 16px;
+        }
+        .content {
+            margin: 30px 0;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: ${colors.text};
+        }
+        .message {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: ${colors.textSecondary};
+        }
+        .code-container {
+            background-color: ${colors.codeBg};
+            border: 2px solid ${colors.primary};
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .code-label {
+            font-size: 14px;
+            color: ${colors.textSecondary};
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .verification-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: ${colors.codeText};
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        .expiry {
+            font-size: 14px;
+            color: ${colors.textSecondary};
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid ${colors.border};
+            text-align: center;
+            color: ${colors.textSecondary};
+            font-size: 14px;
+        }
+        .security-note {
+            background-color: ${colors.primaryLight};
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            color: ${colors.primary};
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            .verification-code { font-size: 28px; letter-spacing: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
         <div class="header">
-          <a href="https://lingubible.com" class="logo-container">
-            <img src="https://lingubible.com/email-banner.png" alt="LingUBible" class="banner-logo" />
-          </a>
-          <p class="platform-text">${t.platform}</p>
+            <div class="logo">${t.title}</div>
+            <div class="subtitle">${t.subtitle}</div>
         </div>
-
-        <!-- Content -->
+        
         <div class="content">
-          <h2 class="title">${t.title}</h2>
-          
-          <p class="text">${t.greeting}</p>
-          
-          <p class="text">${t.thankYou}</p>
-          
-          <!-- Verification Code Box -->
-          <div class="code-section">
+            <div class="greeting">${t.greeting}</div>
+            <div class="message">${t.message}</div>
+            
             <div class="code-container">
-              <div class="code-text">${code}</div>
+                <div class="code-label">${t.codeLabel}</div>
+                <div class="verification-code">${code}</div>
+                <div class="expiry">⏰ ${t.expiry}</div>
             </div>
-          </div>
-          
-          <p class="reminder-title">${t.importantReminder}</p>
-          
-          <ul class="reminder-list">
-            <li class="reminder-item">${t.expiry}</li>
-            <li class="reminder-item">${t.noShare}</li>
-            <li class="reminder-item">${t.ignoreEmail}</li>
-          </ul>
-          
-          <p class="notice">${t.notice}</p>
-          
-          <p class="text">${t.support}</p>
         </div>
-
-        <!-- Footer -->
+        
+        <div class="security-note">
+            🔒 ${t.security}
+        </div>
+        
         <div class="footer">
-          <p class="footer-text">
-            <a href="https://lingubible.com" class="footer-link">LingUBible</a> - ${t.platform}
-          </p>
-          <p class="footer-text">${t.license}</p>
+            ${t.footer}
         </div>
-      </div>
-    </body>
-    </html>
-  `;
+    </div>
+</body>
+</html>`;
 
-  // 生成純文字版本
-  const textTemplate = `
+  const text = `
+${t.title}
+${t.subtitle}
+
 ${t.greeting}
 
-${t.thankYou}
+${t.message}
 
-驗證碼: ${code}
+${t.codeLabel}: ${code}
 
-${t.importantReminder}
-- ${t.expiry}
-- ${t.noShare}
-- ${t.ignoreEmail}
+${t.expiry}
 
-${t.notice}
+${t.security}
 
-${t.support}
-
-${t.team}
-  `;
+---
+${t.footer}
+`;
 
   return {
-    html: htmlTemplate,
-    text: textTemplate.trim(),
-    subject: language === 'en' 
-      ? '【LingUBible】Your Lingnanians Verification Code - Do Not Reply'
-      : language === 'zh-CN'
-      ? '【LingUBible】您的岭南人验证码 - 请勿回复'
-      : '【LingUBible】您的嶺南人驗證碼 - 請勿回覆'
+    subject: t.subject,
+    html: html.trim(),
+    text: text.trim()
   };
 } 
