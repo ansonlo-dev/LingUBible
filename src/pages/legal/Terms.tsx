@@ -16,23 +16,11 @@ export default function Terms() {
             <h1 className="text-4xl font-bold text-foreground mb-2">
               {t('terms.title')}
             </h1>
+            <p className="text-muted-foreground text-lg">
+              {t('terms.subtitle')}
+            </p>
           </div>
         </div>
-
-        {/* Welcome Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              {t('terms.welcome')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">
-              {t('terms.acceptance.content')}
-            </p>
-          </CardContent>
-        </Card>
 
         {/* Terms Sections */}
         <div className="space-y-6">

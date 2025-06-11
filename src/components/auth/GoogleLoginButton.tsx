@@ -37,7 +37,7 @@ export function GoogleLoginButton({ disabled = false }: GoogleLoginButtonProps) 
       variant="outline"
       onClick={handleGoogleLogin}
       disabled={disabled || loading}
-      className="w-full"
+      className="w-full transition-all duration-200 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-950/30 dark:hover:to-indigo-950/30 group"
     >
       {loading ? (
         <>
@@ -46,8 +46,10 @@ export function GoogleLoginButton({ disabled = false }: GoogleLoginButtonProps) 
         </>
       ) : (
         <>
-          <GoogleIcon size={16} className="mr-2" />
-          {t('oauth.continueWithGoogle')}
+          <GoogleIcon size={16} className="mr-2 transition-transform duration-200 group-hover:scale-110" />
+          <span className="transition-colors duration-200 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+            {t('oauth.continueWithGoogle')}
+          </span>
         </>
       )}
     </Button>

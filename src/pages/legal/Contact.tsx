@@ -1,6 +1,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Mail, Github, MessageSquare, HelpCircle } from 'lucide-react';
+import { Mail, Github, MessageSquare, Phone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ContactForm } from '@/components/common/ContactForm';
 
 export default function Contact() {
   const { t } = useLanguage();
@@ -21,11 +22,11 @@ export default function Contact() {
         </div>
 
         {/* Contact Methods - Full Width */}
-        <div className="mb-4">
+        <div className="mb-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-primary" />
+                <Phone className="h-5 w-5 text-primary" />
                 {t('contact.methods')}
               </CardTitle>
             </CardHeader>
@@ -54,7 +55,7 @@ export default function Contact() {
                       rel="noopener noreferrer"
                       className="text-sm text-primary hover:underline"
                     >
-                                              github.com/ansonlo-dev/LingUBible
+                      github.com/ansonlo-dev/LingUBible
                     </a>
                   </div>
                 </div>
@@ -78,34 +79,9 @@ export default function Contact() {
           </Card>
         </div>
 
-        {/* FAQ Section - Full Width */}
-        <div>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="h-5 w-5 text-blue-600" />
-                {t('contact.faq')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed">{t('contact.faqReport')}</h4>
-                  <p 
-                    className="text-muted-foreground leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: t('contact.faqReportAnswer') }}
-                  />
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed">{t('contact.faqTechnical')}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('contact.faqTechnicalAnswer')}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Contact Form */}
+        <div className="mb-4">
+          <ContactForm />
         </div>
       </div>
     </div>

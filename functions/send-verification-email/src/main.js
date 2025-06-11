@@ -236,10 +236,10 @@ export default async ({ req, res, log, error }) => {
     const users = new Users(client);
 
     // 根據 action 參數決定執行發送、驗證或創建帳戶
-    const { action = 'send', email, code, password, name, username, language = 'zh-TW', theme = 'light', ipAddress, userAgent, recaptchaToken } = requestData;
+    const { action = 'send', email, code, password, name, username, message, language = 'zh-TW', theme = 'light', ipAddress, userAgent, recaptchaToken } = requestData;
     
     log('🎯 Action 參數:', action);
-    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, username, language, theme });
+    log('📧 解析參數:', { action, email, code: code ? code.substring(0, 2) + '****' : 'undefined', password: password ? '***' : 'undefined', name, username, message, language, theme });
 
     if (action === 'verify') {
       // 驗證驗證碼
@@ -258,6 +258,9 @@ export default async ({ req, res, log, error }) => {
       // 完成密碼重設
       const { userId, token, password } = requestData;
       return await completePasswordReset(databases, users, userId, token, password, ipAddress, log, error, res);
+    } else if (action === 'sendContactForm') {
+      // 發送聯絡表單郵件
+      return await sendContactFormEmail(name, email, message, language, recaptchaToken, ipAddress, log, error, res);
     } else {
       // 發送驗證碼
       return await sendVerificationCode(databases, email, language, theme, ipAddress, userAgent, log, error, res);
@@ -1219,8 +1222,6 @@ async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-
   }
 }
 
-
-
 // 完成密碼重設函數
 async function completePasswordReset(databases, users, userId, token, password, ipAddress, log, error, res) {
   try {
@@ -1438,4 +1439,287 @@ async function completePasswordReset(databases, users, userId, token, password, 
       message: `密碼重設失敗: ${err.message || '請稍後再試'}`
     }, 500);
   }
+}
+
+// 發送聯絡表單郵件
+async function sendContactFormEmail(name, email, message, language = 'zh-TW', recaptchaToken, ipAddress, log, error, res) {
+  try {
+    log('📧 開始發送聯絡表單郵件:', { name, email: email.substring(0, 5) + '***', language });
+
+    // 驗證參數
+    if (!name || !email || !message) {
+      return res.json({
+        success: false,
+        message: 'Missing required parameters',
+        messageKey: 'error.missingParameters'
+      }, 400);
+    }
+
+    // 驗證 reCAPTCHA（如果提供了 token）
+    if (recaptchaToken || !DEV_MODE.enabled) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, ipAddress, log, error);
+      if (!recaptchaResult.success) {
+        log('❌ reCAPTCHA 驗證失敗:', recaptchaResult.error);
+        return res.json({
+          success: false,
+          message: recaptchaResult.error || 'reCAPTCHA verification failed',
+          messageKey: 'error.captchaFailed'
+        }, 400);
+      }
+      log('✅ reCAPTCHA 驗證通過，分數:', recaptchaResult.score);
+    }
+
+    // 檢查 Resend API 金鑰
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      error('❌ RESEND_API_KEY 環境變數未設定');
+      return res.json({
+        success: false,
+        message: 'Email service configuration error',
+        messageKey: 'error.emailServiceConfig'
+      }, 500);
+    }
+
+    const resend = new Resend(apiKey);
+
+    // 生成聯絡表單郵件內容
+    const emailTemplate = generateContactFormEmailTemplate(name, email, message, language);
+
+    log('📬 準備發送聯絡表單郵件:', { to: 'contact@lingubible.com', subject: emailTemplate.subject });
+
+    const result = await resend.emails.send({
+      from: 'LingUBible Contact Form <noreply@lingubible.com>',
+      to: ['contact@lingubible.com'],
+      replyTo: [email], // 設定回覆地址為用戶的郵件
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+      headers: {
+        'X-Entity-Ref-ID': `lingubible-contact-form-${Date.now()}`,
+        'X-Priority': '1',
+        'X-MSMail-Priority': 'High',
+        'Importance': 'high'
+      }
+    });
+
+    if (result.error) {
+      error('❌ 發送聯絡表單郵件失敗:', result.error);
+      return res.json({
+        success: false,
+        message: `Send failed: ${result.error.message || 'Please try again later'}`,
+        messageKey: 'contact.sendFailed'
+      }, 500);
+    }
+
+    if (!result.data) {
+      error('❌ Resend API 回應異常');
+      return res.json({
+        success: false,
+        message: 'Email service response error, please try again later',
+        messageKey: 'contact.serviceError'
+      }, 500);
+    }
+
+    log('✅ 聯絡表單郵件發送成功:', result.data);
+    return res.json({
+      success: true,
+      message: 'Message sent successfully! We will reply to you as soon as possible.',
+      messageKey: 'contact.successMessage'
+    });
+
+  } catch (err) {
+    error('💥 發送聯絡表單郵件異常:', err);
+    return res.json({
+      success: false,
+      message: `Send failed: ${err.message || 'Please try again later'}`,
+      messageKey: 'contact.sendFailed'
+    }, 500);
+  }
+}
+
+// 生成聯絡表單郵件模板
+function generateContactFormEmailTemplate(name, email, message, language = 'zh-TW') {
+  const translations = {
+    'zh-TW': {
+      subject: `【LingUBible 聯絡表單】來自 ${name} 的訊息`,
+      title: 'LingUBible 聯絡表單',
+      subtitle: '您收到一則新的聯絡訊息',
+      fromLabel: '發送者',
+      emailLabel: '電子郵件',
+      messageLabel: '訊息內容',
+      footer: '此郵件由 LingUBible 聯絡表單自動發送',
+      replyNote: '您可以直接回覆此郵件與用戶聯繫'
+    },
+    'zh-CN': {
+      subject: `【LingUBible 联系表单】来自 ${name} 的消息`,
+      title: 'LingUBible 联系表单',
+      subtitle: '您收到一则新的联系消息',
+      fromLabel: '发送者',
+      emailLabel: '电子邮箱',
+      messageLabel: '消息内容',
+      footer: '此邮件由 LingUBible 联系表单自动发送',
+      replyNote: '您可以直接回复此邮件与用户联系'
+    },
+    'en': {
+      subject: `【LingUBible Contact Form】Message from ${name}`,
+      title: 'LingUBible Contact Form',
+      subtitle: 'You have received a new contact message',
+      fromLabel: 'From',
+      emailLabel: 'Email',
+      messageLabel: 'Message',
+      footer: 'This email was automatically sent by LingUBible contact form',
+      replyNote: 'You can reply directly to this email to contact the user'
+    }
+  };
+
+  const t = translations[language] || translations['zh-TW'];
+
+  const html = `
+<!DOCTYPE html>
+<html lang="${language}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${t.title}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #dc2626;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        .content {
+            margin: 30px 0;
+        }
+        .field {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #dc2626;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .field-value {
+            color: #333;
+            font-size: 16px;
+            word-wrap: break-word;
+        }
+        .message-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .reply-note {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            color: #92400e;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">${t.title}</div>
+            <div class="subtitle">${t.subtitle}</div>
+        </div>
+        
+        <div class="content">
+            <div class="field">
+                <div class="field-label">${t.fromLabel}</div>
+                <div class="field-value">${name}</div>
+            </div>
+            
+            <div class="field">
+                <div class="field-label">${t.emailLabel}</div>
+                <div class="field-value">${email}</div>
+            </div>
+            
+            <div class="field">
+                <div class="field-label">${t.messageLabel}</div>
+                <div class="message-content">${message}</div>
+            </div>
+        </div>
+        
+        <div class="reply-note">
+            💡 ${t.replyNote}
+        </div>
+        
+        <div class="footer">
+            ${t.footer}
+        </div>
+    </div>
+</body>
+</html>`;
+
+  const text = `
+${t.title}
+${t.subtitle}
+
+${t.fromLabel}: ${name}
+${t.emailLabel}: ${email}
+
+${t.messageLabel}:
+${message}
+
+---
+${t.footer}
+${t.replyNote}
+`;
+
+  return {
+    subject: t.subject,
+    html: html.trim(),
+    text: text.trim()
+  };
 } 

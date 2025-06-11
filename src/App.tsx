@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import Contact from "./pages/legal/Contact";
+import FAQ from "./pages/legal/FAQ";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
 import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
@@ -472,6 +473,7 @@ const RouterContent = ({
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

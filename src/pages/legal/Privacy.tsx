@@ -17,23 +17,11 @@ export default function Privacy() {
             <h1 className="text-4xl font-bold text-foreground mb-2">
               {t('privacy.title')}
             </h1>
+            <p className="text-muted-foreground text-lg">
+              {t('privacy.subtitle')}
+            </p>
           </div>
         </div>
-
-        {/* Introduction */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              {t('privacy.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">
-              {t('privacy.intro')}
-            </p>
-          </CardContent>
-        </Card>
 
         {/* Privacy Sections */}
         <div className="space-y-6">

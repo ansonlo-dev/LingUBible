@@ -254,6 +254,7 @@ export default function Login() {
             <span>{t('auth.secureConnection')}</span>
           </div>
           <div className="mt-4 space-x-4 text-xs text-muted-foreground">
+            <Link to="/faq" className="hover:underline">{t('footer.faq')}</Link>
             <Link to="/contact" className="hover:underline">{t('auth.contact')}</Link>
             <Link to="/terms" className="hover:underline">{t('auth.terms')}</Link>
             <Link to="/privacy" className="hover:underline">{t('auth.privacy')}</Link>

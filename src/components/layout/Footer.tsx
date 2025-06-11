@@ -8,7 +8,7 @@ import { getFormattedVersion, getVersionStatus } from '@/utils/version';
 import { useLatestVersion } from '@/hooks/useVersion';
 
 export function Footer() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const localVersion = getFormattedVersion(t('footer.beta'));
   const localVersionStatus = getVersionStatus();
   
@@ -76,17 +76,18 @@ export function Footer() {
             
             {/* Center - Built with love */}
             <div className="text-center">
-              <div className="text-sm text-gray-600 dark:text-muted-foreground">
-                {t('footer.builtWithTools')}{' '}
-                <a 
-                  href="https://ansonlo.dev/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="underline hover:text-foreground transition-colors"
-                >
-                  ansonlo.dev
-                </a>
-              </div>
+                              <div className="text-sm text-gray-600 dark:text-muted-foreground">
+                  {t('footer.builtWithTools')}{' '}
+                  <a 
+                    href="https://ansonlo.dev/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground transition-colors"
+                  >
+                    ansonlo.dev
+                  </a>
+                  {(language === 'zh-TW' || language === 'zh-CN') && t('footer.developedBy')}
+                </div>
               <div className="text-xs text-gray-500 dark:text-muted-foreground">
                 {t('footer.disclaimer')}
               </div>
@@ -126,6 +127,9 @@ export function Footer() {
                   {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
                 </span>
               )}
+              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('footer.faq')}
+              </Link>
               <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.contact')}
               </Link>
@@ -221,6 +225,7 @@ export function Footer() {
                   >
                     ansonlo.dev
                   </a>
+                  {(language === 'zh-TW' || language === 'zh-CN') && t('footer.developedBy')}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-muted-foreground">
                   {t('footer.disclaimer')}
@@ -228,6 +233,9 @@ export function Footer() {
               </div>
               
               <div className="flex items-center space-x-4 text-sm">
+                <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                  {t('footer.faq')}
+                </Link>
                 <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.contact')}
                 </Link>
@@ -289,6 +297,9 @@ export function Footer() {
           
           {/* Navigation Links - Mobile */}
           <div className="flex justify-center space-x-6 text-sm">
+            <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              {t('footer.faq')}
+            </Link>
             <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t('footer.contact')}
             </Link>
@@ -311,6 +322,7 @@ export function Footer() {
             >
               ansonlo.dev
             </a>
+            {(language === 'zh-TW' || language === 'zh-CN') && t('footer.developedBy')}
           </div>
           
           {/* Disclaimer */}
