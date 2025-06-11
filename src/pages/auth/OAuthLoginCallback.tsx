@@ -194,6 +194,18 @@ export default function OAuthLoginCallback() {
           // 設置 OAuth 會話標記，幫助其他組件識別這是 OAuth 登入
           sessionStorage.setItem('oauthSession', 'true');
           
+          // 設置會話持久性標記，確保 OAuth 登入後刷新頁面不會登出
+          // OAuth 登入默認為「記住我」模式，因為用戶選擇了便捷的 OAuth 登入方式
+          localStorage.setItem('rememberMe', 'true');
+          localStorage.setItem('savedEmail', currentUser.email);
+          sessionStorage.removeItem('sessionOnly'); // 確保不是僅會話模式
+          
+          console.log('OAuth 登入會話持久性已設置:', {
+            rememberMe: 'true',
+            savedEmail: currentUser.email,
+            sessionOnly: 'removed'
+          });
+          
           // 設置一個短期標記，讓側邊欄知道需要等待狀態同步
           sessionStorage.setItem('oauthLoginComplete', Date.now().toString());
           

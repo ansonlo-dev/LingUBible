@@ -121,12 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                     window.location.pathname === '/settings' && 
                                     (Date.now() - (parseInt(localStorage.getItem('lastOAuthAttempt') || '0'))) < 30000; // 30秒內
                 
-                // 如果是 Google 連結成功的情況、OAuth 會話或在 OAuth 流程中，跳過 rememberMe 檢查
+                // 檢查是否是 OAuth 登入完成的短期標記
+                const oauthLoginComplete = sessionStorage.getItem('oauthLoginComplete');
+                const isRecentOAuthLogin = oauthLoginComplete && 
+                                         (Date.now() - parseInt(oauthLoginComplete)) < 60000; // 1分鐘內
+                
+                // 如果是 Google 連結成功的情況、OAuth 會話、在 OAuth 流程中或剛完成 OAuth 登入，跳過 rememberMe 檢查
                 // 因為 OAuth 流程不應該受到原始登入時的 rememberMe 設置影響
-                if (!googleLinkSuccess && !oauthSession && !isInOAuthFlow) {
+                if (!googleLinkSuccess && !oauthSession && !isInOAuthFlow && !isRecentOAuthLogin) {
                     // 如果之前選擇了不記住我，且現在是新的瀏覽器 session（sessionOnly 不存在）
                     // 這意味著瀏覽器被關閉並重新打開
                     if (rememberMe === 'false' && !sessionOnly) {
+                        console.log('檢測到不記住我的會話且瀏覽器重新打開，執行登出');
                         // 清理 session 並登出
                         await authService.logout();
                         localStorage.removeItem('rememberMe');
@@ -135,6 +141,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setUserSessionId(null);
                         return;
                     }
+                } else {
+                    console.log('跳過 rememberMe 檢查，原因:', {
+                        googleLinkSuccess: !!googleLinkSuccess,
+                        oauthSession: !!oauthSession,
+                        isInOAuthFlow,
+                        isRecentOAuthLogin,
+                        rememberMe
+                    });
                 }
                 
                 const currentUser = await authService.getCurrentUser();
