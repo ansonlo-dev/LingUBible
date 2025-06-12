@@ -665,15 +665,17 @@ div[style*="position: fixed"][style*="right: 14px"] {
     width: auto;
     min-width: 60px;
     vertical-align: baseline;
+    text-align: center;
   }
 
   .rolling-text-item {
-    @apply absolute top-0 left-0 w-full flex items-center justify-start;
+    @apply absolute top-0 left-0 w-full flex items-center justify-center;
     transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
     color: rgb(220, 38, 38);
     font-weight: 600;
     height: 1.75rem;
     white-space: nowrap;
+    text-align: center;
   }
 
   /* 浮動動畫 */

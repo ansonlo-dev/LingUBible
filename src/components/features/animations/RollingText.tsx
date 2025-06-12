@@ -17,7 +17,7 @@ export function RollingText({ texts, interval = 2000 }: RollingTextProps) {
     return () => clearInterval(timer);
   }, [texts.length, interval]);
 
-  // 計算最長文字的寬度
+  // 計算最長文字的寬度，並確保每個文字都能居中對齊
   useEffect(() => {
     if (containerRef.current) {
       // 創建一個臨時元素來測量文字寬度
@@ -41,8 +41,9 @@ export function RollingText({ texts, interval = 2000 }: RollingTextProps) {
       
       document.body.removeChild(tempElement);
       
-      // 設置容器寬度
-      containerRef.current.style.width = `${maxWidth + 4}px`; // 添加一點額外空間
+      // 設置容器寬度，確保所有文字都能在這個寬度內居中
+      containerRef.current.style.width = `${maxWidth + 8}px`; // 添加更多空間確保居中
+      containerRef.current.style.textAlign = 'center'; // 確保文字居中
     }
   }, [texts]);
 
@@ -57,6 +58,9 @@ export function RollingText({ texts, interval = 2000 }: RollingTextProps) {
           style={{
             transform: index === currentIndex ? 'translateY(0)' : 'translateY(100%)',
             opacity: index === currentIndex ? 1 : 0,
+            textAlign: 'center',
+            width: '100%',
+            display: 'block',
           }}
         >
           {text}
