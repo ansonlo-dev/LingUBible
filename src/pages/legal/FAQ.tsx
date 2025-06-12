@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { HelpCircle, Flag, Bug, Trash2, UserPlus, Shield, Star, BookOpen, MessageSquare, Search, Settings, Globe, Clock, Award, Lock } from 'lucide-react';
+import { HelpCircle, Flag, Bug, Trash2, UserPlus, Shield, Star, BookOpen, MessageSquare, Search, Settings, Globe, Clock, Award, Lock, Eye, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function FAQ() {
@@ -83,6 +83,21 @@ export default function FAQ() {
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
                 {t('faq.whyAccountAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Signup Required to View Reviews */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-blue-500" />
+                {t('faq.signupRequiredQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.signupRequiredAnswer')}
               </p>
             </CardContent>
           </Card>
@@ -250,6 +265,21 @@ export default function FAQ() {
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
                 {t('faq.deleteAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Website Free */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-500" />
+                {t('faq.websiteFreeQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.websiteFreeAnswer')}
               </p>
             </CardContent>
           </Card>

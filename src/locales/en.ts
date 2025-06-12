@@ -714,6 +714,10 @@ export default {
     'faq.languageAnswer': 'Our website supports Traditional Chinese, Simplified Chinese, and English. You can switch languages using the language selector in the top right corner of the page, and your preference will be saved.',
     'faq.updateQuestion': 'How often is course information updated?',
     'faq.updateAnswer': 'We regularly update course information, including new courses and lecturer changes. Reviews and ratings are updated in real-time. If you find any outdated or incorrect information, please contact us.',
+    'faq.signupRequiredQuestion': 'Do I need to sign up to view reviews?',
+    'faq.signupRequiredAnswer': 'No, sign up is not required to view reviews, but to post reviews, users must sign up with a valid Lingnan email address.',
+    'faq.websiteFreeQuestion': 'Is this website free?',
+    'faq.websiteFreeAnswer': 'This website is non-profit and ads-free, all services provided on this website are free. However, if you would like to support this project, you can click the donate button in the footer to help me cover part of the operational cost. Any help is highly appreciated.',
 
     // =============================================================================
     // 7. ERRORS & STATES - 錯誤與狀態
