@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ export default function OAuthCallback() {
   const { t } = useLanguage();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [needRelogin, setNeedRelogin] = useState(false);
   const toastShownRef = useRef(false); // 防止重複顯示 toast
 
   useEffect(() => {
@@ -230,6 +231,7 @@ export default function OAuthCallback() {
                     // 顯示成功但需要重新登入的消息
                     setStatus('success');
                     setMessage(t('oauth.linkSuccessNeedRelogin'));
+                    setNeedRelogin(true);
                     
                     if (!toastShownRef.current) {
                       toastShownRef.current = true;
@@ -296,6 +298,7 @@ export default function OAuthCallback() {
             
             setStatus('success');
             setMessage(t('oauth.linkSuccessNeedRelogin'));
+            setNeedRelogin(true);
             
             if (!toastShownRef.current) {
               toastShownRef.current = true;
@@ -459,7 +462,6 @@ export default function OAuthCallback() {
           <CardTitle className="flex items-center justify-center gap-2">
             {status === 'loading' && (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" />
                 {t('oauth.processing')}
               </>
             )}
@@ -479,9 +481,9 @@ export default function OAuthCallback() {
         </CardHeader>
         
         <CardContent className="text-center space-y-4">
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground whitespace-pre-line">
             {status === 'loading' && t('oauth.processingDescription')}
-            {status === 'success' && t('oauth.successDescription')}
+            {status === 'success' && (needRelogin ? t('oauth.successDescriptionNeedRelogin') : t('oauth.successDescription'))}
             {status === 'error' && message}
           </p>
           

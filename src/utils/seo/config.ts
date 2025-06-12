@@ -39,15 +39,15 @@ export const SEO_CONFIG = {
     home: {
       en: {
         title: 'LingUBible - Course & Lecturer Reviews',
-        description: 'Browse reviews widely, choose courses wisely. A platform for Lingnan University students to share honest course and lecturer reviews.'
+        description: 'Seek insights broadly, choose courses wisely. A platform for Lingnan University students to share honest course and lecturer reviews.'
       },
       'zh-TW': {
         title: 'LingUBible - 課程與講師評價平台',
-        description: '博覽群評，明智選課。專為嶺南大學學生設計的課程和講師評價平台。'
+        description: '博覽群評，擇善而學。專為嶺南大學學生設計的課程和講師評價平台。'
       },
       'zh-CN': {
         title: 'LingUBible - 课程与讲师评价平台',
-        description: '博览群评，明智选课。专为岭南大学学生设计的课程和讲师评价平台。'
+        description: '博览群评，择善而学。专为岭南大学学生设计的课程和讲师评价平台。'
       }
     },
     courses: {

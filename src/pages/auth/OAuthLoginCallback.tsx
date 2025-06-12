@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,158 +16,222 @@ export default function OAuthLoginCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const toastShownRef = useRef(false); // 防止重複顯示 toast
+  const statusLockRef = useRef(false); // 防止狀態重複設置
+
+  // 安全的狀態設置函數，防止重複設置
+  const setStatusSafely = (newStatus: 'loading' | 'success' | 'error', newMessage: string) => {
+    if (statusLockRef.current) {
+      console.log('🔒 狀態已鎖定，跳過重複設置:', { newStatus, newMessage });
+      return false;
+    }
+    
+    console.log('✅ 設置狀態:', { newStatus, newMessage });
+    setStatus(newStatus);
+    setMessage(newMessage);
+    
+    // 如果設置為成功或錯誤狀態，鎖定狀態防止後續更改
+    if (newStatus === 'success' || newStatus === 'error') {
+      statusLockRef.current = true;
+      console.log('🔒 狀態已鎖定，防止後續更改');
+    }
+    
+    return true;
+  };
 
   useEffect(() => {
     const handleLoginCallback = async () => {
       try {
-        // 檢查 URL 參數中是否有錯誤
+        setStatusSafely('loading', t('oauth.processingLogin'));
+        
+        // 檢查 URL 參數
+        const userId = searchParams.get('userId');
+        const secret = searchParams.get('secret');
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
         
-        if (error) {
-          console.error('OAuth 登入錯誤:', error, errorDescription);
-          setStatus('error');
-          setMessage(errorDescription || error);
+        // 也檢查 URL fragment 中的參數（有些 OAuth 錯誤可能在這裡）
+        const fragment = window.location.hash.substring(1);
+        const fragmentParams = new URLSearchParams(fragment);
+        const fragmentError = fragmentParams.get('error');
+        const fragmentErrorDescription = fragmentParams.get('error_description');
+        
+        console.log('OAuth 回調參數:', { userId, secret, error, errorDescription });
+        console.log('Fragment 參數:', { fragmentError, fragmentErrorDescription });
+        console.log('完整 URL:', window.location.href);
+        console.log('所有 URL 參數:', Object.fromEntries(searchParams.entries()));
+        console.log('所有 Fragment 參數:', Object.fromEntries(fragmentParams.entries()));
+        
+        // 如果有明確的錯誤參數（在 query 或 fragment 中）
+        if (error || fragmentError) {
+          const actualError = error || fragmentError;
+          const actualErrorDescription = errorDescription || fragmentErrorDescription;
+          console.error('OAuth 錯誤:', actualError, actualErrorDescription);
+          setStatusSafely('error', t('oauth.noLinkedAccount'));
           
-          // 3秒後重定向到登入頁面
+          if (!toastShownRef.current) {
+            toastShownRef.current = true;
+            toast({
+              variant: "destructive",
+              title: t('oauth.noLinkedAccountTitle'),
+              description: t('oauth.noLinkedAccountDescription'),
+              duration: 10000,
+            });
+          }
+          
+          // 3秒後自動跳轉到註冊頁面
           setTimeout(() => {
-            navigate('/login');
+            navigate('/register');
           }, 3000);
           return;
         }
-
-        // 檢查是否有從 OAuthCallback 重定向過來的參數
-        const userId = searchParams.get('userId');
-        const secret = searchParams.get('secret');
         
-        if (userId && secret) {
-          // 處理從帳戶連結回調重定向過來的登入
+        // 如果沒有 userId 和 secret，嘗試直接檢查是否已經有有效會話
+        if (!userId || !secret) {
+          console.log('⚠️ 缺少 OAuth 成功參數 (userId 或 secret)');
+          console.log('🔍 嘗試檢查是否已經有有效的用戶會話...');
+          
+          // 先嘗試獲取當前用戶，如果成功說明已經登入
           try {
-            console.log('處理從帳戶連結重定向的登入...');
-            await account.createSession(userId, secret);
-            await refreshUser();
+            const existingUser = await account.get();
+            console.log('✅ 發現現有用戶會話:', existingUser.email);
+            console.log('🎉 OAuth 登入可能已經成功，跳過錯誤處理');
             
-            setStatus('success');
-            setMessage(t('oauth.loginSuccess'));
+            // 檢查郵箱是否為學生郵箱
+            const email = existingUser.email;
+            const isStudentEmail = email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
             
-            // 顯示登入成功 toast（這是從帳戶連結重定向的登入）
-            if (!toastShownRef.current) {
-              toastShownRef.current = true;
-              toast({
-                variant: "success",
-                title: t('oauth.loginSuccess'),
-                description: t('oauth.welcomeBack'),
-                duration: 3000,
-              });
-            }
-            
-            // 2秒後重定向到首頁
-            setTimeout(() => {
-              navigate('/');
-            }, 2000);
-            return;
-          } catch (sessionError: any) {
-            console.error('創建會話失敗:', sessionError);
-            setStatus('error');
-            setMessage(t('oauth.loginFailed'));
-            
-            setTimeout(() => {
-              navigate('/login');
-            }, 3000);
-            return;
-          }
-        }
-
-        // 對於 createOAuth2Session，我們需要檢查是否有會話被創建
-        // 如果有會話，說明是登入操作；如果沒有會話但有錯誤，可能是郵箱驗證失敗
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        try {
-          // 嘗試獲取當前會話
-          let currentUser;
-          try {
-            currentUser = await account.get();
-            console.log('OAuth 登入成功，用戶:', currentUser.email);
-          } catch (sessionError) {
-            // 沒有有效會話，檢查是否是因為郵箱驗證失敗
-            console.log('沒有有效會話，可能是郵箱驗證失敗');
-            
-            // 檢查 URL 中是否有特殊的錯誤參數（Appwrite 可能會添加）
-            const urlParams = new URLSearchParams(window.location.search);
-            const hasOAuthParams = urlParams.has('code') || urlParams.has('state');
-            
-            if (hasOAuthParams) {
-              // 有 OAuth 參數但沒有會話，說明 OAuth 流程被中斷
-              // 這可能是因為郵箱不符合要求
-              setStatus('error');
-              setMessage(t('oauth.studentEmailRequired'));
-              
-              if (!toastShownRef.current) {
-                toastShownRef.current = true;
-                toast({
-                  variant: "destructive",
-                  title: t('oauth.loginFailed'),
-                  description: t('oauth.studentEmailRequired'),
-                  duration: 5000,
-                });
-              }
-              
+                         if (!isStudentEmail) {
+               console.error('❌ 現有會話不是學生郵箱:', email);
+               setStatusSafely('error', t('oauth.studentEmailRequired'));
               setTimeout(() => {
                 navigate('/login');
               }, 3000);
               return;
             }
             
-            // 沒有 OAuth 參數，可能是其他錯誤
-            throw sessionError;
+                                      // 會話有效且是學生郵箱，直接成功
+             await refreshUser();
+             const statusSet = setStatusSafely('success', t('oauth.loginSuccess'));
+             
+             if (statusSet && !toastShownRef.current) {
+               toastShownRef.current = true;
+               toast({
+                 variant: "success",
+                 title: t('oauth.loginSuccess'),
+                 description: t('oauth.welcomeBack'),
+                 duration: 4000,
+               });
+             }
+            
+            setTimeout(() => {
+              navigate('/');
+            }, 1500);
+            return;
+            
+          } catch (sessionError) {
+            console.log('❌ 沒有有效會話，繼續檢查 OAuth 流程');
+            
+            // 檢查是否有任何 OAuth 相關的參數（表示確實經過了 OAuth 流程）
+            const hasOAuthParams = searchParams.has('code') || 
+                                  searchParams.has('state') || 
+                                  fragmentParams.has('code') ||
+                                  fragmentParams.has('state') ||
+                                  window.location.href.includes('oauth') ||
+                                  window.location.href.includes('google');
+            
+            if (hasOAuthParams) {
+                             // 有 OAuth 參數但沒有成功參數且沒有有效會話，很可能是帳戶未連結
+               console.log('🔍 檢測到 OAuth 流程但缺少成功參數且無有效會話，判斷為帳戶未連結');
+               setStatusSafely('error', t('oauth.noLinkedAccount'));
+              
+              if (!toastShownRef.current) {
+                toastShownRef.current = true;
+                toast({
+                  variant: "destructive",
+                  title: t('oauth.noLinkedAccountTitle'),
+                  description: t('oauth.noLinkedAccountDescription'),
+                  duration: 10000,
+                });
+              }
+              
+              // 3秒後自動跳轉到註冊頁面
+              setTimeout(() => {
+                navigate('/register');
+              }, 3000);
+              return;
+            } else {
+                             // 沒有任何 OAuth 相關參數，可能是直接訪問了這個頁面
+               console.error('❌ OAuth 回調缺少必要參數且無 OAuth 流程跡象');
+               setStatusSafely('error', t('oauth.missingParameters'));
+              setTimeout(() => {
+                navigate('/login');
+              }, 3000);
+              return;
+            }
           }
+        }
+        
+        try {
+          // 嘗試獲取當前用戶（檢查是否已經有會話）
+          const currentUser = await account.get();
+          console.log('✅ OAuth 回調中成功獲取到用戶:', currentUser.email);
+          console.log('🎉 Google 帳戶已連結且登入成功');
           
-          // 如果到這裡，說明會話創建成功，檢查郵箱
+          // 檢查郵箱是否為學生郵箱
           const email = currentUser.email;
           const isStudentEmail = email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
+          
+          console.log('🔍 OAuth 登入郵箱檢查:', { email, isStudentEmail });
           
           if (!isStudentEmail) {
             // 如果不是學生郵箱，這是一個嚴重的安全問題
             // 我們需要立即刪除用戶帳戶（不只是會話）
-            console.error('非學生郵箱成功創建帳戶，這是安全漏洞:', email);
+            console.error('❌ 非學生郵箱成功創建帳戶，這是安全漏洞:', email);
             
             try {
               // 首先嘗試刪除當前會話
               await account.deleteSession('current');
+              console.log('🚫 已刪除當前會話');
               
               // 調用後端清理函數來刪除用戶帳戶
               try {
-                const response = await fetch('/api/functions/cleanup-expired-codes/executions', {
+                console.log('🗑️ 調用後端清理函數刪除用戶帳戶...');
+                const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
+                    'X-Appwrite-Project': 'lingubible',
                   },
                   body: JSON.stringify({
-                    action: 'immediate_cleanup',
-                    userId: currentUser.$id,
-                    email: email,
-                    reason: 'non_student_email'
-                  })
+                    body: JSON.stringify({
+                      action: 'immediate_cleanup',
+                      userId: currentUser.$id,
+                      email: email,
+                      reason: 'non_student_email_oauth_login'
+                    }),
+                    async: false,
+                    method: 'POST'
+                  }),
                 });
                 
                 if (response.ok) {
                   const result = await response.json();
-                  console.log('後端清理函數調用成功:', result);
+                  console.log('✅ 後端清理函數調用成功:', result);
                 } else {
-                  console.error('後端清理函數調用失敗:', response.status);
+                  const errorText = await response.text();
+                  console.error('❌ 後端清理函數調用失敗:', response.status, errorText);
                 }
               } catch (cleanupError) {
-                console.error('調用後端清理函數失敗:', cleanupError);
+                console.error('❌ 調用後端清理函數失敗:', cleanupError);
               }
               
-              console.error('安全警告：非學生郵箱帳戶已創建但被阻止登入:', email);
+              console.error('🚨 安全警告：非學生郵箱帳戶已創建但被阻止登入:', email);
               
             } catch (deleteError) {
-              console.error('刪除會話失敗:', deleteError);
+              console.error('❌ 刪除會話失敗:', deleteError);
             }
             
-            setStatus('error');
-            setMessage(t('oauth.studentEmailRequired'));
+            setStatusSafely('error', t('oauth.studentEmailRequired'));
             
             if (!toastShownRef.current) {
               toastShownRef.current = true;
@@ -175,21 +239,29 @@ export default function OAuthLoginCallback() {
                 variant: "destructive",
                 title: t('oauth.loginFailed'),
                 description: t('oauth.studentEmailRequired'),
-                duration: 5000,
+                duration: 8000, // 延長顯示時間
               });
             }
             
             setTimeout(() => {
               navigate('/login');
-            }, 3000);
+            }, 5000); // 延長等待時間，讓用戶看到錯誤訊息
             return;
           }
           
           // 登入成功，刷新用戶狀態
-          console.log('OAuth 登入成功，刷新用戶狀態...');
+          console.log('✅ OAuth 登入成功，刷新用戶狀態...');
+          console.log('📊 用戶信息:', {
+            id: currentUser.$id,
+            email: currentUser.email,
+            name: currentUser.name,
+            emailVerification: currentUser.emailVerification,
+            status: currentUser.status
+          });
           
           // 立即刷新用戶狀態
           await refreshUser();
+          console.log('✅ 用戶狀態刷新完成');
           
           // 設置 OAuth 會話標記，幫助其他組件識別這是 OAuth 登入
           sessionStorage.setItem('oauthSession', 'true');
@@ -223,10 +295,9 @@ export default function OAuthLoginCallback() {
           // 觸發自定義事件，通知其他組件 OAuth 登入完成
           window.dispatchEvent(new CustomEvent('oauthLoginComplete'));
           
-          setStatus('success');
-          setMessage(t('oauth.loginSuccess'));
+          const statusSet = setStatusSafely('success', t('oauth.loginSuccess'));
           
-          if (!toastShownRef.current) {
+          if (statusSet && !toastShownRef.current) {
             toastShownRef.current = true;
             toast({
               variant: "success",
@@ -244,18 +315,80 @@ export default function OAuthLoginCallback() {
           }, 1500); // 1.5秒延遲，確保狀態同步
           
         } catch (refreshError) {
-          console.error('處理 OAuth 登入失敗:', refreshError);
-          setStatus('error');
-          setMessage(t('oauth.loginFailed'));
+          console.error('❌ 處理 OAuth 登入失敗:', refreshError);
+          
+          // 如果是 account.get() 失敗，說明沒有有效會話，可能是帳戶未連結
+          if (refreshError.code === 401 || refreshError.code === 403 || 
+              (refreshError.message && (
+                refreshError.message.includes('User (role: guests) missing scope') ||
+                refreshError.message.includes('missing scope (account)') ||
+                refreshError.message.includes('Invalid credentials') ||
+                refreshError.message.includes('User not found') ||
+                refreshError.message.includes('Unauthorized')
+              ))) {
+            console.log('🔍 檢測到 Google 帳戶未連結錯誤 (account.get() 失敗)');
+            setStatusSafely('error', t('oauth.noLinkedAccount'));
+            
+            if (!toastShownRef.current) {
+              toastShownRef.current = true;
+              toast({
+                variant: "destructive",
+                title: t('oauth.noLinkedAccountTitle'),
+                description: t('oauth.noLinkedAccountDescription'),
+                duration: 10000,
+              });
+            }
+            
+            // 3秒後自動跳轉到註冊頁面
+            setTimeout(() => {
+              navigate('/register');
+            }, 3000);
+            return;
+          }
+          
+          // 其他錯誤（不是帳戶未連結的問題）
+          console.error('🚨 其他 OAuth 登入錯誤:', refreshError);
+          setStatusSafely('error', t('oauth.loginFailed'));
           
           setTimeout(() => {
             navigate('/login');
           }, 3000);
         }
       } catch (error: any) {
-        console.error('處理 OAuth 登入回調失敗:', error);
-        setStatus('error');
-        setMessage(error.message || t('oauth.callbackError'));
+        console.error('❌ 處理 OAuth 登入回調失敗:', error);
+        
+        // 只有在明確的認證失敗情況下才判斷為帳戶未連結
+        if (error.code === 401 || error.code === 403 || 
+            (error.message && (
+              error.message.includes('User (role: guests) missing scope') ||
+              error.message.includes('missing scope (account)') ||
+              error.message.includes('Invalid credentials') ||
+              error.message.includes('User not found') ||
+              error.message.includes('Unauthorized')
+            ))) {
+          console.log('🔍 檢測到 Google 帳戶未連結錯誤 (外層 catch)');
+          setStatusSafely('error', t('oauth.noLinkedAccount'));
+          
+          if (!toastShownRef.current) {
+            toastShownRef.current = true;
+            toast({
+              variant: "destructive",
+              title: t('oauth.noLinkedAccountTitle'),
+              description: t('oauth.noLinkedAccountDescription'),
+              duration: 10000,
+            });
+          }
+          
+          // 3秒後自動跳轉到註冊頁面
+          setTimeout(() => {
+            navigate('/register');
+          }, 3000);
+          return;
+        }
+        
+        // 其他錯誤（網路錯誤、參數錯誤等）
+        console.error('🚨 其他 OAuth 回調錯誤:', error);
+        setStatusSafely('error', error.message || t('oauth.callbackError'));
         
         setTimeout(() => {
           navigate('/login');
@@ -270,6 +403,13 @@ export default function OAuthLoginCallback() {
     navigate('/login');
   };
 
+  const handleGoToRegister = () => {
+    navigate('/register');
+  };
+
+  // 檢查是否是未連結帳戶的錯誤
+  const isNoLinkedAccountError = message === t('oauth.noLinkedAccount');
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
       <Card className="w-full max-w-md">
@@ -277,20 +417,18 @@ export default function OAuthLoginCallback() {
           <CardTitle className="flex items-center justify-center gap-2">
             {status === 'loading' && (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" />
                 {t('oauth.processingLogin')}
               </>
             )}
             {status === 'success' && (
               <>
-                <CheckCircle className="h-5 w-5 text-green-500" />
                 {t('oauth.loginSuccess')}
               </>
             )}
             {status === 'error' && (
               <>
                 <XCircle className="h-5 w-5 text-red-500" />
-                {t('oauth.loginFailed')}
+                {isNoLinkedAccountError ? t('oauth.noLinkedAccountTitle') : t('oauth.loginFailed')}
               </>
             )}
           </CardTitle>
@@ -309,10 +447,28 @@ export default function OAuthLoginCallback() {
             </div>
           )}
           
+          {status === 'success' && (
+            <div className="flex justify-center">
+              <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          )}
+          
           {status === 'error' && (
-            <Button onClick={handleReturnToLogin} className="w-full">
-              {t('oauth.returnToLogin')}
-            </Button>
+            <div className="space-y-3">
+              {isNoLinkedAccountError && (
+                <p className="text-sm text-muted-foreground">
+                  {t('oauth.redirectingToRegister')}
+                </p>
+              )}
+              <Button 
+                onClick={isNoLinkedAccountError ? handleGoToRegister : handleReturnToLogin} 
+                className="w-full"
+              >
+                {isNoLinkedAccountError ? t('oauth.goToRegister') : t('oauth.returnToLogin')}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

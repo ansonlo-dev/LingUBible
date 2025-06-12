@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContactRecaptcha } from '@/hooks/useSmartRecaptcha';
-import { Mail, Loader2 } from 'lucide-react';
+import { MessageCircle, Loader2 } from 'lucide-react';
 
 interface FormData {
   name: string;
@@ -210,7 +210,7 @@ export function ContactForm() {
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
-          <Mail className="h-5 w-5 text-primary" />
+          <MessageCircle className="h-5 w-5 text-blue-600" />
           {t('contact.getInTouch')}
         </CardTitle>
       </CardHeader>

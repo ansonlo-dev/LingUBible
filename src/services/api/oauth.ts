@@ -115,6 +115,10 @@ export const oauthService = {
    */
   async loginWithGoogle(): Promise<void> {
     try {
+      // 在開始 OAuth 流程前，顯示警告提示
+      console.warn('⚠️ Google 登入提醒：只有 @ln.hk 或 @ln.edu.hk 郵箱的學生才能使用此功能');
+      console.warn('⚠️ 非學生郵箱創建的帳戶將被系統自動刪除');
+      
       const redirectUrl = `${window.location.origin}/oauth/login-callback`;
       
       // 創建 OAuth 會話（這會創建用戶帳戶）
@@ -235,15 +239,22 @@ export const oauthService = {
         
         // 調用清理函數
         try {
-          await fetch('/api/functions/cleanup-expired-codes/executions', {
+          await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'X-Appwrite-Project': 'lingubible',
             },
             body: JSON.stringify({
-              action: 'immediate_cleanup',
-              userId: user.$id
-            })
+              body: JSON.stringify({
+                action: 'immediate_cleanup',
+                userId: user.$id,
+                email: user.email,
+                reason: 'non_student_email_force_cleanup'
+              }),
+              async: false,
+              method: 'POST'
+            }),
           });
         } catch (cleanupError) {
           console.error('調用清理函數失敗:', cleanupError);

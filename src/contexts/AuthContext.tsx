@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authService, AuthUser } from '@/services/api/auth';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -50,14 +50,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const cleanupInterval = setInterval(async () => {
             try {
                 // 調用清理函數
-                const response = await fetch('/api/functions/cleanup-expired-codes/executions', {
+                const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-Appwrite-Project': 'lingubible',
                     },
                     body: JSON.stringify({
-                        action: 'periodic_cleanup'
-                    })
+                        body: JSON.stringify({
+                            action: 'immediate_cleanup',
+                            userId: user?.$id,
+                            email: user?.email,
+                            reason: 'non_student_email_session_cleanup'
+                        }),
+                        async: false,
+                        method: 'POST'
+                    }),
                 });
                 
                 if (response.ok) {
@@ -86,8 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // 顯示警告 toast
                 toast({
                     variant: "destructive",
-                    title: "安全警告",
-                    description: "檢測到非學生郵箱帳戶，已自動登出。請使用 @ln.hk 或 @ln.edu.hk 郵箱登入。",
+                    title: t('security.warning'),
+                    description: t('security.nonStudentAccountDetected'),
                     duration: 8000,
                 });
             } catch (cleanupError) {

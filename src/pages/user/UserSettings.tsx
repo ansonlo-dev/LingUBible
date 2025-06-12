@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { User, Mail, CheckCircle, Save, ArrowLeft, Loader2, Lock, Palette } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { UsernameValidator } from "@/utils/auth/usernameValidator";

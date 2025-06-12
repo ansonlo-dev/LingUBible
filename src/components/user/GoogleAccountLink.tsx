@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { oauthService } from '@/services/api/oauth';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Loader2, Link as LinkIcon, Unlink, CheckCircle, AlertTriangle } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/GoogleIcon';
 

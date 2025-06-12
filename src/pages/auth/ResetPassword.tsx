@@ -156,10 +156,10 @@ export default function ResetPassword() {
 
           {/* 安全連接頁腳 */}
           <div className="mt-4 text-center flex-shrink-0">
-            <div className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300">
+            <Link to="/faq#password-safety" className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
               <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
               <span>{t('auth.secureConnection')}</span>
-            </div>
+            </Link>
           </div>
         </div>
       </div>
@@ -276,10 +276,10 @@ export default function ResetPassword() {
 
         {/* 安全連接頁腳 */}
         <div className="mt-4 text-center flex-shrink-0">
-          <div className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300">
+          <Link to="/faq#password-safety" className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
             <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
             <span>{t('auth.secureConnection')}</span>
-          </div>
+          </Link>
           <div className="mt-4 space-x-4 text-xs text-muted-foreground">
             <Link to="/faq" className="hover:underline">{t('footer.faq')}</Link>
             <Link to="/contact" className="hover:underline">{t('auth.contact')}</Link>

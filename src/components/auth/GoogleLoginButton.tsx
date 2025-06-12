@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { oauthService } from '@/services/api/oauth';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/GoogleIcon';
 
@@ -17,6 +17,15 @@ export function GoogleLoginButton({ disabled = false }: GoogleLoginButtonProps) 
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+      
+      // 顯示更清楚的警告提示
+      toast({
+        variant: "default",
+        title: "ℹ️ " + t('oauth.loginRequirement'),
+        description: t('oauth.loginRequirementDescription'),
+        duration: 5000,
+      });
+      
       await oauthService.loginWithGoogle();
       // 重定向會在 oauthService.loginWithGoogle() 中處理
     } catch (error: any) {

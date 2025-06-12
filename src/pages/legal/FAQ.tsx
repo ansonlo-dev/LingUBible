@@ -1,79 +1,256 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Flag, Bug, Trash2, UserPlus, Shield, Star, BookOpen, MessageSquare, Search, Settings, Globe, Clock, Award, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function FAQ() {
   const { t } = useLanguage();
+  const location = useLocation();
+
+  useEffect(() => {
+    // 處理錨點跳轉
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        // 延遲滾動以確保頁面完全載入
+        setTimeout(() => {
+          element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }, 100);
+      }
+    }
+  }, [location.hash]);
+
+  // 處理頁面初次載入時的錨點跳轉
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        // 更長的延遲以確保所有內容都已渲染
+        setTimeout(() => {
+          element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }, 300);
+      }
+    }
+  }, []);
 
   return (
-    <div className="bg-background">
-      <div className="container mx-auto px-4 py-4 max-w-4xl">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="mb-4">
+        <div className="mb-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-1">
+            <h1 className="text-4xl font-bold text-foreground mb-2">
               {t('faq.title')}
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-lg">
               {t('faq.subtitle')}
             </p>
           </div>
         </div>
 
-        {/* FAQ Section */}
-        <div>
+        {/* FAQ Sections */}
+        <div className="space-y-6">
+          {/* Account & Registration */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="h-5 w-5 text-blue-600" />
-                {t('faq.questions')}
+                <UserPlus className="h-5 w-5 text-blue-600" />
+                {t('faq.accountQuestion')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-8">
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed mb-2">{t('faq.reportQuestion')}</h4>
-                  <p 
-                    className="text-muted-foreground leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: t('faq.reportAnswer') }}
-                  />
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed mb-2">{t('faq.technicalQuestion')}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('faq.technicalAnswer')}
-                  </p>
-                </div>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.accountAnswer')}
+              </p>
+            </CardContent>
+          </Card>
 
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed mb-2">{t('faq.deleteQuestion')}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('faq.deleteAnswer')}
-                  </p>
-                </div>
+          {/* Why Account Required */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-green-600" />
+                {t('faq.whyAccountQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.whyAccountAnswer')}
+              </p>
+            </CardContent>
+          </Card>
 
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed mb-2">{t('faq.accountQuestion')}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('faq.accountAnswer')}
-                  </p>
-                </div>
+          {/* How to Submit Reviews */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-600" />
+                {t('faq.reviewQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.reviewAnswer')}
+              </p>
+            </CardContent>
+          </Card>
 
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed mb-2">{t('faq.whyAccountQuestion')}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('faq.whyAccountAnswer')}
-                  </p>
-                </div>
+          {/* How to Search Courses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-purple-600" />
+                {t('faq.searchQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.searchAnswer')}
+              </p>
+            </CardContent>
+          </Card>
 
-                <div>
-                  <h4 className="font-medium text-foreground leading-relaxed mb-2">{t('faq.privacyQuestion')}</h4>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('faq.privacyAnswer')}
-                  </p>
-                </div>
-              </div>
+          {/* Rating System */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-orange-600" />
+                {t('faq.ratingQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.ratingAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Anonymous Reviews */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-indigo-600" />
+                {t('faq.anonymousQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.anonymousAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Privacy Protection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-cyan-600" />
+                {t('faq.privacyQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.privacyAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Password Safety */}
+          <Card id="password-safety">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-blue-600" />
+                {t('faq.passwordSafetyQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p 
+                className="text-muted-foreground leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: t('faq.passwordSafetyAnswer') }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Language Support */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-emerald-600" />
+                {t('faq.languageQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.languageAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Update Frequency */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-teal-600" />
+                {t('faq.updateQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.updateAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Report Inappropriate Content */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Flag className="h-5 w-5 text-red-600" />
+                {t('faq.reportQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p 
+                className="text-muted-foreground leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: t('faq.reportAnswer') }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Technical Issues */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bug className="h-5 w-5 text-rose-600" />
+                {t('faq.technicalQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.technicalAnswer')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Delete Account */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-gray-600" />
+                {t('faq.deleteQuestion')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('faq.deleteAnswer')}
+              </p>
             </CardContent>
           </Card>
         </div>

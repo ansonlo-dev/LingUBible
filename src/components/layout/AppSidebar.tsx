@@ -38,43 +38,12 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [forceRender, setForceRender] = useState(0);
-  const [userStateReady, setUserStateReady] = useState(false);
 
-  // 監聽用戶狀態變化，特別是 OAuth 登入後的狀態同步
-  useEffect(() => {
-    // 如果正在載入，等待載入完成
-    if (loading) {
-      setUserStateReady(false);
-      return;
-    }
-
-    // 檢查是否剛完成 OAuth 流程
-    const isOAuthCallback = window.location.pathname.includes('/oauth/') || 
-                           sessionStorage.getItem('oauthSession') ||
-                           sessionStorage.getItem('oauthLoginComplete') ||
-                           localStorage.getItem('googleLinkSuccess');
-
-    if (isOAuthCallback && user) {
-      // OAuth 登入完成，但給一點時間讓狀態完全同步
-      const timer = setTimeout(() => {
-        setUserStateReady(true);
-        setForceRender(prev => prev + 1);
-        console.log('側邊欄: OAuth 用戶狀態同步完成');
-      }, 300); // 減少到 300ms，因為我們已經在回調中處理了主要的同步
-
-      return () => clearTimeout(timer);
-    } else {
-      // 正常情況，立即設置為就緒
-      setUserStateReady(true);
-    }
-  }, [user, loading]);
-
-  // 監聽 OAuth 登入完成事件
+  // 監聽 OAuth 登入完成事件，用於強制重新渲染
   useEffect(() => {
     const handleOAuthComplete = () => {
       console.log('側邊欄: 收到 OAuth 完成事件，強制重新渲染');
       setForceRender(prev => prev + 1);
-      setUserStateReady(true);
     };
 
     // 監聽自定義事件
@@ -134,13 +103,14 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
   const shouldShowText = !isCollapsed || isMobile;
   
-  // 確保用戶狀態就緒後才顯示需要認證的導航項目
+  // 簡化導航邏輯：只要用戶存在且不在載入中就顯示認證菜單項
+  // 這樣可以避免延遲顯示的問題
   const navigation = [
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
     { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
     { name: t('nav.lecturers'), href: '#', icon: GraduationCap, current: false },
-    // 只有在用戶已登入且狀態就緒時才顯示我的評價和設定選項
-    ...(user && userStateReady ? [
+    // 只要用戶已登入且不在載入中就顯示我的評價和設定選項
+    ...(user && !loading ? [
       { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },
       { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
     ] : []),
@@ -221,7 +191,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
           </ul>
         </nav>
 
-                {/* 底部設置區域 - 始終顯示語言和主題切換 */}
+        {/* 底部設置區域 - 始終顯示語言和主題切換 */}
         <div className="p-4 md:py-4 md:px-2">
           {shouldShowText ? (
             <div className="space-y-1">

@@ -47,7 +47,6 @@ export default defineConfig(({ command, mode }) => ({
           ],
           'icons': ['lucide-react'],
           'ui-misc': [
-            'sonner',
             'next-themes',
             'react-hook-form',
             '@hookform/resolvers'

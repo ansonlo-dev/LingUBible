@@ -15,7 +15,7 @@ export default function Contact() {
             <h1 className="text-3xl font-bold text-foreground mb-1">
               {t('contact.title')}
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-lg">
               {t('contact.subtitle')}
             </p>
           </div>
@@ -26,14 +26,14 @@ export default function Contact() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-primary" />
+                <Phone className="h-5 w-5 text-blue-600" />
                 {t('contact.methods')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-2 md:grid-cols-3">
                 <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Mail className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <Mail className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-foreground">{t('contact.email')}</p>
                     <a 
@@ -46,7 +46,7 @@ export default function Contact() {
                 </div>
                 
                 <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Github className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <Github className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-foreground">{t('contact.github')}</p>
                     <a 
@@ -61,7 +61,7 @@ export default function Contact() {
                 </div>
                 
                 <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <MessageSquare className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-foreground">{t('contact.developer')}</p>
                     <a 

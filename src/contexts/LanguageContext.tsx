@@ -84,7 +84,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     
     // Preload other languages in background for better performance
     setTimeout(() => {
-      preloadTranslations(['en', 'zh-TW', 'zh-CN'].filter(lang => lang !== language));
+      preloadTranslations((['en', 'zh-TW', 'zh-CN'] as Language[]).filter(lang => lang !== language));
     }, 1000);
   }, []);
 
@@ -132,8 +132,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const t = (key: string, params?: Record<string, any>): any => {
     let translation = translations[key] || key;
     
-    // Debug toast-related translations
-    if (key.startsWith('toast.')) {
+    // Debug toast-related and security-related translations
+    if (key.startsWith('toast.') || key.startsWith('security.')) {
       console.log(`🌐 翻译 "${key}" (语言: ${language}):`, translation);
     }
     
@@ -145,7 +145,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       });
       
       // Debug parameter replacement results
-      if (key.startsWith('toast.')) {
+      if (key.startsWith('toast.') || key.startsWith('security.')) {
         console.log(`🌐 参数替换后 "${key}":`, translation);
       }
     }

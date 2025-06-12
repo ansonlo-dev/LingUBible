@@ -175,7 +175,7 @@ const Index = () => {
           {/* Rolling Text Animation */}
           <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center">
             <span className="text-foreground">{t('hero.comeHereTo')}</span>
-            <span className="w-1"></span>
+            <span>&nbsp;</span>
             <RollingText 
               texts={actionTexts} 
               interval={2000}

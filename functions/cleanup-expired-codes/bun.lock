@@ -8,6 +8,9 @@
       },
     },
   },
+  "trustedDependencies": [
+    "node-appwrite",
+  ],
   "packages": {
     "node-appwrite": ["node-appwrite@13.0.0", "", { "dependencies": { "node-fetch-native-with-agent": "1.7.2" } }, "sha512-O1g1RWcRYcvnVvR0Dykjoe/4UcL6ELVvZosb4B8/hhNvleuWfN2fOFxzeCaU8amGW6UtVtZqvNaUT3IF1mPBdA=="],
 
