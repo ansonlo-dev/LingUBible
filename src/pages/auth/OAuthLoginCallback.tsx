@@ -115,10 +115,26 @@ export default function OAuthLoginCallback() {
              
              if (statusSet && !toastShownRef.current) {
                toastShownRef.current = true;
+               
+               // 獲取用戶顯示名稱
+               const getUserDisplayName = (user: any): string => {
+                 if (!user) return t('common.user');
+                 
+                 // 如果 name 存在且不等於 email，則使用 name（用戶名）
+                 if (user.name && user.name !== user.email) {
+                   return user.name;
+                 }
+                 
+                 // 否則使用郵箱前綴
+                 return user.email?.split('@')[0] || t('common.user');
+               };
+               
+               const username = getUserDisplayName(existingUser);
+               
                toast({
                  variant: "success",
-                 title: t('oauth.loginSuccess'),
-                 description: t('oauth.welcomeBack'),
+                 title: `🎉 ${t('toast.loginSuccess')}`,
+                 description: t('toast.welcomeBack', { username }),
                  duration: 4000,
                });
              }
@@ -299,10 +315,26 @@ export default function OAuthLoginCallback() {
           
           if (statusSet && !toastShownRef.current) {
             toastShownRef.current = true;
+            
+            // 獲取用戶顯示名稱
+            const getUserDisplayName = (user: any): string => {
+              if (!user) return t('common.user');
+              
+              // 如果 name 存在且不等於 email，則使用 name（用戶名）
+              if (user.name && user.name !== user.email) {
+                return user.name;
+              }
+              
+              // 否則使用郵箱前綴
+              return user.email?.split('@')[0] || t('common.user');
+            };
+            
+            const username = getUserDisplayName(currentUser);
+            
             toast({
               variant: "success",
-              title: t('oauth.loginSuccess'),
-              description: t('oauth.welcomeBack'),
+              title: `🎉 ${t('toast.loginSuccess')}`,
+              description: t('toast.welcomeBack', { username }),
               duration: 4000,
             });
           }
