@@ -10,3 +10,7 @@ command = "bun install --frozen-lockfile && VITE_APPWRITE_ENDPOINT=https://fra.c
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+# 觀察性設定 - 啟用日誌記錄以確保部署設定一致性
+[observability.logs]
+enabled = true
