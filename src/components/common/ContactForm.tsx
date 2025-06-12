@@ -210,7 +210,7 @@ export function ContactForm() {
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
-          <MessageCircle className="h-5 w-5 text-blue-600" />
+          <MessageCircle className="h-5 w-5 text-green-600" />
           {t('contact.getInTouch')}
         </CardTitle>
       </CardHeader>

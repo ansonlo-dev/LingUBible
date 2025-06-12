@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
-import { APP_CONFIG, type ThemeMode } from '@/utils/constants/config';
+
+// 主題類型
+type ThemeMode = 'light' | 'dark' | 'system';
 
 /**
  * 主題管理 Hook
  * 提供主題切換和狀態管理功能
  */
 export function useTheme() {
+  const [currentMode, setCurrentMode] = useState<ThemeMode>(() => {
+    return theme.get() || 'system';
+  });
+
   const [isDark, setIsDark] = useState(() => {
     return theme.getEffectiveTheme() === 'dark';
   });
@@ -17,25 +23,32 @@ export function useTheme() {
   const dispatchThemeChangeEvent = () => {
     // 觸發自定義主題變化事件
     window.dispatchEvent(new CustomEvent('themechange', {
-      detail: { isDark }
+      detail: { isDark, mode: currentMode }
     }));
     
     // 觸發 storage 事件（用於跨標籤頁同步）
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'theme',
-      newValue: isDark ? 'dark' : 'light',
+      newValue: currentMode,
       storageArea: localStorage
     }));
   };
 
   /**
-   * 設置主題
+   * 設置主題模式
    */
-  const setTheme = (isDarkMode: boolean) => {
+  const setThemeMode = (mode: ThemeMode) => {
     const root = document.documentElement;
-    const themeName = isDarkMode ? 'dark' : 'light';
     
-    if (isDarkMode) {
+    // 保存主題設定
+    theme.set(mode);
+    setCurrentMode(mode);
+    
+    // 獲取實際應該應用的主題
+    const effectiveTheme = theme.getEffectiveTheme();
+    const shouldUseDark = effectiveTheme === 'dark';
+    
+    if (shouldUseDark) {
       root.classList.add('dark');
       root.style.backgroundColor = 'rgb(0, 0, 0)';
       root.style.color = 'rgb(255, 255, 255)';
@@ -49,9 +62,7 @@ export function useTheme() {
       document.body.style.color = 'rgb(0, 0, 0)';
     }
     
-    // 保存主題設定
-    theme.set(themeName);
-    setIsDark(isDarkMode);
+    setIsDark(shouldUseDark);
     
     // 觸發主題變化事件
     setTimeout(() => {
@@ -60,9 +71,17 @@ export function useTheme() {
   };
 
   /**
+   * 設置主題（向後兼容）
+   */
+  const setTheme = (isDarkMode: boolean) => {
+    setThemeMode(isDarkMode ? 'dark' : 'light');
+  };
+
+  /**
    * 初始化主題
    */
   const initializeTheme = () => {
+    const storedMode = theme.get() || 'system';
     const effectiveTheme = theme.getEffectiveTheme();
     const shouldUseDark = effectiveTheme === 'dark';
     
@@ -82,6 +101,7 @@ export function useTheme() {
       document.body.style.color = 'rgb(0, 0, 0)';
     }
     
+    setCurrentMode(storedMode);
     setIsDark(shouldUseDark);
     
     // 觸發初始主題事件
@@ -93,10 +113,11 @@ export function useTheme() {
   };
 
   /**
-   * 切換主題
+   * 切換主題（在 light 和 dark 之間切換）
    */
   const toggleTheme = () => {
-    setTheme(!isDark);
+    const newMode = isDark ? 'light' : 'dark';
+    setThemeMode(newMode);
   };
 
   /**
@@ -107,24 +128,36 @@ export function useTheme() {
   };
 
   /**
-   * 設置主題模式
+   * 獲取當前主題設定模式
    */
-  const setThemeMode = (mode: 'light' | 'dark') => {
-    theme.set(mode);
-    setTheme(mode === 'dark');
+  const getCurrentMode = (): ThemeMode => {
+    return currentMode;
   };
 
-  // 初始化主題
+  // 初始化主題和監聽系統主題變化
   useEffect(() => {
     initializeTheme();
+    
+    // 監聽系統主題變化（僅當設定為 system 時）
+    const unwatch = theme.watchSystemTheme((systemIsDark) => {
+      const currentStoredMode = theme.get() || 'system';
+      if (currentStoredMode === 'system') {
+        // 重新應用主題以反映系統變化
+        setThemeMode('system');
+      }
+    });
+    
+    return unwatch;
   }, []);
 
   return {
     isDark,
+    currentMode,
     setTheme,
+    setThemeMode,
     toggleTheme,
     initializeTheme,
     getCurrentTheme,
-    setThemeMode
+    getCurrentMode
   };
 } 

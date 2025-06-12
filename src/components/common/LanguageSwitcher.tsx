@@ -60,44 +60,48 @@ export function LanguageSwitcher({ onLanguageChange, currentLanguage, variant = 
 
   if (variant === 'pills') {
     return (
-      <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg">
-        {Object.entries(languageShortNames).map(([code, shortName]) => (
-          <Button
-            key={code}
-            variant={currentLanguage === code ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onLanguageChange(code as Language)}
-            className={`h-7 px-2 text-xs font-medium transition-all ${
-              currentLanguage === code 
-                ? 'bg-primary text-primary-foreground shadow-sm' 
-                : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {shortName}
-          </Button>
-        ))}
+      <div className="w-full flex justify-center">
+        <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg w-fit min-w-[120px]">
+          {Object.entries(languageShortNames).map(([code, shortName]) => (
+            <Button
+              key={code}
+              variant={currentLanguage === code ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onLanguageChange(code as Language)}
+              className={`h-7 px-2 text-sm font-bold transition-all flex-1 ${
+                currentLanguage === code 
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {shortName}
+            </Button>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (variant === 'vertical-pills') {
     return (
-      <div className="flex flex-col gap-1 p-1 bg-secondary/50 rounded-lg">
-        {Object.entries(languageShortNames).map(([code, shortName]) => (
-          <Button
-            key={code}
-            variant={currentLanguage === code ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onLanguageChange(code as Language)}
-            className={`h-6 w-8 text-xs font-medium transition-all ${
-              currentLanguage === code 
-                ? 'bg-primary text-primary-foreground shadow-sm' 
-                : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {shortName}
-          </Button>
-        ))}
+      <div className="w-full flex justify-center">
+        <div className="flex flex-col gap-1 p-1 bg-secondary/50 rounded-lg w-fit min-w-[40px]">
+          {Object.entries(languageShortNames).map(([code, shortName]) => (
+            <Button
+              key={code}
+              variant={currentLanguage === code ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onLanguageChange(code as Language)}
+              className={`h-6 w-full text-xs font-medium transition-all ${
+                currentLanguage === code 
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {shortName}
+            </Button>
+          ))}
+        </div>
       </div>
     );
   }

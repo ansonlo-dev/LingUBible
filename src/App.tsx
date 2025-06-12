@@ -44,9 +44,15 @@ import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 const queryClient = new QueryClient();
 
 // 主題切換函數
-function setTheme(isDark: boolean) {
+function setTheme(mode: 'light' | 'dark' | 'system') {
   const root = document.documentElement;
-  const themeName = isDark ? 'dark' : 'light';
+  
+  // 保存主題設定
+  theme.set(mode);
+  
+  // 獲取實際應該應用的主題
+  const effectiveTheme = theme.getEffectiveTheme();
+  const isDark = effectiveTheme === 'dark';
   
   if (isDark) {
     root.classList.add('dark');
@@ -61,9 +67,6 @@ function setTheme(isDark: boolean) {
     document.body.style.backgroundColor = 'rgb(255, 255, 255)';
     document.body.style.color = 'rgb(0, 0, 0)';
   }
-  
-  // 保存主題設定
-  theme.set(themeName);
 }
 
 // 立即初始化主題，避免首次載入時的顏色問題
@@ -149,13 +152,24 @@ const AppContent = () => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // 強制應用正確的主題，確保與存儲同步
+    // 獲取當前主題模式和實際主題
+    const currentMode = theme.get() || 'system';
     const effectiveTheme = theme.getEffectiveTheme();
     const shouldUseDark = effectiveTheme === 'dark';
     
     // 強制設定主題，確保與 DOM 同步
-    setTheme(shouldUseDark);
+    setTheme(currentMode);
     setIsDark(shouldUseDark);
+    
+    // 監聽系統主題變化（僅當設定為 system 時）
+    const unwatch = theme.watchSystemTheme((systemIsDark) => {
+      const currentStoredMode = theme.get() || 'system';
+      if (currentStoredMode === 'system') {
+        // 重新應用主題以反映系統變化
+        setTheme('system');
+        setIsDark(systemIsDark);
+      }
+    });
     
     // 初始化滑動提示狀態
     const hasUsedSwipe = swipeHintCookie.hasBeenUsed();
@@ -163,14 +177,18 @@ const AppContent = () => {
     setIsInitialized(true);
     
     // 如果顯示滑動提示，4秒後自動隱藏
+    let timer: NodeJS.Timeout | undefined;
     if (!hasUsedSwipe) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setShowSwipeHint(false);
         swipeHintCookie.markAsUsed();
       }, 4000);
-      
-      return () => clearTimeout(timer);
     }
+    
+    return () => {
+      unwatch();
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   // 監聽滾動事件來關閉滑動提示
@@ -246,6 +264,57 @@ const AppContent = () => {
       setIsSidebarCollapsed(sidebarStateCookie.getState());
     }
   }, [isDesktop, isMobileSidebarOpen]);
+
+  // 監聽語言變化事件，並在語言切換後恢復手機版側邊欄狀態
+  useEffect(() => {
+    const handleLanguageChange = (event: CustomEvent) => {
+      console.log('🌐 App: 收到語言變化事件', event.detail);
+      
+             // 使用 setTimeout 確保在語言切換完成後檢查狀態
+       setTimeout(() => {
+         const wasOpen = sessionStorage.getItem('mobileSidebarWasOpen');
+         if (wasOpen === 'true' && isMobile && !isMobileSidebarOpen) {
+           console.log('📱 App: 語言切換後恢復手機版側邊欄開啟狀態');
+           setIsMobileSidebarOpen(true);
+           // 清除標記，避免重複恢復
+           sessionStorage.removeItem('mobileSidebarWasOpen');
+           
+           // 移除可能的自動聚焦，避免首頁項目被意外聚焦
+           setTimeout(() => {
+             if (document.activeElement && document.activeElement !== document.body) {
+               (document.activeElement as HTMLElement).blur();
+               console.log('📱 App: 移除側邊欄重新展開後的自動聚焦');
+             }
+           }, 50);
+         }
+       }, 100); // 短暫延遲確保狀態更新完成
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange as EventListener);
+    };
+  }, [isMobile, isMobileSidebarOpen]);
+
+  // 在組件初始化時，檢查是否需要恢復手機版側邊欄狀態（處理頁面刷新的情況）
+  useEffect(() => {
+    const wasOpen = sessionStorage.getItem('mobileSidebarWasOpen');
+    if (wasOpen === 'true' && isMobile && !isMobileSidebarOpen) {
+      console.log('📱 App: 初始化時恢復手機版側邊欄開啟狀態');
+      setIsMobileSidebarOpen(true);
+      // 清除標記，避免重複恢復
+      sessionStorage.removeItem('mobileSidebarWasOpen');
+      
+      // 移除可能的自動聚焦
+      setTimeout(() => {
+        if (document.activeElement && document.activeElement !== document.body) {
+          (document.activeElement as HTMLElement).blur();
+          console.log('📱 App: 移除初始化恢復後的自動聚焦');
+        }
+      }, 150);
+    }
+  }, [isInitialized]); // 只在初始化完成時執行一次
 
   const toggleSidebar = () => {
     const newCollapsedState = !isSidebarCollapsed;

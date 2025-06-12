@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
 import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useState, useEffect } from 'react';
 
@@ -99,6 +99,22 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
       }
     };
   }, []);
+
+  // 創建一個包裝的語言切換函數，在手機版時不關閉側邊欄
+  const handleLanguageChange = async (newLanguage: Language) => {
+    console.log('🔄 側邊欄: 語言切換到', newLanguage, '手機版側邊欄狀態:', isMobileOpen);
+    
+    // 在語言切換前，如果是手機版且側邊欄開啟，保存狀態
+    if (isMobile && isMobileOpen) {
+      console.log('📱 側邊欄: 保存手機版側邊欄開啟狀態到 sessionStorage');
+      sessionStorage.setItem('mobileSidebarWasOpen', 'true');
+    }
+    
+    // 調用原始的語言切換函數
+    await setLanguage(newLanguage);
+    
+    console.log('✅ 側邊欄: 語言切換完成');
+  };
 
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
   const shouldShowText = !isCollapsed || isMobile;
@@ -197,7 +213,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             <div className="space-y-1">
               {/* 語言切換器 - 始終顯示 */}
               <div className="flex items-center justify-center px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                <LanguageSwitcher onLanguageChange={setLanguage} currentLanguage={language} variant="pills" />
+                <LanguageSwitcher onLanguageChange={handleLanguageChange} currentLanguage={language} variant="pills" />
               </div>
               
               {/* 主題切換 - 始終顯示 */}
@@ -209,7 +225,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             /* 摺疊狀態下的圖標版本 */
             <div className="space-y-1">
               <div className="flex justify-center p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                <LanguageSwitcher onLanguageChange={setLanguage} currentLanguage={language} variant="vertical-pills" />
+                <LanguageSwitcher onLanguageChange={handleLanguageChange} currentLanguage={language} variant="vertical-pills" />
               </div>
               <div className="flex justify-center p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
                 <ThemeToggle variant="button" />

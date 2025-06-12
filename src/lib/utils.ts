@@ -37,18 +37,18 @@ export const cookies = {
 
 // 主題工具函數 - 使用 localStorage 作為主要存儲
 export const theme = {
-  get: (): 'light' | 'dark' | null => {
+  get: (): 'light' | 'dark' | 'system' | null => {
     if (typeof window === 'undefined') return null;
     
     // 優先從 localStorage 讀取
     const stored = localStorage.getItem('theme');
-    if (stored === 'dark' || stored === 'light') {
+    if (stored === 'dark' || stored === 'light' || stored === 'system') {
       return stored;
     }
     
     // 備用：從 cookies 讀取
     const cookieTheme = cookies.get('theme');
-    if (cookieTheme === 'dark' || cookieTheme === 'light') {
+    if (cookieTheme === 'dark' || cookieTheme === 'light' || cookieTheme === 'system') {
       // 同步到 localStorage
       localStorage.setItem('theme', cookieTheme);
       return cookieTheme;
@@ -57,13 +57,12 @@ export const theme = {
     return null;
   },
   
-  set: (value: 'light' | 'dark') => {
+  set: (value: 'light' | 'dark' | 'system') => {
     if (typeof window === 'undefined') return;
     
     // 同時保存到 localStorage 和 cookies
     localStorage.setItem('theme', value);
     cookies.set('theme', value, 365);
-  
   },
   
   getSystemPreference: (): 'light' | 'dark' => {
@@ -73,23 +72,30 @@ export const theme = {
   
   getEffectiveTheme: (): 'light' | 'dark' => {
     const stored = theme.get();
-    if (stored) {
-      return stored;
+    
+    if (stored === 'system' || !stored) {
+      // 如果設定為跟隨系統或沒有設定，返回系統偏好
+      return theme.getSystemPreference();
     }
     
-    // 如果沒有存儲的主題，檢測系統主題並自動保存
-    const systemTheme = theme.getSystemPreference();
-
-    
-    // 自動保存檢測到的系統主題
-    theme.set(systemTheme);
-    
-    return systemTheme;
+    return stored;
   },
 
   // 檢查是否為首次訪問（沒有保存的主題）
   isFirstVisit: (): boolean => {
     if (typeof window === 'undefined') return false;
     return !localStorage.getItem('theme') && !cookies.get('theme');
+  },
+
+  // 監聽系統主題變化
+  watchSystemTheme: (callback: (isDark: boolean) => void) => {
+    if (typeof window === 'undefined') return () => {};
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => callback(e.matches);
+    
+    mediaQuery.addEventListener('change', handler);
+    
+    return () => mediaQuery.removeEventListener('change', handler);
   }
 };

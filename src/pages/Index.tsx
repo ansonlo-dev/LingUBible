@@ -151,10 +151,10 @@ const Index = () => {
             <span className="neon-glow-text">{t('hero.title')}</span>{' '}
             <span className="red-neon-glow-text">LingUBible</span>
           </h1>
-          <h2 className="text-xl md:text-2xl font-bold text-muted-foreground mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-muted-foreground mb-3">
             {t('hero.regBible')}
           </h2>
-          <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-4 max-w-2xl mx-auto">
             {/* 桌面版：一行顯示 */}
             <span className="hidden md:block">
               {t('hero.subtitleDesktop')}
@@ -173,7 +173,7 @@ const Index = () => {
           </p>
           
           {/* Rolling Text Animation */}
-          <div className="text-lg mb-8 max-w-2xl mx-auto flex items-center justify-center">
+          <div className="text-lg mb-6 max-w-2xl mx-auto flex items-center justify-center">
             <span className="text-foreground">{t('hero.comeHereTo')}</span>
             <span>&nbsp;</span>
             <RollingText 
