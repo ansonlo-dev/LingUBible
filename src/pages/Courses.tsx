@@ -1,245 +1,248 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CourseCard } from "@/components/features/reviews/CourseCard";
 import { useLanguage } from '@/contexts/LanguageContext';
-import { BookOpen, Filter, Search, SortAsc } from 'lucide-react';
+import { AdvancedCourseFilters, CourseFilters } from '@/components/features/reviews/AdvancedCourseFilters';
+import { BookOpen, Filter, Search, SortAsc, Hash, BookText, Tag, Building2, Library, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CourseService } from '@/services/api/courseService';
+import { SUBJECT_AREAS, SUBJECT_CODES, extractSubjectCode, getSubjectAreaName } from '@/utils/constants/subjectAreas';
+import type { UGCourse } from '@/types/course';
+import { databases } from '@/lib/appwrite';
+import { Query } from 'appwrite';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Courses = () => {
-  const { t } = useLanguage();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('rating');
-  const [filterDepartment, setFilterDepartment] = useState('all');
+  const { t, language } = useLanguage();
+  const [courses, setCourses] = useState<UGCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - 擴展的課程列表
-  const allCourses = [
-    {
-      title: t('course.introCS'),
-      code: "CS101",
-      lecturer: "Dr. Sarah Johnson",
-      rating: 4.5,
-      reviewCount: 24,
-      studentCount: 156,
-      department: t('department.computerScience'),
-      difficulty: t('difficulty.medium')
-    },
-    {
-      title: t('course.advancedMath'),
-      code: "MATH301",
-      lecturer: "Prof. Michael Chen",
-      rating: 4.2,
-      reviewCount: 18,
-      studentCount: 89,
-      department: t('department.mathematics'),
-      difficulty: t('difficulty.hard')
-    },
-    {
-      title: t('course.englishLit'),
-      code: "ENG201",
-      lecturer: "Dr. Emily Davis",
-      rating: 4.8,
-      reviewCount: 32,
-      studentCount: 203,
-      department: t('department.english'),
-      difficulty: t('difficulty.easy')
-    },
-    {
-      title: "Data Structures",
-      code: "CS201",
-      lecturer: "Prof. Alex Wong",
-      rating: 4.3,
-      reviewCount: 28,
-      studentCount: 142,
-      department: t('department.computerScience'),
-      difficulty: t('difficulty.medium')
-    },
-    {
-      title: "Calculus II",
-      code: "MATH201",
-      lecturer: "Dr. Lisa Zhang",
-      rating: 4.0,
-      reviewCount: 35,
-      studentCount: 178,
-      department: t('department.mathematics'),
-      difficulty: t('difficulty.hard')
-    },
-    {
-      title: "Creative Writing",
-      code: "ENG301",
-      lecturer: "Prof. James Miller",
-      rating: 4.6,
-      reviewCount: 22,
-      studentCount: 95,
-      department: t('department.english'),
-      difficulty: t('difficulty.easy')
-    },
-    {
-      title: "Database Systems",
-      code: "CS301",
-      lecturer: "Dr. Maria Garcia",
-      rating: 4.4,
-      reviewCount: 31,
-      studentCount: 167,
-      department: t('department.computerScience'),
-      difficulty: t('difficulty.medium')
-    },
-    {
-      title: "Statistics",
-      code: "MATH401",
-      lecturer: "Prof. David Kim",
-      rating: 4.1,
-      reviewCount: 26,
-      studentCount: 134,
-      department: t('department.mathematics'),
-      difficulty: t('difficulty.medium')
-    },
-    {
-      title: "Modern Poetry",
-      code: "ENG401",
-      lecturer: "Dr. Sophie Brown",
-      rating: 4.7,
-      reviewCount: 19,
-      studentCount: 87,
-      department: t('department.english'),
-      difficulty: t('difficulty.easy')
+  // 篩選狀態
+  const [filters, setFilters] = useState<CourseFilters>({
+    searchTerm: '',
+    subjectArea: 'all',
+    sortBy: 'code',
+    offered: 'all',
+    quickFilters: {
+      noExam: false,
+      easyGrading: false,
+      lightWorkload: false,
+      englishTaught: false,
+      hasGroupProject: false,
+      noAttendance: false
     }
-  ];
+  });
 
-  // 過濾和排序課程
-  const filteredAndSortedCourses = allCourses
-    .filter(course => {
-      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.lecturer.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDepartment = filterDepartment === 'all' || course.department === filterDepartment;
-      return matchesSearch && matchesDepartment;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'rating':
-          return b.rating - a.rating;
-        case 'reviews':
-          return b.reviewCount - a.reviewCount;
-        case 'students':
-          return b.studentCount - a.studentCount;
+  // 載入課程資料
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await databases.listDocuments(
+          'lingubible',
+          'ug_courses',
+          [
+            Query.equal('isActive', true),
+            Query.limit(100)
+          ]
+        );
+
+        setCourses(response.documents as unknown as UGCourse[]);
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+        setError(t('error.loadingCourses'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  // 獲取可用的學科領域
+  const availableSubjects = useMemo(() => {
+    const subjects = new Set<string>();
+    courses.forEach(course => {
+      if (course.code) {
+        // 提取課程代碼的學科部分（例如：CDS1001 -> CDS）
+        const match = course.code.match(/^([A-Z]+)/);
+        if (match) {
+          subjects.add(match[1]);
+        }
+      }
+    });
+    return Array.from(subjects).sort();
+  }, [courses]);
+
+  // 篩選和排序課程
+  const filteredAndSortedCourses = useMemo(() => {
+    let filtered = [...courses];
+
+    // 搜尋篩選
+    if (filters.searchTerm.trim()) {
+      const searchTerm = filters.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(course => 
+        course.code?.toLowerCase().includes(searchTerm) ||
+        course.title?.toLowerCase().includes(searchTerm) ||
+        course.department?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // 學科領域篩選
+    if (filters.subjectArea !== 'all') {
+      filtered = filtered.filter(course => 
+        course.code?.startsWith(filters.subjectArea)
+      );
+    }
+
+    // 開設狀態篩選
+    if (filters.offered !== 'all') {
+      filtered = filtered.filter(course => course.offered === filters.offered);
+    }
+
+    // 快速篩選（這裡是示例邏輯，實際需要根據課程資料結構調整）
+    if (filters.quickFilters.englishTaught) {
+      // 假設英語授課的課程代碼包含特定模式或有特定標記
+      filtered = filtered.filter(course => 
+        course.title?.includes('English') || 
+        course.description?.includes('English')
+      );
+    }
+
+    // 排序
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
         case 'code':
-          return a.code.localeCompare(b.code);
+          return (a.code || '').localeCompare(b.code || '');
+        case 'title':
+          return (a.title || '').localeCompare(b.title || '');
+        case 'subject':
+          const aSubject = a.code?.match(/^([A-Z]+)/)?.[1] || '';
+          const bSubject = b.code?.match(/^([A-Z]+)/)?.[1] || '';
+          return aSubject.localeCompare(bSubject);
+        case 'department':
+          return (a.department || '').localeCompare(b.department || '');
         default:
           return 0;
       }
     });
 
-  const departments = [
-    { value: 'all', label: t('filter.allDepartments') },
-    { value: t('department.computerScience'), label: t('department.computerScience') },
-    { value: t('department.mathematics'), label: t('department.mathematics') },
-    { value: t('department.english'), label: t('department.english') }
-  ];
+    return filtered;
+  }, [courses, filters]);
 
-  const sortOptions = [
-    { value: 'rating', label: t('sort.byRating') },
-    { value: 'reviews', label: t('sort.byReviews') },
-    { value: 'students', label: t('sort.byStudents') },
-    { value: 'code', label: t('sort.byCourseCode') }
-  ];
+  // 清除所有篩選
+  const handleClearAllFilters = () => {
+    setFilters({
+      searchTerm: '',
+      subjectArea: 'all',
+      sortBy: 'code',
+      offered: 'all',
+      quickFilters: {
+        noExam: false,
+        easyGrading: false,
+        lightWorkload: false,
+        englishTaught: false,
+        hasGroupProject: false,
+        noAttendance: false
+      }
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+              <p className="text-lg text-muted-foreground">{t('loading.courses')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          <Alert variant="destructive" className="max-w-2xl mx-auto">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* 頁面標題 */}
-      <div className="text-center py-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <BookOpen className="h-8 w-8 text-primary" />
-          <h1 className="text-4xl font-bold">{t('pages.courses.title')}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* 頁面標題 */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t('pages.courses.title') || '所有課程'}
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            {t('pages.courses.subtitle')}
+          </p>
         </div>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          {t('pages.courses.subtitle')}
-        </p>
-      </div>
 
-      {/* 搜索和過濾器 */}
-      <div className="bg-card rounded-lg p-6 shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 搜索框 */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('search.coursesPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        {/* 進階篩選組件 */}
+        <AdvancedCourseFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          availableSubjects={availableSubjects}
+          onClearAll={handleClearAllFilters}
+        />
+
+        {/* 結果統計 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <BookOpen className="h-5 w-5" />
+            <span>
+              {t('pages.courses.showingResults', { 
+                count: filteredAndSortedCourses.length, 
+                total: courses.length 
+              })}
+            </span>
           </div>
-
-          {/* 部門過濾器 */}
-          <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-            <SelectTrigger>
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder={t('filter.selectDepartment')} />
-            </SelectTrigger>
-            <SelectContent>
-              {departments.map((dept) => (
-                <SelectItem key={dept.value} value={dept.value}>
-                  {dept.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* 排序選項 */}
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger>
-              <SortAsc className="h-4 w-4 mr-2" />
-              <SelectValue placeholder={t('sort.selectSort')} />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
-      </div>
 
-      {/* 結果統計 */}
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground">
-          {t('pages.courses.showingResults', { 
-            count: filteredAndSortedCourses.length,
-            total: allCourses.length 
-          })}
-        </p>
-      </div>
-
-      {/* 課程列表 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAndSortedCourses.map((course, index) => (
-          <div key={course.code} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-            <CourseCard {...course} />
+        {/* 課程卡片網格 */}
+        {filteredAndSortedCourses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredAndSortedCourses.map((course) => (
+              <CourseCard
+                key={course.$id}
+                title={course.title}
+                code={course.code}
+                rating={4.2} // 示例評分，實際需要從評價資料計算
+                reviewCount={15} // 示例評價數，實際需要從評價資料計算
+                studentCount={120} // 示例學生數，實際需要從註冊資料計算
+                department={course.department}
+                offered={course.offered || 'Yes'}
+              />
+            ))}
           </div>
-        ))}
+        ) : (
+          <div className="text-center py-16 space-y-4">
+            <BookOpen className="h-16 w-16 mx-auto text-muted-foreground/50" />
+            <h3 className="text-xl font-semibold text-muted-foreground">
+              {t('pages.courses.noResults')}
+            </h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              {t('pages.courses.noResultsDesc')}
+            </p>
+          </div>
+        )}
       </div>
-
-      {/* 無結果提示 */}
-      {filteredAndSortedCourses.length === 0 && (
-        <div className="text-center py-12">
-          <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">{t('pages.courses.noResults')}</h3>
-          <p className="text-muted-foreground mb-4">{t('pages.courses.noResultsDesc')}</p>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setSearchTerm('');
-              setFilterDepartment('all');
-              setSortBy('rating');
-            }}
-          >
-            {t('pages.courses.clearFilters')}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

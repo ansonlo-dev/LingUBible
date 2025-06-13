@@ -355,9 +355,9 @@ export default {
     // =============================================================================
 
     'pages.courses.title': '所有課程',
-    'pages.courses.subtitle': '探索所有可用課程，查看評價和評分',
-    'pages.courses.showingResults': '顯示 {count} / {total} 門課程',
-    'pages.courses.noResults': '找不到課程',
+    'pages.courses.subtitle': '探索嶺南大學的所有課程，查看評價和詳細資訊',
+    'pages.courses.showingResults': '顯示 {count} 個結果（共 {total} 個課程）',
+    'pages.courses.noResults': '找不到符合條件的課程',
     'pages.courses.noResultsDesc': '請嘗試調整搜索條件或篩選器',
     'pages.courses.clearFilters': '清除所有篩選',
     'card.reviews': '評價',
@@ -394,16 +394,39 @@ export default {
     // 4. SEARCH & FILTERING - 搜索與過濾
     // =============================================================================
 
-    'search.placeholder': '搜尋課程、講師...',
-    'search.coursesPlaceholder': '按課程名稱、代碼或講師搜尋...',
-    'search.search': '搜尋',
-    'filter.allDepartments': '所有學系',
-    'filter.selectDepartment': '選擇學系',
-    'sort.byRating': '按評分排序',
-    'sort.byReviews': '按評價數排序',
-    'sort.byStudents': '按學生數排序',
-    'sort.byCourseCode': '按課程代碼排序',
-    'sort.selectSort': '排序方式',
+    'search.placeholder': '搜尋課程代碼、課程名稱或學系...',
+    'search.smartSearch': '智能搜尋',
+    'search.showingResults': '顯示 {count} 個結果（共 {total} 個課程）',
+    'search.noResults': '找不到符合條件的課程',
+    'search.noResultsDesc': '請嘗試不同的搜尋條件或清除篩選器',
+    
+    // Advanced Filters
+    'filters.advanced': '進階篩選',
+    'filters.professional': '專業篩選',
+    'filters.professionalTitle': '專業篩選選項',
+    'filters.clearAll': '清除全部',
+    'filters.applied': '已套用篩選',
+    'filters.quickFilters': '快速篩選',
+    'filters.offeredStatus': '開設狀態',
+    'filters.allCourses': '所有課程',
+    'filters.comingSoon': '進階篩選功能即將推出',
+    'filters.comingSoonDesc': '包括學分範圍、每週時數、教學語言等更多選項',
+    'filters.noExam': '無考試',
+    'filters.easyGrading': '容易給分',
+    'filters.lightWorkload': '工作量輕',
+    'filters.englishTaught': '英語授課',
+    'filters.hasGroupProject': '有小組作業',
+    'filters.noAttendance': '無出席要求',
+    'filters.credits': '學分',
+    'filters.hoursPerWeek': '每週時數',
+    'filters.recommendedYear': '推薦修讀年級',
+    'filters.year': '年級',
+    'filters.teachingLanguage': '教學語言',
+    'filters.chinese': '中文',
+    'filters.english': '英文',
+    'filters.bilingual': '雙語',
+    'filters.assessmentMethods': '評估方式',
+    'filters.courseFeatures': '課程特色',
 
     // =============================================================================
     // 5. UI ELEMENTS - 用戶界面元素
@@ -731,6 +754,8 @@ export default {
     'error.emailRequired': '缺少郵件地址',
     'error.emailServiceConfig': '郵件服務配置錯誤',
     'error.missingParameters': '缺少必要參數',
+    'error.loadingCourses': '載入課程資料時發生錯誤',
+    'loading.courses': '載入課程資料中...',
     '404.title': '糟糕！找不到頁面',
     '404.description': '您尋找的頁面可能已被移除、更名或暫時無法使用。',
     '404.path': '請求的路徑',
@@ -797,4 +822,7 @@ export default {
     'common.clear': '清除',
     'common.refresh': '重新整理',
     'common.words': '字',
+
+    // Back to Top
+    'backToTop.label': '回到頂部',
 };

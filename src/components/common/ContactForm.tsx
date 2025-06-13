@@ -207,7 +207,7 @@ export function ContactForm() {
   };
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <MessageCircle className="h-5 w-5 text-green-600" />

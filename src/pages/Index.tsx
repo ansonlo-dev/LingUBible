@@ -15,6 +15,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
 import { Link, useNavigate } from 'react-router-dom';
+import { CourseService } from '@/services/api/courseService';
+import type { UGCourse, LecturerWithStats } from '@/types/course';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -24,6 +26,8 @@ const Index = () => {
   const [showHeavenTransition, setShowHeavenTransition] = useState(false);
   const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | undefined>();
   const { stats: registeredUsersStats, loading: registeredUsersLoading } = useRegisteredUsers();
+  const [courses, setCourses] = useState<UGCourse[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -38,69 +42,62 @@ const Index = () => {
     };
   }, []);
 
-  // Mock data
-  const courses = [
-    {
-      title: t('course.introCS'),
-      code: "CS101",
-      lecturer: "Dr. Sarah Johnson",
-      rating: 4.5,
-      reviewCount: 24,
-      studentCount: 156,
-      department: t('department.computerScience'),
-      difficulty: t('difficulty.medium')
-    },
-    {
-      title: t('course.advancedMath'),
-      code: "MATH301",
-      lecturer: "Prof. Michael Chen",
-      rating: 4.2,
-      reviewCount: 18,
-      studentCount: 89,
-      department: t('department.mathematics'),
-      difficulty: t('difficulty.hard')
-    },
-    {
-      title: t('course.englishLit'),
-      code: "ENG201",
-      lecturer: "Dr. Emily Davis",
-      rating: 4.8,
-      reviewCount: 32,
-      studentCount: 203,
-      department: t('department.english'),
-      difficulty: t('difficulty.easy')
-    }
-  ];
+  // 載入真實課程數據
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setLoading(true);
+        const allCourses = await CourseService.getAllCourses();
+        // 只顯示前3個課程作為精選課程
+        setCourses(allCourses.slice(0, 3));
+      } catch (error) {
+        console.error('Error loading courses:', error);
+        // 如果載入失敗，使用備用的模擬數據
+        setCourses([
+          {
+            $id: 'cs101',
+            code: 'CS101',
+            title: t('course.introCS'),
+            description: '本課程為計算機科學的入門課程',
+            credits: 3,
+            department: t('department.computerScience'),
+            offered: 'Yes' as const,
+            prerequisites: [],
+            isActive: true,
+            $createdAt: '',
+            $updatedAt: ''
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const lecturers = [
-    {
-      name: "Sarah Johnson",
-      department: t('department.computerScience'),
-      title: t('card.prof'),
-      rating: 4.6,
-      reviewCount: 45,
-      courseCount: 3,
-      specialties: [t('specialty.programming'), t('specialty.dataStructures'), t('specialty.algorithms'), t('specialty.machineLearning')]
-    },
-    {
-      name: "Michael Chen",
-      department: t('department.mathematics'),
-      title: t('card.prof'),
-      rating: 4.3,
-      reviewCount: 28,
-      courseCount: 4,
-      specialties: [t('specialty.calculus'), t('specialty.linearAlgebra'), t('specialty.statistics')]
-    },
-    {
-      name: "Emily Davis",
-      department: t('department.english'),
-      title: t('card.prof'),
-      rating: 4.7,
-      reviewCount: 52,
-      courseCount: 5,
-      specialties: [t('specialty.literature'), t('specialty.creativeWriting'), t('specialty.poetry'), t('specialty.drama')]
-    }
-  ];
+    loadCourses();
+  }, [t]);
+
+  // 載入真實講師數據
+  useEffect(() => {
+    const loadLecturers = async () => {
+      try {
+        setLecturersLoading(true);
+        const allLecturers = await CourseService.getAllLecturers();
+        // 只顯示前3個講師作為頂級講師
+        setLecturers(allLecturers.slice(0, 3));
+      } catch (error) {
+        console.error('Error loading lecturers:', error);
+        // 如果載入失敗，設置為空數組
+        setLecturers([]);
+      } finally {
+        setLecturersLoading(false);
+      }
+    };
+
+    loadLecturers();
+  }, []);
+
+  const [lecturers, setLecturers] = useState<LecturerWithStats[]>([]);
+  const [lecturersLoading, setLecturersLoading] = useState(true);
 
   // Get the actions as an array directly from the translation
   const actions = t('hero.actions');
@@ -182,6 +179,13 @@ const Index = () => {
             />
           </div>
           
+          {/* SEO 增強：添加隱藏的關鍵字內容 */}
+          <div className="sr-only">
+            <h2>嶺南大學課程評價平台 - Reg科聖經</h2>
+            <p>LingUBible 是專為嶺南大學學生設計的課程和講師評價平台。在這裡你可以查看真實的課程評價、講師評分，找到最適合的選修課和必修課。我們的平台幫助嶺大學生做出明智的選課決定，是你的選課神器和學習夥伴。</p>
+            <p>功能包括：課程評論、教授評價、學生心得分享、選課指南、課程推薦等。無論你是新生還是高年級學生，Reg科聖經都能為你的學習之路提供寶貴的參考。</p>
+          </div>
+          
           <div className="relative z-50" style={{ zIndex: 9999 }}>
             <WingedButton 
               size="lg" 
@@ -234,19 +238,25 @@ const Index = () => {
         {/* Content Tabs */}
         <Tabs defaultValue="courses" className="space-y-6 relative z-20" data-section="courses">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <TabsList className="grid grid-cols-2 w-full sm:w-auto min-w-0">
-              <TabsTrigger value="courses" className="flex items-center gap-2 min-w-0">
-                <BookOpen className="h-4 w-4 flex-shrink-0" />
+            <TabsList className="grid grid-cols-2 w-full sm:w-auto min-w-0 bg-muted/50 backdrop-blur-sm">
+              <TabsTrigger 
+                value="courses" 
+                className="flex items-center gap-2 min-w-0 hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+              >
+                <BookOpen className="h-4 w-4 flex-shrink-0 transition-colors duration-200" />
                 <span className="truncate">{t('tabs.popularCourses')}</span>
               </TabsTrigger>
-              <TabsTrigger value="lecturers" className="flex items-center gap-2 min-w-0">
-                <Users className="h-4 w-4 flex-shrink-0" />
+              <TabsTrigger 
+                value="lecturers" 
+                className="flex items-center gap-2 min-w-0 hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+              >
+                <Users className="h-4 w-4 flex-shrink-0 transition-colors duration-200" />
                 <span className="truncate">{t('tabs.topLecturers')}</span>
               </TabsTrigger>
             </TabsList>
             <Button 
               variant="outline" 
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto hover:border-red-500 dark:hover:border-red-500 transition-all duration-200"
               onClick={() => navigate('/courses')}
             >
               {t('button.viewAll')}
@@ -255,21 +265,47 @@ const Index = () => {
 
           <TabsContent value="courses" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course, index) => (
-                <div key={course.code} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <CourseCard {...course} />
-                </div>
-              ))}
+              {loading ? (
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64"></div>
+                  </div>
+                ))
+              ) : (
+                                 courses.map((course, index) => (
+                   <div key={course.$id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                     <CourseCard
+                       title={course.title}
+                       code={course.code}
+                       rating={4.5}
+                       reviewCount={24}
+                       studentCount={156}
+                       department={course.department}
+                       offered={course.offered || 'Yes'}
+                     />
+                   </div>
+                 ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="lecturers" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lecturers.map((lecturer, index) => (
-                <div key={lecturer.name} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <LecturerCard {...lecturer} />
-                </div>
-              ))}
+              {lecturersLoading ? (
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64"></div>
+                  </div>
+                ))
+              ) : (
+                lecturers.map((lecturer, index) => (
+                  <div key={lecturer.$id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <LecturerCard 
+                      lecturer={lecturer}
+                    />
+                  </div>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>

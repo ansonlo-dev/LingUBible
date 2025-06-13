@@ -26,7 +26,7 @@ export default function Privacy() {
         {/* Privacy Sections */}
         <div className="space-y-6">
           {/* 1. Data Collection */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Server className="h-5 w-5 text-blue-600" />
@@ -82,7 +82,7 @@ export default function Privacy() {
           </Card>
 
           {/* 2. Data Security */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-red-600" />
@@ -104,7 +104,7 @@ export default function Privacy() {
           </Card>
 
           {/* 3. Anonymity Protection */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-green-600" />
@@ -152,7 +152,7 @@ export default function Privacy() {
           </Card>
 
           {/* 4. Data Retention */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Timer className="h-5 w-5 text-orange-600" />
@@ -184,7 +184,7 @@ export default function Privacy() {
           </Card>
 
           {/* 5. Cookie Usage */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-yellow-600" />
@@ -199,7 +199,7 @@ export default function Privacy() {
           </Card>
 
           {/* 6. User Rights */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Scale className="h-5 w-5 text-indigo-600" />
@@ -221,7 +221,7 @@ export default function Privacy() {
           </Card>
 
           {/* 7. Policy Changes */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ScrollText className="h-5 w-5 text-teal-600" />
@@ -236,7 +236,7 @@ export default function Privacy() {
           </Card>
 
           {/* 8. Contact Us */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-pink-600" />
@@ -251,7 +251,7 @@ export default function Privacy() {
           </Card>
 
           {/* 9. reCAPTCHA Notice */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-purple-600" />

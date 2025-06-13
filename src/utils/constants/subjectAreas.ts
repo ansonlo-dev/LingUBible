@@ -1,0 +1,270 @@
+// 嶺南大學學科領域代碼和名稱對照表
+export const SUBJECT_AREAS = {
+  en: {
+    ACT: 'Accounting',
+    ADA: 'Animation and Digital Arts',
+    ARS: 'Arts',
+    BAI: 'Business Analytics and Innovation',
+    BUS: 'General Business',
+    CCC: 'Common Core',
+    CDS: 'Computing and Data Sciences',
+    CHI: 'Chinese',
+    CLA: 'Creativity and Innovation',
+    CLB: 'Humanities and the Arts',
+    CLC: 'Management and Society',
+    CLD: 'Science, Technology, Mathematics and Society',
+    CLE: 'Values, Cultures and Societies',
+    CMI: 'Creative Media Industries',
+    CRE: 'Creativity',
+    CUS: 'Cultural Studies',
+    ECO: 'Economics',
+    ENG: 'English',
+    FIN: 'Finance',
+    FRE: 'French',
+    FVA: 'Film and Visual Arts',
+    GDS: 'Global Development and Sustainability',
+    GER: 'German',
+    GLA: 'Global Liberal Arts',
+    GOV: 'Government and International Affairs',
+    HRM: 'Human Resource Management',
+    HSM: 'Health and Social Services Management',
+    HST: 'History',
+    ISM: 'Information Systems',
+    JAP: 'Japanese',
+    KOR: 'Korean',
+    LCC: 'Language and Communication - Chinese',
+    LCE: 'Language and Communication - English',
+    LUE: 'Lingnan University English',
+    MGT: 'Management',
+    MKT: 'Marketing',
+    MPA: 'Music and Performing Arts',
+    ORM: 'Operations and Risk Management',
+    PAI: 'Philosophy and Artificial Intelligence',
+    PHI: 'Philosophy',
+    PMS: 'Public Management and Smart Governance',
+    POL: 'Political Science',
+    PSY: 'Psychology',
+    RIM: 'Risk and Insurance Management',
+    RUS: 'Russian',
+    SCE: 'Sports Coaching and Event Management',
+    SCI: 'Science',
+    SDA: 'Social Data Science',
+    SLP: 'Service Learning Programmes',
+    SOC: 'Sociology',
+    SPA: 'Spanish',
+    SSC: 'Social Sciences',
+    TRA: 'Translation',
+    VIS: 'Visual Studies',
+    MGSL: 'Service Leadership'
+  },
+  'zh-TW': {
+    ACT: '會計學',
+    ADA: '動畫與數位藝術',
+    ARS: '藝術',
+    BAI: '商業分析與創新',
+    BUS: '一般商業',
+    CCC: '共同核心',
+    CDS: '計算與數據科學',
+    CHI: '中文',
+    CLA: '創意與創新',
+    CLB: '人文與藝術',
+    CLC: '管理與社會',
+    CLD: '科學、技術、數學與社會',
+    CLE: '價值觀、文化與社會',
+    CMI: '創意媒體產業',
+    CRE: '創意',
+    CUS: '文化研究',
+    ECO: '經濟學',
+    ENG: '英文',
+    FIN: '金融',
+    FRE: '法文',
+    FVA: '電影與視覺藝術',
+    GDS: '全球發展與可持續性',
+    GER: '德文',
+    GLA: '全球博雅教育',
+    GOV: '政府與國際事務',
+    HRM: '人力資源管理',
+    HSM: '健康與社會服務管理',
+    HST: '歷史',
+    ISM: '資訊系統',
+    JAP: '日文',
+    KOR: '韓文',
+    LCC: '語言與傳播 - 中文',
+    LCE: '語言與傳播 - 英文',
+    LUE: '嶺南大學英文',
+    MGT: '管理學',
+    MKT: '市場學',
+    MPA: '音樂與表演藝術',
+    ORM: '營運與風險管理',
+    PAI: '哲學與人工智能',
+    PHI: '哲學',
+    PMS: '公共管理與智慧治理',
+    POL: '政治學',
+    PSY: '心理學',
+    RIM: '風險與保險管理',
+    RUS: '俄文',
+    SCE: '運動教練與活動管理',
+    SCI: '科學',
+    SDA: '社會數據科學',
+    SLP: '服務研習課程',
+    SOC: '社會學',
+    SPA: '西班牙文',
+    SSC: '社會科學',
+    TRA: '翻譯',
+    VIS: '視覺研究',
+    MGSL: '服務領導'
+  },
+  'zh-CN': {
+    ACT: '会计学',
+    ADA: '动画与数字艺术',
+    ARS: '艺术',
+    BAI: '商业分析与创新',
+    BUS: '一般商业',
+    CCC: '共同核心',
+    CDS: '计算与数据科学',
+    CHI: '中文',
+    CLA: '创意与创新',
+    CLB: '人文与艺术',
+    CLC: '管理与社会',
+    CLD: '科学、技术、数学与社会',
+    CLE: '价值观、文化与社会',
+    CMI: '创意媒体产业',
+    CRE: '创意',
+    CUS: '文化研究',
+    ECO: '经济学',
+    ENG: '英文',
+    FIN: '金融',
+    FRE: '法文',
+    FVA: '电影与视觉艺术',
+    GDS: '全球发展与可持续性',
+    GER: '德文',
+    GLA: '全球博雅教育',
+    GOV: '政府与国际事务',
+    HRM: '人力资源管理',
+    HSM: '健康与社会服务管理',
+    HST: '历史',
+    ISM: '信息系统',
+    JAP: '日文',
+    KOR: '韩文',
+    LCC: '语言与传播 - 中文',
+    LCE: '语言与传播 - 英文',
+    LUE: '岭南大学英文',
+    MGT: '管理学',
+    MKT: '市场学',
+    MPA: '音乐与表演艺术',
+    ORM: '运营与风险管理',
+    PAI: '哲学与人工智能',
+    PHI: '哲学',
+    PMS: '公共管理与智慧治理',
+    POL: '政治学',
+    PSY: '心理学',
+    RIM: '风险与保险管理',
+    RUS: '俄文',
+    SCE: '运动教练与活动管理',
+    SCI: '科学',
+    SDA: '社会数据科学',
+    SLP: '服务研习课程',
+    SOC: '社会学',
+    SPA: '西班牙文',
+    SSC: '社会科学',
+    TRA: '翻译',
+    VIS: '视觉研究',
+    MGSL: '服务领导'
+  }
+} as const;
+
+// 部門翻譯
+export const DEPARTMENTS = {
+  en: {
+    '資訊工程學系': 'Department of Computer Science and Engineering',
+    '數學系': 'Department of Mathematics',
+    '英文系': 'Department of English',
+    '物理系': 'Department of Physics',
+    '經濟學系': 'Department of Economics',
+    '會計學系': 'Department of Accountancy',
+    '工商管理學系': 'Department of Management',
+    '市場及國際企業學系': 'Department of Marketing and International Business',
+    '金融及保險學系': 'Department of Finance and Insurance',
+    '中文系': 'Department of Chinese',
+    '文化研究系': 'Department of Cultural Studies',
+    '歷史系': 'Department of History',
+    '哲學系': 'Department of Philosophy',
+    '翻譯學系': 'Department of Translation',
+    '視覺研究系': 'Department of Visual Studies',
+    '政治學系': 'Department of Political Science',
+    '社會學及社會政策系': 'Department of Sociology and Social Policy',
+    '心理學系': 'Department of Psychology'
+  },
+  'zh-TW': {
+    '資訊工程學系': '資訊工程學系',
+    '數學系': '數學系',
+    '英文系': '英文系',
+    '物理系': '物理系',
+    '經濟學系': '經濟學系',
+    '會計學系': '會計學系',
+    '工商管理學系': '工商管理學系',
+    '市場及國際企業學系': '市場及國際企業學系',
+    '金融及保險學系': '金融及保險學系',
+    '中文系': '中文系',
+    '文化研究系': '文化研究系',
+    '歷史系': '歷史系',
+    '哲學系': '哲學系',
+    '翻譯學系': '翻譯學系',
+    '視覺研究系': '視覺研究系',
+    '政治學系': '政治學系',
+    '社會學及社會政策系': '社會學及社會政策系',
+    '心理學系': '心理學系'
+  },
+  'zh-CN': {
+    '資訊工程學系': '信息工程学系',
+    '數學系': '数学系',
+    '英文系': '英文系',
+    '物理系': '物理系',
+    '經濟學系': '经济学系',
+    '會計學系': '会计学系',
+    '工商管理學系': '工商管理学系',
+    '市場及國際企業學系': '市场及国际企业学系',
+    '金融及保險學系': '金融及保险学系',
+    '中文系': '中文系',
+    '文化研究系': '文化研究系',
+    '歷史系': '历史系',
+    '哲學系': '哲学系',
+    '翻譯學系': '翻译学系',
+    '視覺研究系': '视觉研究系',
+    '政治學系': '政治学系',
+    '社會學及社會政策系': '社会学及社会政策系',
+    '心理學系': '心理学系'
+  }
+} as const;
+
+// 學科領域代碼數組
+export const SUBJECT_CODES = Object.keys(SUBJECT_AREAS.en) as Array<keyof typeof SUBJECT_AREAS.en>;
+
+// 部門列表
+export const DEPARTMENT_KEYS = Object.keys(DEPARTMENTS['zh-TW']);
+
+// 獲取學科領域名稱
+export const getSubjectAreaName = (code: string, language: 'en' | 'zh-TW' | 'zh-CN' = 'en'): string => {
+  return SUBJECT_AREAS[language][code as keyof typeof SUBJECT_AREAS.en] || code;
+};
+
+// 獲取部門名稱
+export const getDepartmentName = (department: string, language: 'en' | 'zh-TW' | 'zh-CN' = 'en'): string => {
+  return DEPARTMENTS[language][department as keyof typeof DEPARTMENTS.en] || department;
+};
+
+// 從課程代碼中提取學科領域代碼
+export const extractSubjectCode = (courseCode: string): string => {
+  const match = courseCode.match(/^([A-Z]{2,4})\d+$/);
+  return match ? match[1] : '';
+};
+
+// 驗證課程代碼格式 (3-4個字母 + 4個數字)
+export const isValidCourseCode = (courseCode: string): boolean => {
+  return /^[A-Z]{2,4}\d{4}$/.test(courseCode);
+};
+
+// 生成課程代碼
+export const generateCourseCode = (subjectCode: string, number: number): string => {
+  return `${subjectCode}${number.toString().padStart(4, '0')}`;
+}; 

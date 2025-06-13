@@ -472,9 +472,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
     letter-spacing: 0.025em;
   }
 
-  /* 課程卡片樣式 - 淺色模式使用純白背景 */
+  /* 課程卡片樣式 - 淺色模式使用淺灰背景 */
   .course-card {
-    background: #ffffff !important;
+    background: #f9fafb !important;
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 16px;
     box-shadow: 
@@ -487,7 +487,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   .course-card:hover {
-    background: #ffffff !important;
+    background: #f3f4f6 !important;
     border: 1px solid rgba(0, 0, 0, 0.2) !important;
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.15),
@@ -504,6 +504,45 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   .dark .course-card:hover {
+    background: rgb(var(--card)) !important;
+    box-shadow: 
+      0 8px 24px rgba(0, 0, 0, 0.25),
+      0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: rgba(var(--primary), 0.3);
+  }
+
+  /* 講師卡片樣式 - 與課程卡片完全一致 */
+  .lecturer-card {
+    background: #f9fafb !important;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.08),
+      0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    opacity: 1;
+  }
+
+  .lecturer-card:hover {
+    background: #f3f4f6 !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .dark .lecturer-card {
+    background: rgb(var(--card)) !important;
+    border: 1px solid rgb(var(--border));
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .lecturer-card:hover {
     background: rgb(var(--card)) !important;
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.25),
@@ -1081,9 +1120,33 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .dark .course-card .inline-flex.items-center.justify-center.border {
     color: rgb(var(--foreground)) !important;
   }
+
+  /* 講師卡片按鈕樣式 - 與課程卡片一致 */
+  .lecturer-card button[data-variant="outline"],
+  .lecturer-card .inline-flex.items-center.justify-center.border {
+    color: rgb(var(--foreground)) !important;
+  }
+  
+  .dark .lecturer-card button[data-variant="outline"],
+  .dark .lecturer-card .inline-flex.items-center.justify-center.border {
+    color: rgb(var(--foreground)) !important;
+  }
   
   /* 確保所有卡片在亮色主題下都有不透明背景 */
   .course-card,
+  .lecturer-card {
+    background-color: #f9fafb !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .course-card:hover,
+  .lecturer-card:hover {
+    background-color: #f3f4f6 !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  }
+  
   .stats-card,
   .glass-card,
   [data-card="true"],
@@ -1093,7 +1156,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
     border: 1px solid rgba(0, 0, 0, 0.15) !important;
   }
   
-  .course-card:hover,
   .stats-card:hover,
   .glass-card:hover,
   [data-card="true"]:hover,
@@ -1105,6 +1167,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   
   /* 暗色主題下保持原有樣式 */
   .dark .course-card,
+  .dark .lecturer-card,
   .dark .stats-card,
   .dark .glass-card,
   .dark [data-card="true"],
@@ -1114,6 +1177,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   .dark .course-card:hover,
+  .dark .lecturer-card:hover,
   .dark .stats-card:hover,
   .dark .glass-card:hover,
   .dark [data-card="true"]:hover,

@@ -5,6 +5,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { CourseService } from '@/services/api/courseService';
+import type { UGCourse, LecturerWithStats } from '@/types/course';
 
 interface SearchDropdownProps {
   isOpen: boolean;
@@ -19,6 +21,9 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   const [showResults, setShowResults] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // 追蹤組件是否已掛載
+  const [courses, setCourses] = useState<UGCourse[]>([]);
+  const [lecturers, setLecturers] = useState<LecturerWithStats[]>([]);
+  const [loading, setLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const blurTimeoutRef = useRef<number | null>(null);
@@ -33,50 +38,98 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   // 檢測操作系統以顯示正確的快捷鍵提示
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
-  // Mock search results data
-  const searchResults = [
-    {
-      category: t('nav.courses'),
-              icon: BookOpenIcon,
-      items: [
-        { title: t('course.introCS'), subtitle: 'CS101 - Dr. Sarah Johnson', href: '#' },
-        { title: t('course.advancedMath'), subtitle: 'MATH301 - Prof. Michael Chen', href: '#' },
-        { title: t('course.englishLit'), subtitle: 'ENG201 - Dr. Emily Davis', href: '#' },
-      ]
-    },
-    {
-      category: t('nav.lecturers'),
-      icon: Users,
-      items: [
-        { title: 'Dr. Sarah Johnson', subtitle: t('department.computerScience'), href: '#' },
-        { title: 'Prof. Michael Chen', subtitle: t('department.mathematics'), href: '#' },
-        { title: 'Dr. Emily Davis', subtitle: t('department.english'), href: '#' },
-      ]
-    },
-    {
-      category: '熱門搜尋',
-      icon: TrendingUp,
-      items: [
-        { title: '計算機科學導論', subtitle: '最受歡迎的入門課程', href: '#' },
-        { title: '高等數學', subtitle: '挑戰性課程', href: '#' },
-        { title: '英國文學', subtitle: '文學愛好者首選', href: '#' },
-      ]
-    },
-    {
-      category: '快速操作',
+  // 載入真實數據
+  useEffect(() => {
+    if (isOpen && courses.length === 0 && lecturers.length === 0) {
+      const loadData = async () => {
+        try {
+          setLoading(true);
+          const [coursesData, lecturersData] = await Promise.all([
+            CourseService.getAllCourses(),
+            CourseService.getAllLecturers()
+          ]);
+          setCourses(coursesData);
+          setLecturers(lecturersData);
+        } catch (error) {
+          console.error('Error loading search data:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadData();
+    }
+  }, [isOpen, courses.length, lecturers.length]);
+
+  // 動態生成搜索結果
+  const getSearchResults = () => {
+    const results = [];
+
+    // 課程結果
+    const courseItems = courses.slice(0, 3).map(course => ({
+      title: course.title,
+      subtitle: `${course.code} - ${course.department}`,
+      href: `/courses/${course.code}`
+    }));
+
+    if (courseItems.length > 0) {
+      results.push({
+        category: t('nav.courses'),
+        icon: BookOpenIcon,
+        items: courseItems
+      });
+    }
+
+    // 講師結果
+    const lecturerItems = lecturers.slice(0, 3).map(lecturer => ({
+      title: `${lecturer.title} ${lecturer.name}`,
+      subtitle: lecturer.department,
+      href: `/lecturers/${lecturer.$id}`
+    }));
+
+    if (lecturerItems.length > 0) {
+      results.push({
+        category: t('nav.lecturers'),
+        icon: Users,
+        items: lecturerItems
+      });
+    }
+
+    // 熱門搜尋（基於真實數據）
+    const popularItems = courses
+      .slice(0, 3)
+      .map(course => ({
+        title: course.title,
+        subtitle: t('search.popularCourse'),
+        href: `/courses/${course.code}`
+      }));
+
+    if (popularItems.length > 0) {
+      results.push({
+        category: t('search.popularSearches'),
+        icon: TrendingUp,
+        items: popularItems
+      });
+    }
+
+    // 快速操作
+    results.push({
+      category: t('search.quickActions'),
       icon: Hash,
       items: [
-        { title: '撰寫評論', subtitle: '分享您的課程體驗', href: '#' },
-        { title: '查看我的評論', subtitle: '管理您的評論', href: '#' },
-        { title: '瀏覽熱門課程', subtitle: '發現受歡迎的課程', href: '#' },
+        { title: t('search.writeReview'), subtitle: t('search.shareExperience'), href: '/courses' },
+        { title: t('search.viewMyReviews'), subtitle: t('search.manageReviews'), href: '/profile' },
+        { title: t('search.browsePopular'), subtitle: t('search.discoverCourses'), href: '/courses' },
       ]
-    }
-  ];
+    });
+
+    return results;
+  };
 
   // Filter results based on search query
   const filteredResults = searchQuery.trim() === '' 
-    ? searchResults 
-    : searchResults.map(group => ({
+    ? getSearchResults()
+    : getSearchResults().map(group => ({
         ...group,
         items: group.items.filter(item => 
           item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -13,9 +13,12 @@ import { DocumentHead } from "@/components/common/DocumentHead";
 import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
 import { SEOTester } from "@/components/dev/SEOTester";
 import { BetaNotice } from "@/components/common/BetaNotice";
+import { BackToTop } from "@/components/ui/back-to-top";
 
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
+import Lecturers from "./pages/Lecturers";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -536,6 +539,8 @@ const RouterContent = ({
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/courses" element={<Courses />} />
+                    <Route path="/courses/:courseCode" element={<CourseDetail />} />
+                    <Route path="/lecturers" element={<Lecturers />} />
                     <Route path="/settings" element={<UserSettings />} />
 
                 <Route path="/terms" element={<Terms />} />
@@ -594,6 +599,7 @@ const App = () => {
           <RecaptchaProvider>
             <AuthProvider>
               <AppContent />
+              <BackToTop />
               <Toaster />
               <CookieConsent />
               {/* <DevModeIndicator /> */}

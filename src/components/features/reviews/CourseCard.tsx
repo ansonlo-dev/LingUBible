@@ -3,30 +3,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 interface CourseCardProps {
   title: string;
   code: string;
-  lecturer: string;
   rating: number;
   reviewCount: number;
   studentCount: number;
   department: string;
-  difficulty: string;
+  offered: 'Yes' | 'No';
 }
 
 export function CourseCard({
   title,
   code,
-  lecturer,
   rating,
   reviewCount,
   studentCount,
   department,
-  difficulty
+  offered
 }: CourseCardProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -46,17 +46,16 @@ export function CourseCard({
     return () => observer.disconnect();
   }, []);
   
-  const getDifficultyColor = (diff: string) => {
-    const easyText = t('difficulty.easy');
-    const mediumText = t('difficulty.medium');
-    const hardText = t('difficulty.hard');
-    
-    switch (diff) {
-      case easyText: return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case mediumText: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case hardText: return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+  const getOfferedColor = (isOffered: 'Yes' | 'No') => {
+    if (isOffered === 'Yes') {
+      return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+    } else {
+      return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
     }
+  };
+
+  const getOfferedText = (isOffered: 'Yes' | 'No') => {
+    return isOffered === 'Yes' ? t('offered.yes') : t('offered.no');
   };
 
   return (
@@ -68,10 +67,9 @@ export function CourseCard({
               {title}
             </CardTitle>
             <p className="text-sm text-gray-600 dark:text-muted-foreground font-mono">{code}</p>
-            <p className="text-sm text-gray-600 dark:text-muted-foreground mt-1 truncate">{t('card.prof')} {lecturer}</p>
           </div>
-          <Badge variant="outline" className={`${getDifficultyColor(difficulty)} flex-shrink-0`}>
-            {difficulty}
+          <Badge variant="outline" className={`${getOfferedColor(offered)} flex-shrink-0`}>
+            {getOfferedText(offered)}
           </Badge>
         </div>
       </CardHeader>
@@ -96,7 +94,11 @@ export function CourseCard({
           </Badge>
           
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1 gradient-primary hover:opacity-90 text-white">
+            <Button 
+              size="sm" 
+              className="flex-1 gradient-primary hover:opacity-90 text-white"
+              onClick={() => navigate(`/courses/${code}`)}
+            >
               <MessageSquare className="h-4 w-4 mr-1" />
               {t('button.review')}
             </Button>
@@ -104,6 +106,7 @@ export function CourseCard({
               size="sm" 
               variant="outline" 
               className="flex-1 border-gray-300 hover:bg-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 text-foreground"
+              onClick={() => navigate(`/courses/${code}`)}
             >
               {t('button.viewDetails')}
             </Button>

@@ -58,7 +58,7 @@ export default function FAQ() {
         {/* FAQ Sections */}
         <div className="space-y-6">
           {/* Account & Registration */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-blue-600" />
@@ -73,7 +73,7 @@ export default function FAQ() {
           </Card>
 
           {/* Why Account Required */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-green-600" />
@@ -88,7 +88,7 @@ export default function FAQ() {
           </Card>
 
           {/* Signup Required to View Reviews */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5 text-blue-500" />
@@ -103,7 +103,7 @@ export default function FAQ() {
           </Card>
 
           {/* How to Submit Reviews */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-600" />
@@ -118,7 +118,7 @@ export default function FAQ() {
           </Card>
 
           {/* How to Search Courses */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-purple-600" />
@@ -133,7 +133,7 @@ export default function FAQ() {
           </Card>
 
           {/* Rating System */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Award className="h-5 w-5 text-orange-600" />
@@ -148,7 +148,7 @@ export default function FAQ() {
           </Card>
 
           {/* Anonymous Reviews */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-indigo-600" />
@@ -163,7 +163,7 @@ export default function FAQ() {
           </Card>
 
           {/* Privacy Protection */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-cyan-600" />
@@ -178,7 +178,7 @@ export default function FAQ() {
           </Card>
 
           {/* Password Safety */}
-          <Card id="password-safety">
+          <Card id="password-safety" className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lock className="h-5 w-5 text-blue-600" />
@@ -194,7 +194,7 @@ export default function FAQ() {
           </Card>
 
           {/* Language Support */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5 text-emerald-600" />
@@ -209,7 +209,7 @@ export default function FAQ() {
           </Card>
 
           {/* Update Frequency */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-teal-600" />
@@ -224,7 +224,7 @@ export default function FAQ() {
           </Card>
 
           {/* Report Inappropriate Content */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Flag className="h-5 w-5 text-red-600" />
@@ -240,7 +240,7 @@ export default function FAQ() {
           </Card>
 
           {/* Technical Issues */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bug className="h-5 w-5 text-rose-600" />
@@ -255,7 +255,7 @@ export default function FAQ() {
           </Card>
 
           {/* Delete Account */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trash2 className="h-5 w-5 text-gray-600" />
@@ -270,7 +270,7 @@ export default function FAQ() {
           </Card>
 
           {/* Website Free */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-green-500" />

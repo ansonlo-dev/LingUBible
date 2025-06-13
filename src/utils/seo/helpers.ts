@@ -70,10 +70,20 @@ export function generateStructuredData(
   const baseStructuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": customData?.name || SEO_CONFIG.SITE_NAME,
+    "name": customData?.name || (language === 'zh-TW' ? 'LingUBible - Reg科聖經' : SEO_CONFIG.SITE_NAME),
+    "alternateName": language === 'zh-TW' ? ['Reg科聖經', '嶺南選課神器', '嶺大課程評價'] : undefined,
     "description": customData?.description || seoData.description,
     "url": url,
     "inLanguage": language,
+    "about": {
+      "@type": "Thing",
+      "name": language === 'zh-TW' ? "嶺南大學課程評價" : "Lingnan University Course Reviews",
+      "description": language === 'zh-TW' ? "為嶺南大學學生提供真實可靠的課程和講師評價平台" : "Reliable course and lecturer review platform for Lingnan University students"
+    },
+    "audience": {
+      "@type": "Audience",
+      "audienceType": language === 'zh-TW' ? "嶺南大學學生" : "Lingnan University Students"
+    },
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
@@ -85,8 +95,10 @@ export function generateStructuredData(
     "publisher": {
       "@type": "Organization",
       "name": SEO_CONFIG.SITE_NAME,
-      "url": SEO_CONFIG.BASE_URL
-    }
+      "url": SEO_CONFIG.BASE_URL,
+      "description": language === 'zh-TW' ? "專為嶺南大學學生設計的課程評價平台" : "Course review platform designed for Lingnan University students"
+    },
+    "keywords": seoData.keywords.split(',').map(k => k.trim())
   };
 
   // 根據頁面類型添加特定的結構化數據

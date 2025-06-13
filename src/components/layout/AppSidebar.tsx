@@ -124,7 +124,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   const navigation = [
     { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
     { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
-    { name: t('nav.lecturers'), href: '#', icon: GraduationCap, current: false },
+    { name: t('nav.lecturers'), href: '/lecturers', icon: GraduationCap, current: location.pathname === '/lecturers' },
     // 只要用戶已登入且不在載入中就顯示我的評價和設定選項
     ...(user && !loading ? [
       { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },

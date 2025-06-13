@@ -16,16 +16,24 @@ export default function Terms() {
             <h1 className="text-4xl font-bold text-foreground mb-2">
               {t('terms.title')}
             </h1>
-            <p className="text-muted-foreground text-lg">
-              {t('terms.subtitle')}
-            </p>
+            <div className="text-muted-foreground text-lg">
+              {/* Mobile: single paragraph */}
+              <p className="md:hidden">
+                {t('terms.subtitle')}
+              </p>
+              {/* Desktop: two lines */}
+              <div className="hidden md:block space-y-1">
+                <p>{t('terms.subtitleLine1')}</p>
+                <p>{t('terms.subtitleLine2')}</p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Terms Sections */}
         <div className="space-y-6">
           {/* 1. User Conduct Guidelines */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-green-600" />
@@ -54,7 +62,7 @@ export default function Terms() {
           </Card>
 
           {/* 2. Content Policy */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquareX className="h-5 w-5 text-rose-600" />
@@ -83,7 +91,7 @@ export default function Terms() {
           </Card>
 
           {/* 3. Username Policy */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserX className="h-5 w-5 text-cyan-600" />
@@ -104,7 +112,7 @@ export default function Terms() {
           </Card>
 
           {/* 4. Content Moderation */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-purple-600" />
@@ -125,7 +133,7 @@ export default function Terms() {
           </Card>
 
           {/* 5. Privacy Protection */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lock className="h-5 w-5 text-indigo-600" />
@@ -155,7 +163,7 @@ export default function Terms() {
           </Card>
 
           {/* 6. Terms Changes */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ScrollText className="h-5 w-5 text-orange-600" />
@@ -170,7 +178,7 @@ export default function Terms() {
           </Card>
 
           {/* 7. Contact Us */}
-          <Card>
+          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-pink-600" />
