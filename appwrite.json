@@ -50,15 +50,25 @@
             "logging": true,
             "runtime": "bun-1.1",
             "scopes": [
+                "users.read",
+                "users.write",
                 "databases.read",
-                "databases.write"
+                "databases.write",
+                "collections.read",
+                "collections.write",
+                "attributes.read",
+                "attributes.write",
+                "indexes.read",
+                "indexes.write",
+                "documents.read",
+                "documents.write"
             ],
             "events": [],
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.js",
             "commands": "bun install",
-            "specification": "s-4cpu-4096mb",
+            "specification": "s-4vcpu-4gb",
             "path": "functions/send-verification-email"
         },
         {
@@ -79,7 +89,7 @@
             "timeout": 30,
             "entrypoint": "src/main.js",
             "commands": "bun install",
-            "specification": "s-4cpu-4096mb",
+            "specification": "s-4vcpu-4gb",
             "path": "functions/cleanup-expired-codes"
         },
         {
@@ -101,7 +111,7 @@
             "timeout": 15,
             "entrypoint": "src/main.js",
             "commands": "bun install",
-            "specification": "s-4cpu-4096mb",
+            "specification": "s-4vcpu-4gb",
             "path": "functions/get-user-stats"
         }
     ],
@@ -447,6 +457,152 @@
                     "status": "available",
                     "attributes": [
                         "expiresAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "password_resets",
+            "databaseId": "verification_system",
+            "name": "password_resets",
+            "enabled": true,
+            "documentSecurity": true,
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "attributes": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "token",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "expiresAt",
+                    "type": "datetime",
+                    "status": "available",
+                    "required": true,
+                    "array": false
+                },
+                {
+                    "key": "used",
+                    "type": "boolean",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "default": false
+                },
+                {
+                    "key": "usedAt",
+                    "type": "datetime",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "usedIp",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 45,
+                    "default": null
+                },
+                {
+                    "key": "ipAddress",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 45,
+                    "default": null
+                },
+                {
+                    "key": "userAgent",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 500,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "email_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "email"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "token_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "token"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "expires_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "expiresAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "used_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "used"
                     ],
                     "orders": [
                         "ASC"

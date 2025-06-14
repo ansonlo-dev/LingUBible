@@ -222,6 +222,12 @@ export default {
     'settings.usernameEmpty': '• 留空时将显示邮箱前缀作为用户名',
     'settings.usernameDisplay': '• 用户名将显示在个人资料和评论中',
     'settings.saving': '保存中...',
+    'settings.changeUsername': '修改用户名',
+    'settings.changePassword': '修改密码',
+    'settings.saveUsername': '保存用户名',
+    'settings.savePassword': '保存密码',
+    'settings.noUsername': '未设置用户名',
+    'settings.passwordHidden': '为了保护您的账户安全，密码已隐藏',
     'settings.saveChanges': '保存更改',
     'settings.reset': '重置',
     'settings.saveSuccess': '✅ 保存成功',
@@ -255,7 +261,6 @@ export default {
     'settings.currentAvatar': '当前头像',
     'settings.customAvatar': '自定义头像',
     'settings.defaultAvatar': '默认头像',
-    'settings.changePassword': '更改密码',
     'settings.password': '密码',
     'settings.changePasswordDescription': '更新您的账户密码',
     'settings.currentPassword': '当前密码',
@@ -347,6 +352,10 @@ export default {
     'auth.passwordResetFailed': '密码重置失败',
     'auth.passwordResetSuccess': '密码重置成功',
     'auth.passwordResetSuccessDescription': '您的密码已成功重置。现在您可以使用新密码登录。',
+    'auth.validatingResetLink': '正在验证重设链接...',
+    'auth.invalidResetLinkTitle': '无效的重设链接',
+    'auth.resetLinkAlreadyUsed': '此重设链接已被使用过，请重新申请密码重设。',
+    'auth.requestNewResetLink': '申请新的重设链接',
 
     // Security - 安全
     'security.warning': '安全警告',
@@ -466,6 +475,8 @@ export default {
     'sidebar.myReviews': '我的评价',
     'sidebar.settings': '设置',
     'sidebar.preferences': '偏好设置',
+    'sidebar.browse': '浏览',
+    'sidebar.personal': '个人',
 
     // =============================================================================
     // 4. SEARCH & FILTERING - 搜索與過濾
@@ -483,6 +494,7 @@ export default {
     'search.showingResults': '显示 {count} 个结果（共 {total} 个课程）',
     'search.noResults': '找不到符合条件的课程',
     'search.noResultsDesc': '请尝试不同的搜索条件或清除筛选器',
+    'search.startTyping': '输入关键字开始搜索',
     'search.popularSearches': '热门搜索',
     'search.quickActions': '快速操作',
     'search.popularCourse': '热门课程',
@@ -497,6 +509,7 @@ export default {
     'filter.department': '学系',
     'filter.allLecturers': '所有讲师',
     'filter.selectLecturer': '选择讲师',
+    'filter.allSubjects': '所有学科',
     'filter.applied': '已应用筛选条件',
     'filter.clear': '清除筛选',
     'sort.by': '排序方式',
@@ -510,6 +523,7 @@ export default {
     'sort.byLikes': '按赞数排序',
     'sort.byName': '按姓名排序',
     'sort.selectSort': '排序方式',
+    'sort.subjectArea': '学科领域',
     'sort.department': '部门',
 
     // =============================================================================

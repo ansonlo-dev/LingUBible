@@ -112,7 +112,7 @@ export async function sendVerificationCode(requestData, context) {
         ipAddress: ipAddress || 'unknown',
         userAgent: userAgent || 'unknown',
         attempts: 0,
-        verified: false
+        isVerified: false
       }
     );
 
@@ -171,7 +171,7 @@ export async function verifyCode(requestData, context) {
       'verification_codes',
       [
         Query.equal('email', email),
-        Query.equal('verified', false),
+        Query.equal('isVerified', false),
         Query.orderDesc('$createdAt'),
         Query.limit(1)
       ]
@@ -221,9 +221,7 @@ export async function verifyCode(requestData, context) {
         'verification_codes',
         verificationDoc.$id,
         {
-          attempts: verificationDoc.attempts + 1,
-          lastAttemptAt: now.toISOString(),
-          lastAttemptIp: ipAddress || 'unknown'
+          attempts: verificationDoc.attempts + 1
         }
       );
       
@@ -243,10 +241,7 @@ export async function verifyCode(requestData, context) {
       'verification_codes',
       verificationDoc.$id,
       {
-        verified: true,
-        verifiedAt: now.toISOString(),
-        verifiedIp: ipAddress || 'unknown',
-        verifiedUserAgent: userAgent || 'unknown'
+        isVerified: true
       }
     );
 
@@ -347,7 +342,7 @@ export async function createVerifiedAccount(requestData, context) {
       'verification_codes',
       [
         Query.equal('email', email),
-        Query.equal('verified', true),
+        Query.equal('isVerified', true),
         Query.orderDesc('$createdAt'),
         Query.limit(1)
       ]
@@ -363,12 +358,12 @@ export async function createVerifiedAccount(requestData, context) {
     }
 
     const verificationDoc = verificationCodes.documents[0];
-    const verifiedAt = new Date(verificationDoc.verifiedAt);
+    const createdAt = new Date(verificationDoc.$createdAt);
     const now = new Date();
-    const timeDiff = now.getTime() - verifiedAt.getTime();
+    const timeDiff = now.getTime() - createdAt.getTime();
     const hoursDiff = timeDiff / (1000 * 60 * 60);
 
-    // 檢查驗證是否在24小時內
+    // 檢查驗證是否在24小時內（使用創建時間作為參考）
     if (hoursDiff > 24) {
       log('⏰ 郵件驗證已過期（超過24小時）');
       return res.json({
@@ -610,7 +605,7 @@ export async function sendPasswordReset(requestData, context) {
       log('✅ 密碼重設記錄已創建:', resetDoc.$id);
 
       // 發送重設郵件
-      const emailResult = await sendPasswordResetEmail(email, user.$id, resetToken, language, theme, log, error);
+      const emailResult = await sendPasswordResetEmail(email, user.$id, resetToken, user.name || user.email.split('@')[0], language, theme, log, error);
       
       if (!emailResult.success) {
         // 如果郵件發送失敗，刪除重設記錄
@@ -756,13 +751,94 @@ export async function completePasswordReset(requestData, context) {
   }
 }
 
+// 驗證密碼重設 token 函數
+export async function validatePasswordResetToken(requestData, context) {
+  const { databases, log, error, res } = context;
+  const { userId, token } = requestData;
+
+  try {
+    log('🔍 開始驗證密碼重設 token:', { userId, token: token ? token.substring(0, 8) + '****' : 'undefined' });
+
+    // 驗證參數
+    if (!userId || !token) {
+      return res.json({
+        success: false,
+        message: 'User ID and token are required',
+        messageKey: 'error.missingParameters'
+      }, 400);
+    }
+
+    // 查找重設記錄
+    const resetRecords = await databases.listDocuments(
+      'verification_system',
+      'password_resets',
+      [
+        Query.equal('userId', userId),
+        Query.equal('token', token),
+        Query.orderDesc('$createdAt'),
+        Query.limit(1)
+      ]
+    );
+
+    if (resetRecords.documents.length === 0) {
+      log('❌ 找不到重設記錄');
+      return res.json({
+        success: false,
+        message: 'Invalid reset token',
+        messageKey: 'password.invalidToken'
+      }, 400);
+    }
+
+    const resetDoc = resetRecords.documents[0];
+    const expiresAt = new Date(resetDoc.expiresAt);
+    const now = new Date();
+
+    // 檢查是否已被使用
+    if (resetDoc.used) {
+      log('❌ 重設連結已被使用');
+      return res.json({
+        success: false,
+        message: 'This reset link has already been used',
+        messageKey: 'password.linkAlreadyUsed'
+      }, 400);
+    }
+
+    // 檢查是否過期
+    if (expiresAt <= now) {
+      log('⏰ 重設令牌已過期');
+      // 刪除過期的記錄
+      await databases.deleteDocument('verification_system', 'password_resets', resetDoc.$id);
+      return res.json({
+        success: false,
+        message: 'Reset token has expired',
+        messageKey: 'password.tokenExpired'
+      }, 400);
+    }
+
+    log('✅ 重設 token 驗證成功');
+    return res.json({
+      success: true,
+      message: 'Reset token is valid',
+      messageKey: 'password.tokenValid'
+    });
+
+  } catch (err) {
+    error('💥 驗證密碼重設 token 異常:', err);
+    return res.json({
+      success: false,
+      message: `Service error: ${err.message || 'Please try again later'}`,
+      messageKey: 'error.serviceError'
+    }, 500);
+  }
+}
+
 // 發送聯絡表單郵件函數
 export async function sendContactFormEmail(requestData, context) {
   const { log, error, res } = context;
-  const { name, email, message, language = 'zh-TW', recaptchaToken, ipAddress } = requestData;
+  const { name, email, message, language = 'zh-TW', theme = 'light', recaptchaToken, ipAddress } = requestData;
 
   try {
-    log('📧 開始發送聯絡表單郵件:', { name, email, language });
+    log('📧 開始發送聯絡表單郵件:', { name, email, language, theme });
 
     // 驗證參數
     if (!name || !email || !message) {
@@ -817,7 +893,7 @@ export async function sendContactFormEmail(requestData, context) {
     }
 
     // 發送郵件
-    const emailResult = await sendContactEmail(name, email, message, language, log, error);
+    const emailResult = await sendContactEmail(name, email, message, language, theme, log, error);
     
     if (!emailResult.success) {
       return res.json({
@@ -934,7 +1010,7 @@ async function cleanupExpiredResets(databases, log, error) {
 }
 
 // 輔助函數：發送密碼重設郵件
-async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-TW', theme = 'light', log, error) {
+async function sendPasswordResetEmail(email, userId, resetToken, username, language = 'zh-TW', theme = 'light', log, error) {
   try {
     log('📤 開始發送密碼重設郵件:', { email, language, theme });
 
@@ -947,7 +1023,7 @@ async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const template = generatePasswordResetEmailTemplate(userId, resetToken, language, theme);
+    const template = generatePasswordResetEmailTemplate(userId, resetToken, username, language, theme);
 
     log('📧 發送密碼重設郵件請求');
     const { data, error: resendError } = await resend.emails.send({
@@ -981,9 +1057,9 @@ async function sendPasswordResetEmail(email, userId, resetToken, language = 'zh-
 }
 
 // 輔助函數：發送聯絡表單郵件
-async function sendContactEmail(name, email, message, language, log, error) {
+async function sendContactEmail(name, email, message, language, theme = 'light', log, error) {
   try {
-    log('📤 開始發送聯絡表單郵件:', { name, email, language });
+    log('📤 開始發送聯絡表單郵件:', { name, email, language, theme });
 
     if (!process.env.RESEND_API_KEY) {
       error('❌ Resend API 金鑰未配置');
@@ -994,7 +1070,7 @@ async function sendContactEmail(name, email, message, language, log, error) {
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const template = generateContactFormEmailTemplate(name, email, message, language);
+    const template = generateContactFormEmailTemplate(name, email, message, language, theme);
 
     log('📧 發送聯絡表單郵件請求');
     const { data, error: resendError } = await resend.emails.send({

@@ -31,12 +31,41 @@ export default function ResetPassword() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [countdown, setCountdown] = useState(3);
+  const [isValidatingToken, setIsValidatingToken] = useState(true);
+  const [isTokenValid, setIsTokenValid] = useState(false);
 
-  // 驗證 URL 參數
+  // 驗證 URL 參數和 token
   useEffect(() => {
-    if (!userId || !token) {
-      setError(t('auth.invalidResetLink'));
-    }
+    const validateToken = async () => {
+      if (!userId || !token) {
+        setError(t('auth.invalidResetLink'));
+        setIsValidatingToken(false);
+        return;
+      }
+
+      try {
+        setIsValidatingToken(true);
+        await authService.validatePasswordResetToken(userId, token);
+        setIsTokenValid(true);
+        setError('');
+      } catch (err: any) {
+        console.error('Token validation failed:', err);
+        setIsTokenValid(false);
+        
+        if (err.message?.includes('already been used')) {
+          setError(t('auth.resetLinkAlreadyUsed'));
+        } else if (err.message?.includes('Invalid token') || 
+                   err.message?.includes('Token expired')) {
+          setError(t('auth.invalidOrExpiredResetLink'));
+        } else {
+          setError(err.message || t('auth.invalidResetLink'));
+        }
+      } finally {
+        setIsValidatingToken(false);
+      }
+    };
+
+    validateToken();
   }, [userId, token, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +88,7 @@ export default function ResetPassword() {
       return;
     }
 
-    if (!userId || !token) {
+    if (!userId || !token || !isTokenValid) {
       setError(t('auth.invalidResetLink'));
       return;
     }
@@ -190,7 +219,38 @@ export default function ResetPassword() {
           </CardHeader>
           
           <CardContent className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {isValidatingToken ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">{t('auth.validatingResetLink')}</p>
+              </div>
+            ) : !isTokenValid ? (
+              <div className="text-center py-8 space-y-4">
+                <div className="mx-auto h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
+                    {t('auth.invalidResetLinkTitle')}
+                  </h3>
+                  <p className="text-muted-foreground">{error}</p>
+                </div>
+                <div className="space-y-2">
+                  <Button asChild className="w-full">
+                    <Link to="/forgot-password">
+                      {t('auth.requestNewResetLink')}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="w-full">
+                    <Link to="/login" className="flex items-center justify-center">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      {t('auth.backToLogin')}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
               {/* 新密碼 */}
               <div className="space-y-2">
                 <Label htmlFor="password">{t('auth.newPassword')}</Label>
@@ -271,6 +331,7 @@ export default function ResetPassword() {
                 </Link>
               </Button>
             </form>
+            )}
           </CardContent>
         </Card>
 

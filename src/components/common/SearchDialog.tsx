@@ -141,9 +141,7 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   const allItems = filteredResults.flatMap(group => group.items);
 
   const handleSelect = (href: string) => {
-    if (!isDesktopMode) {
-      onClose();
-    }
+    onClose();
     setSearchQuery('');
     setSelectedIndex(-1);
     setShowResults(false);
@@ -154,12 +152,7 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
 
     switch (e.key) {
       case 'Escape':
-        if (isDesktopMode) {
-          setShowResults(false);
-          inputRef.current?.blur();
-        } else {
-          onClose();
-        }
+        onClose();
         break;
       case 'ArrowDown':
         e.preventDefault();
@@ -249,26 +242,13 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
   const handleClearSearch = () => {
     setSearchQuery('');
     setSelectedIndex(-1);
-    if (isDesktopMode) {
-      setShowResults(false);
-      inputRef.current?.blur();
-    } else {
-      onClose();
-    }
+    onClose();
   };
 
   // 使用 useCallback 創建穩定的關閉函數
   const handleCloseResults = useCallback(() => {
-    if (isDesktopMode) {
-      setShowResults(false);
-      // 強制失去焦點
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-    } else {
-      onClose();
-    }
-  }, [isDesktopMode, onClose]);
+    onClose();
+  }, [onClose]);
 
   // 處理全域鍵盤快捷鍵
   useEffect(() => {
@@ -298,14 +278,24 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
     };
   }, [isDesktopMode]);
 
-  // Focus input when opened (mobile mode)
+  // Focus input when opened
   useEffect(() => {
-    // 手機版不自動獲得焦點，也不自動顯示搜尋結果
-    // 只有當用戶明確點擊或聚焦搜尋框時才顯示結果
-    if (isOpen && !isDesktopMode) {
-      // 確保手機版初始狀態不顯示搜尋結果
-      setShowResults(false);
-      setIsInitialized(false);
+    if (isOpen) {
+      if (isDesktopMode) {
+        // 桌面版：自動聚焦並顯示搜索結果
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+          setIsInitialized(true);
+          setShowResults(true);
+        }, 100);
+      } else {
+        // 手機版不自動獲得焦點，也不自動顯示搜尋結果
+        // 只有當用戶明確點擊或聚焦搜尋框時才顯示結果
+        setShowResults(false);
+        setIsInitialized(false);
+      }
     }
   }, [isOpen, isDesktopMode]);
 
@@ -317,8 +307,8 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       // 檢查點擊是否在搜尋容器外部
       if (searchRef.current && !searchRef.current.contains(target)) {
         if (isDesktopMode) {
-          // 桌面版：隱藏搜索結果
-          setShowResults(false);
+          // 桌面版：關閉整個搜索框
+          onClose();
         } else {
           // 移動端：關閉整個搜尋對話框
           onClose();
@@ -446,11 +436,8 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       {/* Mobile Search Results Dropdown */}
       {shouldShowResults && !isDesktopMode && (
         <div 
-          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999]"
+          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999] bg-white dark:bg-card"
           style={{
-            backgroundColor: document.documentElement.classList.contains('dark') 
-              ? '#0a0a0a' 
-              : '#ffffff',
             backdropFilter: 'none',
             WebkitBackdropFilter: 'none'
           }}
@@ -502,11 +489,8 @@ export function SearchDropdown({ isOpen, onClose, isDesktop = false }: SearchDro
       {/* Desktop Search Results Dropdown */}
       {shouldShowResults && isDesktopMode && (
         <div 
-          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999]"
+          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg shadow-xl max-h-96 overflow-y-auto z-[999999] bg-white dark:bg-card"
           style={{
-            backgroundColor: document.documentElement.classList.contains('dark') 
-              ? '#0a0a0a' 
-              : '#ffffff',
             backdropFilter: 'none',
             WebkitBackdropFilter: 'none'
           }}

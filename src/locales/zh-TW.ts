@@ -212,6 +212,12 @@ export default {
     'settings.usernameEmpty': '• 留空時將顯示郵箱前綴作為用戶名',
     'settings.usernameDisplay': '• 用戶名將顯示在個人資料和評論中',
     'settings.saving': '保存中...',
+    'settings.changeUsername': '修改用戶名',
+    'settings.changePassword': '修改密碼',
+    'settings.saveUsername': '保存用戶名',
+    'settings.savePassword': '保存密碼',
+    'settings.noUsername': '未設置用戶名',
+    'settings.passwordHidden': '為了保護您的帳戶安全，密碼已隱藏',
     'settings.saveChanges': '保存更改',
     'settings.reset': '重置',
     'settings.saveSuccess': '✅ 保存成功',
@@ -245,7 +251,6 @@ export default {
     'settings.currentAvatar': '當前頭像',
     'settings.customAvatar': '自定義頭像',
     'settings.defaultAvatar': '默認頭像',
-    'settings.changePassword': '更改密碼',
     'settings.password': '密碼',
     'settings.changePasswordDescription': '更新您的帳戶密碼',
     'settings.currentPassword': '當前密碼',
@@ -337,6 +342,10 @@ export default {
     'auth.passwordResetFailed': '密碼重置失敗',
     'auth.passwordResetSuccess': '密碼重置成功',
     'auth.passwordResetSuccessDescription': '您的密碼已成功重置。現在您可以使用新密碼登入。',
+    'auth.validatingResetLink': '正在驗證重設連結...',
+    'auth.invalidResetLinkTitle': '無效的重設連結',
+    'auth.resetLinkAlreadyUsed': '此重設連結已被使用過，請重新申請密碼重設。',
+    'auth.requestNewResetLink': '申請新的重設連結',
     'auth.invalidResetLink': '無效的重置連結',
     'auth.passwordResetComplete': '密碼重置完成',
     'auth.redirectingToLogin': '正在重定向到登入頁面...',
@@ -386,19 +395,25 @@ export default {
     'difficulty.easy': '簡單',
     'difficulty.medium': '中等',
     'difficulty.hard': '困難',
+    'offered.yes': '有開設',
+    'offered.no': '未開設',
     'sidebar.myReviews': '我的評價',
     'sidebar.settings': '設置',
     'sidebar.preferences': '偏好設定',
+    'sidebar.browse': '瀏覽',
+    'sidebar.personal': '個人',
 
     // =============================================================================
     // 4. SEARCH & FILTERING - 搜索與過濾
     // =============================================================================
 
+    'search.search': '搜尋',
     'search.placeholder': '搜尋課程代碼、課程名稱或學系...',
     'search.smartSearch': '智能搜尋',
     'search.showingResults': '顯示 {count} 個結果（共 {total} 個課程）',
     'search.noResults': '找不到符合條件的課程',
     'search.noResultsDesc': '請嘗試不同的搜尋條件或清除篩選器',
+    'search.startTyping': '輸入關鍵字開始搜索',
     
     // Advanced Filters
     'filters.advanced': '進階篩選',
@@ -427,6 +442,29 @@ export default {
     'filters.bilingual': '雙語',
     'filters.assessmentMethods': '評估方式',
     'filters.courseFeatures': '課程特色',
+
+    // Filter and Sort
+    'filter.allDepartments': '所有學系',
+    'filter.selectDepartment': '選擇學系',
+    'filter.department': '學系',
+    'filter.allLecturers': '所有講師',
+    'filter.selectLecturer': '選擇講師',
+    'filter.allSubjects': '所有學科',
+    'filter.applied': '已套用篩選條件',
+    'filter.clear': '清除篩選',
+    'sort.by': '排序方式',
+    'sort.byRating': '按評分排序',
+    'sort.byReviews': '按評價數排序',
+    'sort.byStudents': '按學生數排序',
+    'sort.byCourseCode': '按課程代碼排序',
+    'sort.courseCode': '課程代碼',
+    'sort.courseName': '課程名稱',
+    'sort.byDate': '按日期排序',
+    'sort.byLikes': '按讚數排序',
+    'sort.byName': '按姓名排序',
+    'sort.selectSort': '排序方式',
+    'sort.subjectArea': '學科領域',
+    'sort.department': '學系',
 
     // =============================================================================
     // 5. UI ELEMENTS - 用戶界面元素
@@ -556,6 +594,8 @@ export default {
 
     'terms.title': '使用條款',
     'terms.subtitle': '使用本網站即表示您同意遵守這些服務條款。我們感謝您參與我們的社群，並鼓勵您仔細閱讀這些條款。',
+    'terms.subtitleLine1': '使用本網站即表示您同意遵守這些服務條款。',
+    'terms.subtitleLine2': '我們感謝您參與我們的社群，並鼓勵您仔細閱讀這些條款。',
     'terms.lastUpdated': '最後更新：2025年6月5日',
     'terms.welcome': '歡迎使用 LingUBible',
     'terms.acceptance.title': '接受條款',

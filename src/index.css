@@ -203,24 +203,14 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
 
 
-  /* 活動狀態項目的特殊懸停效果 */
+  /* 活動狀態項目的特殊懸停效果 - 只保留過渡動畫 */
   .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
     transform: translateX(6px);
-    box-shadow: 
-      0 4px 12px rgba(220, 38, 38, 0.2),
-      0 2px 6px rgba(220, 38, 38, 0.1);
   }
 
-  .dark .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
-    box-shadow: 
-      0 4px 12px rgba(220, 38, 38, 0.3),
-      0 2px 6px rgba(220, 38, 38, 0.2);
-  }
-
-  /* 活動狀態項目圖標的特殊懸停效果 */
+  /* 活動狀態項目圖標的特殊懸停效果 - 只保留縮放動畫 */
   .sidebar-container nav a[class*="bg-sidebar-accent"]:hover svg {
     transform: scale(1.15);
-    filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3));
   }
 
   /* 摺疊狀態 */
@@ -2326,5 +2316,14 @@ div[style*="position: fixed"][style*="right: 14px"] {
       width: 2px;
       height: 2px;
     }
+  }
+
+  /* 法律頁面卡片背景 - 使用 rgb(var(--card)) 與主頁面保持一致 */
+  .legal-page-card {
+    background-color: #f9fafb !important;
+  }
+  
+  .dark .legal-page-card {
+    background-color: rgb(var(--card)) !important;
   }
 }

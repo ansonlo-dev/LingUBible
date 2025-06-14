@@ -4,6 +4,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -25,19 +26,19 @@ export const VerificationEmail = ({
         /* 深色主題支援 */
         @media (prefers-color-scheme: dark) {
           body {
-            background-color: #1a1a1a !important;
+            background-color: #000000 !important;
           }
           
           .container {
-            background-color: #2d2d2d !important;
+            background-color: #0f0f0f !important;
           }
           
           .title {
-            color: #f0f0f0 !important;
+            color: #ffffff !important;
           }
           
           .text {
-            color: #e0e0e0 !important;
+            color: #ffffff !important;
           }
           
           .logo {
@@ -45,45 +46,48 @@ export const VerificationEmail = ({
           }
           
           .code-container {
-            background: #1f1f1f !important;
-            border-color: #ef4444 !important;
+            background: #18171b !important;
+            border: none !important;
           }
           
           .code {
-            color: #ef4444 !important;
+            color: #ffffff !important;
           }
           
           .footer {
-            color: #a0a0a0 !important;
+            color: #e5e7eb !important;
           }
         }
         
         /* Outlook 深色主題支援 */
         [data-ogsc] body {
-          background-color: #1a1a1a !important;
+          background-color: #000000 !important;
         }
         
         [data-ogsc] .container {
-          background-color: #2d2d2d !important;
+          background-color: #0f0f0f !important;
         }
         
         [data-ogsc] .title,
         [data-ogsc] .text {
-          color: #e0e0e0 !important;
+          color: #ffffff !important;
         }
         
-        [data-ogsc] .logo,
-        [data-ogsc] .code {
+        [data-ogsc] .logo {
           color: #ef4444 !important;
         }
         
+        [data-ogsc] .code {
+          color: #ffffff !important;
+        }
+        
         [data-ogsc] .footer {
-          color: #a0a0a0 !important;
+          color: #e5e7eb !important;
         }
         
         [data-ogsc] .code-container {
-          background: #1f1f1f !important;
-          border-color: #ef4444 !important;
+          background: #18171b !important;
+          border: none !important;
         }
       `}</style>
     </Head>
@@ -91,13 +95,20 @@ export const VerificationEmail = ({
     <Body style={main} className="body">
       <Container style={container} className="container">
         <Section style={logoContainer}>
-          <Text style={logo} className="logo">📚 LingUBible</Text>
+          <Img
+            src="https://lingubible.com/email-banner.png"
+            width="400"
+            height="120"
+            alt="LingUBible"
+            style={logoImage}
+          />
+          <Text style={logo} className="logo">LingUBible</Text>
         </Section>
         
         <Heading style={h1} className="title">嶺南人帳戶驗證</Heading>
         
         <Text style={text} className="text">
-          您好！感謝您註冊 LingUBible 嶺南人帳戶。請使用以下驗證碼來完成您的帳戶註冊：
+          親愛的嶺南人！感謝您註冊 LingUBible 嶺南人帳戶。請使用以下驗證碼來完成您的帳戶註冊：
         </Text>
         
         <Section style={codeContainer} className="code-container">
@@ -129,12 +140,12 @@ export const VerificationEmail = ({
 );
 
 const main = {
-  backgroundColor: '#f6f9fc',
+  backgroundColor: '#ffffff',
   fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
 };
 
 const container = {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#f5f5f5',
   margin: '0 auto',
   padding: '20px 0 48px',
   marginBottom: '64px',
@@ -143,6 +154,11 @@ const container = {
 const logoContainer = {
   margin: '32px 0',
   textAlign: 'center' as const,
+};
+
+const logoImage = {
+  margin: '0 auto 16px',
+  display: 'block',
 };
 
 const logo = {

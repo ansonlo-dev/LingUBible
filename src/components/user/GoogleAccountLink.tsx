@@ -223,7 +223,7 @@ export function GoogleAccountLink() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className="legal-page-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GoogleIcon size={20} />
@@ -243,7 +243,7 @@ export function GoogleAccountLink() {
   }
 
   return (
-    <Card>
+    <Card className="legal-page-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GoogleIcon size={20} />

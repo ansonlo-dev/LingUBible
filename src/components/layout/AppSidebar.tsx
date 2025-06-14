@@ -1,6 +1,7 @@
-import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle } from 'lucide-react';
+import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle, Mail } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { APP_CONFIG } from '@/utils/constants/config';
 import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
@@ -119,18 +120,36 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
   const shouldShowText = !isCollapsed || isMobile;
   
-  // 簡化導航邏輯：只要用戶存在且不在載入中就顯示認證菜單項
-  // 這樣可以避免延遲顯示的問題
-  const navigation = [
-    { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
-    { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
-    { name: t('nav.lecturers'), href: '/lecturers', icon: GraduationCap, current: location.pathname === '/lecturers' },
-    // 只要用戶已登入且不在載入中就顯示我的評價和設定選項
-    ...(user && !loading ? [
-      { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },
-      { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
-    ] : []),
+  // 重新組織導航項目為分組結構
+  const navigationGroups = [
+    // Home - 不需要分組名稱
+    {
+      items: [
+        { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' }
+      ]
+    },
+    // Courses 和 Lecturers 分組
+    {
+      label: t('sidebar.browse'),
+      items: [
+        { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
+        { name: t('nav.lecturers'), href: '/lecturers', icon: GraduationCap, current: location.pathname === '/lecturers' }
+      ]
+    },
+    // My Reviews 和 Settings 分組（僅在用戶登入時顯示）
+    ...(user && !loading ? [{
+      label: t('sidebar.personal'),
+      items: [
+        { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },
+        { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
+      ]
+    }] : [])
   ];
+
+  // 開發工具導航（僅在開發模式顯示）
+  const devNavigation = APP_CONFIG.DEV_MODE.ENABLED ? [
+    { name: '郵件預覽', href: '/email-preview', icon: Mail, current: location.pathname === '/email-preview' },
+  ] : [];
 
   return (
     <>
@@ -161,50 +180,104 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
 
         {/* 導航選單 */}
         <nav className="flex-1 p-4 md:py-4 md:px-2">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isExternalOrHash = item.href.startsWith('#');
-              
-              return (
-                <li key={item.name}>
-                  {isExternalOrHash ? (
-                    <a
-                      href={item.href}
-                      className={`
-                        flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                        ${item.current 
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                          : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                        }
-                      `}
-                      onClick={() => onMobileToggle && onMobileToggle()}
-                      title={!shouldShowText ? item.name : undefined}
-                    >
-                      <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
-                      {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
-                    </a>
-                  ) : (
-                    <Link
-                      to={item.href}
-                      className={`
-                        flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                        ${item.current 
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                          : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                        }
-                      `}
-                      onClick={() => onMobileToggle && onMobileToggle()}
-                      title={!shouldShowText ? item.name : undefined}
-                    >
-                      <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
-                      {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <div className="space-y-8">
+            {navigationGroups.map((group, groupIndex) => (
+              <div key={groupIndex}>
+                {/* 分組標題 - 只在有標題且顯示文字時顯示 */}
+                {group.label && shouldShowText && (
+                  <div className="mb-2">
+                    <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {group.label}
+                    </h3>
+                  </div>
+                )}
+                
+                {/* 分組項目 */}
+                <ul className="space-y-2">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isExternalOrHash = item.href.startsWith('#');
+                    
+                    return (
+                      <li key={item.name}>
+                        {isExternalOrHash ? (
+                          <a
+                            href={item.href}
+                            className={`
+                              flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
+                              ${item.current 
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                                : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                              }
+                            `}
+                            onClick={() => onMobileToggle && onMobileToggle()}
+                            title={!shouldShowText ? item.name : undefined}
+                          >
+                            <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
+                            {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
+                          </a>
+                        ) : (
+                          <Link
+                            to={item.href}
+                            className={`
+                              flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
+                              ${item.current 
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                                : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                              }
+                            `}
+                            onClick={() => onMobileToggle && onMobileToggle()}
+                            title={!shouldShowText ? item.name : undefined}
+                          >
+                            <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
+                            {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
+                          </Link>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+          
+          {/* 開發工具區域 - 僅在開發模式顯示 */}
+          {devNavigation.length > 0 && (
+            <>
+              <div className="mt-6 mb-2">
+                {shouldShowText && (
+                  <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    開發工具
+                  </h3>
+                )}
+              </div>
+              <ul className="space-y-2">
+                {devNavigation.map((item) => {
+                  const Icon = item.icon;
+                  
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        to={item.href}
+                        className={`
+                          flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
+                          ${item.current 
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                            : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                          }
+                        `}
+                        onClick={() => onMobileToggle && onMobileToggle()}
+                        title={!shouldShowText ? item.name : undefined}
+                      >
+                        <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
+                        {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </nav>
 
         {/* 底部設置區域 - 始終顯示語言和主題切換 */}

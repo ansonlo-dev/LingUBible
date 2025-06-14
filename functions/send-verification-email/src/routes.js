@@ -5,6 +5,7 @@ import {
   checkUsernameAvailability,
   sendPasswordReset,
   completePasswordReset,
+  validatePasswordResetToken,
   sendContactFormEmail
 } from './handlers.js';
 
@@ -16,6 +17,7 @@ export const routes = {
   'checkUsername': checkUsernameAvailability,
   'sendPasswordReset': sendPasswordReset,
   'completePasswordReset': completePasswordReset,
+  'validatePasswordResetToken': validatePasswordResetToken,
   'sendContactForm': sendContactFormEmail
 };
 

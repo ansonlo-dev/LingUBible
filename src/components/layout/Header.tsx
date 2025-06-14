@@ -4,15 +4,13 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 
-import { SearchDropdown } from '@/components/common/SearchDialog';
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from "@/components/user/UserMenu";
 import { Link } from 'react-router-dom';
-import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -22,8 +20,23 @@ interface HeaderProps {
 export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { language, setLanguage, t } = useLanguage();
   const { user } = useAuth();
-  const { isDesktop } = useDeviceDetection();
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // 檢測操作系統
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+
+  // Ctrl+K 鍵盤快捷鍵
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <>
@@ -44,29 +57,25 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
         </div>
 
         {/* 中間區域 - 搜索框 */}
-        <div className="flex-1 mx-2 md:mx-4">
-          {isDesktop ? (
-            <SearchDropdown 
-              isOpen={true}
-              onClose={() => {}} // Always open version
-              isDesktop={true}
-            />
-          ) : (
-            <button
-              onClick={() => setIsMobileSearchOpen(true)}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
-            >
-              <Search className="h-4 w-4" />
-              <span>{t('search.search')}</span>
-            </button>
-          )}
+        <div className="flex-1 min-w-0 mx-1 md:mx-4">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full flex items-center justify-between px-3 py-2 text-left text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Search className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate text-sm">{t('search.placeholder')}</span>
+            </div>
+            <div className="hidden md:flex items-center gap-1 flex-shrink-0">
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K
+              </kbd>
+            </div>
+          </button>
         </div>
 
         {/* 右側區域 */}
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-          
-
-          
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 min-w-0">
           {/* 用戶菜單或登入按鈕 - 最高優先級，始終顯示 */}
           {user ? (
             <UserMenu />
@@ -85,10 +94,10 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
         </div>
       </header>
       
-      {/* 移動端搜索模態 */}
+      {/* 搜索模態 */}
       <MobileSearchModal 
-        isOpen={isMobileSearchOpen}
-        onClose={() => setIsMobileSearchOpen(false)}
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
       />
     </>
   );

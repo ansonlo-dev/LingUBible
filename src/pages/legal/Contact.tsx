@@ -23,7 +23,7 @@ export default function Contact() {
 
         {/* Contact Methods - Full Width */}
         <div className="mb-6">
-          <Card className="bg-gray-100 dark:bg-gray-900 border-gray-400 dark:border-gray-600">
+          <Card className="legal-page-card border-gray-400 dark:border-gray-600">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <Phone className="h-5 w-5 text-blue-600" />

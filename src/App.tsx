@@ -32,6 +32,8 @@ import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
+import EmailPreview from "./pages/EmailPreview";
+import { DevModeRoute } from "@/components/dev/DevModeRoute";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
 import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
@@ -543,11 +545,20 @@ const RouterContent = ({
                     <Route path="/lecturers" element={<Lecturers />} />
                     <Route path="/settings" element={<UserSettings />} />
 
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="*" element={<NotFound />} />
+                                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    {/* 開發模式專用路由 */}
+                    <Route 
+                      path="/email-preview" 
+                      element={
+                        <DevModeRoute>
+                          <EmailPreview />
+                        </DevModeRoute>
+                      } 
+                    />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
                 
