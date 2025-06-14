@@ -21,6 +21,9 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       }
       hasAddedHistoryEntry.current = false;
     }
+    // 重置狀態
+    setIsInitialized(false);
+    setLoading(false);
     onClose();
   };
   const { t } = useLanguage();
@@ -30,6 +33,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   const [courses, setCourses] = useState<UGCourse[]>([]);
   const [lecturers, setLecturers] = useState<LecturerWithStats[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAddedHistoryEntry = useRef(false);
 
@@ -49,6 +53,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
           console.error('Error loading search data:', error);
         } finally {
           setLoading(false);
+          setIsInitialized(true);
         }
       };
 
@@ -122,7 +127,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
             subtitle: `${course.code} - ${course.department}`,
             href: `/course/${course.code}`
           }))
-        : (!searchQuery.trim() ? suggestedCourses.map(course => ({
+        : (!searchQuery.trim() && isInitialized && !loading ? suggestedCourses.map(course => ({
             title: course.title,
             subtitle: `${course.code} - ${course.department}`,
             href: `/course/${course.code}`
@@ -137,7 +142,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
             subtitle: lecturer.department,
             href: `/lecturer/${lecturer.$id}`
           }))
-        : (!searchQuery.trim() ? suggestedLecturers.map(lecturer => ({
+        : (!searchQuery.trim() && isInitialized && !loading ? suggestedLecturers.map(lecturer => ({
             title: lecturer.name,
             subtitle: lecturer.department,
             href: `/lecturer/${lecturer.id}`
@@ -325,8 +330,8 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
             {/* 搜索結果 */}
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                <div className="h-full flex flex-col items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
                   <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
                 </div>
               ) : searchResults.some(category => category.items.length > 0) ? (
