@@ -28,6 +28,7 @@ export default function EmailPreview() {
   const [username, setUsername] = useState('John');
   const [contactName, setContactName] = useState('張三');
   const [contactEmail, setContactEmail] = useState('test@example.com');
+  const [contactType, setContactType] = useState('bugReport');
   const [contactMessage, setContactMessage] = useState('這是一個測試訊息，用來預覽聯絡表單郵件的外觀。這個訊息包含足夠的文字來測試郵件模板的排版和樣式。');
 
   const generatePreview = () => {
@@ -41,7 +42,7 @@ export default function EmailPreview() {
         template = generatePasswordResetEmailTemplate(userId, resetToken, username, language, theme);
         break;
       case 'contact-form':
-        template = generateContactFormEmailTemplate(contactName, contactEmail, contactMessage, language, theme);
+        template = generateContactFormEmailTemplate(contactName, contactEmail, contactType, contactMessage, language, theme);
         break;
       default:
         template = { html: '<p>請選擇郵件類型</p>' };
@@ -210,6 +211,22 @@ export default function EmailPreview() {
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder="輸入郵件地址"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>郵件類型</Label>
+                      <Select value={contactType} onValueChange={setContactType}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="bugReport">錯誤回報</SelectItem>
+                          <SelectItem value="commentReport">評論檢舉</SelectItem>
+                          <SelectItem value="accountIssue">帳戶問題</SelectItem>
+                          <SelectItem value="featureRequest">功能建議</SelectItem>
+                          <SelectItem value="general">一般諮詢</SelectItem>
+                          <SelectItem value="other">其他</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>訊息內容</Label>

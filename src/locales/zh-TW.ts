@@ -747,6 +747,14 @@ export default {
     'contact.messageMinWords': '訊息內容至少需要30個字，目前只有{count}個字',
     'contact.invalidEmail': '請輸入有效的電子郵件地址',
     'contact.nameMaxWords': '姓名不能超過10個字，目前有{count}個字',
+    'contact.type': '郵件類型',
+    'contact.typePlaceholder': '請選擇郵件類型',
+    'contact.types.bugReport': '錯誤回報',
+    'contact.types.commentReport': '評論檢舉',
+    'contact.types.accountIssue': '帳戶問題',
+    'contact.types.featureRequest': '功能建議',
+    'contact.types.general': '一般諮詢',
+    'contact.types.other': '其他',
 
     // FAQ Page
     'faq.title': '常見問題',

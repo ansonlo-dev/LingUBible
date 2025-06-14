@@ -808,6 +808,14 @@ export default {
     'contact.messageMinWords': 'Message content must be at least 30 words, currently only {count} words',
     'contact.invalidEmail': 'Please enter a valid email address',
     'contact.nameMaxWords': 'Name cannot exceed 10 words, currently {count} words',
+    'contact.type': 'Email Type',
+    'contact.typePlaceholder': 'Please select email type',
+    'contact.types.bugReport': 'Bug Report',
+    'contact.types.commentReport': 'Comment Report',
+    'contact.types.accountIssue': 'Account Issue',
+    'contact.types.featureRequest': 'Feature Request',
+    'contact.types.general': 'General Inquiry',
+    'contact.types.other': 'Other',
 
     // FAQ Page
     'faq.title': 'Frequently Asked Questions',

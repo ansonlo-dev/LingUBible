@@ -835,16 +835,16 @@ export async function validatePasswordResetToken(requestData, context) {
 // 發送聯絡表單郵件函數
 export async function sendContactFormEmail(requestData, context) {
   const { log, error, res } = context;
-  const { name, email, message, language = 'zh-TW', theme = 'light', recaptchaToken, ipAddress } = requestData;
+  const { name, email, type, message, language = 'zh-TW', theme = 'light', recaptchaToken, ipAddress } = requestData;
 
   try {
-    log('📧 開始發送聯絡表單郵件:', { name, email, language, theme });
+    log('📧 開始發送聯絡表單郵件:', { name, email, type, language, theme });
 
     // 驗證參數
-    if (!name || !email || !message) {
+    if (!name || !email || !type || !message) {
       return res.json({
         success: false,
-        message: 'Name, email, and message are required',
+        message: 'Name, email, type, and message are required',
         messageKey: 'error.missingParameters'
       }, 400);
     }
@@ -893,7 +893,7 @@ export async function sendContactFormEmail(requestData, context) {
     }
 
     // 發送郵件
-    const emailResult = await sendContactEmail(name, email, message, language, theme, log, error);
+    const emailResult = await sendContactEmail(name, email, type, message, language, theme, log, error);
     
     if (!emailResult.success) {
       return res.json({
@@ -1057,9 +1057,9 @@ async function sendPasswordResetEmail(email, userId, resetToken, username, langu
 }
 
 // 輔助函數：發送聯絡表單郵件
-async function sendContactEmail(name, email, message, language, theme = 'light', log, error) {
+async function sendContactEmail(name, email, type, message, language, theme = 'light', log, error) {
   try {
-    log('📤 開始發送聯絡表單郵件:', { name, email, language, theme });
+    log('📤 開始發送聯絡表單郵件:', { name, email, type, language, theme });
 
     if (!process.env.RESEND_API_KEY) {
       error('❌ Resend API 金鑰未配置');
@@ -1070,7 +1070,7 @@ async function sendContactEmail(name, email, message, language, theme = 'light',
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const template = generateContactFormEmailTemplate(name, email, message, language, theme);
+    const template = generateContactFormEmailTemplate(name, email, type, message, language, theme);
 
     log('📧 發送聯絡表單郵件請求');
     const { data, error: resendError } = await resend.emails.send({

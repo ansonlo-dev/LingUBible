@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContactRecaptcha } from '@/hooks/useSmartRecaptcha';
@@ -12,6 +13,7 @@ import { MessageCircle, Loader2 } from 'lucide-react';
 interface FormData {
   name: string;
   email: string;
+  type: string;
   message: string;
 }
 
@@ -19,6 +21,7 @@ export function ContactForm() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
+    type: '',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +41,7 @@ export function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.type.trim() || !formData.message.trim()) {
       toast({
         title: t('contact.error'),
         description: t('contact.fillAllFields'),
@@ -116,6 +119,7 @@ export function ContactForm() {
               action: 'sendContactForm',
               name: formData.name.trim(),
               email: formData.email.trim(),
+              type: formData.type.trim(),
               message: formData.message.trim(),
               language: language,
               recaptchaToken: recaptchaResult.token,
@@ -147,6 +151,7 @@ export function ContactForm() {
             setFormData({
               name: '',
               email: '',
+              type: '',
               message: ''
             });
           } else {
@@ -160,6 +165,7 @@ export function ContactForm() {
             setFormData({
               name: '',
               email: '',
+              type: '',
               message: ''
             });
           }
@@ -187,6 +193,7 @@ export function ContactForm() {
           setFormData({
             name: '',
             email: '',
+            type: '',
             message: ''
           });
         } else {
@@ -271,6 +278,27 @@ export function ContactForm() {
                 </div>
               );
             })()}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="type">{t('contact.type')}</Label>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger className="bg-background border-border focus:border-primary">
+                <SelectValue placeholder={t('contact.typePlaceholder')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bugReport">{t('contact.types.bugReport')}</SelectItem>
+                <SelectItem value="commentReport">{t('contact.types.commentReport')}</SelectItem>
+                <SelectItem value="accountIssue">{t('contact.types.accountIssue')}</SelectItem>
+                <SelectItem value="featureRequest">{t('contact.types.featureRequest')}</SelectItem>
+                <SelectItem value="general">{t('contact.types.general')}</SelectItem>
+                <SelectItem value="other">{t('contact.types.other')}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">

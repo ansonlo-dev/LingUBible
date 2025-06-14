@@ -809,6 +809,14 @@ export default {
     'contact.messageMinWords': '消息内容至少需要30个字，目前只有{count}个字',
     'contact.invalidEmail': '请输入有效的电子邮件地址',
     'contact.nameMaxWords': '姓名不能超过10个字，目前有{count}个字',
+    'contact.type': '邮件类型',
+    'contact.typePlaceholder': '请选择邮件类型',
+    'contact.types.bugReport': '错误报告',
+    'contact.types.commentReport': '评论举报',
+    'contact.types.accountIssue': '账户问题',
+    'contact.types.featureRequest': '功能建议',
+    'contact.types.general': '一般咨询',
+    'contact.types.other': '其他',
 
     // FAQ Page
     'faq.title': '常见问题',

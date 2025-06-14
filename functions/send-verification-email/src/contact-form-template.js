@@ -1,5 +1,5 @@
 // 生成聯絡表單郵件模板
-export function generateContactFormEmailTemplate(name, email, message, language = 'zh-TW', theme = 'light') {
+export function generateContactFormEmailTemplate(name, email, type, message, language = 'zh-TW', theme = 'light') {
   const isDark = theme === 'dark';
   
   const colors = {
@@ -21,8 +21,17 @@ export function generateContactFormEmailTemplate(name, email, message, language 
       title: '收到新的聯絡表單訊息',
       from: '來自',
       email: '郵件',
+      type: '類型',
       message: '訊息內容',
       footer: '此郵件由聯絡表單自動發送。',
+      types: {
+        bugReport: '錯誤回報',
+        commentReport: '評論檢舉',
+        accountIssue: '帳戶問題',
+        featureRequest: '功能建議',
+        general: '一般諮詢',
+        other: '其他'
+      },
       footerLinks: {
         faq: '常見問題',
         contact: '聯絡我們',
@@ -35,8 +44,17 @@ export function generateContactFormEmailTemplate(name, email, message, language 
       title: '收到新的联系表单消息',
       from: '来自',
       email: '邮件',
+      type: '类型',
       message: '消息内容',
       footer: '此邮件由联系表单自动发送。',
+      types: {
+        bugReport: '错误报告',
+        commentReport: '评论举报',
+        accountIssue: '账户问题',
+        featureRequest: '功能建议',
+        general: '一般咨询',
+        other: '其他'
+      },
       footerLinks: {
         faq: '常见问题',
         contact: '联系我们',
@@ -49,8 +67,17 @@ export function generateContactFormEmailTemplate(name, email, message, language 
       title: 'New Contact Form Message Received',
       from: 'From',
       email: 'Email',
+      type: 'Type',
       message: 'Message',
       footer: 'This email was sent automatically from the contact form.',
+      types: {
+        bugReport: 'Bug Report',
+        commentReport: 'Comment Report',
+        accountIssue: 'Account Issue',
+        featureRequest: 'Feature Request',
+        general: 'General Inquiry',
+        other: 'Other'
+      },
       footerLinks: {
         faq: 'FAQ',
         contact: 'Contact Us',
@@ -195,6 +222,9 @@ export function generateContactFormEmailTemplate(name, email, message, language 
                     
                     <div class="info-label">${t.email}</div>
                     <div class="info-value">${email}</div>
+                    
+                    <div class="info-label">${t.type}</div>
+                    <div class="info-value">${t.types[type] || type}</div>
                 </div>
                 
                 <div class="message-section">
