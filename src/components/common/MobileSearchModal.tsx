@@ -125,12 +125,12 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         ? filteredCourses.map(course => ({
             title: course.title,
             subtitle: `${course.code} - ${course.department}`,
-            href: `/course/${course.code}`
+            href: `/courses/${course.code}`
           }))
         : (!searchQuery.trim() && isInitialized && !loading ? suggestedCourses.map(course => ({
             title: course.title,
             subtitle: `${course.code} - ${course.department}`,
-            href: `/course/${course.code}`
+            href: `/courses/${course.code}`
           })) : [])
     },
     {
