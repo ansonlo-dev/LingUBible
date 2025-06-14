@@ -3,6 +3,17 @@ import { Models } from 'appwrite';
 import { studentVerificationService } from '@/services/external/studentVerification';
 import { DEV_MODE } from '@/config/devMode';
 
+// 自定義錯誤類，支援翻譯鍵值
+export class AuthError extends Error {
+    public messageKey?: string;
+    
+    constructor(message: string, messageKey?: string) {
+        super(message);
+        this.name = 'AuthError';
+        this.messageKey = messageKey;
+    }
+}
+
 export interface AuthUser extends Models.User<Models.Preferences> {}
 
 export const authService = {
@@ -125,68 +136,40 @@ export const authService = {
     // 登入
     async login(email: string, password: string, rememberMe: boolean = false) {
         try {
-            // 先嘗試清理任何現有的 session，以支持多設備登入
+            console.log('🔄 嘗試登入:', email, '記住我:', rememberMe);
+            
+            // 檢查是否已有活躍 session
             try {
                 const currentUser = await account.get();
                 if (currentUser) {
-                    // 如果有現有用戶，先登出
-                    await account.deleteSession('current');
+                    console.log('✅ 已有活躍 session，直接返回');
+                    return currentUser;
                 }
             } catch (error) {
-                // 如果沒有現有 session 或已經過期，忽略錯誤
-                console.log('No existing session to clear');
+                // 沒有活躍 session，繼續登入流程
+                console.log('📝 沒有活躍 session，繼續登入');
             }
 
             // 創建新的 session
-            let session;
-            try {
-                session = await account.createEmailPasswordSession(email, password);
-            } catch (loginError: any) {
-                // 在開發模式下，如果是密碼相關錯誤，嘗試使用預設密碼
-                if (DEV_MODE.enabled && loginError?.message && (
-                    loginError.message.includes('Invalid credentials') ||
-                    loginError.message.includes('Invalid `password` param') ||
-                    loginError.message.includes('Password must be between 8 and 256 characters') ||
-                    loginError.message.includes('password') ||
-                    loginError.code === 400
-                )) {
-                    console.log('🔧 開發模式：原密碼登入失敗，嘗試使用預設密碼');
-                    console.log('🔍 原始錯誤:', loginError.message);
-                    try {
-                        session = await account.createEmailPasswordSession(email, 'DevMode123!@#');
-                        console.log('✅ 開發模式：預設密碼登入成功');
-                    } catch (devPasswordError) {
-                        console.log('❌ 開發模式：預設密碼登入也失敗');
-                        throw loginError; // 拋出原始錯誤
-                    }
-                } else {
-                    throw loginError;
-                }
-            }
+            const session = await account.createEmailPasswordSession(email, password);
             
-            // 如果不選擇記住我，設置 session 為瀏覽器關閉時過期
+            // 設置記住我狀態
             if (!rememberMe) {
-                // 保存記住我狀態到 localStorage
                 localStorage.setItem('rememberMe', 'false');
-                // 設置一個標記，在頁面刷新時檢查
                 sessionStorage.setItem('sessionOnly', 'true');
             } else {
-                // 記住我：保存狀態並移除 sessionOnly 標記
                 localStorage.setItem('rememberMe', 'true');
                 localStorage.setItem('savedEmail', email);
                 sessionStorage.removeItem('sessionOnly');
             }
             
+            console.log('✅ 登入成功');
             return session;
-        } catch (error: any) {
-            console.log('🔍 登入錯誤詳情:', {
-                message: error?.message,
-                code: error?.code,
-                type: error?.type,
-                status: error?.status
-            });
             
-            // 檢查是否是帳戶被禁用的錯誤
+        } catch (error: any) {
+            console.error('❌ 登入錯誤:', error);
+            
+            // 處理帳戶停用錯誤
             const isAccountDisabled = error?.message && (
                 error.message.includes('user is blocked') || 
                 error.message.includes('user is disabled') ||
@@ -197,7 +180,7 @@ export const authService = {
             );
             
             if (isAccountDisabled) {
-                throw new Error('您的帳戶已被停用。如需重新啟用，請聯繫客服。');
+                throw new AuthError('Your account has been disabled. Please contact customer service to reactivate.', 'auth.accountDisabled');
             }
             
             // 如果仍然是 session 衝突錯誤，嘗試強制清理所有 sessions
@@ -308,15 +291,15 @@ export const authService = {
             if (error?.message?.includes('Invalid credentials') || 
                 error?.message?.includes('Invalid recovery') ||
                 error?.code === 401) {
-                throw new Error('重設連結無效或已過期，請重新申請密碼重設');
+                throw new AuthError('Reset link is invalid or expired, please request a new password reset', 'auth.invalidOrExpiredToken');
             }
             
             if (error?.message?.includes('Password must be between 8 and 256 characters')) {
-                throw new Error('密碼長度必須在8-256字符之間');
+                throw new AuthError('Password must be between 8 and 256 characters', 'auth.passwordLengthError');
             }
             
             if (error?.message?.includes('Too many requests')) {
-                throw new Error('請求過於頻繁，請稍後再試');
+                throw new AuthError('Too many requests, please try again later', 'auth.tooManyRequests');
             }
             
             throw error;
@@ -381,11 +364,11 @@ export const authService = {
             if (error?.message?.includes('Invalid token') || 
                 error?.message?.includes('Token expired') ||
                 error?.message?.includes('Token not found')) {
-                throw new Error('重設連結無效或已過期，請重新申請密碼重設');
+                throw new AuthError('Reset link is invalid or expired, please request a new password reset', 'auth.invalidOrExpiredToken');
             }
             
             if (error?.message?.includes('already been used')) {
-                throw new Error('此重設連結已被使用過，請重新申請密碼重設');
+                throw new AuthError('This reset link has already been used. Please request a new password reset.', 'auth.resetLinkAlreadyUsed');
             }
             
             throw error;
@@ -451,15 +434,15 @@ export const authService = {
             if (error?.message?.includes('Invalid token') || 
                 error?.message?.includes('Token expired') ||
                 error?.message?.includes('Token not found')) {
-                throw new Error('重設連結無效或已過期，請重新申請密碼重設');
+                throw new AuthError('Reset link is invalid or expired, please request a new password reset', 'auth.invalidOrExpiredToken');
             }
             
             if (error?.message?.includes('Password must be between 8 and 256 characters')) {
-                throw new Error('密碼長度必須在8-256字符之間');
+                throw new AuthError('Password must be between 8 and 256 characters', 'auth.passwordLengthError');
             }
             
             if (error?.message?.includes('Too many requests')) {
-                throw new Error('請求過於頻繁，請稍後再試');
+                throw new AuthError('Too many requests, please try again later', 'auth.tooManyRequests');
             }
             
             throw error;
@@ -504,15 +487,15 @@ export const authService = {
             if (error?.message?.includes('Invalid credentials') || 
                 error?.message?.includes('password is invalid') ||
                 error?.code === 401) {
-                throw new Error('目前密碼不正確');
+                throw new AuthError('Current password is incorrect', 'auth.currentPasswordIncorrect');
             }
             
             if (error?.message?.includes('Password must be between 8 and 256 characters')) {
-                throw new Error('新密碼長度必須在8-256字符之間');
+                throw new AuthError('New password length must be between 8-256 characters', 'auth.newPasswordLengthError');
             }
             
             if (error?.message?.includes('Too many requests')) {
-                throw new Error('請求過於頻繁，請稍後再試');
+                throw new AuthError('Too many requests, please try again later', 'auth.tooManyRequests');
             }
             
             throw error;

@@ -356,6 +356,11 @@ export default {
     'auth.invalidResetLinkTitle': '无效的重设链接',
     'auth.resetLinkAlreadyUsed': '此重设链接已被使用过，请重新申请密码重设。',
     'auth.requestNewResetLink': '申请新的重设链接',
+    'auth.accountDisabled': '您的账户已被停用。如需重新启用，请联系客服。',
+    'auth.invalidOrExpiredToken': '重设链接无效或已过期，请重新申请密码重设',
+    'auth.tooManyRequests': '请求过于频繁，请稍后再试',
+    'auth.currentPasswordIncorrect': '当前密码不正确',
+    'auth.newPasswordLengthError': '新密码长度必须在8-256字符之间',
 
     // Security - 安全
     'security.warning': '安全警告',

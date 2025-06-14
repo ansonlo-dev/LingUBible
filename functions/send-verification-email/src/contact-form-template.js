@@ -210,7 +210,7 @@ export function generateContactFormEmailTemplate(name, email, type, message, lan
         <div class="container">
             <div class="header">
                 <a href="https://lingubible.com" style="text-decoration: none; color: inherit;">
-                    <img src="/email-banner.png" alt="LingUBible" class="logo">
+                    <img src="https://lingubible.com/email-banner.png" alt="LingUBible" class="logo">
                     <h1 class="title">${t.title}</h1>
                 </a>
             </div>

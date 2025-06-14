@@ -10,7 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { PasswordInput } from '@/components/ui/password-input';
 import { PasswordStrengthChecker } from '@/components/auth/PasswordStrengthChecker';
-import { authService } from '@/services/api/auth';
+import { authService, AuthError } from '@/services/api/auth';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -52,7 +52,10 @@ export default function ResetPassword() {
         console.error('Token validation failed:', err);
         setIsTokenValid(false);
         
-        if (err.message?.includes('already been used')) {
+        // 處理 AuthError 的翻譯鍵值
+        if (err instanceof AuthError && err.messageKey) {
+          setError(t(err.messageKey));
+        } else if (err.message?.includes('already been used')) {
           setError(t('auth.resetLinkAlreadyUsed'));
         } else if (err.message?.includes('Invalid token') || 
                    err.message?.includes('Token expired')) {
@@ -121,7 +124,10 @@ export default function ResetPassword() {
     } catch (err: any) {
       console.error('Password reset failed:', err);
       
-      if (err.message?.includes('Invalid credentials') || 
+      // 處理 AuthError 的翻譯鍵值
+      if (err instanceof AuthError && err.messageKey) {
+        setError(t(err.messageKey));
+      } else if (err.message?.includes('Invalid credentials') || 
           err.message?.includes('Invalid recovery')) {
         setError(t('auth.invalidOrExpiredResetLink'));
       } else if (err.message?.includes('Password must be between 8 and 256 characters')) {

@@ -10,7 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { User, Mail, CheckCircle, Save, ArrowLeft, Loader2, Lock, Palette, UserCircle, AtSign, Settings, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { UsernameValidator } from "@/utils/auth/usernameValidator";
-import { authService } from "@/services/api/auth";
+import { authService, AuthError } from "@/services/api/auth";
 import { PasswordInput } from '@/components/ui/password-input';
 import { PasswordStrengthChecker } from '@/components/auth/PasswordStrengthChecker';
 import { AvatarCustomizer } from '@/components/user/AvatarCustomizer';
@@ -238,7 +238,11 @@ export default function UserSettings() {
       console.error('更新密碼失敗:', error);
       
       let errorMessage = t('settings.passwordUpdateFailed');
-      if (error.message === '目前密碼不正確') {
+      
+      // 處理 AuthError 的翻譯鍵值
+      if (error instanceof AuthError && error.messageKey) {
+        errorMessage = t(error.messageKey);
+      } else if (error.message === '目前密碼不正確') {
         errorMessage = t('settings.wrongCurrentPassword');
       } else if (error.message) {
         errorMessage = error.message;

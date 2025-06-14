@@ -354,6 +354,11 @@ export default {
     'auth.resetting': '重置中...',
     'auth.setNewPassword': '設置新密碼',
     'auth.setNewPasswordDescription': '請輸入您的新密碼以完成重置過程',
+    'auth.accountDisabled': '您的帳戶已被停用。如需重新啟用，請聯繫客服。',
+    'auth.invalidOrExpiredToken': '重設連結無效或已過期，請重新申請密碼重設',
+    'auth.tooManyRequests': '請求過於頻繁，請稍後再試',
+    'auth.currentPasswordIncorrect': '目前密碼不正確',
+    'auth.newPasswordLengthError': '新密碼長度必須在8-256字符之間',
 
     // Security - 安全
     'security.warning': '安全警告',

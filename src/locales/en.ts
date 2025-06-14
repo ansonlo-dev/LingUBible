@@ -355,6 +355,11 @@ export default {
     'auth.termsOfService': 'Terms of Service',
     'auth.privacyPolicy': 'Privacy Policy',
     'auth.mustAgreeTerms': 'You must agree to the Terms of Service and Privacy Policy to continue',
+    'auth.accountDisabled': 'Your account has been disabled. Please contact customer service to reactivate.',
+    'auth.invalidOrExpiredToken': 'Reset link is invalid or expired, please request a new password reset',
+    'auth.tooManyRequests': 'Too many requests, please try again later',
+    'auth.currentPasswordIncorrect': 'Current password is incorrect',
+    'auth.newPasswordLengthError': 'New password length must be between 8-256 characters',
 
     // Security
     'security.warning': 'Security Warning',
