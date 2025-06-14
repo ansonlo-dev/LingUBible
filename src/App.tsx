@@ -441,9 +441,6 @@ const RouterContent = ({
       {/* 動態文檔標題和元數據 */}
       <DocumentHead />
       
-      {/* 路由變化時滾動到頂部 */}
-      <ScrollToTop />
-      
       {/* SEO 測試器 - 僅開發模式 */}
       {/* {import.meta.env.DEV && <SEOTester />} */}
       
@@ -542,6 +539,7 @@ const RouterContent = ({
                     isMobileSidebarOpen={isMobileSidebarOpen}
                     forceSwipeReinit={forceSwipeReinit}
                   />
+                  <ScrollToTop />
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/courses" element={<Courses />} />
