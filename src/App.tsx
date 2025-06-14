@@ -14,6 +14,7 @@ import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
 import { SEOTester } from "@/components/dev/SEOTester";
 import { BetaNotice } from "@/components/common/BetaNotice";
 import { BackToTop } from "@/components/ui/back-to-top";
+import { ScrollToTop } from "@/components/common/ScrollToTop";
 
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
@@ -439,6 +440,9 @@ const RouterContent = ({
     <>
       {/* 動態文檔標題和元數據 */}
       <DocumentHead />
+      
+      {/* 路由變化時滾動到頂部 */}
+      <ScrollToTop />
       
       {/* SEO 測試器 - 僅開發模式 */}
       {/* {import.meta.env.DEV && <SEOTester />} */}
