@@ -559,4 +559,6 @@ This website has no official affiliation with Lingnan University. All reviews an
 
 *Built with ❤️ by [ansonlo.dev](https://ansonlo.dev) | Powered by Open Source*
 
+<!-- Test: VCS integration disabled for Appwrite functions - 2025-06-14 -->
+
 </div> 
