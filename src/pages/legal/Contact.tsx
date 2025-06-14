@@ -38,7 +38,7 @@ export default function Contact() {
                     <p className="font-medium text-foreground">{t('contact.email')}</p>
                     <a 
                       href="mailto:support@lingubible.com" 
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-white underline hover:no-underline"
                     >
                       support@lingubible.com
                     </a>
@@ -53,7 +53,7 @@ export default function Contact() {
                       href="https://github.com/ansonlo-dev/LingUBible" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-white underline hover:no-underline"
                     >
                       github.com/ansonlo-dev/LingUBible
                     </a>
@@ -68,7 +68,7 @@ export default function Contact() {
                       href="https://ansonlo.dev/" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-white underline hover:no-underline"
                     >
                       ansonlo.dev
                     </a>
