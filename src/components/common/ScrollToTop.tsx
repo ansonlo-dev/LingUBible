@@ -37,13 +37,7 @@ export function ScrollToTop() {
           });
         }, 50);
         
-        // 調試信息
-        console.log('ScrollToTop: Scrolled to top for path:', pathname);
-        console.log('ScrollToTop: Current scroll positions:', {
-          window: window.pageYOffset,
-          documentElement: document.documentElement.scrollTop,
-          body: document.body.scrollTop
-        });
+
       } catch (error) {
         console.error('ScrollToTop: Error scrolling to top:', error);
         // 最後的備用方案
