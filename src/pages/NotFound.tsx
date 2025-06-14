@@ -119,7 +119,7 @@ const NotFound = () => {
             {quickLinks.map((link, index) => {
               const IconComponent = link.icon;
               return (
-                <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105">
                   <CardContent className="p-6">
                     <Link to={link.path} className="block">
                       <div className="flex flex-col items-center text-center space-y-3">
@@ -145,7 +145,7 @@ const NotFound = () => {
 
         {/* 幫助信息 */}
         <div className="mt-12 text-center">
-          <Card className="bg-muted/30 border-dashed">
+          <Card className="course-card bg-muted/30 border-dashed">
             <CardContent className="p-6">
               <h4 className="font-semibold text-foreground mb-2">
                 {t('404.help.title')}
