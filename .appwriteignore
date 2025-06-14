@@ -1,0 +1,135 @@
+# Frontend dependencies and build files - CRITICAL: These must be excluded
+node_modules/
+dist/
+dev-dist/
+build/
+.next/
+.nuxt/
+.vite/
+.turbo/
+
+# Package manager files
+package-lock.json
+yarn.lock
+bun.lockb
+pnpm-lock.yaml
+
+# Frontend source files (not needed for functions)
+src/
+public/
+assets/
+docs/
+tools/
+scripts/
+examples/
+
+# Configuration files not needed for functions
+vite.config.ts
+tailwind.config.ts
+postcss.config.js
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+components.json
+eslint.config.js
+wrangler.toml
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+env.example
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory
+coverage/
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+bower_components/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# Documentation
+README.md
+*.md
+LICENSE
+
+# Large binary files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Deployment artifacts
+*.tar.gz
+*.zip
+
+# Frontend specific files
+index.html
+manifest.json
+robots.txt
+sitemap.xml
+
+# Only include functions directory and appwrite.json
+!functions/
+!appwrite.json 
