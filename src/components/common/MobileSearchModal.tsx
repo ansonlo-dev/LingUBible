@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X, BookOpen as BookOpenIcon, Users } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
 import type { UGCourse, LecturerWithStats } from '@/types/course';
 
@@ -28,6 +29,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   };
   const { t } = useLanguage();
   const { isDesktop } = useDeviceDetection();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [courses, setCourses] = useState<UGCourse[]>([]);
@@ -169,7 +171,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0 && allItems[selectedIndex]) {
-          window.location.href = allItems[selectedIndex].href;
+          navigate(allItems[selectedIndex].href);
           handleClose();
         }
         break;
@@ -263,11 +265,13 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                             .reduce((acc, cat) => acc + cat.items.length, 0) + itemIndex;
                           
                           return (
-                            <a
+                            <div
                               key={`${category.category}-${itemIndex}`}
-                              href={item.href}
-                              onClick={handleClose}
-                              className={`flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                              onClick={() => {
+                                navigate(item.href);
+                                handleClose();
+                              }}
+                              className={`flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
                                 selectedIndex === globalIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                               }`}
                             >
@@ -280,7 +284,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                                   {item.subtitle}
                                 </div>
                               </div>
-                            </a>
+                            </div>
                           );
                         })}
                       </div>
@@ -348,11 +352,13 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                             .reduce((acc, cat) => acc + cat.items.length, 0) + itemIndex;
                           
                           return (
-                            <a
+                            <div
                               key={`${category.category}-${itemIndex}`}
-                              href={item.href}
-                              onClick={handleClose}
-                              className={`flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                              onClick={() => {
+                                navigate(item.href);
+                                handleClose();
+                              }}
+                              className={`flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
                                 selectedIndex === globalIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                               }`}
                             >
@@ -365,7 +371,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                                   {item.subtitle}
                                 </div>
                               </div>
-                            </a>
+                            </div>
                           );
                         })}
                       </div>
