@@ -1,166 +1,74 @@
-import { useState, useEffect, useMemo } from 'react';
-import { CourseCard } from "@/components/features/reviews/CourseCard";
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AdvancedCourseFilters, CourseFilters } from '@/components/features/reviews/AdvancedCourseFilters';
-import { BookOpen, Filter, Search, SortAsc, Hash, BookText, Tag, Building2, Library, Sparkles, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CourseCard } from '@/components/features/reviews/CourseCard';
+import { CourseService, CourseWithStats } from '@/services/api/courseService';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CourseService } from '@/services/api/courseService';
-import { SUBJECT_AREAS, SUBJECT_CODES, extractSubjectCode, getSubjectAreaName } from '@/utils/constants/subjectAreas';
-import type { UGCourse } from '@/types/course';
-import { databases } from '@/lib/appwrite';
-import { Query } from 'appwrite';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Search, BookOpen, Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 const Courses = () => {
-  const { t, language } = useLanguage();
-  const [courses, setCourses] = useState<UGCourse[]>([]);
+  const { t } = useLanguage();
+  const [courses, setCourses] = useState<CourseWithStats[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<CourseWithStats[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 篩選狀態
-  const [filters, setFilters] = useState<CourseFilters>({
-    searchTerm: '',
-    subjectArea: 'all',
-    sortBy: 'code',
-    offered: 'all',
-    quickFilters: {
-      noExam: false,
-      easyGrading: false,
-      lightWorkload: false,
-      englishTaught: false,
-      hasGroupProject: false,
-      noAttendance: false
-    }
-  });
-
-  // 載入課程資料
+  // 載入課程數據
   useEffect(() => {
-    const fetchCourses = async () => {
+    const loadCourses = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const response = await databases.listDocuments(
-          'lingubible',
-          'ug_courses',
-          [
-            Query.equal('isActive', true),
-            Query.limit(100)
-          ]
-        );
-
-        setCourses(response.documents as unknown as UGCourse[]);
+        const coursesData = await CourseService.getCoursesWithStats();
+        setCourses(coursesData);
+        setFilteredCourses(coursesData);
       } catch (err) {
-        console.error('Error fetching courses:', err);
-        setError(t('error.loadingCourses'));
+        console.error('Error loading courses:', err);
+        setError('Failed to load courses');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourses();
+    loadCourses();
   }, []);
 
-  // 獲取可用的學科領域
-  const availableSubjects = useMemo(() => {
-    const subjects = new Set<string>();
-    courses.forEach(course => {
-      if (course.code) {
-        // 提取課程代碼的學科部分（例如：CDS1001 -> CDS）
-        const match = course.code.match(/^([A-Z]+)/);
-        if (match) {
-          subjects.add(match[1]);
-        }
-      }
-    });
-    return Array.from(subjects).sort();
-  }, [courses]);
-
-  // 篩選和排序課程
-  const filteredAndSortedCourses = useMemo(() => {
-    let filtered = [...courses];
-
-    // 搜尋篩選
-    if (filters.searchTerm.trim()) {
-      const searchTerm = filters.searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(course => 
-        course.code?.toLowerCase().includes(searchTerm) ||
-        course.title?.toLowerCase().includes(searchTerm) ||
-        course.department?.toLowerCase().includes(searchTerm)
+  // 處理搜尋
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredCourses(courses);
+    } else {
+      const filtered = courses.filter(course =>
+        course.course_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.course_department.toLowerCase().includes(searchTerm.toLowerCase())
       );
+      setFilteredCourses(filtered);
     }
+  }, [searchTerm, courses]);
 
-    // 學科領域篩選
-    if (filters.subjectArea !== 'all') {
-      filtered = filtered.filter(course => 
-        course.code?.startsWith(filters.subjectArea)
-      );
-    }
-
-    // 開設狀態篩選
-    if (filters.offered !== 'all') {
-      filtered = filtered.filter(course => course.offered === filters.offered);
-    }
-
-    // 快速篩選（這裡是示例邏輯，實際需要根據課程資料結構調整）
-    if (filters.quickFilters.englishTaught) {
-      // 假設英語授課的課程代碼包含特定模式或有特定標記
-      filtered = filtered.filter(course => 
-        course.title?.includes('English') || 
-        course.description?.includes('English')
-      );
-    }
-
-    // 排序
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'code':
-          return (a.code || '').localeCompare(b.code || '');
-        case 'title':
-          return (a.title || '').localeCompare(b.title || '');
-        case 'subject':
-          const aSubject = a.code?.match(/^([A-Z]+)/)?.[1] || '';
-          const bSubject = b.code?.match(/^([A-Z]+)/)?.[1] || '';
-          return aSubject.localeCompare(bSubject);
-        case 'department':
-          return (a.department || '').localeCompare(b.department || '');
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }, [courses, filters]);
-
-  // 清除所有篩選
-  const handleClearAllFilters = () => {
-    setFilters({
-      searchTerm: '',
-      subjectArea: 'all',
-      sortBy: 'code',
-      offered: 'all',
-      quickFilters: {
-        noExam: false,
-        easyGrading: false,
-        lightWorkload: false,
-        englishTaught: false,
-        hasGroupProject: false,
-        noAttendance: false
-      }
-    });
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-              <p className="text-lg text-muted-foreground">{t('loading.courses')}</p>
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t('pages.courses.title') || '所有課程'}
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              {t('pages.courses.subtitle') || '瀏覽所有可用的課程'}
+            </p>
+          </div>
+
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('stats.loading') || '載入中...'}</p>
             </div>
           </div>
         </div>
@@ -172,10 +80,23 @@ const Courses = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <div className="container mx-auto px-4 py-8">
-          <Alert variant="destructive" className="max-w-2xl mx-auto">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t('pages.courses.title') || '所有課程'}
+            </h1>
+          </div>
+
+          <div className="flex justify-center items-center min-h-[400px]">
+            <Card className="max-w-md">
+              <CardContent className="p-6 text-center">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">{t('pages.courses.loadFailed')}</h3>
+                <p className="text-muted-foreground">
+                  {t('pages.courses.loadFailedDesc')}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );
@@ -190,56 +111,62 @@ const Courses = () => {
             {t('pages.courses.title') || '所有課程'}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {t('pages.courses.subtitle')}
+            {t('pages.courses.subtitle') || '瀏覽所有可用的課程，查看評論和評分'}
           </p>
         </div>
 
-        {/* 進階篩選組件 */}
-        <AdvancedCourseFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          availableSubjects={availableSubjects}
-          onClearAll={handleClearAllFilters}
-        />
-
-        {/* 結果統計 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <BookOpen className="h-5 w-5" />
-            <span>
-              {t('pages.courses.showingResults', { 
-                count: filteredAndSortedCourses.length, 
-                total: courses.length 
-              })}
-            </span>
+        {/* 搜尋區域 */}
+        <div className="max-w-2xl mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={t('search.placeholder') || '搜尋課程名稱或代碼...'}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-10 h-12 text-base bg-white dark:bg-card border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
           </div>
         </div>
 
-        {/* 課程卡片網格 */}
-        {filteredAndSortedCourses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredAndSortedCourses.map((course) => (
-              <CourseCard
-                key={course.$id}
-                title={course.title}
-                code={course.code}
-                rating={4.2} // 示例評分，實際需要從評價資料計算
-                reviewCount={15} // 示例評價數，實際需要從評價資料計算
-                studentCount={120} // 示例學生數，實際需要從註冊資料計算
-                department={course.department}
-                offered={course.offered || 'Yes'}
-              />
-            ))}
+        {/* 課程統計 */}
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            {searchTerm ? (
+              t('pages.courses.foundCount', { count: filteredCourses.length })
+            ) : (
+              t('pages.courses.totalCount', { count: courses.length })
+            )}
+          </p>
+        </div>
+
+        {/* 課程列表 */}
+        {filteredCourses.length === 0 ? (
+          <div className="flex justify-center items-center min-h-[300px]">
+            <Card className="max-w-md">
+              <CardContent className="p-6 text-center">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">{t('pages.courses.noCoursesFound')}</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm ? t('pages.courses.tryOtherKeywords') : t('pages.courses.noCoursesAvailable')}
+                </p>
+              </CardContent>
+            </Card>
           </div>
         ) : (
-          <div className="text-center py-16 space-y-4">
-            <BookOpen className="h-16 w-16 mx-auto text-muted-foreground/50" />
-            <h3 className="text-xl font-semibold text-muted-foreground">
-              {t('pages.courses.noResults')}
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {t('pages.courses.noResultsDesc')}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredCourses.map((course) => (
+              <CourseCard
+                key={course.$id}
+                title={course.course_title}
+                code={course.course_code}
+                department={course.course_department}
+                language={course.course_language}
+                rating={course.averageRating}
+                reviewCount={course.reviewCount}
+                studentCount={course.studentCount}
+              />
+            ))}
           </div>
         )}
       </div>

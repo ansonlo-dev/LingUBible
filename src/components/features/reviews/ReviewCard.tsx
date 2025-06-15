@@ -120,7 +120,7 @@ export function ReviewCard({
                 className="p-0 h-auto text-primary"
                 onClick={() => setIsExpanded(!isExpanded)}
               >
-                {isExpanded ? '收起' : '展開更多'}
+                {isExpanded ? t('review.collapse') : t('review.expandMore')}
               </Button>
             )}
           </div>
@@ -131,7 +131,7 @@ export function ReviewCard({
               {pros.length > 0 && (
                 <div>
                   <h4 className="font-medium text-green-600 dark:text-green-400 mb-2">
-                    👍 優點
+                    👍 {t('review.pros')}
                   </h4>
                   <ul className="space-y-1">
                     {pros.map((pro, index) => (
@@ -146,7 +146,7 @@ export function ReviewCard({
               {cons.length > 0 && (
                 <div>
                   <h4 className="font-medium text-red-600 dark:text-red-400 mb-2">
-                    👎 缺點
+                    👎 {t('review.cons')}
                   </h4>
                   <ul className="space-y-1">
                     {cons.map((con, index) => (
@@ -172,7 +172,7 @@ export function ReviewCard({
             </Button>
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
               <MessageSquare className="h-4 w-4 mr-1" />
-              {replies} 回覆
+              {replies} {t('review.replies')}
             </Button>
           </div>
         </div>

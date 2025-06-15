@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, BookOpen as BookOpenIcon, Users } from 'lucide-react';
+import { X, BookOpen as BookOpenIcon, Users, Construction } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
-import { CourseService } from '@/services/api/courseService';
-import type { UGCourse, LecturerWithStats } from '@/types/course';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -32,8 +30,6 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [courses, setCourses] = useState<UGCourse[]>([]);
-  const [lecturers, setLecturers] = useState<LecturerWithStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,15 +38,14 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   // 載入數據
   useEffect(() => {
     if (isOpen) {
+      // 立即設置載入狀態，避免建議項目閃現
+      setLoading(true);
+      setIsInitialized(false);
+      
       const loadData = async () => {
         try {
-          setLoading(true);
-          const [coursesData, lecturersData] = await Promise.all([
-            CourseService.getAllCourses(),
-            CourseService.getAllLecturers()
-          ]);
-          setCourses(coursesData);
-          setLecturers(lecturersData);
+          // 模擬載入時間
+          await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
           console.error('Error loading search data:', error);
         } finally {
@@ -60,121 +55,33 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       };
 
       loadData();
+    } else {
+      // 當模態框關閉時重置狀態
+      setIsInitialized(false);
+      setLoading(false);
     }
   }, [isOpen]);
 
-  // 過濾搜索結果
-  const filteredCourses = searchQuery.trim() 
-    ? courses.filter(course => 
-        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.department.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 8)
-    : courses.slice(0, 12);
-
-  const filteredLecturers = searchQuery.trim()
-    ? lecturers.filter(lecturer =>
-        lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lecturer.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (lecturer.specialties && lecturer.specialties.some(specialty => 
-          specialty.toLowerCase().includes(searchQuery.toLowerCase())
-        ))
-      ).slice(0, 8)
-    : lecturers.slice(0, 12);
-
-  // 建議搜索項目（當沒有搜索查詢時顯示）
-  const suggestedCourses = [
-    { title: '商業管理導論', code: 'BUS1001', department: '商學院' },
-    { title: '計算機科學導論', code: 'CDS1001', department: '計算機科學與數據科學系' },
-    { title: '資料結構與演算法', code: 'CDS2001', department: '計算機科學與數據科學系' },
-    { title: '總體經濟學', code: 'ECO1001', department: '經濟學系' },
-    { title: '英國文學', code: 'ENG2001', department: '英文系' },
-    { title: '微積分I', code: 'MAT1001', department: '數學系' },
-    { title: '普通心理學', code: 'PSY1001', department: '心理學系' },
-    { title: '財務管理', code: 'BUS2001', department: '商學院' },
-    { title: '機器學習', code: 'CDS3001', department: '計算機科學與數據科學系' },
-    { title: '國際關係', code: 'POL2001', department: '政治學系' },
-    { title: '有機化學', code: 'CHE2001', department: '化學系' },
-    { title: '統計學原理', code: 'STA1001', department: '統計學系' },
-    { title: '社會學概論', code: 'SOC1001', department: '社會學系' },
-    { title: '藝術史', code: 'ART1001', department: '藝術系' },
-    { title: '物理學I', code: 'PHY1001', department: '物理學系' }
-  ];
-
-  const suggestedLecturers = [
-    { name: 'Prof Sarah Johnson', department: '計算機科學與數據科學系', id: 'prof-sarah' },
-    { name: 'Dr Michael Chen', department: '商學院', id: 'dr-michael' },
-    { name: 'Prof Emily Wang', department: '英文系', id: 'prof-emily' },
-    { name: 'Dr David Liu', department: '經濟學系', id: 'dr-david' },
-    { name: 'Prof Lisa Zhang', department: '心理學系', id: 'prof-lisa' },
-    { name: 'Dr Robert Kim', department: '數學系', id: 'dr-robert' },
-    { name: 'Prof Jennifer Lee', department: '化學系', id: 'prof-jennifer' },
-    { name: 'Dr Thomas Brown', department: '物理學系', id: 'dr-thomas' },
-    { name: 'Prof Maria Garcia', department: '政治學系', id: 'prof-maria' },
-    { name: 'Dr James Wilson', department: '統計學系', id: 'dr-james' },
-    { name: 'Prof Anna Taylor', department: '社會學系', id: 'prof-anna' },
-    { name: 'Dr Kevin Chang', department: '藝術系', id: 'dr-kevin' },
-    { name: 'Prof Rachel Adams', department: '商學院', id: 'prof-rachel' },
-    { name: 'Dr Steven Wu', department: '計算機科學與數據科學系', id: 'dr-steven' },
-    { name: 'Prof Helen Davis', department: '英文系', id: 'prof-helen' }
-  ];
-
+  // 搜尋功能暫時禁用的提示
   const searchResults = [
     {
       category: t('nav.courses'),
       icon: BookOpenIcon,
-      items: filteredCourses.length > 0 
-        ? filteredCourses.map(course => ({
-            title: course.title,
-            subtitle: `${course.code} - ${course.department}`,
-            href: `/courses/${course.code}`
-          }))
-        : (!searchQuery.trim() && isInitialized && !loading ? suggestedCourses.map(course => ({
-            title: course.title,
-            subtitle: `${course.code} - ${course.department}`,
-            href: `/courses/${course.code}`
-          })) : [])
+      items: []
     },
     {
-      category: t('nav.lecturers'),
+              category: t('nav.lecturers'),
       icon: Users,
-      items: filteredLecturers.length > 0
-        ? filteredLecturers.map(lecturer => ({
-            title: lecturer.name,
-            subtitle: lecturer.department,
-            href: `/lecturer/${lecturer.$id}`
-          }))
-        : (!searchQuery.trim() && isInitialized && !loading ? suggestedLecturers.map(lecturer => ({
-            title: lecturer.name,
-            subtitle: lecturer.department,
-            href: `/lecturer/${lecturer.id}`
-          })) : [])
+      items: []
     }
   ];
 
-  const allItems = searchResults.flatMap(category => 
-    category.items.map(item => ({ ...item, category: category.category }))
-  );
+  const allItems: any[] = [];
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (!isOpen) return;
 
     switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % allItems.length);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev <= 0 ? allItems.length - 1 : prev - 1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedIndex >= 0 && allItems[selectedIndex]) {
-          navigate(allItems[selectedIndex].href);
-          handleClose();
-        }
-        break;
       case 'Escape':
         handleClose();
         break;
@@ -251,56 +158,12 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
                   <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
                 </div>
-              ) : searchResults.some(category => category.items.length > 0) ? (
-                <div className="py-2">
-                  {searchResults.map((category, categoryIndex) => (
-                    category.items.length > 0 && (
-                      <div key={category.category}>
-                        <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {category.category}
-                        </div>
-                        {category.items.map((item, itemIndex) => {
-                          const globalIndex = searchResults
-                            .slice(0, categoryIndex)
-                            .reduce((acc, cat) => acc + cat.items.length, 0) + itemIndex;
-                          
-                          return (
-                            <div
-                              key={`${category.category}-${itemIndex}`}
-                              onClick={() => {
-                                navigate(item.href);
-                                handleClose();
-                              }}
-                              className={`flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                                selectedIndex === globalIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                              }`}
-                            >
-                              <category.icon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                  {item.title}
-                                </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                  {item.subtitle}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )
-                  ))}
-                </div>
-              ) : searchQuery.trim() ? (
-                <div className="p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {t('search.noResults')}
-                  </p>
-                </div>
               ) : (
                 <div className="p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {t('search.startTyping')}
+                  <Construction className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">搜尋功能重新設計中</h3>
+                  <p className="text-muted-foreground">
+                    我們正在優化搜尋功能，敬請期待更好的體驗！
                   </p>
                 </div>
               )}
@@ -338,56 +201,12 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
                   <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
                 </div>
-              ) : searchResults.some(category => category.items.length > 0) ? (
-                <div className="py-2">
-                  {searchResults.map((category, categoryIndex) => (
-                    category.items.length > 0 && (
-                      <div key={category.category}>
-                        <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {category.category}
-                        </div>
-                        {category.items.map((item, itemIndex) => {
-                          const globalIndex = searchResults
-                            .slice(0, categoryIndex)
-                            .reduce((acc, cat) => acc + cat.items.length, 0) + itemIndex;
-                          
-                          return (
-                            <div
-                              key={`${category.category}-${itemIndex}`}
-                              onClick={() => {
-                                navigate(item.href);
-                                handleClose();
-                              }}
-                              className={`flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                                selectedIndex === globalIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                              }`}
-                            >
-                              <category.icon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                  {item.title}
-                                </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                  {item.subtitle}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )
-                  ))}
-                </div>
-              ) : searchQuery.trim() ? (
-                <div className="p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {t('search.noResults')}
-                  </p>
-                </div>
               ) : (
                 <div className="p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {t('search.startTyping')}
+                  <Construction className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">搜尋功能重新設計中</h3>
+                  <p className="text-muted-foreground">
+                    我們正在優化搜尋功能，敬請期待更好的體驗！
                   </p>
                 </div>
               )}

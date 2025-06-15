@@ -1,0 +1,20 @@
+[
+  {
+    "term_code": "2024-T1",
+    "name": "2024/25 Term 1",
+    "start_date": "2024-09-01",
+    "end_date": "2024-12-31"
+  },
+  {
+    "term_code": "2023-T2",
+    "name": "2023/24 Term 2",
+    "start_date": "2024-01-01",
+    "end_date": "2024-05-31"
+  },
+  {
+    "term_code": "2025-T1",
+    "name": "2025/26 Term 1",
+    "start_date": "2025-09-01",
+    "end_date": "2025-12-31"
+  }
+]

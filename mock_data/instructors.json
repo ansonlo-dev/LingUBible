@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Dr. Lee Chi Wah",
+    "email": "leecw@ln.edu.hk",
+    "type": "Lecturer"
+  },
+  {
+    "name": "Mr. Jason Chan",
+    "email": "chanj@ln.edu.hk",
+    "type": "TA"
+  },
+  {
+    "name": "Dr. Wong Mei Mei",
+    "email": "wongmm@ln.edu.hk",
+    "type": "Lecturer"
+  },
+  {
+    "name": "Prof. Chan Yiu",
+    "email": "chanyiu@ln.edu.hk",
+    "type": "Lecturer"
+  },
+  {
+    "name": "Ms. Lam Ho Yee",
+    "email": "lamhy@ln.edu.hk",
+    "type": "TA"
+  }
+]

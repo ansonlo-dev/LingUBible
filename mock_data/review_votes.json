@@ -1,0 +1,20 @@
+[
+  {
+    "review_id": "rev_001",
+    "user_id": "user_002",
+    "vote_type": "up",
+    "voted_at": "2025-06-15 11:00:00"
+  },
+  {
+    "review_id": "rev_002",
+    "user_id": "user_001",
+    "vote_type": "down",
+    "voted_at": "2025-06-15 11:30:00"
+  },
+  {
+    "review_id": "rev_003",
+    "user_id": "user_002",
+    "vote_type": "up",
+    "voted_at": "2025-06-15 12:00:00"
+  }
+]

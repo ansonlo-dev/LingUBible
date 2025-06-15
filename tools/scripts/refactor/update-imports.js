@@ -31,7 +31,6 @@ const importMappings = {
   
   '@/components/ThemeToggle': '@/components/common/ThemeToggle',
   '@/components/LanguageSwitcher': '@/components/common/LanguageSwitcher',
-  '@/components/SearchDialog': '@/components/common/SearchDialog',
   '@/components/DocumentHead': '@/components/common/DocumentHead',
   '@/components/ThemeProvider': '@/components/common/ThemeProvider',
   '@/components/CookieConsent': '@/components/common/CookieConsent',

@@ -1,0 +1,44 @@
+[
+  {
+    "course_code": "ENG2104",
+    "term_code": "2024-T1",
+    "instructor_name": "Dr. Lee Chi Wah",
+    "session_type": "Lecture",
+    "email_override": ""
+  },
+  {
+    "course_code": "ENG2104",
+    "term_code": "2024-T1",
+    "instructor_name": "Mr. Jason Chan",
+    "session_type": "Tutorial",
+    "email_override": ""
+  },
+  {
+    "course_code": "CHI1101",
+    "term_code": "2023-T2",
+    "instructor_name": "Dr. Wong Mei Mei",
+    "session_type": "Lecture",
+    "email_override": ""
+  },
+  {
+    "course_code": "BUS1201",
+    "term_code": "2024-T1",
+    "instructor_name": "Prof. Chan Yiu",
+    "session_type": "Lecture",
+    "email_override": ""
+  },
+  {
+    "course_code": "BUS1201",
+    "term_code": "2024-T1",
+    "instructor_name": "Ms. Lam Ho Yee",
+    "session_type": "Tutorial",
+    "email_override": ""
+  },
+  {
+    "course_code": "HIS2103",
+    "term_code": "2025-T1",
+    "instructor_name": "Dr. Lee Chi Wah",
+    "session_type": "Lecture",
+    "email_override": ""
+  }
+]

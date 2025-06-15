@@ -1,0 +1,17 @@
+{
+  "name": "handle-review-vote",
+  "version": "1.0.0",
+  "description": "Handle review voting functionality",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "build": "bun install",
+    "start": "bun run src/main.js"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  }
+} 

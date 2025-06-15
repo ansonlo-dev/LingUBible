@@ -1,61 +1,86 @@
-import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LecturerCard } from '@/components/features/reviews/LecturerCard';
-import { ReviewCard } from '@/components/features/reviews/ReviewCard';
+import { useState, useEffect } from 'react';
 import { 
   BookOpen, 
-  Star, 
-  Users, 
-  GraduationCap, 
   ArrowLeft,
-  Filter,
-  SortAsc
+  Users,
+  Calendar,
+  Mail,
+  Globe,
+  Star,
+  MessageSquare,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CourseService } from '@/services/api/courseService';
-import type { CourseWithLecturers, CourseReview, LecturerWithStats } from '@/types/course';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { CourseService, Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
+import { useAuth } from '@/contexts/AuthContext';
+import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [selectedLecturer, setSelectedLecturer] = useState<string>('all');
-  const [sortBy, setSortBy] = useState('rating');
-  const [courseData, setCourseData] = useState<CourseWithLecturers | null>(null);
-  const [reviews, setReviews] = useState<CourseReview[]>([]);
+  const { user } = useAuth();
+  
+  const [course, setCourse] = useState<Course | null>(null);
+  const [teachingInfo, setTeachingInfo] = useState<CourseTeachingInfo[]>([]);
+  const [courseStats, setCourseStats] = useState({
+    reviewCount: 0,
+    averageRating: 0,
+    studentCount: 0
+  });
+  const [reviews, setReviews] = useState<(CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 載入課程數據
   useEffect(() => {
     const loadCourseData = async () => {
-      if (!courseCode) return;
-      
+      if (!courseCode) {
+        setError(t('pages.courseDetail.invalidCourseCode'));
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
-        
-        // 獲取課程詳細信息（包含講師）
-        const course = await CourseService.getCourseWithLecturers(courseCode);
-        if (!course) {
-          setError('課程不存在');
+
+        // 並行獲取課程信息、教學記錄和統計信息
+        const [courseData, teachingData, statsData] = await Promise.all([
+          CourseService.getCourseByCode(courseCode),
+          CourseService.getCourseTeachingInfo(courseCode),
+          CourseService.getCourseStats(courseCode)
+        ]);
+
+        if (!courseData) {
+          setError(t('pages.courseDetail.courseNotFound'));
           return;
         }
-        
-        setCourseData(course);
-        
-        // 獲取課程評價
-        const courseReviews = await CourseService.getCourseReviews(course.$id);
-        setReviews(courseReviews);
-        
-      } catch (error) {
-        console.error('Error loading course data:', error);
-        setError('載入課程數據時發生錯誤');
+
+        setCourse(courseData);
+        setTeachingInfo(teachingData);
+        setCourseStats(statsData);
+
+        // 獲取課程評論
+        try {
+          setReviewsLoading(true);
+          const reviewsData = await CourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
+          setReviews(reviewsData);
+        } catch (reviewError) {
+          console.error('Error loading reviews:', reviewError);
+          // 評論載入失敗不影響主要頁面顯示
+        } finally {
+          setReviewsLoading(false);
+        }
+      } catch (err) {
+        console.error('Error loading course data:', err);
+                  setError(t('pages.courseDetail.loadError'));
       } finally {
         setLoading(false);
       }
@@ -64,292 +89,246 @@ const CourseDetail = () => {
     loadCourseData();
   }, [courseCode]);
 
-  // 過濾評論
-  const filteredReviews = selectedLecturer === 'all' 
-    ? reviews 
-    : reviews.filter(review => review.lecturerId === selectedLecturer);
-
-  // 排序評論
-  const sortedReviews = [...filteredReviews].sort((a, b) => {
-    switch (sortBy) {
-      case 'rating':
-        return b.overallRating - a.overallRating;
-      case 'date':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case 'likes':
-        return b.likes - a.likes;
+  const getLanguageColor = (lang: string) => {
+    switch (lang) {
+      case 'E':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'C':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
       default:
-        return 0;
-    }
-  });
-
-  const getOfferedColor = (offered: 'Yes' | 'No') => {
-    if (offered === 'Yes') {
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    } else {
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
 
-  const getOfferedText = (offered: 'Yes' | 'No') => {
-    return offered === 'Yes' ? t('offered.yes') : t('offered.no');
+  const getLanguageText = (lang: string) => {
+    switch (lang) {
+      case 'E':
+        return 'English';
+      case 'C':
+        return '中文';
+      default:
+        return lang;
+    }
+  };
+
+  const handleInstructorClick = (instructorName: string) => {
+    // 導航到講師詳情頁面
+          navigate(`/instructors/${encodeURIComponent(instructorName)}`);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-6"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-              <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
+      <div className="container mx-auto px-4 py-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4 hover:bg-muted/50 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('common.back')}
+        </Button>
+        
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">{t('pages.courseDetail.loadingCourseData')}</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !courseData) {
+  if (error || !course) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-12">
-            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {error || '課程不存在'}
-            </h3>
-            <Button onClick={() => navigate('/courses')} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              返回課程列表
-            </Button>
-          </div>
+      <div className="container mx-auto px-4 py-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4 hover:bg-muted/50 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('common.back')}
+        </Button>
+        
+        <div className="flex justify-center items-center min-h-[400px]">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="h-16 w-16 text-destructive" />
+              </div>
+              <CardTitle className="text-xl">{t('pages.courseDetail.loadFailed')}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                {error || t('pages.courseDetail.courseNotFound')}
+              </p>
+              <Button onClick={() => navigate('/courses')}>
+                                  {t('pages.courseDetail.backToCourseList')}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 返回按鈕 */}
-        <Button 
-          onClick={() => navigate('/courses')} 
-          variant="ghost" 
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* 返回按鈕 */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className="mb-4 hover:bg-muted/50 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        {t('common.back')}
+      </Button>
 
-        {/* 課程標題區域 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+      {/* 課程基本信息 */}
+      <Card className="course-card">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
-                <BookOpen className="h-8 w-8 text-blue-600" />
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {courseData.title}
-                  </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-300">
-                    {courseData.code}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-3 mb-6">
-                <Badge variant="secondary" className="px-3 py-1">
-                  {courseData.department}
+              <CardTitle className="text-2xl font-bold mb-2">
+                {course.course_title}
+              </CardTitle>
+              <p className="text-lg text-muted-foreground font-mono mb-3">
+                {course.course_code}
+              </p>
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="text-sm">
+                  <BookOpen className="h-3 w-3 mr-1" />
+                  {course.course_department}
                 </Badge>
-                <Badge className={getOfferedColor(courseData.offered || 'Yes')}>
-                  {getOfferedText(courseData.offered || 'Yes')}
-                </Badge>
-                <Badge variant="outline" className="px-3 py-1">
-                  {courseData.credits} 學分
+                <Badge variant="outline" className={getLanguageColor(course.course_language)}>
+                  <Globe className="h-3 w-3 mr-1" />
+                  {getLanguageText(course.course_language)}
                 </Badge>
               </div>
-
-              {courseData.description && (
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {courseData.description}
-                </p>
-              )}
-
-              {courseData.prerequisites && courseData.prerequisites.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    先修課程：
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {courseData.prerequisites.map((prereq, index) => (
-                      <Badge key={index} variant="outline">
-                        {prereq}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 統計數據 */}
-            <div className="lg:w-80">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">課程統計</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-5 w-5 text-yellow-500" />
-                      <span className="font-medium">平均評分</span>
-                    </div>
-                    <span className="text-lg font-bold">
-                      {courseData.averageRating > 0 ? courseData.averageRating.toFixed(1) : 'N/A'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-blue-500" />
-                      <span className="font-medium">評價數量</span>
-                    </div>
-                    <span className="text-lg font-bold">{courseData.totalReviews}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5 text-green-500" />
-                      <span className="font-medium">學生人數</span>
-                    </div>
-                    <span className="text-lg font-bold">{courseData.totalStudents}</span>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
-        </div>
-
-        {/* 主要內容區域 */}
-        <Tabs defaultValue="lecturers" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/50 backdrop-blur-sm">
-            <TabsTrigger 
-              value="lecturers" 
-              className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-            >
-              講師 ({courseData.lecturers.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="reviews" 
-              className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-            >
-              評價 ({reviews.length})
-            </TabsTrigger>
-          </TabsList>
-
-          {/* 講師標籤頁 */}
-          <TabsContent value="lecturers" className="space-y-6">
-            {courseData.lecturers.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  暫無講師信息
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  此課程暫時沒有講師信息
-                </p>
+        </CardHeader>
+        
+        {/* 課程統計信息 */}
+        {(courseStats.reviewCount > 0 || courseStats.studentCount > 0) && (
+          <CardContent className="pt-0">
+            <Separator className="mb-4" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-lg font-semibold">{courseStats.averageRating.toFixed(1)}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{t('pages.courseDetail.averageRating')}</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courseData.lecturers.map((lecturer: LecturerWithStats) => (
-                  <LecturerCard
-                    key={lecturer.$id}
-                    lecturer={lecturer}
-                  />
-                ))}
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                  <span className="text-lg font-semibold">{courseStats.reviewCount}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{t('pages.courseDetail.reviewCount')}</p>
               </div>
-            )}
-          </TabsContent>
-
-          {/* 評價標籤頁 */}
-          <TabsContent value="reviews" className="space-y-6">
-            {/* 過濾和排序控制 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 講師過濾器 */}
-                <Select value={selectedLecturer} onValueChange={setSelectedLecturer}>
-                  <SelectTrigger>
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="選擇講師" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">所有講師</SelectItem>
-                    {courseData.lecturers.map((lecturer) => (
-                      <SelectItem key={lecturer.$id} value={lecturer.$id}>
-                        {lecturer.title} {lecturer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* 排序選擇器 */}
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SortAsc className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="排序方式" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rating">按評分排序</SelectItem>
-                    <SelectItem value="date">按時間排序</SelectItem>
-                    <SelectItem value="likes">按讚數排序</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="text-lg font-semibold">{courseStats.studentCount}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{t('pages.courseDetail.studentCount')}</p>
               </div>
             </div>
+          </CardContent>
+        )}
+      </Card>
 
-            {/* 評價列表 */}
-            {sortedReviews.length === 0 ? (
-              <div className="text-center py-12">
-                <Star className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  暫無評價
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  {selectedLecturer === 'all' ? '此課程暫時沒有評價' : '此講師暫時沒有評價'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {sortedReviews.map((review) => {
-                  const lecturer = courseData.lecturers.find(l => l.$id === review.lecturerId);
-                  return (
-                                         <ReviewCard
-                       key={review.$id}
-                       reviewId={review.$id}
-                       courseCode={courseData.code}
-                       courseName={courseData.title}
-                       rating={review.overallRating}
-                       difficulty={review.difficulty}
-                       content={review.content}
-                       pros={review.pros || []}
-                       cons={review.cons || []}
-                       semester={review.semester}
-                       likes={review.likes}
-                       dislikes={review.dislikes}
-                       replies={0} // 暫時設為0，後續可以添加回覆功能
-                       createdAt={review.createdAt}
-                       showAnonymousAvatar={true}
-                     />
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+      {/* 教學記錄 */}
+      <Card className="course-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+                          {t('pages.courseDetail.teachingRecords')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {teachingInfo.length === 0 ? (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('pages.courseDetail.noTeachingRecords')}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {teachingInfo.map((info, index) => (
+                <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge variant="outline" className="text-sm">
+                          {info.term.name}
+                        </Badge>
+                        <Badge variant="secondary" className="text-sm">
+                          {info.sessionType}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                          {t('pages.courseDetail.termCode')}: {info.term.term_code}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('pages.courseDetail.startDate')}: {new Date(info.term.start_date).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('pages.courseDetail.endDate')}: {new Date(info.term.end_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleInstructorClick(info.instructor.name)}
+                        className="hover:bg-primary/10 hover:text-primary transition-colors"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        {info.instructor.name}
+                      </Button>
+                      <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                        <Mail className="h-3 w-3" />
+                        <span className="text-xs">
+                          {info.emailOverride || info.instructor.email}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {info.instructor.type}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+              </Card>
+
+      {/* 課程評論 */}
+      <CourseReviewsList reviews={reviews} loading={reviewsLoading} />
+
+      {/* 操作按鈕 */}
+      <div className="flex gap-4">
+        <Button 
+          size="lg" 
+          className="flex-1 gradient-primary hover:opacity-90 text-white"
+          onClick={() => navigate(`/write-review/${course.course_code}`)}
+        >
+          <MessageSquare className="h-4 w-4 mr-2" />
+          {t('review.writeReview')}
+        </Button>
+        <Button 
+          size="lg" 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => navigate('/courses')}
+        >
+          {t('common.back')}
+        </Button>
       </div>
     </div>
   );

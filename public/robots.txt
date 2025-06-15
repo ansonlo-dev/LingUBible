@@ -8,7 +8,7 @@ Allow: /?lang=zh-CN
 
 # 允許訪問主要頁面
 Allow: /courses
-Allow: /lecturers
+Allow: /instructors
 Allow: /login
 Allow: /register
 Allow: /privacy
@@ -20,6 +20,10 @@ Disallow: /dev/
 Disallow: /_next/
 Disallow: /api/
 Disallow: /admin/
+
+# 禁止訪問需要登入的頁面
+Disallow: /write-review
+Disallow: /settings
 
 # 網站地圖位置
 Sitemap: https://lingubible.com/sitemap.xml

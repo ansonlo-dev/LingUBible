@@ -61,15 +61,15 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://lingubible.com/courses?lang=zh-CN"/>
   </url>
   
-  <!-- 講師頁面 -->
+  <!-- 教師頁面 -->
   <url>
-    <loc>https://lingubible.com/lecturers</loc>
+    <loc>https://lingubible.com/instructors</loc>
     <lastmod>2024-01-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/lecturers?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://lingubible.com/lecturers?lang=zh-TW"/>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://lingubible.com/lecturers?lang=zh-CN"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/instructors?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://lingubible.com/instructors?lang=zh-TW"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://lingubible.com/instructors?lang=zh-CN"/>
   </url>
   
   <!-- 登入頁面 -->

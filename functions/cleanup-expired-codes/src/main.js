@@ -12,8 +12,8 @@ export default async ({ req, res, log, error }) => {
   const users = new Users(client);
 
   // Configuration constants
-  const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'lingubible-db';
-  const VERIFICATION_COLLECTION_ID = process.env.APPWRITE_VERIFICATION_COLLECTION_ID || 'verification-codes';
+  const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'verification_system';
+  const VERIFICATION_COLLECTION_ID = process.env.APPWRITE_VERIFICATION_COLLECTION_ID || 'verification_codes';
 
   // Check if email is a student email
   const isStudentEmail = (email) => {
@@ -43,13 +43,67 @@ export default async ({ req, res, log, error }) => {
       
       const { userId, email, reason } = requestBody;
       
-      if (!userId || !email) {
+      // For specific user cleanup, require userId and email
+      if (reason !== 'non_student_email_session_cleanup' && (!userId || !email)) {
         return res.json({
           success: false,
           action: 'invalid_cleanup_request',
           message: '缺少必要的用戶信息',
           timestamp: new Date().toISOString()
         }, 400);
+      }
+      
+      // Handle general non-student email cleanup
+      if (reason === 'non_student_email_session_cleanup') {
+        log(`🧹 執行非學生郵箱用戶清理任務`);
+        
+        let deletedUsers = 0;
+        let blockedUsers = 0;
+        
+        try {
+          // Clean all non-student email users
+          const allUsers = await users.list([Query.limit(500)]);
+          
+          for (const user of allUsers.users) {
+            const userEmail = user?.email;
+            
+            if (userEmail && !isStudentEmail(userEmail)) {
+              try {
+                // Delete all sessions first
+                const sessions = await users.listSessions(user.$id);
+                for (const session of sessions.sessions) {
+                  await users.deleteSession(user.$id, session.$id);
+                }
+                
+                // Try to delete user
+                await users.delete(user.$id);
+                deletedUsers++;
+                log(`🗑️ 已刪除非學生郵箱用戶: ${userEmail}`);
+              } catch (userError) {
+                blockedUsers++;
+                log(`⚠️ 無法刪除用戶但已阻止會話: ${userEmail}`);
+              }
+            }
+          }
+          
+          return res.json({
+            success: true,
+            action: 'non_student_cleanup_success',
+            message: `非學生郵箱用戶清理完成：刪除 ${deletedUsers} 個用戶，阻止 ${blockedUsers} 個用戶`,
+            deletedUsers,
+            blockedUsers,
+            timestamp: new Date().toISOString()
+          });
+        } catch (cleanupError) {
+          error(`非學生郵箱用戶清理失敗:`, cleanupError);
+          return res.json({
+            success: false,
+            action: 'non_student_cleanup_failed',
+            message: `非學生郵箱用戶清理失敗: ${cleanupError.message}`,
+            error: cleanupError.message,
+            timestamp: new Date().toISOString()
+          }, 500);
+        }
       }
       
       log(`🗑️ 手動清理用戶: ${email} (ID: ${userId}), 原因: ${reason}`);

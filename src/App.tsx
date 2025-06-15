@@ -20,11 +20,14 @@ import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Lecturers from "./pages/Lecturers";
+import InstructorsList from "./pages/InstructorsList";
+import WriteReview from "./pages/WriteReview";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import UserSettings from "./pages/user/UserSettings";
+import MyReviews from "./pages/user/MyReviews";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 import OAuthLoginCallback from "./pages/auth/OAuthLoginCallback";
 
@@ -544,7 +547,11 @@ const RouterContent = ({
                     <Route path="/" element={<Index />} />
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/courses/:courseCode" element={<CourseDetail />} />
-                    <Route path="/lecturers" element={<Lecturers />} />
+                    <Route path="/instructors" element={<InstructorsList />} />
+                    <Route path="/instructors/:instructorName" element={<Lecturers />} />
+                    <Route path="/write-review" element={<WriteReview />} />
+                    <Route path="/write-review/:courseCode" element={<WriteReview />} />
+                    <Route path="/my-reviews" element={<MyReviews />} />
                     <Route path="/settings" element={<UserSettings />} />
 
                                     <Route path="/terms" element={<Terms />} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const CIRCLES_DESKTOP = [
   { size: 120, top: '10%', left: '10%', duration: 18, delay: 0 },
@@ -23,6 +23,8 @@ const CIRCLES_MOBILE = [
 export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
   const [isMobile, setIsMobile] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -36,6 +38,11 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
     checkMobile();
     checkDarkMode();
 
+    // 延遲顯示動畫，避免初始化時的跳躍
+    const showTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+
     window.addEventListener('resize', checkMobile);
     
     // 監聽主題變化
@@ -46,6 +53,7 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
     });
 
     return () => {
+      clearTimeout(showTimer);
       window.removeEventListener('resize', checkMobile);
       observer.disconnect();
     };
@@ -61,38 +69,48 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 w-full h-full select-none ${className}`}
+      ref={containerRef}
+      className={`pointer-events-none absolute inset-0 w-full h-full select-none transition-opacity duration-300 ${className}`}
       style={{ 
         zIndex, 
         contain: 'layout style', 
         transform: 'translateZ(0)', 
         minHeight: '100vh',
         minWidth: '100vw',
+        opacity: isVisible ? 1 : 0,
         ...style 
       }}
       aria-hidden="true"
     >
-      {filteredCircles.map((c, i) => (
-        <span
-          key={i}
-          className="floating-circle"
-          style={{
-            width: c.size,
-            height: c.size,
-            top: c.top,
-            left: `calc(${c.left} - ${c.size / 2}px)`,
-            background: `radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(185,28,28,0.15) 70%, transparent 100%)`,
-            animationDuration: `${c.duration}s`,
-            animationDelay: `${c.delay}s`,
-            transform: 'translateX(0) translateY(0) translateZ(0)',
-            maxWidth: `calc(100% - ${c.size}px)`,
-            maxHeight: `calc(100% - ${c.size}px)`,
-            willChange: 'transform, opacity',
-            // 在手機版黑暗模式下降低透明度
-            opacity: (isMobile && isDark) ? 0.6 : 1,
-          }}
-        />
-      ))}
+      {isVisible && filteredCircles.map((c, i) => {
+        // 使用隨機化的延遲來避免同步問題
+        const randomOffset = Math.random() * 2; // 0-2秒的隨機偏移
+        const finalDelay = c.delay + randomOffset;
+        
+        return (
+          <span
+            key={`circle-${i}-${isVisible}`}
+            className="floating-circle"
+            style={{
+              width: c.size,
+              height: c.size,
+              top: c.top,
+              left: `calc(${c.left} - ${c.size / 2}px)`,
+              background: `radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(185,28,28,0.15) 70%, transparent 100%)`,
+              animationDuration: `${c.duration}s`,
+              animationDelay: `${finalDelay}s`,
+              animationFillMode: 'both',
+              animationPlayState: 'running',
+              transform: 'translateX(0) translateY(0) translateZ(0)',
+              maxWidth: `calc(100% - ${c.size}px)`,
+              maxHeight: `calc(100% - ${c.size}px)`,
+              willChange: 'transform, opacity',
+              // 在手機版黑暗模式下降低透明度
+              opacity: (isMobile && isDark) ? 0.6 : 1,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

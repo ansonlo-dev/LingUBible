@@ -133,14 +133,14 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
       label: t('sidebar.browse'),
       items: [
         { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
-        { name: t('nav.lecturers'), href: '/lecturers', icon: GraduationCap, current: location.pathname === '/lecturers' }
+        { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' }
       ]
     },
     // My Reviews 和 Settings 分組（僅在用戶登入時顯示）
     ...(user && !loading ? [{
       label: t('sidebar.personal'),
       items: [
-        { name: t('sidebar.myReviews'), href: '#', icon: MessageSquareText, current: false },
+        { name: t('sidebar.myReviews'), href: '/my-reviews', icon: MessageSquareText, current: location.pathname === '/my-reviews' },
         { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
       ]
     }] : [])

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { CourseCard } from "@/components/features/reviews/CourseCard";
-import { LecturerCard } from "@/components/features/reviews/LecturerCard";
 import { StatsCard } from "@/components/features/reviews/StatsCard";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
@@ -15,8 +14,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
 import { Link, useNavigate } from 'react-router-dom';
-import { CourseService } from '@/services/api/courseService';
-import type { UGCourse, LecturerWithStats } from '@/types/course';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -26,8 +23,6 @@ const Index = () => {
   const [showHeavenTransition, setShowHeavenTransition] = useState(false);
   const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | undefined>();
   const { stats: registeredUsersStats, loading: registeredUsersLoading } = useRegisteredUsers();
-  const [courses, setCourses] = useState<UGCourse[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -41,63 +36,6 @@ const Index = () => {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
-
-  // 載入真實課程數據
-  useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        setLoading(true);
-        const allCourses = await CourseService.getAllCourses();
-        // 只顯示前3個課程作為精選課程
-        setCourses(allCourses.slice(0, 3));
-      } catch (error) {
-        console.error('Error loading courses:', error);
-        // 如果載入失敗，使用備用的模擬數據
-        setCourses([
-          {
-            $id: 'cs101',
-            code: 'CS101',
-            title: t('course.introCS'),
-            description: '本課程為計算機科學的入門課程',
-            credits: 3,
-            department: t('department.computerScience'),
-            offered: 'Yes' as const,
-            prerequisites: [],
-            isActive: true,
-            $createdAt: '',
-            $updatedAt: ''
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCourses();
-  }, [t]);
-
-  // 載入真實講師數據
-  useEffect(() => {
-    const loadLecturers = async () => {
-      try {
-        setLecturersLoading(true);
-        const allLecturers = await CourseService.getAllLecturers();
-        // 只顯示前3個講師作為頂級講師
-        setLecturers(allLecturers.slice(0, 3));
-      } catch (error) {
-        console.error('Error loading lecturers:', error);
-        // 如果載入失敗，設置為空數組
-        setLecturers([]);
-      } finally {
-        setLecturersLoading(false);
-      }
-    };
-
-    loadLecturers();
-  }, []);
-
-  const [lecturers, setLecturers] = useState<LecturerWithStats[]>([]);
-  const [lecturersLoading, setLecturersLoading] = useState(true);
 
   // Get the actions as an array directly from the translation
   const actions = t('hero.actions');
@@ -198,126 +136,77 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up relative z-20">
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <StatsCard
-            title={t('stats.totalCourses')}
-            value="1,247"
-            change={`+12% ${t('stats.thisMonth')}`}
             icon={BookOpen}
-            trend="up"
-            animationDelay={0}
+            title={t('stats.courses')}
+            value="100+"
           />
           <StatsCard
-            title={t('stats.lecturers')}
-            value="342"
-            change={`+5% ${t('stats.thisMonth')}`}
             icon={Users}
-            trend="up"
-            animationDelay={200}
-          />
-          <StatsCard
-            title={t('stats.reviews')}
-            value="8,943"
-            change={`+23% ${t('stats.thisMonth')}`}
-            icon={Star}
-            trend="up"
-            animationDelay={400}
-          />
-          <StatsCard
-            title={t('stats.registeredStudents')}
-            value={registeredUsersStats.totalRegisteredUsers.toLocaleString()}
-            change={`+${registeredUsersStats.newUsersLast30Days} ${t('stats.newLast30Days')}`}
-            icon={TrendingUp}
-            trend="up"
-            animationDelay={600}
+            title={t('stats.users')}
+            value={registeredUsersLoading ? "..." : registeredUsersStats.totalRegisteredUsers.toString()}
             isLoading={registeredUsersLoading}
+          />
+          <StatsCard
+            icon={Star}
+            title={t('stats.reviews')}
+            value="500+"
           />
         </div>
 
-        {/* Content Tabs */}
-        <Tabs defaultValue="courses" className="space-y-6 relative z-20" data-section="courses">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <TabsList className="grid grid-cols-2 w-full sm:w-auto min-w-0 bg-muted/50 backdrop-blur-sm">
+        {/* Featured Content Section */}
+        <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <h2 className="text-3xl font-bold text-center mb-8">{t('featured.title')}</h2>
+          
+          <Tabs defaultValue="courses" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50 backdrop-blur-sm">
               <TabsTrigger 
                 value="courses" 
-                className="flex items-center gap-2 min-w-0 hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
               >
-                <BookOpen className="h-4 w-4 flex-shrink-0 transition-colors duration-200" />
-                <span className="truncate">{t('tabs.popularCourses')}</span>
+                {t('featured.courses')}
               </TabsTrigger>
               <TabsTrigger 
-                value="lecturers" 
-                className="flex items-center gap-2 min-w-0 hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                value="instructors" 
+                className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
               >
-                <Users className="h-4 w-4 flex-shrink-0 transition-colors duration-200" />
-                <span className="truncate">{t('tabs.topLecturers')}</span>
+                                  {t('featured.instructors')}
               </TabsTrigger>
             </TabsList>
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto hover:border-red-500 dark:hover:border-red-500 transition-all duration-200"
-              onClick={() => navigate('/courses')}
-            >
-              {t('button.viewAll')}
-            </Button>
-          </div>
 
-          <TabsContent value="courses" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading ? (
-                [1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64"></div>
-                  </div>
-                ))
-              ) : (
-                                 courses.map((course, index) => (
-                   <div key={course.$id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                     <CourseCard
-                       title={course.title}
-                       code={course.code}
-                       rating={4.5}
-                       reviewCount={24}
-                       studentCount={156}
-                       department={course.department}
-                       offered={course.offered || 'Yes'}
-                     />
-                   </div>
-                 ))
-              )}
-            </div>
-          </TabsContent>
+            <TabsContent value="courses" className="space-y-6">
+              <div className="text-center py-12">
+                <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">課程功能重新設計中</h3>
+                <p className="text-muted-foreground">
+                  我們正在優化課程展示功能，敬請期待！
+                </p>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="lecturers" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lecturersLoading ? (
-                [1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64"></div>
-                  </div>
-                ))
-              ) : (
-                lecturers.map((lecturer, index) => (
-                  <div key={lecturer.$id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <LecturerCard 
-                      lecturer={lecturer}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-      
+                            <TabsContent value="instructors" className="space-y-6">
+              <div className="text-center py-12">
+                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">講師功能重新設計中</h3>
+                <p className="text-muted-foreground">
+                  我們正在優化講師展示功能，敬請期待！
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+        
         {/* Heaven Transition Effect */}
-        <HeavenTransition 
-          isActive={showHeavenTransition}
-          onComplete={handleTransitionComplete}
-          duration={1200}
-          buttonPosition={buttonPosition}
-        />
+        {showHeavenTransition && (
+          <HeavenTransition
+            isActive={showHeavenTransition}
+            onComplete={handleTransitionComplete}
+            buttonPosition={buttonPosition}
+          />
+        )}
+      </div>
       </div>
     </>
   );

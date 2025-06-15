@@ -15,10 +15,16 @@ export default function FAQ() {
       if (element) {
         // 延遲滾動以確保頁面完全載入
         setTimeout(() => {
-          element.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
-          });
+          // 使用多種方法確保在所有設備上都能正常工作
+          try {
+            element.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'center'
+            });
+          } catch (error) {
+            // 如果 smooth 滾動失敗，使用立即滾動作為後備
+            element.scrollIntoView({ block: 'center' });
+          }
         }, 100);
       }
     }
@@ -29,13 +35,37 @@ export default function FAQ() {
     if (location.hash) {
       const element = document.getElementById(location.hash.substring(1));
       if (element) {
-        // 更長的延遲以確保所有內容都已渲染
+        // 手機設備需要更長的延遲以確保所有內容都已渲染
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const delay = isMobile ? 800 : 300;
+        
         setTimeout(() => {
-          element.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
-          });
-        }, 300);
+          try {
+            element.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'center'
+            });
+          } catch (error) {
+            // 如果 smooth 滾動失敗，使用立即滾動作為後備
+            element.scrollIntoView({ block: 'center' });
+          }
+          
+          // 額外的後備方案：使用 window.scrollTo
+          setTimeout(() => {
+            const rect = element.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetY = rect.top + scrollTop - (window.innerHeight / 2) + (rect.height / 2);
+            
+            try {
+              window.scrollTo({
+                top: targetY,
+                behavior: 'smooth'
+              });
+            } catch (error) {
+              window.scrollTo(0, targetY);
+            }
+          }, 100);
+        }, delay);
       }
     }
   }, []);

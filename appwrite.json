@@ -81,8 +81,14 @@
             "logging": true,
             "runtime": "bun-1.1",
             "scopes": [
+                "users.read",
+                "users.write",
                 "databases.read",
-                "databases.write"
+                "databases.write",
+                "collections.read",
+                "collections.write",
+                "documents.read",
+                "documents.write"
             ],
             "events": [],
             "schedule": "0 */6 * * *",

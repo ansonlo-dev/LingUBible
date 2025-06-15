@@ -81,7 +81,7 @@ export const SEO_CONFIG = {
     register: {
       en: {
         title: 'Sign Up - LingUBible',
-        description: 'Create your LingUBible account to start reviewing courses and lecturers at Lingnan University.'
+        description: 'Create your LingUBible account to start reviewing courses and instructors at Lingnan University.'
       },
       'zh-TW': {
         title: '註冊 - LingUBible',
