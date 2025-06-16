@@ -20,6 +20,7 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
+import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 
 interface UserReviewInfo extends CourseReviewInfo {
   upvotes: number;
@@ -168,11 +169,22 @@ const MyReviews = () => {
             <Card key={reviewInfo.review.$id} className="course-card">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <CardTitle className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5" />
-                      {reviewInfo.review.course_code}
-                    </CardTitle>
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <BookOpen className="h-5 w-5" />
+                        {reviewInfo.review.course_code}
+                      </CardTitle>
+                      {/* 最終成績 - 右上角大顯示 */}
+                      {reviewInfo.review.course_final_grade && (
+                        <div className="flex flex-col items-center shrink-0 mr-4">
+                          <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
+                          <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                            {reviewInfo.review.course_final_grade}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
@@ -182,10 +194,10 @@ const MyReviews = () => {
                         <User className="h-4 w-4" />
                         {reviewInfo.review.is_anon ? t('review.anonymous') : reviewInfo.review.username}
                       </div>
-                      <span>{formatDate(reviewInfo.review.$createdAt)}</span>
+                      <span>{formatDateTimeUTC8(reviewInfo.review.$createdAt)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       variant="outline"
                       size="sm"
@@ -251,12 +263,6 @@ const MyReviews = () => {
                 </div>
 
                 <Separator />
-
-                {/* Final Grade */}
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium">{t('review.grade')}:</span>
-                  <Badge variant="outline">{reviewInfo.review.course_final_grade}</Badge>
-                </div>
 
                 {/* Course Comments */}
                 {reviewInfo.review.course_comments && (

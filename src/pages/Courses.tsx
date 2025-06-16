@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CourseCard } from '@/components/features/reviews/CourseCard';
-import { CourseService, CourseWithStats } from '@/services/api/courseService';
+import { CourseCardSkeleton } from '@/components/features/reviews/CourseCardSkeleton';
+import { CachedCourseService } from '@/services/cache/cachedCourseService';
+import { CourseWithStats } from '@/services/api/courseService';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import { Search, BookOpen, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,9 +13,12 @@ const Courses = () => {
   const { t } = useLanguage();
   const [courses, setCourses] = useState<CourseWithStats[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseWithStats[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // 使用防抖來優化搜尋性能
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // 載入課程數據
   useEffect(() => {
@@ -20,9 +26,15 @@ const Courses = () => {
       try {
         setLoading(true);
         setError(null);
-        const coursesData = await CourseService.getCoursesWithStats();
+        
+        const coursesData = await CachedCourseService.getCoursesWithStats();
         setCourses(coursesData);
         setFilteredCourses(coursesData);
+        
+        // 批量預載入熱門課程（延遲執行，避免阻塞主要載入）
+        setTimeout(() => {
+          CachedCourseService.preloadPopularCourses(coursesData);
+        }, 2000);
       } catch (err) {
         console.error('Error loading courses:', err);
         setError('Failed to load courses');
@@ -36,17 +48,19 @@ const Courses = () => {
 
   // 處理搜尋
   useEffect(() => {
-    if (!searchTerm.trim()) {
+    if (!debouncedSearchTerm.trim()) {
       setFilteredCourses(courses);
-    } else {
-      const filtered = courses.filter(course =>
-        course.course_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.course_department.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredCourses(filtered);
+      return;
     }
-  }, [searchTerm, courses]);
+
+    const filtered = courses.filter(course =>
+      course.course_title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      course.course_code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      course.course_department.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+    
+    setFilteredCourses(filtered);
+  }, [courses, debouncedSearchTerm]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -54,23 +68,38 @@ const Courses = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              {t('pages.courses.title') || '所有課程'}
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t('pages.courses.subtitle') || '瀏覽所有可用的課程'}
-            </p>
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* 頁面標題 */}
+        <div className="text-center py-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <BookOpen className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold">{t('courses.title')}</h1>
           </div>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            {t('courses.subtitle')}
+          </p>
+        </div>
 
-          <div className="flex justify-center items-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">{t('stats.loading') || '載入中...'}</p>
+        {/* 搜尋欄骨架 */}
+        <Card className="course-card">
+          <CardContent className="p-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t('courses.searchPlaceholder')}
+                disabled
+                className="pl-10"
+              />
             </div>
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* 課程卡片骨架 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <CourseCardSkeleton key={index} />
+          ))}
         </div>
       </div>
     );

@@ -17,7 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CourseService, Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
+import { CachedCourseService } from '@/services/cache/cachedCourseService';
+import { Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
 import { useAuth } from '@/contexts/AuthContext';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 
@@ -53,9 +54,9 @@ const CourseDetail = () => {
 
         // 並行獲取課程信息、教學記錄和統計信息
         const [courseData, teachingData, statsData] = await Promise.all([
-          CourseService.getCourseByCode(courseCode),
-          CourseService.getCourseTeachingInfo(courseCode),
-          CourseService.getCourseStats(courseCode)
+          CachedCourseService.getCourseByCode(courseCode),
+          CachedCourseService.getCourseTeachingInfo(courseCode),
+          CachedCourseService.getCourseStats(courseCode)
         ]);
 
         if (!courseData) {
@@ -70,7 +71,7 @@ const CourseDetail = () => {
         // 獲取課程評論
         try {
           setReviewsLoading(true);
-          const reviewsData = await CourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
+          const reviewsData = await CachedCourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
           setReviews(reviewsData);
         } catch (reviewError) {
           console.error('Error loading reviews:', reviewError);
@@ -173,7 +174,7 @@ const CourseDetail = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="container mx-auto px-4 py-6 space-y-6 pb-20 overflow-hidden">
       {/* 返回按鈕 */}
       <Button
         variant="ghost"
@@ -185,11 +186,11 @@ const CourseDetail = () => {
       </Button>
 
       {/* 課程基本信息 */}
-      <Card className="course-card">
+      <Card className="course-card overflow-hidden">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <CardTitle className="text-2xl font-bold mb-2">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-2xl font-bold mb-2 break-words">
                 {course.course_title}
               </CardTitle>
               <p className="text-lg text-muted-foreground font-mono mb-3">
@@ -241,14 +242,14 @@ const CourseDetail = () => {
       </Card>
 
       {/* 教學記錄 */}
-      <Card className="course-card">
+      <Card className="course-card overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-                          {t('pages.courseDetail.teachingRecords')}
+            <Calendar className="h-5 w-5 shrink-0" />
+            <span>{t('pages.courseDetail.teachingRecords')}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden">
           {teachingInfo.length === 0 ? (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -257,19 +258,19 @@ const CourseDetail = () => {
           ) : (
             <div className="space-y-4">
               {teachingInfo.map((info, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors overflow-hidden">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge variant="outline" className="text-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <Badge variant="outline" className="text-sm shrink-0">
                           {info.term.name}
                         </Badge>
-                        <Badge variant="secondary" className="text-sm">
+                        <Badge variant="secondary" className="text-sm shrink-0">
                           {info.sessionType}
                         </Badge>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground break-words">
                           {t('pages.courseDetail.termCode')}: {info.term.term_code}
                         </p>
                         <p className="text-sm text-muted-foreground">
@@ -280,23 +281,23 @@ const CourseDetail = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleInstructorClick(info.instructor.name)}
-                        className="hover:bg-primary/10 hover:text-primary transition-colors"
+                        className="hover:bg-primary/10 hover:text-primary transition-colors max-w-full"
                       >
-                        <Users className="h-4 w-4 mr-2" />
-                        {info.instructor.name}
+                        <Users className="h-4 w-4 mr-2 shrink-0" />
+                        <span className="truncate">{info.instructor.name}</span>
                       </Button>
                       <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        <span className="text-xs">
+                        <Mail className="h-3 w-3 shrink-0" />
+                        <span className="text-xs truncate">
                           {info.emailOverride || info.instructor.email}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
                         {info.instructor.type}
                       </p>
                     </div>
@@ -312,7 +313,7 @@ const CourseDetail = () => {
       <CourseReviewsList reviews={reviews} loading={reviewsLoading} />
 
       {/* 操作按鈕 */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 pb-8 md:pb-0">
         <Button 
           size="lg" 
           className="flex-1 gradient-primary hover:opacity-90 text-white"

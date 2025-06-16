@@ -75,14 +75,14 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
         </div>
 
         {/* 右側區域 */}
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 min-w-0">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 min-w-fit">
           {/* 用戶菜單或登入按鈕 - 最高優先級，始終顯示 */}
           {user ? (
             <UserMenu />
           ) : (
             <Button 
               asChild
-              className="gradient-primary hover:opacity-90 text-white font-bold text-sm px-2 sm:px-3 md:px-4"
+              className="gradient-primary hover:opacity-90 text-white font-bold text-sm px-2 sm:px-3 md:px-4 whitespace-nowrap"
               size="sm"
             >
               <Link to="/login">

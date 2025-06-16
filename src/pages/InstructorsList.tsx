@@ -1,6 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useState, useEffect } from 'react';
 import { 
   Users, 
   Search,
@@ -15,11 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { CachedCourseService } from '@/services/cache/cachedCourseService';
 import { 
-  CourseService, 
   Instructor, 
   InstructorTeachingCourse 
 } from '@/services/api/courseService';
+import { InstructorCardSkeleton } from '@/components/features/reviews/InstructorCardSkeleton';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface InstructorWithStats extends Instructor {
   courseCount: number;
@@ -33,9 +35,12 @@ const InstructorsList = () => {
   
   const [instructors, setInstructors] = useState<InstructorWithStats[]>([]);
   const [filteredInstructors, setFilteredInstructors] = useState<InstructorWithStats[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // 使用防抖來優化搜尋性能
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   useEffect(() => {
     const loadInstructors = async () => {
@@ -44,15 +49,15 @@ const InstructorsList = () => {
         setError(null);
 
         // 獲取所有講師
-        const response = await CourseService.getAllInstructors();
+        const response = await CachedCourseService.getAllInstructors();
         
         // 為每個講師獲取統計信息
         const instructorsWithStats = await Promise.all(
           response.map(async (instructor) => {
             try {
               const [teachingCourses, reviews] = await Promise.all([
-                CourseService.getInstructorTeachingCourses(instructor.name),
-                CourseService.getInstructorReviews(instructor.name)
+                CachedCourseService.getInstructorTeachingCourses(instructor.name),
+                CachedCourseService.getInstructorReviews(instructor.name)
               ]);
 
               const averageRating = reviews.length > 0 
@@ -98,22 +103,42 @@ const InstructorsList = () => {
     loadInstructors();
   }, []);
 
+  // 搜尋過濾邏輯
   useEffect(() => {
-    if (!searchTerm.trim()) {
+    if (!debouncedSearchTerm.trim()) {
       setFilteredInstructors(instructors);
-    } else {
-      const filtered = instructors.filter(instructor =>
-        instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        instructor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        instructor.type.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredInstructors(filtered);
+      return;
     }
-  }, [searchTerm, instructors]);
+
+    const filtered = instructors.filter(instructor =>
+      instructor.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      instructor.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+    
+    setFilteredInstructors(filtered);
+  }, [instructors, debouncedSearchTerm]);
 
   const handleInstructorClick = (instructorName: string) => {
     navigate(`/instructors/${encodeURIComponent(instructorName)}`);
   };
+
+  // 講師懸停預載入處理
+  const handleInstructorMouseEnter = (instructorName: string) => {
+    // 延遲預載入，避免用戶快速掃過時觸發
+    setTimeout(() => {
+      CachedCourseService.preloadInstructorDetail(instructorName);
+    }, 300);
+  };
+
+  // 批量預載入熱門講師（在數據載入完成後）
+  useEffect(() => {
+    if (instructors.length > 0) {
+      // 延遲預載入，避免阻塞主要載入
+      setTimeout(() => {
+        CachedCourseService.preloadPopularInstructors(instructors);
+      }, 2000);
+    }
+  }, [instructors]);
 
   const renderRatingStars = (rating: number) => {
     if (rating === 0) return <span className="text-muted-foreground text-sm">{t('instructor.noRating')}</span>;
@@ -137,12 +162,38 @@ const InstructorsList = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">{t('instructor.loadingData')}</p>
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* 頁面標題 */}
+        <div className="text-center py-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Users className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold">{t('instructor.list')}</h1>
           </div>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            {t('instructor.listSubtitle')}
+          </p>
+        </div>
+
+        {/* 搜尋欄骨架 */}
+        <Card className="course-card">
+          <CardContent className="p-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t('instructor.searchPlaceholder')}
+                disabled
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 講師卡片骨架 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <InstructorCardSkeleton key={index} />
+          ))}
         </div>
       </div>
     );
@@ -223,6 +274,7 @@ const InstructorsList = () => {
               key={instructor.$id} 
               className="course-card cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
               onClick={() => handleInstructorClick(instructor.name)}
+              onMouseEnter={() => handleInstructorMouseEnter(instructor.name)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
-import { CourseService } from '@/services/api/courseService';
+import { CachedCourseService } from '@/services/cache/cachedCourseService';
 
 interface VotingButtonsProps {
   reviewId: string;
@@ -50,7 +50,7 @@ export const VotingButtons = ({
 
       // 如果用戶點擊了相同的投票類型，則移除投票
       if (currentUserVote === voteType) {
-        await CourseService.removeVoteFromReview(reviewId, user.$id);
+        await CachedCourseService.removeVoteFromReview(reviewId, user.$id);
         
         // 更新本地狀態
         const newUpvotes = voteType === 'up' ? currentUpvotes - 1 : currentUpvotes;
@@ -63,7 +63,7 @@ export const VotingButtons = ({
         onVoteChange?.(newUpvotes, newDownvotes, null);
       } else {
         // 投票或更改投票
-        await CourseService.voteOnReview(reviewId, user.$id, voteType);
+        await CachedCourseService.voteOnReview(reviewId, user.$id, voteType);
         
         // 更新本地狀態
         let newUpvotes = currentUpvotes;

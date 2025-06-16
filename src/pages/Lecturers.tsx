@@ -12,7 +12,6 @@ import {
   Star,
   MessageSquare,
   GraduationCap,
-  Clock,
   Award,
   FileText,
   CheckCircle,
@@ -28,6 +27,7 @@ import {
   InstructorTeachingCourse, 
   InstructorReviewInfo 
 } from '@/services/api/courseService';
+import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 
 const Lecturers = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
@@ -275,8 +275,8 @@ const Lecturers = () => {
               {reviews.map((reviewInfo, index) => (
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   {/* 評論標題 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2 flex-1">
                       <h4 className="font-semibold text-primary">
                         {reviewInfo.course.course_code} - {reviewInfo.course.course_title}
                       </h4>
@@ -284,8 +284,19 @@ const Lecturers = () => {
                         {reviewInfo.instructorDetail.session_type}
                       </Badge>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {reviewInfo.term.name}
+                    <div className="flex items-center gap-4">
+                      {/* 最終成績 - 右上角大顯示 */}
+                      {reviewInfo.review.course_final_grade && (
+                        <div className="flex flex-col items-center shrink-0">
+                          <div className="text-xs text-muted-foreground mb-1">最終成績</div>
+                          <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                            {reviewInfo.review.course_final_grade}
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="text-sm text-muted-foreground">
+                        {reviewInfo.term.name}
+                      </div>
                     </div>
                   </div>
 
@@ -307,10 +318,6 @@ const Lecturers = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">課程評分:</span>
                         {renderRatingStars(reviewInfo.review.course_usefulness)}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">最終成績:</span>
-                        <Badge variant="secondary">{reviewInfo.review.course_final_grade}</Badge>
                       </div>
                     </div>
                   </div>
@@ -356,9 +363,9 @@ const Lecturers = () => {
                     <span>
                       評論者: {reviewInfo.review.is_anon ? '匿名' : reviewInfo.review.username}
                     </span>
-                    <span>
-                      提交時間: {new Date(reviewInfo.review.submitted_at).toLocaleDateString()}
-                    </span>
+                                          <span>
+                        {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
+                      </span>
                   </div>
                 </div>
               ))}

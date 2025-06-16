@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { CachedCourseService } from '@/services/cache/cachedCourseService';
 
 interface CourseCardProps {
   title: string;
@@ -28,6 +29,7 @@ export function CourseCard({
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(false);
+  const preloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -68,8 +70,52 @@ export function CourseCard({
     }
   };
 
+  const handleCardClick = () => {
+    navigate(`/courses/${code}`);
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation(); // 防止觸發卡片點擊事件
+    action();
+  };
+
+  // 懸停預載入處理
+  const handleMouseEnter = () => {
+    // 清除之前的定時器
+    if (preloadTimeoutRef.current) {
+      clearTimeout(preloadTimeoutRef.current);
+    }
+    
+    // 延遲300ms後開始預載入，避免用戶快速掃過時觸發
+    preloadTimeoutRef.current = setTimeout(() => {
+      CachedCourseService.preloadCourseDetail(code);
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    // 用戶離開時取消預載入
+    if (preloadTimeoutRef.current) {
+      clearTimeout(preloadTimeoutRef.current);
+      preloadTimeoutRef.current = null;
+    }
+  };
+
+  // 清理定時器
+  useEffect(() => {
+    return () => {
+      if (preloadTimeoutRef.current) {
+        clearTimeout(preloadTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <Card className="course-card group">
+    <Card 
+      className="course-card group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+      onClick={handleCardClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -111,11 +157,11 @@ export function CourseCard({
           </Badge>
           
           {/* 操作按鈕 */}
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <Button 
               size="sm" 
               className="flex-1 gradient-primary hover:opacity-90 text-white"
-              onClick={() => navigate(`/write-review/${code}`)}
+              onClick={(e) => handleButtonClick(e, () => navigate(`/write-review/${code}`))}
             >
               <MessageSquare className="h-4 w-4 mr-1" />
               撰寫評論
@@ -124,7 +170,7 @@ export function CourseCard({
               size="sm" 
               variant="outline" 
               className="flex-1 border-gray-300 hover:bg-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 text-foreground"
-              onClick={() => navigate(`/courses/${code}`)}
+              onClick={(e) => handleButtonClick(e, () => navigate(`/courses/${code}`))}
             >
               {t('button.viewDetails')}
             </Button>

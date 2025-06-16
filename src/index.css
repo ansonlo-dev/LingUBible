@@ -328,6 +328,17 @@ div[style*="position: fixed"][style*="right: 14px"] {
     .main-container,
     .main-container.sidebar-collapsed {
       margin-left: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    /* 確保手機版頁面內容有足夠的底部間距 */
+    .content-area {
+      padding-bottom: 2rem;
+    }
+    
+    /* 手機版按鈕容器額外間距 */
+    .container.mx-auto {
+      padding-bottom: 2rem;
     }
   }
 
@@ -352,6 +363,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   @media (max-width: 768px) {
     .header-sticky {
       padding: 0 0.75rem;
+      overflow: visible;
     }
     
     /* 確保 logo 在手機版上有足夠的空間 */
@@ -370,6 +382,30 @@ div[style*="position: fixed"][style*="right: 14px"] {
     .header-sticky a[href="/"] svg {
       width: 1.25rem;
       height: 1.25rem;
+    }
+    
+    /* 手機版右側區域優化 */
+    .header-sticky > div:last-child {
+      flex-shrink: 0;
+      min-width: fit-content;
+      overflow: visible;
+    }
+    
+    /* 手機版登入按鈕優化 */
+    .header-sticky .gradient-primary {
+      min-width: fit-content;
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    /* 手機版搜索框優化 */
+    .header-sticky > div:nth-child(2) {
+      min-width: 0;
+      flex: 1;
+      margin-left: 0.5rem;
+      margin-right: 0.5rem;
     }
   }
 

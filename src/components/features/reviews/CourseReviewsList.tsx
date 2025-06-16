@@ -14,6 +14,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,14 +81,14 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
     return (
       <Badge 
         variant={hasRequirement ? "default" : "secondary"}
-        className={`text-xs ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+        className={`text-xs shrink-0 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
       >
         {hasRequirement ? (
-          <CheckCircle className="h-3 w-3 mr-1" />
+          <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
         ) : (
-          <XCircle className="h-3 w-3 mr-1" />
+          <XCircle className="h-3 w-3 mr-1 shrink-0" />
         )}
-        {label}
+        <span className="truncate">{label}</span>
       </Badge>
     );
   };
@@ -96,27 +97,27 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
     return (
       <div className="space-y-4">
         {instructorDetails.map((instructor, index) => (
-          <div key={index} className="border rounded-lg p-4 bg-muted/30">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-lg">{instructor.instructor_name}</h4>
-              <Badge variant="outline" className="text-sm">
+          <div key={index} className="border rounded-lg p-4 bg-muted/30 overflow-hidden">
+            <div className="flex items-start justify-between mb-3 gap-2">
+              <h4 className="font-semibold text-lg truncate flex-1 min-w-0">{instructor.instructor_name}</h4>
+              <Badge variant="outline" className="text-sm shrink-0">
                 {instructor.session_type}
               </Badge>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <GraduationCap className="h-4 w-4 text-primary" />
+                  <GraduationCap className="h-4 w-4 text-primary shrink-0" />
                   <span className="text-sm font-medium">{t('review.teachingScore')}</span>
                 </div>
                 <StarRating rating={instructor.teaching} showValue />
               </div>
               
               {instructor.grading !== null && (
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <Target className="h-4 w-4 text-primary" />
+                    <Target className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm font-medium">{t('review.gradingFairness')}</span>
                   </div>
                   <StarRating rating={instructor.grading} showValue />
@@ -127,10 +128,10 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
             {/* 課程要求 */}
             <div className="mb-4">
               <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                {t('review.courseRequirements')}
+                <CheckCircle className="h-4 w-4 shrink-0" />
+                <span>{t('review.courseRequirements')}</span>
               </h5>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 overflow-hidden">
                 {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'))}
                 {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'))}
                 {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
@@ -143,12 +144,12 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
 
             {/* 教學評論 */}
             {instructor.comments && (
-              <div>
+              <div className="min-w-0">
                 <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  {t('review.teachingComments')}
+                  <MessageSquare className="h-4 w-4 shrink-0" />
+                  <span>{t('review.teachingComments')}</span>
                 </h5>
-                <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md break-words">
                   {instructor.comments}
                 </p>
               </div>
@@ -205,27 +206,36 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
           {t('review.courseReviews')} ({reviews.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 overflow-hidden">
         {reviews.map((reviewInfo) => {
           const { review, term, instructorDetails } = reviewInfo;
           const isExpanded = expandedReviews[review.$id];
           
           return (
-            <div key={review.$id} className="border rounded-lg p-4 space-y-4">
+            <div key={review.$id} className="border rounded-lg p-4 space-y-4 overflow-hidden">
               {/* 評論基本信息 */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="font-medium truncate">
                       {review.is_anon ? t('review.anonymousUser') : review.username}
                     </span>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {term.name}
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    <Calendar className="h-3 w-3 mr-1 shrink-0" />
+                    <span className="truncate">{term.name}</span>
                   </Badge>
                 </div>
+                {/* 最終成績 - 右上角大顯示 */}
+                {review.course_final_grade && (
+                  <div className="flex flex-col items-center shrink-0">
+                    <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
+                    <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                      {review.course_final_grade}
+                    </Badge>
+                  </div>
+                )}
               </div>
 
               {/* 課程評分 */}
@@ -264,26 +274,15 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
                 </div>
               </div>
 
-              {/* 成績和課程評論 */}
-              {(review.course_final_grade || review.course_comments) && (
+              {/* 課程評論 */}
+              {review.course_comments && (
                 <>
                   <Separator />
-                  <div className="space-y-3">
-                    {review.course_final_grade && (
-                      <div>
-                        <span className="text-sm font-medium">{t('review.finalGrade')}: </span>
-                        <Badge variant="secondary">{review.course_final_grade}</Badge>
-                      </div>
-                    )}
-                    
-                    {review.course_comments && (
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">{t('review.courseComments')}</h5>
-                        <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                          {review.course_comments}
-                        </p>
-                      </div>
-                    )}
+                  <div className="min-w-0">
+                    <h5 className="text-sm font-medium mb-2">{t('review.courseComments')}</h5>
+                    <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md break-words">
+                      {review.course_comments}
+                    </p>
                   </div>
                 </>
               )}
@@ -297,7 +296,7 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
                       {t('review.serviceLearning')}
                     </Badge>
                     {review.service_learning_description && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground break-words">
                         {review.service_learning_description}
                       </p>
                     )}
@@ -349,7 +348,7 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
                   size="sm"
                 />
                 <div className="text-xs text-muted-foreground">
-                  {new Date(review.submitted_at).toLocaleDateString()}
+                  {formatDateTimeUTC8(review.submitted_at)}
                 </div>
               </div>
             </div>

@@ -100,7 +100,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <p className="text-muted-foreground">
               {t('review.loginRequired')}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={() => navigate('/login')} className="flex-1">
                 {t('review.loginToWrite')}
               </Button>
@@ -910,7 +910,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <Separator />
 
             {/* Submit Button */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 onClick={handleSubmit}
                 disabled={submitting}

@@ -149,8 +149,8 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
     }
   }, [location.pathname, isMobile]);
 
-  // 處理導航項目點擊，移除手機版懸停狀態
-  const handleNavClick = (callback?: () => void) => {
+  // 處理導航項目點擊，移除手機版懸停狀態但不關閉側邊欄
+  const handleNavClick = (shouldCloseSidebar: boolean = false) => {
     return (e: React.MouseEvent<HTMLAnchorElement>) => {
       // 手機版點擊後立即移除懸停狀態
       if (isMobile) {
@@ -174,8 +174,12 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             document.body.dispatchEvent(clickEvent);
           }
         }, 50);
+        
+        // 只有在明確指定需要關閉側邊欄時才關閉（例如點擊 Logo）
+        if (shouldCloseSidebar && onMobileToggle) {
+          onMobileToggle();
+        }
       }
-      callback && callback();
     };
   };
   
@@ -220,7 +224,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             <Link 
               to="/" 
               className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
+              onClick={handleNavClick(true)}
             >
               <BookOpenIcon className="h-6 w-6 flex-shrink-0" />
               <span className="text-xl font-bold">LingUBible</span>
@@ -230,7 +234,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             <Link 
               to="/" 
               className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
+              onClick={handleNavClick(true)}
             >
               <BookOpenIcon className="h-6 w-6" />
             </Link>
@@ -269,7 +273,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                               }
                             `}
-                            onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
+                            onClick={handleNavClick(false)}
                             title={!shouldShowText ? item.name : undefined}
                           >
                             <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
@@ -285,7 +289,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                               }
                             `}
-                            onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
+                            onClick={handleNavClick(false)}
                             title={!shouldShowText ? item.name : undefined}
                           >
                             <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
@@ -325,7 +329,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                             : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           }
                         `}
-                        onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
+                        onClick={handleNavClick(false)}
                         title={!shouldShowText ? item.name : undefined}
                       >
                         <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />

@@ -11,7 +11,6 @@ import {
   AlertCircle,
   MessageSquare,
   GraduationCap,
-  Clock,
   Award,
   FileText,
   CheckCircle,
@@ -22,14 +21,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/ui/star-rating';
+import { CachedCourseService } from '@/services/cache/cachedCourseService';
 import { 
-  CourseService, 
   Instructor, 
   InstructorReviewFromDetails,
   InstructorDetail as InstructorDetailType
 } from '@/services/api/courseService';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 
 const InstructorDetail = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
@@ -59,8 +59,8 @@ const InstructorDetail = () => {
 
         // 並行獲取講師信息和評論
         const [instructorData, reviewsData] = await Promise.all([
-          CourseService.getInstructorByName(decodedName),
-          CourseService.getInstructorReviewsFromDetailsWithVotes(decodedName, user?.$id)
+          CachedCourseService.getInstructorByName(decodedName),
+          CachedCourseService.getInstructorReviewsFromDetailsWithVotes(decodedName, user?.$id)
         ]);
 
         setInstructor(instructorData);
@@ -78,7 +78,7 @@ const InstructorDetail = () => {
     };
 
     loadInstructorData();
-  }, [instructorName, t]);
+  }, [instructorName, user?.$id]);
 
   const handleCourseClick = (courseCode: string) => {
     navigate(`/courses/${courseCode}`);
@@ -264,8 +264,8 @@ const InstructorDetail = () => {
               {reviews.map((reviewInfo, index) => (
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   {/* 課程信息標題 */}
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-start justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-1">
                       <h4 
                         className="font-semibold text-primary cursor-pointer hover:underline"
                         onClick={() => handleCourseClick(reviewInfo.course.course_code)}
@@ -273,12 +273,23 @@ const InstructorDetail = () => {
                         {reviewInfo.course.course_code} - {reviewInfo.course.course_title}
                       </h4>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {reviewInfo.term.name}
-                      </Badge>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(reviewInfo.review.submitted_at).toLocaleDateString()}
+                    <div className="flex items-center gap-4">
+                      {/* 最終成績 - 右上角大顯示 */}
+                      {reviewInfo.review.course_final_grade && (
+                        <div className="flex flex-col items-center shrink-0">
+                          <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
+                          <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                            {reviewInfo.review.course_final_grade}
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {reviewInfo.term.name}
+                        </Badge>
+                        <div className="text-sm text-muted-foreground">
+                          {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -315,12 +326,6 @@ const InstructorDetail = () => {
                         </div>
                       </div>
                     </div>
-                    {reviewInfo.review.course_final_grade && (
-                      <div className="flex items-center gap-2 pt-2">
-                        <span className="text-sm">{t('review.finalGrade')}:</span>
-                        <Badge variant="secondary">{reviewInfo.review.course_final_grade}</Badge>
-                      </div>
-                    )}
                   </div>
 
                   {/* 講師評分和評論 */}
