@@ -218,6 +218,30 @@ div[style*="position: fixed"][style*="right: 14px"] {
     width: 4rem;
   }
 
+  /* 觸摸設備上禁用所有懸停效果 */
+  @media (hover: none) and (pointer: coarse) {
+    .sidebar-container nav a:hover {
+      transform: none !important;
+      background-color: inherit !important;
+      color: inherit !important;
+      box-shadow: none !important;
+    }
+
+    .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
+      transform: none !important;
+      background-color: rgb(var(--sidebar-accent)) !important;
+      color: rgb(var(--sidebar-accent-foreground)) !important;
+    }
+
+    .sidebar-container nav a:hover svg {
+      transform: none !important;
+    }
+
+    .dark .sidebar-container nav a:hover {
+      box-shadow: none !important;
+    }
+  }
+
   /* 手機版隱藏側邊欄 */
   @media (max-width: 768px) {
     .sidebar-container {
@@ -254,9 +278,24 @@ div[style*="position: fixed"][style*="right: 14px"] {
       overflow-y: auto;
     }
 
-    /* 手機版懸停效果調整 */
+    /* 手機版懸停效果調整 - 完全禁用懸停效果 */
     .sidebar-container nav a:hover {
       transform: none; /* 手機版不使用 translateX */
+      background-color: inherit; /* 重置背景色 */
+      color: inherit; /* 重置文字顏色 */
+      box-shadow: none; /* 移除陰影 */
+    }
+
+    /* 手機版活動狀態項目的懸停效果也要重置 */
+    .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
+      transform: none;
+      background-color: rgb(var(--sidebar-accent)); /* 保持原有的活動狀態背景 */
+      color: rgb(var(--sidebar-accent-foreground)); /* 保持原有的活動狀態文字色 */
+    }
+
+    /* 手機版圖標懸停效果重置 */
+    .sidebar-container nav a:hover svg {
+      transform: none;
     }
 
     /* 手機版觸摸反饋 */

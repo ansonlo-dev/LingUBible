@@ -119,6 +119,65 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
 
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
   const shouldShowText = !isCollapsed || isMobile;
+
+  // 修復手機版懸停狀態持續的問題
+  useEffect(() => {
+    if (isMobile) {
+      // 當路由變化時，移除所有懸停狀態
+      const removeHoverStates = () => {
+        // 移除所有可能的懸停狀態
+        const hoveredElements = document.querySelectorAll('.sidebar-container nav a:hover');
+        hoveredElements.forEach(element => {
+          // 強制觸發重新渲染來移除懸停狀態
+          (element as HTMLElement).blur();
+        });
+        
+        // 觸摸其他地方來移除懸停狀態
+        const body = document.body;
+        const touchEvent = new TouchEvent('touchstart', {
+          bubbles: true,
+          cancelable: true,
+          touches: []
+        });
+        body.dispatchEvent(touchEvent);
+      };
+
+      // 延遲執行以確保路由變化完成
+      const timeoutId = setTimeout(removeHoverStates, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [location.pathname, isMobile]);
+
+  // 處理導航項目點擊，移除手機版懸停狀態
+  const handleNavClick = (callback?: () => void) => {
+    return (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // 手機版點擊後立即移除懸停狀態
+      if (isMobile) {
+        const target = e.currentTarget;
+        target.blur();
+        // 觸發一個觸摸事件來移除懸停狀態
+        setTimeout(() => {
+          try {
+            const touchEvent = new TouchEvent('touchstart', {
+              bubbles: true,
+              cancelable: true,
+              touches: []
+            });
+            document.body.dispatchEvent(touchEvent);
+          } catch (error) {
+            // 如果 TouchEvent 不支援，使用其他方法
+            const clickEvent = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true
+            });
+            document.body.dispatchEvent(clickEvent);
+          }
+        }, 50);
+      }
+      callback && callback();
+    };
+  };
   
   // 重新組織導航項目為分組結構
   const navigationGroups = [
@@ -161,7 +220,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             <Link 
               to="/" 
               className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={() => onMobileToggle && onMobileToggle()}
+              onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
             >
               <BookOpenIcon className="h-6 w-6 flex-shrink-0" />
               <span className="text-xl font-bold">LingUBible</span>
@@ -171,7 +230,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
             <Link 
               to="/" 
               className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={() => onMobileToggle && onMobileToggle()}
+              onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
             >
               <BookOpenIcon className="h-6 w-6" />
             </Link>
@@ -210,7 +269,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                               }
                             `}
-                            onClick={() => onMobileToggle && onMobileToggle()}
+                            onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
                             title={!shouldShowText ? item.name : undefined}
                           >
                             <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
@@ -226,7 +285,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                               }
                             `}
-                            onClick={() => onMobileToggle && onMobileToggle()}
+                            onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
                             title={!shouldShowText ? item.name : undefined}
                           >
                             <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
@@ -266,7 +325,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                             : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           }
                         `}
-                        onClick={() => onMobileToggle && onMobileToggle()}
+                        onClick={handleNavClick(() => onMobileToggle && onMobileToggle())}
                         title={!shouldShowText ? item.name : undefined}
                       >
                         <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
