@@ -51,9 +51,13 @@ const InstructorsList = () => {
         // 獲取所有講師
         const response = await CachedCourseService.getAllInstructors();
         
-        // 為每個講師獲取統計信息
-        const instructorsWithStats = await Promise.all(
-          response.map(async (instructor) => {
+        // 只為前20個講師獲取詳細統計信息，其他的延遲載入
+        const priorityInstructors = response.slice(0, 20);
+        const remainingInstructors = response.slice(20);
+        
+        // 為優先講師獲取統計信息
+        const priorityInstructorsWithStats = await Promise.all(
+          priorityInstructors.map(async (instructor) => {
             try {
               const [teachingCourses, reviews] = await Promise.all([
                 CachedCourseService.getInstructorTeachingCourses(instructor.name),
@@ -81,17 +85,78 @@ const InstructorsList = () => {
             }
           })
         );
+        
+        // 為剩餘講師設置預設值
+        const remainingInstructorsWithStats = remainingInstructors.map(instructor => ({
+          ...instructor,
+          courseCount: 0,
+          reviewCount: 0,
+          averageRating: 0
+        }));
+        
+        const allInstructorsWithStats = [...priorityInstructorsWithStats, ...remainingInstructorsWithStats];
 
         // 按評分和評論數排序
-        instructorsWithStats.sort((a, b) => {
+        allInstructorsWithStats.sort((a, b) => {
           if (b.averageRating !== a.averageRating) {
             return b.averageRating - a.averageRating;
           }
           return b.reviewCount - a.reviewCount;
         });
 
-        setInstructors(instructorsWithStats);
-        setFilteredInstructors(instructorsWithStats);
+        setInstructors(allInstructorsWithStats);
+        setFilteredInstructors(allInstructorsWithStats);
+        
+        // 延遲載入剩餘講師的統計信息
+        if (remainingInstructors.length > 0) {
+          setTimeout(async () => {
+            try {
+              const updatedRemainingStats = await Promise.all(
+                remainingInstructors.map(async (instructor) => {
+                  try {
+                    const [teachingCourses, reviews] = await Promise.all([
+                      CachedCourseService.getInstructorTeachingCourses(instructor.name),
+                      CachedCourseService.getInstructorReviews(instructor.name)
+                    ]);
+
+                    const averageRating = reviews.length > 0 
+                      ? reviews.reduce((sum, r) => sum + r.instructorDetail.teaching, 0) / reviews.length
+                      : 0;
+
+                    return {
+                      ...instructor,
+                      courseCount: teachingCourses.length,
+                      reviewCount: reviews.length,
+                      averageRating
+                    };
+                  } catch (error) {
+                    console.error(`Error loading delayed stats for instructor ${instructor.name}:`, error);
+                    return {
+                      ...instructor,
+                      courseCount: 0,
+                      reviewCount: 0,
+                      averageRating: 0
+                    };
+                  }
+                })
+              );
+              
+              // 更新狀態
+              const finalInstructorsWithStats = [...priorityInstructorsWithStats, ...updatedRemainingStats];
+              finalInstructorsWithStats.sort((a, b) => {
+                if (b.averageRating !== a.averageRating) {
+                  return b.averageRating - a.averageRating;
+                }
+                return b.reviewCount - a.reviewCount;
+              });
+              
+              setInstructors(finalInstructorsWithStats);
+              setFilteredInstructors(finalInstructorsWithStats);
+            } catch (error) {
+              console.error('Error loading delayed instructor stats:', error);
+            }
+          }, 1000); // 1秒後載入剩餘數據
+        }
       } catch (err) {
         console.error('Error loading instructors:', err);
         setError(t('instructor.loadFailed'));
