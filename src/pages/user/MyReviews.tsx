@@ -137,7 +137,7 @@ const MyReviews = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 overflow-hidden">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
@@ -166,42 +166,46 @@ const MyReviews = () => {
       ) : (
         <div className="space-y-6">
           {reviews.map((reviewInfo) => (
-            <Card key={reviewInfo.review.$id} className="course-card">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <BookOpen className="h-5 w-5" />
-                        {reviewInfo.review.course_code}
-                      </CardTitle>
-                      {/* 最終成績 - 右上角大顯示 */}
-                      {reviewInfo.review.course_final_grade && (
-                        <div className="flex flex-col items-center shrink-0 mr-4">
-                          <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
-                          <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
-                            {reviewInfo.review.course_final_grade}
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {reviewInfo.term.name}
+            <Card key={reviewInfo.review.$id} className="course-card overflow-hidden">
+              <CardHeader className="overflow-hidden">
+                <div className="space-y-3">
+                  {/* 課程標題和成績 */}
+                  <div className="flex items-start justify-between gap-2 overflow-hidden">
+                    <CardTitle className="flex items-center gap-2 min-w-0 flex-1">
+                      <BookOpen className="h-5 w-5 shrink-0" />
+                      <span className="truncate">{reviewInfo.review.course_code}</span>
+                    </CardTitle>
+                    {/* 最終成績 - 右上角大顯示 */}
+                    {reviewInfo.review.course_final_grade && (
+                      <div className="flex flex-col items-center shrink-0">
+                        <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
+                        <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                          {reviewInfo.review.course_final_grade}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        {reviewInfo.review.is_anon ? t('review.anonymous') : reviewInfo.review.username}
-                      </div>
-                      <span>{formatDateTimeUTC8(reviewInfo.review.$createdAt)}</span>
-                    </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  
+                  {/* 課程信息 */}
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground overflow-hidden">
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Calendar className="h-4 w-4" />
+                      <span>{reviewInfo.term.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <User className="h-4 w-4" />
+                      <span>{reviewInfo.review.is_anon ? t('review.anonymous') : reviewInfo.review.username}</span>
+                    </div>
+                    <span className="shrink-0">{formatDateTimeUTC8(reviewInfo.review.$createdAt)}</span>
+                  </div>
+                  
+                  {/* 操作按鈕 */}
+                  <div className="flex items-center gap-2 pt-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditReview(reviewInfo.review.$id, reviewInfo.review.course_code)}
+                      className="flex-1 sm:flex-none"
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       {t('common.edit')}
@@ -212,6 +216,7 @@ const MyReviews = () => {
                           variant="outline"
                           size="sm"
                           disabled={deletingReviewId === reviewInfo.review.$id}
+                          className="flex-1 sm:flex-none"
                         >
                           {deletingReviewId === reviewInfo.review.$id ? (
                             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -245,18 +250,18 @@ const MyReviews = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 overflow-hidden">
                 {/* Course Ratings */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <p className="text-sm font-medium">{t('review.workload')}</p>
                     {renderStars(reviewInfo.review.course_workload)}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <p className="text-sm font-medium">{t('review.difficulty')}</p>
                     {renderStars(reviewInfo.review.course_difficulties)}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <p className="text-sm font-medium">{t('review.usefulness')}</p>
                     {renderStars(reviewInfo.review.course_usefulness)}
                   </div>
@@ -266,9 +271,9 @@ const MyReviews = () => {
 
                 {/* Course Comments */}
                 {reviewInfo.review.course_comments && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-w-0">
                     <p className="text-sm font-medium">{t('review.comments')}</p>
-                    <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md break-words">
                       {reviewInfo.review.course_comments}
                     </p>
                   </div>
@@ -276,12 +281,12 @@ const MyReviews = () => {
 
                 {/* Service Learning */}
                 {reviewInfo.review.has_service_learning && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-w-0">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{t('review.serviceLearning')}</Badge>
                     </div>
                     {reviewInfo.review.service_learning_description && (
-                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md break-words">
                         {reviewInfo.review.service_learning_description}
                       </p>
                     )}
@@ -290,29 +295,29 @@ const MyReviews = () => {
 
                 {/* Instructor Details */}
                 {reviewInfo.instructorDetails && reviewInfo.instructorDetails.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 min-w-0">
                     <Separator />
                     <h4 className="text-sm font-medium">{t('review.instructorEvaluations')}</h4>
                     {reviewInfo.instructorDetails.map((instructor, index) => (
-                      <div key={index} className="bg-muted p-3 rounded-md space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{instructor.instructor_name}</span>
-                          <Badge variant="outline">{instructor.session_type}</Badge>
+                      <div key={index} className="bg-muted p-3 rounded-md space-y-2 overflow-hidden">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="font-medium truncate">{instructor.instructor_name}</span>
+                          <Badge variant="outline" className="shrink-0">{instructor.session_type}</Badge>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div>
+                          <div className="min-w-0">
                             <span className="font-medium">{t('review.teachingScore')}: </span>
                             {renderStars(instructor.teaching)}
                           </div>
                           {instructor.grading && (
-                            <div>
+                            <div className="min-w-0">
                               <span className="font-medium">{t('review.gradingScore')}: </span>
                               {renderStars(instructor.grading)}
                             </div>
                           )}
                         </div>
                         {instructor.comments && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground break-words">
                             {instructor.comments}
                           </p>
                         )}
@@ -322,9 +327,9 @@ const MyReviews = () => {
                 )}
 
                 {/* Vote Stats */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{t('myReviews.upvotes')}: {reviewInfo.upvotes}</span>
-                  <span>{t('myReviews.downvotes')}: {reviewInfo.downvotes}</span>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <span className="shrink-0">{t('myReviews.upvotes')}: {reviewInfo.upvotes}</span>
+                  <span className="shrink-0">{t('myReviews.downvotes')}: {reviewInfo.downvotes}</span>
                 </div>
               </CardContent>
             </Card>

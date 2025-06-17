@@ -21,42 +21,58 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    target: 'es2020',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
+      mangle: {
+        safari10: true,
+      },
+    },
     rollupOptions: {
+      treeshake: {
+        preset: 'recommended',
+        moduleSideEffects: false,
+      },
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'router': ['react-router-dom'],
-          'ui-utils': ['clsx', 'tailwind-merge', 'class-variance-authority'],
-          'radix-ui-1': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-select'
-          ],
-          'radix-ui-2': [
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-label',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-avatar'
-          ],
-          'radix-ui-3': [
-            '@radix-ui/react-toast',
-            '@radix-ui/react-slot'
-          ],
-          'icons': ['lucide-react'],
-          'ui-misc': [
-            'next-themes',
-            'react-hook-form',
-            '@hookform/resolvers'
-          ],
-          'query': ['@tanstack/react-query'],
-          'appwrite': ['appwrite'],
-          'charts-date': ['date-fns', 'recharts'],
-          'forms': ['zod']
-        }
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
-    }
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 600,
+    // Enable build optimizations
+    reportCompressedSize: false, // Disable gzip size reporting to speed up build
+    // Enable CSS code splitting
+    cssCodeSplit: true,
+    // Optimize asset inlining
+    assetsInlineLimit: 4096,
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'appwrite',
+      'lucide-react'
+    ],
+    exclude: ['@vite/client', '@vite/env']
+  },
+  // Additional performance optimizations
+  esbuild: {
+    target: 'es2020',
+    drop: ['console', 'debugger'],
+    legalComments: 'none',
+  },
+  // Worker optimizations
+  worker: {
+    format: 'es',
   },
 }));

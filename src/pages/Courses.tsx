@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CourseCard } from '@/components/features/reviews/CourseCard';
 import { CourseCardSkeleton } from '@/components/features/reviews/CourseCardSkeleton';
-import { CachedCourseService } from '@/services/cache/cachedCourseService';
+import { CourseService } from '@/services/api/courseService';
 import { CourseWithStats } from '@/services/api/courseService';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
@@ -27,13 +27,13 @@ const Courses = () => {
         setLoading(true);
         setError(null);
         
-        const coursesData = await CachedCourseService.getCoursesWithStats();
+        const coursesData = await CourseService.getCoursesWithStats();
         setCourses(coursesData);
         setFilteredCourses(coursesData);
         
         // 批量預載入熱門課程（延遲執行，避免阻塞主要載入）
         setTimeout(() => {
-          CachedCourseService.preloadPopularCourses(coursesData);
+          // Preload removed - no longer using cache
         }, 2000);
       } catch (err) {
         console.error('Error loading courses:', err);

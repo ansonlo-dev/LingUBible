@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLocation } from 'react-router-dom';
 import { 
@@ -21,34 +21,75 @@ interface DocumentHeadProps {
 export function DocumentHead({ title, description, keywords, ogImage }: DocumentHeadProps) {
   const { language } = useLanguage();
   const location = useLocation();
+  const lastUpdateRef = useRef<string>('');
 
-  // 獲取當前頁面的完整 URL
-  const getCanonicalUrl = () => {
-    return `${SEO_CONFIG.BASE_URL}${location.pathname}`;
-  };
+  // 記憶化計算，只在依賴項真正改變時重新計算
+  const memoizedData = useMemo(() => {
+    const canonicalUrl = `${SEO_CONFIG.BASE_URL}${location.pathname}`;
+    const pageType = getPageTypeFromPath(location.pathname);
+    const seoData = getPageSEO(pageType, language as SupportedLanguage, {
+      title,
+      description,
+      keywords,
+      ogImage
+    });
+    const alternateUrls = generateHreflangUrls(location.pathname);
+    const structuredData = generateStructuredData(
+      pageType,
+      language as SupportedLanguage,
+      canonicalUrl
+    );
 
-  // 獲取頁面類型和 SEO 數據
-  const pageType = getPageTypeFromPath(location.pathname);
-  const seoData = getPageSEO(pageType, language as SupportedLanguage, {
-    title,
-    description,
-    keywords,
-    ogImage
-  });
+    return {
+      canonicalUrl,
+      pageType,
+      seoData,
+      alternateUrls,
+      structuredData,
+      localeCode: getLocaleCode(language as SupportedLanguage)
+    };
+  }, [language, location.pathname, title, description, keywords, ogImage]);
 
   useEffect(() => {
-    // 設置頁面標題
-    document.title = seoData.title;
+    // 創建一個唯一標識符來檢查是否需要更新
+    const updateKey = JSON.stringify({
+      path: location.pathname,
+      lang: language,
+      title,
+      description,
+      keywords,
+      ogImage
+    });
 
-    // 設置語言屬性
-    document.documentElement.lang = language === 'zh-TW' ? 'zh-TW' : 
-                                   language === 'zh-CN' ? 'zh-CN' : 'en';
+    // 如果內容沒有改變，跳過更新
+    if (lastUpdateRef.current === updateKey) {
+      return;
+    }
+
+    lastUpdateRef.current = updateKey;
+
+    const { canonicalUrl, seoData, alternateUrls, structuredData, localeCode } = memoizedData;
+
+    // 設置頁面標題（只在真正改變時）
+    if (document.title !== seoData.title) {
+      document.title = seoData.title;
+    }
+
+    // 設置語言屬性（只在真正改變時）
+    const targetLang = language === 'zh-TW' ? 'zh-TW' : 
+                      language === 'zh-CN' ? 'zh-CN' : 'en';
+    if (document.documentElement.lang !== targetLang) {
+      document.documentElement.lang = targetLang;
+    }
     
-    // 更新或創建 meta 標籤的通用函數
+    // 更新或創建 meta 標籤的優化函數
     const updateMetaTag = (selector: string, content: string) => {
-      let meta = document.querySelector(selector);
+      let meta = document.querySelector(selector) as HTMLMetaElement;
       if (meta) {
-        meta.setAttribute('content', content);
+        // 只在內容真正改變時才更新
+        if (meta.content !== content) {
+          meta.content = content;
+        }
       } else {
         meta = document.createElement('meta');
         if (selector.includes('name=')) {
@@ -68,8 +109,8 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
     // Open Graph 標籤
     updateMetaTag('meta[property="og:title"]', seoData.title);
     updateMetaTag('meta[property="og:description"]', seoData.description);
-    updateMetaTag('meta[property="og:locale"]', getLocaleCode(language as SupportedLanguage));
-    updateMetaTag('meta[property="og:url"]', getCanonicalUrl());
+    updateMetaTag('meta[property="og:locale"]', localeCode);
+    updateMetaTag('meta[property="og:url"]', canonicalUrl);
     
     if (seoData.ogImage) {
       updateMetaTag('meta[property="og:image"]', seoData.ogImage);
@@ -83,64 +124,69 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
       updateMetaTag('meta[name="twitter:image"]', seoData.ogImage);
     }
 
-    // 設置 canonical URL
-    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    // 設置 canonical URL（只在改變時）
+    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (canonicalLink) {
-      canonicalLink.setAttribute('href', getCanonicalUrl());
+      if (canonicalLink.href !== canonicalUrl) {
+        canonicalLink.href = canonicalUrl;
+      }
     } else {
       canonicalLink = document.createElement('link');
       canonicalLink.setAttribute('rel', 'canonical');
-      canonicalLink.setAttribute('href', getCanonicalUrl());
+      canonicalLink.setAttribute('href', canonicalUrl);
       document.head.appendChild(canonicalLink);
     }
 
-    // 移除舊的 hreflang 標籤
-    const oldHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
-    oldHreflangs.forEach(link => link.remove());
+    // 更新 hreflang 標籤（只在路徑改變時）
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    const expectedHreflangs = Object.entries(alternateUrls).length + 1; // +1 for x-default
 
-    // 添加新的 hreflang 標籤
-    const alternateUrls = generateHreflangUrls(location.pathname);
-    Object.entries(alternateUrls).forEach(([lang, url]) => {
-      const hreflangLink = document.createElement('link');
-      hreflangLink.setAttribute('rel', 'alternate');
-      hreflangLink.setAttribute('hreflang', lang);
-      hreflangLink.setAttribute('href', url);
-      document.head.appendChild(hreflangLink);
-    });
+    // 只有在數量不匹配或路徑改變時才重新創建 hreflang 標籤
+    if (existingHreflangs.length !== expectedHreflangs) {
+      // 移除舊的 hreflang 標籤
+      existingHreflangs.forEach(link => link.remove());
 
-    // 添加 x-default hreflang
-    const defaultHreflang = document.createElement('link');
-    defaultHreflang.setAttribute('rel', 'alternate');
-    defaultHreflang.setAttribute('hreflang', 'x-default');
-    defaultHreflang.setAttribute('href', alternateUrls.en);
-    document.head.appendChild(defaultHreflang);
+      // 添加新的 hreflang 標籤
+      Object.entries(alternateUrls).forEach(([lang, url]) => {
+        const hreflangLink = document.createElement('link');
+        hreflangLink.setAttribute('rel', 'alternate');
+        hreflangLink.setAttribute('hreflang', lang);
+        hreflangLink.setAttribute('href', url);
+        document.head.appendChild(hreflangLink);
+      });
+
+      // 添加 x-default hreflang
+      const defaultHreflang = document.createElement('link');
+      defaultHreflang.setAttribute('rel', 'alternate');
+      defaultHreflang.setAttribute('hreflang', 'x-default');
+      defaultHreflang.setAttribute('href', alternateUrls.en);
+      document.head.appendChild(defaultHreflang);
+    }
 
     // 設置 PWA 應用標題
     updateMetaTag('meta[name="apple-mobile-web-app-title"]', SEO_CONFIG.SITE_NAME);
 
-    // 添加結構化數據 (JSON-LD)
-    const addStructuredData = () => {
-      // 移除舊的結構化數據
-      const oldScript = document.querySelector('script[type="application/ld+json"]');
-      if (oldScript) {
-        oldScript.remove();
+    // 更新結構化數據（只在內容改變時）
+    const updateStructuredData = () => {
+      const existingScript = document.querySelector('script[type="application/ld+json"]');
+      const newContent = JSON.stringify(structuredData);
+      
+      if (existingScript) {
+        // 只在內容真正改變時才更新
+        if (existingScript.textContent !== newContent) {
+          existingScript.textContent = newContent;
+        }
+      } else {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = newContent;
+        document.head.appendChild(script);
       }
-
-      const structuredData = generateStructuredData(
-        pageType,
-        language as SupportedLanguage,
-        getCanonicalUrl()
-      );
-
-      const script = document.createElement('script');
-      script.type = 'application/ld+json';
-      script.textContent = JSON.stringify(structuredData);
-      document.head.appendChild(script);
     };
 
-    addStructuredData();
+    updateStructuredData();
 
-  }, [language, seoData, location.pathname, pageType]);
+  }, [memoizedData, language, location.pathname, title, description, keywords, ogImage]);
 
   return null; // 這個組件不渲染任何內容
 } 

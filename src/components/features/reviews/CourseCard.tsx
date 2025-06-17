@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { CachedCourseService } from '@/services/cache/cachedCourseService';
+// Removed cache service import - no longer preloading
 
 interface CourseCardProps {
   title: string;
@@ -88,7 +88,7 @@ export function CourseCard({
     
     // 延遲300ms後開始預載入，避免用戶快速掃過時觸發
     preloadTimeoutRef.current = setTimeout(() => {
-      CachedCourseService.preloadCourseDetail(code);
+      // Preload removed - no longer using cache
     }, 300);
   };
 

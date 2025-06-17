@@ -22,11 +22,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
-  CourseService, 
   Instructor, 
   InstructorTeachingCourse, 
   InstructorReviewInfo 
 } from '@/services/api/courseService';
+import { CourseService } from '@/services/api/courseService';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 
 const Lecturers = () => {
@@ -54,13 +54,18 @@ const Lecturers = () => {
 
         // 解碼 URL 參數
         const decodedName = decodeURIComponent(instructorName);
+        
+        const startTime = Date.now();
 
         // 並行獲取講師信息、教學課程和評論
         const [instructorData, coursesData, reviewsData] = await Promise.all([
-          CourseService.getInstructorByName(decodedName),
-          CourseService.getInstructorTeachingCourses(decodedName),
-          CourseService.getInstructorReviews(decodedName)
+                  CourseService.getInstructorByName(decodedName),
+        CourseService.getInstructorTeachingCourses(decodedName),
+        CourseService.getInstructorReviews(decodedName)
         ]);
+        
+        const loadTime = Date.now() - startTime;
+        console.log(`Instructor data loaded in ${loadTime}ms for:`, decodedName);
 
         setInstructor(instructorData);
         setTeachingCourses(coursesData);
@@ -158,7 +163,7 @@ const Lecturers = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="container mx-auto px-4 py-6 space-y-6 overflow-hidden w-full max-w-full">
       {/* 返回按鈕 */}
       <Button 
         onClick={() => navigate(-1)} 
@@ -171,32 +176,32 @@ const Lecturers = () => {
 
       {/* 講師基本信息 */}
       {instructor && (
-        <Card className="course-card">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Users className="h-8 w-8 text-primary" />
-              <div>
-                <CardTitle className="text-2xl">{instructor.name}</CardTitle>
-                <p className="text-muted-foreground">{instructor.type}</p>
+        <Card className="course-card overflow-hidden w-full max-w-full">
+          <CardHeader className="overflow-hidden">
+            <div className="flex items-center gap-3 overflow-hidden min-w-0">
+              <Users className="h-8 w-8 text-primary shrink-0" />
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
+                <p className="text-muted-foreground truncate">{instructor.type}</p>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{instructor.email}</span>
+          <CardContent className="space-y-4 overflow-hidden">
+            <div className="flex items-center gap-2 overflow-hidden min-w-0">
+              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm truncate flex-1 min-w-0">{instructor.email}</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-              <div className="text-center">
+              <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">{teachingCourses.length}</div>
                 <div className="text-sm text-muted-foreground">教授課程</div>
               </div>
-              <div className="text-center">
+              <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">{reviews.length}</div>
                 <div className="text-sm text-muted-foreground">學生評論</div>
               </div>
-              <div className="text-center">
+              <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">
                   {reviews.length > 0 
                     ? (reviews.reduce((sum, r) => sum + r.instructorDetail.teaching, 0) / reviews.length).toFixed(1)
@@ -211,14 +216,14 @@ const Lecturers = () => {
       )}
 
       {/* 教授課程 */}
-      <Card className="course-card">
+      <Card className="course-card overflow-hidden w-full max-w-full">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            教授課程 ({teachingCourses.length})
+          <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
+            <BookOpen className="h-5 w-5 shrink-0" />
+            <span className="truncate">教授課程 ({teachingCourses.length})</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden">
           {teachingCourses.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">暫無教學記錄</p>
           ) : (
@@ -226,28 +231,28 @@ const Lecturers = () => {
               {teachingCourses.map((teaching, index) => (
                 <Card 
                   key={index} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden w-full max-w-full"
                   onClick={() => handleCourseClick(teaching.course.course_code)}
                 >
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-primary">
+                  <CardContent className="p-4 overflow-hidden">
+                    <div className="space-y-2 overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 overflow-hidden min-w-0">
+                        <h3 className="font-semibold text-primary truncate flex-1 min-w-0">
                           {teaching.course.course_code}
                         </h3>
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="shrink-0">
                           {teaching.sessionType}
                         </Badge>
                       </div>
-                      <p className="text-sm font-medium">{teaching.course.course_title}</p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
+                      <p className="text-sm font-medium truncate">{teaching.course.course_title}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground overflow-hidden">
+                        <div className="flex items-center gap-1 shrink-0">
                           <Calendar className="h-3 w-3" />
-                          {teaching.term.name}
+                          <span>{teaching.term.name}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0 min-w-0">
                           <GraduationCap className="h-3 w-3" />
-                          {teaching.course.course_department}
+                          <span className="truncate">{teaching.course.course_department}</span>
                         </div>
                       </div>
                     </div>
@@ -260,31 +265,31 @@ const Lecturers = () => {
       </Card>
 
       {/* 學生評論 */}
-      <Card className="course-card">
+      <Card className="course-card overflow-hidden w-full max-w-full">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            學生評論 ({reviews.length})
+          <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
+            <MessageSquare className="h-5 w-5 shrink-0" />
+            <span className="truncate">學生評論 ({reviews.length})</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden">
           {reviews.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">暫無學生評論</p>
           ) : (
             <div className="space-y-6">
               {reviews.map((reviewInfo, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-4">
+                <div key={index} className="border rounded-lg p-4 space-y-4 overflow-hidden w-full max-w-full">
                   {/* 評論標題 */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2 flex-1">
-                      <h4 className="font-semibold text-primary">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 overflow-hidden">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                      <h4 className="font-semibold text-primary truncate flex-1 min-w-0">
                         {reviewInfo.course.course_code} - {reviewInfo.course.course_title}
                       </h4>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="shrink-0">
                         {reviewInfo.instructorDetail.session_type}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
                       {/* 最終成績 - 右上角大顯示 */}
                       {reviewInfo.review.course_final_grade && (
                         <div className="flex flex-col items-center shrink-0">
@@ -294,38 +299,44 @@ const Lecturers = () => {
                           </Badge>
                         </div>
                       )}
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground shrink-0">
                         {reviewInfo.term.name}
                       </div>
                     </div>
                   </div>
 
                   {/* 評分 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">教學評分:</span>
-                        {renderRatingStars(reviewInfo.instructorDetail.teaching)}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
+                    <div className="space-y-2 min-w-0 overflow-hidden">
+                      <div className="flex items-center justify-between min-w-0 overflow-hidden">
+                        <span className="text-sm shrink-0">教學評分:</span>
+                        <div className="shrink-0">
+                          {renderRatingStars(reviewInfo.instructorDetail.teaching)}
+                        </div>
                       </div>
                       {reviewInfo.instructorDetail.grading !== null && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">評分公平性:</span>
-                          {renderRatingStars(reviewInfo.instructorDetail.grading)}
+                        <div className="flex items-center justify-between min-w-0 overflow-hidden">
+                          <span className="text-sm shrink-0">評分公平性:</span>
+                          <div className="shrink-0">
+                            {renderRatingStars(reviewInfo.instructorDetail.grading)}
+                          </div>
                         </div>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">課程評分:</span>
-                        {renderRatingStars(reviewInfo.review.course_usefulness)}
+                    <div className="space-y-2 min-w-0 overflow-hidden">
+                      <div className="flex items-center justify-between min-w-0 overflow-hidden">
+                        <span className="text-sm shrink-0">課程評分:</span>
+                        <div className="shrink-0">
+                          {renderRatingStars(reviewInfo.review.course_usefulness)}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* 課程要求 */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 overflow-hidden">
                     <h5 className="text-sm font-medium">課程要求:</h5>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 overflow-hidden">
                       {renderBooleanBadge(reviewInfo.instructorDetail.has_midterm, "期中考", "無期中考")}
                       {renderBooleanBadge(reviewInfo.instructorDetail.has_quiz, "小測", "無小測")}
                       {renderBooleanBadge(reviewInfo.instructorDetail.has_group_project, "小組專案", "無小組專案")}
@@ -338,9 +349,9 @@ const Lecturers = () => {
 
                   {/* 評論內容 */}
                   {reviewInfo.instructorDetail.comments && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0 overflow-hidden">
                       <h5 className="text-sm font-medium">對講師的評價:</h5>
-                      <p className="text-sm bg-muted/50 rounded-lg p-3">
+                      <p className="text-sm bg-muted/50 rounded-lg p-3 break-words overflow-hidden">
                         {reviewInfo.instructorDetail.comments}
                       </p>
                     </div>
@@ -348,9 +359,9 @@ const Lecturers = () => {
 
                   {/* 課程整體評論 */}
                   {reviewInfo.review.course_comments && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0 overflow-hidden">
                       <h5 className="text-sm font-medium">課程整體評價:</h5>
-                      <p className="text-sm bg-muted/30 rounded-lg p-3">
+                      <p className="text-sm bg-muted/30 rounded-lg p-3 break-words overflow-hidden">
                         {reviewInfo.review.course_comments}
                       </p>
                     </div>
@@ -359,13 +370,13 @@ const Lecturers = () => {
                   <Separator />
                   
                   {/* 評論者信息 */}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground overflow-hidden">
+                    <span className="truncate flex-1 min-w-0">
                       評論者: {reviewInfo.review.is_anon ? '匿名' : reviewInfo.review.username}
                     </span>
-                                          <span>
-                        {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
-                      </span>
+                    <span className="shrink-0 ml-2">
+                      {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
+                    </span>
                   </div>
                 </div>
               ))}

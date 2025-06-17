@@ -36,7 +36,7 @@ const NotFound = () => {
     {
       icon: Users,
       label: t('nav.lecturers'),
-      path: '/instructors',
+                  path: '/instructors',
       description: t('404.quickLinks.lecturersDesc')
     },
     {

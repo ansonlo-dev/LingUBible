@@ -27,7 +27,6 @@ export default {
     'tabs.popularCourses': 'Popular Courses',
     'tabs.topInstructors': 'Top Instructors',
     'tabs.instructors': 'Instructors',
-    'featured.instructors': 'Featured Instructors',
     'tabs.reviews': 'Reviews',
     'footer.builtWith': 'Built with 💝 by ansonlo.dev',
     'footer.disclaimer': 'The website is not affiliated with Lingnan University',
@@ -1134,4 +1133,19 @@ export default {
     'myReviews.deleteError': 'Failed to delete review',
     'myReviews.upvotes': 'Upvotes',
     'myReviews.downvotes': 'Downvotes',
+
+    // Featured content
+    'featured.title': 'Featured Content',
+    'featured.courses': 'Featured Courses',
+    'featured.instructors': 'Featured Instructors',
+    'featured.popularCourses': 'Popular Courses',
+    'featured.popularCoursesDesc': 'Most popular courses based on review count',
+    'featured.popularInstructors': 'Popular Instructors',
+    'featured.popularInstructorsDesc': 'Most popular instructors based on review count',
+    'featured.noPopularCourses': 'No Popular Courses',
+    'featured.noPopularCoursesDesc': 'Not enough course review data available yet',
+    'featured.noPopularInstructors': 'No Popular Instructors',
+    'featured.noPopularInstructorsDesc': 'Not enough instructor review data available yet',
+    'featured.viewAllCourses': 'View All Courses',
+    'featured.viewAllInstructors': 'View All Instructors',
 };

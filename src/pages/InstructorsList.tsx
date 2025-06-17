@@ -15,10 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { CachedCourseService } from '@/services/cache/cachedCourseService';
+import { CourseService } from '@/services/api/courseService';
 import { 
-  Instructor, 
-  InstructorTeachingCourse 
+  Instructor
 } from '@/services/api/courseService';
 import { InstructorCardSkeleton } from '@/components/features/reviews/InstructorCardSkeleton';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -30,16 +29,13 @@ interface InstructorWithStats extends Instructor {
 }
 
 const InstructorsList = () => {
-  const navigate = useNavigate();
   const { t } = useLanguage();
-  
+  const navigate = useNavigate();
   const [instructors, setInstructors] = useState<InstructorWithStats[]>([]);
-  const [filteredInstructors, setFilteredInstructors] = useState<InstructorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // 使用防抖來優化搜尋性能
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   useEffect(() => {
@@ -47,216 +43,115 @@ const InstructorsList = () => {
       try {
         setLoading(true);
         setError(null);
-
-        // 獲取所有講師
-        const response = await CachedCourseService.getAllInstructors();
         
-        // 只為前20個講師獲取詳細統計信息，其他的延遲載入
-        const priorityInstructors = response.slice(0, 20);
-        const remainingInstructors = response.slice(20);
+        // 獲取講師列表（使用緩存）
+        const instructorsList = await CourseService.getAllInstructors();
         
-        // 為優先講師獲取統計信息
-        const priorityInstructorsWithStats = await Promise.all(
-          priorityInstructors.map(async (instructor) => {
-            try {
-              const [teachingCourses, reviews] = await Promise.all([
-                CachedCourseService.getInstructorTeachingCourses(instructor.name),
-                CachedCourseService.getInstructorReviews(instructor.name)
-              ]);
-
-              const averageRating = reviews.length > 0 
-                ? reviews.reduce((sum, r) => sum + r.instructorDetail.teaching, 0) / reviews.length
-                : 0;
-
-              return {
-                ...instructor,
-                courseCount: teachingCourses.length,
-                reviewCount: reviews.length,
-                averageRating
-              };
-            } catch (error) {
-              console.error(`Error loading stats for instructor ${instructor.name}:`, error);
-              return {
-                ...instructor,
-                courseCount: 0,
-                reviewCount: 0,
-                averageRating: 0
-              };
-            }
-          })
-        );
-        
-        // 為剩餘講師設置預設值
-        const remainingInstructorsWithStats = remainingInstructors.map(instructor => ({
+        // 先顯示基本講師列表，統計信息設為預設值
+        const instructorsWithDefaultStats: InstructorWithStats[] = instructorsList.map(instructor => ({
           ...instructor,
           courseCount: 0,
           reviewCount: 0,
           averageRating: 0
         }));
         
-        const allInstructorsWithStats = [...priorityInstructorsWithStats, ...remainingInstructorsWithStats];
-
-        // 按評分和評論數排序
-        allInstructorsWithStats.sort((a, b) => {
-          if (b.averageRating !== a.averageRating) {
-            return b.averageRating - a.averageRating;
-          }
-          return b.reviewCount - a.reviewCount;
-        });
-
-        setInstructors(allInstructorsWithStats);
-        setFilteredInstructors(allInstructorsWithStats);
+        setInstructors(instructorsWithDefaultStats);
+        setLoading(false);
         
-        // 延遲載入剩餘講師的統計信息
-        if (remainingInstructors.length > 0) {
-          setTimeout(async () => {
-            try {
-              const updatedRemainingStats = await Promise.all(
-                remainingInstructors.map(async (instructor) => {
-                  try {
-                    const [teachingCourses, reviews] = await Promise.all([
-                      CachedCourseService.getInstructorTeachingCourses(instructor.name),
-                      CachedCourseService.getInstructorReviews(instructor.name)
-                    ]);
-
-                    const averageRating = reviews.length > 0 
-                      ? reviews.reduce((sum, r) => sum + r.instructorDetail.teaching, 0) / reviews.length
-                      : 0;
-
-                    return {
-                      ...instructor,
-                      courseCount: teachingCourses.length,
-                      reviewCount: reviews.length,
-                      averageRating
-                    };
-                  } catch (error) {
-                    console.error(`Error loading delayed stats for instructor ${instructor.name}:`, error);
-                    return {
-                      ...instructor,
-                      courseCount: 0,
-                      reviewCount: 0,
-                      averageRating: 0
-                    };
-                  }
-                })
-              );
-              
-              // 更新狀態
-              const finalInstructorsWithStats = [...priorityInstructorsWithStats, ...updatedRemainingStats];
-              finalInstructorsWithStats.sort((a, b) => {
-                if (b.averageRating !== a.averageRating) {
-                  return b.averageRating - a.averageRating;
-                }
-                return b.reviewCount - a.reviewCount;
-              });
-              
-              setInstructors(finalInstructorsWithStats);
-              setFilteredInstructors(finalInstructorsWithStats);
-            } catch (error) {
-              console.error('Error loading delayed instructor stats:', error);
-            }
-          }, 1000); // 1秒後載入剩餘數據
+        // 分批載入前20個講師的統計信息
+        const batchSize = 5;
+        const maxInstructors = Math.min(20, instructorsList.length);
+        
+        for (let i = 0; i < maxInstructors; i += batchSize) {
+          const batch = instructorsList.slice(i, i + batchSize);
+          
+          // 並行載入這一批講師的統計信息
+          const batchStats = await Promise.all(
+            batch.map(async (instructor) => {
+              try {
+                const stats = await CourseService.getInstructorStatsOptimized(instructor.name);
+                return {
+                  name: instructor.name,
+                  stats
+                };
+              } catch (error) {
+                console.error(`Error loading stats for instructor ${instructor.name}:`, error);
+                return {
+                  name: instructor.name,
+                  stats: { courseCount: 0, reviewCount: 0, averageRating: 0 }
+                };
+              }
+            })
+          );
+          
+          // 更新講師列表中對應講師的統計信息
+          setInstructors(prevInstructors => 
+            prevInstructors.map(instructor => {
+              const batchStat = batchStats.find(stat => stat.name === instructor.name);
+              if (batchStat) {
+                return {
+                  ...instructor,
+                  courseCount: batchStat.stats.courseCount,
+                  reviewCount: batchStat.stats.reviewCount,
+                  averageRating: batchStat.stats.averageRating
+                };
+              }
+              return instructor;
+            })
+          );
+          
+          // 在批次之間添加小延遲，避免過度負載
+          if (i + batchSize < maxInstructors) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
-      } catch (err) {
-        console.error('Error loading instructors:', err);
-        setError(t('instructor.loadFailed'));
-      } finally {
+        
+      } catch (error) {
+        console.error('Error loading instructors:', error);
+        setError(t('common.error'));
         setLoading(false);
       }
     };
 
     loadInstructors();
-  }, []);
+  }, [t]);
 
-  // 搜尋過濾邏輯
-  useEffect(() => {
-    if (!debouncedSearchTerm.trim()) {
-      setFilteredInstructors(instructors);
-      return;
-    }
-
-    const filtered = instructors.filter(instructor =>
-      instructor.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
-    
-    setFilteredInstructors(filtered);
-  }, [instructors, debouncedSearchTerm]);
+  // 過濾講師
+  const filteredInstructors = instructors.filter(instructor =>
+    instructor.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    instructor.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  );
 
   const handleInstructorClick = (instructorName: string) => {
     navigate(`/instructors/${encodeURIComponent(instructorName)}`);
   };
 
-  // 講師懸停預載入處理
-  const handleInstructorMouseEnter = (instructorName: string) => {
-    // 延遲預載入，避免用戶快速掃過時觸發
-    setTimeout(() => {
-      CachedCourseService.preloadInstructorDetail(instructorName);
-    }, 300);
-  };
-
-  // 批量預載入熱門講師（在數據載入完成後）
-  useEffect(() => {
-    if (instructors.length > 0) {
-      // 延遲預載入，避免阻塞主要載入
-      setTimeout(() => {
-        CachedCourseService.preloadPopularInstructors(instructors);
-      }, 2000);
-    }
-  }, [instructors]);
-
-  const renderRatingStars = (rating: number) => {
-    if (rating === 0) return <span className="text-muted-foreground text-sm">{t('instructor.noRating')}</span>;
-    
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating 
-                ? 'fill-yellow-400 text-yellow-400' 
-                : 'text-gray-300'
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-sm font-medium">{rating.toFixed(1)}</span>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* 頁面標題 */}
-        <div className="text-center py-4">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Users className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">{t('instructor.list')}</h1>
-          </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('instructor.listSubtitle')}
-          </p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4 flex items-center gap-2">
+            <Users className="h-8 w-8" />
+            {t('nav.lecturers')}
+          </h1>
+          
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Search className="h-4 w-4" />
+                <Input
+                  placeholder={t('search.placeholder')}
+                  value=""
+                  disabled
+                  className="flex-1"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* 搜尋欄骨架 */}
-        <Card className="course-card">
-          <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t('instructor.searchPlaceholder')}
-                disabled
-                className="pl-10"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 講師卡片骨架 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {Array.from({ length: 12 }).map((_, index) => (
             <InstructorCardSkeleton key={index} />
           ))}
         </div>
@@ -266,128 +161,99 @@ const InstructorsList = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-center items-center min-h-[400px]">
-          <Card className="max-w-md w-full">
-            <CardHeader className="text-center">
-              <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-              <CardTitle className="text-xl">{t('instructor.loadFailed')}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-muted-foreground">{error}</p>
-              <Button onClick={() => window.location.reload()} variant="outline">
-{t('instructor.reload')}
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">{t('common.error')}</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            {t('common.retry')}
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* 頁面標題 */}
-      <div className="text-center py-4">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Users className="h-8 w-8 text-primary" />
-          <h1 className="text-4xl font-bold">{t('instructor.list')}</h1>
-        </div>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          {t('instructor.listSubtitle')}
-        </p>
-      </div>
-
-      {/* 搜尋欄 */}
-      <Card className="course-card">
-        <CardContent className="p-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={t('instructor.searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          {searchTerm && (
-            <p className="text-sm text-muted-foreground mt-2">
-{t('instructor.foundCount', { count: filteredInstructors.length })}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 教師列表 */}
-      {filteredInstructors.length === 0 ? (
-        <Card className="course-card">
-          <CardContent className="text-center py-12">
-            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              {searchTerm ? t('instructor.noResults') : t('instructor.noData')}
-            </h3>
-            <p className="text-muted-foreground">
-              {searchTerm ? t('instructor.noResultsDesc') : t('instructor.noDataDesc')}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4 flex items-center gap-2">
+          <Users className="h-8 w-8" />
+          {t('nav.lecturers')}
+        </h1>
+        
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="h-4 w-4" />
+              <Input
+                placeholder={t('search.placeholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t('instructors.found', { count: filteredInstructors.length })}
             </p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredInstructors.map((instructor) => (
-            <Card 
-              key={instructor.$id} 
-              className="course-card cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
-              onClick={() => handleInstructorClick(instructor.name)}
-              onMouseEnter={() => handleInstructorMouseEnter(instructor.name)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <GraduationCap className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">{instructor.name}</CardTitle>
-                    <Badge variant="secondary" className="text-xs">
-                      {instructor.type}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* 聯絡信息 */}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredInstructors.map((instructor) => (
+          <Card 
+            key={instructor.$id} 
+            className="course-card cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+            onClick={() => handleInstructorClick(instructor.name)}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="text-lg font-semibold truncate">
+                  {instructor.name}
+                </span>
+                <Badge variant="secondary" className="ml-2 shrink-0">
+                  {instructor.type}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4 flex-shrink-0" />
+                  <Mail className="h-4 w-4 shrink-0" />
                   <span className="truncate">{instructor.email}</span>
                 </div>
-
-                {/* 統計信息 */}
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1">
-                      <BookOpen className="h-3 w-3" />
-                      <span>{t('instructor.courses')}</span>
-                    </div>
-                    <div className="text-lg font-bold text-primary">{instructor.courseCount}</div>
+                
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div className="flex flex-col items-center p-2 bg-muted rounded">
+                    <BookOpen className="h-4 w-4 mb-1" />
+                    <span className="font-medium">{instructor.courseCount}</span>
+                    <span className="text-xs text-muted-foreground">{t('instructors.courses')}</span>
                   </div>
-                  <div>
-                    <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1">
-                      <Users className="h-3 w-3" />
-                      <span>{t('instructor.reviews')}</span>
-                    </div>
-                    <div className="text-lg font-bold text-primary">{instructor.reviewCount}</div>
+                  <div className="flex flex-col items-center p-2 bg-muted rounded">
+                    <GraduationCap className="h-4 w-4 mb-1" />
+                    <span className="font-medium">{instructor.reviewCount}</span>
+                    <span className="text-xs text-muted-foreground">{t('instructors.reviews')}</span>
+                  </div>
+                  <div className="flex flex-col items-center p-2 bg-muted rounded">
+                    <Star className="h-4 w-4 mb-1" />
+                    <span className="font-medium">
+                      {instructor.averageRating > 0 ? instructor.averageRating.toFixed(1) : 'N/A'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{t('instructors.rating')}</span>
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-                {/* 評分 */}
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground mb-1">{t('instructor.rating')}</div>
-                  {renderRatingStars(instructor.averageRating)}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {filteredInstructors.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">{t('instructors.noResults')}</h3>
+          <p className="text-muted-foreground">{t('instructors.tryDifferentSearch')}</p>
         </div>
       )}
     </div>

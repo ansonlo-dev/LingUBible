@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CachedCourseService } from '@/services/cache/cachedCourseService';
+import { CourseService } from '@/services/api/courseService';
 import { Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
 import { useAuth } from '@/contexts/AuthContext';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
@@ -54,9 +54,9 @@ const CourseDetail = () => {
 
         // 並行獲取課程信息、教學記錄和統計信息
         const [courseData, teachingData, statsData] = await Promise.all([
-          CachedCourseService.getCourseByCode(courseCode),
-          CachedCourseService.getCourseTeachingInfo(courseCode),
-          CachedCourseService.getCourseStats(courseCode)
+                  CourseService.getCourseByCode(courseCode),
+        CourseService.getCourseTeachingInfo(courseCode),
+        CourseService.getCourseStats(courseCode)
         ]);
 
         if (!courseData) {
@@ -71,7 +71,7 @@ const CourseDetail = () => {
         // 獲取課程評論
         try {
           setReviewsLoading(true);
-          const reviewsData = await CachedCourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
+          const reviewsData = await CourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
           setReviews(reviewsData);
         } catch (reviewError) {
           console.error('Error loading reviews:', reviewError);

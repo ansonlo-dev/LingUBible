@@ -39,6 +39,7 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [forceRender, setForceRender] = useState(0);
+  const [dynamicHeight, setDynamicHeight] = useState('100vh');
 
   // 監聽 OAuth 登入完成事件，用於強制重新渲染
   useEffect(() => {
@@ -52,6 +53,57 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
     
     return () => {
       window.removeEventListener('oauthLoginComplete', handleOAuthComplete);
+    };
+  }, []);
+
+  // 處理動態視窗高度變化（修復手機版側邊欄高度問題）
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      // 使用 window.innerHeight 來獲取實際可視高度
+      const vh = window.innerHeight;
+      const dynamicVh = `${vh}px`;
+      setDynamicHeight(dynamicVh);
+      
+      // 同時更新 CSS 自定義屬性，用於其他元素
+      document.documentElement.style.setProperty('--dynamic-vh', `${vh}px`);
+      document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
+    };
+
+    // 初始設定
+    updateViewportHeight();
+
+    // 監聽視窗大小變化
+    window.addEventListener('resize', updateViewportHeight);
+    
+    // 監聽方向變化
+    window.addEventListener('orientationchange', () => {
+      // 延遲更新，等待瀏覽器完成方向變化
+      setTimeout(updateViewportHeight, 100);
+      setTimeout(updateViewportHeight, 300);
+    });
+
+    // 監聽視覺視窗變化（處理移動端瀏覽器地址欄顯示/隱藏）
+    if ('visualViewport' in window && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportHeight);
+    }
+
+    // 監聽滾動事件，處理某些瀏覽器在滾動時的視窗變化
+    let scrollTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(updateViewportHeight, 50);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight);
+      window.removeEventListener('orientationchange', updateViewportHeight);
+      window.removeEventListener('scroll', handleScroll);
+      if ('visualViewport' in window && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewportHeight);
+      }
+      clearTimeout(scrollTimeout);
     };
   }, []);
 
@@ -216,8 +268,16 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
 
   return (
     <>
-      {/* 側邊欄內容 - 直接使用 flex 佈局，不再包裝額外的 div */}
-      <div key={`sidebar-${forceRender}`} className="flex flex-col h-full">
+      {/* 側邊欄內容 - 使用動態高度 */}
+      <div 
+        key={`sidebar-${forceRender}`} 
+        className="flex flex-col h-full"
+        style={{
+          // 在手機版使用動態高度
+          height: isMobile ? dynamicHeight : undefined,
+          minHeight: isMobile ? dynamicHeight : undefined
+        }}
+      >
         {/* Logo 區域 - 所有設備都顯示 */}
         <div className="p-4 md:p-2 md:h-16 md:flex md:items-center mt-2">
           {shouldShowText && (

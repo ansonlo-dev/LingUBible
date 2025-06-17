@@ -26,6 +26,12 @@ export interface Instructor {
   $updatedAt: string;
 }
 
+export interface InstructorWithStats extends Instructor {
+  courseCount: number;
+  reviewCount: number;
+  averageRating: number;
+}
+
 export interface TeachingRecord {
   $id: string;
   course_code: string;
@@ -334,6 +340,120 @@ export class CourseService {
   }
 
   /**
+   * 獲取講師統計信息（優化版本）
+   */
+  static async getInstructorStatsOptimized(instructorName: string): Promise<{
+    courseCount: number;
+    reviewCount: number;
+    averageRating: number;
+  }> {
+    try {
+      // 並行獲取教學記錄和評論，但使用更輕量的查詢
+      const [teachingRecords, reviewsResponse] = await Promise.all([
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.TEACHING_RECORDS_COLLECTION_ID,
+          [
+            Query.equal('instructor_name', instructorName),
+            Query.limit(100)
+          ]
+        ),
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.REVIEWS_COLLECTION_ID,
+          [
+            Query.orderDesc('$createdAt'),
+            Query.limit(200) // 只查詢最近的評論
+          ]
+        )
+      ]);
+
+      // 計算課程數（去重）
+      const uniqueCourses = new Set(
+        (teachingRecords.documents as unknown as TeachingRecord[])
+          .map(record => record.course_code)
+      );
+      const courseCount = uniqueCourses.size;
+
+      // 過濾包含該講師的評論並計算統計
+      const allReviews = reviewsResponse.documents as unknown as Review[];
+      const instructorReviews = allReviews.filter(review => {
+        try {
+          const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
+          return instructorDetails.some(detail => detail.instructor_name === instructorName);
+        } catch (error) {
+          return false;
+        }
+      });
+
+      const reviewCount = instructorReviews.length;
+      let totalRating = 0;
+      let ratingCount = 0;
+
+      instructorReviews.forEach(review => {
+        try {
+          const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
+          const instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName);
+          if (instructorDetail && instructorDetail.teaching > 0) {
+            totalRating += instructorDetail.teaching;
+            ratingCount++;
+          }
+        } catch (error) {
+          // 忽略解析錯誤
+        }
+      });
+
+      const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
+
+      return {
+        courseCount,
+        reviewCount,
+        averageRating
+      };
+    } catch (error) {
+      console.error('Error fetching instructor stats:', error);
+      return {
+        courseCount: 0,
+        reviewCount: 0,
+        averageRating: 0
+      };
+    }
+  }
+
+  /**
+   * 獲取帶統計信息的講師列表
+   */
+  static async getInstructorsWithStats(): Promise<InstructorWithStats[]> {
+    try {
+      const instructors = await this.getAllInstructors();
+      
+      // 並行獲取所有講師的統計信息
+      const instructorsWithStats = await Promise.all(
+        instructors.map(async (instructor) => {
+          const stats = await this.getInstructorStatsOptimized(instructor.name);
+          return {
+            ...instructor,
+            ...stats
+          };
+        })
+      );
+
+      // 按評分和評論數排序
+      instructorsWithStats.sort((a, b) => {
+        if (b.averageRating !== a.averageRating) {
+          return b.averageRating - a.averageRating;
+        }
+        return b.reviewCount - a.reviewCount;
+      });
+
+      return instructorsWithStats;
+    } catch (error) {
+      console.error('Error fetching instructors with stats:', error);
+      throw new Error('Failed to fetch instructors with statistics');
+    }
+  }
+
+  /**
    * 根據講師姓名獲取講師信息
    */
   static async getInstructorByName(name: string): Promise<Instructor | null> {
@@ -439,26 +559,38 @@ export class CourseService {
     try {
       const teachingRecords = await this.getInstructorTeachingRecords(instructorName);
       
-      // 並行獲取所有相關的課程和學期信息
-      const teachingCourses = await Promise.all(
-        teachingRecords.map(async (record) => {
-          const [course, term] = await Promise.all([
-            this.getCourseByCode(record.course_code),
-            this.getTermByCode(record.term_code)
-          ]);
+      // 批量獲取所有需要的課程和學期信息，避免重複調用
+      const uniqueCourseCodes = [...new Set(teachingRecords.map(record => record.course_code))];
+      const uniqueTermCodes = [...new Set(teachingRecords.map(record => record.term_code))];
+      
+      // 並行獲取所有課程和學期信息
+      const [coursesMap, termsMap] = await Promise.all([
+        Promise.all(uniqueCourseCodes.map(async (courseCode) => {
+          const course = await this.getCourseByCode(courseCode);
+          return [courseCode, course] as const;
+        })).then(results => new Map(results)),
+        Promise.all(uniqueTermCodes.map(async (termCode) => {
+          const term = await this.getTermByCode(termCode);
+          return [termCode, term] as const;
+        })).then(results => new Map(results))
+      ]);
 
-          if (!course || !term) {
-            return null;
-          }
+      // 處理教學記錄，使用緩存的課程和學期數據
+      const teachingCourses = teachingRecords.map((record) => {
+        const course = coursesMap.get(record.course_code);
+        const term = termsMap.get(record.term_code);
 
-          return {
-            course,
-            term,
-            sessionType: record.session_type,
-            ...(record.email_override && { emailOverride: record.email_override })
-          };
-        })
-      );
+        if (!course || !term) {
+          return null;
+        }
+
+        return {
+          course,
+          term,
+          sessionType: record.session_type,
+          ...(record.email_override && { emailOverride: record.email_override })
+        };
+      });
 
       // 過濾掉 null 值並返回
       return teachingCourses.filter((info): info is NonNullable<typeof info> => info !== null);
@@ -469,16 +601,17 @@ export class CourseService {
   }
 
   /**
-   * 獲取包含特定講師的所有評論
+   * 獲取包含特定講師的所有評論（優化版本）
    */
   static async getInstructorReviews(instructorName: string): Promise<InstructorReviewInfo[]> {
     try {
-      // 獲取所有評論
+      // 使用更精確的查詢，減少需要處理的數據量
       const response = await databases.listDocuments(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
-          Query.limit(1000) // 獲取所有評論
+          Query.orderDesc('$createdAt'),
+          Query.limit(500) // 減少查詢數量
         ]
       );
 
@@ -495,40 +628,67 @@ export class CourseService {
         }
       });
 
-      // 並行獲取課程和學期信息，並提取講師詳情
-      const reviewsWithInfo = await Promise.all(
-        instructorReviews.map(async (review) => {
-          const [course, term] = await Promise.all([
-            this.getCourseByCode(review.course_code),
-            this.getTermByCode(review.term_code)
-          ]);
+      // 如果沒有找到評論，直接返回空數組
+      if (instructorReviews.length === 0) {
+        return [];
+      }
 
-          if (!course || !term) {
-            return null;
-          }
-
-          // 解析講師詳情並找到該講師的評價
-          let instructorDetail: InstructorDetail | null = null;
+      // 批量獲取所有需要的課程和學期信息，避免重複調用
+      const uniqueCourseCodes = [...new Set(instructorReviews.map(review => review.course_code))];
+      const uniqueTermCodes = [...new Set(instructorReviews.map(review => review.term_code))];
+      
+      // 並行獲取所有課程和學期信息
+      const [coursesMap, termsMap] = await Promise.all([
+        Promise.all(uniqueCourseCodes.map(async (courseCode) => {
           try {
-            const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-            instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName) || null;
+            const course = await this.getCourseByCode(courseCode);
+            return [courseCode, course] as const;
           } catch (error) {
-            console.error('Error parsing instructor_details:', error);
-            return null;
+            console.error(`Error fetching course ${courseCode}:`, error);
+            return [courseCode, null] as const;
           }
-
-          if (!instructorDetail) {
-            return null;
+        })).then(results => new Map(results.filter(([, course]) => course !== null))),
+        Promise.all(uniqueTermCodes.map(async (termCode) => {
+          try {
+            const term = await this.getTermByCode(termCode);
+            return [termCode, term] as const;
+          } catch (error) {
+            console.error(`Error fetching term ${termCode}:`, error);
+            return [termCode, null] as const;
           }
+        })).then(results => new Map(results.filter(([, term]) => term !== null)))
+      ]);
 
-          return {
-            review,
-            course,
-            term,
-            instructorDetail
-          };
-        })
-      );
+      // 處理評論信息，使用緩存的課程和學期數據
+      const reviewsWithInfo = instructorReviews.map((review) => {
+        const course = coursesMap.get(review.course_code);
+        const term = termsMap.get(review.term_code);
+
+        if (!course || !term) {
+          return null;
+        }
+
+        // 解析講師詳情並找到該講師的評價
+        let instructorDetail: InstructorDetail | null = null;
+        try {
+          const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
+          instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName) || null;
+        } catch (error) {
+          console.error('Error parsing instructor_details:', error);
+          return null;
+        }
+
+        if (!instructorDetail) {
+          return null;
+        }
+
+        return {
+          review,
+          course,
+          term,
+          instructorDetail
+        };
+      });
 
       // 過濾掉 null 值並返回
       return reviewsWithInfo.filter((info): info is NonNullable<typeof info> => info !== null);

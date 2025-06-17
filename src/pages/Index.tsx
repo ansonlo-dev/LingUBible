@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { CourseCard } from "@/components/features/reviews/CourseCard";
 import { StatsCard } from "@/components/features/reviews/StatsCard";
+import { PopularItemCard } from "@/components/features/reviews/PopularItemCard";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
 
-import { BookOpen, Users, Star, TrendingUp } from 'lucide-react';
+import { BookOpen, Users, Star, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
@@ -14,6 +15,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
 import { Link, useNavigate } from 'react-router-dom';
+import { CourseService } from '@/services/api/courseService';
+import { CourseWithStats, InstructorWithStats } from '@/services/api/courseService';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -23,6 +26,12 @@ const Index = () => {
   const [showHeavenTransition, setShowHeavenTransition] = useState(false);
   const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | undefined>();
   const { stats: registeredUsersStats, loading: registeredUsersLoading } = useRegisteredUsers();
+
+  // 熱門內容狀態
+  const [popularCourses, setPopularCourses] = useState<CourseWithStats[]>([]);
+  const [popularInstructors, setPopularInstructors] = useState<InstructorWithStats[]>([]);
+  const [popularLoading, setPopularLoading] = useState(true);
+  const [popularError, setPopularError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -35,6 +44,31 @@ const Index = () => {
     return () => {
       window.removeEventListener('resize', checkMobile);
     };
+  }, []);
+
+  // 載入熱門內容
+  useEffect(() => {
+    const loadPopularContent = async () => {
+      try {
+        setPopularLoading(true);
+        setPopularError(null);
+
+        const [courses, instructors] = await Promise.all([
+                  CourseService.getPopularCourses(),
+        CourseService.getPopularInstructors()
+        ]);
+
+        setPopularCourses(courses);
+        setPopularInstructors(instructors);
+      } catch (error) {
+        console.error('Error loading popular content:', error);
+        setPopularError('載入熱門內容時發生錯誤');
+      } finally {
+        setPopularLoading(false);
+      }
+    };
+
+    loadPopularContent();
   }, []);
 
   // Get the actions as an array directly from the translation
@@ -177,23 +211,110 @@ const Index = () => {
             </TabsList>
 
             <TabsContent value="courses" className="space-y-6">
-              <div className="text-center py-12">
-                <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">課程功能重新設計中</h3>
-                <p className="text-muted-foreground">
-                  我們正在優化課程展示功能，敬請期待！
-                </p>
-              </div>
+              {popularLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
+                  </div>
+                </div>
+              ) : popularError ? (
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('common.error')}</h3>
+                  <p className="text-muted-foreground">{popularError}</p>
+                </div>
+              ) : popularCourses.length === 0 ? (
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('featured.noPopularCourses')}</h3>
+                  <p className="text-muted-foreground">{t('featured.noPopularCoursesDesc')}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <h3 className="text-xl font-semibold mb-2">{t('featured.popularCourses')}</h3>
+                    <p className="text-muted-foreground">{t('featured.popularCoursesDesc')}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {popularCourses.map((course) => (
+                      <PopularItemCard
+                        key={course.$id}
+                        type="course"
+                        title={course.course_title}
+                        code={course.course_code}
+                        department={course.course_department}
+                        language={course.course_language}
+                        rating={course.averageRating}
+                        reviewCount={course.reviewCount}
+                        studentCount={course.studentCount}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate('/courses')}
+                      className="hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      {t('featured.viewAllCourses')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </TabsContent>
 
-                            <TabsContent value="instructors" className="space-y-6">
-              <div className="text-center py-12">
-                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">講師功能重新設計中</h3>
-                <p className="text-muted-foreground">
-                  我們正在優化講師展示功能，敬請期待！
-                </p>
-              </div>
+            <TabsContent value="instructors" className="space-y-6">
+              {popularLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
+                  </div>
+                </div>
+              ) : popularError ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('common.error')}</h3>
+                  <p className="text-muted-foreground">{popularError}</p>
+                </div>
+              ) : popularInstructors.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('featured.noPopularInstructors')}</h3>
+                  <p className="text-muted-foreground">{t('featured.noPopularInstructorsDesc')}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <h3 className="text-xl font-semibold mb-2">{t('featured.popularInstructors')}</h3>
+                    <p className="text-muted-foreground">{t('featured.popularInstructorsDesc')}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {popularInstructors.map((instructor) => (
+                      <PopularItemCard
+                        key={instructor.$id}
+                        type="instructor"
+                        name={instructor.name}
+                        email={instructor.email}
+                        instructorType={instructor.type}
+                        courseCount={instructor.courseCount}
+                        reviewCount={instructor.reviewCount}
+                        averageRating={instructor.averageRating}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate('/instructors')}
+                      className="hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      {t('featured.viewAllInstructors')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </TabsContent>
           </Tabs>
         </div>

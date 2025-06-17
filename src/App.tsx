@@ -127,15 +127,7 @@ const AppContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [installError, setInstallError] = useState<string | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [showOfflineToast, setShowOfflineToast] = useState(false);
-  const [showOnlineToast, setShowOnlineToast] = useState(false);
-  const [lastOnlineState, setLastOnlineState] = useState(navigator.onLine);
+
   const [isDark, setIsDark] = useState(initialIsDark);
   const { isDesktop, isMobile } = useDeviceDetection();
 

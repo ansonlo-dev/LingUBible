@@ -27,7 +27,6 @@ export default {
     'tabs.popularCourses': '热门课程',
     'tabs.topInstructors': '顶级教师',
     'tabs.instructors': '教师',
-    'featured.instructors': '精选教师',
     'tabs.reviews': '评论',
     'footer.builtWith': '由 ansonlo.dev 用 💝 制作',
     'footer.disclaimer': '本网站与岭南大学没有关系',
@@ -1135,4 +1134,19 @@ export default {
     'myReviews.deleteError': '删除评论失败',
     'myReviews.upvotes': '赞',
     'myReviews.downvotes': '踩',
+
+    // Featured content
+    'featured.title': '精选内容',
+    'featured.courses': '精选课程',
+    'featured.instructors': '精选教师',
+    'featured.popularCourses': '热门课程',
+    'featured.popularCoursesDesc': '根据评论数量排序的最受欢迎课程',
+    'featured.popularInstructors': '热门讲师',
+    'featured.popularInstructorsDesc': '根据评论数量排序的最受欢迎讲师',
+    'featured.noPopularCourses': '暂无热门课程',
+    'featured.noPopularCoursesDesc': '目前还没有足够的课程评论数据',
+    'featured.noPopularInstructors': '暂无热门讲师',
+    'featured.noPopularInstructorsDesc': '目前还没有足够的讲师评论数据',
+    'featured.viewAllCourses': '查看所有课程',
+    'featured.viewAllInstructors': '查看所有讲师',
 };

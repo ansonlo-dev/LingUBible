@@ -339,16 +339,19 @@ export const CourseReviewsList = ({ reviews, loading = false }: CourseReviewsLis
 
               {/* 投票按鈕 */}
               <Separator />
-              <div className="flex items-center justify-between">
-                <VotingButtons
-                  reviewId={review.$id}
-                  upvotes={reviewInfo.upvotes}
-                  downvotes={reviewInfo.downvotes}
-                  userVote={reviewInfo.userVote}
-                  size="sm"
-                />
-                <div className="text-xs text-muted-foreground">
-                  {formatDateTimeUTC8(review.submitted_at)}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 overflow-hidden">
+                <div className="flex-shrink-0">
+                  <VotingButtons
+                    reviewId={review.$id}
+                    upvotes={reviewInfo.upvotes}
+                    downvotes={reviewInfo.downvotes}
+                    userVote={reviewInfo.userVote}
+                    size="sm"
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+                  <Calendar className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{formatDateTimeUTC8(review.submitted_at)}</span>
                 </div>
               </div>
             </div>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
-import { CachedCourseService } from '@/services/cache/cachedCourseService';
+import { CourseService } from '@/services/api/courseService';
 
 interface VotingButtonsProps {
   reviewId: string;
@@ -50,7 +50,7 @@ export const VotingButtons = ({
 
       // 如果用戶點擊了相同的投票類型，則移除投票
       if (currentUserVote === voteType) {
-        await CachedCourseService.removeVoteFromReview(reviewId, user.$id);
+        await CourseService.removeVoteFromReview(reviewId, user.$id);
         
         // 更新本地狀態
         const newUpvotes = voteType === 'up' ? currentUpvotes - 1 : currentUpvotes;
@@ -63,7 +63,7 @@ export const VotingButtons = ({
         onVoteChange?.(newUpvotes, newDownvotes, null);
       } else {
         // 投票或更改投票
-        await CachedCourseService.voteOnReview(reviewId, user.$id, voteType);
+        await CourseService.voteOnReview(reviewId, user.$id, voteType);
         
         // 更新本地狀態
         let newUpvotes = currentUpvotes;
@@ -103,22 +103,22 @@ export const VotingButtons = ({
   const iconSize = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-shrink-0">
       <Button
         variant="ghost"
         size={buttonSize}
         onClick={() => handleVote('up')}
         disabled={loading || disabled}
-        className={`text-muted-foreground hover:text-green-600 ${
+        className={`text-muted-foreground hover:text-green-600 whitespace-nowrap ${
           currentUserVote === 'up' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : ''
         }`}
       >
         {loading && currentUserVote === 'up' ? (
-          <Loader2 className={`${iconSize} mr-1 animate-spin`} />
+          <Loader2 className={`${iconSize} mr-1 animate-spin shrink-0`} />
         ) : (
-          <ThumbsUp className={`${iconSize} mr-1`} />
+          <ThumbsUp className={`${iconSize} mr-1 shrink-0`} />
         )}
-        {currentUpvotes}
+        <span className="shrink-0">{currentUpvotes}</span>
       </Button>
       
       <Button
@@ -126,16 +126,16 @@ export const VotingButtons = ({
         size={buttonSize}
         onClick={() => handleVote('down')}
         disabled={loading || disabled}
-        className={`text-muted-foreground hover:text-red-600 ${
+        className={`text-muted-foreground hover:text-red-600 whitespace-nowrap ${
           currentUserVote === 'down' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' : ''
         }`}
       >
         {loading && currentUserVote === 'down' ? (
-          <Loader2 className={`${iconSize} mr-1 animate-spin`} />
+          <Loader2 className={`${iconSize} mr-1 animate-spin shrink-0`} />
         ) : (
-          <ThumbsDown className={`${iconSize} mr-1`} />
+          <ThumbsDown className={`${iconSize} mr-1 shrink-0`} />
         )}
-        {currentDownvotes}
+        <span className="shrink-0">{currentDownvotes}</span>
       </Button>
     </div>
   );
