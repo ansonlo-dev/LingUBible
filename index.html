@@ -9,51 +9,25 @@
   <body>
     <div id="root">
       <div style="padding: 20px; font-family: Arial, sans-serif; text-align: center;">
-        <h1>LingUBible - 基本測試</h1>
-        <p>如果您看到這個頁面，表示 HTML 正常載入。</p>
-        <p>當前時間：<span id="time"></span></p>
-        <div id="status">正在載入 JavaScript...</div>
+        <h1>載入中...</h1>
+        <p>正在載入 React 應用...</p>
       </div>
     </div>
     
     <script>
-      console.log('HTML 載入完成');
-      
-      // 更新時間
-      function updateTime() {
-        const timeElement = document.getElementById('time');
-        if (timeElement) {
-          timeElement.textContent = new Date().toLocaleString();
-        }
-      }
-      updateTime();
-      setInterval(updateTime, 1000);
-      
-      // 測試基本 JavaScript
-      const statusElement = document.getElementById('status');
-      if (statusElement) {
-        statusElement.textContent = 'JavaScript 運行正常！';
-        statusElement.style.color = 'green';
-      }
-      
-      // 錯誤處理
+      // 全局錯誤處理
       window.addEventListener('error', function(e) {
-        console.error('頁面錯誤:', e.error, e.filename, e.lineno, e.colno);
-        const statusElement = document.getElementById('status');
-        if (statusElement) {
-          statusElement.innerHTML = '<span style="color: red;">錯誤: ' + (e.error ? e.error.message : '未知錯誤') + '</span>';
-        }
+        console.error('全局錯誤:', e.error, e.filename, e.lineno, e.colno);
+        document.body.innerHTML = '<div style="padding: 20px; color: red; font-family: Arial;">錯誤: ' + (e.error ? e.error.message : '未知錯誤') + '<br>文件: ' + e.filename + '<br>行號: ' + e.lineno + '</div>';
       });
       
       window.addEventListener('unhandledrejection', function(e) {
         console.error('未處理的 Promise 錯誤:', e.reason);
-        const statusElement = document.getElementById('status');
-        if (statusElement) {
-          statusElement.innerHTML = '<span style="color: red;">Promise 錯誤: ' + String(e.reason) + '</span>';
-        }
+        document.body.innerHTML = '<div style="padding: 20px; color: red; font-family: Arial;">Promise 錯誤: ' + String(e.reason) + '</div>';
       });
       
-      console.log('基本 JavaScript 測試完成');
+      console.log('錯誤處理設置完成');
     </script>
+    <script type="module" src="/src/main-simple.tsx"></script>
   </body>
 </html>
