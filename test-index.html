@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LingUBible Test</title>
+  </head>
+  <body>
+    <div id="root">Loading...</div>
+    <script>
+      console.log('HTML loaded');
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error, e.filename, e.lineno, e.colno);
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e.reason);
+      });
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html> 

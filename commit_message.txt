@@ -1,0 +1,62 @@
+feat: 移除 PWA 功能並重新設計主頁面熱門內容展示
+
+🔧 架構重構：
+- 完全移除 PWA (Progressive Web App) 功能和相關文件
+- 刪除 Service Worker、離線頁面和 PWA 配置
+- 移除緩存系統 (CacheService, CachedCourseService, useCache)
+- 簡化應用架構，專注於核心功能
+
+🎨 主頁面改進：
+- 新增熱門課程和熱門講師展示區塊
+- 添加 PopularItemCard 組件用於展示熱門內容
+- 實現 useMainPageStats hook 用於統計數據管理
+- 改善載入狀態和錯誤處理的用戶體驗
+
+🔍 數據服務優化：
+- 擴展 CourseService 添加熱門內容獲取功能
+- 優化講師列表頁面的數據載入和顯示邏輯
+- 改進課程詳情頁面的數據獲取方式
+- 移除複雜的緩存層，直接使用 API 調用
+
+🌐 多語言支援：
+- 更新所有語言文件的翻譯鍵值
+- 新增熱門內容相關的翻譯文本
+- 統一各頁面的多語言實現
+
+🎯 SEO 和元數據優化：
+- 改進 DocumentHead 組件的 SEO 元數據處理
+- 新增 Google 搜尋專用的 favicon 文件
+- 添加 browserconfig.xml 用於 Windows 平台
+
+🗑️ 清理和維護：
+- 移除未使用的 PWA 相關文檔和腳本
+- 刪除 CacheDebug 頁面和相關調試工具
+- 清理 Vite 配置中的 PWA 相關設定
+- 移除過時的版本更新腳本
+
+📊 統計數據改進：
+- 重新設計統計卡片的顯示邏輯
+- 改善數據載入的性能和用戶體驗
+- 統一各頁面的統計數據展示方式
+
+這次更新大幅簡化了應用架構，移除了複雜的 PWA 和緩存系統，
+專注於提供更直接、更快速的用戶體驗。主頁面新增的熱門內容
+展示功能讓用戶能更容易發現受歡迎的課程和講師。
+
+檔案變更統計：
+- 35 個文件被修改
+- 新增 1,086 行代碼
+- 刪除 2,947 行代碼
+- 淨刪除 1,861 行代碼
+
+主要新增文件：
+- src/components/features/reviews/PopularItemCard.tsx
+- src/hooks/useMainPageStats.ts
+- public/favicon-google.ico, favicon-google.png, favicon-google-32.png
+- public/browserconfig.xml
+
+主要刪除文件：
+- 所有 PWA 相關文件 (sw.js, offline.html, public/index.html)
+- 緩存系統文件 (src/services/cache/*)
+- PWA 文檔和腳本 (docs/*, tools/scripts/version/*)
+- 調試頁面 (src/pages/CacheDebug.tsx) 
