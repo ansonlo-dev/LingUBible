@@ -22,38 +22,20 @@ export default defineConfig(({ command, mode }) => ({
     outDir: 'dist',
     sourcemap: false,
     target: 'es2020',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug'],
-      },
-      mangle: {
-        safari10: true,
-      },
-    },
+    minify: false,
     rollupOptions: {
-      treeshake: {
-        preset: 'recommended',
-        moduleSideEffects: false,
-      },
+      treeshake: false,
       output: {
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     },
-    // Increase chunk size warning limit
     chunkSizeWarningLimit: 600,
-    // Enable build optimizations
-    reportCompressedSize: false, // Disable gzip size reporting to speed up build
-    // Enable CSS code splitting
+    reportCompressedSize: false,
     cssCodeSplit: true,
-    // Optimize asset inlining
     assetsInlineLimit: 4096,
   },
-  // Optimize dependencies
   optimizeDeps: {
     include: [
       'react',
@@ -65,13 +47,10 @@ export default defineConfig(({ command, mode }) => ({
     ],
     exclude: ['@vite/client', '@vite/env']
   },
-  // Additional performance optimizations
   esbuild: {
     target: 'es2020',
-    drop: ['console', 'debugger'],
     legalComments: 'none',
   },
-  // Worker optimizations
   worker: {
     format: 'es',
   },
