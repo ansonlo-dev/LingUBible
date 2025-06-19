@@ -28,6 +28,7 @@ import {
 } from '@/services/api/courseService';
 import { CourseService } from '@/services/api/courseService';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
+import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 
 const Lecturers = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
@@ -43,7 +44,7 @@ const Lecturers = () => {
   useEffect(() => {
     const loadInstructorData = async () => {
       if (!instructorName) {
-        setError('講師姓名未提供');
+        setError(t('instructors.nameNotProvided'));
         setLoading(false);
         return;
       }
@@ -72,11 +73,11 @@ const Lecturers = () => {
         setReviews(reviewsData);
 
         if (!instructorData) {
-          setError('找不到該講師的信息');
+          setError(t('instructors.notFound'));
         }
       } catch (err) {
         console.error('Error loading instructor data:', err);
-        setError('載入講師資料時發生錯誤');
+        setError(t('instructors.loadError'));
       } finally {
         setLoading(false);
       }
@@ -133,7 +134,7 @@ const Lecturers = () => {
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">載入講師資料中...</p>
+            <p className="text-muted-foreground">{t('instructors.loading')}</p>
           </div>
         </div>
       </div>
@@ -153,7 +154,7 @@ const Lecturers = () => {
               <p className="text-muted-foreground">{error}</p>
               <Button onClick={() => navigate('/instructors')} variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                返回講師列表
+                {t('instructors.backToList')}
               </Button>
             </CardContent>
           </Card>
@@ -171,7 +172,7 @@ const Lecturers = () => {
         className="mb-4"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
-        返回
+        {t('instructors.back')}
       </Button>
 
       {/* 講師基本信息 */}
@@ -180,9 +181,8 @@ const Lecturers = () => {
           <CardHeader className="overflow-hidden">
             <div className="flex items-center gap-3 overflow-hidden min-w-0">
               <Users className="h-8 w-8 text-primary shrink-0" />
-              <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="min-w-0 flex-1">
                 <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
-                <p className="text-muted-foreground truncate">{instructor.type}</p>
               </div>
             </div>
           </CardHeader>
@@ -195,11 +195,11 @@ const Lecturers = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">{teachingCourses.length}</div>
-                <div className="text-sm text-muted-foreground">教授課程</div>
+                <div className="text-sm text-muted-foreground">{t('instructors.coursesTeaching')}</div>
               </div>
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">{reviews.length}</div>
-                <div className="text-sm text-muted-foreground">學生評論</div>
+                <div className="text-sm text-muted-foreground">{t('instructors.studentReviews')}</div>
               </div>
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">
@@ -208,7 +208,12 @@ const Lecturers = () => {
                     : 'N/A'
                   }
                 </div>
-                <div className="text-sm text-muted-foreground">平均教學評分</div>
+                <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingRating')}</div>
+                {reviews.length === 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {t('instructors.noRatingData')}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -220,12 +225,24 @@ const Lecturers = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
             <BookOpen className="h-5 w-5 shrink-0" />
-            <span className="truncate">教授課程 ({teachingCourses.length})</span>
+            <span className="truncate">{t('instructors.coursesTeaching')} ({teachingCourses.length})</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-hidden">
           {teachingCourses.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">暫無教學記錄</p>
+            <div className="text-center py-12 space-y-4">
+              <div className="flex justify-center">
+                <div className="p-4 bg-muted/50 rounded-full">
+                  <BookOpen className="h-12 w-12 text-muted-foreground" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium text-muted-foreground">{t('instructors.noTeachingTitle')}</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {t('instructors.noTeachingDesc', { name: instructor?.name || '' })}
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {teachingCourses.map((teaching, index) => (
@@ -269,12 +286,34 @@ const Lecturers = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
             <MessageSquare className="h-5 w-5 shrink-0" />
-            <span className="truncate">學生評論 ({reviews.length})</span>
+            <span className="truncate">{t('instructors.studentReviews')} ({reviews.length})</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-hidden">
           {reviews.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">暫無學生評論</p>
+            <div className="text-center py-12 space-y-4">
+              <div className="flex justify-center">
+                <div className="p-4 bg-muted/50 rounded-full">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium text-muted-foreground">{t('instructors.noReviewsTitle')}</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {t('instructors.noReviewsDesc', { name: instructor?.name || '' })}
+                </p>
+              </div>
+              <div className="pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/courses')}
+                  className="gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  {t('instructors.browseCoursesToReview')}
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-6">
               {reviews.map((reviewInfo, index) => (
@@ -293,7 +332,7 @@ const Lecturers = () => {
                       {/* 最終成績 - 右上角大顯示 */}
                       {reviewInfo.review.course_final_grade && (
                         <div className="flex flex-col items-center shrink-0">
-                          <div className="text-xs text-muted-foreground mb-1">最終成績</div>
+                          <div className="text-xs text-muted-foreground mb-1">{t('instructors.finalGrade')}</div>
                           <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
                             {reviewInfo.review.course_final_grade}
                           </Badge>
@@ -309,14 +348,14 @@ const Lecturers = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
                     <div className="space-y-2 min-w-0 overflow-hidden">
                       <div className="flex items-center justify-between min-w-0 overflow-hidden">
-                        <span className="text-sm shrink-0">教學評分:</span>
+                        <span className="text-sm shrink-0">{t('instructors.teachingRating')}:</span>
                         <div className="shrink-0">
                           {renderRatingStars(reviewInfo.instructorDetail.teaching)}
                         </div>
                       </div>
                       {reviewInfo.instructorDetail.grading !== null && (
                         <div className="flex items-center justify-between min-w-0 overflow-hidden">
-                          <span className="text-sm shrink-0">評分公平性:</span>
+                          <span className="text-sm shrink-0">{t('instructors.gradingFairness')}:</span>
                           <div className="shrink-0">
                             {renderRatingStars(reviewInfo.instructorDetail.grading)}
                           </div>
@@ -325,7 +364,7 @@ const Lecturers = () => {
                     </div>
                     <div className="space-y-2 min-w-0 overflow-hidden">
                       <div className="flex items-center justify-between min-w-0 overflow-hidden">
-                        <span className="text-sm shrink-0">課程評分:</span>
+                        <span className="text-sm shrink-0">{t('instructors.courseRating')}:</span>
                         <div className="shrink-0">
                           {renderRatingStars(reviewInfo.review.course_usefulness)}
                         </div>
@@ -335,22 +374,22 @@ const Lecturers = () => {
 
                   {/* 課程要求 */}
                   <div className="space-y-2 overflow-hidden">
-                    <h5 className="text-sm font-medium">課程要求:</h5>
+                    <h5 className="text-sm font-medium">{t('instructors.courseRequirements')}:</h5>
                     <div className="flex flex-wrap gap-2 overflow-hidden">
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_midterm, "期中考", "無期中考")}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_quiz, "小測", "無小測")}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_group_project, "小組專案", "無小組專案")}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_individual_assignment, "個人作業", "無個人作業")}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_presentation, "報告", "無報告")}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_reading, "閱讀", "無閱讀")}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_attendance_requirement, "出席要求", "無出席要求")}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_midterm, t('instructors.midtermExam'), t('instructors.noMidtermExam'))}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_quiz, t('instructors.quiz'), t('instructors.noQuiz'))}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_group_project, t('instructors.groupProject'), t('instructors.noGroupProject'))}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_individual_assignment, t('instructors.individualAssignment'), t('instructors.noIndividualAssignment'))}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_presentation, t('instructors.presentation'), t('instructors.noPresentation'))}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_reading, t('instructors.reading'), t('instructors.noReading'))}
+                      {renderBooleanBadge(reviewInfo.instructorDetail.has_attendance_requirement, t('instructors.attendanceRequirement'), t('instructors.noAttendanceRequirement'))}
                     </div>
                   </div>
 
                   {/* 評論內容 */}
                   {reviewInfo.instructorDetail.comments && (
                     <div className="space-y-2 min-w-0 overflow-hidden">
-                      <h5 className="text-sm font-medium">對講師的評價:</h5>
+                      <h5 className="text-sm font-medium">{t('instructors.instructorComments')}:</h5>
                       <p className="text-sm bg-muted/50 rounded-lg p-3 break-words overflow-hidden">
                         {reviewInfo.instructorDetail.comments}
                       </p>
@@ -360,10 +399,16 @@ const Lecturers = () => {
                   {/* 課程整體評論 */}
                   {reviewInfo.review.course_comments && (
                     <div className="space-y-2 min-w-0 overflow-hidden">
-                      <h5 className="text-sm font-medium">課程整體評價:</h5>
-                      <p className="text-sm bg-muted/30 rounded-lg p-3 break-words overflow-hidden">
-                        {reviewInfo.review.course_comments}
-                      </p>
+                      <h5 className="text-sm font-medium">{t('instructors.courseComments')}:</h5>
+                      <div className="bg-muted/30 rounded-lg p-3 break-words overflow-hidden">
+                        {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
+                          renderCommentMarkdown(reviewInfo.review.course_comments)
+                        ) : (
+                          <p className="text-sm">
+                            {reviewInfo.review.course_comments}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -372,7 +417,7 @@ const Lecturers = () => {
                   {/* 評論者信息 */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground overflow-hidden">
                     <span className="truncate flex-1 min-w-0">
-                      評論者: {reviewInfo.review.is_anon ? '匿名' : reviewInfo.review.username}
+                      {t('instructors.reviewer')}: {reviewInfo.review.is_anon ? t('instructors.anonymous') : reviewInfo.review.username}
                     </span>
                     <span className="shrink-0 ml-2">
                       {formatDateTimeUTC8(reviewInfo.review.submitted_at)}

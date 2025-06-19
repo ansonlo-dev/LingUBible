@@ -6,32 +6,54 @@ import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
 
-import { BookOpen, Users, Star, TrendingUp, Loader2 } from 'lucide-react';
+import { BookOpen, Users, Star, TrendingUp, Loader2, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
+import { useMainPageStats } from '@/hooks/useMainPageStats';
 import { Link, useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
-import { CourseWithStats, InstructorWithStats } from '@/services/api/courseService';
+import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
 
 const Index = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // 格式化統計變化的輔助函數
+  const formatStatsChange = (count: number) => {
+    if (count > 0) {
+      return {
+        text: t('stats.increaseInLast30Days', { count }),
+        trend: 'up' as const
+      };
+    } else if (count < 0) {
+      return {
+        text: t('stats.decreaseInLast30Days', { count: Math.abs(count) }),
+        trend: 'down' as const
+      };
+    } else {
+      return {
+        text: t('stats.noChangeInLast30Days'),
+        trend: 'neutral' as const
+      };
+    }
+  };
+  
   const [isMobile, setIsMobile] = useState(false);
   const [showHeavenTransition, setShowHeavenTransition] = useState(false);
   const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | undefined>();
-  const { stats: registeredUsersStats, loading: registeredUsersLoading } = useRegisteredUsers();
+  const { stats: mainPageStats, loading: mainPageStatsLoading } = useMainPageStats();
 
   // 熱門內容狀態
   const [popularCourses, setPopularCourses] = useState<CourseWithStats[]>([]);
-  const [popularInstructors, setPopularInstructors] = useState<InstructorWithStats[]>([]);
+  const [popularInstructors, setPopularInstructors] = useState<InstructorWithDetailedStats[]>([]);
   const [popularLoading, setPopularLoading] = useState(true);
   const [popularError, setPopularError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('courses');
 
   useEffect(() => {
     const checkMobile = () => {
@@ -54,15 +76,15 @@ const Index = () => {
         setPopularError(null);
 
         const [courses, instructors] = await Promise.all([
-                  CourseService.getPopularCourses(),
-        CourseService.getPopularInstructors()
+          CourseService.getPopularCourses(),
+          CourseService.getPopularInstructorsWithDetailedStats()
         ]);
 
         setPopularCourses(courses);
         setPopularInstructors(instructors);
       } catch (error) {
         console.error('Error loading popular content:', error);
-        setPopularError('載入熱門內容時發生錯誤');
+        setPopularError(error instanceof Error ? error.message : '載入熱門內容時發生錯誤');
       } finally {
         setPopularLoading(false);
       }
@@ -80,7 +102,6 @@ const Index = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    
     // 如果用戶已登入，導航到課程頁面
     if (user) {
       navigate('/courses');
@@ -92,7 +113,6 @@ const Index = () => {
     const rect = button.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
     
     setButtonPosition({ x: centerX, y: centerY });
     setShowHeavenTransition(true);
@@ -171,44 +191,69 @@ const Index = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <StatsCard
-            icon={BookOpen}
-            title={t('stats.courses')}
-            value="100+"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in max-w-6xl mx-auto" style={{ animationDelay: '0.2s' }}>
           <StatsCard
             icon={Users}
-            title={t('stats.users')}
-            value={registeredUsersLoading ? "..." : registeredUsersStats.totalRegisteredUsers.toString()}
-            isLoading={registeredUsersLoading}
+            title={t('stats.verifiedStudents')}
+            value={mainPageStatsLoading ? "..." : mainPageStats.verifiedStudentsCount.toString()}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).trend}
+            isLoading={mainPageStatsLoading}
           />
           <StatsCard
             icon={Star}
             title={t('stats.reviews')}
-            value="500+"
+            value={mainPageStatsLoading ? "..." : mainPageStats.reviewsCount.toString()}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.reviewsLast30Days).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.reviewsLast30Days).trend}
+            isLoading={mainPageStatsLoading}
+          />
+          <StatsCard
+            icon={BookOpen}
+            title={t('stats.courses')}
+            value={mainPageStatsLoading ? "..." : mainPageStats.coursesWithReviewsCount.toString()}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days).trend}
+            isLoading={mainPageStatsLoading}
+          />
+          <StatsCard
+            icon={UserCheck}
+            title={t('stats.instructorsWithReviews')}
+            value={mainPageStatsLoading ? "..." : mainPageStats.instructorsWithReviewsCount.toString()}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days).trend}
+            isLoading={mainPageStatsLoading}
           />
         </div>
 
-        {/* Featured Content Section */}
+        {/* Featured Content Section - without main heading */}
         <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <h2 className="text-3xl font-bold text-center mb-8">{t('featured.title')}</h2>
-          
-          <Tabs defaultValue="courses" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-muted/50 backdrop-blur-sm">
-              <TabsTrigger 
-                value="courses" 
-                className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Mobile: Stack vertically, Desktop: Align with course cards edges */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 max-w-6xl mx-auto">
+              <TabsList className="bg-muted/50 backdrop-blur-sm w-full sm:w-auto">
+                <TabsTrigger 
+                  value="courses" 
+                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                >
+                  {t('featured.courses')}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="instructors" 
+                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                >
+                  {t('featured.instructors')}
+                </TabsTrigger>
+              </TabsList>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(activeTab === 'courses' ? '/courses' : '/instructors')}
+                className="hover:bg-primary/10 hover:text-primary transition-colors w-full sm:w-auto text-sm"
               >
-                {t('featured.courses')}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="instructors" 
-                className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-              >
-                                  {t('featured.instructors')}
-              </TabsTrigger>
-            </TabsList>
+                {activeTab === 'courses' ? t('featured.viewAllCourses') : t('featured.viewAllInstructors')}
+              </Button>
+            </div>
 
             <TabsContent value="courses" className="space-y-6">
               {popularLoading ? (
@@ -231,36 +276,22 @@ const Index = () => {
                   <p className="text-muted-foreground">{t('featured.noPopularCoursesDesc')}</p>
                 </div>
               ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-semibold mb-2">{t('featured.popularCourses')}</h3>
-                    <p className="text-muted-foreground">{t('featured.popularCoursesDesc')}</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {popularCourses.map((course) => (
-                      <PopularItemCard
-                        key={course.$id}
-                        type="course"
-                        title={course.course_title}
-                        code={course.course_code}
-                        department={course.course_department}
-                        language={course.course_language}
-                        rating={course.averageRating}
-                        reviewCount={course.reviewCount}
-                        studentCount={course.studentCount}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => navigate('/courses')}
-                      className="hover:bg-primary/10 hover:text-primary transition-colors"
-                    >
-                      {t('featured.viewAllCourses')}
-                    </Button>
-                  </div>
-                </>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                  {popularCourses.map((course) => (
+                    <PopularItemCard
+                      key={course.$id}
+                      type="course"
+                      title={course.course_title}
+                      code={course.course_code}
+                      department={course.course_department}
+                      language={course.course_language}
+                      rating={course.averageRating}
+                      reviewCount={course.reviewCount}
+      
+                      isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
+                    />
+                  ))}
+                </div>
               )}
             </TabsContent>
 
@@ -285,35 +316,19 @@ const Index = () => {
                   <p className="text-muted-foreground">{t('featured.noPopularInstructorsDesc')}</p>
                 </div>
               ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-semibold mb-2">{t('featured.popularInstructors')}</h3>
-                    <p className="text-muted-foreground">{t('featured.popularInstructorsDesc')}</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {popularInstructors.map((instructor) => (
-                      <PopularItemCard
-                        key={instructor.$id}
-                        type="instructor"
-                        name={instructor.name}
-                        email={instructor.email}
-                        instructorType={instructor.type}
-                        courseCount={instructor.courseCount}
-                        reviewCount={instructor.reviewCount}
-                        averageRating={instructor.averageRating}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => navigate('/instructors')}
-                      className="hover:bg-primary/10 hover:text-primary transition-colors"
-                    >
-                      {t('featured.viewAllInstructors')}
-                    </Button>
-                  </div>
-                </>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                  {popularInstructors.map((instructor) => (
+                    <PopularItemCard
+                      key={instructor.$id}
+                      type="instructor"
+                      name={instructor.name}
+                      email={instructor.email}
+                      reviewCount={instructor.reviewCount}
+                      teachingScore={instructor.teachingScore}
+                      gradingFairness={instructor.gradingFairness}
+                    />
+                  ))}
+                </div>
               )}
             </TabsContent>
           </Tabs>

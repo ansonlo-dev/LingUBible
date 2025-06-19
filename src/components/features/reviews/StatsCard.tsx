@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { LoadingDots, PulsingNumber } from '@/components/ui/loading-number';
+import { LoadingDots } from '@/components/ui/loading-number';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -79,7 +79,7 @@ export function StatsCard({
     switch (trend) {
       case 'up': return 'text-green-600 dark:text-green-400';
       case 'down': return 'text-red-600 dark:text-red-400';
-      default: return 'text-gray-600 dark:text-muted-foreground';
+      default: return 'text-yellow-600 dark:text-yellow-400';
     }
   };
 
@@ -90,14 +90,12 @@ export function StatsCard({
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-600 dark:text-muted-foreground">{title}</p>
             
-            <PulsingNumber isLoading={isLoading} className="mt-1">
-              <p className="text-2xl font-bold text-foreground tabular-nums">
-                {displayValue}
-              </p>
-            </PulsingNumber>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+              {displayValue}
+            </p>
             
-            {change && !isLoading && (
-              <p className={`text-sm mt-1 transition-opacity duration-300 ${getTrendColor()}`}>
+            {change && (
+              <p className={`text-sm mt-1 ${getTrendColor()}`}>
                 {change}
               </p>
             )}
@@ -111,14 +109,7 @@ export function StatsCard({
           </div>
           
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <div className={`transition-all duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
-              <Icon className="h-6 w-6 text-primary" />
-            </div>
-            {isLoading && (
-              <div className="absolute">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
+            <Icon className="h-6 w-6 text-primary" />
           </div>
         </div>
       </CardContent>

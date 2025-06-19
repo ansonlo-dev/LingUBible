@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, BookOpen as BookOpenIcon, Users, Construction } from 'lucide-react';
+import { X, BookOpen as BookOpenIcon, Users, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
+import { CourseService } from '@/services/api/courseService';
+import type { CourseWithStats, InstructorWithStats } from '@/services/api/courseService';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -32,6 +34,8 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [popularCourses, setPopularCourses] = useState<CourseWithStats[]>([]);
+  const [popularInstructors, setPopularInstructors] = useState<InstructorWithStats[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAddedHistoryEntry = useRef(false);
 
@@ -44,8 +48,14 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       
       const loadData = async () => {
         try {
-          // 模擬載入時間
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // 載入熱門課程和講師
+          const [coursesData, instructorsData] = await Promise.all([
+            CourseService.getPopularCourses(5), // 獲取前5個熱門課程
+            CourseService.getPopularInstructors(5) // 獲取前5個熱門講師
+          ]);
+          
+          setPopularCourses(coursesData);
+          setPopularInstructors(instructorsData);
         } catch (error) {
           console.error('Error loading search data:', error);
         } finally {
@@ -62,21 +72,17 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
     }
   }, [isOpen]);
 
-  // 搜尋功能暫時禁用的提示
-  const searchResults = [
-    {
-      category: t('nav.courses'),
-      icon: BookOpenIcon,
-      items: []
-    },
-    {
-              category: t('nav.lecturers'),
-      icon: Users,
-      items: []
-    }
-  ];
+  // 處理課程點擊
+  const handleCourseClick = (courseCode: string) => {
+    navigate(`/courses/${courseCode}`);
+    handleClose();
+  };
 
-  const allItems: any[] = [];
+  // 處理講師點擊
+  const handleInstructorClick = (instructorName: string) => {
+    navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+    handleClose();
+  };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (!isOpen) return;
@@ -102,7 +108,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, selectedIndex, allItems]);
+  }, [isOpen, selectedIndex]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -159,12 +165,70 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                   <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
                 </div>
               ) : (
-                <div className="p-8 text-center">
-                  <Construction className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">搜尋功能重新設計中</h3>
-                  <p className="text-muted-foreground">
-                    我們正在優化搜尋功能，敬請期待更好的體驗！
-                  </p>
+                <div className="p-4 space-y-6">
+                  {/* 熱門課程 */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 px-2">
+                      <BookOpenIcon className="h-5 w-5 text-red-600" />
+                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {popularCourses.map((course) => (
+                        <button
+                          key={course.course_code}
+                          onClick={() => handleCourseClick(course.course_code)}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {course.course_code} - {course.course_title}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {course.course_department}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-gray-500">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{course.reviewCount}</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 熱門講師 */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 px-2">
+                      <Users className="h-5 w-5 text-red-600" />
+                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {popularInstructors.map((instructor) => (
+                        <button
+                          key={instructor.name}
+                          onClick={() => handleInstructorClick(instructor.name)}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {instructor.name}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {instructor.email}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-gray-500">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{instructor.reviewCount}</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -202,12 +266,70 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                   <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
                 </div>
               ) : (
-                <div className="p-8 text-center">
-                  <Construction className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">搜尋功能重新設計中</h3>
-                  <p className="text-muted-foreground">
-                    我們正在優化搜尋功能，敬請期待更好的體驗！
-                  </p>
+                <div className="p-4 space-y-6">
+                  {/* 熱門課程 */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 px-2">
+                      <BookOpenIcon className="h-5 w-5 text-red-600" />
+                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {popularCourses.map((course) => (
+                        <button
+                          key={course.course_code}
+                          onClick={() => handleCourseClick(course.course_code)}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-gray-900 dark:text-white truncate">
+                                {course.course_code} - {course.course_title}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                {course.course_department}
+                              </div>
+                            </div>
+                                                         <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                               <MessageCircle className="h-4 w-4" />
+                               <span>{course.reviewCount}</span>
+                             </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 熱門講師 */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 px-2">
+                      <Users className="h-5 w-5 text-red-600" />
+                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {popularInstructors.map((instructor) => (
+                        <button
+                          key={instructor.name}
+                          onClick={() => handleInstructorClick(instructor.name)}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-gray-900 dark:text-white truncate">
+                                {instructor.name}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                {instructor.email}
+                              </div>
+                            </div>
+                                                         <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                               <MessageCircle className="h-4 w-4" />
+                               <span>{instructor.reviewCount}</span>
+                             </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

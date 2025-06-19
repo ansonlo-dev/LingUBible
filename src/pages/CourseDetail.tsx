@@ -1,62 +1,65 @@
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useState, useEffect } from 'react';
-import { 
-  BookOpen, 
-  ArrowLeft,
-  Users,
-  Calendar,
-  Mail,
-  Globe,
-  Star,
-  MessageSquare,
-  Loader2,
-  AlertCircle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CourseService } from '@/services/api/courseService';
-import { Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
+import { 
+  ArrowLeft, 
+  Star, 
+  MessageSquare, 
+  BookOpen, 
+  Calendar, 
+  Mail, 
+  Loader2, 
+  AlertCircle 
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
   const navigate = useNavigate();
-  const { t } = useLanguage();
   const { user } = useAuth();
+  const { t } = useLanguage();
   
   const [course, setCourse] = useState<Course | null>(null);
-  const [teachingInfo, setTeachingInfo] = useState<CourseTeachingInfo[]>([]);
+  const [allReviews, setAllReviews] = useState<(CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]>([]);
   const [courseStats, setCourseStats] = useState({
-    reviewCount: 0,
     averageRating: 0,
-    studentCount: 0
+    reviewCount: 0
   });
-  const [reviews, setReviews] = useState<(CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]>([]);
+  const [teachingInfo, setTeachingInfo] = useState<CourseTeachingInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en', 'zh-TW', 'zh-CN']);
+
+  // 前端篩選評論
+  const filteredReviews = allReviews.filter(reviewInfo => {
+    const reviewLanguage = reviewInfo.review.review_language || 'en';
+    return selectedLanguages.includes(reviewLanguage);
+  });
 
   useEffect(() => {
-    const loadCourseData = async () => {
-      if (!courseCode) {
-        setError(t('pages.courseDetail.invalidCourseCode'));
-        setLoading(false);
-        return;
-      }
+    if (!courseCode) {
+      setError(t('pages.courseDetail.courseNotFound'));
+      setLoading(false);
+      return;
+    }
 
+    const loadCourseData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // 並行獲取課程信息、教學記錄和統計信息
-        const [courseData, teachingData, statsData] = await Promise.all([
-                  CourseService.getCourseByCode(courseCode),
-        CourseService.getCourseTeachingInfo(courseCode),
-        CourseService.getCourseStats(courseCode)
+        // 並行載入課程基本信息、統計信息和教學信息
+        const [courseData, statsData, teachingData] = await Promise.all([
+          CourseService.getCourseByCode(courseCode),
+          CourseService.getCourseStats(courseCode),
+          CourseService.getCourseTeachingInfo(courseCode)
         ]);
 
         if (!courseData) {
@@ -65,56 +68,54 @@ const CourseDetail = () => {
         }
 
         setCourse(courseData);
+        setCourseStats({
+          averageRating: statsData.averageRating,
+          reviewCount: statsData.reviewCount
+        });
         setTeachingInfo(teachingData);
-        setCourseStats(statsData);
 
-        // 獲取課程評論
+        setLoading(false);
+
+        // 背景載入所有評論（一次性獲取所有語言的評論）
         try {
           setReviewsLoading(true);
           const reviewsData = await CourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
-          setReviews(reviewsData);
+          setAllReviews(reviewsData);
         } catch (reviewError) {
-          console.error('Error loading reviews:', reviewError);
-          // 評論載入失敗不影響主要頁面顯示
+          console.error('Failed to load reviews:', reviewError);
+          // 評論載入失敗不影響主要內容顯示
         } finally {
           setReviewsLoading(false);
         }
-      } catch (err) {
-        console.error('Error loading course data:', err);
-                  setError(t('pages.courseDetail.loadError'));
-      } finally {
+
+      } catch (error) {
+        console.error('Failed to load course data:', error);
+        setError(t('pages.courseDetail.loadError'));
         setLoading(false);
       }
     };
 
     loadCourseData();
-  }, [courseCode]);
-
-  const getLanguageColor = (lang: string) => {
-    switch (lang) {
-      case 'E':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'C':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-    }
-  };
-
-  const getLanguageText = (lang: string) => {
-    switch (lang) {
-      case 'E':
-        return 'English';
-      case 'C':
-        return '中文';
-      default:
-        return lang;
-    }
-  };
+  }, [courseCode, user?.$id, t]);
 
   const handleInstructorClick = (instructorName: string) => {
     // 導航到講師詳情頁面
-          navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+    navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+  };
+
+  const toggleLanguage = (language: string) => {
+    setSelectedLanguages(prev => {
+      if (prev.includes(language)) {
+        // 如果已選中，則取消選擇（但至少要保留一個語言）
+        if (prev.length > 1) {
+          return prev.filter(lang => lang !== language);
+        }
+        return prev; // 不允許全部取消選擇
+      } else {
+        // 如果未選中，則添加
+        return [...prev, language];
+      }
+    });
   };
 
   if (loading) {
@@ -164,7 +165,7 @@ const CourseDetail = () => {
                 {error || t('pages.courseDetail.courseNotFound')}
               </p>
               <Button onClick={() => navigate('/courses')}>
-                                  {t('pages.courseDetail.backToCourseList')}
+                {t('pages.courseDetail.backToCourseList')}
               </Button>
             </CardContent>
           </Card>
@@ -201,20 +202,16 @@ const CourseDetail = () => {
                   <BookOpen className="h-3 w-3 mr-1" />
                   {course.course_department}
                 </Badge>
-                <Badge variant="outline" className={getLanguageColor(course.course_language)}>
-                  <Globe className="h-3 w-3 mr-1" />
-                  {getLanguageText(course.course_language)}
-                </Badge>
               </div>
             </div>
           </div>
         </CardHeader>
         
         {/* 課程統計信息 */}
-        {(courseStats.reviewCount > 0 || courseStats.studentCount > 0) && (
+        {courseStats.reviewCount > 0 && (
           <CardContent className="pt-0">
             <Separator className="mb-4" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -228,13 +225,6 @@ const CourseDetail = () => {
                   <span className="text-lg font-semibold">{courseStats.reviewCount}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{t('pages.courseDetail.reviewCount')}</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users className="h-4 w-4 text-primary" />
-                  <span className="text-lg font-semibold">{courseStats.studentCount}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{t('pages.courseDetail.studentCount')}</p>
               </div>
             </div>
           </CardContent>
@@ -288,7 +278,7 @@ const CourseDetail = () => {
                         onClick={() => handleInstructorClick(info.instructor.name)}
                         className="hover:bg-primary/10 hover:text-primary transition-colors max-w-full"
                       >
-                        <Users className="h-4 w-4 mr-2 shrink-0" />
+                        <Mail className="h-4 w-4 mr-2 shrink-0" />
                         <span className="truncate">{info.instructor.name}</span>
                       </Button>
                       <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
@@ -297,9 +287,7 @@ const CourseDetail = () => {
                           {info.emailOverride || info.instructor.email}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">
-                        {info.instructor.type}
-                      </p>
+
                     </div>
                   </div>
                 </div>
@@ -307,10 +295,16 @@ const CourseDetail = () => {
             </div>
           )}
         </CardContent>
-              </Card>
+      </Card>
 
       {/* 課程評論 */}
-      <CourseReviewsList reviews={reviews} loading={reviewsLoading} />
+      <CourseReviewsList 
+        reviews={filteredReviews} 
+        allReviews={allReviews}
+        loading={reviewsLoading}
+        selectedLanguages={selectedLanguages}
+        onToggleLanguage={toggleLanguage}
+      />
 
       {/* 操作按鈕 */}
       <div className="flex flex-col sm:flex-row gap-4 pb-8 md:pb-0">

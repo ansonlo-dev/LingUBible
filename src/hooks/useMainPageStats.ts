@@ -1,20 +1,32 @@
 import { useState, useEffect } from 'react';
 import { CourseService } from '@/services/api/courseService';
 import { useRegisteredUsers } from '@/hooks/useRegisteredUsers';
+import { databases } from '@/lib/appwrite';
+import { Query } from 'appwrite';
 
 interface MainPageStats {
-  coursesCount: number;
+  coursesWithReviewsCount: number;
+  coursesWithReviewsLast30Days: number;
   instructorsCount: number;
+  instructorsWithReviewsCount: number;
+  instructorsWithReviewsLast30Days: number;
   reviewsCount: number;
-  registeredStudentsCount: number;
+  reviewsLast30Days: number;
+  verifiedStudentsCount: number;
+  verifiedStudentsLast30Days: number;
 }
 
 export function useMainPageStats() {
   const [stats, setStats] = useState<MainPageStats>({
-    coursesCount: 0,
+    coursesWithReviewsCount: 0,
+    coursesWithReviewsLast30Days: 0,
     instructorsCount: 0,
+    instructorsWithReviewsCount: 0,
+    instructorsWithReviewsLast30Days: 0,
     reviewsCount: 0,
-    registeredStudentsCount: 0
+    reviewsLast30Days: 0,
+    verifiedStudentsCount: 0,
+    verifiedStudentsLast30Days: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,24 +40,80 @@ export function useMainPageStats() {
         setLoading(true);
         setError(null);
 
-        // 並行獲取課程和講師統計數據
-        const [coursesWithStats, instructorsWithStats] = await Promise.all([
-                CourseService.getCoursesWithStats(),
-      CourseService.getInstructorsWithStats()
+        // 計算30天前的日期
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+
+        // 並行獲取所有需要的數據
+        const [
+          coursesWithStats,
+          instructorsWithStats,
+          allReviews,
+          reviewsLast30Days
+        ] = await Promise.all([
+          CourseService.getCoursesWithStatsBatch(),
+          CourseService.getInstructorsWithStatsBatch(),
+          // 獲取所有評論來計算總數
+          databases.listDocuments(
+            'lingubible',
+            'reviews',
+            [
+              Query.orderDesc('$createdAt'),
+              Query.limit(2000),
+              Query.select(['$id', 'course_code', 'instructor_details', '$createdAt'])
+            ]
+          ),
+          // 獲取過去30天的評論
+          databases.listDocuments(
+            'lingubible',
+            'reviews',
+            [
+              Query.greaterThan('$createdAt', thirtyDaysAgoISO),
+              Query.orderDesc('$createdAt'),
+              Query.limit(1000),
+              Query.select(['$id', 'course_code', 'instructor_details', '$createdAt'])
+            ]
+          )
         ]);
 
-        // 只計算有評論的課程和講師
-        const coursesWithReviews = coursesWithStats.filter(course => course.reviewCount > 0);
-        const instructorsWithReviews = instructorsWithStats.filter(instructor => instructor.reviewCount > 0);
+        // 計算當前統計
+        const coursesWithReviews = coursesWithStats.filter(course => course.reviewCount > 0).length;
+        const instructorsWithReviews = instructorsWithStats.filter(instructor => instructor.reviewCount > 0).length;
+        const totalReviews = allReviews.documents.length;
 
-        // 計算總評論數
-        const totalReviews = coursesWithStats.reduce((sum, course) => sum + course.reviewCount, 0);
+        // 計算30天內的精確變化
+        const reviewsInLast30Days = reviewsLast30Days.documents.length;
+
+        // 計算30天內新增有評論的課程
+        const coursesWithReviewsInLast30Days = new Set();
+        reviewsLast30Days.documents.forEach((review: any) => {
+          coursesWithReviewsInLast30Days.add(review.course_code);
+        });
+
+        // 計算30天內新增有評論的講師
+        const instructorsWithReviewsInLast30Days = new Set();
+        reviewsLast30Days.documents.forEach((review: any) => {
+          try {
+            const instructorDetails = JSON.parse(review.instructor_details);
+            instructorDetails.forEach((detail: any) => {
+              instructorsWithReviewsInLast30Days.add(detail.instructor_name);
+            });
+          } catch (error) {
+            // 忽略解析錯誤
+          }
+        });
 
         setStats({
-          coursesCount: coursesWithReviews.length,
-          instructorsCount: instructorsWithReviews.length,
+          coursesWithReviewsCount: coursesWithReviews,
+          coursesWithReviewsLast30Days: coursesWithReviewsInLast30Days.size,
+          instructorsCount: instructorsWithStats.length,
+          instructorsWithReviewsCount: instructorsWithReviews,
+          instructorsWithReviewsLast30Days: instructorsWithReviewsInLast30Days.size,
           reviewsCount: totalReviews,
-          registeredStudentsCount: registeredUsersStats.totalRegisteredUsers
+          reviewsLast30Days: reviewsInLast30Days,
+          verifiedStudentsCount: registeredUsersStats.verifiedUsers,
+          verifiedStudentsLast30Days: registeredUsersStats.newUsersLast30Days
         });
 
       } catch (error) {

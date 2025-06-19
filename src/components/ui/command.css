@@ -1,0 +1,33 @@
+/* Command Dialog Styles */
+.cmdk-dialog [cmdk-group-heading] {
+  @apply px-2 font-medium text-muted-foreground;
+}
+
+.cmdk-dialog [cmdk-group]:not([hidden]) ~ [cmdk-group] {
+  @apply pt-0;
+}
+
+.cmdk-dialog [cmdk-group] {
+  @apply px-2;
+}
+
+.cmdk-dialog [cmdk-input-wrapper] svg {
+  @apply h-5 w-5;
+}
+
+.cmdk-dialog [cmdk-input] {
+  @apply h-12;
+}
+
+.cmdk-dialog [cmdk-item] {
+  @apply px-2 py-3;
+}
+
+.cmdk-dialog [cmdk-item] svg {
+  @apply h-5 w-5;
+}
+
+/* Command Group Styles */
+.cmdk-group [cmdk-group-heading] {
+  @apply px-2 py-1.5 text-xs font-medium text-muted-foreground;
+} 

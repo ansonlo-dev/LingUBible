@@ -21,6 +21,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
+import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 
 interface UserReviewInfo extends CourseReviewInfo {
   upvotes: number;
@@ -273,9 +274,15 @@ const MyReviews = () => {
                 {reviewInfo.review.course_comments && (
                   <div className="space-y-2 min-w-0">
                     <p className="text-sm font-medium">{t('review.comments')}</p>
-                    <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md break-words">
-                      {reviewInfo.review.course_comments}
-                    </p>
+                    <div className="bg-muted p-3 rounded-md break-words">
+                      {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
+                        renderCommentMarkdown(reviewInfo.review.course_comments)
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {reviewInfo.review.course_comments}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -286,9 +293,15 @@ const MyReviews = () => {
                       <Badge variant="secondary">{t('review.serviceLearning')}</Badge>
                     </div>
                     {reviewInfo.review.service_learning_description && (
-                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md break-words">
-                        {reviewInfo.review.service_learning_description}
-                      </p>
+                      <div className="bg-muted p-3 rounded-md break-words">
+                        {hasMarkdownFormatting(reviewInfo.review.service_learning_description) ? (
+                          renderCommentMarkdown(reviewInfo.review.service_learning_description)
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {reviewInfo.review.service_learning_description}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -317,9 +330,15 @@ const MyReviews = () => {
                           )}
                         </div>
                         {instructor.comments && (
-                          <p className="text-sm text-muted-foreground break-words">
-                            {instructor.comments}
-                          </p>
+                          <div className="break-words">
+                            {hasMarkdownFormatting(instructor.comments) ? (
+                              renderCommentMarkdown(instructor.comments)
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                {instructor.comments}
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}

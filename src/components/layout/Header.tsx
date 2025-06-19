@@ -57,21 +57,23 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
         </div>
 
         {/* 中間區域 - 搜索框 */}
-        <div className="flex-1 min-w-0 mx-1 md:mx-4">
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-2 text-left text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Search className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate text-sm">{t('search.placeholder')}</span>
-            </div>
-            <div className="hidden md:flex items-center gap-1 flex-shrink-0">
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K
-              </kbd>
-            </div>
-          </button>
+        <div className="flex-1 flex justify-center min-w-0 mx-1 md:mx-4">
+          <div className="w-full max-w-md">
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="w-full flex items-center justify-between px-3 py-2 text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
+            >
+              <div className="flex items-center justify-center gap-2 min-w-0 flex-1">
+                <Search className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate text-sm text-center">{t('search.placeholder')}</span>
+              </div>
+              <div className="hidden md:flex items-center gap-1 flex-shrink-0">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                  <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K
+                </kbd>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* 右側區域 */}

@@ -30,6 +30,7 @@ import {
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
+import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 
 const InstructorDetail = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
@@ -41,6 +42,7 @@ const InstructorDetail = () => {
   const [reviews, setReviews] = useState<(InstructorReviewFromDetails & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en', 'zh-TW', 'zh-CN']);
 
   useEffect(() => {
     const loadInstructorData = async () => {
@@ -57,9 +59,8 @@ const InstructorDetail = () => {
         // 解碼 URL 參數
         const decodedName = decodeURIComponent(instructorName);
 
-        // 先載入講師基本信息
+        // 第一階段：載入講師基本信息（最快）
         const instructorData = await CourseService.getInstructorByName(decodedName);
-        setInstructor(instructorData);
 
         if (!instructorData) {
           setError(t('instructor.notFound'));
@@ -67,10 +68,10 @@ const InstructorDetail = () => {
           return;
         }
 
-        // 設置載入完成，顯示基本信息
-        setLoading(false);
+        setInstructor(instructorData);
+        setLoading(false); // 先顯示基本信息
 
-        // 背景載入評論數據
+        // 第二階段：背景載入評論數據（較慢）
         try {
           const reviewsData = await CourseService.getInstructorReviewsFromDetailsWithVotes(decodedName, user?.$id);
           setReviews(reviewsData);
@@ -88,6 +89,44 @@ const InstructorDetail = () => {
 
     loadInstructorData();
   }, [instructorName, user?.$id, t]);
+
+  // 當語言篩選改變時重新載入評論
+  useEffect(() => {
+    if (instructorName && instructor) {
+      const loadReviews = async () => {
+        try {
+          const decodedName = decodeURIComponent(instructorName);
+          // 獲取所有評論，然後在前端篩選
+          const reviewsData = await CourseService.getInstructorReviewsFromDetailsWithVotes(decodedName, user?.$id);
+          // 根據選中的語言篩選評論
+          const filteredReviews = reviewsData.filter(reviewInfo => {
+            const reviewLanguage = reviewInfo.review.review_language || 'en';
+            return selectedLanguages.includes(reviewLanguage);
+          });
+          setReviews(filteredReviews);
+        } catch (reviewError) {
+          console.error('Error loading instructor reviews:', reviewError);
+        }
+      };
+      
+      loadReviews();
+    }
+  }, [selectedLanguages, instructorName, instructor, user?.$id]);
+
+  const toggleLanguage = (language: string) => {
+    setSelectedLanguages(prev => {
+      if (prev.includes(language)) {
+        // 如果已選中，則取消選擇（但至少要保留一個語言）
+        if (prev.length > 1) {
+          return prev.filter(lang => lang !== language);
+        }
+        return prev; // 不允許全部取消選擇
+      } else {
+        // 如果未選中，則添加
+        return [...prev, language];
+      }
+    });
+  };
 
   const handleCourseClick = (courseCode: string) => {
     navigate(`/courses/${courseCode}`);
@@ -225,14 +264,16 @@ const InstructorDetail = () => {
               <Users className="h-8 w-8 text-primary shrink-0" />
               <div className="min-w-0 flex-1">
                 <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
-                <p className="text-muted-foreground truncate">{instructor.type}</p>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 overflow-hidden">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate">{instructor.email}</span>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">{instructor.name}</h1>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Mail className="h-4 w-4" />
+                <span className="truncate">{instructor.email}</span>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
@@ -260,10 +301,45 @@ const InstructorDetail = () => {
       {/* 學生評論 */}
       <Card className="course-card overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 shrink-0" />
-            <span className="truncate">{t('instructor.studentReviews')} ({reviews.length})</span>
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 shrink-0" />
+              <span className="truncate">{t('instructor.studentReviews')} ({reviews.length})</span>
+            </CardTitle>
+            
+            {/* 語言篩選器 */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {t('review.filterByLanguage')}:
+              </span>
+              <div className="flex flex-wrap gap-1">
+                <Button
+                  variant={selectedLanguages.includes('en') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleLanguage('en')}
+                  className="text-xs"
+                >
+                  {t('review.languageOptions.en')}
+                </Button>
+                <Button
+                  variant={selectedLanguages.includes('zh-TW') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleLanguage('zh-TW')}
+                  className="text-xs"
+                >
+                  {t('review.languageOptions.zh-TW')}
+                </Button>
+                <Button
+                  variant={selectedLanguages.includes('zh-CN') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleLanguage('zh-CN')}
+                  className="text-xs"
+                >
+                  {t('review.languageOptions.zh-CN')}
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="overflow-hidden">
           {reviews.length === 0 ? (
@@ -391,9 +467,15 @@ const InstructorDetail = () => {
                   {reviewInfo.review.course_comments && (
                     <div className="space-y-2 min-w-0">
                       <h5 className="text-sm font-medium">{t('review.courseComments')}:</h5>
-                      <p className="text-sm bg-muted/30 rounded-lg p-3 break-words">
-                        {reviewInfo.review.course_comments}
-                      </p>
+                      <div className="bg-muted/30 rounded-lg p-3 break-words">
+                        {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
+                          renderCommentMarkdown(reviewInfo.review.course_comments)
+                        ) : (
+                          <p className="text-sm">
+                            {reviewInfo.review.course_comments}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
 

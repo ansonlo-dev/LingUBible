@@ -37,6 +37,7 @@ import Privacy from "./pages/legal/Privacy";
 import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
 import EmailPreview from "./pages/EmailPreview";
+import PerformanceTest from "./pages/PerformanceTest";
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
@@ -331,6 +332,19 @@ const AppContent = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
+  // 禁用/啟用 body 滾動（手機版側邊欄打開時）- 使用 CSS 類的方法
+  useEffect(() => {
+    if (isMobile && isMobileSidebarOpen) {
+      // 使用 CSS 類而不是直接操作樣式，避免影響 sticky 定位
+      document.body.classList.add('mobile-sidebar-open');
+      
+      return () => {
+        // 移除 CSS 類
+        document.body.classList.remove('mobile-sidebar-open');
+      };
+    }
+  }, [isMobile, isMobileSidebarOpen]);
+
   // 統一的側邊欄切換函數，根據設備類型選擇正確的行為
   const handleSidebarToggle = () => {
     if (isMobile) {
@@ -475,11 +489,16 @@ const RouterContent = ({
                 />
               )}
               
-              {/* 主要內容區域 */}
+              {/* 主要內容區域包含header和content */}
               <div 
                 ref={swipeRef}
                 className={`main-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}
               >
+                {/* 頂部 Header - 回到main-container內部但保持sticky */}
+                <Header 
+                  onToggleSidebar={handleSidebarToggle}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                />
                 {/* 手機版透明滾動方向動畫指示器 */}
                 {isInitialized && isMobile && !isMobileSidebarOpen && showSwipeHint && (
                   <div className="fixed inset-0 z-50 pointer-events-none">
@@ -518,12 +537,6 @@ const RouterContent = ({
                   </div>
                 )}
                 
-                {/* 頂部 Header - sticky */}
-                <Header 
-                  onToggleSidebar={handleSidebarToggle}
-                  isSidebarCollapsed={isSidebarCollapsed}
-                />
-                
                 {/* 測試版通知橫幅 */}
                 <BetaNotice />
                 
@@ -556,6 +569,14 @@ const RouterContent = ({
                       element={
                         <DevModeRoute>
                           <EmailPreview />
+                        </DevModeRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/performance" 
+                      element={
+                        <DevModeRoute>
+                          <PerformanceTest />
                         </DevModeRoute>
                       } 
                     />
