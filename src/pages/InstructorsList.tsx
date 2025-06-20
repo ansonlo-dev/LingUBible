@@ -213,7 +213,13 @@ const InstructorsList = () => {
                       </CardTitle>
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted-foreground">
                         <Mail className="h-3 w-3 shrink-0 text-blue-500" />
-                        <span className="truncate">{instructor.email}</span>
+                        <a 
+                          href={`mailto:${instructor.email}`}
+                          className="truncate hover:underline hover:text-primary transition-colors block"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {instructor.email}
+                        </a>
                       </div>
                       {/* Review count display */}
                       <div className="flex items-center gap-1 mt-1">
@@ -228,12 +234,12 @@ const InstructorsList = () => {
                     <div className="flex gap-1.5 shrink-0">
                       <div className="flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800/30 text-purple-600 dark:text-purple-400 rounded-md border text-xs">
                         <Award className="h-3 w-3 mb-0.5" />
-                        <span className="font-bold text-xs">{instructor.teachingScore > 0 ? instructor.teachingScore.toFixed(1) : 'N/A'}</span>
+                        <span className="font-bold text-xs">{instructor.teachingScore > 0 ? instructor.teachingScore.toFixed(2) : 'N/A'}</span>
                         <span className="text-xs font-medium leading-tight">{t('card.teaching')}</span>
                       </div>
                       <div className="flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border-indigo-200 dark:border-indigo-800/30 text-indigo-600 dark:text-indigo-400 rounded-md border text-xs">
                         <Scale className="h-3 w-3 mb-0.5" />
-                        <span className="font-bold text-xs">{instructor.gradingFairness > 0 ? instructor.gradingFairness.toFixed(1) : 'N/A'}</span>
+                        <span className="font-bold text-xs">{instructor.gradingFairness > 0 ? instructor.gradingFairness.toFixed(2) : 'N/A'}</span>
                         <span className="text-xs font-medium leading-tight">{t('card.grading')}</span>
                       </div>
                     </div>

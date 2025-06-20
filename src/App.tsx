@@ -10,8 +10,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
-import { DevModeIndicator } from "@/components/dev/DevModeIndicator";
-import { SEOTester } from "@/components/dev/SEOTester";
 import { BetaNotice } from "@/components/common/BetaNotice";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
@@ -38,6 +36,8 @@ import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
 import EmailPreview from "./pages/EmailPreview";
 import PerformanceTest from "./pages/PerformanceTest";
+
+import CourseGradingExplain from "./pages/CourseGradingExplain";
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
@@ -110,37 +110,15 @@ const initialIsDark = initializeTheme();
 const AppContent = () => {
   const { t, isLoading: translationsLoading } = useLanguage();
   
-  // Show loading screen while translations are loading
-  if (translationsLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
+  // 所有 hooks 必須在條件返回之前調用
   const [showBetaNotice, setShowBetaNotice] = useState(false);
   const [showCookieConsent, setShowCookieConsent] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-
   const [isDark, setIsDark] = useState(initialIsDark);
   const { isDesktop, isMobile } = useDeviceDetection();
-
-  // 初始化訪客會話（如果用戶未登入）
-  useVisitorSession();
-
-  // 啟動 ping 系統來追蹤用戶在線狀態
-  usePingSystem({
-    enabled: true,
-    pingInterval: 45 * 1000, // 每 45 秒 ping 一次，與本地統計服務同步
-    activityEvents: ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
-  });
   // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     // 只在桌面版時從 cookie 讀取狀態
@@ -152,6 +130,16 @@ const AppContent = () => {
   });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // 初始化訪客會話（如果用戶未登入）
+  useVisitorSession();
+
+  // 啟動 ping 系統來追蹤用戶在線狀態
+  usePingSystem({
+    enabled: true,
+    pingInterval: 45 * 1000, // 每 45 秒 ping 一次，與本地統計服務同步
+    activityEvents: ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
+  });
 
   useEffect(() => {
     // 獲取當前主題模式和實際主題
@@ -376,6 +364,18 @@ const AppContent = () => {
     allowedTime: 800 // 增加允許時間，因為滑動距離更長
   });
 
+  // Show loading screen while translations are loading
+  if (translationsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <BrowserRouter
@@ -580,6 +580,8 @@ const RouterContent = ({
                         </DevModeRoute>
                       } 
                     />
+
+          <Route path="/course-grading-explain" element={<CourseGradingExplain />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

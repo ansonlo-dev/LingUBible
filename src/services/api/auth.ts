@@ -2,6 +2,10 @@ import { account, ID } from '@/lib/appwrite';
 import { Models } from 'appwrite';
 import { studentVerificationService } from '@/services/external/studentVerification';
 import { DEV_MODE } from '@/config/devMode';
+import { UsernameValidator } from '@/utils/auth/usernameValidator';
+
+// 導入 CourseService 來更新評論中的用戶名
+import { CourseService } from './courseService';
 
 // 自定義錯誤類，支援翻譯鍵值
 export class AuthError extends Error {
@@ -20,54 +24,34 @@ export const authService = {
     // 檢查是否有本地 session（避免 API 調用）
     hasLocalSession() {
         try {
-            // 檢查多種可能的會話存儲方式
+            // 檢查 Appwrite 會話 cookie（最可靠的方法）
             const cookieString = document.cookie;
-            const hasCookieSession = cookieString.includes('a_session_');
-            const hasFallbackSession = localStorage.getItem('cookieFallback') !== null;
+            const sessionCookiePattern = /a_session_[a-zA-Z0-9]+=/;
+            const hasCookieSession = sessionCookiePattern.test(cookieString);
             
-            // 檢查 Appwrite 可能使用的其他存儲方式
-            const hasAppwriteSession = localStorage.getItem('appwrite-session') !== null;
-            
-            // 檢查所有可能的 localStorage 鍵值
-            const appwriteKeys = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && (key.includes('appwrite') || key.includes('session') || key.includes('a_session'))) {
-                    appwriteKeys.push(key);
+            // 如果有會話 cookie，進一步檢查是否有效（非空值）
+            if (hasCookieSession) {
+                const sessionCookies = cookieString.match(/a_session_[a-zA-Z0-9]+=([^;]*)/g);
+                const hasValidCookie = sessionCookies?.some(cookie => {
+                    const value = cookie.split('=')[1];
+                    return value && value !== 'null' && value !== 'undefined' && value.length > 0;
+                });
+                
+                if (hasValidCookie) {
+                    console.log('檢測到有效的會話 cookie');
+                    return true;
                 }
             }
             
-            // 檢查是否有任何形式的會話標記
-            const hasAnySession = hasCookieSession || hasFallbackSession || hasAppwriteSession || appwriteKeys.length > 0;
-            
-            console.log('會話檢測結果:', {
-                hasCookieSession,
-                hasFallbackSession,
-                hasAppwriteSession,
-                appwriteKeys,
-                hasAnySession,
-                cookieCount: cookieString.split('a_session_').length - 1,
-                allCookies: cookieString
-            });
-            
-            return hasAnySession;
+            console.log('沒有檢測到有效的會話 cookie');
+            return false;
         } catch (error) {
             console.error('會話檢測失敗:', error);
             return false;
         }
     },
 
-    // 更可靠的會話檢測（使用 API 調用）
-    async hasValidSession() {
-        try {
-            const user = await account.get();
-            console.log('API 會話檢測成功:', user?.email);
-            return true;
-        } catch (error) {
-            console.log('API 會話檢測失敗:', error);
-            return false;
-        }
-    },
+
 
     // 發送嶺南人驗證碼
     async sendStudentVerificationCode(email: string, language: string = 'zh-TW', theme: 'light' | 'dark' = 'light') {
@@ -458,6 +442,7 @@ export const authService = {
             if (error?.status === 401 || error?.code === 401 || 
                 error?.message?.includes('401') || 
                 error?.message?.includes('Unauthorized')) {
+                // 完全靜默處理，不記錄401錯誤因為這是正常的未登入狀態
                 return null;
             }
             // 對於其他錯誤，仍然記錄但不拋出
@@ -469,9 +454,28 @@ export const authService = {
     // 更新用戶名
     async updateUserName(name: string) {
         try {
-            return await account.updateName(name);
+            console.log(`🔄 Starting user name update to "${name}"`);
+            
+            // 首先獲取當前用戶信息
+            const currentUser = await account.get();
+            console.log(`👤 Current user ID: ${currentUser.$id}, Current name: "${currentUser.name}"`);
+            
+            // 更新 Appwrite 中的用戶名
+            const result = await account.updateName(name);
+            console.log(`✅ Appwrite username updated successfully`);
+            
+            // 同步更新所有評論中的用戶名（僅非匿名評論）
+            console.log(`🔄 Starting review username synchronization...`);
+            try {
+                await CourseService.updateUserReviewsUsername(currentUser.$id, name);
+                console.log(`✅ Review username synchronization completed`);
+            } catch (error) {
+                console.warn('⚠️ Failed to update username in reviews, but user profile update succeeded:', error);
+            }
+            
+            return result;
         } catch (error) {
-            console.error('更新用戶名錯誤:', error);
+            console.error('❌ 更新用戶名錯誤:', error);
             throw error;
         }
     },

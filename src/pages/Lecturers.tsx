@@ -15,7 +15,9 @@ import {
   Award,
   FileText,
   CheckCircle,
-  XCircle
+  XCircle,
+  Brain,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +31,7 @@ import {
 import { CourseService } from '@/services/api/courseService';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
+import { ReviewAvatar } from '@/components/ui/review-avatar';
 
 const Lecturers = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
@@ -86,8 +89,14 @@ const Lecturers = () => {
     loadInstructorData();
   }, [instructorName]);
 
-  const handleCourseClick = (courseCode: string) => {
-    navigate(`/courses/${courseCode}`);
+  const handleCourseClick = (courseCode: string, event?: React.MouseEvent) => {
+    if (event?.ctrlKey || event?.metaKey || event?.button === 1) {
+      // Ctrl+Click 或 Cmd+Click 或中鍵點擊，在新頁面打開
+      window.open(`/courses/${courseCode}`, '_blank');
+    } else {
+      // 普通點擊，在當前頁面導航
+      navigate(`/courses/${courseCode}`);
+    }
   };
 
   const renderRatingStars = (rating: number | null) => {
@@ -110,20 +119,18 @@ const Lecturers = () => {
     );
   };
 
-  const renderBooleanBadge = (value: boolean, trueText: string, falseText: string) => {
+  const renderBooleanBadge = (value: boolean, label: string) => {
     return (
-      <Badge variant={value ? "default" : "secondary"} className="text-xs">
+      <Badge 
+        variant={value ? "default" : "secondary"}
+        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+      >
         {value ? (
-          <>
-            <CheckCircle className="h-3 w-3 mr-1" />
-            {trueText}
-          </>
+          <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
         ) : (
-          <>
-            <XCircle className="h-3 w-3 mr-1" />
-            {falseText}
-          </>
+          <XCircle className="h-3 w-3 mr-1 shrink-0" />
         )}
+        <span className="truncate">{label}</span>
       </Badge>
     );
   };
@@ -169,7 +176,7 @@ const Lecturers = () => {
       <Button 
         onClick={() => navigate(-1)} 
         variant="ghost" 
-        className="mb-4"
+        className="mb-4 h-12 sm:h-auto px-6 sm:px-4"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         {t('instructors.back')}
@@ -189,7 +196,12 @@ const Lecturers = () => {
           <CardContent className="space-y-4 overflow-hidden">
             <div className="flex items-center gap-2 overflow-hidden min-w-0">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate flex-1 min-w-0">{instructor.email}</span>
+              <a 
+                href={`mailto:${instructor.email}`}
+                className="text-sm truncate flex-1 min-w-0 hover:underline hover:text-primary transition-colors block"
+              >
+                {instructor.email}
+              </a>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
@@ -204,7 +216,7 @@ const Lecturers = () => {
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">
                   {reviews.length > 0 
-                    ? (reviews.reduce((sum, r) => sum + r.instructorDetail.teaching, 0) / reviews.length).toFixed(1)
+                    ? (reviews.reduce((sum, r) => sum + r.instructorDetail.teaching, 0) / reviews.length).toFixed(2)
                     : 'N/A'
                   }
                 </div>
@@ -248,26 +260,58 @@ const Lecturers = () => {
               {teachingCourses.map((teaching, index) => (
                 <Card 
                   key={index} 
-                  className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden w-full max-w-full"
-                  onClick={() => handleCourseClick(teaching.course.course_code)}
+                  className="cursor-pointer hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] hover:border-primary/50 transition-all duration-200 group relative overflow-hidden w-full max-w-full"
+                  onClick={(e) => handleCourseClick(teaching.course.course_code, e)}
+                  onMouseDown={(e) => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      handleCourseClick(teaching.course.course_code, e);
+                    }
+                  }}
+                  onAuxClick={(e) => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      handleCourseClick(teaching.course.course_code, e);
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleCourseClick(teaching.course.course_code);
+                    }
+                  }}
+                  title={`${t('button.clickToView')} | ${t('button.ctrlClickNewTab')}`}
                 >
+
+                  
                   <CardContent className="p-4 overflow-hidden">
                     <div className="space-y-2 overflow-hidden">
                       <div className="flex items-center justify-between gap-2 overflow-hidden min-w-0">
-                        <h3 className="font-semibold text-primary truncate flex-1 min-w-0">
+                        <h3 className="font-semibold text-primary group-hover:text-primary/80 transition-colors truncate flex-1 min-w-0">
                           {teaching.course.course_code}
                         </h3>
-                        <Badge variant="outline" className="shrink-0">
+                        <Badge 
+                          variant="secondary" 
+                          className={`shrink-0 group-hover:scale-105 transition-transform ${
+                            teaching.sessionType === 'Lecture' 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                              : teaching.sessionType === 'Tutorial'
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                              : ''
+                          }`}
+                        >
                           {teaching.sessionType}
                         </Badge>
                       </div>
-                      <p className="text-sm font-medium truncate">{teaching.course.course_title}</p>
+                      <p className="text-sm font-medium truncate group-hover:text-foreground/80 transition-colors">{teaching.course.course_title}</p>
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground overflow-hidden">
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0 group-hover:text-muted-foreground/80 transition-colors">
                           <Calendar className="h-3 w-3" />
                           <span>{teaching.term.name}</span>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0 min-w-0">
+                        <div className="flex items-center gap-1 shrink-0 min-w-0 group-hover:text-muted-foreground/80 transition-colors">
                           <GraduationCap className="h-3 w-3" />
                           <span className="truncate">{teaching.course.course_department}</span>
                         </div>
@@ -307,7 +351,7 @@ const Lecturers = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/courses')}
-                  className="gap-2"
+                  className="gap-2 h-12 text-base font-medium"
                 >
                   <BookOpen className="h-4 w-4" />
                   {t('instructors.browseCoursesToReview')}
@@ -315,113 +359,280 @@ const Lecturers = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {reviews.map((reviewInfo, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-4 overflow-hidden w-full max-w-full">
-                  {/* 評論標題 */}
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 overflow-hidden">
-                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-                      <h4 className="font-semibold text-primary truncate flex-1 min-w-0">
-                        {reviewInfo.course.course_code} - {reviewInfo.course.course_title}
-                      </h4>
-                      <Badge variant="outline" className="shrink-0">
-                        {reviewInfo.instructorDetail.session_type}
+                <div key={index} className="border-gray-400 dark:border-gray-400 border rounded-lg p-3 space-y-2 overflow-hidden">
+                  {/* 評論基本信息 */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-2 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ReviewAvatar
+                          isAnonymous={reviewInfo.review.is_anon}
+                          userId={reviewInfo.review.user_id}
+                          username={reviewInfo.review.username}
+                          reviewId={reviewInfo.review.$id}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                        <span className="font-medium truncate">
+                          {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
+                        </span>
+                        {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
+                        <Badge variant="outline" className="text-xs shrink-0 hidden md:inline-flex">
+                          <span className="truncate">{reviewInfo.term.name}</span>
+                        </Badge>
+                      </div>
+                      {/* 學期徽章 - 手機版顯示在下方 */}
+                      <Badge variant="outline" className="text-xs w-fit md:hidden">
+                        <span className="truncate">{reviewInfo.term.name}</span>
                       </Badge>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-primary truncate">
+                          {reviewInfo.course.course_code} - {reviewInfo.course.course_title}
+                        </h4>
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-sm shrink-0 ${
+                            reviewInfo.instructorDetail.session_type === 'Lecture' 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                              : reviewInfo.instructorDetail.session_type === 'Tutorial'
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                              : ''
+                          }`}
+                        >
+                          {reviewInfo.instructorDetail.session_type}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
-                      {/* 最終成績 - 右上角大顯示 */}
-                      {reviewInfo.review.course_final_grade && (
-                        <div className="flex flex-col items-center shrink-0">
-                          <div className="text-xs text-muted-foreground mb-1">{t('instructors.finalGrade')}</div>
-                          <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
-                            {reviewInfo.review.course_final_grade}
-                          </Badge>
+                    {/* 最終成績 - 右上角大顯示 */}
+                    {reviewInfo.review.course_final_grade && (
+                      <div className="flex flex-col items-center shrink-0">
+                        <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                          {reviewInfo.review.course_final_grade}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 課程評分 */}
+                  <div className="grid grid-cols-3 gap-1 text-xs">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <BookOpen className="h-3 w-3 text-primary" />
+                        <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
+                      </div>
+                      {reviewInfo.review.course_workload === null || reviewInfo.review.course_workload === -1 ? (
+                        <span className="text-muted-foreground">
+                          {reviewInfo.review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                        </span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3 w-3 ${
+                                star <= reviewInfo.review.course_workload 
+                                  ? 'fill-yellow-400 text-yellow-400' 
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-1 text-xs font-medium">{reviewInfo.review.course_workload}</span>
                         </div>
                       )}
-                      <div className="text-sm text-muted-foreground shrink-0">
-                        {reviewInfo.term.name}
-                      </div>
                     </div>
-                  </div>
-
-                  {/* 評分 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
-                    <div className="space-y-2 min-w-0 overflow-hidden">
-                      <div className="flex items-center justify-between min-w-0 overflow-hidden">
-                        <span className="text-sm shrink-0">{t('instructors.teachingRating')}:</span>
-                        <div className="shrink-0">
-                          {renderRatingStars(reviewInfo.instructorDetail.teaching)}
-                        </div>
-                      </div>
-                      {reviewInfo.instructorDetail.grading !== null && (
-                        <div className="flex items-center justify-between min-w-0 overflow-hidden">
-                          <span className="text-sm shrink-0">{t('instructors.gradingFairness')}:</span>
-                          <div className="shrink-0">
-                            {renderRatingStars(reviewInfo.instructorDetail.grading)}
-                          </div>
+                    
+                                         <div className="text-center">
+                       <div className="flex items-center justify-center gap-1 mb-1">
+                         <Brain className="h-3 w-3 text-primary" />
+                         <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
+                       </div>
+                      {reviewInfo.review.course_difficulties === null || reviewInfo.review.course_difficulties === -1 ? (
+                        <span className="text-muted-foreground">
+                          {reviewInfo.review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                        </span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3 w-3 ${
+                                star <= reviewInfo.review.course_difficulties 
+                                  ? 'fill-yellow-400 text-yellow-400' 
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-1 text-xs font-medium">{reviewInfo.review.course_difficulties}</span>
                         </div>
                       )}
                     </div>
-                    <div className="space-y-2 min-w-0 overflow-hidden">
-                      <div className="flex items-center justify-between min-w-0 overflow-hidden">
-                        <span className="text-sm shrink-0">{t('instructors.courseRating')}:</span>
-                        <div className="shrink-0">
-                          {renderRatingStars(reviewInfo.review.course_usefulness)}
+                    
+                                         <div className="text-center">
+                       <div className="flex items-center justify-center gap-1 mb-1">
+                         <Target className="h-3 w-3 text-primary" />
+                         <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
+                       </div>
+                      {reviewInfo.review.course_usefulness === null || reviewInfo.review.course_usefulness === -1 ? (
+                        <span className="text-muted-foreground">
+                          {reviewInfo.review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                        </span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3 w-3 ${
+                                star <= reviewInfo.review.course_usefulness 
+                                  ? 'fill-yellow-400 text-yellow-400' 
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-1 text-xs font-medium">{reviewInfo.review.course_usefulness}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 課程評論 */}
+                  {reviewInfo.review.course_comments && (
+                    <>
+                      <Separator />
+                      <div className="min-w-0">
+                        <h5 className="text-sm font-medium mb-2">{t('review.courseComments')}</h5>
+                        <div className="bg-muted/50 p-2 rounded-md break-words">
+                          {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
+                            renderCommentMarkdown(reviewInfo.review.course_comments)
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              {reviewInfo.review.course_comments}
+                            </p>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* 課程要求 */}
-                  <div className="space-y-2 overflow-hidden">
-                    <h5 className="text-sm font-medium">{t('instructors.courseRequirements')}:</h5>
-                    <div className="flex flex-wrap gap-2 overflow-hidden">
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_midterm, t('instructors.midtermExam'), t('instructors.noMidtermExam'))}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_quiz, t('instructors.quiz'), t('instructors.noQuiz'))}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_group_project, t('instructors.groupProject'), t('instructors.noGroupProject'))}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_individual_assignment, t('instructors.individualAssignment'), t('instructors.noIndividualAssignment'))}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_presentation, t('instructors.presentation'), t('instructors.noPresentation'))}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_reading, t('instructors.reading'), t('instructors.noReading'))}
-                      {renderBooleanBadge(reviewInfo.instructorDetail.has_attendance_requirement, t('instructors.attendanceRequirement'), t('instructors.noAttendanceRequirement'))}
-                    </div>
-                  </div>
-
-                  {/* 評論內容 */}
-                  {reviewInfo.instructorDetail.comments && (
-                    <div className="space-y-2 min-w-0 overflow-hidden">
-                      <h5 className="text-sm font-medium">{t('instructors.instructorComments')}:</h5>
-                      <p className="text-sm bg-muted/50 rounded-lg p-3 break-words overflow-hidden">
-                        {reviewInfo.instructorDetail.comments}
-                      </p>
-                    </div>
+                    </>
                   )}
 
-                  {/* 課程整體評論 */}
-                  {reviewInfo.review.course_comments && (
-                    <div className="space-y-2 min-w-0 overflow-hidden">
-                      <h5 className="text-sm font-medium">{t('instructors.courseComments')}:</h5>
-                      <div className="bg-muted/30 rounded-lg p-3 break-words overflow-hidden">
-                        {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
-                          renderCommentMarkdown(reviewInfo.review.course_comments)
-                        ) : (
-                          <p className="text-sm">
-                            {reviewInfo.review.course_comments}
+                  {/* 服務學習 */}
+                  {reviewInfo.review.has_service_learning && (
+                    <>
+                      <Separator />
+                      <div>
+                        <Badge variant="default" className="mb-2">
+                          {t('review.serviceLearning')}
+                        </Badge>
+                        {reviewInfo.review.service_learning_description && (
+                          <p className="text-sm text-muted-foreground break-words">
+                            {reviewInfo.review.service_learning_description}
                           </p>
                         )}
                       </div>
-                    </div>
+                    </>
                   )}
 
+                  {/* 講師詳細評價 */}
+                  {reviewInfo.instructorDetail && (
+                    <>
+                      <Separator />
+                      <div className="rounded-lg p-2 space-y-2 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 overflow-hidden">
+                        <div className="flex items-center justify-between gap-2 overflow-hidden">
+                          <h5 className="text-sm font-medium truncate">{t('review.instructorEvaluation')}:</h5>
+                        </div>
+                        
+                        {/* 講師評分 */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <GraduationCap className="h-3 w-3 text-primary" />
+                              <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
+                            </div>
+                            {reviewInfo.instructorDetail.teaching === null ? (
+                              <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                            ) : reviewInfo.instructorDetail.teaching === -1 ? (
+                              <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-3 w-3 ${
+                                      star <= reviewInfo.instructorDetail.teaching 
+                                        ? 'fill-yellow-400 text-yellow-400' 
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                                <span className="ml-1 text-xs font-medium">{reviewInfo.instructorDetail.teaching}</span>
+                              </div>
+                            )}
+                          </div>
+                          {reviewInfo.instructorDetail.grading !== null && reviewInfo.instructorDetail.grading !== -1 && (
+                                                         <div className="text-center">
+                               <div className="flex items-center justify-center gap-1 mb-1">
+                                 <Target className="h-3 w-3 text-primary" />
+                                 <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                               </div>
+                              <div className="flex items-center justify-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-3 w-3 ${
+                                      star <= reviewInfo.instructorDetail.grading 
+                                        ? 'fill-yellow-400 text-yellow-400' 
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                                <span className="ml-1 text-xs font-medium">{reviewInfo.instructorDetail.grading}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 課程要求 */}
+                        <div className="space-y-2 overflow-hidden">
+                          <h6 className="text-xs font-medium text-muted-foreground">{t('review.courseRequirements')}:</h6>
+                          <div className="flex flex-wrap gap-1 overflow-hidden">
+                                            {renderBooleanBadge(reviewInfo.instructorDetail.has_midterm, t('review.requirements.midterm'))}
+                {renderBooleanBadge(reviewInfo.instructorDetail.has_quiz, t('review.requirements.quiz'))}
+                {renderBooleanBadge(reviewInfo.instructorDetail.has_group_project, t('review.requirements.groupProject'))}
+                {renderBooleanBadge(reviewInfo.instructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                {renderBooleanBadge(reviewInfo.instructorDetail.has_presentation, t('review.requirements.presentation'))}
+                {renderBooleanBadge(reviewInfo.instructorDetail.has_reading, t('review.requirements.reading'))}
+                {renderBooleanBadge(reviewInfo.instructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
+                          </div>
+                        </div>
+
+                        {/* 講師評論 */}
+                        {reviewInfo.instructorDetail.comments && (
+                          <div className="space-y-1 overflow-hidden">
+                            <h6 className="text-xs font-medium text-muted-foreground">{t('review.instructorComments')}:</h6>
+                            <div className="bg-white/60 dark:bg-black/20 p-2 rounded-md break-words">
+                              {hasMarkdownFormatting(reviewInfo.instructorDetail.comments) ? (
+                                renderCommentMarkdown(reviewInfo.instructorDetail.comments)
+                              ) : (
+                                <p className="text-xs text-muted-foreground">
+                                  {reviewInfo.instructorDetail.comments}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* 投票按鈕和時間 */}
                   <Separator />
-                  
-                  {/* 評論者信息 */}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground overflow-hidden">
-                    <span className="truncate flex-1 min-w-0">
-                      {t('instructors.reviewer')}: {reviewInfo.review.is_anon ? t('instructors.anonymous') : reviewInfo.review.username}
-                    </span>
-                    <span className="shrink-0 ml-2">
-                      {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
-                    </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 overflow-hidden">
+                    <div className="flex-shrink-0">
+                      {/* 這裡可以添加投票按鈕，如果需要的話 */}
+                    </div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+                      <Calendar className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{formatDateTimeUTC8(reviewInfo.review.submitted_at)}</span>
+                    </div>
                   </div>
                 </div>
               ))}

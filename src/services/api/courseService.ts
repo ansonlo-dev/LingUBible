@@ -342,9 +342,9 @@ export class CourseService {
           reviewCount: 0,
           averageRating: 0,
           studentCount: 0,
-          averageWorkload: 0,
-          averageDifficulty: 0,
-          averageUsefulness: 0
+          averageWorkload: -1,
+          averageDifficulty: -1,
+          averageUsefulness: -1
         };
       }
 
@@ -357,31 +357,31 @@ export class CourseService {
       const totalDifficulty = validDifficultyReviews.reduce((sum, review) => sum + review.course_difficulties, 0);
       const totalUsefulness = validUsefulnessReviews.reduce((sum, review) => sum + review.course_usefulness, 0);
 
-      const averageWorkload = validWorkloadReviews.length > 0 ? totalWorkload / validWorkloadReviews.length : 0;
-      const averageDifficulty = validDifficultyReviews.length > 0 ? totalDifficulty / validDifficultyReviews.length : 0;
-      const averageUsefulness = validUsefulnessReviews.length > 0 ? totalUsefulness / validUsefulnessReviews.length : 0;
+      const averageWorkload = validWorkloadReviews.length > 0 ? totalWorkload / validWorkloadReviews.length : -1;
+      const averageDifficulty = validDifficultyReviews.length > 0 ? totalDifficulty / validDifficultyReviews.length : -1;
+      const averageUsefulness = validUsefulnessReviews.length > 0 ? totalUsefulness / validUsefulnessReviews.length : -1;
 
       // 計算學生數（去重用戶）
       const uniqueUsers = new Set(reviews.map(review => review.user_id));
       const studentCount = uniqueUsers.size;
 
-      return {
-        reviewCount,
-        averageRating: averageUsefulness, // 使用實用性作為總體評分
-        studentCount,
-        averageWorkload,
-        averageDifficulty,
-        averageUsefulness
-      };
+              return {
+          reviewCount,
+          averageRating: averageUsefulness > 0 ? averageUsefulness : 0, // 使用實用性作為總體評分，但避免負數
+          studentCount,
+          averageWorkload,
+          averageDifficulty,
+          averageUsefulness
+        };
     } catch (error) {
       console.error('Error fetching course detailed stats:', error);
       return {
         reviewCount: 0,
         averageRating: 0,
         studentCount: 0,
-        averageWorkload: 0,
-        averageDifficulty: 0,
-        averageUsefulness: 0
+        averageWorkload: -1,
+        averageDifficulty: -1,
+        averageUsefulness: -1
       };
     }
   }
@@ -2062,4 +2062,128 @@ export class CourseService {
     // 使用優化版本
     return this.getInstructorReviewsFromDetailsWithVotesBatch(instructorName, userId, language);
   }
+
+  /**
+   * 更新用戶在所有評論中的用戶名
+   * 當用戶更改用戶名時調用此函數來同步所有評論中的用戶名
+   */
+  static async updateUserReviewsUsername(userId: string, newUsername: string): Promise<void> {
+    try {
+      console.log(`🔄 Starting username update for user ${userId} to "${newUsername}"`);
+      
+      // 獲取該用戶的所有評論
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.equal('user_id', userId),
+          Query.equal('is_anon', false), // 只更新非匿名評論
+          Query.limit(1000),
+          Query.select(['$id', 'username', 'course_code', 'is_anon']) // 添加更多字段用於調試
+        ]
+      );
+
+      console.log(`📋 Found ${response.documents.length} non-anonymous reviews for user ${userId}`);
+      
+      if (response.documents.length === 0) {
+        console.log('ℹ️ No non-anonymous reviews found to update');
+        return;
+      }
+
+      // 顯示找到的評論信息
+      response.documents.forEach((review, index) => {
+        console.log(`📝 Review ${index + 1}: ID=${review.$id}, Course=${review.course_code}, CurrentUsername="${review.username}", IsAnon=${review.is_anon}`);
+      });
+
+      // 批量更新所有評論的用戶名
+      // 首先獲取完整的評論數據，然後只更新用戶名
+      const updatePromises = response.documents.map(async (review) => {
+        console.log(`🔄 Updating review ${review.$id} from "${review.username}" to "${newUsername}"`);
+        
+        try {
+          // 獲取完整的評論文檔
+          const fullReview = await databases.getDocument(
+            this.DATABASE_ID,
+            this.REVIEWS_COLLECTION_ID,
+            review.$id
+          );
+          
+          // 更新用戶名，保持其他所有字段不變
+          return await databases.updateDocument(
+            this.DATABASE_ID,
+            this.REVIEWS_COLLECTION_ID,
+            review.$id,
+            {
+              ...fullReview,
+              username: newUsername,
+              // 移除系統字段，避免衝突
+              $id: undefined,
+              $createdAt: undefined,
+              $updatedAt: undefined,
+              $permissions: undefined,
+              $collectionId: undefined,
+              $databaseId: undefined
+            }
+          );
+        } catch (error) {
+          console.error(`❌ Failed to update review ${review.$id}:`, error);
+          throw error;
+        }
+      });
+
+      const results = await Promise.all(updatePromises);
+      
+      console.log(`✅ Successfully updated username in ${results.length} reviews for user ${userId}`);
+      
+      // 驗證更新結果
+      results.forEach((result, index) => {
+        console.log(`✅ Review ${index + 1} updated: ID=${result.$id}, NewUsername="${result.username}"`);
+      });
+      
+    } catch (error) {
+      console.error('❌ Error updating user reviews username:', error);
+      // 不拋出錯誤，因為這是一個後台同步操作，不應該阻止用戶名更新
+      console.warn('⚠️ Username update in reviews failed, but user profile update will continue');
+    }
+  }
+
+  /**
+   * 測試函數：手動測試用戶名更新功能
+   * 在瀏覽器控制台中調用：CourseService.testUsernameUpdate('your-user-id', 'new-username')
+   */
+  static async testUsernameUpdate(userId: string, newUsername: string): Promise<void> {
+    console.log(`🧪 Testing username update functionality`);
+    console.log(`📋 User ID: ${userId}`);
+    console.log(`📝 New Username: ${newUsername}`);
+    
+    try {
+      // 首先查看用戶的所有評論（包括匿名的）
+      const allReviewsResponse = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.equal('user_id', userId),
+          Query.limit(1000),
+          Query.select(['$id', 'username', 'course_code', 'is_anon'])
+        ]
+      );
+      
+      console.log(`📊 Total reviews for user: ${allReviewsResponse.documents.length}`);
+      allReviewsResponse.documents.forEach((review, index) => {
+        console.log(`📝 All Review ${index + 1}: ID=${review.$id}, Course=${review.course_code}, Username="${review.username}", IsAnon=${review.is_anon}`);
+      });
+      
+      // 然後執行更新
+      await this.updateUserReviewsUsername(userId, newUsername);
+      
+      console.log(`🧪 Test completed`);
+    } catch (error) {
+      console.error('🧪 Test failed:', error);
+    }
+  }
 } 
+
+// 開發模式下將 CourseService 暴露到全局，方便調試
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  (window as any).CourseService = CourseService;
+}

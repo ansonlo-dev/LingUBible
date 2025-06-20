@@ -103,7 +103,7 @@ export function AdvancedCourseFilters({
             <Input
               type="text"
               placeholder={t('search.placeholder')}
-              value={filters.searchTerm}
+              value={filters.searchTerm || ''}
               onChange={(e) => updateFilters({ searchTerm: e.target.value })}
               className="pl-12 pr-12 h-[48px] text-base bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-lg transition-all duration-300"
             />

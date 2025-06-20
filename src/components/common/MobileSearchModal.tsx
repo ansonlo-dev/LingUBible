@@ -145,7 +145,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 ref={inputRef}
                 type="text"
                 placeholder={t('search.placeholder')}
-                value={searchQuery}
+                value={searchQuery || ''}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 py-4 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
@@ -246,7 +246,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 ref={inputRef}
                 type="text"
                 placeholder={t('search.placeholder')}
-                value={searchQuery}
+                value={searchQuery || ''}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 py-4 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />

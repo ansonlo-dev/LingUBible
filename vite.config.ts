@@ -85,15 +85,12 @@ export default defineConfig(({ command, mode }) => {
         'react-dom',
         'react-router-dom',
         '@tanstack/react-query',
-        'appwrite',
         'lucide-react',
         'clsx',
         'tailwind-merge',
         'date-fns',
       ],
       exclude: ['@vite/client', '@vite/env'],
-      // 強制預構建某些依賴
-      force: isDevelopment,
     },
     esbuild: {
       target: 'es2020',

@@ -216,8 +216,9 @@ export const getAvatarContent = (config: AvatarConfig, userData: {
   const { showPersonalAvatar, showAnonymousAvatar, context } = config;
   const { userId, name, email, reviewId, customAvatar } = userData;
 
-  // 評論和回覆情境：使用匿名頭像或不顯示
+  // 評論和回覆情境：根據是否匿名決定顯示類型
   if (context === 'review' || context === 'comment') {
+    // 如果要顯示匿名頭像且有評論ID，顯示匿名頭像
     if (showAnonymousAvatar && reviewId) {
       const avatarData = getAnonymousAvatar(reviewId);
       return {
@@ -226,10 +227,32 @@ export const getAvatarContent = (config: AvatarConfig, userData: {
         background: avatarData.background
       };
     }
-    // 不顯示頭像的情況下返回空字符串
+    
+    // 如果要顯示個人頭像且有用戶ID（非匿名評論），顯示個人頭像
+    if (showPersonalAvatar && userId) {
+      // 優先使用自定義頭像
+      if (customAvatar) {
+        const avatarData = getCustomAvatar(customAvatar);
+        return {
+          type: 'emoji',
+          content: avatarData.animal,
+          background: avatarData.background
+        };
+      }
+      
+      // 使用默認生成的頭像
+      const avatarData = getPersonalAvatar(userId);
+      return {
+        type: 'emoji',
+        content: avatarData.animal,
+        background: avatarData.background
+      };
+    }
+    
+    // 降級到文字首字母
     return {
       type: 'text',
-      content: ''
+      content: getInitials(name || '', '', email || '')
     };
   }
 

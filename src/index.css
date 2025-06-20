@@ -183,9 +183,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 側邊欄項目懸停效果 */
   .sidebar-container nav a:hover {
     transform: translateX(4px);
-    box-shadow: 
-      0 2px 8px rgba(0, 0, 0, 0.1),
-      0 1px 4px rgba(0, 0, 0, 0.06);
+    /* 移除亮色主題下的陰影邊框效果 */
   }
 
   .dark .sidebar-container nav a:hover {
@@ -610,7 +608,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 課程卡片樣式 - 淺色模式使用淺灰背景 */
   .course-card {
     background: #f9fafb !important;
-    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 16px;
     box-shadow: 
       0 2px 8px rgba(0, 0, 0, 0.08),
@@ -623,7 +620,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   .course-card:hover {
     background: #f3f4f6 !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.15),
       0 4px 12px rgba(0, 0, 0, 0.08);
@@ -632,7 +628,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   .dark .course-card {
     background: rgb(var(--card)) !important;
-    border: 1px solid rgb(var(--border));
     box-shadow: 
       0 2px 8px rgba(0, 0, 0, 0.1),
       0 1px 4px rgba(0, 0, 0, 0.05);
@@ -643,7 +638,48 @@ div[style*="position: fixed"][style*="right: 14px"] {
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.25),
       0 4px 12px rgba(0, 0, 0, 0.12);
-    border-color: rgba(var(--primary), 0.3);
+  }
+
+  /* 優秀課程的光澤效果 */
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .quality-excellent {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quality-excellent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: shine 3s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  .dark .quality-excellent::before {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      transparent 100%
+    );
   }
 
   /* 講師卡片樣式 - 繼承課程卡片樣式 */
@@ -2385,5 +2421,40 @@ div[style*="position: fixed"][style*="right: 14px"] {
   
   .dark .legal-page-card {
     background-color: rgb(var(--card)) !important;
+  }
+
+  /* Shine effect for Excellent badge */
+  .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shine-effect::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shine-sweep 3s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  .shine-effect > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes shine-sweep {
+    0% {
+      left: -100%;
+    }
+    50% {
+      left: 100%;
+    }
+    100% {
+      left: 100%;
+    }
   }
 }

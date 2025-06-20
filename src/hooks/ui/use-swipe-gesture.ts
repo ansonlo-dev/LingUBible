@@ -61,7 +61,15 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       return;
     }
 
+    if (!e.touches || e.touches.length === 0) {
+      return;
+    }
+    
     const touch = e.touches[0];
+    if (!touch) {
+      return;
+    }
+    
     const startX = touch.clientX;
     const startY = touch.clientY;
     const screenWidth = window.innerWidth;
@@ -92,7 +100,15 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const currentOptions = optionsRef.current;
     if (!currentOptions.enabled || !isValidSwipeStart.current) return;
 
+    if (!e.touches || e.touches.length === 0) {
+      return;
+    }
+    
     const touch = e.touches[0];
+    if (!touch) {
+      return;
+    }
+    
     const currentX = touch.clientX;
     const currentY = touch.clientY;
     
@@ -146,7 +162,15 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       return;
     }
 
+    if (!e.changedTouches || e.changedTouches.length === 0) {
+      return;
+    }
+    
     const touch = e.changedTouches[0];
+    if (!touch) {
+      return;
+    }
+    
     const endX = touch.clientX;
     const endY = touch.clientY;
     const endTime = Date.now();

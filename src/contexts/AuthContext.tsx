@@ -1,11 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { authService, AuthUser } from '@/services/api/auth';
 import { toast } from '@/hooks/use-toast';
 import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/contexts/LanguageContext';
 import AppwriteUserStatsService from '@/services/api/appwriteUserStats';
-import { theme } from '@/lib/utils';
 import { oauthService } from '@/services/api/oauth';
 
 interface AuthContextType {
@@ -24,6 +23,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// 全局標記防止多個實例同時初始化
+let isGloballyInitializing = false;
+
 // 獲取用戶顯示名稱的輔助函數
 const getUserDisplayName = (user: AuthUser | null, t: (key: string) => string): string => {
     if (!user) return t('common.user');
@@ -41,10 +43,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [userSessionId, setUserSessionId] = useState<string | null>(null); // 存儲當前用戶的 sessionId
+    const [isCheckingUser, setIsCheckingUser] = useState(false); // 防止重複調用
+    const [isRefreshingUser, setIsRefreshingUser] = useState(false); // 防止 refreshUser 重複調用
+    const hasInitialized = useRef(false); // 追蹤是否已經初始化
     const { t } = useLanguage(); // 將 useLanguage 移到組件頂層
 
     useEffect(() => {
-        checkUser();
+        // 只在初始掛載時執行一次，防止重複調用
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            console.log('AuthProvider 初始化，執行 checkUser');
+            checkUser();
+        }
         
         // 設置定期清理非學生用戶的定時器（每5分鐘執行一次）
         const cleanupInterval = setInterval(async () => {
@@ -86,7 +96,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const checkUser = async () => {
-        // 清理非學生用戶會話的輔助函數
+        // 防止重複調用（本地和全局）
+        if (isCheckingUser || isGloballyInitializing) {
+            console.log('checkUser 已在執行中，跳過重複調用', { isCheckingUser, isGloballyInitializing });
+            return;
+        }
+        
+        setIsCheckingUser(true);
+        isGloballyInitializing = true;
+        
+        try {
+            // 清理非學生用戶會話的輔助函數
         const cleanupNonStudentSession = async (email: string) => {
             try {
                 await oauthService.forceCleanupNonStudentSession();
@@ -117,36 +137,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
-            // 首先嘗試直接獲取用戶信息（最可靠的方法）
+            // 首先檢查本地會話標記，避免不必要的 API 調用
+            const hasLocalSession = authService.hasLocalSession();
+            console.log('本地會話檢測結果:', hasLocalSession);
+            
             let currentUser = null;
             let hasValidSession = false;
             
-            try {
-                currentUser = await authService.getCurrentUser();
-                hasValidSession = true;
-                console.log('直接獲取用戶成功:', currentUser?.email);
-            } catch (directError) {
-                console.log('直接獲取用戶失敗:', directError);
-                // 如果直接獲取失敗，檢查本地會話標記
-                hasValidSession = authService.hasLocalSession();
-                console.log('本地會話檢測結果:', hasValidSession);
-            }
-            
-            if (hasValidSession) {
-                // 如果沒有用戶信息但有會話，再次嘗試獲取
-                if (!currentUser) {
-                    try {
-                        currentUser = await authService.getCurrentUser();
-                        console.log('重試獲取用戶成功:', currentUser?.email);
-                    } catch (retryError) {
-                        console.log('重試獲取用戶失敗:', retryError);
-                        // 會話可能已過期，清理狀態
-                        setUser(null);
-                        setUserSessionId(null);
-                        setLoading(false);
-                        return;
+            if (hasLocalSession) {
+                // 只有在有本地會話標記時才嘗試獲取用戶信息
+                try {
+                    currentUser = await authService.getCurrentUser();
+                    hasValidSession = true;
+                    console.log('獲取用戶成功:', currentUser?.email);
+                } catch (directError: any) {
+                    // 如果是 401 錯誤，表示會話已過期，清理本地狀態
+                    if (directError?.code === 401 || directError?.type === 'general_unauthorized_scope') {
+                        console.log('會話已過期，清理狀態');
+                        hasValidSession = false;
+                    } else {
+                        console.log('獲取用戶失敗:', directError);
+                        hasValidSession = false;
                     }
                 }
+            } else {
+                console.log('沒有本地會話標記，跳過 API 調用');
+                hasValidSession = false;
+            }
+            
+            if (hasValidSession && currentUser) {
+                // 只有當我們有用戶信息時才繼續處理
 
                 // 檢查是否為 session-only 模式且是新的瀏覽器 session
                 const sessionOnly = sessionStorage.getItem('sessionOnly');
@@ -258,6 +278,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
             setLoading(false);
         }
+        } catch (outerError) {
+            console.error('checkUser 執行失敗:', outerError);
+            setUser(null);
+            setUserSessionId(null);
+            setLoading(false);
+        } finally {
+            setIsCheckingUser(false);
+            isGloballyInitializing = false;
+        }
     };
 
     const login = async (email: string, password: string, rememberMe?: boolean) => {
@@ -266,7 +295,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await checkUser();
             
             // 獲取當前用戶（已經在 checkUser 中獲取過了）
-            const currentUser = user || await authService.getCurrentUser();
+            const currentUser = user;
             
             // 異步處理統計記錄和頭像獲取，不阻塞登入流程
             if (currentUser?.$id) {
@@ -311,7 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await checkUser();
             
             // 獲取當前用戶
-            const currentUser = user || await authService.getCurrentUser();
+            const currentUser = user;
             
             // 異步處理統計記錄，不阻塞註冊流程
             if (currentUser?.$id) {
@@ -342,7 +371,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const sendStudentVerificationCode = async (email: string) => {
-        const currentTheme = theme.getEffectiveTheme();
+        // 獲取當前主題，如果無法獲取則使用默認值
+        const currentTheme = 'light'; // 暫時使用默認值
         const { language } = useLanguage();
         return await authService.sendStudentVerificationCode(email, language, currentTheme);
     };
@@ -352,7 +382,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const sendPasswordReset = async (email: string, recaptchaToken?: string, language?: string) => {
-        const currentTheme = theme.getEffectiveTheme();
+        // 獲取當前主題，如果無法獲取則使用默認值
+        const currentTheme = 'light'; // 暫時使用默認值
         return await authService.sendPasswordReset(email, recaptchaToken, language, currentTheme);
     };
 
@@ -410,7 +441,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const refreshUser = async () => {
+        // 防止重複調用
+        if (isRefreshingUser) {
+            console.log('refreshUser 已在執行中，跳過重複調用');
+            return;
+        }
+        
+        setIsRefreshingUser(true);
+        
         try {
+            // 首先檢查本地會話狀態
+            const hasLocalSession = authService.hasLocalSession();
+            if (!hasLocalSession) {
+                console.log('沒有本地會話，跳過刷新');
+                setUser(null);
+                setUserSessionId(null);
+                return;
+            }
+            
             // 對於 OAuth 流程，可能需要多次嘗試才能獲取到用戶信息
             let currentUser = null;
             let attempts = 0;
@@ -423,7 +471,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         console.log(`刷新用戶資料成功 (嘗試 ${attempts + 1}):`, currentUser.email);
                         break;
                     }
-                } catch (error) {
+                } catch (error: any) {
+                    // 如果是 401 錯誤，不要重試
+                    if (error?.code === 401 || error?.type === 'general_unauthorized_scope') {
+                        console.log('刷新用戶資料失敗: 會話已過期');
+                        break;
+                    }
+                    
                     console.log(`刷新用戶資料失敗 (嘗試 ${attempts + 1}):`, error);
                     if (attempts < maxAttempts - 1) {
                         // 等待一下再重試
@@ -447,6 +501,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 如果刷新失敗，可能是 session 過期，設置為 null
             setUser(null);
             setUserSessionId(null);
+        } finally {
+            setIsRefreshingUser(false);
         }
     };
 

@@ -1,7 +1,7 @@
 import { Star } from 'lucide-react';
 
 interface StarRatingProps {
-  rating: number;
+  rating: number | null;
   maxRating?: number;
   size?: 'sm' | 'md' | 'lg';
   showValue?: boolean;
@@ -27,6 +27,27 @@ export const StarRating = ({
     lg: 'text-lg'
   };
 
+  // 處理 null、undefined 和無效值
+  if (rating === null || rating === undefined || typeof rating !== 'number' || isNaN(rating)) {
+    return (
+      <div className={`flex items-center gap-1 ${className}`}>
+        <div className="flex items-center">
+          {Array.from({ length: maxRating }, (_, index) => (
+            <Star
+              key={index}
+              className={`${sizeClasses[size]} fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700`}
+            />
+          ))}
+        </div>
+        {showValue && (
+          <span className={`${textSizeClasses[size]} text-muted-foreground ml-1`}>
+            N/A
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       <div className="flex items-center">
@@ -51,7 +72,7 @@ export const StarRating = ({
       </div>
       {showValue && (
         <span className={`${textSizeClasses[size]} text-muted-foreground ml-1`}>
-          {rating.toFixed(1)}
+          {rating.toFixed(2)}
         </span>
       )}
     </div>

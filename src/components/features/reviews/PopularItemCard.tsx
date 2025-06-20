@@ -1,4 +1,4 @@
-import { Star, MessageSquare, BookOpen, Mail, CheckCircle, XCircle, GraduationCap, Clock, Zap, TrendingUp, Loader2, Award, Scale } from 'lucide-react';
+import { Star, MessageSquare, BookOpen, Mail, CheckCircle, XCircle, GraduationCap, Scale, Brain, Target, Loader2, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +52,10 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     label: string, 
     color: string 
   }) => (
-    <div className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs`}>
+    <div 
+      className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs hover:scale-105 transition-transform cursor-help`}
+      title={`${label}: ${value > 0 ? value.toFixed(1) : 'N/A'}/5`}
+    >
       <Icon className="h-3 w-3 mb-0.5" />
       <span className="font-bold text-xs">{value > 0 ? value.toFixed(1) : 'N/A'}</span>
       <span className="text-xs font-medium leading-tight">{label}</span>
@@ -75,7 +78,10 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     label: string, 
     color: string 
   }) => (
-    <div className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs`}>
+    <div 
+      className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs hover:scale-105 transition-transform cursor-help`}
+      title={`${label}: ${value > 0 ? value.toFixed(1) : 'N/A'}/5`}
+    >
       <Icon className="h-3 w-3 mb-0.5" />
       <span className="font-bold text-xs">{value > 0 ? value.toFixed(1) : 'N/A'}</span>
       <span className="text-xs font-medium leading-tight">{label}</span>
@@ -115,19 +121,19 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               ) : (
                 <>
                   <StatBox
-                    icon={Clock}
+                    icon={Scale}
                     value={stats?.averageWorkload || 0}
                     label={t('card.workload')}
                     color="from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800/30 text-blue-600 dark:text-blue-400"
                   />
                   <StatBox
-                    icon={Zap}
+                    icon={Brain}
                     value={stats?.averageDifficulty || 0}
                     label={t('card.difficulty')}
                     color="from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800/30 text-amber-600 dark:text-amber-400"
                   />
                   <StatBox
-                    icon={TrendingUp}
+                    icon={Target}
                     value={stats?.averageUsefulness || 0}
                     label={t('card.usefulness')}
                     color="from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800/30 text-green-600 dark:text-green-400"

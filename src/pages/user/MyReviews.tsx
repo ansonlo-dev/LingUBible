@@ -18,10 +18,15 @@ import {
   Star, 
   User,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Brain,
+  Target,
+  GraduationCap
 } from 'lucide-react';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
+import { ReviewAvatar } from '@/components/ui/review-avatar';
+import { StarRating } from '@/components/ui/star-rating';
 
 interface UserReviewInfo extends CourseReviewInfo {
   upvotes: number;
@@ -94,23 +99,7 @@ const MyReviews = () => {
     }
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating 
-                ? 'fill-yellow-400 text-yellow-400' 
-                : 'text-gray-300'
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-sm text-muted-foreground">({rating})</span>
-      </div>
-    );
-  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -165,39 +154,45 @@ const MyReviews = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {reviews.map((reviewInfo) => (
             <Card key={reviewInfo.review.$id} className="course-card overflow-hidden">
-              <CardHeader className="overflow-hidden">
-                <div className="space-y-3">
-                  {/* 課程標題和成績 */}
-                  <div className="flex items-start justify-between gap-2 overflow-hidden">
-                    <CardTitle className="flex items-center gap-2 min-w-0 flex-1">
-                      <BookOpen className="h-5 w-5 shrink-0" />
-                      <span className="truncate">{reviewInfo.review.course_code}</span>
-                    </CardTitle>
+              <CardHeader className="pb-3">
+                <div className="space-y-3 overflow-hidden">
+                  {/* 課程標題 */}
+                  <CardTitle className="flex items-center gap-2 min-w-0">
+                    <BookOpen className="h-5 w-5 shrink-0" />
+                    <span className="truncate">{reviewInfo.review.course_code}</span>
+                  </CardTitle>
+                  
+                  {/* 用戶信息和最終成績 */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-2 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ReviewAvatar
+                          isAnonymous={reviewInfo.review.is_anon}
+                          userId={reviewInfo.review.user_id}
+                          username={reviewInfo.review.username}
+                          reviewId={reviewInfo.review.$id}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                        <span className="font-medium truncate">
+                          {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="text-xs w-fit">
+                        <span className="truncate">{reviewInfo.term.name}</span>
+                      </Badge>
+                    </div>
                     {/* 最終成績 - 右上角大顯示 */}
                     {reviewInfo.review.course_final_grade && (
                       <div className="flex flex-col items-center shrink-0">
-                        <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
                         <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
                           {reviewInfo.review.course_final_grade}
                         </Badge>
                       </div>
                     )}
-                  </div>
-                  
-                  {/* 課程信息 */}
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground overflow-hidden">
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Calendar className="h-4 w-4" />
-                      <span>{reviewInfo.term.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <User className="h-4 w-4" />
-                      <span>{reviewInfo.review.is_anon ? t('review.anonymous') : reviewInfo.review.username}</span>
-                    </div>
-                    <span className="shrink-0">{formatDateTimeUTC8(reviewInfo.review.$createdAt)}</span>
                   </div>
                   
                   {/* 操作按鈕 */}
@@ -251,20 +246,47 @@ const MyReviews = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4 overflow-hidden">
+              <CardContent className="space-y-2 overflow-hidden">
                 {/* Course Ratings */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1 min-w-0">
-                    <p className="text-sm font-medium">{t('review.workload')}</p>
-                    {renderStars(reviewInfo.review.course_workload)}
+                <div className="grid grid-cols-3 gap-1 text-xs">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <BookOpen className="h-3 w-3 text-primary" />
+                      <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
+                    </div>
+                    {reviewInfo.review.course_workload === null || reviewInfo.review.course_workload === -1 ? (
+                      <span className="text-muted-foreground">
+                        {reviewInfo.review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                      </span>
+                    ) : (
+                      <StarRating rating={reviewInfo.review.course_workload} showValue size="sm" />
+                    )}
                   </div>
-                  <div className="space-y-1 min-w-0">
-                    <p className="text-sm font-medium">{t('review.difficulty')}</p>
-                    {renderStars(reviewInfo.review.course_difficulties)}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Brain className="h-3 w-3 text-primary" />
+                      <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
+                    </div>
+                    {reviewInfo.review.course_difficulties === null || reviewInfo.review.course_difficulties === -1 ? (
+                      <span className="text-muted-foreground">
+                        {reviewInfo.review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                      </span>
+                    ) : (
+                      <StarRating rating={reviewInfo.review.course_difficulties} showValue size="sm" />
+                    )}
                   </div>
-                  <div className="space-y-1 min-w-0">
-                    <p className="text-sm font-medium">{t('review.usefulness')}</p>
-                    {renderStars(reviewInfo.review.course_usefulness)}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Target className="h-3 w-3 text-primary" />
+                      <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
+                    </div>
+                    {reviewInfo.review.course_usefulness === null || reviewInfo.review.course_usefulness === -1 ? (
+                      <span className="text-muted-foreground">
+                        {reviewInfo.review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                      </span>
+                    ) : (
+                      <StarRating rating={reviewInfo.review.course_usefulness} showValue size="sm" />
+                    )}
                   </div>
                 </div>
 
@@ -274,7 +296,7 @@ const MyReviews = () => {
                 {reviewInfo.review.course_comments && (
                   <div className="space-y-2 min-w-0">
                     <p className="text-sm font-medium">{t('review.comments')}</p>
-                    <div className="bg-muted p-3 rounded-md break-words">
+                    <div className="bg-muted p-2 rounded-md break-words">
                       {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
                         renderCommentMarkdown(reviewInfo.review.course_comments)
                       ) : (
@@ -293,7 +315,7 @@ const MyReviews = () => {
                       <Badge variant="secondary">{t('review.serviceLearning')}</Badge>
                     </div>
                     {reviewInfo.review.service_learning_description && (
-                      <div className="bg-muted p-3 rounded-md break-words">
+                      <div className="bg-muted p-2 rounded-md break-words">
                         {hasMarkdownFormatting(reviewInfo.review.service_learning_description) ? (
                           renderCommentMarkdown(reviewInfo.review.service_learning_description)
                         ) : (
@@ -308,26 +330,60 @@ const MyReviews = () => {
 
                 {/* Instructor Details */}
                 {reviewInfo.instructorDetails && reviewInfo.instructorDetails.length > 0 && (
-                  <div className="space-y-3 min-w-0">
+                  <div className="space-y-2 min-w-0">
                     <Separator />
-                    <h4 className="text-sm font-medium">{t('review.instructorEvaluations')}</h4>
+                    <h4 className="text-sm font-medium">{t('review.instructorEvaluation')}</h4>
                     {reviewInfo.instructorDetails.map((instructor, index) => (
-                      <div key={index} className="bg-muted p-3 rounded-md space-y-2 overflow-hidden">
+                      <div key={index} className="p-2 rounded-md space-y-1 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 overflow-hidden">
                         <div className="flex items-center gap-2 overflow-hidden">
-                          <span className="font-medium truncate">{instructor.instructor_name}</span>
-                          <Badge variant="outline" className="shrink-0">{instructor.session_type}</Badge>
+                          <span 
+                            className="font-medium truncate text-primary cursor-pointer hover:underline"
+                            onClick={() => navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`)}
+                          >
+                            {instructor.instructor_name}
+                          </span>
+                          <Badge 
+                            variant="secondary" 
+                            className={`shrink-0 ${
+                              instructor.session_type === 'Lecture' 
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                : instructor.session_type === 'Tutorial'
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                                : ''
+                            }`}
+                          >
+                            {instructor.session_type}
+                          </Badge>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div className="min-w-0">
-                            <span className="font-medium">{t('review.teachingScore')}: </span>
-                            {renderStars(instructor.teaching)}
-                          </div>
-                          {instructor.grading && (
-                            <div className="min-w-0">
-                              <span className="font-medium">{t('review.gradingScore')}: </span>
-                              {renderStars(instructor.grading)}
+                        {/* 教學評分 - 緊湊的2列佈局 */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <GraduationCap className="h-3 w-3 text-primary" />
+                              <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
                             </div>
-                          )}
+                            {instructor.teaching === null || instructor.teaching === -1 ? (
+                              <span className="text-muted-foreground">
+                                {instructor.teaching === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                              </span>
+                            ) : (
+                              <StarRating rating={instructor.teaching} showValue size="sm" />
+                            )}
+                          </div>
+                          
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <Target className="h-3 w-3 text-primary" />
+                              <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                            </div>
+                            {instructor.grading === null || instructor.grading === -1 ? (
+                              <span className="text-muted-foreground">
+                                {instructor.grading === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                              </span>
+                            ) : (
+                              <StarRating rating={instructor.grading} showValue size="sm" />
+                            )}
+                          </div>
                         </div>
                         {instructor.comments && (
                           <div className="break-words">

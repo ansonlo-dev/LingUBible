@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   Star, 
@@ -36,6 +37,7 @@ const CourseDetail = () => {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en', 'zh-TW', 'zh-CN']);
+  const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
 
   // 前端篩選評論
   const filteredReviews = allReviews.filter(reviewInfo => {
@@ -121,15 +123,6 @@ const CourseDetail = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4 hover:bg-muted/50 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
-        
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
@@ -143,15 +136,6 @@ const CourseDetail = () => {
   if (error || !course) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4 hover:bg-muted/50 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
-        
         <div className="flex justify-center items-center min-h-[400px]">
           <Card className="max-w-md w-full">
             <CardHeader className="text-center">
@@ -164,7 +148,7 @@ const CourseDetail = () => {
               <p className="text-muted-foreground">
                 {error || t('pages.courseDetail.courseNotFound')}
               </p>
-              <Button onClick={() => navigate('/courses')}>
+              <Button onClick={() => navigate('/courses')} className="h-12 text-base font-medium">
                 {t('pages.courseDetail.backToCourseList')}
               </Button>
             </CardContent>
@@ -176,16 +160,6 @@ const CourseDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6 pb-20 overflow-hidden">
-      {/* 返回按鈕 */}
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className="mb-4 hover:bg-muted/50 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        {t('common.back')}
-      </Button>
-
       {/* 課程基本信息 */}
       <Card className="course-card overflow-hidden">
         <CardHeader>
@@ -215,7 +189,7 @@ const CourseDetail = () => {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-semibold">{courseStats.averageRating.toFixed(1)}</span>
+                  <span className="text-lg font-semibold">{courseStats.averageRating.toFixed(2)}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{t('pages.courseDetail.averageRating')}</p>
               </div>
@@ -246,53 +220,112 @@ const CourseDetail = () => {
               <p className="text-muted-foreground">{t('pages.courseDetail.noTeachingRecords')}</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {teachingInfo.map((info, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors overflow-hidden">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <Badge variant="outline" className="text-sm shrink-0">
-                          {info.term.name}
-                        </Badge>
-                        <Badge variant="secondary" className="text-sm shrink-0">
-                          {info.sessionType}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground break-words">
-                          {t('pages.courseDetail.termCode')}: {info.term.term_code}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {t('pages.courseDetail.startDate')}: {new Date(info.term.start_date).toLocaleDateString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {t('pages.courseDetail.endDate')}: {new Date(info.term.end_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleInstructorClick(info.instructor.name)}
-                        className="hover:bg-primary/10 hover:text-primary transition-colors max-w-full"
-                      >
-                        <Mail className="h-4 w-4 mr-2 shrink-0" />
-                        <span className="truncate">{info.instructor.name}</span>
-                      </Button>
-                      <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3 shrink-0" />
-                        <span className="text-xs truncate">
-                          {info.emailOverride || info.instructor.email}
-                        </span>
-                      </div>
+            <Tabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
+              <TabsList className="bg-muted/50 backdrop-blur-sm w-full sm:w-auto mb-4">
+                <TabsTrigger 
+                  value="lecture" 
+                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                >
+                  Lecture ({teachingInfo.filter(info => info.sessionType === 'Lecture').length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="tutorial" 
+                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                >
+                  Tutorial ({teachingInfo.filter(info => info.sessionType === 'Tutorial').length})
+                </TabsTrigger>
+              </TabsList>
 
-                    </div>
+              <TabsContent value="lecture" className="mt-0">
+                {teachingInfo.filter(info => info.sessionType === 'Lecture').length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No lecture records found</p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {teachingInfo.filter(info => info.sessionType === 'Lecture').map((info, index) => (
+                      <div key={index} className="rounded-lg p-3 hover:bg-muted/50 transition-colors overflow-hidden">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              {info.term.name}
+                            </Badge>
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs shrink-0 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                            >
+                              {info.sessionType}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleInstructorClick(info.instructor.name)}
+                              className="hover:bg-primary/10 hover:text-primary transition-colors h-auto p-1 justify-start font-medium"
+                            >
+                              <span className="truncate text-sm">{info.instructor.name}</span>
+                            </Button>
+                            <a 
+                              href={`mailto:${info.emailOverride || info.instructor.email}`}
+                              className="text-xs text-muted-foreground truncate pl-1 hover:underline hover:text-primary transition-colors block"
+                            >
+                              {info.emailOverride || info.instructor.email}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="tutorial" className="mt-0">
+                {teachingInfo.filter(info => info.sessionType === 'Tutorial').length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No tutorial records found</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {teachingInfo.filter(info => info.sessionType === 'Tutorial').map((info, index) => (
+                      <div key={index} className="rounded-lg p-3 hover:bg-muted/50 transition-colors overflow-hidden">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              {info.term.name}
+                            </Badge>
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs shrink-0 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                            >
+                              {info.sessionType}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleInstructorClick(info.instructor.name)}
+                              className="hover:bg-primary/10 hover:text-primary transition-colors h-auto p-1 justify-start font-medium"
+                            >
+                              <span className="truncate text-sm">{info.instructor.name}</span>
+                            </Button>
+                            <a 
+                              href={`mailto:${info.emailOverride || info.instructor.email}`}
+                              className="text-xs text-muted-foreground truncate pl-1 hover:underline hover:text-primary transition-colors block"
+                            >
+                              {info.emailOverride || info.instructor.email}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
@@ -307,19 +340,17 @@ const CourseDetail = () => {
       />
 
       {/* 操作按鈕 */}
-      <div className="flex flex-col sm:flex-row gap-4 pb-8 md:pb-0">
+      <div className="flex gap-3 pb-8 md:pb-0">
         <Button 
-          size="lg" 
-          className="flex-1 gradient-primary hover:opacity-90 text-white"
+          className="flex-1 h-12 text-base font-medium gradient-primary hover:opacity-90 text-white"
           onClick={() => navigate(`/write-review/${course.course_code}`)}
         >
           <MessageSquare className="h-4 w-4 mr-2" />
           {t('review.writeReview')}
         </Button>
         <Button 
-          size="lg" 
           variant="outline" 
-          className="flex-1"
+          className="flex-1 h-12 text-base font-medium"
           onClick={() => navigate('/courses')}
         >
           {t('common.back')}

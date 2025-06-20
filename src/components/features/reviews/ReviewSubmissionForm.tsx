@@ -40,13 +40,15 @@ import {
   Underline,
   Strikethrough,
   List,
-  ListOrdered
+  ListOrdered,
+  GraduationCap
 } from 'lucide-react';
 import { CourseService, Course, Term, TeachingRecord, InstructorDetail, Review } from '@/services/api/courseService';
 import { cn } from '@/lib/utils';
 import { validateWordCount } from '@/utils/textUtils';
 import { WordCounter } from '@/components/ui/word-counter';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
+import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
 
 interface ReviewSubmissionFormProps {
@@ -57,7 +59,7 @@ interface ReviewSubmissionFormProps {
 interface InstructorEvaluation {
   instructorName: string;
   sessionType: string;
-  teachingScore: number;
+  teachingScore: number | null;
   gradingScore: number | null;
   comments: string;
   hasMidterm: boolean;
@@ -71,8 +73,8 @@ interface InstructorEvaluation {
 
 // 新增 StarRating 組件
 interface StarRatingProps {
-  rating: number;
-  onRatingChange: (rating: number) => void;
+  rating: number | null;
+  onRatingChange: (rating: number | null) => void;
   label: string;
   type?: 'workload' | 'difficulty' | 'usefulness' | 'teaching' | 'grading';
   t: (key: string) => string;
@@ -82,7 +84,20 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   
   const getDescription = (value: number) => {
-    if (value === 0) return '';
+    if (value === 0) {
+      switch (type) {
+        case 'workload':
+          return t('review.workload.none');
+        case 'difficulty':
+          return t('review.difficulty.none');
+        case 'usefulness':
+          return t('review.usefulness.none');
+        case 'teaching':
+        case 'grading':
+        default:
+          return t('review.rating.0');
+      }
+    }
     
     switch (type) {
       case 'workload':
@@ -98,8 +113,9 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
     }
   };
 
-  const displayRating = hoveredRating !== null ? hoveredRating : rating;
+  const displayRating = hoveredRating !== null ? hoveredRating : (rating ?? 0);
   const isNotApplicable = rating === -1;
+  const isNotRated = rating === null;
 
   return (
     <div className="space-y-1">
@@ -118,7 +134,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
               ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
               : "border-border hover:bg-accent hover:text-accent-foreground"
           )}
-          onClick={() => onRatingChange(rating === -1 ? 0 : -1)}
+          onClick={() => onRatingChange(rating === -1 ? null : -1)}
         >
           {t('review.notApplicable')}
         </Button>
@@ -131,12 +147,28 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
           )}
           onMouseLeave={() => setHoveredRating(null)}
         >
+          {/* 0 star button - easy to click */}
+          <button
+            type="button"
+            onClick={() => onRatingChange(rating === 0 ? null : 0)}
+            onMouseEnter={() => setHoveredRating(0)}
+            className={cn(
+              "h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none flex items-center justify-center text-xs font-bold mr-1",
+              rating === 0
+                ? "bg-red-500 border-red-500 text-white"
+                : "border-gray-300 text-gray-400 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
+            )}
+            disabled={isNotApplicable}
+          >
+            0
+          </button>
+          
           {[1, 2, 3, 4, 5].map((starValue) => (
             <div key={starValue} className="relative">
               {/* Half star (left side) */}
               <button
                 type="button"
-                onClick={() => onRatingChange(rating === starValue - 0.5 ? 0 : starValue - 0.5)}
+                onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
                 onMouseEnter={() => setHoveredRating(starValue - 0.5)}
                 className="absolute left-0 top-0 w-3 h-6 transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded-l z-10"
                 style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
@@ -159,7 +191,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
               {/* Full star */}
               <button
                 type="button"
-                onClick={() => onRatingChange(rating === starValue ? 0 : starValue)}
+                onClick={() => onRatingChange(rating === starValue ? null : starValue)}
                 onMouseEnter={() => setHoveredRating(starValue)}
                 className="transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded"
                 style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
@@ -191,7 +223,9 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
         </div>
         
         <span className="text-sm text-muted-foreground flex-1">
-          {displayRating > 0 ? `${displayRating}/5 - ${getDescription(displayRating)}` : ''}
+          {isNotRated ? t('review.rating.notRated') : 
+           isNotApplicable ? '' : 
+           `${displayRating}/5 - ${getDescription(displayRating)}`}
         </span>
       </div>
 
@@ -210,7 +244,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
                 ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
                 : "border-border hover:bg-accent hover:text-accent-foreground"
             )}
-            onClick={() => onRatingChange(rating === -1 ? 0 : -1)}
+            onClick={() => onRatingChange(rating === -1 ? null : -1)}
           >
             {t('review.notApplicable')}
           </Button>
@@ -223,12 +257,28 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
             )}
             onMouseLeave={() => setHoveredRating(null)}
           >
+            {/* 0 star button - easy to click */}
+            <button
+              type="button"
+              onClick={() => onRatingChange(rating === 0 ? null : 0)}
+              onMouseEnter={() => setHoveredRating(0)}
+              className={cn(
+                "h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none flex items-center justify-center text-xs font-bold mr-1",
+                rating === 0
+                  ? "bg-red-500 border-red-500 text-white"
+                  : "border-gray-300 text-gray-400 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
+              )}
+              disabled={isNotApplicable}
+            >
+              0
+            </button>
+            
             {[1, 2, 3, 4, 5].map((starValue) => (
               <div key={starValue} className="relative">
                 {/* Half star (left side) */}
                 <button
                   type="button"
-                  onClick={() => onRatingChange(rating === starValue - 0.5 ? 0 : starValue - 0.5)}
+                  onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
                   onMouseEnter={() => setHoveredRating(starValue - 0.5)}
                   className="absolute left-0 top-0 w-3 h-6 transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded-l z-10"
                   style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
@@ -251,7 +301,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
                 {/* Full star */}
                 <button
                   type="button"
-                  onClick={() => onRatingChange(rating === starValue ? 0 : starValue)}
+                  onClick={() => onRatingChange(rating === starValue ? null : starValue)}
                   onMouseEnter={() => setHoveredRating(starValue)}
                   className="transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded"
                   style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
@@ -283,7 +333,9 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
           </div>
           
           <span className="text-sm text-muted-foreground ml-2">
-            {displayRating > 0 ? `${displayRating}/5 - ${getDescription(displayRating)}` : ''}
+            {isNotRated ? t('review.rating.notRated') : 
+             isNotApplicable ? '' : 
+             `${displayRating}/5 - ${getDescription(displayRating)}`}
           </span>
         </div>
       </div>
@@ -312,6 +364,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [termsLoading, setTermsLoading] = useState(false);
   const [instructorsLoading, setInstructorsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEditData, setLoadingEditData] = useState(false);
 
   // Data states
   const [courses, setCourses] = useState<Course[]>([]);
@@ -323,10 +376,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [selectedTerm, setSelectedTerm] = useState<string>('');
   const [selectedInstructors, setSelectedInstructors] = useState<string[]>([]);
   
-  // Course evaluation
-  const [workload, setWorkload] = useState<number>(0);
-  const [difficulty, setDifficulty] = useState<number>(0);
-  const [usefulness, setUsefulness] = useState<number>(0);
+  // Course evaluation - Use null to represent "not yet rated" state
+  const [workload, setWorkload] = useState<number | null>(null);
+  const [difficulty, setDifficulty] = useState<number | null>(null);
+  const [usefulness, setUsefulness] = useState<number | null>(null);
   const [grade, setGrade] = useState<string>('');
   const [courseComments, setCourseComments] = useState<string>('');
   const [hasServiceLearning, setHasServiceLearning] = useState<boolean>(false);
@@ -341,7 +394,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   // Edit mode states
   const [isEditMode, setIsEditMode] = useState<boolean>(!!editReviewId);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [loadingEditData, setLoadingEditData] = useState<boolean>(false);
+  const [isPopulatingEditData, setIsPopulatingEditData] = useState<boolean>(false);
 
   // Common phrases UI states
   const [coursePhrasesExpanded, setCoursePhrasesExpanded] = useState<boolean>(false);
@@ -676,7 +729,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   };
 
   // Helper function to organize comment with phrases grouped by sentiment and category
-  const organizeCommentWithPhrase = (currentComment: string, newPhrase: string, type: 'course' | 'teaching'): string => {
+  const organizeCommentWithPhrase = (currentComment: string, newPhrase: string, type: 'course' | 'teaching', isRemoving: boolean = false): string => {
     const sentiment = getPhraseSentiment(newPhrase, type);
     const category = getPhraseCategory(newPhrase, type);
     
@@ -718,6 +771,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Check for bullet points
         if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-')) {
           const content = trimmedLine.replace(/^[•-]\s*/, '');
+          
+          // Skip this phrase if we're removing it
+          if (isRemoving && content === newPhrase) {
+            continue;
+          }
+          
           if (currentSection !== 'neutral' && currentCategory) {
             if (!sections[currentSection][currentCategory]) {
               sections[currentSection][currentCategory] = [];
@@ -733,19 +792,25 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             sections.neutral.push(content);
           }
         } else if (trimmedLine && currentSection === 'neutral') {
+          // Skip this phrase if we're removing it
+          if (isRemoving && trimmedLine === newPhrase) {
+            continue;
+          }
           sections.neutral.push(trimmedLine);
         }
       }
     }
     
-    // Add new phrase to appropriate section and category
-    if (sentiment !== 'neutral' && category) {
-      if (!sections[sentiment][category]) {
-        sections[sentiment][category] = [];
+    // Add new phrase to appropriate section and category (only if not removing)
+    if (!isRemoving) {
+      if (sentiment !== 'neutral' && category) {
+        if (!sections[sentiment][category]) {
+          sections[sentiment][category] = [];
+        }
+        sections[sentiment][category].push(newPhrase);
+      } else {
+        sections.neutral.push(newPhrase);
       }
-      sections[sentiment][category].push(newPhrase);
-    } else {
-      sections.neutral.push(newPhrase);
     }
     
     // Build organized comment
@@ -816,13 +881,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   };
 
   const addPhraseToComment = (phrase: string, type: 'course' | 'teaching', instructorIndex?: number) => {
+    // Check if phrase is already selected
+    const isSelected = isPhraseSelected(phrase, type, instructorIndex);
+    
     if (type === 'course') {
       const currentComment = courseComments;
-      const newComment = organizeCommentWithPhrase(currentComment, phrase, type);
+      const newComment = organizeCommentWithPhrase(currentComment, phrase, type, isSelected);
       setCourseComments(newComment);
     } else if (type === 'teaching' && instructorIndex !== undefined) {
       const currentComment = instructorEvaluations[instructorIndex]?.comments || '';
-      const newComment = organizeCommentWithPhrase(currentComment, phrase, type);
+      const newComment = organizeCommentWithPhrase(currentComment, phrase, type, isSelected);
       updateInstructorEvaluation(instructorIndex, 'comments', newComment);
     }
   };
@@ -1038,6 +1106,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   // Populate form with review data for editing
   const populateFormWithReviewData = (reviewData: Review) => {
+    setIsPopulatingEditData(true);
+    
     // Set course and basic info
     setSelectedCourse(reviewData.course_code);
     setSelectedTerm(reviewData.term_code);
@@ -1065,10 +1135,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     setIsAnonymous(reviewData.is_anon || false);
     setReviewLanguage(reviewData.review_language || 'en'); // Set review language from data or default to English
     
+    // Store the instructor data for later use when instructors are loaded
+    const instructorDataRef = { current: null as InstructorDetail[] | null };
+    
     // Parse and set instructor evaluations if available
     if (reviewData.instructor_details) {
       try {
         const instructorDetails = JSON.parse(reviewData.instructor_details) as InstructorDetail[];
+        instructorDataRef.current = instructorDetails;
+        
         const evaluations: InstructorEvaluation[] = instructorDetails.map(detail => ({
           instructorName: detail.instructor_name,
           sessionType: detail.session_type,
@@ -1084,19 +1159,22 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           hasAttendanceRequirement: detail.has_attendance_requirement || false
         }));
         setInstructorEvaluations(evaluations);
-        // Extract instructor names for selection
-        const instructorNames = instructorDetails.map(detail => detail.instructor_name);
-        setSelectedInstructors(instructorNames);
+        
+        // Extract instructor keys for selection (format: instructorName|sessionType)
+        const instructorKeys = instructorDetails.map(detail => `${detail.instructor_name}|${detail.session_type}`);
+        setSelectedInstructors(instructorKeys);
       } catch (error) {
         console.error('Failed to parse instructor details:', error);
       }
     }
+    
+    // Don't turn off the flag automatically - let the instructor loading useEffect handle it
   };
 
   // Load review data for editing
   useEffect(() => {
     const loadEditData = async () => {
-      if (!editReviewId) return;
+      if (!editReviewId || editingReview) return; // Prevent reloading if already loaded
       
       try {
         setLoadingEditData(true);
@@ -1126,7 +1204,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     };
 
     loadEditData();
-  }, [editReviewId, t, toast, navigate]);
+  }, [editReviewId]); // Remove dependencies that could cause re-execution
 
   // Load courses on component mount
   useEffect(() => {
@@ -1163,8 +1241,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const loadTerms = async () => {
       if (!selectedCourse) {
         setTerms([]);
-        setSelectedTerm(''); // Clear selected term when no course
-        setSelectedInstructors([]); // Clear selected instructors when no course
+        if (!isPopulatingEditData) {
+          setSelectedTerm(''); // Clear selected term when no course
+          setSelectedInstructors([]); // Clear selected instructors when no course
+        }
         return;
       }
 
@@ -1183,9 +1263,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         const sortedTerms = validTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
         setTerms(sortedTerms);
         
-        // Clear selected term and instructors when course changes
-        setSelectedTerm('');
-        setSelectedInstructors([]);
+        // Clear selected term and instructors when course changes (but not during edit data population)
+        // Also don't clear if we're in edit mode and already have selections
+        if (!isPopulatingEditData && (!editReviewId || (!selectedTerm && selectedInstructors.length === 0))) {
+          setSelectedTerm('');
+          setSelectedInstructors([]);
+        }
       } catch (error) {
         console.error('Error loading terms:', error);
         toast({
@@ -1199,21 +1282,25 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     };
 
     loadTerms();
-  }, [selectedCourse, t, toast]);
+  }, [selectedCourse, t, toast, isPopulatingEditData]);
 
   // Clear instructors when term changes
   useEffect(() => {
-    setSelectedInstructors([]);
-    setInstructorEvaluations([]); // Also clear instructor evaluations
-  }, [selectedTerm]);
+    if (!isPopulatingEditData && (!editReviewId || selectedInstructors.length === 0)) {
+      setSelectedInstructors([]);
+      setInstructorEvaluations([]); // Also clear instructor evaluations
+    }
+  }, [selectedTerm, isPopulatingEditData, editReviewId]);
 
   // Load instructors when course and term are selected
   useEffect(() => {
     const loadInstructors = async () => {
       if (!selectedCourse || !selectedTerm) {
         setAvailableInstructors([]);
-        setSelectedInstructors([]); // Clear selected instructors when no course/term
-        setInstructorEvaluations([]); // Also clear instructor evaluations
+        if (!isPopulatingEditData) {
+          setSelectedInstructors([]); // Clear selected instructors when no course/term
+          setInstructorEvaluations([]); // Also clear instructor evaluations
+        }
         return;
       }
 
@@ -1224,8 +1311,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         setAvailableInstructors(filteredRecords);
         
         // Remove any selected instructors that are not available for this course/term combination
-        const validInstructorKeys = filteredRecords.map(record => `${record.instructor_name}|${record.session_type}`);
-        setSelectedInstructors(prev => prev.filter(instructorKey => validInstructorKeys.includes(instructorKey)));
+        // But preserve selected instructors during edit data population
+        if (!isPopulatingEditData) {
+          const validInstructorKeys = filteredRecords.map(record => `${record.instructor_name}|${record.session_type}`);
+          setSelectedInstructors(prev => prev.filter(instructorKey => validInstructorKeys.includes(instructorKey)));
+        } else {
+          // In edit mode, validate that instructors are available
+          // Don't turn off the flag here - let it be handled after evaluations are set
+        }
       } catch (error) {
         console.error('Error loading instructors:', error);
         toast({
@@ -1239,10 +1332,28 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     };
 
     loadInstructors();
-  }, [selectedCourse, selectedTerm, t, toast]);
+  }, [selectedCourse, selectedTerm, t, toast, isPopulatingEditData]);
 
   // Update instructor evaluations when selected instructors change
   useEffect(() => {
+    // Don't update evaluations during edit data population to preserve existing data
+    if (isPopulatingEditData) return;
+    
+    // Don't override evaluations if we already have evaluations for the selected instructors
+    // This prevents overriding edit data that was already loaded
+    const hasExistingEvaluations = selectedInstructors.length > 0 && 
+      selectedInstructors.every(instructorKey => {
+        const [instructorName, sessionType] = instructorKey.split('|');
+        return instructorEvaluations.some(
+          evaluation => evaluation.instructorName === instructorName && evaluation.sessionType === sessionType
+        );
+      });
+    
+    if (hasExistingEvaluations && editReviewId) {
+      console.log('🔒 Preserving existing evaluations for edit mode');
+      return;
+    }
+    
     const newEvaluations: InstructorEvaluation[] = selectedInstructors.map(instructorKey => {
       const [instructorName, sessionType] = instructorKey.split('|');
       const existing = instructorEvaluations.find(
@@ -1252,7 +1363,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return existing || {
         instructorName,
         sessionType,
-        teachingScore: 0,
+        teachingScore: null,
         gradingScore: null,
         comments: '',
         hasMidterm: false,
@@ -1265,8 +1376,38 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       };
     });
     
-    setInstructorEvaluations(newEvaluations);
-  }, [selectedInstructors]);
+    // Only update if the evaluations have actually changed
+    const hasChanges = newEvaluations.length !== instructorEvaluations.length ||
+      newEvaluations.some((newEval, index) => {
+        const oldEval = instructorEvaluations[index];
+        return !oldEval || 
+          newEval.instructorName !== oldEval.instructorName ||
+          newEval.sessionType !== oldEval.sessionType;
+      });
+    
+    if (hasChanges) {
+      setInstructorEvaluations(newEvaluations);
+    }
+  }, [selectedInstructors, isPopulatingEditData, editReviewId]);
+
+  // Turn off edit mode flag after instructor evaluations are properly set
+  useEffect(() => {
+    if (isPopulatingEditData && selectedInstructors.length > 0 && instructorEvaluations.length > 0) {
+      // Ensure all selected instructors have corresponding evaluations
+      const allInstructorsHaveEvaluations = selectedInstructors.every(instructorKey => {
+        const [instructorName, sessionType] = instructorKey.split('|');
+        return instructorEvaluations.some(
+          evaluation => evaluation.instructorName === instructorName && evaluation.sessionType === sessionType
+        );
+      });
+      
+      if (allInstructorsHaveEvaluations) {
+        setTimeout(() => {
+          setIsPopulatingEditData(false);
+        }, 100);
+      }
+    }
+  }, [isPopulatingEditData, selectedInstructors, instructorEvaluations]);
 
   const handleInstructorToggle = (instructorKey: string) => {
     setSelectedInstructors(prev => 
@@ -1287,8 +1428,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return false;
     }
 
-    // 檢查課程評分（0 表示未選擇，-1 表示 N/A，都是有效值）
-    if (workload === 0 || difficulty === 0 || usefulness === 0) {
+    // 檢查課程評分（null 表示未選擇，0 表示0星，-1 表示 N/A，都需要選擇）
+    if (workload === null || difficulty === null || usefulness === null) {
       toast({
         title: t('common.error'),
         description: t('review.fillAllFields'),
@@ -1328,9 +1469,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return false;
     }
 
-    // 檢查講師評分（0 表示未選擇，-1 表示 N/A，都是有效值）
+    // 檢查講師評分（null 表示未選擇，0 表示0星，-1 表示 N/A，都需要選擇）
     for (const evaluation of instructorEvaluations) {
-      if (evaluation.teachingScore === 0) {
+      if (evaluation.teachingScore === null) {
         toast({
           title: t('common.error'),
           description: t('review.fillAllFields'),
@@ -1443,7 +1584,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       const instructorDetails: InstructorDetail[] = instructorEvaluations.map(evaluation => ({
         instructor_name: evaluation.instructorName,
         session_type: evaluation.sessionType,
-        grading: evaluation.gradingScore,
+        grading: evaluation.gradingScore === null ? null : evaluation.gradingScore,
         teaching: evaluation.teachingScore,
         has_midterm: evaluation.hasMidterm,
         has_quiz: evaluation.hasQuiz,
@@ -1521,34 +1662,52 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     return (
       <Card className="course-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            {t('review.previewMode')}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t('review.previewDescription')}
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                {t('review.previewMode')}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {t('review.previewDescription')}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsPreviewMode(false)}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t('review.backToEdit')}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg p-4 space-y-4">
             {/* 評論基本信息 */}
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex flex-col gap-2 min-w-0 flex-1">
                 <div className="flex items-center gap-2 min-w-0">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <ReviewAvatar
+                    isAnonymous={isAnonymous}
+                    userId={user?.$id}
+                    username={mockUsername}
+                    reviewId="preview"
+                    size="sm"
+                    className="shrink-0"
+                  />
                   <span className="font-medium truncate">
                     {isAnonymous ? t('review.anonymousUser') : mockUsername}
                   </span>
                 </div>
-                <Badge variant="outline" className="text-xs shrink-0">
+                <Badge variant="outline" className="text-xs w-fit">
                   <Calendar className="h-3 w-3 mr-1 shrink-0" />
                   <span className="truncate">{mockTerm.name}</span>
                 </Badge>
               </div>
-              {/* 最終成績 */}
+              {/* 最終成績 - 右上角大顯示 */}
               {grade && grade !== '-1' && (
                 <div className="flex flex-col items-center shrink-0">
-                  <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
                   <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
                     {grade}
                   </Badge>
@@ -1557,29 +1716,47 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             </div>
 
             {/* 課程評分 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-1 text-xs">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <BookOpen className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{t('review.workload')}</span>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <BookOpen className="h-3 w-3 text-primary" />
+                  <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                 </div>
-                <UIStarRating rating={workload} showValue={true} />
+                {workload === null ? (
+                  <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                ) : workload === -1 ? (
+                  <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                ) : (
+                  <UIStarRating rating={workload} showValue size="sm" />
+                )}
               </div>
               
               <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Brain className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{t('review.difficulty')}</span>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Brain className="h-3 w-3 text-primary" />
+                  <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                 </div>
-                <UIStarRating rating={difficulty} showValue={true} />
+                {difficulty === null ? (
+                  <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                ) : difficulty === -1 ? (
+                  <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                ) : (
+                  <UIStarRating rating={difficulty} showValue size="sm" />
+                )}
               </div>
               
               <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{t('review.usefulness')}</span>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Target className="h-3 w-3 text-primary" />
+                  <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                 </div>
-                <UIStarRating rating={usefulness} showValue={true} />
+                {usefulness === null ? (
+                  <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                ) : usefulness === -1 ? (
+                  <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                ) : (
+                  <UIStarRating rating={usefulness} showValue size="sm" />
+                )}
               </div>
             </div>
 
@@ -1637,24 +1814,41 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 <div className="space-y-3">
                   <h5 className="text-sm font-medium">{t('review.instructorEvaluation')}</h5>
                   {instructorEvaluations.map((instructor, index) => (
-                    <div key={index} className="bg-muted/30 p-3 rounded-md space-y-3">
+                    <div key={index} className="p-3 rounded-md space-y-3 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 overflow-hidden">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{instructor.instructorName}</span>
                         <Badge variant="outline">{instructor.sessionType}</Badge>
                       </div>
                       
-                      {/* 教學評分 */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="font-medium">{t('review.teachingScore')}: </span>
-                          <UIStarRating rating={instructor.teachingScore} showValue={true} />
-                        </div>
-                        {instructor.gradingScore && instructor.gradingScore > 0 && (
-                          <div>
-                            <span className="font-medium">{t('review.gradingScore')}: </span>
-                            <UIStarRating rating={instructor.gradingScore} showValue={true} />
+                      {/* 教學評分 - 緊湊的2列佈局 */}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <GraduationCap className="h-3 w-3 text-primary" />
+                            <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
                           </div>
-                        )}
+                          {instructor.teachingScore === null ? (
+                            <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                          ) : instructor.teachingScore === -1 ? (
+                            <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                          ) : (
+                            <UIStarRating rating={instructor.teachingScore} showValue size="sm" />
+                          )}
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Target className="h-3 w-3 text-primary" />
+                            <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                          </div>
+                          {instructor.gradingScore === null ? (
+                            <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                          ) : instructor.gradingScore === -1 ? (
+                            <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                          ) : (
+                            <UIStarRating rating={instructor.gradingScore} showValue size="sm" />
+                          )}
+                        </div>
                       </div>
 
                       {/* 課程要求 */}
@@ -1692,17 +1886,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               </>
             )}
           </div>
-          
-          <div className="mt-4 flex justify-center">
-            <Button 
-              onClick={() => setIsPreviewMode(false)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Edit className="h-4 w-4" />
-              {t('review.backToEdit')}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     );
@@ -1715,16 +1898,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       {/* Header */}
-      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="hover:bg-muted/50 transition-colors w-fit"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">
             {isEditMode ? t('review.editTitle') : t('review.title')}
           </h1>
@@ -1732,6 +1907,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('common.back')}
+        </Button>
       </div>
 
       {/* Course Selection */}
@@ -1796,7 +1979,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <span className="text-sm text-muted-foreground">{t('review.loadingInstructors')}</span>
                   </div>
                 ) : availableInstructors.length === 0 ? (
-                  <div className="flex items-center justify-center h-10 px-3 border rounded-md text-center text-muted-foreground bg-muted/50">
+                  <div className="flex items-center justify-center h-10 px-3 border rounded-md text-center text-muted-foreground opacity-50 cursor-not-allowed">
                     {t('review.noInstructors')}
                   </div>
                 ) : (
@@ -1818,6 +2001,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       .map((record) => {
                         const instructorKey = `${record.instructor_name}|${record.session_type}`;
                         const isSelected = selectedInstructors.includes(instructorKey);
+                        
+                        // Debug logging
+                        if (editReviewId) {
+                          console.log(`🎯 Instructor ${instructorKey}: selected=${isSelected}, selectedInstructors=`, selectedInstructors);
+                        }
                         
                         return (
                           <div key={instructorKey} className="flex items-center space-x-2">
@@ -2124,7 +2312,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {/* Grading Score */}
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground md:hidden">{t('review.gradingScoreDescription')}</p>
-                  <StarRating rating={evaluation.gradingScore || 0} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} />
+                  <StarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} />
                 </div>
 
                 {/* Course Requirements */}
@@ -2278,11 +2466,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <Separator />
 
             {/* Submit Button */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <div className="flex gap-3 pt-6">
               <Button 
                 type="button" 
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 h-12 text-base font-medium"
                 onClick={() => setIsPreviewMode(true)}
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -2291,7 +2479,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               <Button 
                 type="button" 
                 disabled={submitting} 
-                className="flex-1"
+                className="flex-1 h-12 text-base font-medium"
                 onClick={handleSubmit}
               >
                 {submitting ? (

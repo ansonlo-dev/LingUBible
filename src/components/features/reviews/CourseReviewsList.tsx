@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -22,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
+import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { CourseReviewInfo, InstructorDetail } from '@/services/api/courseService';
 
 interface CourseReviewsListProps {
@@ -48,6 +50,7 @@ export const CourseReviewsList = ({
   const { t: tContext } = useLanguage();
   const t = tProp || tContext;
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [expandedReviews, setExpandedReviews] = useState<ExpandedReviews>({});
 
   // 計算各語言的評論數量
@@ -69,7 +72,10 @@ export const CourseReviewsList = ({
     }));
   };
 
-  const getWorkloadText = (workload: number) => {
+  const getWorkloadText = (workload: number | null) => {
+    if (workload === null) return t('review.rating.notRated');
+    if (workload === -1) return t('review.notApplicable');
+    if (workload === 0) return t('review.workload.none');
     const workloadMap = {
       1: t('review.workload.veryLight'),
       2: t('review.workload.light'),
@@ -77,10 +83,13 @@ export const CourseReviewsList = ({
       4: t('review.workload.heavy'),
       5: t('review.workload.veryHeavy')
     };
-    return workloadMap[workload as keyof typeof workloadMap] || workload.toString();
+    return workloadMap[Math.ceil(workload) as keyof typeof workloadMap] || workload.toString();
   };
 
-  const getDifficultyText = (difficulty: number) => {
+  const getDifficultyText = (difficulty: number | null) => {
+    if (difficulty === null) return t('review.rating.notRated');
+    if (difficulty === -1) return t('review.notApplicable');
+    if (difficulty === 0) return t('review.difficulty.none');
     const difficultyMap = {
       1: t('review.difficulty.veryEasy'),
       2: t('review.difficulty.easy'),
@@ -88,10 +97,13 @@ export const CourseReviewsList = ({
       4: t('review.difficulty.hard'),
       5: t('review.difficulty.veryHard')
     };
-    return difficultyMap[difficulty as keyof typeof difficultyMap] || difficulty.toString();
+    return difficultyMap[Math.ceil(difficulty) as keyof typeof difficultyMap] || difficulty.toString();
   };
 
-  const getUsefulnessText = (usefulness: number) => {
+  const getUsefulnessText = (usefulness: number | null) => {
+    if (usefulness === null) return t('review.rating.notRated');
+    if (usefulness === -1) return t('review.notApplicable');
+    if (usefulness === 0) return t('review.usefulness.none');
     const usefulnessMap = {
       1: t('review.usefulness.notUseful'),
       2: t('review.usefulness.slightlyUseful'),
@@ -99,7 +111,7 @@ export const CourseReviewsList = ({
       4: t('review.usefulness.veryUseful'),
       5: t('review.usefulness.extremelyUseful')
     };
-    return usefulnessMap[usefulness as keyof typeof usefulnessMap] || usefulness.toString();
+    return usefulnessMap[Math.ceil(usefulness) as keyof typeof usefulnessMap] || usefulness.toString();
   };
 
   const renderRequirementBadge = (hasRequirement: boolean, label: string) => {
@@ -122,30 +134,54 @@ export const CourseReviewsList = ({
     return (
       <div className="space-y-4">
         {instructorDetails.map((instructor, index) => (
-          <div key={index} className="border rounded-lg p-4 bg-muted/30 overflow-hidden">
+          <div key={index} className="rounded-lg p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 overflow-hidden">
             <div className="flex items-start justify-between mb-3 gap-2">
-              <h4 className="font-semibold text-lg truncate flex-1 min-w-0">{instructor.instructor_name}</h4>
-              <Badge variant="outline" className="text-sm shrink-0">
+              <h4 
+                className="font-semibold text-lg truncate flex-1 min-w-0 text-primary cursor-pointer hover:underline"
+                onClick={() => navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`)}
+              >
+                {instructor.instructor_name}
+              </h4>
+              <Badge 
+                variant="secondary" 
+                className={`text-sm shrink-0 ${
+                  instructor.session_type === 'Lecture' 
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                    : instructor.session_type === 'Tutorial'
+                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                    : ''
+                }`}
+              >
                 {instructor.session_type}
               </Badge>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <GraduationCap className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm font-medium">{t('review.teachingScore')}</span>
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <GraduationCap className="h-3 w-3 text-primary" />
+                  <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
                 </div>
-                <StarRating rating={instructor.teaching} showValue />
+                {instructor.teaching === null ? (
+                  <span className="text-muted-foreground">
+                    {t('review.rating.notRated')}
+                  </span>
+                ) : instructor.teaching === -1 ? (
+                  <span className="text-muted-foreground">
+                    {t('review.notApplicable')}
+                  </span>
+                ) : (
+                  <StarRating rating={instructor.teaching} showValue size="sm" />
+                )}
               </div>
               
-              {instructor.grading !== null && (
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium">{t('review.gradingFairness')}</span>
+              {instructor.grading !== null && instructor.grading !== -1 && (
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Target className="h-3 w-3 text-primary" />
+                    <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
                   </div>
-                  <StarRating rating={instructor.grading} showValue />
+                  <StarRating rating={instructor.grading} showValue size="sm" />
                 </div>
               )}
             </div>
@@ -203,10 +239,7 @@ export const CourseReviewsList = ({
             
             {/* 語言篩選器 - 載入時也顯示 */}
             {onToggleLanguage && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {t('review.filterByLanguage')}:
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex flex-wrap gap-1">
                   <Button
                     variant={selectedLanguages.includes('en') ? 'default' : 'outline'}
@@ -262,10 +295,7 @@ export const CourseReviewsList = ({
             
             {/* 語言篩選器 - 無評論時也顯示 */}
             {onToggleLanguage && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {t('review.filterByLanguage')}:
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex flex-wrap gap-1">
                   <Button
                     variant={selectedLanguages.includes('en') ? 'default' : 'outline'}
@@ -320,10 +350,7 @@ export const CourseReviewsList = ({
           
           {/* 語言篩選器 */}
           {onToggleLanguage && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {t('review.filterByLanguage')}:
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <div className="flex flex-wrap gap-1">
                 <Button
                   variant={selectedLanguages.includes('en') ? 'default' : 'outline'}
@@ -354,7 +381,7 @@ export const CourseReviewsList = ({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 overflow-hidden">
+      <CardContent className="space-y-3 overflow-hidden">
         {filteredCount === 0 ? (
           <div className="text-center py-8">
             <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -364,30 +391,41 @@ export const CourseReviewsList = ({
             </p>
           </div>
         ) : (
-          reviews.map((reviewInfo) => {
-            const { review, term, instructorDetails } = reviewInfo;
-            const isExpanded = expandedReviews[review.$id];
-            
-            return (
-              <div key={review.$id} className="border rounded-lg p-4 space-y-4 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {reviews.map((reviewInfo) => {
+              const { review, term, instructorDetails } = reviewInfo;
+              const isExpanded = expandedReviews[review.$id];
+              
+              return (
+                <div key={review.$id} className="border-gray-400 dark:border-gray-400 border rounded-lg p-3 space-y-2 overflow-hidden">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
-                      <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <ReviewAvatar
+                        isAnonymous={review.is_anon}
+                        userId={review.user_id}
+                        username={review.username}
+                        reviewId={review.$id}
+                        size="sm"
+                        className="shrink-0"
+                      />
                       <span className="font-medium truncate">
                         {review.is_anon ? t('review.anonymousUser') : review.username}
                       </span>
+                      {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
+                      <Badge variant="outline" className="text-xs shrink-0 hidden md:inline-flex">
+                        <span className="truncate">{term.name}</span>
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      <Calendar className="h-3 w-3 mr-1 shrink-0" />
+                    {/* 學期徽章 - 手機版顯示在下方 */}
+                    <Badge variant="outline" className="text-xs w-fit md:hidden">
                       <span className="truncate">{term.name}</span>
                     </Badge>
                   </div>
                   {/* 最終成績 - 右上角大顯示 */}
                   {review.course_final_grade && (
                     <div className="flex flex-col items-center shrink-0">
-                      <div className="text-xs text-muted-foreground mb-1">{t('review.finalGrade')}</div>
                       <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
                         {review.course_final_grade}
                       </Badge>
@@ -396,38 +434,47 @@ export const CourseReviewsList = ({
                 </div>
 
                 {/* 課程評分 */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-1 text-xs">
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <BookOpen className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">{t('review.workload')}</span>
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <BookOpen className="h-3 w-3 text-primary" />
+                      <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                     </div>
-                    <StarRating rating={review.course_workload} showValue />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {getWorkloadText(review.course_workload)}
-                    </p>
+                    {review.course_workload === null || review.course_workload === -1 ? (
+                      <span className="text-muted-foreground">
+                        {review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                      </span>
+                    ) : (
+                      <StarRating rating={review.course_workload} showValue size="sm" />
+                    )}
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <Brain className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">{t('review.difficulty')}</span>
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Brain className="h-3 w-3 text-primary" />
+                      <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                     </div>
-                    <StarRating rating={review.course_difficulties} showValue />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {getDifficultyText(review.course_difficulties)}
-                    </p>
+                    {review.course_difficulties === null || review.course_difficulties === -1 ? (
+                      <span className="text-muted-foreground">
+                        {review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                      </span>
+                    ) : (
+                      <StarRating rating={review.course_difficulties} showValue size="sm" />
+                    )}
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <Target className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">{t('review.usefulness')}</span>
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Target className="h-3 w-3 text-primary" />
+                      <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                     </div>
-                    <StarRating rating={review.course_usefulness} showValue />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {getUsefulnessText(review.course_usefulness)}
-                    </p>
+                    {review.course_usefulness === null || review.course_usefulness === -1 ? (
+                      <span className="text-muted-foreground">
+                        {review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                      </span>
+                    ) : (
+                      <StarRating rating={review.course_usefulness} showValue size="sm" />
+                    )}
                   </div>
                 </div>
 
@@ -437,7 +484,7 @@ export const CourseReviewsList = ({
                     <Separator />
                     <div className="min-w-0">
                       <h5 className="text-sm font-medium mb-2">{t('review.courseComments')}</h5>
-                      <div className="bg-muted/50 p-3 rounded-md break-words">
+                      <div className="bg-muted/50 p-2 rounded-md break-words">
                         {hasMarkdownFormatting(review.course_comments) ? (
                           renderCommentMarkdown(review.course_comments)
                         ) : (
@@ -502,7 +549,7 @@ export const CourseReviewsList = ({
 
                 {/* 投票按鈕 */}
                 <Separator />
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 overflow-hidden">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 overflow-hidden">
                   <div className="flex-shrink-0">
                     <VotingButtons
                       reviewId={review.$id}
@@ -519,7 +566,8 @@ export const CourseReviewsList = ({
                 </div>
               </div>
             );
-          })
+          })}
+          </div>
         )}
       </CardContent>
     </Card>

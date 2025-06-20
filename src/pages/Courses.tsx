@@ -118,7 +118,7 @@ const Courses = () => {
             <Input
               type="text"
               placeholder={t('search.placeholder')}
-              value={searchTerm}
+              value={searchTerm || ''}
               onChange={handleSearchChange}
               className="pl-10 h-12 text-base bg-white dark:bg-card border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />

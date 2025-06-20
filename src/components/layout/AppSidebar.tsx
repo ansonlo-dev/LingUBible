@@ -186,12 +186,21 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
         
         // 觸摸其他地方來移除懸停狀態
         const body = document.body;
-        const touchEvent = new TouchEvent('touchstart', {
-          bubbles: true,
-          cancelable: true,
-          touches: []
-        });
-        body.dispatchEvent(touchEvent);
+        try {
+          const touchEvent = new TouchEvent('touchstart', {
+            bubbles: true,
+            cancelable: true,
+            touches: []
+          });
+          body.dispatchEvent(touchEvent);
+        } catch (error) {
+          // 如果 TouchEvent 創建失敗，使用 MouseEvent 作為後備
+          const mouseEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true
+          });
+          body.dispatchEvent(mouseEvent);
+        }
       };
 
       // 延遲執行以確保路由變化完成
