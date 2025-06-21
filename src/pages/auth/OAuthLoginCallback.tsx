@@ -278,8 +278,19 @@ export default function OAuthLoginCallback() {
           // 強制刷新用戶狀態，確保 UI 立即同步
           console.log('🔄 開始 OAuth 強制刷新用戶狀態...');
           
-          // 使用強制刷新模式，繞過 hasLocalSession() 檢查
-          await refreshUser(true); // forceRefresh = true
+          // 方法1: 直接觸發強制用戶更新事件，立即更新 AuthContext 狀態
+          window.dispatchEvent(new CustomEvent('forceUserUpdate', { 
+            detail: { user: currentUser } 
+          }));
+          console.log('✅ 已觸發強制用戶更新事件');
+          
+          // 方法2: 同時調用標準的強制刷新作為後備
+          try {
+            await refreshUser(true); // forceRefresh = true
+            console.log('✅ 標準強制刷新也已完成');
+          } catch (refreshError) {
+            console.warn('⚠️ 標準強制刷新失敗，但直接事件觸發應該已生效:', refreshError);
+          }
           
           console.log('✅ 用戶狀態刷新流程完成');
           
@@ -344,11 +355,12 @@ export default function OAuthLoginCallback() {
           }
           
           // 延遲重定向，確保狀態同步完成
+          // 增加延遲時間，確保狀態更新有足夠時間傳播到所有組件
           setTimeout(() => {
             // 清理短期標記
             sessionStorage.removeItem('oauthLoginComplete');
             navigate('/');
-          }, 1500); // 1.5秒延遲，確保狀態同步
+          }, 2500); // 2.5秒延遲，確保狀態同步和 UI 更新完成
           
         } catch (refreshError) {
           console.error('❌ 處理 OAuth 登入失敗:', refreshError);

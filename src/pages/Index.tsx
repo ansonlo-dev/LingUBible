@@ -20,7 +20,7 @@ import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/cou
 
 const Index = () => {
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // 格式化統計變化的輔助函數
@@ -67,6 +67,31 @@ const Index = () => {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
+
+  // 檢測 OAuth 登入完成並強制刷新用戶狀態
+  useEffect(() => {
+    const checkOAuthLoginComplete = async () => {
+      // 檢查是否有 OAuth 會話標記
+      const oauthSession = sessionStorage.getItem('oauthSession');
+      const oauthLoginComplete = sessionStorage.getItem('oauthLoginComplete');
+      
+      // 如果檢測到 OAuth 登入標記且當前沒有用戶狀態，強制刷新
+      if ((oauthSession || oauthLoginComplete) && !user) {
+        console.log('🔄 首頁檢測到 OAuth 登入標記但沒有用戶狀態，執行強制刷新...');
+        try {
+          await refreshUser(true); // 強制刷新
+          console.log('✅ 首頁 OAuth 狀態刷新完成');
+        } catch (error) {
+          console.warn('⚠️ 首頁 OAuth 狀態刷新失敗:', error);
+        }
+      }
+    };
+
+    // 延遲檢查，確保頁面載入完成
+    const timeoutId = setTimeout(checkOAuthLoginComplete, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [user, refreshUser]);
 
   // 載入熱門內容
   useEffect(() => {
