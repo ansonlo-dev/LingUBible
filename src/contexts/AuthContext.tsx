@@ -13,7 +13,7 @@ interface AuthContextType {
     login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
     register: (email: string, password: string, name: string, recaptchaToken?: string) => Promise<void>;
     logout: () => Promise<void>;
-    refreshUser: () => Promise<void>;
+    refreshUser: (forceRefresh?: boolean) => Promise<void>;
     sendStudentVerificationCode: (email: string) => Promise<{ success: boolean; message: string }>;
     verifyStudentCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
     isStudentEmailVerified: (email: string) => Promise<boolean>;
@@ -507,7 +507,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const refreshUser = async () => {
+    const refreshUser = async (forceRefresh: boolean = false) => {
         // 防止重複調用
         if (isRefreshingUser) {
             console.log('refreshUser 已在執行中，跳過重複調用');
@@ -517,13 +517,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsRefreshingUser(true);
         
         try {
-            // 首先檢查本地會話狀態
+            // 檢查是否為強制刷新（用於 OAuth 登入）或有本地會話
             const hasLocalSession = authService.hasLocalSession();
-            if (!hasLocalSession) {
-                console.log('沒有本地會話，跳過刷新');
+            if (!forceRefresh && !hasLocalSession) {
+                console.log('沒有本地會話且非強制刷新，跳過刷新');
                 setUser(null);
                 setUserSessionId(null);
                 return;
+            }
+            
+            if (forceRefresh) {
+                console.log('🔄 執行強制刷新（OAuth 登入模式）');
             }
             
             // 對於 OAuth 流程，可能需要多次嘗試才能獲取到用戶信息

@@ -276,55 +276,10 @@ export default function OAuthLoginCallback() {
           });
           
           // 強制刷新用戶狀態，確保 UI 立即同步
-          console.log('🔄 開始強制刷新用戶狀態...');
+          console.log('🔄 開始 OAuth 強制刷新用戶狀態...');
           
-          // 由於 OAuth 登入可能導致會話狀態同步延遲，我們需要強制刷新
-          // 不依賴 hasLocalSession() 檢查，直接嘗試獲取用戶信息並更新狀態
-          let refreshAttempts = 0;
-          const maxRefreshAttempts = 5;
-          let refreshSuccess = false;
-          
-          while (!refreshSuccess && refreshAttempts < maxRefreshAttempts) {
-            try {
-              refreshAttempts++;
-              console.log(`🔄 強制刷新嘗試 ${refreshAttempts}/${maxRefreshAttempts}...`);
-              
-              // 直接調用 account.get() 而不是依賴 refreshUser 的會話檢查
-              const refreshedUser = await account.get();
-              if (refreshedUser) {
-                console.log(`✅ 用戶狀態強制刷新成功:`, refreshedUser.email);
-                
-                // 觸發強制用戶狀態更新事件，讓 AuthContext 立即更新
-                window.dispatchEvent(new CustomEvent('forceUserUpdate', { 
-                  detail: { user: refreshedUser } 
-                }));
-                
-                refreshSuccess = true;
-                break;
-              }
-            } catch (refreshError: any) {
-              console.log(`❌ 用戶狀態強制刷新失敗 (嘗試 ${refreshAttempts}):`, refreshError?.message);
-              
-              // 如果是 401 錯誤，停止重試
-              if (refreshError?.code === 401) {
-                console.log('🔒 會話無效，停止刷新嘗試');
-                break;
-              }
-              
-              // 等待一下再重試
-              if (refreshAttempts < maxRefreshAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 300));
-              }
-            }
-          }
-          
-          // 無論強制刷新是否成功，都調用標準的 refreshUser 作為後備
-          try {
-            await refreshUser();
-            console.log('✅ 標準 refreshUser 也已完成');
-          } catch (backupError) {
-            console.warn('⚠️ 標準 refreshUser 失敗，但強制刷新可能已成功:', backupError);
-          }
+          // 使用強制刷新模式，繞過 hasLocalSession() 檢查
+          await refreshUser(true); // forceRefresh = true
           
           console.log('✅ 用戶狀態刷新流程完成');
           
