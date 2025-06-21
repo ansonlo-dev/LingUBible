@@ -468,22 +468,59 @@ export async function checkUsernameAvailability(requestData, context) {
     }
 
     try {
-      // 嘗試查詢用戶名是否已存在
+      // 嘗試查詢用戶名是否已存在（區分大小寫）
+      log('🔍 執行區分大小寫的用戶名查詢:', username);
       const existingUsers = await users.list([
-        Query.equal('name', username)
+        Query.equal('name', username)  // 這個查詢應該是區分大小寫的
       ]);
 
+      log('📊 查詢結果:', {
+        searchedUsername: username,
+        foundCount: existingUsers.users.length,
+        foundUsers: existingUsers.users.map(u => ({ 
+          id: u.$id, 
+          name: u.name, 
+          email: u.email 
+        }))
+      });
+
       if (existingUsers.users.length > 0) {
-        log('❌ 用戶名已被使用:', username);
-        return res.json({
-          success: false,
-          available: false,
-          message: 'This username is already taken',
-          messageKey: 'username.alreadyTaken'
-        });
+        // 雙重檢查：確保找到的用戶名與輸入完全匹配（包括大小寫）
+        const exactMatch = existingUsers.users.find(user => user.name === username);
+        
+        if (exactMatch) {
+          log('❌ 找到完全匹配的用戶名:', { 
+            inputUsername: username, 
+            existingUsername: exactMatch.name,
+            isExactMatch: username === exactMatch.name 
+          });
+          return res.json({
+            success: false,
+            available: false,
+            message: 'This username is already taken',
+            messageKey: 'username.alreadyTaken'
+          });
+        } else {
+          log('⚠️ 查詢返回了結果但沒有完全匹配，這可能是數據庫配置問題');
+          log('📝 詳細比較:', existingUsers.users.map(user => ({
+            stored: user.name,
+            input: username,
+            equal: user.name === username,
+            toLowerCase_equal: user.name.toLowerCase() === username.toLowerCase()
+          })));
+          
+          // 如果沒有完全匹配，認為用戶名可用
+          log('✅ 沒有完全匹配，用戶名可用:', username);
+          return res.json({
+            success: true,
+            available: true,
+            message: 'Username is available',
+            messageKey: 'username.available'
+          });
+        }
       }
 
-      log('✅ 用戶名可用:', username);
+      log('✅ 沒有找到任何匹配的用戶名，用戶名可用:', username);
       return res.json({
         success: true,
         available: true,
