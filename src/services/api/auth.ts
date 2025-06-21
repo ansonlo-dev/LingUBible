@@ -436,7 +436,9 @@ export const authService = {
     // 獲取當前用戶
     async getCurrentUser() {
         try {
-            return await account.get();
+            const user = await account.get();
+            console.log('✅ authService.getCurrentUser 成功:', user?.email);
+            return user;
         } catch (error: any) {
             // 靜默處理未授權錯誤（401），這是正常的未登入狀態
             if (error?.status === 401 || error?.code === 401 || 
@@ -445,9 +447,10 @@ export const authService = {
                 // 完全靜默處理，不記錄401錯誤因為這是正常的未登入狀態
                 return null;
             }
-            // 對於其他錯誤，仍然記錄但不拋出
-            console.warn('Auth error:', error);
-            return null;
+            
+            // 對於其他錯誤，記錄並拋出，讓上層決定如何處理
+            console.warn('⚠️ authService.getCurrentUser 遇到非401錯誤:', error?.message || error);
+            throw error; // 拋出錯誤，讓 checkUser 可以進行重試
         }
     },
 

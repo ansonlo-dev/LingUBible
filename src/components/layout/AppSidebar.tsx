@@ -41,18 +41,25 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   const [forceRender, setForceRender] = useState(0);
   const [dynamicHeight, setDynamicHeight] = useState('100vh');
 
-  // 監聽 OAuth 登入完成事件，用於強制重新渲染
+  // 監聽 OAuth 登入完成事件和強制用戶更新事件，用於強制重新渲染
   useEffect(() => {
     const handleOAuthComplete = () => {
       console.log('側邊欄: 收到 OAuth 完成事件，強制重新渲染');
       setForceRender(prev => prev + 1);
     };
 
+    const handleForceUserUpdate = () => {
+      console.log('側邊欄: 收到強制用戶更新事件，強制重新渲染');
+      setForceRender(prev => prev + 1);
+    };
+
     // 監聽自定義事件
     window.addEventListener('oauthLoginComplete', handleOAuthComplete);
+    window.addEventListener('forceUserUpdate', handleForceUserUpdate);
     
     return () => {
       window.removeEventListener('oauthLoginComplete', handleOAuthComplete);
+      window.removeEventListener('forceUserUpdate', handleForceUserUpdate);
     };
   }, []);
 

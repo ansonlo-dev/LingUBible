@@ -21,9 +21,24 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { language, setLanguage, t } = useLanguage();
   const { user } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
 
   // 檢測操作系統
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+
+  // 監聽強制用戶更新事件，確保 Header 立即反映用戶狀態變化
+  useEffect(() => {
+    const handleForceUserUpdate = () => {
+      console.log('Header: 收到強制用戶更新事件，強制重新渲染');
+      setForceRender(prev => prev + 1);
+    };
+
+    window.addEventListener('forceUserUpdate', handleForceUserUpdate);
+    
+    return () => {
+      window.removeEventListener('forceUserUpdate', handleForceUserUpdate);
+    };
+  }, []);
 
   // Ctrl+K 鍵盤快捷鍵
   useEffect(() => {
