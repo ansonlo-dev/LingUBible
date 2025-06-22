@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { CourseCard } from "@/components/features/reviews/CourseCard";
 import { StatsCard } from "@/components/features/reviews/StatsCard";
 import { PopularItemCard } from "@/components/features/reviews/PopularItemCard";
 import { RollingText } from "@/components/features/animations/RollingText";
@@ -11,12 +10,13 @@ import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMainPageStats } from '@/hooks/useMainPageStats';
 import { Link, useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
 import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
+import { translateDepartmentName } from '@/utils/textUtils';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -220,10 +220,10 @@ const Index = () => {
           <StatsCard
             icon={Users}
             title={t('stats.verifiedStudents')}
-            value={mainPageStatsLoading ? "..." : mainPageStats.verifiedStudentsCount.toString()}
-            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).text}
-            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).trend}
-            isLoading={mainPageStatsLoading}
+            value={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? "..." : mainPageStats.verifiedStudentsCount.toString()}
+            change={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).text}
+            trend={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).trend}
+            isLoading={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0}
           />
           <StatsCard
             icon={Star}
@@ -301,18 +301,19 @@ const Index = () => {
                   <p className="text-muted-foreground">{t('featured.noPopularCoursesDesc')}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                   {popularCourses.map((course) => (
                     <PopularItemCard
                       key={course.$id}
                       type="course"
                       title={course.course_title}
+                      titleTc={course.course_title_tc}
+                      titleSc={course.course_title_sc}
                       code={course.course_code}
-                      department={course.course_department}
+                                              department={translateDepartmentName(course.course_department, t)}
                       language={course.course_language}
                       rating={course.averageRating}
                       reviewCount={course.reviewCount}
-      
                       isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
                     />
                   ))}
@@ -341,16 +342,19 @@ const Index = () => {
                   <p className="text-muted-foreground">{t('featured.noPopularInstructorsDesc')}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                   {popularInstructors.map((instructor) => (
                     <PopularItemCard
                       key={instructor.$id}
                       type="instructor"
                       name={instructor.name}
-                      email={instructor.email}
+                      nameTc={instructor.name_tc}
+                      nameSc={instructor.name_sc}
+                      department={translateDepartmentName(instructor.department, t)}
                       reviewCount={instructor.reviewCount}
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
+                      isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
                     />
                   ))}
                 </div>

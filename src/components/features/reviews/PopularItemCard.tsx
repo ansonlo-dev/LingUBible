@@ -1,14 +1,18 @@
-import { Star, MessageSquare, BookOpen, Mail, CheckCircle, XCircle, GraduationCap, Scale, Brain, Target, Loader2, Award } from 'lucide-react';
+import { Star, MessageSquare, BookOpen, Mail, CheckCircle, XCircle, GraduationCap, Scale, Brain, Target, Loader2, Award, Building } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { StarRating } from '@/components/ui/star-rating';
 import { useCourseDetailedStats } from '@/hooks/useCourseDetailedStats';
+import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/utils/textUtils';
+import { getCurrentTermName } from '@/utils/dateUtils';
 
 interface PopularCourseCardProps {
   type: 'course';
   title: string;
+  titleTc?: string;
+  titleSc?: string;
   code: string;
   department: string;
   language: string;
@@ -20,17 +24,45 @@ interface PopularCourseCardProps {
 interface PopularInstructorCardProps {
   type: 'instructor';
   name: string;
-  email: string;
+  nameTc?: string;
+  nameSc?: string;
+  department: string;
   reviewCount: number;
   teachingScore: number;
   gradingFairness: number;
+  isTeachingInCurrentTerm?: boolean;
 }
 
 type PopularItemCardProps = PopularCourseCardProps | PopularInstructorCardProps;
 
 export const PopularItemCard = (props: PopularItemCardProps) => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language: currentLanguage } = useLanguage();
+  const currentTermName = getCurrentTermName();
+  
+  // 獲取多語言標題（僅對課程類型）
+  const titleInfo = props.type === 'course' 
+    ? getCourseTitle(
+        { 
+          course_title: props.title, 
+          course_title_tc: props.titleTc, 
+          course_title_sc: props.titleSc 
+        }, 
+        currentLanguage
+      )
+    : null;
+
+  // 獲取多語言講師姓名（僅對講師類型）
+  const instructorNameInfo = props.type === 'instructor' 
+    ? getInstructorName(
+        { 
+          name: props.name, 
+          name_tc: props.nameTc, 
+          name_sc: props.nameSc 
+        }, 
+        currentLanguage
+      )
+    : null;
 
   const handleClick = () => {
     if (props.type === 'course') {
@@ -45,48 +77,90 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     ? useCourseDetailedStats(props.code)
     : { stats: null, isLoading: false };
 
-  // 統計框組件 - 更小的版本用於標題旁邊
-  const StatBox = ({ icon: Icon, value, label, color }: { 
+  // 根據評分獲取漸變背景色（0-5分，紅色到綠色）
+  const getRatingGradientColor = (value: number, isDarkMode: boolean = false) => {
+    // 確保評分在0-5範圍內
+    const clampedValue = Math.max(0, Math.min(5, value));
+    
+    // 將0-5的評分映射到0-1的範圍
+    const ratio = clampedValue / 5;
+    
+    // 使用HSL色彩空間創建從紅色(0°)到綠色(120°)的漸變
+    const hue = ratio * 120; // 0到120度
+    const saturation = 95; // 提高飽和度到95%，讓顏色更鮮艷
+    
+    // 調整亮度確保文字可讀性，深色模式使用更深的顏色
+    const lightness = isDarkMode ? 30 : 45; // 深色模式30%，淺色模式45%，讓顏色更深更突出
+    
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  };
+
+  // 統計框組件 - 評分類型在框外，只有數字在框內
+  const StatBox = ({ icon: Icon, value, label }: { 
     icon: any, 
     value: number, 
-    label: string, 
-    color: string 
-  }) => (
-    <div 
-      className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs hover:scale-105 transition-transform cursor-help`}
-      title={`${label}: ${value > 0 ? value.toFixed(1) : 'N/A'}/5`}
-    >
-      <Icon className="h-3 w-3 mb-0.5" />
-      <span className="font-bold text-xs">{value > 0 ? value.toFixed(1) : 'N/A'}</span>
-      <span className="text-xs font-medium leading-tight">{label}</span>
-    </div>
-  );
+    label: string
+  }) => {
+    const hasValidData = value > 0;
+    
+    // 檢測深色模式
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    
+    const backgroundColor = hasValidData 
+      ? getRatingGradientColor(value, isDarkMode) 
+      : (isDarkMode ? '#4B5563' : '#9CA3AF'); // 深色模式用更深的灰色
+    
+    const displayValue = hasValidData ? value.toFixed(1) : 'N/A';
+    
+    // 獲取詳細的懸停說明
+    const getTooltipText = () => {
+      if (label === t('card.workload')) {
+        return t('card.workload.tooltip');
+      } else if (label === t('card.difficulty')) {
+        return t('card.difficulty.tooltip');
+      } else if (label === t('card.usefulness')) {
+        return t('card.usefulness.tooltip');
+      } else if (label === t('card.teaching')) {
+        return t('card.teaching.tooltip');
+      } else if (label === t('card.grading')) {
+        return t('card.grading.tooltip');
+      }
+      return `${label}: ${displayValue}/5`;
+    };
+    
+    return (
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide text-center">{label}</span>
+        <div 
+          className="flex items-center justify-center px-3 py-1.5 rounded-lg hover:scale-105 transition-transform cursor-help"
+          style={{ backgroundColor, width: '90%' }}
+          title={getTooltipText()}
+        >
+          <span className={`font-bold text-base ${isDarkMode ? 'text-white' : 'text-black'} drop-shadow-sm`}>{displayValue}</span>
+        </div>
+      </div>
+    );
+  };
 
-  // 載入中的統計框 - 更小的版本
-  const StatBoxLoading = ({ color }: { color: string }) => (
-    <div className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs`}>
-      <Loader2 className="h-3 w-3 mb-0.5 animate-spin" />
-      <span className="font-bold text-xs">--</span>
-      <span className="text-xs font-medium leading-tight">--</span>
-    </div>
-  );
+  // 載入中的統計框 - 匹配新樣式
+  const StatBoxLoading = ({ label }: { label: string }) => {
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const backgroundColor = isDarkMode ? '#4B5563' : '#9CA3AF';
+    
+    return (
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide text-center">{label}</span>
+        <div 
+          className="flex items-center justify-center px-3 py-1.5 rounded-lg animate-pulse"
+          style={{ backgroundColor, width: '90%' }}
+        >
+          <span className={`font-bold text-base ${isDarkMode ? 'text-white' : 'text-black'} drop-shadow-sm`}>--</span>
+        </div>
+      </div>
+    );
+  };
 
-  // 講師統計框組件 - 用於講師卡片右側
-  const InstructorStatBox = ({ icon: Icon, value, label, color }: { 
-    icon: any, 
-    value: number, 
-    label: string, 
-    color: string 
-  }) => (
-    <div 
-      className={`flex flex-col items-center px-1.5 py-1.5 bg-gradient-to-br ${color} rounded-md border text-xs hover:scale-105 transition-transform cursor-help`}
-      title={`${label}: ${value > 0 ? value.toFixed(1) : 'N/A'}/5`}
-    >
-      <Icon className="h-3 w-3 mb-0.5" />
-      <span className="font-bold text-xs">{value > 0 ? value.toFixed(1) : 'N/A'}</span>
-      <span className="text-xs font-medium leading-tight">{label}</span>
-    </div>
-  );
+
 
   if (props.type === 'course') {
     return (
@@ -95,66 +169,28 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
         onClick={handleClick}
       >
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex justify-between items-start mb-2">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors duration-200 line-clamp-2 mb-1">
-                {props.title}
+              <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors duration-200 line-clamp-2 font-mono">
+                {props.code}
               </CardTitle>
-              <p className="text-sm text-gray-600 dark:text-muted-foreground font-mono">{props.code}</p>
-              {/* Review count display */}
-              <div className="flex items-center gap-1 mt-1">
-                <MessageSquare className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {props.reviewCount} {props.reviewCount === 1 ? t('card.review') : t('card.reviews')}
-                </span>
+              <div className="mt-1">
+                <p className="text-sm text-gray-600 dark:text-muted-foreground">{titleInfo?.primary}</p>
+                {titleInfo?.secondary && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{titleInfo.secondary}</p>
+                )}
               </div>
             </div>
             
-            {/* 3個水平統計框 - 移到右側 */}
-            <div className="flex gap-1.5 shrink-0">
-              {isLoading ? (
-                <>
-                  <StatBoxLoading color="from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800/30 text-blue-600 dark:text-blue-400" />
-                  <StatBoxLoading color="from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800/30 text-amber-600 dark:text-amber-400" />
-                  <StatBoxLoading color="from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800/30 text-green-600 dark:text-green-400" />
-                </>
-              ) : (
-                <>
-                  <StatBox
-                    icon={Scale}
-                    value={stats?.averageWorkload || 0}
-                    label={t('card.workload')}
-                    color="from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800/30 text-blue-600 dark:text-blue-400"
-                  />
-                  <StatBox
-                    icon={Brain}
-                    value={stats?.averageDifficulty || 0}
-                    label={t('card.difficulty')}
-                    color="from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800/30 text-amber-600 dark:text-amber-400"
-                  />
-                  <StatBox
-                    icon={Target}
-                    value={stats?.averageUsefulness || 0}
-                    label={t('card.usefulness')}
-                    color="from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800/30 text-green-600 dark:text-green-400"
-                  />
-                </>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="pt-0">
-          {/* 底部區域：開設狀態徽章和學系標籤 */}
-          <div className="flex items-center justify-between">
-            {/* 左側：開設狀態徽章 */}
+            {/* 開設狀態徽章 - 移到右上角 */}
             <Badge 
               variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
-              className={`text-xs font-medium ${
+              className={`text-xs font-medium ml-2 flex-shrink-0 cursor-help ${
                 props.isOfferedInCurrentTerm 
                   ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
                   : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
               }`}
+              title={props.isOfferedInCurrentTerm ? t('offered.tooltip.yes').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
             >
               {props.isOfferedInCurrentTerm ? (
                 <>
@@ -168,12 +204,57 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 </>
               )}
             </Badge>
-
-            {/* 右側：學系標籤 */}
-            <Badge variant="secondary" className="text-xs bg-gray-600 text-white dark:bg-gray-700 dark:text-gray-200">
-              <BookOpen className="h-3 w-3 mr-1 text-white dark:text-gray-200" />
-              {props.department}
-            </Badge>
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            
+            {/* 3個水平統計框 - 移到評論數量下方 */}
+            <div className="flex gap-2 mt-2 w-full">
+              {isLoading ? (
+                <>
+                  <StatBoxLoading 
+                    label={t('card.workload')}
+                  />
+                  <StatBoxLoading 
+                    label={t('card.difficulty')}
+                  />
+                  <StatBoxLoading 
+                    label={t('card.usefulness')}
+                  />
+                </>
+              ) : (
+                <>
+                  <StatBox
+                    icon={Scale}
+                    value={stats?.averageWorkload || 0}
+                    label={t('card.workload')}
+                  />
+                  <StatBox
+                    icon={Brain}
+                    value={stats?.averageDifficulty || 0}
+                    label={t('card.difficulty')}
+                  />
+                  <StatBox
+                    icon={Target}
+                    value={stats?.averageUsefulness || 0}
+                    label={t('card.usefulness')}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="pt-0">
+          {/* 底部區域：評論數量在左側 */}
+          <div className="flex items-center justify-start">
+            {/* 評論數量 */}
+            <div className="flex items-center gap-1.5">
+              <MessageSquare className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {props.reviewCount} {props.reviewCount === 1 ? t('card.review') : t('card.reviews')}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -187,41 +268,79 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       onClick={handleClick}
     >
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex justify-between items-start mb-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors duration-200 line-clamp-2 mb-1">
+            <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors duration-200 line-clamp-2">
               {props.name}
             </CardTitle>
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted-foreground">
-              <Mail className="h-3 w-3 shrink-0 text-blue-500" />
-              <span className="truncate">{props.email}</span>
-            </div>
-            {/* Review count display */}
-            <div className="flex items-center gap-1 mt-1">
-              <MessageSquare className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {props.reviewCount} {props.reviewCount === 1 ? t('card.review') : t('card.reviews')}
-              </span>
+            <div className="mt-1">
+              {/* 在中文模式下顯示中文名稱 */}
+              {currentLanguage === 'zh-TW' && props.nameTc && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium">{props.nameTc}</p>
+              )}
+              {currentLanguage === 'zh-CN' && props.nameSc && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium">{props.nameSc}</p>
+              )}
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted-foreground">
+                <Building className="h-3 w-3 shrink-0 text-blue-500" />
+                <span className="truncate">{translateDepartmentName(props.department, t)}</span>
+              </div>
             </div>
           </div>
           
-          {/* 2個水平統計框 - 教學評分和評分公平性 */}
-          <div className="flex gap-1.5 shrink-0">
-            <InstructorStatBox
+          {/* 教學狀態徽章 - 移到右上角，類似課程的開設狀態徽章 */}
+          <Badge 
+            variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
+            className={`text-xs font-medium ml-2 flex-shrink-0 cursor-help ${
+              props.isTeachingInCurrentTerm 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+            }`}
+            title={props.isTeachingInCurrentTerm ? t('teaching.tooltip.yes').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}
+          >
+            {props.isTeachingInCurrentTerm ? (
+              <>
+                <CheckCircle className="h-3 w-3 mr-1" />
+                {t('teaching.yes')}
+              </>
+            ) : (
+              <>
+                <XCircle className="h-3 w-3 mr-1" />
+                {t('teaching.no')}
+              </>
+            )}
+          </Badge>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          {/* 2個水平統計框 - 與課程卡片相同的格式 */}
+          <div className="flex gap-2 mt-2 w-full">
+            <StatBox
               icon={Award}
               value={props.teachingScore}
               label={t('card.teaching')}
-              color="from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800/30 text-purple-600 dark:text-purple-400"
             />
-            <InstructorStatBox
+            <StatBox
               icon={Scale}
               value={props.gradingFairness}
               label={t('card.grading')}
-              color="from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border-indigo-200 dark:border-indigo-800/30 text-indigo-600 dark:text-indigo-400"
             />
           </div>
         </div>
       </CardHeader>
+      
+      <CardContent className="pt-0">
+        {/* 底部區域：評論數量 */}
+        <div className="flex items-center justify-start">
+          {/* 評論數量 */}
+          <div className="flex items-center gap-1.5">
+            <MessageSquare className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {props.reviewCount} {props.reviewCount === 1 ? t('card.review') : t('card.reviews')}
+            </span>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }; 

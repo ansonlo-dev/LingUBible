@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useState, useEffect } from 'react';
 import { 
   Users, 
@@ -32,11 +32,12 @@ import { CourseService } from '@/services/api/courseService';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
+import { getInstructorName } from '@/utils/textUtils';
 
 const Lecturers = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [instructor, setInstructor] = useState<Instructor | null>(null);
   const [teachingCourses, setTeachingCourses] = useState<InstructorTeachingCourse[]>([]);
@@ -190,6 +191,13 @@ const Lecturers = () => {
               <Users className="h-8 w-8 text-primary shrink-0" />
               <div className="min-w-0 flex-1">
                 <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
+                {/* 在中文模式下顯示中文名稱 */}
+                {language === 'zh-TW' && instructor.name_tc && (
+                  <p className="text-xl text-gray-600 dark:text-gray-400 mt-1 font-medium">{instructor.name_tc}</p>
+                )}
+                {language === 'zh-CN' && instructor.name_sc && (
+                  <p className="text-xl text-gray-600 dark:text-gray-400 mt-1 font-medium">{instructor.name_sc}</p>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -407,7 +415,7 @@ const Lecturers = () => {
                     {/* 最終成績 - 右上角大顯示 */}
                     {reviewInfo.review.course_final_grade && (
                       <div className="flex flex-col items-center shrink-0">
-                        <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                        <Badge variant="default" className="text-lg font-bold w-10 h-10 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
                           {reviewInfo.review.course_final_grade}
                         </Badge>
                       </div>
