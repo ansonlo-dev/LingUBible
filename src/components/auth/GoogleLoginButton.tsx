@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { oauthService } from '@/services/api/oauth';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';

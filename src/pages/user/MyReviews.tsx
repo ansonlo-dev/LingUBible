@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { CourseService, type Review, type CourseReviewInfo } from '@/services/api/courseService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -188,7 +188,7 @@ const MyReviews = () => {
                     {/* 最終成績 - 右上角大顯示 */}
                     {reviewInfo.review.course_final_grade && (
                       <div className="flex flex-col items-center shrink-0">
-                        <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                        <Badge variant="default" className="text-lg font-bold w-10 h-10 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
                           {reviewInfo.review.course_final_grade}
                         </Badge>
                       </div>

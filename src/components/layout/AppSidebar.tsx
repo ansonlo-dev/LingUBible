@@ -1,5 +1,5 @@
 import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle, Mail } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
 import { Link, useLocation } from 'react-router-dom';

@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { LoadingDots } from '@/components/ui/loading-number';
 import { useCounterAnimation } from '@/hooks/useCounterAnimation';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useEffect } from 'react';
 
 interface StatsCardProps {

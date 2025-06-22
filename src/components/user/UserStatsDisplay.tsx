@@ -1,6 +1,6 @@
 import { Users, UserCheck, Calendar, TrendingUp } from 'lucide-react';
 import { useUserStats } from '@/hooks/useUserStats';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface UserStatsDisplayProps {
   variant?: 'compact' | 'detailed';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1708,7 +1708,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               {/* 最終成績 - 右上角大顯示 */}
               {grade && grade !== '-1' && (
                 <div className="flex flex-col items-center shrink-0">
-                  <Badge variant="default" className="text-lg font-bold px-3 py-1 bg-primary text-primary-foreground">
+                  <Badge variant="default" className="text-lg font-bold w-10 h-10 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
                     {grade}
                   </Badge>
                 </div>

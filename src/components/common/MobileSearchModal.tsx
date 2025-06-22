@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, BookOpen as BookOpenIcon, Users, MessageCircle } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
 import type { CourseWithStats, InstructorWithStats } from '@/services/api/courseService';
+import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -185,7 +186,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                                 {course.course_code} - {course.course_title}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {course.course_department}
+                                {translateDepartmentName(course.course_department, t)}
                               </div>
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -286,7 +287,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                                 {course.course_code} - {course.course_title}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {course.course_department}
+                                {translateDepartmentName(course.course_department, t)}
                               </div>
                             </div>
                                                          <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">

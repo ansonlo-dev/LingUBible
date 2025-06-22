@@ -1,8 +1,12 @@
 {
   "name": "lingubible",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
+  "description": "LingU Bible - 嶺南大學課程評價平台 ",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "dev:performance": "vite --mode development --open /performance",

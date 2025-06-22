@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { getWordCountStatus } from '@/utils/textUtils';
 import { cn } from '@/lib/utils';
 

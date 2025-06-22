@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Check, X, AlertTriangle, Shield, Info } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { DEV_MODE, getDevModeMessage } from '@/config/devMode';
 
 interface ValidationRule {

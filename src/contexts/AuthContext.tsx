@@ -3,7 +3,7 @@ import { authService, AuthUser } from '@/services/api/auth';
 import { toast } from '@/hooks/use-toast';
 import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import AppwriteUserStatsService from '@/services/api/appwriteUserStats';
 import { oauthService } from '@/services/api/oauth';
 
@@ -526,12 +526,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsRefreshingUser(true);
         
         try {
+            // 保存當前用戶狀態作為備份
+            const currentUserBackup = user;
+            
             // 檢查是否為強制刷新（用於 OAuth 登入）或有本地會話
             const hasLocalSession = authService.hasLocalSession();
             if (!forceRefresh && !hasLocalSession) {
                 console.log('沒有本地會話且非強制刷新，跳過刷新');
-                setUser(null);
-                setUserSessionId(null);
+                // 只有在確實沒有會話時才清空用戶狀態
+                if (!currentUserBackup) {
+                    setUser(null);
+                    setUserSessionId(null);
+                }
                 return;
             }
             
@@ -552,9 +558,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         break;
                     }
                 } catch (error: any) {
-                    // 如果是 401 錯誤，不要重試
+                    // 如果是 401 錯誤，檢查是否真的是會話過期
                     if (error?.code === 401 || error?.type === 'general_unauthorized_scope') {
                         console.log('刷新用戶資料失敗: 會話已過期');
+                        // 如果有本地會話但 API 返回 401，可能是暫時的網路問題
+                        if (hasLocalSession && attempts < maxAttempts - 1) {
+                            console.log('檢測到本地會話存在，可能是暫時的網路問題，繼續重試');
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            attempts++;
+                            continue;
+                        }
                         break;
                     }
                     
@@ -572,15 +585,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.log('用戶狀態已更新:', currentUser.email);
             } else {
                 console.error('多次嘗試後仍無法獲取用戶信息');
-                // 如果刷新失敗，可能是 session 過期，設置為 null
-                setUser(null);
-                setUserSessionId(null);
+                // 只有在確實沒有本地會話的情況下才清空用戶狀態
+                if (!hasLocalSession) {
+                    console.log('沒有本地會話，清空用戶狀態');
+                    setUser(null);
+                    setUserSessionId(null);
+                } else {
+                    console.log('檢測到本地會話存在，保持當前用戶狀態');
+                    // 保持當前用戶狀態，避免意外登出
+                }
             }
         } catch (error) {
             console.error('刷新用戶資料失敗:', error);
-            // 如果刷新失敗，可能是 session 過期，設置為 null
-            setUser(null);
-            setUserSessionId(null);
+            // 檢查是否有本地會話，如果有則不清空用戶狀態
+            const hasLocalSession = authService.hasLocalSession();
+            if (!hasLocalSession) {
+                console.log('沒有本地會話，清空用戶狀態');
+                setUser(null);
+                setUserSessionId(null);
+            } else {
+                console.log('檢測到本地會話存在，保持當前用戶狀態以避免意外登出');
+            }
         } finally {
             setIsRefreshingUser(false);
         }

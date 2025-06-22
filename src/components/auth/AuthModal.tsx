@@ -11,7 +11,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, AlertTriangle, User, Lightbulb, Loader2 } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentVerificationInput } from './StudentVerificationInput';
 import { PasswordStrengthChecker } from './PasswordStrengthChecker';

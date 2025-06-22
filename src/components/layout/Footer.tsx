@@ -1,4 +1,4 @@
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Github, ExternalLink, RefreshCw } from 'lucide-react';
 import { UserStatsDisplay } from '@/components/user/UserStatsDisplay';
 import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';

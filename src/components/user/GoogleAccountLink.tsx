@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { oauthService } from '@/services/api/oauth';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Link as LinkIcon, Unlink, CheckCircle, AlertTriangle } from 'lucide-react';

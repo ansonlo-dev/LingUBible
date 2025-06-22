@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Mail, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
 import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptcha } from '@/contexts/RecaptchaContext';
 import { useForgotPasswordRecaptcha } from '@/hooks/useSmartRecaptcha';

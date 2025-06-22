@@ -70,8 +70,10 @@ export function generateStructuredData(
   const baseStructuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": customData?.name || (language === 'zh-TW' ? 'LingUBible - Reg科聖經' : SEO_CONFIG.SITE_NAME),
-    "alternateName": language === 'zh-TW' ? ['Reg科聖經', '嶺南選課神器', '嶺大課程評價'] : undefined,
+    "name": customData?.name || SEO_CONFIG.SITE_NAME,
+    "alternateName": language === 'zh-TW' ? ['Reg科聖經', '嶺南選課神器', '嶺大課程評價'] : 
+                     language === 'zh-CN' ? ['课程评价平台', '岭南大学选课'] : 
+                     ['Course Reviews', 'Lecturer Ratings'],
     "description": customData?.description || seoData.description,
     "url": url,
     "inLanguage": language,

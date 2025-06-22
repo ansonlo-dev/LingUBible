@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
 import { 
   getPageSEO, 

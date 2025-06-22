@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { RecaptchaProvider, useRecaptcha } from '@/contexts/RecaptchaContext';
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -37,7 +38,7 @@ import FAQ from "./pages/legal/FAQ";
 import EmailPreview from "./pages/EmailPreview";
 import PerformanceTest from "./pages/PerformanceTest";
 
-import CourseGradingExplain from "./pages/CourseGradingExplain";
+
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
 import { useState, useEffect } from 'react';
 import { theme } from '@/lib/utils';
@@ -581,7 +582,7 @@ const RouterContent = ({
                       } 
                     />
 
-          <Route path="/course-grading-explain" element={<CourseGradingExplain />} />
+          
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

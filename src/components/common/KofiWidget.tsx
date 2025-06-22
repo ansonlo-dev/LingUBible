@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 declare global {
   interface Window {

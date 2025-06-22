@@ -1,6 +1,6 @@
 import { AlertTriangle, Settings, Mail, Lock } from 'lucide-react';
 import { DEV_MODE } from '@/config/devMode';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export function DevModeIndicator() {
   const { t } = useLanguage();

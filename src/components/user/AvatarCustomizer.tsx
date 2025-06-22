@@ -7,7 +7,7 @@ import { SmartAvatar } from '@/components/ui/smart-avatar';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';
 import { getAllAnimals, getAllBackgrounds, getTotalCombinations } from "@/utils/ui/avatarUtils";
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Palette, Shuffle, Save, Trash2, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 

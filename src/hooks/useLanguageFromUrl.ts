@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export function useLanguageFromUrl() {
   const [searchParams, setSearchParams] = useSearchParams();

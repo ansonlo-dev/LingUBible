@@ -7,7 +7,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
 import { useState, useEffect } from 'react';
 
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from "@/components/user/UserMenu";
 import { Link } from 'react-router-dom';

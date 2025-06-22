@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, CheckCircle, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
 import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { PasswordInput } from '@/components/ui/password-input';
 import { PasswordStrengthChecker } from '@/components/auth/PasswordStrengthChecker';

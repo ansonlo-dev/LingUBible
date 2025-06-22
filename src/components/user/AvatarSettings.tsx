@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { SmartAvatar } from '@/components/ui/smart-avatar';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAvatarPreferences } from '@/hooks/useAvatarPreferences';
 import { useCustomAvatar } from '@/hooks/useCustomAvatar';

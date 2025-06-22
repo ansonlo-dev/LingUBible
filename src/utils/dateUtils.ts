@@ -36,14 +36,26 @@ export function isCurrentTerm(termCode: string): boolean {
  */
 export function getCurrentTermName(): string {
   const termCode = getCurrentTermCode();
-  const year = termCode.split('-')[0];
-  const term = termCode.split('-')[1];
+  return getTermDisplayName(termCode);
+}
+
+/**
+ * 將學期代碼轉換為顯示名稱
+ */
+export function getTermDisplayName(termCode: string): string {
+  const parts = termCode.split('-');
+  if (parts.length !== 2) {
+    return termCode; // 如果格式不正確，返回原始代碼
+  }
+  
+  const year = parts[0];
+  const term = parts[1];
   
   switch (term) {
     case 'T1':
       return `${year}/${parseInt(year) + 1} Term 1`;
     case 'T2':
-      return `${parseInt(year) + 1}/${parseInt(year) + 2} Term 2`;
+      return `${year}/${parseInt(year) + 1} Term 2`;
     case 'Summer':
       return `${year} Summer`;
     default:

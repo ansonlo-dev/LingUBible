@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,12 +129,30 @@ export default function UserSettings() {
 
     setLoading(true);
 
-          try {
-        // 更新用戶名
-        await authService.updateUserName(username.trim() || user.email);
+    try {
+      // 保存當前用戶信息作為備份
+      const currentUserBackup = user;
       
-      // 刷新用戶資料
-      await refreshUser();
+      // 更新用戶名
+      await authService.updateUserName(username.trim() || user.email);
+      
+      // 等待一小段時間確保更新完成
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 嘗試刷新用戶資料，但如果失敗不要清空用戶狀態
+      try {
+        await refreshUser();
+      } catch (refreshError) {
+        console.warn('刷新用戶資料失敗，但用戶名更新成功:', refreshError);
+        // 如果刷新失敗，手動更新本地用戶狀態
+        if (currentUserBackup) {
+          const updatedUser = {
+            ...currentUserBackup,
+            name: username.trim() || user.email
+          };
+          // 這裡我們不能直接設置 user 狀態，但可以確保不會被登出
+        }
+      }
       
       // 更新原始用戶名
       setOriginalUsername(username);
@@ -313,9 +331,58 @@ export default function UserSettings() {
   };
 
   const handleSaveUsername = async () => {
-    await handleSave();
-    if (isUsernameValid && !usernameError) {
+    if (!user || !isUsernameValid || usernameError) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 保存當前用戶信息作為備份
+      const currentUserBackup = user;
+      
+      // 更新用戶名
+      await authService.updateUserName(username.trim() || user.email);
+      
+      // 等待一小段時間確保更新完成
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 嘗試刷新用戶資料，但如果失敗不要清空用戶狀態
+      try {
+        await refreshUser();
+        console.log('用戶資料刷新成功');
+      } catch (refreshError) {
+        console.warn('刷新用戶資料失敗，但用戶名更新成功:', refreshError);
+        // 刷新失敗不應該影響用戶體驗，用戶名已經成功更新
+      }
+      
+      // 更新原始用戶名狀態
+      setOriginalUsername(username);
+      
+      // 關閉編輯模式
       setIsEditingUsername(false);
+      
+      // 顯示成功訊息
+      toast({
+        title: t('settings.saveSuccess'),
+        description: username.trim() 
+          ? t('settings.usernameUpdated', { username: username.trim() })
+          : t('settings.usernameCleared'),
+        className: "border-green-300 bg-green-100 dark:bg-green-900 dark:border-green-600 text-green-900 dark:text-green-100",
+      });
+      
+    } catch (error: any) {
+      console.error('更新用戶名失敗:', error);
+      
+      // 顯示錯誤訊息但不關閉編輯模式
+      toast({
+        variant: "destructive",
+        title: t('settings.saveFailed'),
+        description: error.message || t('settings.updateError'),
+        className: "border-red-300 bg-red-100 dark:bg-red-900 dark:border-red-600 text-red-900 dark:text-red-100",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -110,8 +110,10 @@ export default function OAuthLoginCallback() {
             }
             
                                       // 會話有效且是學生郵箱，直接成功
-             await refreshUser();
-             const statusSet = setStatusSafely('success', t('oauth.loginSuccess'));
+            console.log('🔄 檢測到現有會話，執行強制刷新...');
+            await refreshUser(true); // forceRefresh = true
+            console.log('✅ 現有會話強制刷新完成');
+            const statusSet = setStatusSafely('success', t('oauth.loginSuccess'));
              
              if (statusSet && !toastShownRef.current) {
                toastShownRef.current = true;

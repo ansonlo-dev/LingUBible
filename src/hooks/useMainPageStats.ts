@@ -116,6 +116,14 @@ export function useMainPageStats() {
           verifiedStudentsLast30Days: registeredUsersStats.newUsersLast30Days
         });
 
+        console.log('📊 主頁統計數據載入完成:', {
+          coursesWithReviews,
+          instructorsWithReviews,
+          totalReviews,
+          verifiedStudentsCount: registeredUsersStats.verifiedUsers,
+          verifiedStudentsLast30Days: registeredUsersStats.newUsersLast30Days
+        });
+
       } catch (error) {
         console.error('Error loading main page stats:', error);
         setError('Failed to load statistics');

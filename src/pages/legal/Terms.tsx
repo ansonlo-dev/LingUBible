@@ -1,4 +1,4 @@
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Shield, Users, FileText, AlertTriangle, Scale, Mail, UserCheck, MessageSquareX, CheckCircle, ShieldCheck, Lock, UserX, ScrollText, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

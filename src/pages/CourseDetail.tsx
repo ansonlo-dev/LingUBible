@@ -16,9 +16,10 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
+import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
 
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
@@ -174,7 +175,7 @@ const CourseDetail = () => {
               <div className="flex items-center gap-3">
                 <Badge variant="secondary" className="text-sm">
                   <BookOpen className="h-3 w-3 mr-1" />
-                  {course.course_department}
+                                      {translateDepartmentName(course.course_department, t)}
                 </Badge>
               </div>
             </div>
@@ -268,10 +269,10 @@ const CourseDetail = () => {
                               <span className="truncate text-sm">{info.instructor.name}</span>
                             </Button>
                             <a 
-                              href={`mailto:${info.emailOverride || info.instructor.email}`}
+                              href={`mailto:${info.instructor.email}`}
                               className="text-xs text-muted-foreground truncate pl-1 hover:underline hover:text-primary transition-colors block"
                             >
-                              {info.emailOverride || info.instructor.email}
+                              {info.instructor.email}
                             </a>
                           </div>
                         </div>
@@ -313,10 +314,10 @@ const CourseDetail = () => {
                               <span className="truncate text-sm">{info.instructor.name}</span>
                             </Button>
                             <a 
-                              href={`mailto:${info.emailOverride || info.instructor.email}`}
+                              href={`mailto:${info.instructor.email}`}
                               className="text-xs text-muted-foreground truncate pl-1 hover:underline hover:text-primary transition-colors block"
                             >
-                              {info.emailOverride || info.instructor.email}
+                              {info.instructor.email}
                             </a>
                           </div>
                         </div>

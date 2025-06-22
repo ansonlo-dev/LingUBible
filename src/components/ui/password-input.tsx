@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage } from "@/hooks/useLanguage"
 
 export interface PasswordInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}

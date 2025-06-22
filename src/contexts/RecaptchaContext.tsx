@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useLanguage } from './LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { theme } from '@/lib/utils';
 
 // reCAPTCHA 配置

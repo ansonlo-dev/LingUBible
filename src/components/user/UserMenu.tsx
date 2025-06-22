@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {

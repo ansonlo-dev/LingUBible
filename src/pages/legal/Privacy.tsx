@@ -1,4 +1,4 @@
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Shield, Database, Eye, Clock, Lock, UserCheck, Cookie, FileText, Mail, Server, Users, Timer, ShieldCheck, Scale, Zap, ScrollText, MessageCircle, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { X, Info, Shield, Settings, BarChart3 } from 'lucide-react';
 import { swipeHintCookie } from '@/lib/cookies';
 

@@ -1,13 +1,15 @@
 import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useEffect, useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, Search, BookOpen, Users, ArrowLeft, RefreshCw } from "lucide-react";
+import { MobileSearchModal } from "@/components/common/MobileSearchModal";
 
 const NotFound = () => {
   const location = useLocation();
   const { t } = useLanguage();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     console.error(
@@ -20,30 +22,39 @@ const NotFound = () => {
     window.location.reload();
   };
 
+  const handleSearchClick = () => {
+    setIsSearchOpen(true);
+  };
+
   const quickLinks = [
     {
       icon: Home,
       label: t('nav.home'),
       path: '/',
-      description: t('404.quickLinks.homeDesc')
+      description: t('404.quickLinks.homeDesc'),
+      isLink: true
     },
     {
       icon: BookOpen,
       label: t('nav.courses'),
       path: '/courses',
-      description: t('404.quickLinks.coursesDesc')
+      description: t('404.quickLinks.coursesDesc'),
+      isLink: true
     },
     {
       icon: Users,
       label: t('nav.lecturers'),
-                  path: '/instructors',
-      description: t('404.quickLinks.lecturersDesc')
+      path: '/instructors',
+      description: t('404.quickLinks.instructorsDesc'),
+      isLink: true
     },
     {
       icon: Search,
       label: t('search.search'),
       path: '/',
-      description: t('404.quickLinks.searchDesc')
+      description: t('404.quickLinks.searchDesc'),
+      isLink: false,
+      onClick: handleSearchClick
     }
   ];
 
@@ -118,27 +129,52 @@ const NotFound = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickLinks.map((link, index) => {
               const IconComponent = link.icon;
-              return (
-                <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105">
-                  <CardContent className="p-6">
-                    <Link to={link.path} className="block">
-                      <div className="flex flex-col items-center text-center space-y-3">
-                        <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                          <IconComponent className="h-6 w-6 text-primary" />
+              
+              if (link.isLink) {
+                return (
+                  <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105">
+                    <CardContent className="p-6">
+                      <Link to={link.path} className="block">
+                        <div className="flex flex-col items-center text-center space-y-3">
+                          <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                            <IconComponent className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {link.label}
+                            </h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {link.description}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {link.label}
-                          </h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {link.description}
-                          </p>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              } else {
+                return (
+                  <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer">
+                    <CardContent className="p-6">
+                      <div onClick={link.onClick} className="block">
+                        <div className="flex flex-col items-center text-center space-y-3">
+                          <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                            <IconComponent className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {link.label}
+                            </h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {link.description}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </Link>
-                  </CardContent>
-                </Card>
-              );
+                    </CardContent>
+                  </Card>
+                );
+              }
             })}
           </div>
         </div>
@@ -166,6 +202,12 @@ const NotFound = () => {
           </Card>
         </div>
       </div>
+      
+      {/* 搜索模態 */}
+      <MobileSearchModal 
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </div>
   );
 };

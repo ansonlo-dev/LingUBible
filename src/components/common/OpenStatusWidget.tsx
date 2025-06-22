@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getStatus } from "@openstatus/react";
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface OpenStatusWidgetProps {
   slug: string;
