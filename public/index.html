@@ -103,48 +103,46 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://lingubible.com/" />
     
-    <!-- Google Site Name Structured Data -->
+    <!-- Structured Data -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "LingUBible",
-      "alternateName": ["嶺大Reg科聖經", "Reg科聖經", "嶺南大學課程評價平台"],
-      "url": "https://lingubible.com/",
-      "description": "真實可靠的Reg科聖經，幫助嶺南大學同學們作出明智的選課決定。專業的課程與講師評價平台，提供真實學生評價。",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://lingubible.com/favicon-google.png",
-        "width": 96,
-        "height": 96
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "LingUBible",
+        "alternateName": ["嶺大Reg科聖經", "Reg科聖經", "嶺南大學課程評價平台"],
+        "url": "https://lingubible.com/",
+        "description": "真實可靠的Reg科聖經，幫助嶺南大學同學們作出明智的選課決定。專業的課程與講師評價平台，提供真實學生評價。",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://lingubible.com/favicon-google.png",
+          "width": 96,
+          "height": 96
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://lingubible.com/courses?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
       },
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://lingubible.com/courses?search={search_term_string}",
-        "query-input": "required name=search_term_string"
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "LingUBible",
+        "url": "https://lingubible.com/",
+        "logo": "https://lingubible.com/favicon-google.png",
+        "description": "嶺南大學課程與講師評價平台，提供真實可靠的學生評價和選課指南。",
+        "foundingDate": "2024",
+        "sameAs": [
+          "https://lingubible.com/"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "url": "https://lingubible.com/contact"
+        }
       }
-    }
-    </script>
-
-    <!-- Organization Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "LingUBible",
-      "url": "https://lingubible.com/",
-      "logo": "https://lingubible.com/favicon-google.png",
-      "description": "嶺南大學課程與講師評價平台，提供真實可靠的學生評價和選課指南。",
-      "foundingDate": "2024",
-      "sameAs": [
-        "https://lingubible.com/"
-      ],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "customer service",
-        "url": "https://lingubible.com/contact"
-      }
-    }
+    ]
     </script>
     
     <!-- Fonts -->
