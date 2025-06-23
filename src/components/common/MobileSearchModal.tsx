@@ -28,7 +28,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
     setLoading(false);
     onClose();
   };
-  const { t } = useLanguage();
+  const { t, language: currentLanguage } = useLanguage();
   const { isDesktop } = useDeviceDetection();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,28 +174,31 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                       <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
                     </div>
                     <div className="space-y-2">
-                      {popularCourses.map((course) => (
-                        <button
-                          key={course.course_code}
-                          onClick={() => handleCourseClick(course.course_code)}
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">
-                                {course.course_code} - {course.course_title}
+                      {popularCourses.map((course) => {
+                        const titleInfo = getCourseTitle(course, currentLanguage);
+                        return (
+                          <button
+                            key={course.course_code}
+                            onClick={() => handleCourseClick(course.course_code)}
+                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {titleInfo.primary}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {course.course_code} • {translateDepartmentName(course.course_department, t)}
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {translateDepartmentName(course.course_department, t)}
+                              <div className="flex items-center gap-1 text-sm text-gray-500">
+                                <MessageCircle className="h-4 w-4" />
+                                <span>{course.reviewCount}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              <MessageCircle className="h-4 w-4" />
-                              <span>{course.reviewCount}</span>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -218,7 +221,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                                 {instructor.name}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {instructor.email}
+                                {translateDepartmentName(instructor.department, t)}
                               </div>
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -275,28 +278,31 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                       <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
                     </div>
                     <div className="space-y-2">
-                      {popularCourses.map((course) => (
-                        <button
-                          key={course.course_code}
-                          onClick={() => handleCourseClick(course.course_code)}
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium text-gray-900 dark:text-white truncate">
-                                {course.course_code} - {course.course_title}
+                      {popularCourses.map((course) => {
+                        const titleInfo = getCourseTitle(course, currentLanguage);
+                        return (
+                          <button
+                            key={course.course_code}
+                            onClick={() => handleCourseClick(course.course_code)}
+                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-gray-900 dark:text-white truncate">
+                                  {titleInfo.primary}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                  {course.course_code} • {translateDepartmentName(course.course_department, t)}
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {translateDepartmentName(course.course_department, t)}
+                              <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                                <MessageCircle className="h-4 w-4" />
+                                <span>{course.reviewCount}</span>
                               </div>
                             </div>
-                                                         <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
-                               <MessageCircle className="h-4 w-4" />
-                               <span>{course.reviewCount}</span>
-                             </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -319,13 +325,13 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                                 {instructor.name}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {instructor.email}
+                                {translateDepartmentName(instructor.department, t)}
                               </div>
                             </div>
-                                                         <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
-                               <MessageCircle className="h-4 w-4" />
-                               <span>{instructor.reviewCount}</span>
-                             </div>
+                            <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{instructor.reviewCount}</span>
+                            </div>
                           </div>
                         </button>
                       ))}
