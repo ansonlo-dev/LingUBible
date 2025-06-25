@@ -316,7 +316,6 @@ export default {
     'oauth.returnToLogin': '返回登入',
     'oauth.welcomeBack': '歡迎回來！登入成功。',
     'oauth.studentEmailRequired': '只有 @ln.hk 或 @ln.edu.hk 郵箱的學生才能使用 Google 登入',
-    'oauth.nonStudentAccountWarning': '非學生帳戶透過 Google 登入將被系統自動移除',
     'oauth.studentEmailWarning': '學生郵箱驗證',
     'oauth.studentEmailWarningDescription': '只有 @ln.hk 或 @ln.edu.hk 郵箱的學生才能使用 Google 登入。非學生帳戶將被系統自動刪除。',
     'oauth.noLinkedAccount': '找不到連結的帳戶',
@@ -327,6 +326,36 @@ export default {
     'oauth.missingParameters': '缺少必要的回調參數',
     'oauth.loginRequirement': 'Google 登入要求',
     'oauth.loginRequirementDescription': '只能登入已連結的 Google 帳戶。如果您的 Google 帳戶尚未連結，請先註冊學生帳戶，然後在設定中連結。',
+    'oauth.nonStudentAccountWarning': '非學生帳戶將被安全系統立即阻止並刪除。',
+    'oauth.immediateValidation': '即時驗證',
+    'oauth.immediateValidationDescription': '所有帳戶都會立即驗證。非學生信箱無法建立帳戶。',
+    'oauth.validationInProgress': '正在驗證帳戶...',
+    'oauth.validationFailed': '帳戶驗證失敗',
+    'oauth.validationSuccess': '帳戶驗證成功',
+    'oauth.accountCreationBlocked': '帳戶建立被阻止',
+    'oauth.accountCreationBlockedDescription': '非學生信箱地址無法在此平台建立帳戶。',
+    
+    // Session types
+    'sessionType.lecture': '講課',
+    'sessionType.tutorial': '導修',
+    'sessionType.lab': '實驗',
+    'sessionType.seminar': '研討',
+    
+    // Grade and GPA
+    'grade.tooltip.title': '成績資訊',
+    'grade.gpa': 'GPA',
+    'grade.description.excellent': '優秀',
+    'grade.description.good': '良好',
+    'grade.description.fair': '一般',
+    'grade.description.pass': '通過',
+    'grade.description.failure': '不及格',
+    'grade.description.incomplete': '未完成',
+    'grade.description.merit': '優異',
+    'grade.description.verySatisfactory': '非常滿意',
+    'grade.description.satisfactory': '滿意',
+    'grade.description.unsatisfactory': '不滿意',
+    'grade.description.withdrawn': '退課',
+    'grade.description.audit': '旁聽',
     'auth.termsAgreement': '註冊即表示您同意我們的使用條款和隱私政策',
     'auth.termsAgreementShort': '註冊即表示您同意我們的',
     'auth.and': '和',
@@ -385,12 +414,36 @@ export default {
     // 分頁
     'pagination.itemsPerPage': '每頁課程數',
     'pagination.coursesPerPage': '每頁課程數',
+    'pagination.reviewsPerPage': '每頁評論數',
     'pagination.showingItems': '顯示第 {start} - {end} 項，共 {total} 項',
     'pagination.pageInfo': '第 {current} 頁，共 {total} 頁',
     'pagination.first': '首頁',
     'pagination.previous': '上一頁',
     'pagination.next': '下一頁',
     'pagination.last': '末頁',
+
+    // Review filters
+      'filter.reviewLanguage': '評論語言',
+  'filter.reviewTerm': '學期',
+  'filter.reviewInstructor': '講師',
+  'filter.reviewSessionType': '課堂類型',
+  'filter.reviewCourse': '課程',
+  'filter.allLanguages': '所有語言',
+  'filter.allTerms': '所有學期',
+  'filter.allInstructors': '所有講師',
+  'filter.allSessionTypes': '所有課堂類型',
+  'filter.allCourses': '所有課程',
+    'sort.currentSort': '目前排序',
+
+    // Common
+    'common.reviews': '評論',
+
+    // Languages
+    'language.traditionalChinese': '繁體中文',
+    'language.simplifiedChinese': '簡體中文',
+
+    // Reviews
+    'review.studentReviews': '學生評論',
 
     'pages.courseDetail.invalidCourseCode': '課程代碼無效',
     'pages.courseDetail.courseNotFound': '找不到該課程',
@@ -401,12 +454,19 @@ export default {
       'pages.courseDetail.reviews': '課程評論',
     'pages.courseDetail.averageRating': '平均評分',
     'pages.courseDetail.reviewCount': '評論數',
+    'pages.courseDetail.totalReviewsCount': '總共 {count} 則評論',
+    'pages.courseDetail.filteredReviewsCount': '找到 {count} 則評論',
     'pages.courseDetail.studentCount': '學生數',
     'pages.courseDetail.teachingRecords': '教學記錄',
-    'pages.courseDetail.noTeachingRecords': '暫無教學記錄',
+'pages.courseDetail.loadingTeachingRecords': '載入教學記錄中...',
+'pages.courseDetail.noTeachingRecords': '暫無教學記錄',
     'pages.courseDetail.termCode': '學期代碼',
     'pages.courseDetail.startDate': '開始日期',
     'pages.courseDetail.endDate': '結束日期',
+    'pages.courseDetail.filterByTerm': '按學期篩選',
+    'pages.courseDetail.noLectureRecords': '沒有找到講座記錄',
+    'pages.courseDetail.noTutorialRecords': '沒有找到導修記錄',
+    'pages.courseDetail.offerRecords': '開設記錄',
 
     'pages.instructors.title': '教師目錄',
     'pages.instructors.showingResults': '顯示 {count} / {total} 位教師',
@@ -467,17 +527,21 @@ export default {
   'offered.no': '未開設',
   'offered.tooltip.yes': '本學期有開設此課程（{term}）',
   'offered.tooltip.no': '本學期未開設此課程（{term}）',
+  'offered.tooltip.clickable': '本學期有開設此課程（{term}）。點擊查看本學期所有開設的課程。',
   
   // Teaching status
   'teaching.yes': '正在授課',
   'teaching.no': '未授課',
   'teaching.tooltip.yes': '該講師本學期正在授課（{term}）',
   'teaching.tooltip.no': '該講師本學期未授課（{term}）',
-    'sidebar.myReviews': '我的評價',
-    'sidebar.settings': '設置',
-    'sidebar.preferences': '偏好設定',
-    'sidebar.browse': '瀏覽',
-    'sidebar.personal': '個人',
+  'teaching.tooltip.clickable': '該講師本學期正在授課（{term}）。點擊查看本學期所有授課的講師。',
+      'sidebar.myReviews': '我的評價',
+  'sidebar.settings': '設置',
+  'sidebar.preferences': '偏好設定',
+  'sidebar.browse': '瀏覽',
+  'sidebar.personal': '個人',
+  'sidebar.toggle': '切換側邊欄',
+  'sidebar.toggleShortcut': '使用快捷鍵 {shortcut} 展開/摺疊側邊欄',
 
     // =============================================================================
     // 4. SEARCH & FILTERING - 搜索與過濾
@@ -485,6 +549,8 @@ export default {
 
     'search.search': '搜尋',
     'search.placeholder': '搜尋課程、教師...',
+    'search.courses': '搜尋課程',
+    'search.coursesPlaceholder': '搜尋課程代碼、課程名稱...',
     'search.instructors': '搜尋教師',
     'search.instructorsPlaceholder': '搜尋教師姓名、郵箱或類型...',
     'search.findInstructors': '尋找教師',
@@ -510,7 +576,7 @@ export default {
     'filters.lightWorkload': '工作量輕',
     'filters.englishTaught': '英語授課',
     'filters.hasGroupProject': '有小組作業',
-    'filters.noAttendance': '無出席要求',
+    'filters.noAttendance': '無出席',
     'filters.credits': '學分',
     'filters.hoursPerWeek': '每週時數',
     'filters.recommendedYear': '推薦修讀年級',
@@ -526,17 +592,14 @@ export default {
     'filter.allDepartments': '所有學系',
     'filter.selectDepartment': '選擇學系',
     'filter.department': '學系',
-    'filter.allInstructors': '所有教師',
     'filter.selectLecturer': '選擇講師',
     'filter.allSubjects': '所有學科',
     'filter.teachingLanguage': '教學語言',
-    'filter.allLanguages': '所有語言',
     
     // Teaching Languages
     'language.english': '英語',
     'language.mandarinChinese': '普通話',
     'filter.offeredTerms': '開設學期',
-    'filter.allTerms': '所有學期',
     'filter.applied': '已套用篩選條件',
     'filter.clearAll': '清除全部',
     'filter.clear': '清除篩選',
@@ -544,6 +607,11 @@ export default {
     'filter.teachingTerm': '授課學期',
     'filter.allStatuses': '所有狀態',
     'filter.checkingTerm': '正在檢查選定學期的課程...',
+    'filter.clickToFilterDepartment': '點擊以按此學系篩選講師',
+    'filter.courseRequirements': '課程要求篩選器',
+    'filter.courseRequirementsInstructions': '按課程要求篩選評論。點擊 全部/✓/✗ 來篩選每個要求。',
+    'filter.reset': '重設篩選',
+    'filter.all': '全部',
     'sort.by': '排序方式',
     'sort.byRating': '按評分排序',
     'sort.byReviews': '按評價數排序',
@@ -561,8 +629,12 @@ export default {
     'sort.difficulty': '難度',
     'sort.usefulness': '實用性',
     'sort.reviews': '評論數',
-    'sort.ascending': '升序',
-    'sort.descending': '降序',
+'sort.postDate': '發布日期',
+'sort.grade': '成績',
+'sort.upvotes': '讚數',
+'sort.downvotes': '踩數',
+'sort.ascending': '升序',
+'sort.descending': '降序',
     'sort.workloadAsc': '工作量 (低到高)',
     'sort.workloadDesc': '工作量 (高到低)',
     'sort.difficultyAsc': '難度 (易到難)',
@@ -751,6 +823,8 @@ export default {
     'terms.changes.content': '我們可能會不時更新這些條款。重大變更將通過網站公告通知用戶。',
     'terms.contact.title': '聯繫我們',
     'terms.contact.content': '如果您對這些條款有任何疑問，請通過網站聯繫功能與我們聯繫。',
+    'terms.disclaimer.title': '評論準確性免責聲明',
+    'terms.disclaimer.content': '本網站不保證學生評論的準確性或正確性，對於用戶提交評論中包含的任何不正確、誤導性或虛假資訊概不負責。所有評論僅代表個別學生的意見和經歷，可能存在顯著差異。用戶在解讀評論內容時應自行判斷。',
     'terms.username.title': '用戶名政策',
     'terms.username.content': '用戶需對其選擇的用戶名負責：',
     'terms.username.offensive': '• 冒犯性、不當或誤導性的用戶名可能會在不通知的情況下被更改',
@@ -920,6 +994,18 @@ export default {
     'faq.signupRequiredAnswer': '不需要，查看評價不需要註冊，但要發表評價，用戶必須使用有效的嶺南大學電子郵件地址註冊。',
     'faq.websiteFreeQuestion': '這個網站是免費的嗎？',
     'faq.websiteFreeAnswer': '這個網站是非營利且無廣告的，網站提供的所有服務都是免費的。不過，如果您想支持這個項目，可以點擊頁腳的贊助按鈕來幫助我承擔部分營運成本。任何幫助都非常感謝。',
+    
+    // FAQ Section Categories
+    'faq.section.account': '帳戶與註冊',
+    'faq.section.navigation': '導航與使用', 
+    'faq.section.reviews': '評論與評分',
+    'faq.section.privacy': '隱私與安全',
+    'faq.section.general': '一般資訊',
+    'faq.section.support': '支援與幫助',
+    
+    // New FAQ Questions
+    'faq.coursesVsInstructorsQuestion': '為什麼要分別設置課程頁面和講師頁面？',
+    'faq.coursesVsInstructorsAnswer': '我們提供兩個頁面是為了讓您從不同角度探索學術資訊。課程頁面幫助您找到特定課程並查看所有授課講師，而講師頁面讓您發現某位講師教授的所有課程。例如，如果您喜歡某位教授在某門課程中的教學風格，您可以輕鬆找到他們教授的其他課程，繼續跟隨他們學習。',
 
     // =============================================================================
     // 7. ERRORS & STATES - 錯誤與狀態
@@ -1000,6 +1086,8 @@ export default {
     'common.selectAll': '全選',
     'common.clear': '清除',
     'common.refresh': '重新整理',
+    'common.all': '全部',
+  'common.na': '無數據',
     'common.words': '字',
 
     // Back to Top
@@ -1032,6 +1120,8 @@ export default {
     'review.comments': '課程評論',
     'review.commentsPlaceholder': '分享您對這門課程的整體看法、學習心得或建議...',
     'review.instructorEvaluation': '教師評價',
+    'review.teaching': '教學',
+    'review.grading': '評分',
     'review.teachingScore': '教學評分',
     'review.teachingScoreDescription': '教師的教學質量如何？',
     'review.gradingScore': '評分滿意度',
@@ -1039,13 +1129,13 @@ export default {
     'review.teachingComments': '教學評論',
     'review.teachingCommentsPlaceholder': '分享您對這位教師教學方式、課堂管理等方面的看法...',
     'review.courseRequirements': '課程要求',
-    'review.hasMidterm': '有期中考試',
-    'review.hasQuiz': '有小測驗',
+    'review.hasMidterm': '有期中考',
+    'review.hasQuiz': '有小測',
     'review.hasGroupProject': '有小組專案',
     'review.hasIndividualAssignment': '有個人作業',
     'review.hasPresentation': '有演講報告',
-    'review.hasReading': '有閱讀要求',
-    'review.hasAttendanceRequirement': '有出席要求',
+    'review.hasReading': '閱讀',
+    'review.hasAttendanceRequirement': '出席',
     'review.hasServiceLearning': '有服務學習',
     'review.serviceLearningType': '服務學習類型',
     'review.compulsory': '必修',
@@ -1068,11 +1158,15 @@ export default {
     'review.loadingCourses': '載入課程中...',
     'review.loadingTerms': '載入學期中...',
     'review.loadingInstructors': '載入教師中...',
+    'review.loadingCourseReviews': '載入課程評論中...',
     'review.noCourses': '沒有可用的課程',
     'review.noTerms': '沒有可用的學期',
          'review.noInstructors': '請先選擇學期',
     'review.loginRequired': '請先登入才能撰寫評論',
     'review.loginToWrite': '登入以撰寫評論',
+    'review.loginToVote': '請登入以投票',
+    'review.showOtherInstructors': '顯示其他講師',
+    'review.hideOtherInstructors': '隱藏其他講師',
     'review.backToCourses': '返回課程列表',
     'review.writeReview': '撰寫評論',
     'review.voteError': '投票失敗，請重試。',
@@ -1225,13 +1319,13 @@ export default {
     'review.usefulness.extremelyUseful': '極其有用',
     
     // Course requirements
-    'review.requirements.midterm': '期中考試',
-    'review.requirements.quiz': '小測驗',
+    'review.requirements.midterm': '期中考',
+    'review.requirements.quiz': '小測',
     'review.requirements.groupProject': '小組專案',
     'review.requirements.individualAssignment': '個人作業',
     'review.requirements.presentation': '演講報告',
-    'review.requirements.reading': '閱讀要求',
-    'review.requirements.attendance': '出席要求',
+    'review.requirements.reading': '閱讀',
+    'review.requirements.attendance': '出席',
 
     // Word count validation
     'review.wordCount.words': '字',
@@ -1249,6 +1343,7 @@ export default {
     'review.instructorComments': '講師評論',
     'review.courseRatings': '課程評分',
     'review.noReviewsMatchFilter': '沒有符合篩選條件的評論',
+    'review.timestampTooltip': '提交時間：{timezone}',
     'review.adjustFilterToSeeReviews': '請調整語言篩選器以查看評論',
 
     // Instructor detail page
@@ -1260,11 +1355,13 @@ export default {
       'instructor.avgGrading': '平均評分滿意度',
   'instructor.studentReviews': '學生評論',
   'instructor.noReviews': '尚無學生評論',
-  'instructor.coursesTeaching': '教授課程',
+      'instructor.coursesTeaching': '教學記錄',
   'instructor.loadingCourses': '載入課程中...',
   'instructor.noCoursesFound': '未找到課程',
 
     // My Reviews page
+    'myReviews.title': '我的評論',
+    'myReviews.subtitle': '管理和查看您的所有課程評論',
     'myReviews.description': '管理和查看您的所有課程評論',
     'myReviews.loading': '正在載入您的評論...',
     'myReviews.loadError': '載入評論失敗',
@@ -1277,6 +1374,7 @@ export default {
     'myReviews.deleteError': '刪除評論失敗',
     'myReviews.upvotes': '讚',
     'myReviews.downvotes': '踩',
+    'myReviews.viewCourse': '查看課程 {course}',
 
     // Featured content
     'featured.title': '熱門內容',
@@ -1302,7 +1400,7 @@ export default {
     'instructors.noTeachingTitle': '暫無教學記錄',
     'instructors.noTeachingDesc': '{name} 的教學記錄尚未在系統中更新，或可能使用了不同的姓名格式。',
     'instructors.noRatingData': '尚無評分資料',
-    'instructors.coursesTeaching': '教授課程',
+    'instructors.coursesTeaching': '教學記錄',
     'instructors.studentReviews': '學生評論',
     'instructors.averageTeachingRating': '平均教學評分',
     'instructors.finalGrade': '最終成績',
@@ -1326,8 +1424,8 @@ export default {
     'instructors.noPresentation': '無報告',
     'instructors.reading': '閱讀',
     'instructors.noReading': '無閱讀',
-    'instructors.attendanceRequirement': '出席要求',
-    'instructors.noAttendanceRequirement': '無出席要求',
+    'instructors.attendanceRequirement': '出席',
+    'instructors.noAttendanceRequirement': '無出席',
     // 錯誤訊息和載入狀態
     'instructors.nameNotProvided': '講師姓名未提供',
     'instructors.notFound': '找不到該講師的信息',
@@ -1436,7 +1534,7 @@ export default {
     'grading.feature4': '代表頂級教育質量',
     
     // Additional search and pagination keys
-    'search.instructorPlaceholder': '搜尋講師、學系...',
+    'search.instructorPlaceholder': '搜尋講師姓名、學系...',
     'sort.instructorName': '講師姓名',
     'sort.department': '學系',
     'sort.teaching': '教學質素',
@@ -1447,6 +1545,7 @@ export default {
     'pagination.filtered': '（已篩選）',
     'pagination.totalInstructors': '總共 {total} 位講師',
     'pages.instructors.lastUpdated': '最後更新：{date}',
+    'pages.instructors.teachingRecords': '教學記錄',
     'pagination.noResults': '未找到結果',
 
     // =============================================================================
@@ -1533,4 +1632,14 @@ export default {
     'department.scienceUnit': '科學教研組',
     'department.musicUnit': '黃炳禮音樂及演藝部',
     'department.dataScience': '嶺南教育機構陳斌博士數據科學研究所',
+
+    // =============================================================================
+    // 11. FACULTIES AND SCHOOLS - 學院與學系
+    // =============================================================================
+
+    'faculty.arts': '文學院',
+    'faculty.business': '商學院', 
+    'faculty.socialSciences': '社會科學院',
+    'faculty.dataScience': '數據科學學院',
+    'faculty.interdisciplinaryStudies': '跨學科學院',
 };

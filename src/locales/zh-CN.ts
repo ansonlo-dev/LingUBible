@@ -326,7 +326,6 @@ export default {
     'oauth.returnToLogin': '返回登录',
     'oauth.welcomeBack': '欢迎回来！登录成功。',
     'oauth.studentEmailRequired': '只有 @ln.hk 或 @ln.edu.hk 邮箱的学生才能使用 Google 登录',
-    'oauth.nonStudentAccountWarning': '非学生账户通过 Google 登录将被系统自动移除',
     'oauth.studentEmailWarning': '学生邮箱验证',
     'oauth.studentEmailWarningDescription': '只有 @ln.hk 或 @ln.edu.hk 邮箱的学生才能使用 Google 登录。非学生账户将被系统自动删除。',
     'oauth.noLinkedAccount': '找不到链接的账户',
@@ -337,6 +336,36 @@ export default {
     'oauth.missingParameters': '缺少必要的回调参数',
     'oauth.loginRequirement': 'Google 登录要求',
     'oauth.loginRequirementDescription': '只能登录已链接的 Google 账户。如果您的 Google 账户尚未链接，请先注册学生账户，然后在设置中链接。',
+    'oauth.nonStudentAccountWarning': '非学生账户将被安全系统立即阻止并删除。',
+    'oauth.immediateValidation': '即时验证',
+    'oauth.immediateValidationDescription': '所有账户都会立即验证。非学生邮箱无法创建账户。',
+    'oauth.validationInProgress': '正在验证账户...',
+    'oauth.validationFailed': '账户验证失败',
+    'oauth.validationSuccess': '账户验证成功',
+    'oauth.accountCreationBlocked': '账户创建被阻止',
+    'oauth.accountCreationBlockedDescription': '非学生邮箱地址无法在此平台创建账户。',
+    
+    // Session types
+    'sessionType.lecture': '讲课',
+    'sessionType.tutorial': '导修',
+    'sessionType.lab': '实验',
+    'sessionType.seminar': '研讨',
+    
+    // Grade and GPA
+    'grade.tooltip.title': '成绩信息',
+    'grade.gpa': 'GPA',
+      'grade.description.excellent': '优秀',
+  'grade.description.good': '良好',
+  'grade.description.fair': '一般',
+  'grade.description.pass': '通过',
+  'grade.description.failure': '不及格',
+  'grade.description.incomplete': '未完成',
+  'grade.description.merit': '优异',
+  'grade.description.verySatisfactory': '非常满意',
+  'grade.description.satisfactory': '满意',
+  'grade.description.unsatisfactory': '不满意',
+  'grade.description.withdrawn': '退课',
+  'grade.description.audit': '旁听',
     'auth.termsAgreement': '注册即表示您同意我们的使用条款和隐私政策',
     'auth.termsAgreementShort': '注册即表示您同意我们的',
     'auth.and': '和',
@@ -387,12 +416,36 @@ export default {
     // Pagination
     'pagination.itemsPerPage': '每页课程数',
     'pagination.coursesPerPage': '每页课程数',
+    'pagination.reviewsPerPage': '每页评论数',
     'pagination.showingItems': '显示第 {start} - {end} 项，共 {total} 项',
     'pagination.pageInfo': '第 {current} 页，共 {total} 页',
     'pagination.first': '首页',
     'pagination.previous': '上一页',
     'pagination.next': '下一页',
     'pagination.last': '末页',
+
+    // Review filters
+      'filter.reviewLanguage': '评论语言',
+  'filter.reviewTerm': '学期',
+  'filter.reviewInstructor': '讲师',
+  'filter.reviewSessionType': '课堂类型',
+  'filter.reviewCourse': '课程',
+  'filter.allLanguages': '所有语言',
+  'filter.allTerms': '所有学期',
+  'filter.allInstructors': '所有讲师',
+  'filter.allSessionTypes': '所有课堂类型',
+  'filter.allCourses': '所有课程',
+    'sort.currentSort': '当前排序',
+
+    // Common
+    'common.reviews': '评论',
+
+    // Languages
+    'language.traditionalChinese': '繁体中文',
+    'language.simplifiedChinese': '简体中文',
+
+    // Reviews
+    'review.studentReviews': '学生评论',
 
     'pages.courseDetail.invalidCourseCode': '课程代码无效',
     'pages.courseDetail.courseNotFound': '找不到该课程',
@@ -403,12 +456,19 @@ export default {
       'pages.courseDetail.reviews': '课程评论',
     'pages.courseDetail.averageRating': '平均评分',
     'pages.courseDetail.reviewCount': '评论数',
+    'pages.courseDetail.totalReviewsCount': '总共 {count} 条评论',
+    'pages.courseDetail.filteredReviewsCount': '找到 {count} 条评论',
     'pages.courseDetail.studentCount': '学生数',
     'pages.courseDetail.teachingRecords': '教学记录',
-    'pages.courseDetail.noTeachingRecords': '暂无教学记录',
+'pages.courseDetail.loadingTeachingRecords': '载入教学记录中...',
+'pages.courseDetail.noTeachingRecords': '暂无教学记录',
     'pages.courseDetail.termCode': '学期代码',
     'pages.courseDetail.startDate': '开始日期',
     'pages.courseDetail.endDate': '结束日期',
+    'pages.courseDetail.filterByTerm': '按学期筛选',
+    'pages.courseDetail.noLectureRecords': '没有找到讲座记录',
+    'pages.courseDetail.noTutorialRecords': '没有找到导修记录',
+    'pages.courseDetail.offerRecords': '开设记录',
 
     'pages.instructors.title': '教师目录',
     'pages.instructors.showingResults': '显示 {count} / {total} 位教师',
@@ -485,12 +545,14 @@ export default {
   'offered.no': '未开设',
   'offered.tooltip.yes': '本学期有开设此课程（{term}）',
   'offered.tooltip.no': '本学期未开设此课程（{term}）',
+  'offered.tooltip.clickable': '本学期有开设此课程（{term}）。点击查看本学期所有开设的课程。',
   
   // Teaching status
   'teaching.yes': '正在授课',
   'teaching.no': '未授课',
   'teaching.tooltip.yes': '该讲师本学期正在授课（{term}）',
   'teaching.tooltip.no': '该讲师本学期未授课（{term}）',
+  'teaching.tooltip.clickable': '该讲师本学期正在授课（{term}）。点击查看本学期所有授课的讲师。',
     
     // 进阶筛选
     'filters.advanced': '进阶筛选',
@@ -508,7 +570,7 @@ export default {
     'filters.lightWorkload': '工作量轻',
     'filters.englishTaught': '英语授课',
     'filters.hasGroupProject': '有小组作业',
-    'filters.noAttendance': '无出席要求',
+    'filters.noAttendance': '无出席',
     'filters.credits': '学分',
     'filters.hoursPerWeek': '每周时数',
     'filters.recommendedYear': '推荐修读年级',
@@ -528,33 +590,33 @@ export default {
     'filter.offeredTerm': '开设学期',
     'filter.selectTerm': '选择学期',
     'filter.teachingLanguage': '教学语言',
-    'filter.allLanguages': '所有语言',
     
     // Teaching Languages
     'language.english': '英语',
     'language.mandarinChinese': '普通话',
     'filter.offeredTerms': '开设学期',
-    'filter.allTerms': '所有学期',
     'filter.clearAll': '清除全部',
     'filter.term1': '第一学期',
     'filter.term2': '第二学期',
     'filter.summer': '暑期',
     'assessment.midterm': '期中考',
     'assessment.finalExam': '期末考',
-    'assessment.quiz': '小测验',
+    'assessment.quiz': '小测',
     'assessment.groupProject': '小组作业',
     'assessment.individualAssignment': '个人作业',
     'assessment.presentation': '报告',
     'features.serviceLearning': '服务学习',
-    'features.attendance': '出席要求',
-    'features.reading': '阅读要求',
+    'features.attendance': '出席',
+    'features.reading': '阅读',
     'features.useful': '实用性高',
     'features.practical': '实践性强',
-    'sidebar.myReviews': '我的评价',
-    'sidebar.settings': '设置',
-    'sidebar.preferences': '偏好设置',
-    'sidebar.browse': '浏览',
-    'sidebar.personal': '个人',
+      'sidebar.myReviews': '我的评价',
+  'sidebar.settings': '设置',
+  'sidebar.preferences': '偏好设置',
+  'sidebar.browse': '浏览',
+  'sidebar.personal': '个人',
+  'sidebar.toggle': '切换侧边栏',
+  'sidebar.toggleShortcut': '使用快捷键 {shortcut} 展开/折叠侧边栏',
 
     // =============================================================================
     // 4. SEARCH & FILTERING - 搜索與過濾
@@ -562,7 +624,7 @@ export default {
 
     'search.placeholder': '搜索课程、讲师...',
     'search.courses': '搜索课程',
-    'search.coursesPlaceholder': '按课程名称、代码或讲师搜索...',
+    'search.coursesPlaceholder': '搜索课程代码、课程名称...',
     'search.instructors': '搜索教师',
     'search.instructorsPlaceholder': '按教师姓名或专长搜索...',
     'search.search': '搜索',
@@ -600,7 +662,6 @@ export default {
     'filter.allDepartments': '所有学系',
     'filter.selectDepartment': '选择学系',
     'filter.department': '学系',
-    'filter.allInstructors': '所有教师',
     'filter.selectLecturer': '选择讲师',
     'filter.allSubjects': '所有学科',
     'filter.applied': '已应用筛选条件',
@@ -609,6 +670,11 @@ export default {
     'filter.teachingTerm': '授课学期',
     'filter.allStatuses': '所有状态',
     'filter.checkingTerm': '正在检查选定学期的课程...',
+    'filter.clickToFilterDepartment': '点击以按此学系筛选讲师',
+    'filter.courseRequirements': '课程要求筛选器',
+    'filter.courseRequirementsInstructions': '按课程要求筛选评论。点击 全部/✓/✗ 来筛选每个要求。',
+    'filter.reset': '重置筛选',
+    'filter.all': '全部',
     'sort.by': '排序方式',
     'sort.byRating': '按评分排序',
     'sort.byReviews': '按评价数排序',
@@ -626,8 +692,12 @@ export default {
     'sort.difficulty': '难度',
     'sort.usefulness': '实用性',
     'sort.reviews': '评论数',
-    'sort.ascending': '升序',
-    'sort.descending': '降序',
+'sort.postDate': '发布日期',
+'sort.grade': '成绩',
+'sort.upvotes': '赞数',
+'sort.downvotes': '踩数',
+'sort.ascending': '升序',
+'sort.descending': '降序',
     'sort.workloadAsc': '工作量 (低到高)',
     'sort.workloadDesc': '工作量 (高到低)',
     'sort.difficultyAsc': '难度 (易到难)',
@@ -803,6 +873,8 @@ export default {
     'terms.changes.content': '我们可能会不时更新这些条款。重大变更将通过网站公告通知用户。',
     'terms.contact.title': '联系我们',
     'terms.contact.content': '如果您对这些条款有任何疑问，请通过网站联系功能与我们联系。',
+    'terms.disclaimer.title': '评论准确性免责声明',
+    'terms.disclaimer.content': '本网站不保证学生评论的准确性或正确性，对于用户提交评论中包含的任何不正确、误导性或虚假信息概不负责。所有评论仅代表个别学生的意见和经历，可能存在显著差异。用户在解读评论内容时应自行判断。',
     'terms.username.title': '用户名政策',
     'terms.username.content': '用户需对其选择的用户名负责：',
     'terms.username.offensive': '• 冒犯性、不当或误导性的用户名可能会在不通知的情况下被更改',
@@ -972,6 +1044,18 @@ export default {
     'faq.signupRequiredAnswer': '不需要，查看评价不需要注册，但要发表评价，用户必须使用有效的岭南大学电子邮件地址注册。',
     'faq.websiteFreeQuestion': '这个网站是免费的吗？',
     'faq.websiteFreeAnswer': '这个网站是非营利且无广告的，网站提供的所有服务都是免费的。不过，如果您想支持这个项目，可以点击页脚的赞助按钮来帮助我承担部分运营成本。任何帮助都非常感谢。',
+    
+    // FAQ Section Categories
+    'faq.section.account': '账户与注册',
+    'faq.section.navigation': '导航与使用', 
+    'faq.section.reviews': '评论与评分',
+    'faq.section.privacy': '隐私与安全',
+    'faq.section.general': '一般信息',
+    'faq.section.support': '支持与帮助',
+    
+    // New FAQ Questions
+    'faq.coursesVsInstructorsQuestion': '为什么要分别设置课程页面和讲师页面？',
+    'faq.coursesVsInstructorsAnswer': '我们提供两个页面是为了让您从不同角度探索学术信息。课程页面帮助您找到特定课程并查看所有授课讲师，而讲师页面让您发现某位讲师教授的所有课程。例如，如果您喜欢某位教授在某门课程中的教学风格，您可以轻松找到他们教授的其他课程，继续跟随他们学习。',
 
     // =============================================================================
     // 7. ERRORS & STATES - 錯誤與狀態
@@ -1052,6 +1136,8 @@ export default {
     'common.selectAll': '全选',
     'common.clear': '清除',
     'common.refresh': '刷新',
+    'common.all': '全部',
+  'common.na': '无数据',
     'common.words': '字',
 
     // Back to Top
@@ -1084,6 +1170,8 @@ export default {
     'review.comments': '课程评论',
     'review.commentsPlaceholder': '分享您对这门课程的整体看法、学习心得或建议...',
     'review.instructorEvaluation': '教师评价',
+    'review.teaching': '教学',
+    'review.grading': '评分',
     'review.teachingScore': '教学评分',
     'review.teachingScoreDescription': '教师的教学质量如何？',
     'review.gradingScore': '评分满意度',
@@ -1091,13 +1179,13 @@ export default {
     'review.teachingComments': '教学评论',
     'review.teachingCommentsPlaceholder': '分享您对这位教师教学方式、课堂管理等方面的看法...',
     'review.courseRequirements': '课程要求',
-    'review.hasMidterm': '有期中考试',
-    'review.hasQuiz': '有小测验',
+    'review.hasMidterm': '有期中考',
+    'review.hasQuiz': '有小测',
     'review.hasGroupProject': '有小组项目',
     'review.hasIndividualAssignment': '有个人作业',
     'review.hasPresentation': '有演讲报告',
-    'review.hasReading': '有阅读要求',
-    'review.hasAttendanceRequirement': '有出席要求',
+    'review.hasReading': '阅读',
+    'review.hasAttendanceRequirement': '出席',
     'review.hasServiceLearning': '有服务学习',
     'review.serviceLearningType': '服务学习类型',
     'review.compulsory': '必修',
@@ -1120,11 +1208,15 @@ export default {
     'review.loadingCourses': '加载课程中...',
     'review.loadingTerms': '加载学期中...',
     'review.loadingInstructors': '加载教师中...',
+    'review.loadingCourseReviews': '加载课程评论中...',
     'review.noCourses': '没有可用的课程',
     'review.noTerms': '没有可用的学期',
          'review.noInstructors': '请先选择学期',
     'review.loginRequired': '请先登录才能撰写评论',
     'review.loginToWrite': '登录以撰写评论',
+    'review.loginToVote': '请登录以投票',
+    'review.showOtherInstructors': '显示其他讲师',
+    'review.hideOtherInstructors': '隐藏其他讲师',
     'review.backToCourses': '返回课程列表',
     'review.writeReview': '撰写评论',
     'review.voteError': '投票失败，请重试。',
@@ -1277,13 +1369,13 @@ export default {
     'review.usefulness.extremelyUseful': '极其有用',
     
     // Course requirements
-    'review.requirements.midterm': '期中考试',
-    'review.requirements.quiz': '小测验',
+    'review.requirements.midterm': '期中考',
+    'review.requirements.quiz': '小测',
     'review.requirements.groupProject': '小组项目',
     'review.requirements.individualAssignment': '个人作业',
     'review.requirements.presentation': '演讲报告',
-    'review.requirements.reading': '阅读要求',
-    'review.requirements.attendance': '出席要求',
+    'review.requirements.reading': '阅读',
+    'review.requirements.attendance': '出席',
 
     // Word count validation
     'review.wordCount.words': '字',
@@ -1301,6 +1393,7 @@ export default {
     'review.instructorComments': '讲师评论',
     'review.courseRatings': '课程评分',
     'review.noReviewsMatchFilter': '没有符合筛选条件的评论',
+    'review.timestampTooltip': '提交时间：{timezone}',
     'review.adjustFilterToSeeReviews': '请调整语言筛选器以查看评论',
 
     // Instructor detail page
@@ -1312,11 +1405,13 @@ export default {
       'instructor.avgGrading': '平均评分满意度',
   'instructor.studentReviews': '学生评论',
   'instructor.noReviews': '暂无学生评论',
-  'instructor.coursesTeaching': '教授课程',
+      'instructor.coursesTeaching': '教学记录',
   'instructor.loadingCourses': '载入课程中...',
   'instructor.noCoursesFound': '未找到课程',
 
     // My Reviews page
+    'myReviews.title': '我的评论',
+    'myReviews.subtitle': '管理和查看您的所有课程评论',
     'myReviews.description': '管理和查看您的所有课程评论',
     'myReviews.loading': '正在加载您的评论...',
     'myReviews.loadError': '加载评论失败',
@@ -1329,6 +1424,7 @@ export default {
     'myReviews.deleteError': '删除评论失败',
     'myReviews.upvotes': '赞',
     'myReviews.downvotes': '踩',
+    'myReviews.viewCourse': '查看课程 {course}',
 
     // Featured content
     'featured.title': '热门内容',
@@ -1355,7 +1451,7 @@ export default {
     'instructors.noTeachingDesc': '{name} 的教学记录尚未在系统中更新，或可能使用了不同的姓名格式。',
     'instructors.noRatingData': '尚无评分资料',
     // 新增翻譯
-    'instructors.coursesTeaching': '教授课程',
+    'instructors.coursesTeaching': '教学记录',
     'instructors.studentReviews': '学生评论',
     'instructors.averageTeachingRating': '平均教学评分',
     'instructors.finalGrade': '最终成绩',
@@ -1380,8 +1476,8 @@ export default {
     'instructors.noPresentation': '无报告',
     'instructors.reading': '阅读',
     'instructors.noReading': '无阅读',
-    'instructors.attendanceRequirement': '出席要求',
-    'instructors.noAttendanceRequirement': '无出席要求',
+    'instructors.attendanceRequirement': '出席',
+    'instructors.noAttendanceRequirement': '无出席',
     // 错误信息和加载状态
     'instructors.nameNotProvided': '讲师姓名未提供',
     'instructors.notFound': '找不到该讲师的信息',
@@ -1490,7 +1586,7 @@ export default {
     'grading.feature4': '代表顶级教育质量',
     
     // Additional search and pagination keys
-    'search.instructorPlaceholder': '搜索讲师、学系...',
+    'search.instructorPlaceholder': '搜索讲师姓名、学系...',
     'sort.instructorName': '讲师姓名',
     'sort.department': '学系',
     'sort.teaching': '教学质素',
@@ -1501,6 +1597,7 @@ export default {
     'pagination.filtered': '（已筛选）',
     'pagination.totalInstructors': '总共 {total} 位讲师',
     'pages.instructors.lastUpdated': '最后更新：{date}',
+    'pages.instructors.teachingRecords': '教学记录',
     'pagination.noResults': '未找到结果',
 
     // =============================================================================
@@ -1587,4 +1684,14 @@ export default {
     'department.scienceUnit': '科学教研组',
     'department.musicUnit': '黄炳礼音乐及演艺部',
     'department.dataScience': '岭南教育机构陈斌博士数据科学研究所',
+
+    // =============================================================================
+    // 11. FACULTIES AND SCHOOLS - 学院与学系
+    // =============================================================================
+
+    'faculty.arts': '文学院',
+    'faculty.business': '商学院', 
+    'faculty.socialSciences': '社会科学院',
+    'faculty.dataScience': '数据科学学院',
+    'faculty.interdisciplinaryStudies': '跨学科学院',
 };

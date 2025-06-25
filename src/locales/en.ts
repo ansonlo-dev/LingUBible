@@ -337,18 +337,50 @@ export default {
     'oauth.returnToLogin': 'Return to Login',
     'oauth.welcomeBack': 'Welcome back! Login successful.',
     'oauth.studentEmailRequired': 'Only students with @ln.hk or @ln.edu.hk email addresses can use Google login',
-    'oauth.nonStudentAccountWarning': 'Non-student accounts created via Google login will be automatically removed by the system',
+    'oauth.nonStudentAccountWarning': 'Non-student accounts will be immediately blocked and deleted by our security system.',
     'oauth.studentEmailWarning': 'Student Email Verification',
-    'oauth.studentEmailWarningDescription': 'Only students with @ln.hk or @ln.edu.hk email addresses can use Google login. Non-student accounts will be automatically deleted by the system.',
+    'oauth.studentEmailWarningDescription': 'Only students with @ln.hk or @ln.edu.hk email addresses can use Google login. Non-student accounts are immediately blocked and deleted by our security system.',
+    'oauth.immediateValidation': 'Immediate Validation',
+    'oauth.immediateValidationDescription': 'All accounts are validated instantly. Non-student emails are prevented from creating accounts.',
+    'oauth.validationInProgress': 'Validating account...',
+    'oauth.validationFailed': 'Account validation failed',
+    'oauth.validationSuccess': 'Account validation successful',
+    'oauth.accountCreationBlocked': 'Account creation blocked',
+    'oauth.accountCreationBlockedDescription': 'Non-student email addresses cannot create accounts on this platform.',
     'oauth.noLinkedAccount': 'No linked account found',
-    'oauth.noLinkedAccountTitle': 'No Linked Account Found',
-    'oauth.noLinkedAccountDescription': 'This Google account is not linked to any existing account. Please register with a @ln.hk or @ln.edu.hk email address first, then link your Google account in settings.',
-    'oauth.goToRegister': 'Go to Sign Up',
-    'oauth.redirectingToRegister': 'Redirecting to registration page in 3 seconds...',
-    'oauth.missingParameters': 'Missing required callback parameters',
+    'oauth.noLinkedAccountTitle': 'No Linked Account',
+    'oauth.noLinkedAccountDescription': 'Please register with @ln.hk or @ln.edu.hk email first, then link your Google account in settings',
+    'oauth.goToRegister': 'Go to Register',
+    'oauth.redirectingToRegister': 'Redirecting to registration page...',
     'oauth.loginRequirement': 'Google Login Requirement',
-    'oauth.loginRequirementDescription': 'You can only login with linked Google accounts. If your Google account is not linked yet, please register a student account first, then link it in settings.',
+    'oauth.loginRequirementDescription': 'Only users with linked Google accounts can use Google login',
+    
+    // Session types
+    'sessionType.lecture': 'Lecture',
+    'sessionType.tutorial': 'Tutorial',
+    'sessionType.lab': 'Lab',
+    'sessionType.seminar': 'Seminar',
+    
+    // Grade and GPA
+    'grade.tooltip.title': 'Grade Information',
+    'grade.gpa': 'GPA',
+    'grade.description.excellent': 'Excellent',
+    'grade.description.good': 'Good',
+    'grade.description.fair': 'Fair',
+    'grade.description.pass': 'Pass',
+    'grade.description.failure': 'Failure',
+    'grade.description.incomplete': 'Incomplete',
+    'grade.description.merit': 'Merit',
+    'grade.description.verySatisfactory': 'Very Satisfactory',
+    'grade.description.satisfactory': 'Satisfactory',
+    'grade.description.unsatisfactory': 'Unsatisfactory',
+    'grade.description.withdrawn': 'Withdrawn',
+    'grade.description.audit': 'Audit',
     'auth.termsAgreement': 'By signing up, you agree to our Terms of Service and Privacy Policy',
+    
+    // Security
+    'security.warning': 'Security Warning',
+    'security.nonStudentAccountDetected': 'Non-student account detected and blocked for security.',
     'auth.termsAgreementShort': 'By signing up, you agree to our',
     'auth.and': 'and',
     'auth.termsCheckbox': 'I have read and agree to the',
@@ -360,10 +392,6 @@ export default {
     'auth.tooManyRequests': 'Too many requests, please try again later',
     'auth.currentPasswordIncorrect': 'Current password is incorrect',
     'auth.newPasswordLengthError': 'New password length must be between 8-256 characters',
-
-    // Security
-    'security.warning': 'Security Warning',
-    'security.nonStudentAccountDetected': 'Non-student email account detected and automatically logged out. Please use @ln.hk or @ln.edu.hk email to log in.',
 
     // =============================================================================
     // 3. COURSES & CONTENT - 課程與內容
@@ -386,12 +414,36 @@ export default {
     // Pagination
     'pagination.itemsPerPage': 'Courses per page',
     'pagination.coursesPerPage': 'Courses per page',
+    'pagination.reviewsPerPage': 'Reviews per page',
     'pagination.showingItems': 'Showing {start} - {end} of {total} items',
     'pagination.pageInfo': 'Page {current} of {total}',
     'pagination.first': 'First',
     'pagination.previous': 'Previous',
     'pagination.next': 'Next',
     'pagination.last': 'Last',
+
+    // Review filters
+      'filter.reviewLanguage': 'Review Language',
+  'filter.reviewTerm': 'Term',
+  'filter.reviewInstructor': 'Instructor',
+  'filter.reviewSessionType': 'Session Type',
+  'filter.reviewCourse': 'Course',
+  'filter.allLanguages': 'All Languages',
+  'filter.allTerms': 'All Terms',
+  'filter.allInstructors': 'All Instructors',
+  'filter.allSessionTypes': 'All Session Types',
+  'filter.allCourses': 'All Courses',
+    'sort.currentSort': 'Current Sort',
+
+    // Common
+    'common.reviews': 'reviews',
+
+    // Languages
+    'language.traditionalChinese': 'Traditional Chinese',
+    'language.simplifiedChinese': 'Simplified Chinese',
+
+    // Reviews
+    'review.studentReviews': 'Student Reviews',
 
     'pages.courseDetail.invalidCourseCode': 'Invalid course code',
     'pages.courseDetail.courseNotFound': 'Course not found',
@@ -402,12 +454,19 @@ export default {
     'pages.courseDetail.reviews': 'Course Reviews',
     'pages.courseDetail.averageRating': 'Average Rating',
     'pages.courseDetail.reviewCount': 'Review Count',
+    'pages.courseDetail.totalReviewsCount': 'Total {count} reviews',
+    'pages.courseDetail.filteredReviewsCount': 'Found {count} reviews',
     'pages.courseDetail.studentCount': 'Student Count',
     'pages.courseDetail.teachingRecords': 'Teaching Records',
+    'pages.courseDetail.loadingTeachingRecords': 'Loading teaching records...',
     'pages.courseDetail.noTeachingRecords': 'No teaching records available',
     'pages.courseDetail.termCode': 'Term Code',
     'pages.courseDetail.startDate': 'Start Date',
     'pages.courseDetail.endDate': 'End Date',
+    'pages.courseDetail.filterByTerm': 'Filter by Term',
+    'pages.courseDetail.noLectureRecords': 'No lecture records found',
+    'pages.courseDetail.noTutorialRecords': 'No tutorial records found',
+    'pages.courseDetail.offerRecords': 'Offer Records',
 
     'pages.instructors.title': 'Instructors Catalog',
     'pages.instructors.showingResults': 'Showing {count} of {total} instructors',
@@ -484,12 +543,14 @@ export default {
   'offered.no': 'Not Offered',
   'offered.tooltip.yes': 'This course is offered in the current term ({term})',
   'offered.tooltip.no': 'This course is not offered in the current term ({term})',
+  'offered.tooltip.clickable': 'This course is offered in the current term ({term}). Click to view all courses offered this term.',
   
   // Teaching status
   'teaching.yes': 'Teaching',
   'teaching.no': 'Not Teaching',
   'teaching.tooltip.yes': 'This instructor is currently teaching courses in this term ({term})',
   'teaching.tooltip.no': 'This instructor is not teaching any courses in this term ({term})',
+  'teaching.tooltip.clickable': 'This instructor is currently teaching courses in this term ({term}). Click to view all instructors teaching this term.',
     
     // Advanced Filters
     'filters.advanced': 'Advanced Filters',
@@ -540,11 +601,13 @@ export default {
     'features.reading': 'Reading Required',
     'features.useful': 'Highly Useful',
     'features.practical': 'Highly Practical',
-    'sidebar.myReviews': 'My Reviews',
-    'sidebar.settings': 'Settings',
-    'sidebar.preferences': 'Preferences',
-    'sidebar.browse': 'Browse',
-    'sidebar.personal': 'Personal',
+      'sidebar.myReviews': 'My Reviews',
+  'sidebar.settings': 'Settings',
+  'sidebar.preferences': 'Preferences',
+  'sidebar.browse': 'Browse',
+  'sidebar.personal': 'Personal',
+  'sidebar.toggle': 'Toggle Sidebar',
+  'sidebar.toggleShortcut': 'Use shortcut {shortcut} to expand/collapse sidebar',
 
     // =============================================================================
     // 4. SEARCH & FILTERING - 搜索與過濾
@@ -552,7 +615,7 @@ export default {
 
     'search.placeholder': 'Search courses, instructors...',
     'search.courses': 'Search Courses',
-    'search.coursesPlaceholder': 'Search courses by name, code, or lecturer...',
+    'search.coursesPlaceholder': 'Search course codes, course names...',
     'search.instructors': 'Search Instructors',
     'search.instructorsPlaceholder': 'Search instructors by name or specialty...',
     'search.search': 'Search',
@@ -579,6 +642,8 @@ export default {
     'instructors.noTeachingTitle': 'No Teaching Records',
     'instructors.noTeachingDesc': '{name}\'s teaching records have not been updated in the system, or may be using a different name format.',
     'instructors.noRatingData': 'No rating data available',
+    'instructors.coursesTeaching': 'Teaching Records',
+    'instructors.studentReviews': 'Student Reviews',
     'search.smartSearch': 'Smart Search',
     'search.showingResults': 'Showing {count} results (out of {total} courses)',
     'search.noResults': 'No courses found matching your criteria',
@@ -596,11 +661,9 @@ export default {
     'filter.allDepartments': 'All Departments',
     'filter.selectDepartment': 'Select Department',
     'filter.department': 'Department',
-    'filter.allInstructors': 'All Instructors',
     'filter.selectLecturer': 'Select Lecturer',
     'filter.allSubjects': 'All Subjects',
     'filter.teachingLanguage': 'Teaching Language',
-    'filter.allLanguages': 'All Languages',
     'filter.teachingStatus': 'Teaching Status',
     'filter.teachingTerm': 'Teaching Term',
     'filter.allStatuses': 'All Statuses',
@@ -609,11 +672,15 @@ export default {
     'language.english': 'English',
     'language.mandarinChinese': 'Mandarin Chinese',
     'filter.offeredTerms': 'Offered Terms',
-    'filter.allTerms': 'All Terms',
     'filter.applied': 'Filters applied',
     'filter.clearAll': 'Clear All',
     'filter.clear': 'Clear filters',
     'filter.checkingTerm': 'Checking courses for selected term...',
+    'filter.clickToFilterDepartment': 'Click to filter instructors by this department',
+    'filter.courseRequirements': 'Course Requirements Filter',
+    'filter.courseRequirementsInstructions': 'Filter reviews by course requirements. Click All/✓/✗ for each requirement.',
+    'filter.reset': 'Reset Filters',
+    'filter.all': 'All',
     'sort.by': 'Sort by',
     'sort.byRating': 'By Rating',
     'sort.byReviews': 'By Review Count',
@@ -631,8 +698,12 @@ export default {
     'sort.difficulty': 'Difficulty',
     'sort.usefulness': 'Usefulness',
     'sort.reviews': 'Reviews',
-    'sort.ascending': 'Ascending',
-    'sort.descending': 'Descending',
+'sort.postDate': 'Post Date',
+'sort.grade': 'Grade',
+'sort.upvotes': 'Upvotes',
+'sort.downvotes': 'Downvotes',
+'sort.ascending': 'Ascending',
+'sort.descending': 'Descending',
     'sort.workloadAsc': 'Workload (Low to High)',
     'sort.workloadDesc': 'Workload (High to Low)',
     'sort.difficultyAsc': 'Difficulty (Easy to Hard)',
@@ -808,6 +879,8 @@ export default {
     'terms.changes.content': 'We may update these terms from time to time. Major changes will be announced through website notifications.',
     'terms.contact.title': 'Contact Us',
     'terms.contact.content': 'If you have any questions about these terms, please contact us through the website contact feature.',
+    'terms.disclaimer.title': 'Review Accuracy Disclaimer',
+    'terms.disclaimer.content': 'This website does not guarantee the accuracy or correctness of student reviews and is not responsible for any incorrect, misleading, or false information contained in user-submitted reviews. All reviews represent individual student opinions and experiences, which may vary significantly. Users should exercise their own judgment when interpreting review content.',
     'terms.username.title': 'Username Policy',
     'terms.username.content': 'Users are responsible for their chosen usernames:',
     'terms.username.offensive': '• Offensive, inappropriate, or misleading usernames may be changed without notice',
@@ -977,6 +1050,18 @@ export default {
     'faq.signupRequiredAnswer': 'No, sign up is not required to view reviews, but to post reviews, users must sign up with a valid Lingnan email address.',
     'faq.websiteFreeQuestion': 'Is this website free?',
     'faq.websiteFreeAnswer': 'This website is non-profit and ads-free, all services provided on this website are free. However, if you would like to support this project, you can click the donate button in the footer to help me cover part of the operational cost. Any help is highly appreciated.',
+    
+    // FAQ Section Categories
+    'faq.section.account': 'Account & Registration',
+    'faq.section.navigation': 'Navigation & Usage', 
+    'faq.section.reviews': 'Reviews & Ratings',
+    'faq.section.privacy': 'Privacy & Security',
+    'faq.section.general': 'General Information',
+    'faq.section.support': 'Support & Help',
+    
+    // New FAQ Questions
+    'faq.coursesVsInstructorsQuestion': 'Why are there separate Courses and Instructors pages?',
+    'faq.coursesVsInstructorsAnswer': 'We provide both pages to give you different perspectives when exploring academic information. The Courses page helps you find specific courses and see all instructors who teach them, while the Instructors page lets you discover all courses taught by a particular instructor. For example, if you like a professor\'s teaching style from one course, you can easily find other courses they teach to continue learning with them.',
 
     // =============================================================================
     // 7. ERRORS & STATES - 錯誤與狀態
@@ -1057,6 +1142,8 @@ export default {
     'common.selectAll': 'Select All',
     'common.clear': 'Clear',
     'common.refresh': 'Refresh',
+    'common.all': 'All',
+  'common.na': 'N/A',
     'common.words': 'words',
 
     // Back to Top
@@ -1072,6 +1159,9 @@ export default {
     'review.editSubtitle': 'Update your course review',
     'review.loginRequired': 'Please log in to write a review',
     'review.loginToWrite': 'Log in to write a review',
+    'review.loginToVote': 'Please log in to vote',
+    'review.showOtherInstructors': 'Show other instructors',
+    'review.hideOtherInstructors': 'Hide other instructors',
     'review.backToCourses': 'Back to courses',
     'review.selectCourse': 'Select Course',
     'review.selectCoursePlaceholder': 'Choose a course...',
@@ -1099,18 +1189,20 @@ export default {
   'review.serviceLearningPlaceholder': 'Describe your compulsory service learning experience (required, 5-1000 words)...',
   'review.serviceLearningOptionalPlaceholder': 'Describe your optional service learning experience (optional, up to 1000 words)...',
     'review.instructorEvaluation': 'Instructor Evaluation',
+    'review.teaching': 'Teaching',
+    'review.grading': 'Grading',
     'review.teachingScore': 'Teaching Quality',
     'review.teachingScoreDescription': 'How would you rate the teaching quality?',
     'review.gradingScore': 'Grading satisfaction',
     'review.gradingScoreDescription': 'How fair was the grading?',
     'review.courseRequirements': 'Course Requirements',
-    'review.hasMidterm': 'Midterm Exam',
+    'review.hasMidterm': 'Midterm',
     'review.hasQuiz': 'Quiz',
     'review.hasGroupProject': 'Group Project',
     'review.hasIndividualAssignment': 'Individual Assignment',
     'review.hasPresentation': 'Presentation',
-    'review.hasReading': 'Required Reading',
-    'review.hasAttendanceRequirement': 'Attendance Requirement',
+    'review.hasReading': 'Reading',
+    'review.hasAttendanceRequirement': 'Attendance',
     'review.teachingComments': 'Teaching Comments',
     'review.teachingCommentsPlaceholder': 'Share your thoughts about the teaching...',
     'review.anonymous': 'Post Anonymously',
@@ -1135,6 +1227,7 @@ export default {
     'review.validationError': 'Validation error occurred',
     'review.invalidInstructorSelection': 'Invalid instructor selection: {instructor} ({session}) for term {term}',
     'review.loadingReview': 'Loading review data...',
+    'review.loadingCourseReviews': 'Loading course reviews...',
     'review.reviewNotFound': 'Review not found',
     'review.loadReviewError': 'Failed to load review data',
     'review.notApplicable': 'N/A',
@@ -1157,6 +1250,7 @@ export default {
     'review.courseComments': 'Course Comments',
     'review.gradingFairness': 'Grading satisfaction',
     'review.noReviewsMatchFilter': 'No reviews match the current filter',
+    'review.timestampTooltip': 'Submitted at {timezone}',
     'review.adjustFilterToSeeReviews': 'Please adjust the language filter to see reviews',
     'review.workload.none': 'Extremely Heavy',
     'review.workload.veryLight': 'Very Heavy',
@@ -1232,13 +1326,13 @@ export default {
     'review.finalGrade': 'Final Grade',
     'review.serviceLearning': 'Service Learning',
     'review.noReviews': 'No reviews yet',
-    'review.requirements.midterm': 'Midterm Exam',
+    'review.requirements.midterm': 'Midterm',
     'review.requirements.quiz': 'Quiz',
     'review.requirements.groupProject': 'Group Project',
     'review.requirements.individualAssignment': 'Individual Assignment',
     'review.requirements.presentation': 'Presentation',
-    'review.requirements.reading': 'Required Reading',
-    'review.requirements.attendance': 'Attendance Requirement',
+    'review.requirements.reading': 'Reading',
+    'review.requirements.attendance': 'Attendance',
     
     // Word count validation
       'review.wordCount.words': 'words',
@@ -1359,11 +1453,13 @@ export default {
       'instructor.avgGrading': 'Average Grading Score',
   'instructor.studentReviews': 'Student Reviews',
   'instructor.noReviews': 'No student reviews yet',
-  'instructor.coursesTeaching': 'Courses Teaching',
+      'instructor.coursesTeaching': 'Teaching Records',
   'instructor.loadingCourses': 'Loading courses...',
   'instructor.noCoursesFound': 'No courses found',
 
     // My Reviews page
+    'myReviews.title': 'My Reviews',
+    'myReviews.subtitle': 'Manage and view all your course reviews',
     'myReviews.description': 'Manage and view all your course reviews',
     'myReviews.loading': 'Loading your reviews...',
     'myReviews.loadError': 'Failed to load your reviews',
@@ -1376,6 +1472,7 @@ export default {
     'myReviews.deleteError': 'Failed to delete review',
     'myReviews.upvotes': 'Upvotes',
     'myReviews.downvotes': 'Downvotes',
+    'myReviews.viewCourse': 'View course {course}',
 
     // Featured content
     'featured.title': 'Popular Content',
@@ -1393,8 +1490,6 @@ export default {
     'featured.viewAllInstructors': 'View All Instructors',
 
     // Additional instructor detail translations
-    'instructors.coursesTeaching': 'Courses Teaching',
-    'instructors.studentReviews': 'Student Reviews',
     'instructors.averageTeachingRating': 'Average Teaching Rating',
     'instructors.finalGrade': 'Final Grade',
     'instructors.teachingRating': 'Teaching Rating',
@@ -1405,8 +1500,8 @@ export default {
     'instructors.courseComments': 'Overall Course Evaluation',
     'instructors.reviewer': 'Reviewer',
     'instructors.anonymous': 'Lingnanian',
-    'instructors.midtermExam': 'Midterm Exam',
-    'instructors.noMidtermExam': 'No Midterm Exam',
+    'instructors.midtermExam': 'Midterm',
+    'instructors.noMidtermExam': 'No Midterm',
     'instructors.quiz': 'Quiz',
     'instructors.noQuiz': 'No Quiz',
     'instructors.groupProject': 'Group Project',
@@ -1417,15 +1512,10 @@ export default {
     'instructors.noPresentation': 'No Presentation',
     'instructors.reading': 'Reading',
     'instructors.noReading': 'No Reading',
-    'instructors.attendanceRequirement': 'Attendance Requirement',
-    'instructors.noAttendanceRequirement': 'No Attendance Requirement',
-    // Error messages and loading states
-    'instructors.nameNotProvided': 'Instructor name not provided',
-    'instructors.notFound': 'Instructor not found',
-    'instructors.loadError': 'Error loading instructor data',
+    'instructors.attendanceRequirement': 'Attendance',
+    'instructors.noAttendanceRequirement': 'No Attendance',
     'instructors.loading': 'Loading instructor data...',
-          'instructors.backToList': 'Back to Instructor List',
-      'instructors.back': 'Back',
+    'instructors.back': 'Back',
 
     // Course grading explanation
     'grading.title': 'Course Grading System Explained',
@@ -1467,17 +1557,18 @@ export default {
     'grading.feature4': 'Represents top-tier educational quality',
     
     // Additional search and pagination keys
-    'search.instructorPlaceholder': 'Search instructors, departments...',
+    'search.instructorPlaceholder': 'Search instructor names, departments...',
     'sort.instructorName': 'Instructor Name',
     'sort.department': 'Department',
-    'sort.teaching': 'Teaching Rating',
-    'sort.grading': 'Grading Fairness',
+      'sort.teaching': 'Teaching Quality',
+  'sort.grading': 'Grading Satisfaction',
     'sort.sortBy': 'Sort By',
     'pagination.instructorsPerPage': 'Instructors per page',
     'pagination.showingFiltered': 'Showing {start}-{end} of {total} filtered instructors',
     'pagination.filtered': '(filtered)',
     'pagination.totalInstructors': 'Total {total} instructors',
     'pages.instructors.lastUpdated': 'Last updated: {date}',
+    'pages.instructors.teachingRecords': 'Teaching Records',
     'pagination.noResults': 'No results found',
 
     // =============================================================================
@@ -1560,8 +1651,17 @@ export default {
     'department.economics': 'Department of Economics',
     'department.government': 'Department of Government and International Affairs',
     'department.sociology': 'Department of Sociology and Social Policy',
-    'department.coreOffice': 'Office of the Core Curriculum',
     'department.scienceUnit': 'Science Unit',
     'department.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
     'department.dataScience': 'LEO Dr David P. Chan Institute of Data Science',
+
+    // =============================================================================
+    // 5. FACULTIES AND SCHOOLS - 學院與學系
+    // =============================================================================
+
+    'faculty.arts': 'Faculty of Arts',
+    'faculty.business': 'Faculty of Business', 
+    'faculty.socialSciences': 'Faculty of Social Sciences',
+    'faculty.dataScience': 'School of Data Science',
+    'faculty.interdisciplinaryStudies': 'School of Interdisciplinary Studies',
 };
