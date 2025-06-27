@@ -5,7 +5,7 @@
   "type": "module",
   "description": "LingU Bible - 嶺南大學課程評價平台 ",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.19.0"
   },
   "scripts": {
     "dev": "vite",
@@ -111,7 +111,7 @@
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react-swc": "^3.5.0",
+    "@vitejs/plugin-react-swc": "^3.10.2",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
@@ -123,7 +123,7 @@
     "terser": "^5.40.0",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1",
+    "vite": "^7.0.0",
     "wrangler": "^4.19.1"
   }
 }

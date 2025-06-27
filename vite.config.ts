@@ -1,9 +1,10 @@
-import { defineConfig } from "vite";
+import { defineConfig, defaultClientConditions, defaultServerConditions } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
+// Migrated to Vite 7 - see https://vite.dev/guide/migration
 export default defineConfig(({ command, mode }) => {
   const isProduction = mode === 'production';
   const isDevelopment = mode === 'development';
@@ -27,11 +28,14 @@ export default defineConfig(({ command, mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+      // Vite 6: Explicitly set resolve conditions for better compatibility
+      conditions: [...defaultClientConditions],
     },
     build: {
       outDir: 'dist',
       sourcemap: isDevelopment,
-      target: 'es2020',
+      // Vite 7: Updated browser target to 'baseline-widely-available'
+      target: 'baseline-widely-available',
       minify: isProduction ? 'terser' : false,
       terserOptions: isProduction ? {
         compress: {
@@ -41,6 +45,10 @@ export default defineConfig(({ command, mode }) => {
         },
         mangle: {
           safari10: true,
+        },
+        // Vite 6: Ensure compatibility with terser 5.16.0+
+        format: {
+          comments: false,
         },
       } : undefined,
       rollupOptions: {
@@ -93,7 +101,8 @@ export default defineConfig(({ command, mode }) => {
       exclude: ['@vite/client', '@vite/env'],
     },
     esbuild: {
-      target: 'es2020',
+      // Vite 7: Updated to align with new browser targets
+      target: 'es2022',
       legalComments: 'none',
       // 生產環境移除 console
       drop: isProduction ? ['console', 'debugger'] : [],
@@ -109,6 +118,13 @@ export default defineConfig(({ command, mode }) => {
     // CSS 優化
     css: {
       devSourcemap: isDevelopment,
+      // Vite 6: Enable CSS minification for SSR builds by default
+      minify: isProduction,
+    },
+    // Vite 6: Configure JSON handling
+    json: {
+      stringify: 'auto', // New default in Vite 6
+      namedExports: true,
     },
     // 預加載優化
     experimental: {

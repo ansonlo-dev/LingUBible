@@ -87,8 +87,8 @@ const Courses = () => {
     const subjects = new Set<string>();
     
     courses.forEach(course => {
-      if (course.course_department) {
-        subjects.add(course.course_department);
+      if (course.department) {
+        subjects.add(course.department);
       }
     });
     
@@ -106,13 +106,13 @@ const Courses = () => {
       filtered = filtered.filter(course =>
         course.course_title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         course.course_code.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        course.course_department.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        course.department.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       );
     }
 
     // 學科領域篩選
     if (filters.subjectArea !== 'all') {
-      filtered = filtered.filter(course => course.course_department === filters.subjectArea);
+      filtered = filtered.filter(course => course.department === filters.subjectArea);
     }
 
     // 教學語言篩選
@@ -148,7 +148,7 @@ const Courses = () => {
           break;
         case 'subject':
         case 'department':
-          comparison = a.course_department.localeCompare(b.course_department);
+          comparison = a.department.localeCompare(b.department);
           break;
         case 'workload':
           // 工作量排序：有效值在前，按數值排序；無效值(-1)排在後面
@@ -348,11 +348,15 @@ const Courses = () => {
                     titleTc={course.course_title_tc}
                     titleSc={course.course_title_sc}
                     code={course.course_code}
-                                            department={translateDepartmentName(course.course_department, t)}
+                    department={translateDepartmentName(course.department, t)}
                     language={course.course_language}
                     rating={course.averageRating}
                     reviewCount={course.reviewCount}
                     isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
+                    averageWorkload={course.averageWorkload}
+                    averageDifficulty={course.averageDifficulty}
+                    averageUsefulness={course.averageUsefulness}
+                    isLoading={statsLoading}
                   />
                 ))}
               </div>

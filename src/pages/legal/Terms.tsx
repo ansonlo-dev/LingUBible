@@ -30,6 +30,23 @@ export default function Terms() {
           </div>
         </div>
 
+        {/* Disclaimer Box */}
+        <div className="mb-8">
+          <Card className="legal-page-card border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-900/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                {t('terms.disclaimer.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('terms.disclaimer.content')}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Terms Sections */}
         <div className="space-y-6">
           {/* 1. User Conduct Guidelines */}

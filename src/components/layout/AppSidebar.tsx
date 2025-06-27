@@ -1,4 +1,4 @@
-import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle, Mail } from 'lucide-react';
+import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle, Mail, Heart } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
@@ -117,7 +117,16 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
   // 檢測移動設備並監聽方向變化
   useEffect(() => {
     const checkIsMobile = () => {
-      const newIsMobile = window.innerWidth < 768;
+      // 檢測真正的移動設備：結合螢幕寬度和設備特徵
+      const width = window.innerWidth;
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      
+      // 只有在寬度小於 640px 或者是真正的移動設備時才視為手機版
+      // 這樣桌面半屏模式（約 960px）就不會被誤判為手機版
+      const newIsMobile = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      
       setIsMobile(newIsMobile);
       // 強制重新渲染以確保 shouldShowText 正確更新
       setForceRender(prev => prev + 1);
@@ -267,11 +276,12 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
         { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' }
       ]
     },
-    // My Reviews 和 Settings 分組（僅在用戶登入時顯示）
+    // My Reviews、Favorites 和 Settings 分組（僅在用戶登入時顯示）
     ...(user && !loading ? [{
       label: t('sidebar.personal'),
       items: [
         { name: t('sidebar.myReviews'), href: '/my-reviews', icon: MessageSquareText, current: location.pathname === '/my-reviews' },
+        { name: t('sidebar.myFavorites'), href: '/favorites', icon: Heart, current: location.pathname === '/favorites' },
         { name: t('sidebar.settings'), href: '/settings', icon: UserCircle, current: location.pathname === '/settings' }
       ]
     }] : [])
@@ -376,6 +386,13 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
                     );
                   })}
                 </ul>
+                
+                {/* 分組分隔線 - 只在摺疊狀態且不是最後一個分組時顯示 */}
+                {!shouldShowText && groupIndex < navigationGroups.length - 1 && (
+                  <div className="mt-6 flex justify-center">
+                    <div className="w-8 h-0.5 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -383,6 +400,13 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
           {/* 開發工具區域 - 僅在開發模式顯示 */}
           {devNavigation.length > 0 && (
             <>
+              {/* 開發工具分隔線 - 只在摺疊狀態顯示 */}
+              {!shouldShowText && (
+                <div className="mt-6 flex justify-center">
+                  <div className="w-8 h-0.5 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+                </div>
+              )}
+              
               <div className="mt-6 mb-2">
                 {shouldShowText && (
                   <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">

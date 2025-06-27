@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, BookOpen as BookOpenIcon, Users, MessageCircle } from 'lucide-react';
+import { X, BookOpen as BookOpenIcon, GraduationCap, MessageSquare, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
-import type { CourseWithStats, InstructorWithStats } from '@/services/api/courseService';
-import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
+import type { CourseWithStats, InstructorWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
+import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/utils/textUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -29,16 +30,57 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
     onClose();
   };
   const { t, language: currentLanguage } = useLanguage();
-  const { isDesktop } = useDeviceDetection();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [popularCourses, setPopularCourses] = useState<CourseWithStats[]>([]);
-  const [popularInstructors, setPopularInstructors] = useState<InstructorWithStats[]>([]);
+  const [popularInstructors, setPopularInstructors] = useState<InstructorWithDetailedStats[]>([]);
+  const [allCourses, setAllCourses] = useState<CourseWithStats[]>([]);
+  const [allInstructors, setAllInstructors] = useState<InstructorWithDetailedStats[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAddedHistoryEntry = useRef(false);
+
+  // Get faculty by department name
+  const getFacultyByDepartment = (department: string): string => {
+    const facultyMapping: { [key: string]: string } = {
+      // Faculty of Arts
+      'Chinese': 'faculty.arts',
+      'Cultural Studies': 'faculty.arts',
+      'Digital Arts and Creative Industries': 'faculty.arts',
+      'English': 'faculty.arts',
+      'History': 'faculty.arts',
+      'Philosophy': 'faculty.arts',
+      'Translation': 'faculty.arts',
+      'Centre for English and Additional Languages': 'faculty.arts',
+      'Chinese Language Education and Assessment Centre': 'faculty.arts',
+      
+      // Faculty of Business
+      'Accountancy': 'faculty.business',
+      'Finance': 'faculty.business',
+      'Management': 'faculty.business',
+      'Marketing and International Business': 'faculty.business',
+      'Operations and Risk Management': 'faculty.business',
+      
+      // Faculty of Social Sciences
+      'Economics': 'faculty.socialSciences',
+      'Government and International Affairs': 'faculty.socialSciences',
+      'Psychology': 'faculty.socialSciences',
+      'Sociology and Social Policy': 'faculty.socialSciences',
+      
+      // School of Data Science
+      'LEO Dr David P. Chan Institute of Data Science': 'faculty.dataScience',
+      
+      // School of Interdisciplinary Studies
+      'Office of the Core Curriculum': 'faculty.interdisciplinaryStudies',
+      'Science Unit': 'faculty.interdisciplinaryStudies',
+      'Wong Bing Lai Music and Performing Arts Unit': 'faculty.interdisciplinaryStudies'
+    };
+    
+    return facultyMapping[department] || '';
+  };
 
   // 載入數據
   useEffect(() => {
@@ -49,14 +91,18 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       
       const loadData = async () => {
         try {
-          // 載入熱門課程和講師
-          const [coursesData, instructorsData] = await Promise.all([
-            CourseService.getPopularCourses(5), // 獲取前5個熱門課程
-            CourseService.getPopularInstructors(5) // 獲取前5個熱門講師
+          // 載入熱門課程和講師以及所有數據用於搜索
+          const [coursesData, instructorsData, allCoursesData, allInstructorsData] = await Promise.all([
+            CourseService.getPopularCourses(6), // 獲取前6個熱門課程
+            CourseService.getPopularInstructorsWithDetailedStats(6), // 獲取前6個熱門講師
+            CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
+            CourseService.getAllInstructorsWithDetailedStats() // 獲取所有講師用於搜索
           ]);
           
           setPopularCourses(coursesData);
           setPopularInstructors(instructorsData);
+          setAllCourses(allCoursesData);
+          setAllInstructors(allInstructorsData);
         } catch (error) {
           console.error('Error loading search data:', error);
         } finally {
@@ -73,15 +119,124 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
     }
   }, [isOpen]);
 
+  // 搜索過濾邏輯
+  const filteredCourses = searchQuery.trim() 
+    ? allCourses.filter(course => {
+        // 只顯示有評論的課程
+        if (course.reviewCount === 0) return false;
+        
+        const query = searchQuery.toLowerCase();
+        return (
+          // 課程代碼
+          course.course_code.toLowerCase().includes(query) ||
+          // 課程名稱（所有語言）
+          course.course_title?.toLowerCase().includes(query) ||
+          course.course_title_tc?.toLowerCase().includes(query) ||
+          course.course_title_sc?.toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => b.reviewCount - a.reviewCount) // 按評論數降序排序
+      .slice(0, 10) // 限制搜索結果數量
+    : [];
+
+  const filteredInstructors = searchQuery.trim()
+    ? allInstructors.filter(instructor => {
+        // 只顯示有評論的講師
+        if (instructor.reviewCount === 0) return false;
+        
+        const query = searchQuery.toLowerCase();
+        
+        // 獲取所有語言版本的部門名稱進行搜索
+        const departmentEnglish = instructor.department?.toLowerCase() || '';
+        
+        // 創建臨時翻譯函數來獲取不同語言的部門名稱
+        const getTcTranslation = (key: string) => {
+          const zhTwTranslations: Record<string, string> = {
+            'department.chinese': '中文系',
+            'department.culturalStudies': '文化研究系',
+            'department.digitalArts': '數碼藝術及創意產業系',
+            'department.english': '英文系',
+            'department.history': '歷史系',
+            'department.philosophy': '哲學系',
+            'department.translation': '翻譯系',
+            'department.englishLanguageCentre': '英語及外語教學中心',
+            'department.chineseLanguageCentre': '中國語文教學與測試中心',
+            'department.accountancy': '會計學系',
+            'department.finance': '金融學系',
+            'department.management': '管理學學系',
+            'department.marketing': '市場及國際企業學系',
+            'department.operations': '運營與風險管理學系',
+            'department.psychology': '心理學系',
+            'department.economics': '經濟學系',
+            'department.government': '政府與國際事務學系',
+            'department.sociology': '社會學及社會政策系',
+            'department.coreOffice': '核心課程辦事處',
+            'department.scienceUnit': '科學教研組',
+            'department.musicUnit': '黃炳禮音樂及演藝部',
+            'department.dataScience': '嶺南教育機構陳斌博士數據科學研究所'
+          };
+          return zhTwTranslations[key] || key;
+        };
+        
+        const getScTranslation = (key: string) => {
+          const zhCnTranslations: Record<string, string> = {
+            'department.chinese': '中文系',
+            'department.culturalStudies': '文化研究系',
+            'department.digitalArts': '数码艺术及创意产业系',
+            'department.english': '英文系',
+            'department.history': '历史系',
+            'department.philosophy': '哲学系',
+            'department.translation': '翻译系',
+            'department.englishLanguageCentre': '英语及外语教学中心',
+            'department.chineseLanguageCentre': '中国语文教学与测试中心',
+            'department.accountancy': '会计学系',
+            'department.finance': '金融学系',
+            'department.management': '管理学学系',
+            'department.marketing': '市场及国际企业学系',
+            'department.operations': '运营与风险管理学系',
+            'department.psychology': '心理学系',
+            'department.economics': '经济学系',
+            'department.government': '政府与国际事务学系',
+            'department.sociology': '社会学及社会政策系',
+            'department.coreOffice': '核心课程办事处',
+            'department.scienceUnit': '科学教研组',
+            'department.musicUnit': '黄炳礼音乐及演艺部',
+            'department.dataScience': '岭南教育机构陈斌博士数据科学研究所'
+          };
+          return zhCnTranslations[key] || key;
+        };
+        
+        const departmentTc = translateDepartmentName(instructor.department || '', getTcTranslation).toLowerCase();
+        const departmentSc = translateDepartmentName(instructor.department || '', getScTranslation).toLowerCase();
+        
+        return (
+          // 講師姓名（所有語言）
+          instructor.name.toLowerCase().includes(query) ||
+          instructor.name_tc?.toLowerCase().includes(query) ||
+          instructor.name_sc?.toLowerCase().includes(query) ||
+          // 電子郵件
+          instructor.email?.toLowerCase().includes(query) ||
+          // 部門名稱（所有語言）
+          departmentEnglish.includes(query) ||
+          departmentTc.includes(query) ||
+          departmentSc.includes(query)
+        );
+      })
+      .sort((a, b) => b.reviewCount - a.reviewCount) // 按評論數降序排序
+      .slice(0, 10) // 限制搜索結果數量
+    : [];
+
   // 處理課程點擊
-  const handleCourseClick = (courseCode: string) => {
-    navigate(`/courses/${courseCode}`);
+  const handleCourseClick = (courseCode: string, event?: React.MouseEvent) => {
+    // This function is now simplified since we're using <a> tags
+    // The browser will handle navigation naturally
     handleClose();
   };
 
   // 處理講師點擊
-  const handleInstructorClick = (instructorName: string) => {
-    navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+  const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
+    // This function is now simplified since we're using <a> tags
+    // The browser will handle navigation naturally
     handleClose();
   };
 
@@ -134,7 +289,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
       onClick={handleClose}
     >
-      {isDesktop ? (
+      {!isMobile ? (
         <div className="fixed inset-x-0 top-16 mx-auto max-w-2xl px-4">
           <div 
             className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[70vh] flex flex-col"
@@ -161,78 +316,287 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
             {/* 搜索結果 */}
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="text-muted-foreground">{t('common.loading')}</p>
                 </div>
               ) : (
                 <div className="p-4 space-y-6">
-                  {/* 熱門課程 */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 px-2">
-                      <BookOpenIcon className="h-5 w-5 text-red-600" />
-                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {popularCourses.map((course) => {
-                        const titleInfo = getCourseTitle(course, currentLanguage);
-                        return (
-                          <button
-                            key={course.course_code}
-                            onClick={() => handleCourseClick(course.course_code)}
-                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-gray-900 dark:text-white">
-                                  {titleInfo.primary}
-                                </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                  {course.course_code} • {translateDepartmentName(course.course_department, t)}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-gray-500">
-                                <MessageCircle className="h-4 w-4" />
-                                <span>{course.reviewCount}</span>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 熱門講師 */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 px-2">
-                      <Users className="h-5 w-5 text-red-600" />
-                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {popularInstructors.map((instructor) => (
-                        <button
-                          key={instructor.name}
-                          onClick={() => handleInstructorClick(instructor.name)}
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">
-                                {instructor.name}
-                              </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {translateDepartmentName(instructor.department, t)}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              <MessageCircle className="h-4 w-4" />
-                              <span>{instructor.reviewCount}</span>
-                            </div>
+                  {/* 搜尋結果 */}
+                  {searchQuery.trim() && (
+                    <div className="space-y-6">
+                      {/* 課程結果 */}
+                      {filteredCourses.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3 px-2">
+                            <BookOpenIcon className="h-5 w-5 text-red-600" />
+                            <h3 className="font-medium text-gray-900 dark:text-white">{t('search.courses')}</h3>
                           </div>
-                        </button>
-                      ))}
+                          <div className="space-y-2">
+                            {filteredCourses.map((course) => {
+                              const titleInfo = getCourseTitle(course, currentLanguage);
+                              const departmentName = translateDepartmentName(course.department, t);
+                              const facultyKey = getFacultyByDepartment(course.department);
+                              const courseUrl = `/courses/${course.course_code}`;
+                              return (
+                                <a
+                                  key={course.course_code}
+                                  href={courseUrl}
+                                  onClick={(e) => {
+                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                    // Let normal clicks use the default link behavior
+                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                      // Let browser handle these naturally
+                                      handleClose();
+                                      return;
+                                    }
+                                    // For normal clicks, prevent default and use React Router
+                                    e.preventDefault();
+                                    navigate(courseUrl);
+                                    handleClose();
+                                  }}
+                                  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium text-gray-900 dark:text-white font-mono truncate">
+                                        {course.course_code}
+                                      </div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                        {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
+                                      </div>
+                                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                                        {facultyKey && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                            {t(facultyKey)}
+                                          </span>
+                                        )}
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                          {departmentName}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                                      <MessageSquare className="h-4 w-4" />
+                                      <span>{course.reviewCount}</span>
+                                    </div>
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 講師結果 */}
+                      {filteredInstructors.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3 px-2">
+                            <GraduationCap className="h-5 w-5 text-red-600" />
+                            <h3 className="font-medium text-gray-900 dark:text-white">{t('search.instructors')}</h3>
+                          </div>
+                          <div className="space-y-2">
+                            {filteredInstructors.map((instructor) => {
+                              const nameInfo = getInstructorName(instructor, currentLanguage);
+                              const departmentName = translateDepartmentName(instructor.department, t);
+                              const facultyKey = getFacultyByDepartment(instructor.department);
+                              const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                              return (
+                                <a
+                                  key={instructor.name}
+                                  href={instructorUrl}
+                                  onClick={(e) => {
+                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                    // Let normal clicks use the default link behavior
+                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                      // Let browser handle these naturally
+                                      handleClose();
+                                      return;
+                                    }
+                                    // For normal clicks, prevent default and use React Router
+                                    e.preventDefault();
+                                    navigate(instructorUrl);
+                                    handleClose();
+                                  }}
+                                  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium text-gray-900 dark:text-white">
+                                        {nameInfo.primary}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 mt-1">
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                          {nameInfo.secondary || ''}
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-gray-500 flex-shrink-0">
+                                      <MessageSquare className="h-4 w-4" />
+                                      <span>{instructor.reviewCount}</span>
+                                    </div>
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 無搜索結果 */}
+                      {filteredCourses.length === 0 && filteredInstructors.length === 0 && (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 dark:text-gray-400">{t('search.noResults')}</p>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
+
+                  {/* 熱門內容 - 只在沒有搜索時顯示 */}
+                  {!searchQuery.trim() && (
+                    <>
+                      {/* 熱門課程 */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 px-2">
+                          <BookOpenIcon className="h-5 w-5 text-red-600" />
+                          <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {popularCourses.map((course) => {
+                            const titleInfo = getCourseTitle(course, currentLanguage);
+                            const departmentName = translateDepartmentName(course.department, t);
+                            const facultyKey = getFacultyByDepartment(course.department);
+                            const courseUrl = `/courses/${course.course_code}`;
+                            return (
+                              <a
+                                key={course.course_code}
+                                href={courseUrl}
+                                onClick={(e) => {
+                                  // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                  // Let normal clicks use the default link behavior
+                                  if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                    // Let browser handle these naturally
+                                    handleClose();
+                                    return;
+                                  }
+                                  // For normal clicks, prevent default and use React Router
+                                  e.preventDefault();
+                                  navigate(courseUrl);
+                                  handleClose();
+                                }}
+                                className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    {/* 第1行：課程代碼 */}
+                                    <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                      {course.course_code}
+                                    </div>
+                                    {/* 第2行：課程名稱 */}
+                                    <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
+                                      {titleInfo.secondary 
+                                        ? `${titleInfo.primary} • ${titleInfo.secondary}`
+                                        : titleInfo.primary
+                                      }
+                                    </div>
+                                    {/* 第3行：學院和系所 */}
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {facultyKey && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                          {t(facultyKey)}
+                                        </span>
+                                      )}
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                        {departmentName}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                    <MessageSquare className="h-4 w-4" />
+                                    <span>{course.reviewCount}</span>
+                                  </div>
+                                </div>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 熱門講師 */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 px-2">
+                          <GraduationCap className="h-5 w-5 text-red-600" />
+                          <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {popularInstructors.map((instructor) => {
+                            const nameInfo = getInstructorName(instructor, currentLanguage);
+                            const departmentName = translateDepartmentName(instructor.department, t);
+                            const facultyKey = getFacultyByDepartment(instructor.department);
+                            const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                            return (
+                              <a
+                                key={instructor.name}
+                                href={instructorUrl}
+                                onClick={(e) => {
+                                  // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                  // Let normal clicks use the default link behavior
+                                  if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                    // Let browser handle these naturally
+                                    handleClose();
+                                    return;
+                                  }
+                                  // For normal clicks, prevent default and use React Router
+                                  e.preventDefault();
+                                  navigate(instructorUrl);
+                                  handleClose();
+                                }}
+                                className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    {/* 第1行：英文名稱 */}
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {nameInfo.primary}
+                                    </div>
+                                    {/* 第2行：中文名稱（保留空間以維持高度一致） */}
+                                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                                      {nameInfo.secondary || ''}
+                                    </div>
+                                    {/* 第3行：學院和系所 */}
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {facultyKey && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                          {t(facultyKey)}
+                                        </span>
+                                      )}
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                        {departmentName}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                    <MessageSquare className="h-4 w-4" />
+                                    <span>{instructor.reviewCount}</span>
+                                  </div>
+                                </div>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -266,77 +630,286 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="h-full flex flex-col items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-                  <p className="mt-2 text-gray-500 dark:text-gray-400">{t('stats.loading')}</p>
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="mt-2 text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
                 </div>
               ) : (
                 <div className="p-4 space-y-6">
-                  {/* 熱門課程 */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 px-2">
-                      <BookOpenIcon className="h-5 w-5 text-red-600" />
-                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {popularCourses.map((course) => {
-                        const titleInfo = getCourseTitle(course, currentLanguage);
-                        return (
-                          <button
-                            key={course.course_code}
-                            onClick={() => handleCourseClick(course.course_code)}
-                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="min-w-0 flex-1">
-                                <div className="font-medium text-gray-900 dark:text-white truncate">
-                                  {titleInfo.primary}
-                                </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                  {course.course_code} • {translateDepartmentName(course.course_department, t)}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
-                                <MessageCircle className="h-4 w-4" />
-                                <span>{course.reviewCount}</span>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 熱門講師 */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 px-2">
-                      <Users className="h-5 w-5 text-red-600" />
-                      <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {popularInstructors.map((instructor) => (
-                        <button
-                          key={instructor.name}
-                          onClick={() => handleInstructorClick(instructor.name)}
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium text-gray-900 dark:text-white truncate">
-                                {instructor.name}
-                              </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {translateDepartmentName(instructor.department, t)}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
-                              <MessageCircle className="h-4 w-4" />
-                              <span>{instructor.reviewCount}</span>
-                            </div>
+                  {/* 搜尋結果 */}
+                  {searchQuery.trim() && (
+                    <div className="space-y-6">
+                      {/* 課程結果 */}
+                      {filteredCourses.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3 px-2">
+                            <BookOpenIcon className="h-5 w-5 text-red-600" />
+                            <h3 className="font-medium text-gray-900 dark:text-white">{t('search.courses')}</h3>
                           </div>
-                        </button>
-                      ))}
+                          <div className="space-y-2">
+                            {filteredCourses.map((course) => {
+                              const titleInfo = getCourseTitle(course, currentLanguage);
+                              const departmentName = translateDepartmentName(course.department, t);
+                              const facultyKey = getFacultyByDepartment(course.department);
+                              const courseUrl = `/courses/${course.course_code}`;
+                              return (
+                                <a
+                                  key={course.course_code}
+                                  href={courseUrl}
+                                  onClick={(e) => {
+                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                    // Let normal clicks use the default link behavior
+                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                      // Let browser handle these naturally
+                                      handleClose();
+                                      return;
+                                    }
+                                    // For normal clicks, prevent default and use React Router
+                                    e.preventDefault();
+                                    navigate(courseUrl);
+                                    handleClose();
+                                  }}
+                                  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium text-gray-900 dark:text-white font-mono truncate">
+                                        {course.course_code}
+                                      </div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                        {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
+                                      </div>
+                                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                                        {facultyKey && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                            {t(facultyKey)}
+                                          </span>
+                                        )}
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                          {departmentName}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                                      <MessageSquare className="h-4 w-4" />
+                                      <span>{course.reviewCount}</span>
+                                    </div>
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 講師結果 */}
+                      {filteredInstructors.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3 px-2">
+                            <GraduationCap className="h-5 w-5 text-red-600" />
+                            <h3 className="font-medium text-gray-900 dark:text-white">{t('search.instructors')}</h3>
+                          </div>
+                          <div className="space-y-2">
+                            {filteredInstructors.map((instructor) => {
+                              const nameInfo = getInstructorName(instructor, currentLanguage);
+                              const departmentName = translateDepartmentName(instructor.department, t);
+                              const facultyKey = getFacultyByDepartment(instructor.department);
+                              const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                              return (
+                                <a
+                                  key={instructor.name}
+                                  href={instructorUrl}
+                                  onClick={(e) => {
+                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                    // Let normal clicks use the default link behavior
+                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                      // Let browser handle these naturally
+                                      handleClose();
+                                      return;
+                                    }
+                                    // For normal clicks, prevent default and use React Router
+                                    e.preventDefault();
+                                    navigate(instructorUrl);
+                                    handleClose();
+                                  }}
+                                  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium text-gray-900 dark:text-white">
+                                        {nameInfo.primary}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 mt-1">
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                          {nameInfo.secondary || ''}
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-gray-500 flex-shrink-0">
+                                      <MessageSquare className="h-4 w-4" />
+                                      <span>{instructor.reviewCount}</span>
+                                    </div>
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 無搜索結果 */}
+                      {filteredCourses.length === 0 && filteredInstructors.length === 0 && (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 dark:text-gray-400">{t('search.noResults')}</p>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
+
+                  {/* 熱門內容 - 只在沒有搜索時顯示 */}
+                  {!searchQuery.trim() && (
+                    <>
+                      {/* 熱門課程 */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 px-2">
+                          <BookOpenIcon className="h-5 w-5 text-red-600" />
+                          <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {popularCourses.map((course) => {
+                            const titleInfo = getCourseTitle(course, currentLanguage);
+                            const departmentName = translateDepartmentName(course.department, t);
+                            const facultyKey = getFacultyByDepartment(course.department);
+                            const courseUrl = `/courses/${course.course_code}`;
+                            return (
+                              <a
+                                key={course.course_code}
+                                href={courseUrl}
+                                onClick={(e) => {
+                                  // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                  // Let normal clicks use the default link behavior
+                                  if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                    // Let browser handle these naturally
+                                    handleClose();
+                                    return;
+                                  }
+                                  // For normal clicks, prevent default and use React Router
+                                  e.preventDefault();
+                                  navigate(courseUrl);
+                                  handleClose();
+                                }}
+                                className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    {/* 第1行：課程代碼 */}
+                                    <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                      {course.course_code}
+                                    </div>
+                                    {/* 第2行：課程名稱 */}
+                                    <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
+                                      {titleInfo.secondary 
+                                        ? `${titleInfo.primary} • ${titleInfo.secondary}`
+                                        : titleInfo.primary
+                                      }
+                                    </div>
+                                    {/* 第3行：學院和系所 */}
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {facultyKey && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                          {t(facultyKey)}
+                                        </span>
+                                      )}
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                        {departmentName}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                    <MessageSquare className="h-4 w-4" />
+                                    <span>{course.reviewCount}</span>
+                                  </div>
+                                </div>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 熱門講師 */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 px-2">
+                          <GraduationCap className="h-5 w-5 text-red-600" />
+                          <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {popularInstructors.map((instructor) => {
+                            const nameInfo = getInstructorName(instructor, currentLanguage);
+                            const departmentName = translateDepartmentName(instructor.department, t);
+                            const facultyKey = getFacultyByDepartment(instructor.department);
+                            const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                            return (
+                              <a
+                                key={instructor.name}
+                                href={instructorUrl}
+                                onClick={(e) => {
+                                  // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                  // Let normal clicks use the default link behavior
+                                  if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                    // Let browser handle these naturally
+                                    handleClose();
+                                    return;
+                                  }
+                                  // For normal clicks, prevent default and use React Router
+                                  e.preventDefault();
+                                  navigate(instructorUrl);
+                                  handleClose();
+                                }}
+                                className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    {/* 第1行：英文名稱 */}
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {nameInfo.primary}
+                                    </div>
+                                    {/* 第2行：中文名稱（保留空間以維持高度一致） */}
+                                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                                      {nameInfo.secondary || ''}
+                                    </div>
+                                    {/* 第3行：學院和系所 */}
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {facultyKey && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                          {t(facultyKey)}
+                                        </span>
+                                      )}
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                        {departmentName}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                    <MessageSquare className="h-4 w-4" />
+                                    <span>{instructor.reviewCount}</span>
+                                  </div>
+                                </div>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

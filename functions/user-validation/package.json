@@ -1,0 +1,16 @@
+{
+  "name": "user-validation",
+  "version": "1.0.0",
+  "description": "Appwrite function to validate and block non-student user accounts",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/main.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^15.0.0"
+  },
+  "keywords": ["appwrite", "validation", "oauth", "security"],
+  "author": "LingUBible",
+  "license": "MIT"
+} 

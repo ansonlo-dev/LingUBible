@@ -77,13 +77,14 @@ export const CourseReviewsList = ({
 
   // 課程要求篩選狀態
   const [requirementsFilters, setRequirementsFilters] = useState<CourseRequirementsFilters>({
-    midterm: 'all',
+    attendance: 'all',
     quiz: 'all',
-    groupProject: 'all',
+    midterm: 'all',
+    final: 'all',
     individualAssignment: 'all',
+    groupProject: 'all',
     presentation: 'all',
-    reading: 'all',
-    attendance: 'all'
+    reading: 'all'
   });
 
   // 獲取講師完整信息
@@ -182,13 +183,14 @@ export const CourseReviewsList = ({
       // 檢查是否有任何講師詳情符合篩選條件
       return instructorDetails.some(detail => {
         const checks = [
-          requirementsFilters.midterm === 'all' || (requirementsFilters.midterm === 'has' && detail.has_midterm) || (requirementsFilters.midterm === 'no' && !detail.has_midterm),
+          requirementsFilters.attendance === 'all' || (requirementsFilters.attendance === 'has' && detail.has_attendance_requirement) || (requirementsFilters.attendance === 'no' && !detail.has_attendance_requirement),
           requirementsFilters.quiz === 'all' || (requirementsFilters.quiz === 'has' && detail.has_quiz) || (requirementsFilters.quiz === 'no' && !detail.has_quiz),
-          requirementsFilters.groupProject === 'all' || (requirementsFilters.groupProject === 'has' && detail.has_group_project) || (requirementsFilters.groupProject === 'no' && !detail.has_group_project),
+          requirementsFilters.midterm === 'all' || (requirementsFilters.midterm === 'has' && detail.has_midterm) || (requirementsFilters.midterm === 'no' && !detail.has_midterm),
+          requirementsFilters.final === 'all' || (requirementsFilters.final === 'has' && detail.has_final) || (requirementsFilters.final === 'no' && !detail.has_final),
           requirementsFilters.individualAssignment === 'all' || (requirementsFilters.individualAssignment === 'has' && detail.has_individual_assignment) || (requirementsFilters.individualAssignment === 'no' && !detail.has_individual_assignment),
+          requirementsFilters.groupProject === 'all' || (requirementsFilters.groupProject === 'has' && detail.has_group_project) || (requirementsFilters.groupProject === 'no' && !detail.has_group_project),
           requirementsFilters.presentation === 'all' || (requirementsFilters.presentation === 'has' && detail.has_presentation) || (requirementsFilters.presentation === 'no' && !detail.has_presentation),
-          requirementsFilters.reading === 'all' || (requirementsFilters.reading === 'has' && detail.has_reading) || (requirementsFilters.reading === 'no' && !detail.has_reading),
-          requirementsFilters.attendance === 'all' || (requirementsFilters.attendance === 'has' && detail.has_attendance_requirement) || (requirementsFilters.attendance === 'no' && !detail.has_attendance_requirement)
+          requirementsFilters.reading === 'all' || (requirementsFilters.reading === 'has' && detail.has_reading) || (requirementsFilters.reading === 'no' && !detail.has_reading)
         ];
         
         // 所有條件都必須滿足 (AND logic)
@@ -310,13 +312,14 @@ export const CourseReviewsList = ({
     
     // 同時清空課程要求篩選
     setRequirementsFilters({
-      midterm: 'all',
+      attendance: 'all',
       quiz: 'all',
-      groupProject: 'all',
+      midterm: 'all',
+      final: 'all',
       individualAssignment: 'all',
+      groupProject: 'all',
       presentation: 'all',
-      reading: 'all',
-      attendance: 'all'
+      reading: 'all'
     });
   };
 
@@ -457,31 +460,31 @@ export const CourseReviewsList = ({
             
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                   <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  {instructor.teaching === null ? (
-                    <span className="text-muted-foreground">
-                      {t('review.rating.notRated')}
-                    </span>
-                  ) : instructor.teaching === -1 ? (
-                    <span className="text-muted-foreground">
-                      {t('review.notApplicable')}
-                    </span>
-                  ) : (
-                    <StarRating rating={instructor.teaching} showValue size="sm" showTooltip ratingType="teaching" />
-                  )}
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {instructor.teaching === null ? (
+                      <span className="text-muted-foreground">
+                        {t('review.rating.notRated')}
+                      </span>
+                    ) : instructor.teaching === -1 ? (
+                      <span className="text-muted-foreground">
+                        {t('review.notApplicable')}
+                      </span>
+                    ) : (
+                      <StarRating rating={instructor.teaching} showValue size="sm" showTooltip ratingType="teaching" />
+                    )}
+                  </div>
                 </div>
               </div>
               
               {instructor.grading !== null && instructor.grading !== -1 && (
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                     <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                    <div className="flex items-center justify-center lg:ml-1">
+                      <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -494,13 +497,14 @@ export const CourseReviewsList = ({
                 <span>{t('review.courseRequirements')}</span>
               </h5>
               <div className="flex flex-wrap gap-2 overflow-hidden">
-                {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'))}
+                {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
                 {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'))}
-                {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
+                {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'))}
+                {renderRequirementBadge(instructor.has_final, t('review.requirements.final'))}
                 {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
                 {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'))}
                 {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'))}
-                {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
               </div>
             </div>
 
@@ -642,7 +646,7 @@ export const CourseReviewsList = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
-          {t('review.courseReviews')}
+          {t('review.studentReviews')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 overflow-hidden">
@@ -748,47 +752,47 @@ export const CourseReviewsList = ({
                 {/* 課程評分 */}
                 <div className="grid grid-cols-3 gap-1 text-xs">
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      {review.course_workload === null || review.course_workload === -1 ? (
-                        <span className="text-muted-foreground">
-                          {review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
-                        </span>
-                      ) : (
-                        <StarRating rating={review.course_workload} showValue size="sm" showTooltip ratingType="workload" />
-                      )}
+                      <div className="flex items-center justify-center lg:ml-1">
+                        {review.course_workload === null || review.course_workload === -1 ? (
+                          <span className="text-muted-foreground">
+                            {review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                          </span>
+                        ) : (
+                          <StarRating rating={review.course_workload} showValue size="sm" showTooltip ratingType="workload" />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      {review.course_difficulties === null || review.course_difficulties === -1 ? (
-                        <span className="text-muted-foreground">
-                          {review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
-                        </span>
-                      ) : (
-                        <StarRating rating={review.course_difficulties} showValue size="sm" showTooltip ratingType="difficulty" />
-                      )}
+                      <div className="flex items-center justify-center lg:ml-1">
+                        {review.course_difficulties === null || review.course_difficulties === -1 ? (
+                          <span className="text-muted-foreground">
+                            {review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                          </span>
+                        ) : (
+                          <StarRating rating={review.course_difficulties} showValue size="sm" showTooltip ratingType="difficulty" />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      {review.course_usefulness === null || review.course_usefulness === -1 ? (
-                        <span className="text-muted-foreground">
-                          {review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
-                        </span>
-                      ) : (
-                        <StarRating rating={review.course_usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
-                      )}
+                      <div className="flex items-center justify-center lg:ml-1">
+                        {review.course_usefulness === null || review.course_usefulness === -1 ? (
+                          <span className="text-muted-foreground">
+                            {review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                          </span>
+                        ) : (
+                          <StarRating rating={review.course_usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -17,6 +17,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
 import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
 import { translateDepartmentName } from '@/utils/textUtils';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -54,6 +55,11 @@ const Index = () => {
   const [popularLoading, setPopularLoading] = useState(true);
   const [popularError, setPopularError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('courses');
+
+  // 收藏功能 - 預載所有收藏狀態
+  const { isFavorited, toggleFavorite, addItems } = useFavorites({ 
+    preload: !!user // 只有登入用戶才預載
+  });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -118,6 +124,27 @@ const Index = () => {
     loadPopularContent();
   }, []);
 
+  // 當用戶登入且課程/講師數據載入完成後，添加到收藏監控
+  useEffect(() => {
+    if (user && popularCourses.length > 0) {
+      const courseItems = popularCourses.map(course => ({
+        type: 'course' as const,
+        itemId: course.course_code
+      }));
+      addItems(courseItems);
+    }
+  }, [user, popularCourses, addItems]);
+
+  useEffect(() => {
+    if (user && popularInstructors.length > 0) {
+      const instructorItems = popularInstructors.map(instructor => ({
+        type: 'instructor' as const,
+        itemId: instructor.name
+      }));
+      addItems(instructorItems);
+    }
+  }, [user, popularInstructors, addItems]);
+
   // Get the actions as an array directly from the translation
   const actions = t('hero.actions');
   const actionTexts = Array.isArray(actions) ? actions : [actions];
@@ -148,6 +175,14 @@ const Index = () => {
     setShowHeavenTransition(false);
     setButtonPosition(undefined);
     navigate('/register');
+  };
+
+  const handleFavoriteToggle = async (type: 'course' | 'instructor', itemId: string) => {
+    try {
+      await toggleFavorite(type, itemId);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   return (
@@ -271,13 +306,23 @@ const Index = () => {
                 </TabsTrigger>
               </TabsList>
               
-              <Button 
-                variant="outline" 
-                onClick={() => navigate(activeTab === 'courses' ? '/courses' : '/instructors')}
-                className="hover:bg-primary/10 hover:text-primary transition-colors w-full sm:w-auto text-sm"
+              <a 
+                href={activeTab === 'courses' ? '/courses' : '/instructors'}
+                onClick={(e) => {
+                  // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                  // Let normal clicks use the default link behavior
+                  if (e.ctrlKey || e.metaKey || e.button === 1) {
+                    // Let browser handle these naturally
+                    return;
+                  }
+                  // For normal clicks, prevent default and use React Router
+                  e.preventDefault();
+                  navigate(activeTab === 'courses' ? '/courses' : '/instructors');
+                }}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-primary/10 hover:text-primary h-10 px-4 py-2 w-full sm:w-auto no-underline"
               >
                 {activeTab === 'courses' ? t('featured.viewAllCourses') : t('featured.viewAllInstructors')}
-              </Button>
+              </a>
             </div>
 
             <TabsContent value="courses" className="space-y-6">
@@ -310,11 +355,17 @@ const Index = () => {
                       titleTc={course.course_title_tc}
                       titleSc={course.course_title_sc}
                       code={course.course_code}
-                                              department={translateDepartmentName(course.course_department, t)}
+                      department={course.department}
                       language={course.course_language}
                       rating={course.averageRating}
                       reviewCount={course.reviewCount}
                       isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
+                      averageWorkload={course.averageWorkload}
+                      averageDifficulty={course.averageDifficulty}
+                      averageUsefulness={course.averageUsefulness}
+                      isLoading={false}
+                      isFavorited={user ? isFavorited('course', course.course_code) : false}
+                      onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
                     />
                   ))}
                 </div>
@@ -355,6 +406,9 @@ const Index = () => {
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
                       isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
+                      isLoading={false}
+                      isFavorited={user ? isFavorited('instructor', instructor.name) : false}
+                      onFavoriteToggle={() => handleFavoriteToggle('instructor', instructor.name)}
                     />
                   ))}
                 </div>

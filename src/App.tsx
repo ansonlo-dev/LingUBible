@@ -27,6 +27,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import UserSettings from "./pages/user/UserSettings";
 import MyReviews from "./pages/user/MyReviews";
+import Favorites from "./pages/Favorites";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 import OAuthLoginCallback from "./pages/auth/OAuthLoginCallback";
 
@@ -122,9 +123,21 @@ const AppContent = () => {
   const { isDesktop, isMobile } = useDeviceDetection();
   // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    // 只在桌面版時從 cookie 讀取狀態
-    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-      return sidebarStateCookie.getState();
+    // 使用智能設備檢測來決定是否讀取 cookie 狀態
+    if (typeof window !== 'undefined') {
+      // 檢測真正的移動設備：結合螢幕寬度和設備特徵
+      const width = window.innerWidth;
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      
+      // 只有在寬度小於 640px 或者是真正的移動設備時才視為手機版
+      const isRealMobile = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      
+      // 只在非手機版時從 cookie 讀取狀態
+      if (!isRealMobile) {
+        return sidebarStateCookie.getState();
+      }
     }
     // 手機版默認收縮
     return false;
@@ -254,7 +267,13 @@ const AppContent = () => {
       // 從 cookie 讀取桌面版側邊欄狀態
       setIsSidebarCollapsed(sidebarStateCookie.getState());
     }
-  }, [isDesktop, isMobileSidebarOpen]);
+    
+    // 當從桌面版切換到手機版時，確保側邊欄狀態正確
+    if (isMobile && !isMobileSidebarOpen) {
+      // 手機版時不需要摺疊狀態，因為會使用 overlay 模式
+      setIsSidebarCollapsed(false);
+    }
+  }, [isDesktop, isMobile, isMobileSidebarOpen]);
 
   // 監聽語言變化事件，並在語言切換後恢復手機版側邊欄狀態
   useEffect(() => {
@@ -446,6 +465,24 @@ const RouterContent = ({
   // 處理 URL 語言參數 - 現在在 Router 內部
   useLanguageFromUrl();
 
+  // 側邊欄快捷鍵 Alt+L 和 Ctrl+Shift+L
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Alt+L 或 Ctrl+Shift+L 快捷鍵
+      if (
+        e.key.toLowerCase() === 'l' &&
+        ((e.altKey && !e.ctrlKey && !e.shiftKey) ||
+         (e.ctrlKey && e.shiftKey && !e.altKey))
+      ) {
+        e.preventDefault();
+        handleSidebarToggle();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleSidebarToggle]);
+
   return (
     <>
       {/* 動態文檔標題和元數據 */}
@@ -558,6 +595,7 @@ const RouterContent = ({
                     <Route path="/write-review" element={<WriteReview />} />
                     <Route path="/write-review/:courseCode" element={<WriteReview />} />
                     <Route path="/my-reviews" element={<MyReviews />} />
+                    <Route path="/favorites" element={<Favorites />} />
                     <Route path="/settings" element={<UserSettings />} />
 
                                     <Route path="/terms" element={<Terms />} />

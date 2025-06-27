@@ -1,0 +1,38 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "LingUBible - Reg科聖經",
+  "alternateName": [
+    "LingUBible",
+    "Reg科聖經", 
+    "嶺大Reg科聖經",
+    "嶺南大學課程評價平台",
+    "Lingnan University Course Reviews"
+  ],
+  "url": "https://lingubible.com/",
+  "description": "嶺南大學課程與講師評價平台 - 真實可靠的Reg科聖經，幫助同學們作出明智的選課決定",
+  "inLanguage": ["zh-TW", "zh-CN", "en"],
+  "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "student"
+  },
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Course Reviews"
+    },
+    {
+      "@type": "Thing", 
+      "name": "Instructor Ratings"
+    },
+    {
+      "@type": "Thing",
+      "name": "University Education"
+    }
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "LingUBible",
+    "url": "https://lingubible.com/"
+  }
+} 

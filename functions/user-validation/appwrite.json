@@ -1,0 +1,26 @@
+{
+  "projectId": "lingubible",
+  "functions": [
+    {
+      "name": "user-validation",
+      "runtime": "bun-1.1",
+      "execute": ["any"],
+      "events": [
+        "users.*.create"
+      ],
+      "timeout": 15,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "bun install",
+      "ignore": [
+        "node_modules",
+        ".npm"
+      ],
+      "variables": {
+        "APPWRITE_FUNCTION_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "APPWRITE_FUNCTION_PROJECT_ID": "lingubible"
+      }
+    }
+  ]
+} 

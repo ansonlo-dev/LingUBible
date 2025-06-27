@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ArrowLeft, 
   Star, 
@@ -17,109 +18,94 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
+import { FavoriteButton } from '@/components/ui/FavoriteButton';
 
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
-  const [course, setCourse] = useState<Course | null>(null);
-  const [allReviews, setAllReviews] = useState<(CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]>([]);
-  const [courseStats, setCourseStats] = useState({
-    averageRating: 0,
-    reviewCount: 0
-  });
-  const [teachingInfo, setTeachingInfo] = useState<CourseTeachingInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en', 'zh-TW', 'zh-CN']);
+  // 使用優化的 hook
+  const { data, loading, error, teachingInfoLoading, reviewsLoading } = useCourseDetailOptimized(
+    courseCode || null,
+    user?.$id
+  );
+
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
+  const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
 
-  // 前端篩選評論
-  const filteredReviews = allReviews.filter(reviewInfo => {
-    const reviewLanguage = reviewInfo.review.review_language || 'en';
-    return selectedLanguages.includes(reviewLanguage);
-  });
+  // 解構數據
+  const { course, courseStats, teachingInfo, reviews: allReviews } = data;
 
-  useEffect(() => {
-    if (!courseCode) {
-      setError(t('pages.courseDetail.courseNotFound'));
-      setLoading(false);
-      return;
+  // 獲取所有可用的學期
+  const availableTerms = React.useMemo(() => {
+    const terms = teachingInfo.map(info => info.term);
+    const uniqueTerms = terms.filter((term, index, self) => 
+      self.findIndex(t => t.term_code === term.term_code) === index
+    );
+    return uniqueTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
+  }, [teachingInfo]);
+
+  // 根據選定的學期篩選教學信息
+  const filteredTeachingInfo = React.useMemo(() => {
+    if (selectedTermFilter === 'all') {
+      return teachingInfo;
     }
+    return teachingInfo.filter(info => info.term.term_code === selectedTermFilter);
+  }, [teachingInfo, selectedTermFilter]);
 
-    const loadCourseData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // 並行載入課程基本信息、統計信息和教學信息
-        const [courseData, statsData, teachingData] = await Promise.all([
-          CourseService.getCourseByCode(courseCode),
-          CourseService.getCourseStats(courseCode),
-          CourseService.getCourseTeachingInfo(courseCode)
-        ]);
-
-        if (!courseData) {
-          setError(t('pages.courseDetail.courseNotFound'));
-          return;
-        }
-
-        setCourse(courseData);
-        setCourseStats({
-          averageRating: statsData.averageRating,
-          reviewCount: statsData.reviewCount
-        });
-        setTeachingInfo(teachingData);
-
-        setLoading(false);
-
-        // 背景載入所有評論（一次性獲取所有語言的評論）
-        try {
-          setReviewsLoading(true);
-          const reviewsData = await CourseService.getCourseReviewsWithVotes(courseCode, user?.$id);
-          setAllReviews(reviewsData);
-        } catch (reviewError) {
-          console.error('Failed to load reviews:', reviewError);
-          // 評論載入失敗不影響主要內容顯示
-        } finally {
-          setReviewsLoading(false);
-        }
-
-      } catch (error) {
-        console.error('Failed to load course data:', error);
-        setError(t('pages.courseDetail.loadError'));
-        setLoading(false);
-      }
-    };
-
-    loadCourseData();
-  }, [courseCode, user?.$id, t]);
-
-  const handleInstructorClick = (instructorName: string) => {
-    // 導航到講師詳情頁面
-    navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+  const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
+    // This function is now simplified since we're using <a> tags
+    // The browser will handle navigation naturally
   };
 
-  const toggleLanguage = (language: string) => {
-    setSelectedLanguages(prev => {
-      if (prev.includes(language)) {
-        // 如果已選中，則取消選擇（但至少要保留一個語言）
-        if (prev.length > 1) {
-          return prev.filter(lang => lang !== language);
+  // Handle scroll to specific review when review_id is in URL
+  useEffect(() => {
+    const reviewId = searchParams.get('review_id');
+    if (reviewId && !reviewsLoading) {
+      let hasScrolled = false;
+      let attemptCount = 0;
+      const maxAttempts = 3;
+      
+      const scrollToReview = () => {
+        if (hasScrolled || attemptCount >= maxAttempts) return false;
+        
+        attemptCount++;
+        const reviewElement = document.querySelector(`[data-review-id="${reviewId}"]`);
+        if (reviewElement) {
+          reviewElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          hasScrolled = true;
+          return true;
         }
-        return prev; // 不允許全部取消選擇
-      } else {
-        // 如果未選中，則添加
-        return [...prev, language];
-      }
-    });
-  };
+        return false;
+      };
+      
+      // Try multiple times with increasing delays, but stop if successful
+      const timeout1 = setTimeout(() => {
+        if (!scrollToReview() && attemptCount < maxAttempts) {
+          const timeout2 = setTimeout(() => {
+            if (!scrollToReview() && attemptCount < maxAttempts) {
+              setTimeout(() => scrollToReview(), 700);
+            }
+          }, 500);
+        }
+      }, 300);
+      
+      // Cleanup function to prevent memory leaks
+      return () => {
+        hasScrolled = true; // Prevent any pending scrolls
+      };
+    }
+  }, [searchParams, reviewsLoading]);
 
   if (loading) {
     return (
@@ -175,9 +161,18 @@ const CourseDetail = () => {
               <div className="flex items-center gap-3">
                 <Badge variant="secondary" className="text-sm">
                   <BookOpen className="h-3 w-3 mr-1" />
-                                      {translateDepartmentName(course.course_department, t)}
+                                      {translateDepartmentName(course.department, t)}
                 </Badge>
               </div>
+            </div>
+            <div className="shrink-0">
+              <FavoriteButton
+                type="course"
+                itemId={course.course_code}
+                size="lg"
+                showText={true}
+                variant="outline"
+              />
             </div>
           </div>
         </CardHeader>
@@ -190,7 +185,7 @@ const CourseDetail = () => {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-semibold">{courseStats.averageRating.toFixed(2)}</span>
+                  <span className="text-lg font-semibold">{courseStats.averageRating.toFixed(2).replace(/\.?0+$/, '')}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{t('pages.courseDetail.averageRating')}</p>
               </div>
@@ -211,70 +206,132 @@ const CourseDetail = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 shrink-0" />
-            <span>{t('pages.courseDetail.teachingRecords')}</span>
+            <span>{t('pages.courseDetail.offerRecords')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-hidden">
-          {teachingInfo.length === 0 ? (
+          {teachingInfoLoading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('pages.courseDetail.loadingTeachingRecords')}</p>
+            </div>
+          ) : teachingInfo.length === 0 ? (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">{t('pages.courseDetail.noTeachingRecords')}</p>
             </div>
           ) : (
             <Tabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
-              <TabsList className="bg-muted/50 backdrop-blur-sm w-full sm:w-auto mb-4">
-                <TabsTrigger 
-                  value="lecture" 
-                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
-                >
-                  Lecture ({teachingInfo.filter(info => info.sessionType === 'Lecture').length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="tutorial" 
-                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
-                >
-                  Tutorial ({teachingInfo.filter(info => info.sessionType === 'Tutorial').length})
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <TabsList className="bg-muted/50 backdrop-blur-sm w-full sm:w-auto">
+                  <TabsTrigger 
+                    value="lecture" 
+                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                  >
+                    {t('sessionType.lecture')} ({filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="tutorial" 
+                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                  >
+                    {t('sessionType.tutorial')} ({filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length})
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* 學期篩選器 - 移到右側 */}
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pages.courseDetail.filterByTerm')}:</span>
+                  <Select value={selectedTermFilter} onValueChange={setSelectedTermFilter}>
+                    <SelectTrigger className="w-[180px] h-8">
+                      <SelectValue placeholder={t('common.all')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('common.all')}</SelectItem>
+                      {availableTerms.map((term) => (
+                        <SelectItem key={term.term_code} value={term.term_code}>
+                          {term.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
               <TabsContent value="lecture" className="mt-0">
-                {teachingInfo.filter(info => info.sessionType === 'Lecture').length === 0 ? (
+                {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No lecture records found</p>
+                    <p className="text-muted-foreground">{t('pages.courseDetail.noLectureRecords')}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {teachingInfo.filter(info => info.sessionType === 'Lecture').map((info, index) => (
-                      <div key={index} className="rounded-lg p-3 hover:bg-muted/50 transition-colors overflow-hidden">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs shrink-0">
-                              {info.term.name}
-                            </Badge>
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs shrink-0 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                  <div className="space-y-2">
+                    {/* Group by instructor and sort alphabetically */}
+                    {Object.entries(
+                      filteredTeachingInfo
+                        .filter(info => info.sessionType === 'Lecture')
+                        .reduce((acc, info) => {
+                          const instructorName = info.instructor.name;
+                          if (!acc[instructorName]) {
+                            acc[instructorName] = {
+                              instructor: info.instructor,
+                              terms: []
+                            };
+                          }
+                          acc[instructorName].terms.push(info.term);
+                          return acc;
+                        }, {} as Record<string, { instructor: any; terms: any[] }>)
+                    )
+                    .sort(([a], [b]) => a.localeCompare(b)) // Sort by instructor name alphabetically
+                    .map(([instructorName, data]) => (
+                      <div key={instructorName} className="flex items-center justify-between p-3 rounded-lg ">
+                        {/* Left side: Instructor name */}
+                        <div className="flex-shrink-0">
+                          <a
+                            href={`/instructors/${encodeURIComponent(instructorName)}`}
+                            onClick={(e) => {
+                              if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                return;
+                              }
+                              e.preventDefault();
+                              navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+                            }}
+                            className="font-medium text-sm hover:text-primary transition-colors"
+                          >
+                            <div className="flex flex-col">
+                              <span>{instructorName}</span>
+                              {(language === 'zh-TW' || language === 'zh-CN') && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
+                                </span>
+                              )}
+                            </div>
+                          </a>
+                        </div>
+                        
+                        {/* Right side: Terms */}
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                          {data.terms
+                            .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
+                            .map((term, termIndex) => (
+                            <button
+                              key={termIndex}
+                              onClick={() => {
+                                // 如果已經選中該學期，則取消篩選（設為 'all'）
+                                if (selectedTermFilter === term.term_code) {
+                                  setSelectedTermFilter('all');
+                                } else {
+                                  setSelectedTermFilter(term.term_code);
+                                }
+                              }}
+                              className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                selectedTermFilter === term.term_code
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background hover:bg-muted border-border hover:border-primary/50'
+                              }`}
                             >
-                              {info.sessionType}
-                            </Badge>
-                          </div>
-                          <div className="space-y-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleInstructorClick(info.instructor.name)}
-                              className="hover:bg-primary/10 hover:text-primary transition-colors h-auto p-1 justify-start font-medium"
-                            >
-                              <span className="truncate text-sm">{info.instructor.name}</span>
-                            </Button>
-                            <a 
-                              href={`mailto:${info.instructor.email}`}
-                              className="text-xs text-muted-foreground truncate pl-1 hover:underline hover:text-primary transition-colors block"
-                            >
-                              {info.instructor.email}
-                            </a>
-                          </div>
+                              {term.name}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     ))}
@@ -283,43 +340,80 @@ const CourseDetail = () => {
               </TabsContent>
 
               <TabsContent value="tutorial" className="mt-0">
-                {teachingInfo.filter(info => info.sessionType === 'Tutorial').length === 0 ? (
+                {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No tutorial records found</p>
+                    <p className="text-muted-foreground">{t('pages.courseDetail.noTutorialRecords')}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {teachingInfo.filter(info => info.sessionType === 'Tutorial').map((info, index) => (
-                      <div key={index} className="rounded-lg p-3 hover:bg-muted/50 transition-colors overflow-hidden">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs shrink-0">
-                              {info.term.name}
-                            </Badge>
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs shrink-0 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                  <div className="space-y-2">
+                    {/* Group by instructor and sort alphabetically */}
+                    {Object.entries(
+                      filteredTeachingInfo
+                        .filter(info => info.sessionType === 'Tutorial')
+                        .reduce((acc, info) => {
+                          const instructorName = info.instructor.name;
+                          if (!acc[instructorName]) {
+                            acc[instructorName] = {
+                              instructor: info.instructor,
+                              terms: []
+                            };
+                          }
+                          acc[instructorName].terms.push(info.term);
+                          return acc;
+                        }, {} as Record<string, { instructor: any; terms: any[] }>)
+                    )
+                    .sort(([a], [b]) => a.localeCompare(b)) // Sort by instructor name alphabetically
+                    .map(([instructorName, data]) => (
+                      <div key={instructorName} className="flex items-center justify-between p-3 rounded-lg ">
+                        {/* Left side: Instructor name */}
+                        <div className="flex-shrink-0">
+                          <a
+                            href={`/instructors/${encodeURIComponent(instructorName)}`}
+                            onClick={(e) => {
+                              if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                return;
+                              }
+                              e.preventDefault();
+                              navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+                            }}
+                            className="font-medium text-sm hover:text-primary transition-colors"
+                          >
+                            <div className="flex flex-col">
+                              <span>{instructorName}</span>
+                              {(language === 'zh-TW' || language === 'zh-CN') && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
+                                </span>
+                              )}
+                            </div>
+                          </a>
+                        </div>
+                        
+                        {/* Right side: Terms */}
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                          {data.terms
+                            .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
+                            .map((term, termIndex) => (
+                            <button
+                              key={termIndex}
+                              onClick={() => {
+                                // 如果已經選中該學期，則取消篩選（設為 'all'）
+                                if (selectedTermFilter === term.term_code) {
+                                  setSelectedTermFilter('all');
+                                } else {
+                                  setSelectedTermFilter(term.term_code);
+                                }
+                              }}
+                              className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                selectedTermFilter === term.term_code
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background hover:bg-muted border-border hover:border-primary/50'
+                              }`}
                             >
-                              {info.sessionType}
-                            </Badge>
-                          </div>
-                          <div className="space-y-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleInstructorClick(info.instructor.name)}
-                              className="hover:bg-primary/10 hover:text-primary transition-colors h-auto p-1 justify-start font-medium"
-                            >
-                              <span className="truncate text-sm">{info.instructor.name}</span>
-                            </Button>
-                            <a 
-                              href={`mailto:${info.instructor.email}`}
-                              className="text-xs text-muted-foreground truncate pl-1 hover:underline hover:text-primary transition-colors block"
-                            >
-                              {info.instructor.email}
-                            </a>
-                          </div>
+                              {term.name}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     ))}
@@ -332,13 +426,13 @@ const CourseDetail = () => {
       </Card>
 
       {/* 課程評論 */}
-      <CourseReviewsList 
-        reviews={filteredReviews} 
-        allReviews={allReviews}
-        loading={reviewsLoading}
-        selectedLanguages={selectedLanguages}
-        onToggleLanguage={toggleLanguage}
-      />
+      <div id="student-reviews">
+        <CourseReviewsList 
+          reviews={allReviews} 
+          allReviews={allReviews}
+          loading={reviewsLoading}
+        />
+      </div>
 
       {/* 操作按鈕 */}
       <div className="flex gap-3 pb-8 md:pb-0">
@@ -351,9 +445,10 @@ const CourseDetail = () => {
         </Button>
         <Button 
           variant="outline" 
-          className="flex-1 h-12 text-base font-medium"
+          className="flex-1 h-12 text-base font-medium hover:bg-primary/10 hover:text-primary"
           onClick={() => navigate('/courses')}
         >
+          <ArrowLeft className="h-4 w-4 mr-2" />
           {t('common.back')}
         </Button>
       </div>

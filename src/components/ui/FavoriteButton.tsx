@@ -1,0 +1,146 @@
+import React from 'react';
+import { Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { LanguageContext } from '@/contexts/LanguageContext';
+import { useFavoriteStatus } from '@/hooks/useFavorites';
+import { cn } from '@/lib/utils';
+
+const useLanguage = () => {
+  const context = React.useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+interface FavoriteButtonProps {
+  type: 'course' | 'instructor';
+  itemId: string;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'ghost' | 'outline';
+  showText?: boolean;
+  externalIsFavorited?: boolean;
+  onToggle?: (newState: boolean) => void;
+}
+
+export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
+  type,
+  itemId,
+  className,
+  size = 'md',
+  variant = 'ghost',
+  showText = false,
+  externalIsFavorited,
+  onToggle
+}) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  
+  const { isFavorited: hookIsFavorited, toggle, isLoading } = useFavoriteStatus(type, itemId);
+  
+  const isFavorited = externalIsFavorited !== undefined ? externalIsFavorited : hookIsFavorited;
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: t('favorites.loginRequired'),
+        description: t('favorites.loginRequiredDescription'),
+      });
+      return;
+    }
+
+    try {
+      let newFavoriteStatus: boolean;
+      
+      if (onToggle && externalIsFavorited !== undefined) {
+        newFavoriteStatus = !externalIsFavorited;
+        onToggle(newFavoriteStatus);
+      } else {
+        // Calculate new state immediately
+        newFavoriteStatus = !isFavorited;
+      }
+      
+      // Show toast immediately with optimistic update
+      toast({
+        title: newFavoriteStatus ? t('favorites.added') : t('favorites.removed'),
+        description: newFavoriteStatus 
+          ? t(`favorites.${type}Added`) 
+          : t(`favorites.${type}Removed`),
+      });
+
+      // Perform the actual API call in background
+      if (!(onToggle && externalIsFavorited !== undefined)) {
+        await toggle();
+      }
+    } catch (error: any) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        variant: 'destructive',
+        title: t('favorites.error'),
+        description: error.message || t('favorites.errorDescription'),
+      });
+    }
+  };
+
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'h-8 w-8';
+      case 'lg':
+        return 'h-12 w-12';
+      default:
+        return 'h-10 w-10';
+    }
+  };
+
+  const getIconSize = () => {
+    switch (size) {
+      case 'sm':
+        return 'h-3 w-3';
+      case 'lg':
+        return 'h-5 w-5';
+      default:
+        return 'h-4 w-4';
+    }
+  };
+
+  return (
+    <Button
+      variant={variant}
+      size={showText ? "default" : "icon"}
+      className={cn(
+        showText ? 'h-auto px-3 py-2' : getSizeClasses(),
+        'group transition-all duration-200',
+        'hover:bg-red-500/20 hover:border-red-500/50',
+        className
+      )}
+      onClick={handleFavoriteClick}
+      disabled={isLoading}
+      title={isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+    >
+      <Heart
+        className={cn(
+          getIconSize(),
+          'transition-all duration-200',
+          showText && 'mr-2',
+          isFavorited 
+            ? 'fill-red-500 text-red-500' 
+            : 'text-muted-foreground group-hover:fill-red-500 group-hover:text-red-500'
+        )}
+      />
+      {showText && (
+        <span className="text-sm font-medium">
+          {isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+        </span>
+      )}
+    </Button>
+  );
+}; 

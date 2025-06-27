@@ -65,6 +65,9 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               size="icon"
               onClick={onToggleSidebar}
               className="flex"
+              title={t('sidebar.toggleShortcut', { 
+                shortcut: isMac ? 'Alt+L or ⌘+Shift+L' : 'Alt+L or Ctrl+Shift+L' 
+              })}
             >
               <PanelLeft className="h-4 w-4" />
             </Button>

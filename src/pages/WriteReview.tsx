@@ -7,7 +7,7 @@ const WriteReview = () => {
   const editReviewId = searchParams.get('edit');
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-8">
       <ReviewSubmissionForm 
         preselectedCourseCode={courseCode} 
         editReviewId={editReviewId || undefined}

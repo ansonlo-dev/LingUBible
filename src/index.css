@@ -119,7 +119,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 確保在手機版側邊欄打開時，main-container 不會滾動但header仍然可見 */
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     body.mobile-sidebar-open .main-container {
       overflow: hidden;
       height: 100vh;
@@ -260,7 +260,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 手機版隱藏側邊欄 */
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     .sidebar-container {
       transform: translateX(-100%);
       top: 0;
@@ -358,7 +358,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     max-width: calc(100% - var(--sidebar-collapsed-width));
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     .main-container,
     .main-container.sidebar-collapsed {
       margin-left: 0;
@@ -420,7 +420,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 桌面版sidebar摺疊時的header調整 - 不再需要，因為header在main-container內部 */
 
   /* 手機版 header 樣式 */
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     .header-sticky {
       /* 手機版使用正常padding */
       padding: 0 0.75rem !important;
@@ -694,11 +694,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   .course-card:hover {
-    background: #f3f4f6 !important;
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.15),
       0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
   }
 
   .dark .course-card {
@@ -1462,7 +1460,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   /* 側邊欄滑動動畫優化 */
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     .sidebar-container {
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -1474,7 +1472,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 移動端橫屏模式：側邊欄寬度為屏幕寬度的三分之一 */
-  @media (max-width: 768px) and (orientation: landscape) {
+  @media (max-width: 640px) and (orientation: landscape) {
     .sidebar-container {
       width: 33.33vw !important;
     }
@@ -1493,7 +1491,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 移動端豎屏模式：確保文字正確顯示 */
-  @media (max-width: 768px) and (orientation: portrait) {
+  @media (max-width: 640px) and (orientation: portrait) {
     .sidebar-container nav a span {
       opacity: 1 !important;
       width: auto !important;
@@ -2532,4 +2530,32 @@ div[style*="position: fixed"][style*="right: 14px"] {
       left: 100%;
     }
   }
+
+  /* Remove border color for student review cards in light theme */
+  .bg-card.border.border-border {
+    border-color: transparent !important;
+  }
+
+  /* Remove border for student review cards in dark theme */
+  .dark .bg-card.border.border-border {
+    border-width: 0 !important;
+  }
+
+  /* Remove padding from course requirements filter content */
+  .bg-muted\/20.p-4 {
+    padding: 0 !important;
+  }
+
+  /* Remove gap from course requirements filter grid */
+  .bg-muted\/20 .gap-3 {
+    gap: 0rem !important;
+  }
+
+  /* Set specific background color for student review cards in light theme only - more specific selector */
+  html:not(.dark) .bg-card.border.border-border {
+    background-color: rgb(240, 241, 243) !important;
+  }
+
+
+
 }

@@ -37,7 +37,7 @@ export const VotingButtons = ({
     if (!user) {
       toast({
         title: t('common.error'),
-        description: t('review.loginRequired'),
+        description: t('review.loginToVote'),
         variant: 'destructive',
       });
       return;

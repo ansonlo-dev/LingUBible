@@ -1,0 +1,13 @@
+{
+  "site_name": "LingUBible - Reg科聖經",
+  "short_name": "LingUBible", 
+  "display_name": "LingUBible",
+  "brand_name": "Reg科聖經",
+  "description": "嶺南大學課程與講師評價平台",
+  "domain": "lingubible.com",
+  "url": "https://lingubible.com/",
+  "languages": ["zh-TW", "zh-CN", "en"],
+  "default_language": "zh-TW",
+  "type": "educational_platform",
+  "category": "education"
+} 

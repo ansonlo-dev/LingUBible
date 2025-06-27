@@ -19,7 +19,8 @@ import {
   Target,
   User,
   ChevronDown,
-  Clock
+  Clock,
+  Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +45,137 @@ import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
 import { GradeBadge } from '@/components/ui/GradeBadge';
+import { FavoriteButton } from '@/components/ui/FavoriteButton';
+
+// Faculty mapping function - copied from PopularItemCard
+const getFacultyByDepartment = (department: string): string => {
+  // First try to extract raw department name if it's translated
+  const rawDepartment = extractRawDepartmentName(department);
+  
+  const facultyMapping: { [key: string]: string } = {
+    // Faculty of Arts
+    'Chinese': 'faculty.arts',
+    'Cultural Studies': 'faculty.arts',
+    'Digital Arts and Creative Industries': 'faculty.arts',
+    'English': 'faculty.arts',
+    'History': 'faculty.arts',
+    'Philosophy': 'faculty.arts',
+    'Translation': 'faculty.arts',
+    'Centre for English and Additional Languages': 'faculty.arts',
+    'Chinese Language Education and Assessment Centre': 'faculty.arts',
+    
+    // Faculty of Business
+    'Accountancy': 'faculty.business',
+    'Finance': 'faculty.business',
+    'Management': 'faculty.business',
+    'Marketing and International Business': 'faculty.business',
+    'Operations and Risk Management': 'faculty.business',
+    
+    // Faculty of Social Sciences
+    'Economics': 'faculty.socialSciences',
+    'Government and International Affairs': 'faculty.socialSciences',
+    'Psychology': 'faculty.socialSciences',
+    'Sociology and Social Policy': 'faculty.socialSciences',
+    
+    // School of Data Science
+    'LEO Dr David P. Chan Institute of Data Science': 'faculty.dataScience',
+    
+    // School of Interdisciplinary Studies
+    'Science Unit': 'faculty.interdisciplinaryStudies',
+    'Wong Bing Lai Music and Performing Arts Unit': 'faculty.interdisciplinaryStudies'
+  };
+  
+  return facultyMapping[rawDepartment] || '';
+};
+
+// Helper function to extract raw department name from translated names
+const extractRawDepartmentName = (department: string): string => {
+  // If it's already a raw department name, return as is
+  const rawDepartmentNames = [
+    'Chinese', 'Cultural Studies', 'Digital Arts and Creative Industries', 'English', 
+    'History', 'Philosophy', 'Translation', 'Centre for English and Additional Languages',
+    'Chinese Language Education and Assessment Centre', 'Accountancy', 'Finance', 
+    'Management', 'Marketing and International Business', 'Operations and Risk Management',
+    'Psychology', 'Economics', 'Government and International Affairs', 
+    'Sociology and Social Policy', 'Science Unit',
+    'Wong Bing Lai Music and Performing Arts Unit', 'LEO Dr David P. Chan Institute of Data Science'
+  ];
+  
+  if (rawDepartmentNames.includes(department)) {
+    return department;
+  }
+  
+  // Create mapping from translated names back to raw names
+  const translatedToRawMapping: { [key: string]: string } = {
+    // English translations
+    'Department of Chinese': 'Chinese',
+    'Department of Cultural Studies': 'Cultural Studies',
+    'Department of Digital Arts and Creative Industries': 'Digital Arts and Creative Industries',
+    'Department of English': 'English',
+    'Department of History': 'History',
+    'Department of Philosophy': 'Philosophy',
+    'Department of Translation': 'Translation',
+    'Centre for English and Additional Languages': 'Centre for English and Additional Languages',
+    'Chinese Language Education and Assessment Centre': 'Chinese Language Education and Assessment Centre',
+    'Department of Accountancy': 'Accountancy',
+    'Department of Finance': 'Finance',
+    'Department of Management': 'Management',
+    'Department of Marketing and International Business': 'Marketing and International Business',
+    'Department of Operations and Risk Management': 'Operations and Risk Management',
+    'Department of Psychology': 'Psychology',
+    'Department of Economics': 'Economics',
+    'Department of Government and International Affairs': 'Government and International Affairs',
+    'Department of Sociology and Social Policy': 'Sociology and Social Policy',
+    'Science Unit': 'Science Unit',
+    'Wong Bing Lai Music and Performing Arts Unit': 'Wong Bing Lai Music and Performing Arts Unit',
+    'LEO Dr David P. Chan Institute of Data Science': 'LEO Dr David P. Chan Institute of Data Science',
+    
+    // Chinese Traditional translations
+    '中文系': 'Chinese',
+    '文化研究系': 'Cultural Studies',
+    '數碼藝術及創意產業系': 'Digital Arts and Creative Industries',
+    '英文系': 'English',
+    '歷史系': 'History',
+    '哲學系': 'Philosophy',
+    '翻譯系': 'Translation',
+    '英語及外語教學中心': 'Centre for English and Additional Languages',
+    '中國語文教學與測試中心': 'Chinese Language Education and Assessment Centre',
+    '會計學系': 'Accountancy',
+    '金融學系': 'Finance',
+    '管理學學系': 'Management',
+    '市場及國際企業學系': 'Marketing and International Business',
+    '運營與風險管理學系': 'Operations and Risk Management',
+    '心理學系': 'Psychology',
+    '經濟學系': 'Economics',
+    '政府與國際事務學系': 'Government and International Affairs',
+    '社會學及社會政策系': 'Sociology and Social Policy',
+    '科學教研組': 'Science Unit',
+    '黃炳禮音樂及演藝部': 'Wong Bing Lai Music and Performing Arts Unit',
+    '嶺南教育機構陳斌博士數據科學研究所': 'LEO Dr David P. Chan Institute of Data Science',
+    
+    // Chinese Simplified translations (only unique ones)
+    '数码艺术及创意产业系': 'Digital Arts and Creative Industries',
+    '历史系': 'History',
+    '哲学系': 'Philosophy',
+    '翻译系': 'Translation',
+    '英语及外语教学中心': 'Centre for English and Additional Languages',
+    '中国语文教学与测试中心': 'Chinese Language Education and Assessment Centre',
+    '会计学系': 'Accountancy',
+    '金融学系': 'Finance',
+    '管理学学系': 'Management',
+    '市场及国际企业学系': 'Marketing and International Business',
+    '运营与风险管理学系': 'Operations and Risk Management',
+    '心理学系': 'Psychology',
+    '经济学系': 'Economics',
+    '政府与国际事务学系': 'Government and International Affairs',
+    '社会学及社会政策系': 'Sociology and Social Policy',
+    '科学教研组': 'Science Unit',
+    '黄炳礼音乐及演艺部': 'Wong Bing Lai Music and Performing Arts Unit',
+    '岭南教育机构陈斌博士数据科学研究所': 'LEO Dr David P. Chan Institute of Data Science'
+  };
+  
+  return translatedToRawMapping[department] || department;
+};
 
 const Lecturers = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
@@ -75,13 +207,14 @@ const Lecturers = () => {
 
   // 課程要求篩選狀態
   const [requirementsFilters, setRequirementsFilters] = useState<CourseRequirementsFilters>({
-    midterm: 'all',
+    attendance: 'all',
     quiz: 'all',
-    groupProject: 'all',
+    midterm: 'all',
+    final: 'all',
     individualAssignment: 'all',
+    groupProject: 'all',
     presentation: 'all',
-    reading: 'all',
-    attendance: 'all'
+    reading: 'all'
   });
 
   // 解碼 URL 參數
@@ -302,13 +435,14 @@ const Lecturers = () => {
       // 課程要求篩選 (先執行，因為可能會大幅減少評論數量)
       const hasMatchingRequirements = reviewInfo.instructorDetails.some(detail => {
         const checks = [
-          requirementsFilters.midterm === 'all' || (requirementsFilters.midterm === 'has' && detail.has_midterm) || (requirementsFilters.midterm === 'no' && !detail.has_midterm),
+          requirementsFilters.attendance === 'all' || (requirementsFilters.attendance === 'has' && detail.has_attendance_requirement) || (requirementsFilters.attendance === 'no' && !detail.has_attendance_requirement),
           requirementsFilters.quiz === 'all' || (requirementsFilters.quiz === 'has' && detail.has_quiz) || (requirementsFilters.quiz === 'no' && !detail.has_quiz),
-          requirementsFilters.groupProject === 'all' || (requirementsFilters.groupProject === 'has' && detail.has_group_project) || (requirementsFilters.groupProject === 'no' && !detail.has_group_project),
+          requirementsFilters.midterm === 'all' || (requirementsFilters.midterm === 'has' && detail.has_midterm) || (requirementsFilters.midterm === 'no' && !detail.has_midterm),
+          requirementsFilters.final === 'all' || (requirementsFilters.final === 'has' && detail.has_final) || (requirementsFilters.final === 'no' && !detail.has_final),
           requirementsFilters.individualAssignment === 'all' || (requirementsFilters.individualAssignment === 'has' && detail.has_individual_assignment) || (requirementsFilters.individualAssignment === 'no' && !detail.has_individual_assignment),
+          requirementsFilters.groupProject === 'all' || (requirementsFilters.groupProject === 'has' && detail.has_group_project) || (requirementsFilters.groupProject === 'no' && !detail.has_group_project),
           requirementsFilters.presentation === 'all' || (requirementsFilters.presentation === 'has' && detail.has_presentation) || (requirementsFilters.presentation === 'no' && !detail.has_presentation),
-          requirementsFilters.reading === 'all' || (requirementsFilters.reading === 'has' && detail.has_reading) || (requirementsFilters.reading === 'no' && !detail.has_reading),
-          requirementsFilters.attendance === 'all' || (requirementsFilters.attendance === 'has' && detail.has_attendance_requirement) || (requirementsFilters.attendance === 'no' && !detail.has_attendance_requirement)
+          requirementsFilters.reading === 'all' || (requirementsFilters.reading === 'has' && detail.has_reading) || (requirementsFilters.reading === 'no' && !detail.has_reading)
         ];
         
         // 所有條件都必須滿足 (AND logic)
@@ -446,13 +580,14 @@ const Lecturers = () => {
     
     // 同時清空課程要求篩選
     setRequirementsFilters({
-      midterm: 'all',
+      attendance: 'all',
       quiz: 'all',
-      groupProject: 'all',
+      midterm: 'all',
+      final: 'all',
       individualAssignment: 'all',
+      groupProject: 'all',
       presentation: 'all',
-      reading: 'all',
-      attendance: 'all'
+      reading: 'all'
     });
   };
 
@@ -500,22 +635,13 @@ const Lecturers = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6 overflow-hidden">
-      {/* 返回按鈕 */}
-      <Button 
-        onClick={() => navigate(-1)} 
-        variant="ghost" 
-        className="mb-4 h-12 sm:h-auto px-6 sm:px-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        {t('instructors.back')}
-      </Button>
 
       {/* 講師基本信息 */}
       {instructor && (
         <Card className="course-card overflow-hidden">
           <CardHeader className="overflow-hidden">
             <div className="flex items-center gap-3 overflow-hidden min-w-0">
-              <Users className="h-8 w-8 text-primary shrink-0" />
+              <GraduationCap className="h-8 w-8 text-primary shrink-0" />
               <div className="min-w-0 flex-1">
                 <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
                 {/* 在中文模式下顯示中文名稱 - 保留空間以維持卡片高度一致 */}
@@ -529,6 +655,38 @@ const Lecturers = () => {
                     {instructor.name_sc || ''}
                   </p>
                 )}
+                {/* Faculty and Department Badges - matching PopularItemCard styling */}
+                {instructor.department && (
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-2" style={{ minHeight: '2rem' }}>
+                    {/* Faculty Badge */}
+                    {getFacultyByDepartment(instructor.department) && (
+                      <Badge 
+                        variant="outline"
+                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
+                      >
+                        {t(getFacultyByDepartment(instructor.department))}
+                      </Badge>
+                    )}
+                    {/* Department Badge */}
+                    <Badge 
+                      variant="outline"
+                      className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit max-w-full"
+                    >
+                      <span className="break-words hyphens-auto">
+                        {instructor.department}
+                      </span>
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              <div className="shrink-0">
+                <FavoriteButton
+                  type="instructor"
+                  itemId={instructor.name}
+                  size="lg"
+                  showText={true}
+                  variant="outline"
+                />
               </div>
             </div>
           </CardHeader>
@@ -544,16 +702,7 @@ const Lecturers = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-              <div className="text-center min-w-0">
-                <div className="text-2xl font-bold text-primary">
-                  {teachingCoursesLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  ) : (
-                    teachingCourses.length
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">{t('instructors.coursesTeaching')}</div>
-              </div>
+              {/* Student Reviews */}
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">
                   {reviewsLoading ? (
@@ -564,6 +713,8 @@ const Lecturers = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">{t('instructors.studentReviews')}</div>
               </div>
+              
+              {/* Average Teaching Quality Rating */}
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">
                   {reviewsLoading ? (
@@ -581,7 +732,33 @@ const Lecturers = () => {
                     'N/A'
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingRating')}</div>
+                <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingQuality')}</div>
+                {!reviewsLoading && reviews.length === 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {t('instructors.noRatingData')}
+                  </div>
+                )}
+              </div>
+              
+              {/* Average Grading Satisfaction Rating */}
+              <div className="text-center min-w-0">
+                <div className="text-2xl font-bold text-primary">
+                  {reviewsLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  ) : reviews.length > 0 ? (
+                    (() => {
+                      const validRatings = reviews
+                        .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
+                        .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                      return validRatings.length > 0 
+                        ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                        : 'N/A';
+                    })()
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">{t('instructors.averageGradingSatisfaction')}</div>
                 {!reviewsLoading && reviews.length === 0 && (
                   <div className="text-xs text-muted-foreground mt-1">
                     {t('instructors.noRatingData')}
@@ -596,10 +773,38 @@ const Lecturers = () => {
       {/* 教授課程 */}
       <Card className="course-card overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
-            <BookOpen className="h-5 w-5 shrink-0" />
-            <span className="truncate">{t('instructors.coursesTeaching')} ({teachingCourses.length})</span>
-          </CardTitle>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
+              <BookOpen className="h-5 w-5 shrink-0" />
+              <span className="truncate">{t('instructors.coursesTeaching')} ({teachingCourses.length})</span>
+            </CardTitle>
+            <div className="shrink-0">
+              {teachingCoursesLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Badge 
+                  variant={teachingCourses.length > 0 ? "default" : "secondary"}
+                  className={`${
+                    teachingCourses.length > 0 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800' 
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-200 dark:border-gray-800'
+                  }`}
+                >
+                  {teachingCourses.length > 0 ? (
+                    <>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Teaching
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Not Teaching
+                    </>
+                  )}
+                </Badge>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="overflow-hidden">
           {teachingCoursesLoading ? (
@@ -861,49 +1066,49 @@ const Lecturers = () => {
                   {/* 課程評分 */}
                   <div className="grid grid-cols-3 gap-1 text-xs">
                     <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                         <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
-                      </div>
-                      <div className="flex items-center justify-center">
-                        {reviewInfo.review.course_workload === null || reviewInfo.review.course_workload === -1 ? (
-                          <span className="text-muted-foreground">
-                            {reviewInfo.review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
-                          </span>
-                        ) : (
-                          <StarRating rating={reviewInfo.review.course_workload} showValue size="sm" showTooltip ratingType="workload" />
-                        )}
+                        <div className="flex items-center justify-center lg:ml-1">
+                          {reviewInfo.review.course_workload === null || reviewInfo.review.course_workload === -1 ? (
+                            <span className="text-muted-foreground">
+                              {reviewInfo.review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                            </span>
+                          ) : (
+                            <StarRating rating={reviewInfo.review.course_workload} showValue size="sm" showTooltip ratingType="workload" />
+                          )}
+                        </div>
                       </div>
                     </div>
                     
-                                         <div className="text-center">
-                       <div className="flex items-center justify-center gap-1 mb-1">
-                         <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
-                       </div>
-                       <div className="flex items-center justify-center">
-                         {reviewInfo.review.course_difficulties === null || reviewInfo.review.course_difficulties === -1 ? (
-                           <span className="text-muted-foreground">
-                             {reviewInfo.review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
-                           </span>
-                         ) : (
-                           <StarRating rating={reviewInfo.review.course_difficulties} showValue size="sm" showTooltip ratingType="difficulty" />
-                         )}
-                       </div>
-                     </div>
+                    <div className="text-center">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                        <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
+                        <div className="flex items-center justify-center lg:ml-1">
+                          {reviewInfo.review.course_difficulties === null || reviewInfo.review.course_difficulties === -1 ? (
+                            <span className="text-muted-foreground">
+                              {reviewInfo.review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                            </span>
+                          ) : (
+                            <StarRating rating={reviewInfo.review.course_difficulties} showValue size="sm" showTooltip ratingType="difficulty" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     
-                                         <div className="text-center">
-                       <div className="flex items-center justify-center gap-1 mb-1">
-                         <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
-                       </div>
-                       <div className="flex items-center justify-center">
-                         {reviewInfo.review.course_usefulness === null || reviewInfo.review.course_usefulness === -1 ? (
-                           <span className="text-muted-foreground">
-                             {reviewInfo.review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
-                           </span>
-                         ) : (
-                           <StarRating rating={reviewInfo.review.course_usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
-                         )}
-                       </div>
-                     </div>
+                    <div className="text-center">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                        <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
+                        <div className="flex items-center justify-center lg:ml-1">
+                          {reviewInfo.review.course_usefulness === null || reviewInfo.review.course_usefulness === -1 ? (
+                            <span className="text-muted-foreground">
+                              {reviewInfo.review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                            </span>
+                          ) : (
+                            <StarRating rating={reviewInfo.review.course_usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* 課程評論 */}
@@ -1019,31 +1224,31 @@ const Lecturers = () => {
                               
                               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                                 <div className="text-center">
-                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                                     <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
-                                  </div>
-                                  <div className="flex items-center justify-center">
-                                    {currentInstructorDetail.teaching === null ? (
-                                      <span className="text-muted-foreground">
-                                        {t('review.rating.notRated')}
-                                      </span>
-                                    ) : currentInstructorDetail.teaching === -1 ? (
-                                      <span className="text-muted-foreground">
-                                        {t('review.notApplicable')}
-                                      </span>
-                                    ) : (
-                                      <StarRating rating={currentInstructorDetail.teaching} showValue size="sm" showTooltip ratingType="teaching" />
-                                    )}
+                                    <div className="flex items-center justify-center lg:ml-1">
+                                      {currentInstructorDetail.teaching === null ? (
+                                        <span className="text-muted-foreground">
+                                          {t('review.rating.notRated')}
+                                        </span>
+                                      ) : currentInstructorDetail.teaching === -1 ? (
+                                        <span className="text-muted-foreground">
+                                          {t('review.notApplicable')}
+                                        </span>
+                                      ) : (
+                                        <StarRating rating={currentInstructorDetail.teaching} showValue size="sm" showTooltip ratingType="teaching" />
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                                 
                                 {currentInstructorDetail.grading !== null && currentInstructorDetail.grading !== -1 && (
                                   <div className="text-center">
-                                    <div className="flex items-center justify-center gap-1 mb-1">
+                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                                       <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
-                                    </div>
-                                    <div className="flex items-center justify-center">
-                                      <StarRating rating={currentInstructorDetail.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                      <div className="flex items-center justify-center lg:ml-1">
+                                        <StarRating rating={currentInstructorDetail.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                      </div>
                                     </div>
                                   </div>
                                 )}
@@ -1056,13 +1261,14 @@ const Lecturers = () => {
                                   <span>{t('review.courseRequirements')}</span>
                                 </h5>
                                 <div className="flex flex-wrap gap-2 overflow-hidden">
-                                  {renderBooleanBadge(currentInstructorDetail.has_midterm, t('review.requirements.midterm'))}
+                                  {renderBooleanBadge(currentInstructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
                                   {renderBooleanBadge(currentInstructorDetail.has_quiz, t('review.requirements.quiz'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_group_project, t('review.requirements.groupProject'))}
+                                  {renderBooleanBadge(currentInstructorDetail.has_midterm, t('review.requirements.midterm'))}
+                                  {renderBooleanBadge(currentInstructorDetail.has_final, t('review.requirements.final'))}
                                   {renderBooleanBadge(currentInstructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                                  {renderBooleanBadge(currentInstructorDetail.has_group_project, t('review.requirements.groupProject'))}
                                   {renderBooleanBadge(currentInstructorDetail.has_presentation, t('review.requirements.presentation'))}
                                   {renderBooleanBadge(currentInstructorDetail.has_reading, t('review.requirements.reading'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
                                 </div>
                               </div>
 
@@ -1159,31 +1365,31 @@ const Lecturers = () => {
                                     
                                     <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                                       <div className="text-center">
-                                        <div className="flex items-center justify-center gap-1 mb-1">
+                                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                                           <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
-                                        </div>
-                                        <div className="flex items-center justify-center">
-                                          {instructor.teaching === null ? (
-                                            <span className="text-muted-foreground">
-                                              {t('review.rating.notRated')}
-                                            </span>
-                                          ) : instructor.teaching === -1 ? (
-                                            <span className="text-muted-foreground">
-                                              {t('review.notApplicable')}
-                                            </span>
-                                          ) : (
-                                            <StarRating rating={instructor.teaching} showValue size="sm" showTooltip ratingType="teaching" />
-                                          )}
+                                          <div className="flex items-center justify-center lg:ml-1">
+                                            {instructor.teaching === null ? (
+                                              <span className="text-muted-foreground">
+                                                {t('review.rating.notRated')}
+                                              </span>
+                                            ) : instructor.teaching === -1 ? (
+                                              <span className="text-muted-foreground">
+                                                {t('review.notApplicable')}
+                                              </span>
+                                            ) : (
+                                              <StarRating rating={instructor.teaching} showValue size="sm" showTooltip ratingType="teaching" />
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                       
                                       {instructor.grading !== null && instructor.grading !== -1 && (
                                         <div className="text-center">
-                                          <div className="flex items-center justify-center gap-1 mb-1">
+                                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                                             <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
-                                          </div>
-                                          <div className="flex items-center justify-center">
-                                            <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                            <div className="flex items-center justify-center lg:ml-1">
+                                              <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                            </div>
                                           </div>
                                         </div>
                                       )}
@@ -1196,13 +1402,14 @@ const Lecturers = () => {
                                         <span>{t('review.courseRequirements')}</span>
                                       </h5>
                                       <div className="flex flex-wrap gap-2 overflow-hidden">
-                                        {renderBooleanBadge(instructor.has_midterm, t('review.requirements.midterm'))}
+                                        {renderBooleanBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
                                         {renderBooleanBadge(instructor.has_quiz, t('review.requirements.quiz'))}
-                                        {renderBooleanBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
+                                        {renderBooleanBadge(instructor.has_midterm, t('review.requirements.midterm'))}
+                                        {renderBooleanBadge(instructor.has_final, t('review.requirements.final'))}
                                         {renderBooleanBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                                        {renderBooleanBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
                                         {renderBooleanBadge(instructor.has_presentation, t('review.requirements.presentation'))}
                                         {renderBooleanBadge(instructor.has_reading, t('review.requirements.reading'))}
-                                        {renderBooleanBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
                                       </div>
                                     </div>
 
@@ -1271,6 +1478,18 @@ const Lecturers = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* 操作按鈕 */}
+      <div className="flex gap-3 pb-8 md:pb-0">
+        <Button 
+          variant="outline" 
+          className="flex-1 h-12 text-base font-medium hover:bg-primary/10 hover:text-primary"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('instructors.back')}
+        </Button>
+      </div>
     </div>
   );
 };

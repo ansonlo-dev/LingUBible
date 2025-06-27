@@ -96,7 +96,7 @@ export function ReviewCard({
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
+                  <span className="font-medium text-foreground">{rating.toFixed(1).replace(/\.?0+$/, '')}</span>
                 </div>
                 <span>{semester}</span>
                 <span>{formatDate(createdAt)}</span>

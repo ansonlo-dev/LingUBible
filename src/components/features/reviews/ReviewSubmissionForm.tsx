@@ -41,7 +41,9 @@ import {
   Strikethrough,
   List,
   ListOrdered,
-  GraduationCap
+  GraduationCap,
+  FileText,
+  XCircle
 } from 'lucide-react';
 import { CourseService, Course, Term, TeachingRecord, InstructorDetail, Review } from '@/services/api/courseService';
 import { cn } from '@/lib/utils';
@@ -50,6 +52,7 @@ import { WordCounter } from '@/components/ui/word-counter';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
@@ -63,6 +66,7 @@ interface InstructorEvaluation {
   gradingScore: number | null;
   comments: string;
   hasMidterm: boolean;
+  hasFinal: boolean;
   hasQuiz: boolean;
   hasGroupProject: boolean;
   hasIndividualAssignment: boolean;
@@ -1151,6 +1155,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           gradingScore: detail.grading || 0,
           comments: detail.comments || '',
           hasMidterm: detail.has_midterm || false,
+          hasFinal: detail.has_final || false,
           hasQuiz: detail.has_quiz || false,
           hasGroupProject: detail.has_group_project || false,
           hasIndividualAssignment: detail.has_individual_assignment || false,
@@ -1367,6 +1372,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         gradingScore: null,
         comments: '',
         hasMidterm: false,
+        hasFinal: false,
         hasQuiz: false,
         hasGroupProject: false,
         hasIndividualAssignment: false,
@@ -1587,6 +1593,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         grading: evaluation.gradingScore === null ? null : evaluation.gradingScore,
         teaching: evaluation.teachingScore,
         has_midterm: evaluation.hasMidterm,
+        has_final: evaluation.hasFinal,
         has_quiz: evaluation.hasQuiz,
         has_group_project: evaluation.hasGroupProject,
         has_individual_assignment: evaluation.hasIndividualAssignment,
@@ -1683,7 +1690,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg p-4 space-y-4">
+          <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
             {/* 評論基本信息 */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -1699,18 +1706,32 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   <span className="font-medium truncate">
                     {isAnonymous ? t('review.anonymousUser') : mockUsername}
                   </span>
+                  {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs shrink-0 hidden md:inline-flex"
+                  >
+                    <Calendar className="h-3 w-3 mr-1" />
+                    <span className="truncate">{mockTerm.name}</span>
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="text-xs w-fit">
-                  <Calendar className="h-3 w-3 mr-1 shrink-0" />
+                {/* 學期徽章 - 手機版顯示在下方 */}
+                <Badge 
+                  variant="outline" 
+                  className="text-xs w-fit md:hidden"
+                >
+                  <Calendar className="h-3 w-3 mr-1" />
                   <span className="truncate">{mockTerm.name}</span>
                 </Badge>
               </div>
               {/* 最終成績 - 右上角大顯示 */}
               {grade && grade !== '-1' && (
                 <div className="flex flex-col items-center shrink-0">
-                  <Badge variant="default" className="text-lg font-bold w-10 h-10 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
-                    {grade}
-                  </Badge>
+                  <GradeBadge 
+                    grade={grade}
+                    size="md"
+                    showTooltip={true}
+                  />
                 </div>
               )}
             </div>
@@ -1719,44 +1740,47 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <div className="grid grid-cols-3 gap-1 text-xs">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <BookOpen className="h-3 w-3 text-primary" />
                   <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                 </div>
-                {workload === null ? (
-                  <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                ) : workload === -1 ? (
-                  <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                ) : (
-                  <UIStarRating rating={workload} showValue size="sm" />
-                )}
+                <div className="flex items-center justify-center">
+                  {workload === null ? (
+                    <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                  ) : workload === -1 ? (
+                    <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                  ) : (
+                    <UIStarRating rating={workload} showValue size="sm" showTooltip ratingType="workload" />
+                  )}
+                </div>
               </div>
               
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <Brain className="h-3 w-3 text-primary" />
                   <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                 </div>
-                {difficulty === null ? (
-                  <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                ) : difficulty === -1 ? (
-                  <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                ) : (
-                  <UIStarRating rating={difficulty} showValue size="sm" />
-                )}
+                <div className="flex items-center justify-center">
+                  {difficulty === null ? (
+                    <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                  ) : difficulty === -1 ? (
+                    <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                  ) : (
+                    <UIStarRating rating={difficulty} showValue size="sm" showTooltip ratingType="difficulty" />
+                  )}
+                </div>
               </div>
               
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <Target className="h-3 w-3 text-primary" />
                   <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                 </div>
-                {usefulness === null ? (
-                  <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                ) : usefulness === -1 ? (
-                  <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                ) : (
-                  <UIStarRating rating={usefulness} showValue size="sm" />
-                )}
+                <div className="flex items-center justify-center">
+                  {usefulness === null ? (
+                    <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                  ) : usefulness === -1 ? (
+                    <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                  ) : (
+                    <UIStarRating rating={usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1765,8 +1789,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               <>
                 <Separator />
                 <div className="min-w-0">
-                  <h5 className="text-sm font-medium mb-2">{t('review.courseComments')}</h5>
-                  <div className="bg-muted/50 p-3 rounded-md break-words">
+                  <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 shrink-0" />
+                    <span>{t('review.courseComments')}</span>
+                  </h5>
+                  <div className="bg-muted/50 p-2 rounded-md break-words">
                     {hasMarkdownFormatting(courseComments) ? (
                       renderCommentMarkdown(courseComments)
                     ) : (
@@ -1783,24 +1810,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {hasServiceLearning && (
               <>
                 <Separator />
-                <div>
-                  <Badge variant="default" className="mb-2">
-                    {t('review.serviceLearning')}
-                  </Badge>
-                  {serviceLearningType && (
-                    <Badge variant="outline" className="ml-2">
-                      {serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md border border-blue-400 dark:from-blue-600 dark:to-blue-700 dark:border-blue-500 flex items-center gap-1">
+                      <GraduationCap className="h-3 w-3" />
+                      {t('review.serviceLearning')}
                     </Badge>
-                  )}
+                    {serviceLearningType && (
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-xs",
+                          serviceLearningType === 'compulsory'
+                            ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
+                            : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                        )}
+                      >
+                        {serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                      </Badge>
+                    )}
+                  </div>
                   {serviceLearningDescription && (
-                    <div className="mt-2 bg-muted/50 p-3 rounded-md break-words">
-                      {hasMarkdownFormatting(serviceLearningDescription) ? (
-                        renderCommentMarkdown(serviceLearningDescription)
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          {serviceLearningDescription}
-                        </p>
-                      )}
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
+                      <p className="text-sm text-blue-900 dark:text-blue-100 break-words">
+                        {serviceLearningDescription}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1811,69 +1845,116 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {instructorEvaluations.length > 0 && (
               <>
                 <Separator />
-                <div className="space-y-3">
-                  <h5 className="text-sm font-medium">{t('review.instructorEvaluation')}</h5>
+                <div className="space-y-4">
                   {instructorEvaluations.map((instructor, index) => (
-                    <div key={index} className="p-3 rounded-md space-y-3 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 overflow-hidden">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{instructor.instructorName}</span>
-                        <Badge variant="outline">{instructor.sessionType}</Badge>
+                    <div 
+                      key={index} 
+                      className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[rgb(26_35_50)]"
+                    >
+                      <div className="flex items-start justify-between mb-3 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-lg">
+                            <div className="text-primary px-2 py-1 rounded-md inline-block">
+                              <div>{instructor.instructorName}</div>
+                            </div>
+                          </h4>
+                        </div>
+                        <div className="shrink-0 flex items-start pt-1">
+                          <Badge 
+                            variant="secondary" 
+                            className={`text-sm ${
+                              instructor.sessionType === 'Lecture' 
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                : instructor.sessionType === 'Tutorial'
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                                : ''
+                            }`}
+                          >
+                            {t(`sessionType.${instructor.sessionType.toLowerCase()}`)}
+                          </Badge>
+                        </div>
                       </div>
                       
-                      {/* 教學評分 - 緊湊的2列佈局 */}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                         <div className="text-center">
                           <div className="flex items-center justify-center gap-1 mb-1">
-                            <GraduationCap className="h-3 w-3 text-primary" />
                             <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
                           </div>
-                          {instructor.teachingScore === null ? (
-                            <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                          ) : instructor.teachingScore === -1 ? (
-                            <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                          ) : (
-                            <UIStarRating rating={instructor.teachingScore} showValue size="sm" />
-                          )}
+                          <div className="flex items-center justify-center">
+                            {instructor.teachingScore === null ? (
+                              <span className="text-muted-foreground">
+                                {t('review.rating.notRated')}
+                              </span>
+                            ) : instructor.teachingScore === -1 ? (
+                              <span className="text-muted-foreground">
+                                {t('review.notApplicable')}
+                              </span>
+                            ) : (
+                              <UIStarRating rating={instructor.teachingScore} showValue size="sm" showTooltip ratingType="teaching" />
+                            )}
+                          </div>
                         </div>
                         
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-1 mb-1">
-                            <Target className="h-3 w-3 text-primary" />
-                            <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                        {instructor.gradingScore !== null && instructor.gradingScore !== -1 && (
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <UIStarRating rating={instructor.gradingScore} showValue size="sm" showTooltip ratingType="grading" />
+                            </div>
                           </div>
-                          {instructor.gradingScore === null ? (
-                            <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                          ) : instructor.gradingScore === -1 ? (
-                            <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                          ) : (
-                            <UIStarRating rating={instructor.gradingScore} showValue size="sm" />
-                          )}
-                        </div>
+                        )}
                       </div>
 
                       {/* 課程要求 */}
-                      <div className="space-y-2">
-                        <h6 className="text-sm font-medium">{t('review.courseRequirements')}</h6>
-                        <div className="flex flex-wrap gap-2">
-                          {instructor.hasMidterm && <Badge variant="secondary">{t('review.requirements.midterm')}</Badge>}
-                          {instructor.hasQuiz && <Badge variant="secondary">{t('review.requirements.quiz')}</Badge>}
-                          {instructor.hasGroupProject && <Badge variant="secondary">{t('review.requirements.groupProject')}</Badge>}
-                          {instructor.hasIndividualAssignment && <Badge variant="secondary">{t('review.requirements.individualAssignment')}</Badge>}
-                          {instructor.hasPresentation && <Badge variant="secondary">{t('review.requirements.presentation')}</Badge>}
-                          {instructor.hasReading && <Badge variant="secondary">{t('review.requirements.reading')}</Badge>}
-                          {instructor.hasAttendanceRequirement && <Badge variant="secondary">{t('review.requirements.attendance')}</Badge>}
+                      <div className="mb-4">
+                        <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                          <FileText className="h-4 w-4 shrink-0" />
+                          <span>{t('review.courseRequirements')}</span>
+                        </h5>
+                        <div className="flex flex-wrap gap-2 overflow-hidden">
+                          {[
+                            { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
+                            { key: 'hasQuiz', label: t('review.hasQuiz') },
+                            { key: 'hasMidterm', label: t('review.hasMidterm') },
+                            { key: 'hasFinal', label: t('review.hasFinal') },
+                            { key: 'hasIndividualAssignment', label: t('review.hasIndividualAssignment') },
+                            { key: 'hasGroupProject', label: t('review.hasGroupProject') },
+                            { key: 'hasPresentation', label: t('review.hasPresentation') },
+                            { key: 'hasReading', label: t('review.hasReading') },
+                          ].map(({ key, label }) => {
+                            const hasRequirement = instructor[key as keyof typeof instructor] as boolean;
+                            return (
+                              <Badge 
+                                key={key}
+                                variant={hasRequirement ? "default" : "secondary"}
+                                className={`text-xs shrink-0 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                              >
+                                {hasRequirement ? (
+                                  <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+                                ) : (
+                                  <XCircle className="h-3 w-3 mr-1 shrink-0" />
+                                )}
+                                <span className="truncate">{label}</span>
+                              </Badge>
+                            );
+                          })}
                         </div>
                       </div>
 
-                      {/* 教學評論 */}
+                      {/* 講師評論 */}
                       {instructor.comments && (
-                        <div>
-                          <h6 className="text-sm font-medium mb-2">{t('review.teachingComments')}</h6>
-                          <div className="bg-background/50 p-3 rounded-md break-words">
+                        <div className="min-w-0">
+                          <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <User className="h-4 w-4 shrink-0" />
+                            <span>{t('review.instructorComments')}</span>
+                          </h5>
+                          <div className="break-words">
                             {hasMarkdownFormatting(instructor.comments) ? (
                               renderCommentMarkdown(instructor.comments)
                             ) : (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm">
                                 {instructor.comments}
                               </p>
                             )}
@@ -1896,10 +1977,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+        <div className="flex-1 space-y-2">
           <h1 className="text-3xl font-bold">
             {isEditMode ? t('review.editTitle') : t('review.title')}
           </h1>
@@ -1910,7 +1991,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         <Button
           variant="outline"
           onClick={() => navigate(-1)}
-          className="shrink-0"
+          className="shrink-0 hover:bg-primary/10 hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('common.back')}
@@ -2320,13 +2401,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   <Label>{t('review.courseRequirements')}</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
-                      { key: 'hasMidterm', label: t('review.hasMidterm') },
+                      { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
                       { key: 'hasQuiz', label: t('review.hasQuiz') },
-                      { key: 'hasGroupProject', label: t('review.hasGroupProject') },
+                      { key: 'hasMidterm', label: t('review.hasMidterm') },
+                      { key: 'hasFinal', label: t('review.hasFinal') },
                       { key: 'hasIndividualAssignment', label: t('review.hasIndividualAssignment') },
+                      { key: 'hasGroupProject', label: t('review.hasGroupProject') },
                       { key: 'hasPresentation', label: t('review.hasPresentation') },
                       { key: 'hasReading', label: t('review.hasReading') },
-                      { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
                     ].map(({ key, label }) => (
                       <div key={key} className="flex items-center space-x-2">
                         <Checkbox
