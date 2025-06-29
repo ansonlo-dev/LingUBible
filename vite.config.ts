@@ -119,7 +119,7 @@ export default defineConfig(({ command, mode }) => {
     css: {
       devSourcemap: isDevelopment,
       // Vite 6: Enable CSS minification for SSR builds by default
-      minify: isProduction,
+      minify: isDevelopment,
     },
     // Vite 6: Configure JSON handling
     json: {

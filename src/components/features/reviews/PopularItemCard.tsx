@@ -373,7 +373,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   </p>
                   {/* Faculty and Department Badges */}
                   <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground mt-2">
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0 w-full" style={{ minHeight: '2rem' }} data-badge-container>
+                    <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                       {/* Faculty Badge */}
                       {getFacultyByDepartment(props.department) && (
                         <Badge 
@@ -386,9 +386,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       {/* Department Badge */}
                       <Badge 
                         variant="outline"
-                        className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer hover:bg-primary/5 hover:text-primary hover:border-primary transition-colors duration-200 shrink-0 w-fit max-w-full"
-                        onClick={handleDepartmentBadgeClick}
-                        title={t('filter.clickToFilterDepartment')}
+                        className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit max-w-full"
                       >
                         <span className="break-words hyphens-auto">
                           {translateDepartmentName(props.department, t)}
@@ -404,7 +402,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
                 className={`text-xs font-medium ml-2 flex-shrink-0 transition-all duration-200 ${
                   props.isOfferedInCurrentTerm 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
                 }`}
                 title={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
@@ -531,7 +529,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   </p>
                 )}
                 <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0 w-full" style={{ minHeight: '2rem' }} data-badge-container>
+                  <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                     {/* Faculty Badge */}
                     {getFacultyByDepartment(props.department) && (
                       <Badge 
@@ -544,7 +542,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                     {/* Department Badge */}
                     <Badge 
                       variant="outline"
-                      className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer hover:bg-primary/5 hover:text-primary hover:border-primary transition-colors duration-200 shrink-0 w-fit max-w-full"
+                      className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help hover:bg-primary/5 hover:text-primary hover:border-primary hover:shadow-sm transition-all duration-200 shrink-0 w-fit max-w-full"
                       onClick={handleDepartmentBadgeClick}
                       title={t('filter.clickToFilterDepartment')}
                     >
@@ -562,7 +560,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
               className={`text-xs font-medium ml-2 flex-shrink-0 transition-all duration-200 ${
                 props.isTeachingInCurrentTerm 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
                   : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
               }`}
               title={props.isTeachingInCurrentTerm ? t('teaching.tooltip.clickable').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}

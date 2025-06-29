@@ -73,6 +73,10 @@ interface InstructorEvaluation {
   hasPresentation: boolean;
   hasReading: boolean;
   hasAttendanceRequirement: boolean;
+  // Service learning fields for each instructor
+  hasServiceLearning: boolean;
+  serviceLearningType: 'compulsory' | 'optional';
+  serviceLearningDescription: string;
 }
 
 // 新增 StarRating 組件
@@ -82,9 +86,10 @@ interface StarRatingProps {
   label: string;
   type?: 'workload' | 'difficulty' | 'usefulness' | 'teaching' | 'grading';
   t: (key: string) => string;
+  required?: boolean;
 }
 
-const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t }) => {
+const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t, required = false }) => {
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   
   const getDescription = (value: number) => {
@@ -125,7 +130,9 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
     <div className="space-y-1">
       {/* Desktop: Label, N/A, Stars, and Description on same line */}
       <div className="hidden md:flex md:items-center md:gap-4">
-        <Label className="text-sm font-medium min-w-[120px] flex-shrink-0">{label}</Label>
+        <Label className="text-sm font-medium min-w-[120px] flex-shrink-0">
+          {label} {required && <span className="text-red-500">*</span>}
+        </Label>
         
         {/* N/A Button */}
         <Button
@@ -235,7 +242,9 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, 
 
       {/* Mobile: Traditional stacked layout */}
       <div className="md:hidden space-y-2">
-        <Label className="text-sm font-medium">{label}</Label>
+        <Label className="text-sm font-medium">
+          {label} {required && <span className="text-red-500">*</span>}
+        </Label>
         <div className="flex items-center gap-2">
           {/* N/A Button */}
           <Button
@@ -386,9 +395,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [usefulness, setUsefulness] = useState<number | null>(null);
   const [grade, setGrade] = useState<string>('');
   const [courseComments, setCourseComments] = useState<string>('');
-  const [hasServiceLearning, setHasServiceLearning] = useState<boolean>(false);
-  const [serviceLearningType, setServiceLearningType] = useState<'compulsory' | 'optional' | null>('compulsory');
-  const [serviceLearningDescription, setServiceLearningDescription] = useState<string>('');
+
   const [isAnonymous, setIsAnonymous] = useState<boolean>(true);
   const [reviewLanguage, setReviewLanguage] = useState<string>('en'); // Default to English
 
@@ -1122,20 +1129,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     setUsefulness(reviewData.course_usefulness || 0);
     setGrade(reviewData.course_final_grade || '');
     setCourseComments(reviewData.course_comments || '');
-    setHasServiceLearning(reviewData.has_service_learning || false);
-    
-    // Parse service learning type and description
-    const slDescription = reviewData.service_learning_description || '';
-    if (slDescription.startsWith('[COMPULSORY]')) {
-      setServiceLearningType('compulsory');
-      setServiceLearningDescription(slDescription.replace('[COMPULSORY] ', ''));
-    } else if (slDescription.startsWith('[OPTIONAL]')) {
-      setServiceLearningType('optional');
-      setServiceLearningDescription(slDescription.replace('[OPTIONAL] ', ''));
-    } else {
-      setServiceLearningType('compulsory'); // Default
-      setServiceLearningDescription(slDescription);
-    }
+    // Service learning is now handled per instructor, not at course level
     setIsAnonymous(reviewData.is_anon || false);
     setReviewLanguage(reviewData.review_language || 'en'); // Set review language from data or default to English
     
@@ -1161,7 +1155,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           hasIndividualAssignment: detail.has_individual_assignment || false,
           hasPresentation: detail.has_presentation || false,
           hasReading: detail.has_reading || false,
-          hasAttendanceRequirement: detail.has_attendance_requirement || false
+          hasAttendanceRequirement: detail.has_attendance_requirement || false,
+          // Provide defaults for service learning fields that may not exist in old data
+          hasServiceLearning: detail.has_service_learning ?? false,
+          serviceLearningType: detail.service_learning_type ?? 'compulsory',
+          serviceLearningDescription: detail.service_learning_description ?? '',
         }));
         setInstructorEvaluations(evaluations);
         
@@ -1379,6 +1377,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         hasPresentation: false,
         hasReading: false,
         hasAttendanceRequirement: false,
+        hasServiceLearning: false,
+        serviceLearningType: 'compulsory',
+        serviceLearningDescription: '',
       };
     });
     
@@ -1414,6 +1415,57 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       }
     }
   }, [isPopulatingEditData, selectedInstructors, instructorEvaluations]);
+
+  // Auto-set service learning status for each instructor based on teaching records
+  useEffect(() => {
+    // Don't update during edit data population to preserve existing data
+    if (isPopulatingEditData) return;
+    
+    if (!selectedCourse || !selectedTerm || selectedInstructors.length === 0 || instructorEvaluations.length === 0) {
+      return;
+    }
+
+    // Update instructor evaluations with service learning data from teaching records
+    const updatedEvaluations = instructorEvaluations.map(evaluation => {
+      const teachingRecord = availableInstructors.find(
+        record => record.instructor_name === evaluation.instructorName && 
+                 record.session_type === evaluation.sessionType
+      );
+      
+      if (teachingRecord?.service_learning) {
+        // Only update if not already set correctly (to avoid overriding edit data)
+        if (!evaluation.hasServiceLearning || evaluation.serviceLearningType !== teachingRecord.service_learning) {
+          return {
+            ...evaluation,
+            hasServiceLearning: true,
+            serviceLearningType: teachingRecord.service_learning as 'compulsory' | 'optional'
+          };
+        }
+      } else {
+        // No service learning for this instructor
+        if (evaluation.hasServiceLearning) {
+          return {
+            ...evaluation,
+            hasServiceLearning: false,
+            serviceLearningType: 'compulsory' as const,
+            serviceLearningDescription: ''
+          };
+        }
+      }
+      
+      return evaluation; // No changes needed
+    });
+
+    // Only update if there are actual changes
+    const hasChanges = updatedEvaluations.some((updatedEval, index) => {
+      const currentEval = instructorEvaluations[index];
+      return updatedEval !== currentEval;
+    });
+
+    if (hasChanges) {
+      setInstructorEvaluations(updatedEvaluations);
+    }
+  }, [selectedInstructors, availableInstructors, selectedCourse, selectedTerm, isPopulatingEditData, instructorEvaluations]);
 
   const handleInstructorToggle = (instructorKey: string) => {
     setSelectedInstructors(prev => 
@@ -1486,6 +1538,30 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         return false;
       }
       
+      // 檢查評分滿意度（現在必填）
+      if (evaluation.gradingScore === null) {
+        toast({
+          title: t('common.error'),
+          description: t('review.fillAllFields'),
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      // 檢查課程要求（至少需要選擇一個）
+      const hasAnyRequirement = evaluation.hasMidterm || evaluation.hasFinal || evaluation.hasQuiz || 
+        evaluation.hasGroupProject || evaluation.hasIndividualAssignment || evaluation.hasPresentation || 
+        evaluation.hasReading || evaluation.hasAttendanceRequirement;
+      
+      if (!hasAnyRequirement) {
+        toast({
+          title: t('common.error'),
+          description: t('review.courseRequirementsRequired'),
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
       // 檢查講師評論（現在必填）
       if (!evaluation.comments.trim()) {
         toast({
@@ -1508,31 +1584,33 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       }
     }
 
-    // 如果有服務學習，檢查描述
-    if (hasServiceLearning) {
-      // 必修服務學習必須填寫描述
-      if (serviceLearningType === 'compulsory' && !serviceLearningDescription.trim()) {
-        toast({
-          title: t('common.error'),
-          description: t('review.fillAllFields'),
-          variant: 'destructive',
-        });
-        return false;
-      }
-      
-      // 如果有填寫服務學習描述，檢查字數
-      if (serviceLearningDescription.trim()) {
-        const minWords = serviceLearningType === 'compulsory' ? 5 : 0;
-        const serviceLearningValidation = validateWordCount(serviceLearningDescription, minWords, 1000);
-        if (!serviceLearningValidation.isValid) {
+    // 檢查每個講師的服務學習描述
+    for (const evaluation of instructorEvaluations) {
+      if (evaluation.hasServiceLearning) {
+        // 必修服務學習必須填寫描述
+        if (evaluation.serviceLearningType === 'compulsory' && !evaluation.serviceLearningDescription.trim()) {
           toast({
             title: t('common.error'),
-            description: serviceLearningType === 'compulsory' 
-              ? t('review.wordCount.serviceLearningRequired')
-              : t('review.wordCount.serviceLearningOptional'),
+            description: t('review.fillAllFields'),
             variant: 'destructive',
           });
           return false;
+        }
+        
+        // 如果有填寫服務學習描述，檢查字數
+        if (evaluation.serviceLearningDescription.trim()) {
+          const minWords = evaluation.serviceLearningType === 'compulsory' ? 5 : 0;
+          const serviceLearningValidation = validateWordCount(evaluation.serviceLearningDescription, minWords, 1000);
+          if (!serviceLearningValidation.isValid) {
+            toast({
+              title: t('common.error'),
+              description: evaluation.serviceLearningType === 'compulsory' 
+                ? t('review.wordCount.serviceLearningRequired')
+                : t('review.wordCount.serviceLearningOptional'),
+              variant: 'destructive',
+            });
+            return false;
+          }
         }
       }
     }
@@ -1600,6 +1678,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         has_presentation: evaluation.hasPresentation,
         has_reading: evaluation.hasReading,
         has_attendance_requirement: evaluation.hasAttendanceRequirement,
+        has_service_learning: evaluation.hasServiceLearning,
+        service_learning_type: evaluation.serviceLearningType,
+        service_learning_description: evaluation.serviceLearningDescription,
         comments: evaluation.comments,
       }));
 
@@ -1614,9 +1695,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         course_usefulness: usefulness,
         course_final_grade: grade,
         course_comments: courseComments,
-        has_service_learning: hasServiceLearning,
-        service_learning_description: hasServiceLearning ? 
-          `[${serviceLearningType?.toUpperCase() || 'UNSPECIFIED'}] ${serviceLearningDescription}` : undefined,
+        has_service_learning: false, // Deprecated: service learning is now per instructor
+        service_learning_description: undefined, // Deprecated: service learning is now per instructor
         submitted_at: new Date().toISOString(),
         instructor_details: JSON.stringify(instructorDetails),
         review_language: reviewLanguage,
@@ -1806,40 +1886,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               </>
             )}
 
-            {/* 服務學習 */}
-            {hasServiceLearning && (
-              <>
-                <Separator />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md border border-blue-400 dark:from-blue-600 dark:to-blue-700 dark:border-blue-500 flex items-center gap-1">
-                      <GraduationCap className="h-3 w-3" />
-                      {t('review.serviceLearning')}
-                    </Badge>
-                    {serviceLearningType && (
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-xs",
-                          serviceLearningType === 'compulsory'
-                            ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
-                            : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
-                        )}
-                      >
-                        {serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
-                      </Badge>
-                    )}
-                  </div>
-                  {serviceLearningDescription && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
-                      <p className="text-sm text-blue-900 dark:text-blue-100 break-words">
-                        {serviceLearningDescription}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
+            {/* Service learning is now handled per instructor, not at course level */}
 
             {/* 講師評價 */}
             {instructorEvaluations.length > 0 && (
@@ -1854,9 +1901,30 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       <div className="flex items-start justify-between mb-3 gap-2">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-lg">
-                            <div className="text-primary px-2 py-1 rounded-md inline-block">
-                              <div>{instructor.instructorName}</div>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                const url = `/instructors/${encodeURIComponent(instructor.instructorName)}`;
+                                if (e.button === 1 || e.ctrlKey || e.metaKey) {
+                                  // Middle click, Ctrl+click, or Cmd+click - open in new tab
+                                  window.open(url, '_blank');
+                                } else {
+                                  // Regular click - navigate in same tab
+                                  navigate(url);
+                                }
+                              }}
+                              onMouseDown={(e) => {
+                                if (e.button === 1) {
+                                  // Middle click
+                                  e.preventDefault();
+                                  const url = `/instructors/${encodeURIComponent(instructor.instructorName)}`;
+                                  window.open(url, '_blank');
+                                }
+                              }}
+                              className="text-primary px-2 py-1 rounded-md inline-block hover:bg-red-500/20 transition-all duration-200 focus:outline-none focus:bg-red-500/20"
+                            >
+                              {instructor.instructorName}
+                            </button>
                           </h4>
                         </div>
                         <div className="shrink-0 flex items-start pt-1">
@@ -1943,6 +2011,44 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         </div>
                       </div>
 
+                      {/* 服務學習 */}
+                      {instructor.hasServiceLearning && (
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <GraduationCap className="h-4 w-4 shrink-0" />
+                            <span>{t('review.serviceLearning')}</span>
+                          </h5>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "text-xs",
+                                  instructor.serviceLearningType === 'compulsory'
+                                    ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
+                                    : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                                )}
+                              >
+                                {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                              </Badge>
+                            </div>
+                            {instructor.serviceLearningDescription && (
+                              <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
+                                <div className="break-words">
+                                  {hasMarkdownFormatting(instructor.serviceLearningDescription) ? (
+                                    renderCommentMarkdown(instructor.serviceLearningDescription)
+                                  ) : (
+                                    <p className="text-sm text-blue-900 dark:text-blue-100">
+                                      {instructor.serviceLearningDescription}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* 講師評論 */}
                       {instructor.comments && (
                         <div className="min-w-0">
@@ -2010,7 +2116,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           {/* Course Selection - Desktop: inline, Mobile: stacked */}
           <div className="space-y-2 md:space-y-0">
             <div className="md:flex md:items-center md:gap-4">
-              <Label htmlFor="course" className="md:min-w-[120px] md:flex-shrink-0">{t('review.selectCourse')}</Label>
+              <Label htmlFor="course" className="md:min-w-[120px] md:flex-shrink-0">
+                {t('review.selectCourse')} <span className="text-red-500">*</span>
+              </Label>
               <Select 
                 value={selectedCourse} 
                 onValueChange={setSelectedCourse} 
@@ -2033,7 +2141,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           {/* Term Selection - Desktop: inline, Mobile: stacked */}
           <div className="space-y-2 md:space-y-0">
             <div className="md:flex md:items-center md:gap-4">
-              <Label htmlFor="term" className="md:min-w-[120px] md:flex-shrink-0">{t('review.selectTerm')}</Label>
+              <Label htmlFor="term" className="md:min-w-[120px] md:flex-shrink-0">
+                {t('review.selectTerm')} <span className="text-red-500">*</span>
+              </Label>
               <Select value={selectedTerm} onValueChange={setSelectedTerm} disabled={!selectedCourse || termsLoading}>
                 <SelectTrigger className="md:flex-1">
                   <SelectValue placeholder={termsLoading ? t('review.loadingTerms') : t('review.selectTermPlaceholder')} />
@@ -2052,7 +2162,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           {/* Instructor Selection - Desktop: inline, Mobile: stacked */}
           <div className="space-y-2 md:space-y-0">
             <div className="md:flex md:items-start md:gap-4">
-              <Label className="md:min-w-[120px] md:flex-shrink-0 md:pt-3">{t('review.selectInstructors')}</Label>
+              <Label className="md:min-w-[120px] md:flex-shrink-0 md:pt-3">
+                {t('review.selectInstructors')} <span className="text-red-500">*</span>
+              </Label>
               <div className="md:flex-1">
                 {instructorsLoading ? (
                   <div className="flex items-center gap-2 p-3 border rounded-md">
@@ -2127,25 +2239,27 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           <div className="space-y-1">
             {/* Description only shown on mobile, since desktop shows everything inline */}
             <p className="text-sm text-muted-foreground md:hidden">{t('review.workloadDescription')}</p>
-            <StarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} />
+            <StarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} required />
           </div>
 
           {/* Difficulty Rating */}
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground md:hidden">{t('review.difficultyDescription')}</p>
-            <StarRating rating={difficulty} onRatingChange={setDifficulty} label={t('review.difficulty')} type="difficulty" t={t} />
+            <StarRating rating={difficulty} onRatingChange={setDifficulty} label={t('review.difficulty')} type="difficulty" t={t} required />
           </div>
 
           {/* Usefulness Rating */}
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground md:hidden">{t('review.usefulnessDescription')}</p>
-            <StarRating rating={usefulness} onRatingChange={setUsefulness} label={t('review.usefulness')} type="usefulness" t={t} />
+            <StarRating rating={usefulness} onRatingChange={setUsefulness} label={t('review.usefulness')} type="usefulness" t={t} required />
           </div>
 
           {/* Grade - Desktop: inline, Mobile: stacked */}
           <div className="space-y-2 md:space-y-0">
             <div className="md:flex md:items-center md:gap-4">
-              <Label htmlFor="grade" className="md:min-w-[120px] md:flex-shrink-0">{t('review.grade')}</Label>
+              <Label htmlFor="grade" className="md:min-w-[120px] md:flex-shrink-0">
+                {t('review.grade')} <span className="text-red-500">*</span>
+              </Label>
               <div className="flex items-center gap-2 md:flex-1">
                 <Button
                   type="button"
@@ -2241,7 +2355,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
           {/* Course Comments */}
           <div className="space-y-3">
-            <Label htmlFor="courseComments">{t('review.comments')}</Label>
+            <Label htmlFor="courseComments">
+              {t('review.comments')} <span className="text-red-500">*</span>
+            </Label>
             {renderCommonPhrases('course')}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Input Area */}
@@ -2279,94 +2395,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
           {/* Service Learning */}
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="hasServiceLearning"
-                checked={hasServiceLearning}
-                onCheckedChange={(checked) => setHasServiceLearning(checked === true)}
-              />
-              <Label htmlFor="hasServiceLearning">{t('review.hasServiceLearning')}</Label>
-            </div>
-            
-            {hasServiceLearning && (
-              <div className="space-y-3 ml-6">
-                {/* Service Learning Type */}
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setServiceLearningType(serviceLearningType === 'compulsory' ? null : 'compulsory')}
-                      className={cn(
-                        "text-xs border transition-colors",
-                        serviceLearningType === 'compulsory'
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "border-border hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      {t('review.compulsory')}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setServiceLearningType(serviceLearningType === 'optional' ? null : 'optional')}
-                      className={cn(
-                        "text-xs border transition-colors",
-                        serviceLearningType === 'optional'
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "border-border hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      {t('review.optional')}
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Service Learning Description */}
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Input Area */}
-                    <div className="relative">
-                      {renderFormattingToolbar(serviceLearningRef, setServiceLearningDescription)}
-                      <Textarea
-                        ref={serviceLearningRef}
-                        id="serviceLearningDescription"
-                        value={serviceLearningDescription}
-                        onChange={(e) => setServiceLearningDescription(e.target.value)}
-                        placeholder={
-                          serviceLearningType === 'optional' 
-                            ? t('review.serviceLearningOptionalPlaceholder')
-                            : serviceLearningType === 'compulsory'
-                            ? t('review.serviceLearningPlaceholder')
-                            : t('review.serviceLearningOptionalPlaceholder')
-                        }
-                        rows={3}
-                        className="rounded-t-none border-t-0"
-                      />
-                      <WordCounter text={serviceLearningDescription} minWords={serviceLearningType === 'compulsory' ? 5 : 0} maxWords={1000} />
-                    </div>
-                    
-                    {/* Live Preview */}
-                    {serviceLearningDescription && (
-                      <div className="relative">
-                        <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                        <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
-                          {hasMarkdownFormatting(serviceLearningDescription) ? (
-                            renderCommentMarkdown(serviceLearningDescription)
-                          ) : (
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                              {serviceLearningDescription}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Service learning is now handled per instructor, not at course level */}
           </div>
         </CardContent>
       </Card>
@@ -2387,18 +2416,20 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {/* Teaching Score */}
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
-                  <StarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} />
+                  <StarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
                 </div>
 
                 {/* Grading Score */}
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground md:hidden">{t('review.gradingScoreDescription')}</p>
-                  <StarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} />
+                  <StarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} required />
                 </div>
 
                 {/* Course Requirements */}
                 <div className="space-y-3">
-                  <Label>{t('review.courseRequirements')}</Label>
+                  <Label>
+                    {t('review.courseRequirements')} <span className="text-red-500">*</span>
+                  </Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
                       { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
@@ -2422,9 +2453,101 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   </div>
                 </div>
 
+                {/* Service Learning */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4" />
+                    {t('review.serviceLearning')}
+                  </Label>
+                  
+                  {/* Service Learning Status Indicator */}
+                  <div className="p-3 bg-muted/30 rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${evaluation.hasServiceLearning ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        <span className="text-sm font-medium">
+                          {evaluation.hasServiceLearning ? t('review.hasServiceLearning') : t('review.noServiceLearning')}
+                        </span>
+                      </div>
+                      {evaluation.hasServiceLearning && (
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-xs",
+                            evaluation.serviceLearningType === 'compulsory'
+                              ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
+                              : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                          )}
+                        >
+                          {evaluation.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('review.serviceLearningAutoFilled')}
+                    </p>
+                  </div>
+
+                  {/* Service Learning Description - only show if has service learning */}
+                  {evaluation.hasServiceLearning && (
+                    <div className="space-y-2">
+                      <Label htmlFor={`serviceLearningDescription-${index}`}>
+                        {t('review.serviceLearningDescription')}
+                        {evaluation.serviceLearningType === 'compulsory' && (
+                          <span className="text-destructive ml-1">*</span>
+                        )}
+                      </Label>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Input Area */}
+                        <div className="relative">
+                          {renderFormattingToolbar(
+                            { current: null }, // We can add ref later if needed
+                            (value: string) => updateInstructorEvaluation(index, 'serviceLearningDescription', value)
+                          )}
+                          <Textarea
+                            id={`serviceLearningDescription-${index}`}
+                            value={evaluation.serviceLearningDescription}
+                            onChange={(e) => updateInstructorEvaluation(index, 'serviceLearningDescription', e.target.value)}
+                            placeholder={
+                              evaluation.serviceLearningType === 'optional' 
+                                ? t('review.serviceLearningOptionalPlaceholder')
+                                : t('review.serviceLearningPlaceholder')
+                            }
+                            rows={3}
+                            className="rounded-t-none border-t-0"
+                          />
+                          <WordCounter 
+                            text={evaluation.serviceLearningDescription} 
+                            minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0} 
+                            maxWords={1000} 
+                          />
+                        </div>
+                        
+                        {/* Live Preview */}
+                        {evaluation.serviceLearningDescription && (
+                          <div className="relative">
+                            <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
+                            <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
+                              {hasMarkdownFormatting(evaluation.serviceLearningDescription) ? (
+                                renderCommentMarkdown(evaluation.serviceLearningDescription)
+                              ) : (
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                  {evaluation.serviceLearningDescription}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Teaching Comments */}
                 <div className="space-y-3">
-                  <Label htmlFor={`teachingComments-${index}`}>{t('review.teachingComments')}</Label>
+                  <Label htmlFor={`teachingComments-${index}`}>
+                    {t('review.teachingComments')} <span className="text-red-500">*</span>
+                  </Label>
                   {renderCommonPhrases('teaching', index)}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Input Area */}
@@ -2546,6 +2669,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             </div>
 
             <Separator />
+
+            {/* Required Fields Notice */}
+            <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="flex items-start gap-2">
+                <div className="text-red-500 text-lg font-bold mt-0.5">*</div>
+                <div className="text-sm text-muted-foreground">
+                  {t('review.requiredFieldsNotice')}
+                </div>
+              </div>
+            </div>
 
             {/* Submit Button */}
             <div className="flex gap-3 pt-6">

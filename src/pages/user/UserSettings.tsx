@@ -405,22 +405,7 @@ export default function UserSettings() {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md mx-4 legal-page-card">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-muted-foreground">{t('settings.loginRequired')}</p>
-              <Button asChild className="mt-4">
-                <Link to="/login">{t('settings.login')}</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -630,12 +615,8 @@ export default function UserSettings() {
               </div>
 
               {!isEditingPassword ? (
-                // 顯示模式
-                <div className="p-3 bg-muted rounded-md my-0">
-                  <p className="text-sm text-muted-foreground my-0">
-                    {t('settings.passwordHidden')}
-                  </p>
-                </div>
+                // 顯示模式 - 不顯示任何內容
+                null
               ) : (
                 // 編輯模式
                 <div className="space-y-4">

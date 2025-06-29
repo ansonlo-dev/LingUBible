@@ -1,4 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
+import { isCurrentTerm } from '@/utils/dateUtils';
 import {
   Filter,
   X,
@@ -58,7 +59,7 @@ export function InstructorReviewsFilters({
   filteredReviews,
   onClearAll
 }: InstructorReviewsFiltersProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const updateFilters = (updates: Partial<InstructorReviewFilters>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -156,13 +157,20 @@ export function InstructorReviewsFilters({
   const currentCourse = (filters.selectedCourses || []).length === 0 ? 'all' : (filters.selectedCourses || [])[0];
   const currentSessionType = (filters.selectedSessionTypes || []).length === 0 ? 'all' : (filters.selectedSessionTypes || [])[0];
 
+  // Helper function to determine if labels should be bold based on language
+  const getLabelClassName = () => {
+    return language === 'zh-TW' || language === 'zh-CN' 
+      ? 'text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0'
+      : 'text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0';
+  };
+
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-6">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
       {/* 篩選器行 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 語言篩選 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <Languages className="h-4 w-4" />
             {t('filter.reviewLanguage')}
           </label>
@@ -180,7 +188,9 @@ export function InstructorReviewsFilters({
                 <SelectItem key={language} value={language}>
                   <span className="flex items-center gap-2">
                     <span>{getLanguageDisplayName(language)}</span>
-                    <span className="text-xs text-muted-foreground">({count})</span>
+                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                      {count}
+                    </Badge>
                   </span>
                 </SelectItem>
               ))}
@@ -190,7 +200,7 @@ export function InstructorReviewsFilters({
 
         {/* 學期篩選 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <CalendarDays className="h-4 w-4" />
             {t('filter.reviewTerm')}
           </label>
@@ -211,8 +221,11 @@ export function InstructorReviewsFilters({
                 return (
                   <SelectItem key={termCode} value={termCode}>
                     <span className="flex items-center gap-2">
+                      <div className={`w-2 h-2 ${isCurrentTerm(termCode) ? 'bg-green-500' : 'bg-gray-500'} rounded-full`}></div>
                       <span>{(termInfo && termInfo.name) ? termInfo.name : termCode}</span>
-                      <span className="text-xs text-muted-foreground">({(termInfo && termInfo.count) ? termInfo.count : 0})</span>
+                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                        {(termInfo && termInfo.count) ? termInfo.count : 0}
+                      </Badge>
                     </span>
                   </SelectItem>
                 );
@@ -223,7 +236,7 @@ export function InstructorReviewsFilters({
 
         {/* 課程篩選 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <BookOpen className="h-4 w-4" />
             {t('filter.reviewCourse')}
           </label>
@@ -245,7 +258,9 @@ export function InstructorReviewsFilters({
                   <SelectItem key={courseCode} value={courseCode}>
                     <span className="flex items-center gap-2">
                       <span>{courseCode} - {(courseInfo && courseInfo.title) ? courseInfo.title : courseCode}</span>
-                      <span className="text-xs text-muted-foreground">({(courseInfo && courseInfo.count) ? courseInfo.count : 0})</span>
+                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                        {(courseInfo && courseInfo.count) ? courseInfo.count : 0}
+                      </Badge>
                     </span>
                   </SelectItem>
                 );
@@ -256,7 +271,7 @@ export function InstructorReviewsFilters({
 
         {/* 課堂類型篩選 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <School className="h-4 w-4" />
             {t('filter.reviewSessionType')}
           </label>
@@ -274,7 +289,9 @@ export function InstructorReviewsFilters({
                 <SelectItem key={sessionType} value={sessionType}>
                   <span className="flex items-center gap-2">
                     <span>{t(`sessionType.${sessionType.toLowerCase()}`)}</span>
-                    <span className="text-xs text-muted-foreground">({count})</span>
+                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                      {count}
+                    </Badge>
                   </span>
                 </SelectItem>
               ))}
@@ -285,7 +302,7 @@ export function InstructorReviewsFilters({
 
       {/* 排序選項 */}
       <div className="flex items-center gap-4">
-        <label className="text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0">
+        <label className={getLabelClassName()}>
           <Filter className="h-4 w-4" />
           {t('sort.sortBy')}
         </label>
@@ -310,7 +327,7 @@ export function InstructorReviewsFilters({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* 左側：每頁評論數 */}
         <div className="flex items-center gap-4">
-          <label className="text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <Grid3X3 className="h-4 w-4" />
             {t('pagination.reviewsPerPage')}
           </label>

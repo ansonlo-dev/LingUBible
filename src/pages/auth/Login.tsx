@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -33,6 +33,7 @@ export default function Login() {
   const { t } = useLanguage();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isRecaptchaLoaded } = useRecaptcha();
   const { verifyLogin, recordFailure, resetFailures, needsRecaptcha } = useLoginRecaptcha();
 
@@ -60,7 +61,9 @@ export default function Login() {
       // 登入成功，重置失敗計數
       resetFailures();
       
-      navigate('/'); // 登入成功後導向首頁
+      // 重定向到原本要訪問的頁面，如果沒有則導向首頁
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
     } catch (err: any) {
       console.error('Auth error:', err);
       

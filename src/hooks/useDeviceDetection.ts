@@ -14,9 +14,19 @@ export function useDeviceDetection() {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       
-      // 只有在寬度小於 640px 或者是真正的移動設備時才視為非桌面端
-      // 這樣桌面半屏模式（約 960px）就不會被誤判為手機版
-      const isMobileDetected = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      // 更穩定的移動設備檢測：考慮方向變化
+      // 使用較小的寬度或高度來判斷，避免橫屏時誤判為桌面
+      const minDimension = Math.min(window.innerWidth, window.innerHeight);
+      const maxDimension = Math.max(window.innerWidth, window.innerHeight);
+      
+      // 如果是真正的移動設備，無論方向如何都視為移動設備
+      if (isMobileDevice && isTouchDevice) {
+        // 真正的移動設備：最大尺寸通常不超過 1024px
+        return maxDimension >= 1024;
+      }
+      
+      // 對於非移動設備，使用寬度判斷
+      const isMobileDetected = width < 640;
       return !isMobileDetected;
     }
     // SSR 時的預設值，假設是桌面端
@@ -31,8 +41,19 @@ export function useDeviceDetection() {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       
-      // 只有在寬度小於 640px 或者是真正的移動設備時才視為手機版
-      const isMobileDetected = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      // 更穩定的移動設備檢測：考慮方向變化
+      // 使用較小的寬度或高度來判斷，避免橫屏時誤判為桌面
+      const minDimension = Math.min(window.innerWidth, window.innerHeight);
+      const maxDimension = Math.max(window.innerWidth, window.innerHeight);
+      
+      // 如果是真正的移動設備，無論方向如何都視為移動設備
+      if (isMobileDevice && isTouchDevice) {
+        // 真正的移動設備：最大尺寸通常不超過 1024px
+        return maxDimension < 1024;
+      }
+      
+      // 對於非移動設備，使用寬度判斷
+      const isMobileDetected = width < 640;
       return isMobileDetected;
     }
     return false;
@@ -46,8 +67,21 @@ export function useDeviceDetection() {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       
-      // 只有在寬度小於 640px 或者是真正的移動設備時才視為手機版
-      const isMobileDetected = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      // 更穩定的移動設備檢測：考慮方向變化
+      // 使用較小的寬度或高度來判斷，避免橫屏時誤判為桌面
+      const minDimension = Math.min(window.innerWidth, window.innerHeight);
+      const maxDimension = Math.max(window.innerWidth, window.innerHeight);
+      
+      let isMobileDetected;
+      
+      // 如果是真正的移動設備，無論方向如何都視為移動設備
+      if (isMobileDevice && isTouchDevice) {
+        // 真正的移動設備：最大尺寸通常不超過 1024px
+        isMobileDetected = maxDimension < 1024;
+      } else {
+        // 對於非移動設備，使用寬度判斷
+        isMobileDetected = width < 640;
+      }
       
       setIsDesktop(!isMobileDetected);
       setIsMobile(isMobileDetected);

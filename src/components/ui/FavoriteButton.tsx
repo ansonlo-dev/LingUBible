@@ -115,10 +115,16 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   return (
     <Button
       variant={variant}
-      size={showText ? "default" : "icon"}
+      size={showText ? undefined : "icon"}
       className={cn(
-        showText ? 'h-auto px-3 py-2' : getSizeClasses(),
-        'group transition-all duration-200',
+        // Base size - always start with icon size
+        getSizeClasses(),
+        // Responsive expansion only when showText is true
+        showText && [
+          'landscape:h-auto landscape:w-auto landscape:px-3 landscape:py-2',
+          'sm:h-auto sm:w-auto sm:px-3 sm:py-2'
+        ],
+        'transition-all duration-200',
         'hover:bg-red-500/20 hover:border-red-500/50',
         className
       )}
@@ -130,14 +136,14 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         className={cn(
           getIconSize(),
           'transition-all duration-200',
-          showText && 'mr-2',
+          showText && 'landscape:mr-2 sm:mr-2',
           isFavorited 
             ? 'fill-red-500 text-red-500' 
-            : 'text-muted-foreground group-hover:fill-red-500 group-hover:text-red-500'
+            : 'text-muted-foreground hover:fill-red-500 hover:text-red-500'
         )}
       />
       {showText && (
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium hidden landscape:inline sm:inline">
           {isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
         </span>
       )}

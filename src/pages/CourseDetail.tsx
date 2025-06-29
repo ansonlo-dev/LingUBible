@@ -14,7 +14,10 @@ import {
   Calendar, 
   Mail, 
   Loader2, 
-  AlertCircle 
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -22,7 +25,138 @@ import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
+import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+
+// Faculty mapping function - copied from Lecturers.tsx
+const getFacultyByDepartment = (department: string): string => {
+  // First try to extract raw department name if it's translated
+  const rawDepartment = extractRawDepartmentName(department);
+  
+  const facultyMapping: { [key: string]: string } = {
+    // Faculty of Arts
+    'Chinese': 'faculty.arts',
+    'Cultural Studies': 'faculty.arts',
+    'Digital Arts and Creative Industries': 'faculty.arts',
+    'English': 'faculty.arts',
+    'History': 'faculty.arts',
+    'Philosophy': 'faculty.arts',
+    'Translation': 'faculty.arts',
+    'Centre for English and Additional Languages': 'faculty.arts',
+    'Chinese Language Education and Assessment Centre': 'faculty.arts',
+    
+    // Faculty of Business
+    'Accountancy': 'faculty.business',
+    'Finance': 'faculty.business',
+    'Management': 'faculty.business',
+    'Marketing and International Business': 'faculty.business',
+    'Operations and Risk Management': 'faculty.business',
+    
+    // Faculty of Social Sciences
+    'Economics': 'faculty.socialSciences',
+    'Government and International Affairs': 'faculty.socialSciences',
+    'Psychology': 'faculty.socialSciences',
+    'Sociology and Social Policy': 'faculty.socialSciences',
+    
+    // School of Data Science
+    'LEO Dr David P. Chan Institute of Data Science': 'faculty.dataScience',
+    
+    // School of Interdisciplinary Studies
+    'Science Unit': 'faculty.interdisciplinaryStudies',
+    'Wong Bing Lai Music and Performing Arts Unit': 'faculty.interdisciplinaryStudies'
+  };
+  
+  return facultyMapping[rawDepartment] || '';
+};
+
+// Helper function to extract raw department name from translated names
+const extractRawDepartmentName = (department: string): string => {
+  // If it's already a raw department name, return as is
+  const rawDepartmentNames = [
+    'Chinese', 'Cultural Studies', 'Digital Arts and Creative Industries', 'English', 
+    'History', 'Philosophy', 'Translation', 'Centre for English and Additional Languages',
+    'Chinese Language Education and Assessment Centre', 'Accountancy', 'Finance', 
+    'Management', 'Marketing and International Business', 'Operations and Risk Management',
+    'Psychology', 'Economics', 'Government and International Affairs', 
+    'Sociology and Social Policy', 'Science Unit',
+    'Wong Bing Lai Music and Performing Arts Unit', 'LEO Dr David P. Chan Institute of Data Science'
+  ];
+  
+  if (rawDepartmentNames.includes(department)) {
+    return department;
+  }
+  
+  // Create mapping from translated names back to raw names
+  const translatedToRawMapping: { [key: string]: string } = {
+    // English translations
+    'Department of Chinese': 'Chinese',
+    'Department of Cultural Studies': 'Cultural Studies',
+    'Department of Digital Arts and Creative Industries': 'Digital Arts and Creative Industries',
+    'Department of English': 'English',
+    'Department of History': 'History',
+    'Department of Philosophy': 'Philosophy',
+    'Department of Translation': 'Translation',
+    'Centre for English and Additional Languages': 'Centre for English and Additional Languages',
+    'Chinese Language Education and Assessment Centre': 'Chinese Language Education and Assessment Centre',
+    'Department of Accountancy': 'Accountancy',
+    'Department of Finance': 'Finance',
+    'Department of Management': 'Management',
+    'Department of Marketing and International Business': 'Marketing and International Business',
+    'Department of Operations and Risk Management': 'Operations and Risk Management',
+    'Department of Psychology': 'Psychology',
+    'Department of Economics': 'Economics',
+    'Department of Government and International Affairs': 'Government and International Affairs',
+    'Department of Sociology and Social Policy': 'Sociology and Social Policy',
+    'Science Unit': 'Science Unit',
+    'Wong Bing Lai Music and Performing Arts Unit': 'Wong Bing Lai Music and Performing Arts Unit',
+    'LEO Dr David P. Chan Institute of Data Science': 'LEO Dr David P. Chan Institute of Data Science',
+    
+    // Chinese Traditional translations
+    '中文系': 'Chinese',
+    '文化研究系': 'Cultural Studies',
+    '數碼藝術及創意產業系': 'Digital Arts and Creative Industries',
+    '英文系': 'English',
+    '歷史系': 'History',
+    '哲學系': 'Philosophy',
+    '翻譯系': 'Translation',
+    '英語及外語教學中心': 'Centre for English and Additional Languages',
+    '中國語文教學與測試中心': 'Chinese Language Education and Assessment Centre',
+    '會計學系': 'Accountancy',
+    '金融學系': 'Finance',
+    '管理學學系': 'Management',
+    '市場及國際企業學系': 'Marketing and International Business',
+    '運營與風險管理學系': 'Operations and Risk Management',
+    '心理學系': 'Psychology',
+    '經濟學系': 'Economics',
+    '政府與國際事務學系': 'Government and International Affairs',
+    '社會學及社會政策系': 'Sociology and Social Policy',
+    '科學教研組': 'Science Unit',
+    '黃炳禮音樂及演藝部': 'Wong Bing Lai Music and Performing Arts Unit',
+    '嶺南教育機構陳斌博士數據科學研究所': 'LEO Dr David P. Chan Institute of Data Science',
+    
+    // Chinese Simplified translations (only unique ones)
+    '数码艺术及创意产业系': 'Digital Arts and Creative Industries',
+    '历史系': 'History',
+    '哲学系': 'Philosophy',
+    '翻译系': 'Translation',
+    '英语及外语教学中心': 'Centre for English and Additional Languages',
+    '中国语文教学与测试中心': 'Chinese Language Education and Assessment Centre',
+    '会计学系': 'Accountancy',
+    '金融学系': 'Finance',
+    '管理学学系': 'Management',
+    '市场及国际企业学系': 'Marketing and International Business',
+    '运营与风险管理学系': 'Operations and Risk Management',
+    '心理学系': 'Psychology',
+    '经济学系': 'Economics',
+    '政府与国际事务学系': 'Government and International Affairs',
+    '社会学及社会政策系': 'Sociology and Social Policy',
+    '科学教研组': 'Science Unit',
+    '黄炳礼音乐及演艺部': 'Wong Bing Lai Music and Performing Arts Unit',
+    '岭南教育机构陈斌博士数据科学研究所': 'LEO Dr David P. Chan Institute of Data Science'
+  };
+  
+  return translatedToRawMapping[department] || department;
+};
 
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
@@ -30,6 +164,26 @@ const CourseDetail = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  
+  // Get current term info for offer badge
+  const currentTermName = getCurrentTermName();
+  const currentTermCode = getCurrentTermCode();
+  
+  // State to track if course is offered in current term
+  const [isOfferedInCurrentTerm, setIsOfferedInCurrentTerm] = useState<boolean>(false);
+  const [isCheckingOffer, setIsCheckingOffer] = useState<boolean>(false);
+  
+  // State for detailed course stats
+  const [courseDetailedStats, setCourseDetailedStats] = useState<{
+    averageWorkload: number;
+    averageDifficulty: number;
+    averageUsefulness: number;
+  }>({
+    averageWorkload: 0,
+    averageDifficulty: 0,
+    averageUsefulness: 0
+  });
+  const [isLoadingDetailedStats, setIsLoadingDetailedStats] = useState<boolean>(false);
   
   // 使用優化的 hook
   const { data, loading, error, teachingInfoLoading, reviewsLoading } = useCourseDetailOptimized(
@@ -42,6 +196,54 @@ const CourseDetail = () => {
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews } = data;
+
+  // Check if course is offered in current term
+  useEffect(() => {
+    const checkCourseOffering = async () => {
+      if (!course) return;
+      
+      setIsCheckingOffer(true);
+      try {
+        const isOffered = await CourseService.isCourseOfferedInTerm(course.course_code, currentTermCode);
+        setIsOfferedInCurrentTerm(isOffered);
+      } catch (error) {
+        console.error('Error checking course offering:', error);
+        setIsOfferedInCurrentTerm(false);
+      } finally {
+        setIsCheckingOffer(false);
+      }
+    };
+
+    checkCourseOffering();
+  }, [course, currentTermCode]);
+
+  // Load detailed course stats
+  useEffect(() => {
+    const loadDetailedStats = async () => {
+      if (!course) return;
+      
+      setIsLoadingDetailedStats(true);
+      try {
+        const detailedStats = await CourseService.getCourseDetailedStatsOptimized(course.course_code);
+        setCourseDetailedStats({
+          averageWorkload: detailedStats.averageWorkload,
+          averageDifficulty: detailedStats.averageDifficulty,
+          averageUsefulness: detailedStats.averageUsefulness
+        });
+      } catch (error) {
+        console.error('Error loading detailed course stats:', error);
+        setCourseDetailedStats({
+          averageWorkload: 0,
+          averageDifficulty: 0,
+          averageUsefulness: 0
+        });
+      } finally {
+        setIsLoadingDetailedStats(false);
+      }
+    };
+
+    loadDetailedStats();
+  }, [course]);
 
   // 獲取所有可用的學期
   const availableTerms = React.useMemo(() => {
@@ -63,6 +265,18 @@ const CourseDetail = () => {
   const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
     // This function is now simplified since we're using <a> tags
     // The browser will handle navigation naturally
+  };
+
+  // Handle offer badge click to navigate to courses with current term filter
+  const handleOfferedBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Navigate to courses catalog with current term filter applied
+    const searchParams = new URLSearchParams();
+    searchParams.set('offeredTerm', currentTermCode);
+    
+    navigate(`/courses?${searchParams.toString()}`);
   };
 
   // Handle scroll to specific review when review_id is in URL
@@ -149,21 +363,51 @@ const CourseDetail = () => {
     <div className="container mx-auto px-4 py-6 space-y-6 pb-20 overflow-hidden">
       {/* 課程基本信息 */}
       <Card className="course-card overflow-hidden">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-2xl font-bold mb-2 break-words">
+        <CardHeader className="overflow-hidden">
+          <div className="flex items-center gap-3 overflow-hidden min-w-0">
+            <BookOpen className="h-8 w-8 text-primary shrink-0" />
+            <div className="min-w-0 flex-1">
+              {/* 課程代碼 - 作為主標題 */}
+              <CardTitle className="text-2xl truncate font-mono">{course.course_code}</CardTitle>
+              {/* 英文課程名稱 - 作為副標題 */}
+              <p className="text-xl text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.75rem]">
                 {course.course_title}
-              </CardTitle>
-              <p className="text-lg text-muted-foreground font-mono mb-3">
-                {course.course_code}
               </p>
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="text-sm">
-                  <BookOpen className="h-3 w-3 mr-1" />
-                                      {translateDepartmentName(course.department, t)}
-                </Badge>
-              </div>
+              {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
+              {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
+                return chineseName && (
+                  <p className="text-lg text-gray-500 dark:text-gray-500 mt-1 min-h-[1.5rem]">
+                    {chineseName}
+                  </p>
+                );
+              })()}
+              {/* 系所徽章 - 匹配講師頁面的樣式 */}
+              {course.department && (
+                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-2" style={{ minHeight: '2rem' }}>
+                  {/* Faculty Badge */}
+                  {(() => {
+                    const faculty = getFacultyByDepartment(course.department);
+                    return faculty && (
+                      <Badge 
+                        variant="outline"
+                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
+                      >
+                        {t(faculty)}
+                      </Badge>
+                    );
+                  })()}
+                  {/* Department Badge */}
+                  <Badge 
+                    variant="outline"
+                    className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit max-w-full"
+                  >
+                    <span className="break-words hyphens-auto">
+                      {language === 'en' ? `Department of ${translateDepartmentName(course.department, t)}` : translateDepartmentName(course.department, t)}
+                    </span>
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="shrink-0">
               <FavoriteButton
@@ -176,38 +420,118 @@ const CourseDetail = () => {
             </div>
           </div>
         </CardHeader>
-        
-        {/* 課程統計信息 */}
-        {courseStats.reviewCount > 0 && (
-          <CardContent className="pt-0">
-            <Separator className="mb-4" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-semibold">{courseStats.averageRating.toFixed(2).replace(/\.?0+$/, '')}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{t('pages.courseDetail.averageRating')}</p>
+        <CardContent className="space-y-4 overflow-hidden">
+          {/* 課程統計信息 - 2x2 網格佈局 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+            {/* 學生評論數 */}
+            <div className="text-center min-w-0">
+              <div className="text-2xl font-bold text-primary">
+                {reviewsLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : (
+                  allReviews.length
+                )}
               </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  <span className="text-lg font-semibold">{courseStats.reviewCount}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{t('pages.courseDetail.reviewCount')}</p>
-              </div>
+              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.studentReviews')}</div>
             </div>
-          </CardContent>
-        )}
+
+            {/* 平均工作量 */}
+            <div className="text-center min-w-0">
+              <div className="text-2xl font-bold text-primary">
+                {isLoadingDetailedStats ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : courseDetailedStats.averageWorkload > 0 ? (
+                  courseDetailedStats.averageWorkload.toFixed(2)
+                ) : (
+                  'N/A'
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageWorkload')}</div>
+              {!isLoadingDetailedStats && courseDetailedStats.averageWorkload === 0 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {t('pages.courseDetail.noRatingData')}
+                </div>
+              )}
+            </div>
+            
+            {/* 平均難度 */}
+            <div className="text-center min-w-0">
+              <div className="text-2xl font-bold text-primary">
+                {isLoadingDetailedStats ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : courseDetailedStats.averageDifficulty > 0 ? (
+                  courseDetailedStats.averageDifficulty.toFixed(2)
+                ) : (
+                  'N/A'
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageDifficulty')}</div>
+              {!isLoadingDetailedStats && courseDetailedStats.averageDifficulty === 0 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {t('pages.courseDetail.noRatingData')}
+                </div>
+              )}
+            </div>
+            
+            {/* 平均實用性 */}
+            <div className="text-center min-w-0">
+              <div className="text-2xl font-bold text-primary">
+                {isLoadingDetailedStats ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : courseDetailedStats.averageUsefulness > 0 ? (
+                  courseDetailedStats.averageUsefulness.toFixed(2)
+                ) : (
+                  'N/A'
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageUsefulness')}</div>
+              {!isLoadingDetailedStats && courseDetailedStats.averageUsefulness === 0 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {t('pages.courseDetail.noRatingData')}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* 教學記錄 */}
       <Card className="course-card overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 shrink-0" />
-            <span>{t('pages.courseDetail.offerRecords')}</span>
-          </CardTitle>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
+              <Calendar className="h-5 w-5 shrink-0" />
+              <span className="truncate">{t('pages.courseDetail.offerRecords')}</span>
+            </CardTitle>
+            <div className="shrink-0">
+              {teachingInfoLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Badge 
+                  variant={isOfferedInCurrentTerm ? "default" : "secondary"}
+                  className={`text-xs font-medium transition-all duration-200 cursor-help ${
+                    isOfferedInCurrentTerm 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                  }`}
+                  title={isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
+                  onClick={isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
+                >
+                  {isOfferedInCurrentTerm ? (
+                    <>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {t('offered.yes')}
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-3 w-3 mr-1" />
+                      {t('offered.no')}
+                    </>
+                  )}
+                </Badge>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="overflow-hidden">
           {teachingInfoLoading ? (

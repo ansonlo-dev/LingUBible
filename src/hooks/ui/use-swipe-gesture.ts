@@ -52,13 +52,34 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       target.closest('input[type="text"]') ||
       target.closest('textarea') ||
       target.closest('select') ||
-      target.closest('button') ||
-      target.closest('a[href]') ||
       target.closest('[cmdk-root]') ||
       target.closest('.fixed.left-4.right-4') // 搜索結果下拉框
     )) {
-
       return;
+    }
+
+    // 檢查是否是真正的按鈕或鏈接，但允許課程卡片和講師卡片的主要連結區域
+    if (target) {
+      const isInCourseCard = target.closest('.course-card');
+      const isInInstructorCard = target.closest('[class*="instructor-card"]') || isInCourseCard; // instructor cards often use course-card class
+      
+      // 如果在課程卡片或講師卡片內，只阻止特定的交互元素
+      if (isInCourseCard || isInInstructorCard) {
+        // 允許在卡片的主要區域開始滑動，但阻止這些特定元素
+        if (target.closest('button:not(.card-main-link)') || 
+            target.closest('.favorite-button') ||
+            target.closest('[role="button"]:not(.card-main-link)') ||
+            target.closest('input') ||
+            target.closest('textarea') ||
+            target.closest('select')) {
+          return;
+        }
+      } else {
+        // 如果不在卡片內，使用原來的邏輯阻止所有按鈕和鏈接
+        if (target.closest('button') || target.closest('a[href]')) {
+          return;
+        }
+      }
     }
 
     if (!e.touches || e.touches.length === 0) {
@@ -153,13 +174,34 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       target.closest('input[type="text"]') ||
       target.closest('textarea') ||
       target.closest('select') ||
-      target.closest('button') ||
-      target.closest('a[href]') ||
       target.closest('[cmdk-root]') ||
       target.closest('.fixed.left-4.right-4') // 搜索結果下拉框
     )) {
-
       return;
+    }
+
+    // 檢查是否是真正的按鈕或鏈接，但允許課程卡片和講師卡片的主要連結區域
+    if (target) {
+      const isInCourseCard = target.closest('.course-card');
+      const isInInstructorCard = target.closest('[class*="instructor-card"]') || isInCourseCard; // instructor cards often use course-card class
+      
+      // 如果在課程卡片或講師卡片內，只阻止特定的交互元素
+      if (isInCourseCard || isInInstructorCard) {
+        // 允許在卡片的主要區域結束滑動，但阻止這些特定元素
+        if (target.closest('button:not(.card-main-link)') || 
+            target.closest('.favorite-button') ||
+            target.closest('[role="button"]:not(.card-main-link)') ||
+            target.closest('input') ||
+            target.closest('textarea') ||
+            target.closest('select')) {
+          return;
+        }
+      } else {
+        // 如果不在卡片內，使用原來的邏輯阻止所有按鈕和鏈接
+        if (target.closest('button') || target.closest('a[href]')) {
+          return;
+        }
+      }
     }
 
     if (!e.changedTouches || e.changedTouches.length === 0) {

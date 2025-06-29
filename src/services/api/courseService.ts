@@ -63,6 +63,7 @@ export interface TeachingRecord {
   term_code: string;
   instructor_name: string;
   session_type: string;
+  service_learning: string | null; // null, 'compulsory', or 'optional'
   $createdAt: string;
   $updatedAt: string;
 }
@@ -119,6 +120,10 @@ export interface InstructorDetail {
   has_reading: boolean;
   has_attendance_requirement: boolean;
   comments: string;
+  // Service learning fields for each instructor
+  has_service_learning: boolean;
+  service_learning_type: 'compulsory' | 'optional';
+  service_learning_description: string;
 }
 
 export interface InstructorTeachingCourse {

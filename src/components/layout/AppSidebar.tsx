@@ -123,9 +123,23 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       
-      // 只有在寬度小於 640px 或者是真正的移動設備時才視為手機版
-      // 這樣桌面半屏模式（約 960px）就不會被誤判為手機版
-      const newIsMobile = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      // 新的智能檢測邏輯：
+      // 1. 真正的移動設備（有觸控且匹配用戶代理）始終視為移動設備
+      // 2. 桌面設備即使在分屏模式下（寬度 < 640）也不視為移動設備
+      let newIsMobile;
+      
+      if (isMobileDevice && isTouchDevice) {
+        // 真正的移動設備：檢查螢幕的最大尺寸
+        const maxDimension = Math.max(window.innerWidth, window.innerHeight);
+        newIsMobile = maxDimension < 1024; // 真正移動設備的最大尺寸限制
+      } else if (isTouchDevice && !isMobileDevice) {
+        // 觸控設備但不是移動設備（如Surface等），使用寬度判斷
+        newIsMobile = width < 640;
+      } else {
+        // 桌面設備：即使在分屏模式下也不視為移動設備
+        // 只有在極窄的情況下（如開發者工具模擬）才視為移動設備
+        newIsMobile = width < 480;
+      }
       
       setIsMobile(newIsMobile);
       // 強制重新渲染以確保 shouldShowText 正確更新

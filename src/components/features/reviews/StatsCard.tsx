@@ -1,118 +1,83 @@
+import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { LoadingDots } from '@/components/ui/loading-number';
-import { useCounterAnimation } from '@/hooks/useCounterAnimation';
-import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-import { useLanguage } from '@/hooks/useLanguage';
-import { useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 
 interface StatsCardProps {
   title: string;
-  value: string | number;
-  change?: string;
+  value: number | string;
   icon: LucideIcon;
   trend?: 'up' | 'down' | 'neutral';
-  animationDelay?: number;
-  isLoading?: boolean;
+  change?: string; // Keep for backward compatibility - maps to trendValue
+  trendValue?: string;
+  isLoading?: boolean; // Added back for compatibility
 }
 
-export function StatsCard({ 
-  title, 
-  value, 
-  change, 
-  icon: Icon, 
+export const StatsCard: React.FC<StatsCardProps> = ({
+  title,
+  value,
+  icon: Icon,
   trend = 'neutral',
-  animationDelay = 0,
+  change, // For backward compatibility
+  trendValue,
   isLoading = false
-}: StatsCardProps) {
-  const { t } = useLanguage();
-  const { elementRef, isIntersecting } = useIntersectionObserver({
-    threshold: 0.1, // 降低閾值，更容易觸發
-    triggerOnce: true
-  });
-
-  // 解析數字值
-  const parseNumericValue = (val: string | number): number => {
-    if (typeof val === 'number') return val;
-    
-    // 移除逗號和其他非數字字符，但保留數字
-    const numericString = val.replace(/[^\d]/g, '');
-    const parsed = parseInt(numericString, 10);
-    return isNaN(parsed) ? 0 : parsed;
-  };
-
-  const numericValue = parseNumericValue(value);
-  const isNumeric = numericValue > 0 && !isLoading;
-
-  // 根據數值大小設置不同的起始百分比
-  const getStartPercentage = (num: number): number => {
-    if (num >= 10000) return 0.6; // 大數字從60%開始
-    if (num >= 1000) return 0.5;  // 中等數字從50%開始
-    if (num >= 100) return 0.3;   // 小數字從30%開始
-    return 0.1; // 很小的數字從10%開始
-  };
-
-  const { count, startAnimation, hasAnimated, isAnimating } = useCounterAnimation({
-    end: numericValue,
-    duration: 1500,
-    delay: animationDelay,
-    startPercentage: getStartPercentage(numericValue)
-  });
-
-  useEffect(() => {
-    if (isIntersecting && isNumeric && !hasAnimated && !isAnimating) {
-      startAnimation();
-    }
-  }, [isIntersecting, isNumeric, hasAnimated, isAnimating, startAnimation]);
-
-  // 格式化顯示值
-  const formatDisplayValue = (val: number): string => {
-    if (typeof value === 'string' && value.includes(',')) {
-      return val.toLocaleString();
-    }
-    return val.toString();
-  };
-
-  const displayValue = isNumeric ? formatDisplayValue(count) : value;
-
+}) => {
   const getTrendColor = () => {
     switch (trend) {
-      case 'up': return 'text-green-600 dark:text-green-400';
-      case 'down': return 'text-red-600 dark:text-red-400';
-      default: return 'text-yellow-600 dark:text-yellow-400';
+      case 'up':
+        return 'text-green-600 dark:text-green-400';
+      case 'down':
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return 'text-gray-600 dark:text-gray-400';
     }
   };
 
+  // Use change prop if trendValue is not provided (backward compatibility)
+  const displayTrendValue = trendValue || change;
+
   return (
-    <Card className="stats-card" ref={elementRef}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 dark:text-muted-foreground">{title}</p>
-            
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
-              {displayValue}
-            </p>
-            
-            {change && (
-              <p className={`text-sm mt-1 ${getTrendColor()}`}>
-                {change}
-              </p>
-            )}
-            
-            {isLoading && (
-              <div className="flex items-center space-x-2 mt-1">
-                <LoadingDots size="sm" />
-                <span className="text-xs text-muted-foreground">{t('stats.updating')}</span>
-              </div>
+    <Card className="stats-card p-0 relative overflow-hidden">
+      {/* Header section with icon and title */}
+      <div className="flex items-center justify-between p-6 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 p-3 rounded-full">
+            <Icon className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-xl font-bold text-muted-foreground line-clamp-2 leading-tight">
+            {title}
+          </h3>
+        </div>
+      </div>
+
+      {/* Main value section */}
+      <div className="px-6 pb-6">
+        <div className="space-y-3">
+          <div className="text-3xl font-bold text-foreground tabular-nums leading-none">
+            {isLoading ? (
+              <div className="h-9 w-16 bg-muted animate-pulse rounded" />
+            ) : (
+              value
             )}
           </div>
           
-          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
+          {/* Trend section */}
+          {displayTrendValue && !isLoading && (
+            <div className="flex items-center gap-1">
+              <span className={`text-xs font-medium ${getTrendColor()}`}>
+                {displayTrendValue}
+              </span>
+            </div>
+          )}
+
+          {/* Loading state for trend */}
+          {isLoading && (
+            <div className="h-4 w-12 bg-muted animate-pulse rounded" />
+          )}
         </div>
-      </CardContent>
+      </div>
+
+      {/* Decorative gradient accent */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30" />
     </Card>
   );
-}
+};

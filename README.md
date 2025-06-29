@@ -120,6 +120,7 @@
 | | ESLint | Latest | Code Linting |
 | | PostCSS | Latest | CSS Processing |
 | | i18n | - | Internationalization |
+| **🐧 Environment** | Linux | - | Development OS |
 
 </div>
 

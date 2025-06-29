@@ -111,6 +111,12 @@ div[style*="position: fixed"][style*="right: 14px"] {
     overflow-y: auto;
   }
 
+  /* 
+   * 滾動條佈局偏移修復：
+   * 現在使用 JavaScript 動態補償方案 (scrollbarCompensation.ts)
+   * 當 Radix UI 下拉選單打開時會自動檢測並補償滾動條寬度
+   */
+
   /* 手機版側邊欄打開時防止背景滾動，但不影響 sticky 定位 */
   body.mobile-sidebar-open {
     /* 只在手機版且側邊欄打開時禁用滾動 */
@@ -119,7 +125,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 確保在手機版側邊欄打開時，main-container 不會滾動但header仍然可見 */
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     body.mobile-sidebar-open .main-container {
       overflow: hidden;
       height: 100vh;
@@ -259,8 +265,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
-  /* 手機版隱藏側邊欄 */
-  @media (max-width: 640px) {
+  /* 手機版隱藏側邊欄 - 調整斷點以支援桌面分屏模式 */
+  @media (max-width: 768px) {
     .sidebar-container {
       transform: translateX(-100%);
       top: 0;
@@ -327,6 +333,35 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
+  /* 桌面分屏模式支援：769px-1023px 寬度範圍 */
+  @media (min-width: 769px) and (max-width: 1023px) {
+    .sidebar-container {
+      /* 在分屏模式下保持側邊欄可見但使用較小寬度 */
+      width: 9rem; /* 從 11rem 減少到 9rem */
+    }
+    
+    .main-container {
+      margin-left: 9rem;
+      width: calc(100% - 9rem);
+      max-width: calc(100% - 9rem);
+    }
+    
+    .main-container.sidebar-collapsed {
+      margin-left: var(--sidebar-collapsed-width);
+      width: calc(100% - var(--sidebar-collapsed-width));
+      max-width: calc(100% - var(--sidebar-collapsed-width));
+    }
+    
+    /* 分屏模式下側邊欄文字稍微小一點以節省空間 */
+    .sidebar-container nav a span {
+      font-size: 0.8rem;
+    }
+    
+    .sidebar-container .text-xl {
+      font-size: 1rem;
+    }
+  }
+
   .main-container {
     flex: 1;
     display: flex;
@@ -358,7 +393,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     max-width: calc(100% - var(--sidebar-collapsed-width));
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .main-container,
     .main-container.sidebar-collapsed {
       margin-left: 0;
@@ -420,7 +455,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 桌面版sidebar摺疊時的header調整 - 不再需要，因為header在main-container內部 */
 
   /* 手機版 header 樣式 */
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .header-sticky {
       /* 手機版使用正常padding */
       padding: 0 0.75rem !important;
@@ -561,116 +596,64 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
 
 
-  /* 統計卡片樣式 - 使用網站主題色的漸變背景 */
+  /* 統計卡片樣式 - 簡潔現代設計 */
   .stats-card {
-    background: linear-gradient(135deg, #fef2f2 0%, #ffffff 50%, #fef2f2 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.2);
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: none;
     border-radius: 20px;
     box-shadow: 
-      0 4px 12px rgba(220, 38, 38, 0.1),
-      0 2px 6px rgba(0, 0, 0, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      0 4px 20px rgba(0, 0, 0, 0.06),
+      0 1px 4px rgba(0, 0, 0, 0.04);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    opacity: 1;
     overflow: hidden;
   }
 
-  .stats-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(220, 38, 38, 0.1) 50%,
-      transparent 100%
-    );
-    transition: left 0.5s ease;
-    z-index: 1;
-  }
-
-  .stats-card:hover::before {
-    left: 100%;
-  }
-
   .stats-card:hover {
-    background: linear-gradient(135deg, #fef2f2 0%, #ffffff 30%, #fef2f2 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.3) !important;
+    transform: translateY(-4px) scale(1.02);
     box-shadow: 
-      0 8px 24px rgba(220, 38, 38, 0.15),
-      0 4px 12px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    transform: translateY(-3px) scale(1.02);
+      0 12px 32px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .stats-card > * {
-    position: relative;
-    z-index: 2;
-  }
-
-  /* 統計卡片圖標容器樣式 */
+  /* 統計卡片圖標容器樣式 - 現代簡約風格 */
   .stats-card .bg-primary\/10 {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(220, 38, 38, 0.08) 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.2);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05)) !important;
+    border: none;
+    border-radius: 16px !important;
     transition: all 0.3s ease;
-    animation: stats-icon-pulse 3s ease-in-out infinite;
   }
 
   .stats-card:hover .bg-primary\/10 {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.25) 0%, rgba(220, 38, 38, 0.15) 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.3);
-    transform: scale(1.1);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(220, 38, 38, 0.08)) !important;
+    transform: scale(1.05);
   }
 
-  @keyframes stats-icon-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2);
-    }
-    50% {
-      box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.05);
-    }
-  }
-
+  /* 深色模式樣式 */
   .dark .stats-card {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgb(var(--card)) 50%, rgba(220, 38, 38, 0.1) 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.3);
+    background: rgba(20, 20, 23, 0.98) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 
-      0 4px 12px rgba(220, 38, 38, 0.2),
-      0 2px 6px rgba(0, 0, 0, 0.1),
-      inset 0 1px 0 rgba(220, 38, 38, 0.2);
-  }
-
-  .dark .stats-card::before {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(220, 38, 38, 0.2) 50%,
-      transparent 100%
-    );
+      0 4px 20px rgba(0, 0, 0, 0.2),
+      0 1px 4px rgba(0, 0, 0, 0.3);
   }
 
   .dark .stats-card:hover {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgb(var(--card)) 30%, rgba(220, 38, 38, 0.15) 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.4);
     box-shadow: 
-      0 8px 24px rgba(220, 38, 38, 0.25),
-      0 4px 12px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(220, 38, 38, 0.3);
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      0 4px 8px rgba(0, 0, 0, 0.4);
   }
 
   /* 深色模式下的圖標容器 */
   .dark .stats-card .bg-primary\/10 {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.3);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(220, 38, 38, 0.08)) !important;
   }
 
   .dark .stats-card:hover .bg-primary\/10 {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.35) 0%, rgba(220, 38, 38, 0.2) 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.4);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.25), rgba(220, 38, 38, 0.12)) !important;
   }
 
   /* 數字動畫樣式 */
@@ -824,26 +807,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
       0 0 2px currentColor,
       0 0 4px currentColor;
     animation: very-subtle-neon-flicker-dark 4s ease-in-out infinite alternate;
-  }
-
-  /* 暗色主題下的極輕微紅色霓虹燈效果 */
-  .dark .red-neon-glow-text {
-    text-shadow: 
-      0 0 2px rgb(220, 38, 38),
-      0 0 4px rgb(220, 38, 38);
-  }
-
-  @keyframes very-subtle-neon-flicker-dark {
-    0%, 100% {
-      text-shadow: 
-        0 0 2px currentColor,
-        0 0 4px currentColor;
-    }
-    50% {
-      text-shadow: 
-        0 0 1px currentColor,
-        0 0 2px currentColor;
-    }
   }
 
   /* 暗色主題下的極輕微紅色霓虹燈閃爍動畫 */
@@ -1092,6 +1055,16 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
+  /* 完全隱藏滾動條的樣式類 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
   /* 選擇文字樣式 */
   ::selection {
     background: rgb(var(--primary));
@@ -1147,14 +1120,17 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* Toast 成功變體增強樣式 */
+  [data-radix-toast-root][data-variant="success"],
   .toast-success {
     background: rgb(240, 253, 244) !important;
     border: 1px solid rgb(34, 197, 94) !important;
+    color: rgb(20, 83, 45) !important;
     box-shadow: 
       0 10px 25px rgba(34, 197, 94, 0.15),
       0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
+  .dark [data-radix-toast-root][data-variant="success"],
   .dark .toast-success {
     background: rgb(20, 83, 45) !important;
     border: 1px solid rgb(34, 197, 94) !important;
@@ -1185,15 +1161,52 @@ div[style*="position: fixed"][style*="right: 14px"] {
       0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
-  /* 確保所有 toast 都有不透明背景 */
-  [data-radix-toast-root] {
+  /* 終極 Toast 懸停修復 - 最高優先級 */
+  
+  /* 完全禁用 Toast 的懸停狀態變化 */
+  li[role="status"][data-radix-toast-root]:hover,
+  li[role="status"][data-radix-toast-root]:focus,
+  li[role="status"][data-radix-toast-root]:active,
+  [data-radix-collection-item][data-radix-toast-root]:hover,
+  [data-radix-collection-item][data-radix-toast-root]:focus,
+  [data-radix-collection-item][data-radix-toast-root]:active {
+    background-color: inherit !important;
+    background: inherit !important;
+    border-color: inherit !important;
+    border: inherit !important;
+    color: inherit !important;
+    opacity: inherit !important;
+    transform: none !important;
+    filter: none !important;
+    box-shadow: inherit !important;
+    transition: none !important;
+  }
+
+  /* 針對具體的綠色成功 Toast */
+  li[role="status"][data-radix-toast-root].bg-green-50:hover,
+  li[role="status"][data-radix-toast-root].border-green-200:hover,
+  li[role="status"][data-radix-toast-root].text-green-900:hover {
+    background-color: rgb(240 253 244) !important;
+    border-color: rgb(187 247 208) !important;
+    color: rgb(20 83 45) !important;
+  }
+
+  /* 暗色主題的綠色 Toast */
+  .dark li[role="status"][data-radix-toast-root]:hover {
+    background-color: inherit !important;
+    border-color: inherit !important;
+    color: inherit !important;
+  }
+
+  /* 確保預設 toast 都有不透明背景 - 排除成功和錯誤變體 */
+  [data-radix-toast-root]:not([data-variant="success"]):not([data-variant="destructive"]) {
     background: rgb(255, 255, 255) !important;
     border: 1px solid rgb(229, 231, 235) !important;
     color: rgb(17, 24, 39) !important;
     opacity: 1 !important;
   }
 
-  .dark [data-radix-toast-root] {
+  .dark [data-radix-toast-root]:not([data-variant="success"]):not([data-variant="destructive"]) {
     background: rgb(31, 41, 55) !important;
     border: 1px solid rgb(75, 85, 99) !important;
     color: rgb(243, 244, 246) !important;
@@ -1460,8 +1473,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   /* 側邊欄滑動動畫優化 */
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .sidebar-container {
+      transform: translateX(-100%);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
@@ -1472,7 +1486,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 移動端橫屏模式：側邊欄寬度為屏幕寬度的三分之一 */
-  @media (max-width: 640px) and (orientation: landscape) {
+  @media (max-width: 768px) and (orientation: landscape) {
     .sidebar-container {
       width: 33.33vw !important;
     }
@@ -1491,7 +1505,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 移動端豎屏模式：確保文字正確顯示 */
-  @media (max-width: 640px) and (orientation: portrait) {
+  @media (max-width: 768px) and (orientation: portrait) {
     .sidebar-container nav a span {
       opacity: 1 !important;
       width: auto !important;
@@ -1514,8 +1528,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
   
   /* 確保活躍狀態的樣式優先級更高 */
   [data-radix-tabs-trigger][data-state="active"]:hover {
-    background-color: rgb(var(--background)) !important;
-    border: 1px solid rgb(var(--border));
+    background-color: transparent !important;
+    border: none !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
     border-radius: 6px 6px 0 0 !important;
   }
@@ -1558,9 +1572,16 @@ div[style*="position: fixed"][style*="right: 14px"] {
     display: none !important;
   }
   
-  /* 確保非活躍狀態的 TabsTrigger 沒有底部邊框 */
+  /* 確保非活躍狀態的 TabsTrigger 沒有底部邊框和背景 */
   [data-radix-tabs-trigger]:not([data-state="active"]) {
     border-bottom: none !important;
+    background-color: transparent !important;
+  }
+  
+  /* 防止狀態切換時出現白色閃爍 */
+  [data-radix-tabs-trigger] {
+    background-color: transparent !important;
+    transition: border-bottom 0.2s ease-in-out !important;
   }
   
   /* 暗色主題下的 TabsTrigger 懸停效果 */
@@ -1571,8 +1592,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   .dark [data-radix-tabs-trigger][data-state="active"]:hover {
-    background-color: rgb(var(--background)) !important;
-    border: 1px solid rgb(var(--border));
+    background-color: transparent !important;
+    border: none !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
     border-radius: 6px 6px 0 0 !important;
   }
@@ -1597,7 +1618,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 手機版標籤切換響應式設計 */
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     /* 確保 TabsList 在手機版有足夠的寬度 */
     [data-radix-tabs-list] {
       width: 100% !important;
@@ -2556,6 +2577,37 @@ div[style*="position: fixed"][style*="right: 14px"] {
     background-color: rgb(240, 241, 243) !important;
   }
 
+  /* 增強 Select 下拉選項的懸停效果 */
+  [data-radix-select-item]:hover,
+  [data-radix-collection-item]:hover {
+    background-color: #f3f4f6 !important;
+    color: inherit !important;
+    border-radius: 4px;
+    transform: translateX(2px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.15s ease-in-out;
+  }
 
+  .dark [data-radix-select-item]:hover,
+  .dark [data-radix-collection-item]:hover {
+    background-color: rgba(227, 31, 38, 0.2) !important;
+    color: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
 
+  /* 確保懸停時的平滑過渡效果 */
+  [data-radix-select-item] {
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  /* 增強特殊分組項目（如學院標題）的懸停效果 */
+  [data-radix-select-content] .bg-primary\/5:hover {
+    background-color: #e5e7eb !important;
+    color: inherit !important;
+  }
+
+  .dark [data-radix-select-content] .bg-primary\/5:hover {
+    background-color: rgba(227, 31, 38, 0.25) !important;
+    color: white !important;
+  }
 }

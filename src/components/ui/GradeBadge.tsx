@@ -15,12 +15,22 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   showTooltip = true 
 }) => {
   const { t } = useLanguage();
-  const gradeInfo = getGradeInfo(grade);
-
-  // 如果無法獲取成績信息，顯示原始成績或 N/A
-  const displayGrade = gradeInfo?.grade || grade || 'N/A';
-  const displayGpa = gradeInfo?.gpa ?? 0;
-  const displayDescription = gradeInfo?.description || 'Unknown';
+  
+  // Handle N/A grades (stored as "-1")
+  const isNotApplicable = grade === '-1';
+  
+  // If it's N/A, use translated text; otherwise get grade info
+  const gradeInfo = isNotApplicable ? null : getGradeInfo(grade);
+  
+  // Display logic: Always use "N/A" for display (fits in circle), but translated text for tooltips
+  const displayGrade = isNotApplicable 
+    ? 'N/A'
+    : gradeInfo?.grade || grade || 'N/A';
+    
+  const displayGpa = isNotApplicable ? 0 : (gradeInfo?.gpa ?? 0);
+  const displayDescription = isNotApplicable 
+    ? 'Not Applicable' 
+    : (gradeInfo?.description || 'Unknown');
 
   const getLocalizedDescription = (description: string) => {
     const descriptionMap: Record<string, string> = {
@@ -36,6 +46,7 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
       'Unsatisfactory': t('grade.description.unsatisfactory'),
       'Withdrawn': t('grade.description.withdrawn'),
       'Audit': t('grade.description.audit'),
+      'Not Applicable': t('review.notApplicable'),
       'Unknown': t('grade.description.unknown') || 'Unknown'
     };
     return descriptionMap[description] || description;
@@ -47,13 +58,13 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
     lg: 'w-12 h-12 text-lg'
   };
 
-  const getGradeStyleClasses = (grade: string, gpa: number) => {
-    // 處理 N/A 或空成績（但不包括有效的 F 成績）
-    if (!grade || grade.toLowerCase() === 'n/a' || grade.trim() === '' || displayGrade === 'N/A') {
+  const getGradeStyleClasses = (grade: string, gpa: number, isNA: boolean) => {
+    // 處理 N/A 成績
+    if (isNA || !grade || grade.toLowerCase() === 'n/a' || grade.trim() === '' || displayGrade === 'N/A') {
       return `
         bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600
         dark:from-gray-500 dark:via-gray-600 dark:to-gray-700
-        text-gray-800 dark:text-gray-200
+        text-white dark:text-gray-200
         border-2 border-gray-500/30 dark:border-gray-600/40
         shadow-lg shadow-gray-500/25 dark:shadow-gray-600/20
         hover:shadow-xl hover:shadow-gray-500/35 dark:hover:shadow-gray-600/30
@@ -143,6 +154,11 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   const getTooltipText = () => {
     if (!showTooltip) return undefined;
     
+    // Special tooltip for N/A grades
+    if (isNotApplicable) {
+      return `${t('review.finalGrade')}: ${t('review.notApplicable')} | ${t('review.gradeNotApplicable')}`;
+    }
+    
     return `${t('review.finalGrade')}: ${displayGrade} | ${t('grade.gpa')}: ${displayGpa.toFixed(2)} | ${getLocalizedDescription(displayDescription)}`;
   };
 
@@ -151,7 +167,7 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
       <div 
         className={`
           ${sizeClasses[size]} 
-          ${getGradeStyleClasses(displayGrade, displayGpa)}
+          ${getGradeStyleClasses(displayGrade, displayGpa, isNotApplicable)}
           font-black 
           text-center
           rounded-full

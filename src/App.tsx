@@ -28,6 +28,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import UserSettings from "./pages/user/UserSettings";
 import MyReviews from "./pages/user/MyReviews";
 import Favorites from "./pages/Favorites";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 import OAuthLoginCallback from "./pages/auth/OAuthLoginCallback";
 
@@ -50,6 +51,7 @@ import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { initializeScrollbarCompensation } from '@/utils/ui/scrollbarCompensation';
 
 
 
@@ -131,8 +133,20 @@ const AppContent = () => {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       
-      // 只有在寬度小於 640px 或者是真正的移動設備時才視為手機版
-      const isRealMobile = (width < 640) || (width < 768 && isTouchDevice && isMobileDevice);
+      // 智能檢測邏輯：與 AppSidebar 保持一致
+      let isRealMobile;
+      
+      if (isMobileDevice && isTouchDevice) {
+        // 真正的移動設備：檢查螢幕的最大尺寸
+        const maxDimension = Math.max(window.innerWidth, window.innerHeight);
+        isRealMobile = maxDimension < 1024;
+      } else if (isTouchDevice && !isMobileDevice) {
+        // 觸控設備但不是移動設備（如Surface等），使用寬度判斷
+        isRealMobile = width < 640;
+      } else {
+        // 桌面設備：即使在分屏模式下也不視為移動設備
+        isRealMobile = width < 480;
+      }
       
       // 只在非手機版時從 cookie 讀取狀態
       if (!isRealMobile) {
@@ -180,6 +194,9 @@ const AppContent = () => {
     setShowSwipeHint(!hasUsedSwipe);
     setIsInitialized(true);
     
+    // 初始化滾動條補償系統，防止下拉選單導致的佈局偏移
+    const cleanupScrollbarCompensation = initializeScrollbarCompensation();
+    
     // 如果顯示滑動提示，4秒後自動隱藏
     let timer: NodeJS.Timeout | undefined;
     if (!hasUsedSwipe) {
@@ -191,6 +208,7 @@ const AppContent = () => {
     
     return () => {
       unwatch();
+      cleanupScrollbarCompensation();
       if (timer) clearTimeout(timer);
     };
   }, []);
@@ -264,6 +282,8 @@ const AppContent = () => {
     // 當從手機版切換到桌面版時，關閉手機版側邊欄並恢復桌面版狀態
     if (isDesktop && isMobileSidebarOpen) {
       setIsMobileSidebarOpen(false);
+      // 清理可能殘留的 CSS 類
+      document.body.classList.remove('mobile-sidebar-open');
       // 從 cookie 讀取桌面版側邊欄狀態
       setIsSidebarCollapsed(sidebarStateCookie.getState());
     }
@@ -272,6 +292,8 @@ const AppContent = () => {
     if (isMobile && !isMobileSidebarOpen) {
       // 手機版時不需要摺疊狀態，因為會使用 overlay 模式
       setIsSidebarCollapsed(false);
+      // 確保清理桌面版可能殘留的 CSS 類
+      document.body.classList.remove('mobile-sidebar-open');
     }
   }, [isDesktop, isMobile, isMobileSidebarOpen]);
 
@@ -350,8 +372,34 @@ const AppContent = () => {
         // 移除 CSS 類
         document.body.classList.remove('mobile-sidebar-open');
       };
+    } else {
+      // 確保在不需要時移除 CSS 類
+      document.body.classList.remove('mobile-sidebar-open');
     }
   }, [isMobile, isMobileSidebarOpen]);
+
+  // 狀態一致性檢查和修復
+  useEffect(() => {
+    // 如果是桌面版但 mobile sidebar 還是開著，強制關閉
+    if (isDesktop && isMobileSidebarOpen) {
+      console.log('📱 App: 檢測到桌面版但 mobile sidebar 仍開啟，強制關閉');
+      setIsMobileSidebarOpen(false);
+      document.body.classList.remove('mobile-sidebar-open');
+    }
+    
+    // 如果 CSS 類與狀態不一致，修復
+    const hasOpenClass = document.body.classList.contains('mobile-sidebar-open');
+    const shouldHaveOpenClass = isMobile && isMobileSidebarOpen;
+    
+    if (hasOpenClass !== shouldHaveOpenClass) {
+      console.log(`📱 App: CSS 類狀態不一致，修復中 (hasClass: ${hasOpenClass}, shouldHave: ${shouldHaveOpenClass})`);
+      if (shouldHaveOpenClass) {
+        document.body.classList.add('mobile-sidebar-open');
+      } else {
+        document.body.classList.remove('mobile-sidebar-open');
+      }
+    }
+  }, [isDesktop, isMobile, isMobileSidebarOpen]);
 
   // 統一的側邊欄切換函數，根據設備類型選擇正確的行為
   const handleSidebarToggle = () => {
@@ -520,9 +568,9 @@ const RouterContent = ({
               </aside>
               
               {/* 手機版遮罩 */}
-              {isMobileSidebarOpen && (
+              {isMobileSidebarOpen && isMobile && (
                 <div 
-                  className="md:hidden fixed inset-0 z-[45] bg-black/50"
+                  className="fixed inset-0 z-[45] bg-black/50"
                   onClick={() => setIsMobileSidebarOpen(false)}
                 />
               )}
@@ -594,9 +642,21 @@ const RouterContent = ({
                     <Route path="/instructors/:instructorName" element={<Lecturers />} />
                     <Route path="/write-review" element={<WriteReview />} />
                     <Route path="/write-review/:courseCode" element={<WriteReview />} />
-                    <Route path="/my-reviews" element={<MyReviews />} />
-                    <Route path="/favorites" element={<Favorites />} />
-                    <Route path="/settings" element={<UserSettings />} />
+                    <Route path="/my-reviews" element={
+                      <ProtectedRoute>
+                        <MyReviews />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/favorites" element={
+                      <ProtectedRoute>
+                        <Favorites />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/settings" element={
+                      <ProtectedRoute>
+                        <UserSettings />
+                      </ProtectedRoute>
+                    } />
 
                                     <Route path="/terms" element={<Terms />} />
                     <Route path="/privacy" element={<Privacy />} />

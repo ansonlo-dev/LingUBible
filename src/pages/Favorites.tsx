@@ -56,12 +56,8 @@ const Favorites = () => {
   const { toggleFavorite, refresh: refreshFavorites } = useFavorites({ preload: true });
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
     loadFavorites();
-  }, [user, navigate]);
+  }, []);
 
   const loadFavorites = async () => {
     try {
@@ -185,22 +181,7 @@ const Favorites = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="rounded-lg p-12 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
-          <div className="text-center space-y-4">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
-            <h3 className="text-lg font-medium">{t('auth.loginRequired')}</h3>
-            <p className="text-muted-foreground">{t('favorites.loginRequiredDescription')}</p>
-            <Button onClick={() => navigate('/login')} className="mt-4">
-              {t('auth.login')}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="container mx-auto px-4 py-8">

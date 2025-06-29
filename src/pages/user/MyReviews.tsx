@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageSquareText, 
+  MessageSquare, 
   Edit, 
   Trash2, 
   Loader2, 
@@ -32,7 +32,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { CourseService } from '@/services/api/courseService';
-import type { CourseReviewInfo, InstructorDetail, Instructor } from '@/services/api/courseService';
+import type { CourseReviewInfo, InstructorDetail, Instructor, Course } from '@/services/api/courseService';
 import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdownRenderer';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
@@ -42,11 +42,15 @@ import { VotingButtons } from '@/components/ui/voting-buttons';
 import { getInstructorName, getCourseTitle } from '@/utils/textUtils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MyReviewsFilters, MyReviewFilters } from '@/components/features/reviews/MyReviewsFilters';
+import { Pagination } from '@/components/features/reviews/Pagination';
+
 
 interface UserReviewInfo extends CourseReviewInfo {
   upvotes: number;
   downvotes: number;
   instructorData: Map<string, Instructor>;
+  courseData?: Course;
 }
 
 interface ReviewInfoWithInstructors extends CourseReviewInfo {
@@ -54,6 +58,59 @@ interface ReviewInfoWithInstructors extends CourseReviewInfo {
   downvotes: number;
   instructorMaps: Map<string, Instructor>;
 }
+
+// CourseTitle component for fetching and displaying course title
+const CourseTitle = React.memo(({ courseCode }: { courseCode: string }) => {
+  const { language } = useLanguage();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        setLoading(true);
+        const courseData = await CourseService.getCourseByCode(courseCode);
+        setCourse(courseData);
+      } catch (error) {
+        console.error('Error fetching course:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCourse();
+  }, [courseCode]);
+  
+  if (loading) {
+    return (
+      <div>
+        <div className="text-sm text-muted-foreground font-normal">Loading...</div>
+      </div>
+    );
+  }
+  
+  if (!course) {
+    return (
+      <div>
+        <div className="text-sm text-muted-foreground font-normal">{courseCode}</div>
+      </div>
+    );
+  }
+  
+  const courseInfo = getCourseTitle(course, language);
+  return (
+    <div>
+      <div className="text-sm text-muted-foreground font-normal">{courseInfo.primary}</div>
+      {courseInfo.secondary && (
+        <div className="text-sm text-muted-foreground font-normal mt-0.5">
+          {courseInfo.secondary}
+        </div>
+      )}
+    </div>
+  );
+});
+
+CourseTitle.displayName = 'CourseTitle';
 
 const MyReviews = () => {
   const { t, language } = useLanguage();
@@ -66,16 +123,24 @@ const MyReviews = () => {
   const [error, setError] = useState<string | null>(null);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
+  // 篩選和排序狀態
+  const [filters, setFilters] = useState<MyReviewFilters>({
+    searchTerm: '',
+    selectedSubjectAreas: [],
+    selectedTerms: [],
+    selectedGrades: [],
+    selectedSessionTypes: [],
+    sortBy: 'postDate',
+    sortOrder: 'desc',
+    itemsPerPage: 2, // 只顯示2個評論（1行）
+    currentPage: 1
+  });
+
   useEffect(() => {
     loadUserReviews();
   }, [user]);
 
   const loadUserReviews = async () => {
-    if (!user) {
-      setError(t('myReviews.loginRequired'));
-      setLoading(false);
-      return;
-    }
 
     try {
       setLoading(true);
@@ -84,7 +149,7 @@ const MyReviews = () => {
       // 獲取用戶評論
       const userReviews = await CourseService.getUserReviews(user.$id);
       
-      // 為每個評論獲取講師信息
+      // 為每個評論獲取講師信息和課程信息
       const reviewsWithInstructors = await Promise.all(
         userReviews.map(async (reviewInfo) => {
           const instructorData = new Map<string, Instructor>();
@@ -92,19 +157,23 @@ const MyReviews = () => {
           // 從 instructor_details 中獲取所有講師名字
           const instructorNames = reviewInfo.instructorDetails.map(detail => detail.instructor_name);
           
-          // 並行獲取所有講師的完整信息
-          const instructorPromises = [...new Set(instructorNames)].map(async (name) => {
-            const instructor = await CourseService.getInstructorByName(name);
-            if (instructor) {
-              instructorData.set(name, instructor);
-            }
-          });
-          
-          await Promise.all(instructorPromises);
+          // 並行獲取所有講師的完整信息和課程信息
+          const [courseData] = await Promise.all([
+            // 獲取課程信息
+            CourseService.getCourseByCode(reviewInfo.review.course_code),
+            // 獲取講師信息
+            ...([...new Set(instructorNames)].map(async (name) => {
+              const instructor = await CourseService.getInstructorByName(name);
+              if (instructor) {
+                instructorData.set(name, instructor);
+              }
+            }))
+          ]);
           
           return {
             ...reviewInfo,
-            instructorData
+            instructorData,
+            courseData: courseData || undefined
           };
         })
       );
@@ -150,22 +219,254 @@ const MyReviews = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  if (!user) {
+  const getLanguageDisplayName = (language: string) => {
+    const languageMap: { [key: string]: string } = {
+      'en': t('language.english'),
+      'zh-TW': t('language.traditionalChinese'),
+      'zh-CN': t('language.simplifiedChinese')
+    };
+    return languageMap[language] || language;
+  };
+
+  const renderBooleanBadge = (value: boolean, label: string) => {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="rounded-lg p-12 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
-          <div className="text-center space-y-4">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
-            <h3 className="text-lg font-medium">{t('auth.loginRequired')}</h3>
-            <p className="text-muted-foreground">{t('myReviews.loginDescription')}</p>
-            <Button onClick={() => navigate('/login')} className="mt-4">
-              {t('auth.login')}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Badge 
+        variant={value ? "default" : "secondary"}
+        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+      >
+        {value ? (
+          <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+        ) : (
+          <XCircle className="h-3 w-3 mr-1 shrink-0" />
+        )}
+        <span className="truncate">{label}</span>
+      </Badge>
     );
-  }
+  };
+
+  // 為篩選器生成數據計數
+  const courseCounts = useMemo(() => {
+    const counts: { [key: string]: { title: string; count: number } } = {};
+    reviews.forEach(reviewInfo => {
+      const courseCode = reviewInfo.review.course_code;
+      if (!counts[courseCode]) {
+        counts[courseCode] = { title: courseCode, count: 0 };
+      }
+      counts[courseCode].count++;
+    });
+    return counts;
+  }, [reviews]);
+
+  const termCounts = useMemo(() => {
+    const counts: { [key: string]: { name: string; count: number } } = {};
+    reviews.forEach(reviewInfo => {
+      const termCode = reviewInfo.term.term_code;
+      if (!counts[termCode]) {
+        counts[termCode] = { name: reviewInfo.term.name, count: 0 };
+      }
+      counts[termCode].count++;
+    });
+    return counts;
+  }, [reviews]);
+
+  const gradeCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    reviews.forEach(reviewInfo => {
+      const grade = reviewInfo.review.course_final_grade === '-1' || !reviewInfo.review.course_final_grade ? 'N/A' : reviewInfo.review.course_final_grade;
+      counts[grade] = (counts[grade] || 0) + 1;
+    });
+    return counts;
+  }, [reviews]);
+
+  // Calculate session type counts
+  const sessionTypeCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    reviews.forEach(reviewInfo => {
+      reviewInfo.instructorDetails.forEach(instructorDetail => {
+        const sessionType = instructorDetail.session_type;
+        counts[sessionType] = (counts[sessionType] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [reviews]);
+
+  // 篩選和排序評論
+  const filteredAndSortedReviews = useMemo(() => {
+    let filteredReviews = [...reviews];
+
+    // 智能搜索篩選 - 包含課程名稱（所有語言）、講師姓名（所有語言）和課程代碼
+    if (filters.searchTerm.trim()) {
+      const searchTerm = filters.searchTerm.toLowerCase().trim();
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        // 搜索課程代碼
+        const courseCodeMatch = reviewInfo.review.course_code.toLowerCase().includes(searchTerm);
+        
+        // 搜索課程名稱（英文和中文）
+        let courseNameMatch = false;
+        if (reviewInfo.courseData) {
+          const englishTitle = reviewInfo.courseData.course_title?.toLowerCase() || '';
+          const tcTitle = reviewInfo.courseData.course_title_tc?.toLowerCase() || '';
+          const scTitle = reviewInfo.courseData.course_title_sc?.toLowerCase() || '';
+          
+          courseNameMatch = (
+            englishTitle.includes(searchTerm) ||
+            tcTitle.includes(searchTerm) ||
+            scTitle.includes(searchTerm)
+          );
+        }
+        
+        // 搜索評論內容
+        const commentsMatch = reviewInfo.review.course_comments?.toLowerCase().includes(searchTerm) || false;
+        
+        // 搜索講師姓名（包含所有語言）
+        const instructorMatch = reviewInfo.instructorDetails.some(detail => {
+          const instructor = reviewInfo.instructorData.get(detail.instructor_name);
+          if (instructor) {
+            const englishName = instructor.name?.toLowerCase() || '';
+            const chineseName = instructor.name_tc?.toLowerCase() || '';
+            const scName = instructor.name_sc?.toLowerCase() || '';
+            // Simplified approach - just use the instructor name directly
+            const displayNameStr = detail.instructor_name.toLowerCase();
+            
+            return (
+              englishName.includes(searchTerm) ||
+              chineseName.includes(searchTerm) ||
+              scName.includes(searchTerm) ||
+              displayNameStr.includes(searchTerm) ||
+              detail.instructor_name.toLowerCase().includes(searchTerm)
+            );
+          }
+          return detail.instructor_name.toLowerCase().includes(searchTerm);
+        });
+        
+        return courseCodeMatch || courseNameMatch || commentsMatch || instructorMatch;
+      });
+    }
+
+    // 學科領域篩選
+    if (filters.selectedSubjectAreas.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const subjectArea = reviewInfo.review.course_code.split(/\d/)[0]; // Extract letters before numbers
+        return filters.selectedSubjectAreas.includes(subjectArea);
+      });
+    }
+
+    // 學期篩選
+    if (filters.selectedTerms.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => 
+        filters.selectedTerms.includes(reviewInfo.term.term_code)
+      );
+    }
+
+    // 成績篩選
+    if (filters.selectedGrades.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const grade = reviewInfo.review.course_final_grade === '-1' || !reviewInfo.review.course_final_grade ? 'N/A' : reviewInfo.review.course_final_grade;
+        return filters.selectedGrades.includes(grade);
+      });
+    }
+
+    // 課堂類型篩選
+    if (filters.selectedSessionTypes.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => 
+        reviewInfo.instructorDetails.some(detail => 
+          filters.selectedSessionTypes.includes(detail.session_type)
+        )
+      );
+    }
+
+    // 排序
+    filteredReviews.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (filters.sortBy) {
+        case 'postDate':
+          aValue = new Date(a.review.$createdAt).getTime();
+          bValue = new Date(b.review.$createdAt).getTime();
+          break;
+        case 'courseCode':
+          aValue = a.review.course_code;
+          bValue = b.review.course_code;
+          break;
+        case 'workload':
+          aValue = a.review.course_workload || 0;
+          bValue = b.review.course_workload || 0;
+          break;
+        case 'difficulty':
+          aValue = a.review.course_difficulties || 0;
+          bValue = b.review.course_difficulties || 0;
+          break;
+        case 'usefulness':
+          aValue = a.review.course_usefulness || 0;
+          bValue = b.review.course_usefulness || 0;
+          break;
+        case 'grade':
+          const gradeOrder = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+          // Handle N/A grades as worse than F (assign higher value than F's index)
+          const getGradeValue = (grade: string) => {
+            if (!grade || grade === '-1' || grade === 'N/A') return gradeOrder.length; // N/A worse than F
+            const index = gradeOrder.indexOf(grade);
+            return index !== -1 ? index : gradeOrder.length + 1; // Unknown grades worse than N/A
+          };
+          aValue = getGradeValue(a.review.course_final_grade || '');
+          bValue = getGradeValue(b.review.course_final_grade || '');
+          break;
+        case 'upvotes':
+          aValue = a.upvotes || 0;
+          bValue = b.upvotes || 0;
+          break;
+        default:
+          aValue = new Date(a.review.$createdAt).getTime();
+          bValue = new Date(b.review.$createdAt).getTime();
+      }
+
+      if (filters.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return filteredReviews;
+  }, [reviews, filters]);
+
+  // 分頁邏輯
+  const paginatedReviews = useMemo(() => {
+    const startIndex = (filters.currentPage - 1) * filters.itemsPerPage;
+    const endIndex = startIndex + filters.itemsPerPage;
+    return filteredAndSortedReviews.slice(startIndex, endIndex);
+  }, [filteredAndSortedReviews, filters.currentPage, filters.itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedReviews.length / filters.itemsPerPage);
+
+  const handleFiltersChange = (newFilters: MyReviewFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handleSessionTypeClick = (sessionType: string) => {
+    setFilters(prev => ({
+      ...prev,
+      selectedSessionTypes: [sessionType],
+      currentPage: 1
+    }));
+  };
+
+  const handleClearAllFilters = () => {
+    setFilters({
+      searchTerm: '',
+      selectedSubjectAreas: [],
+      selectedTerms: [],
+      selectedGrades: [],
+      selectedSessionTypes: [],
+      sortBy: 'postDate',
+      sortOrder: 'desc',
+      itemsPerPage: 2,
+      currentPage: 1
+    });
+  };
+
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -196,13 +497,28 @@ const MyReviews = () => {
         </div>
       )}
 
+      {/* Filters */}
+      {!loading && !error && reviews.length > 0 && (
+        <MyReviewsFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          courseCounts={courseCounts}
+          termCounts={termCounts}
+          gradeCounts={gradeCounts}
+          sessionTypeCounts={sessionTypeCounts}
+          totalReviews={reviews.length}
+          filteredReviews={filteredAndSortedReviews.length}
+          onClearAll={handleClearAllFilters}
+        />
+      )}
+
       {/* Reviews List */}
       {!loading && !error && (
         <>
           {reviews.length === 0 ? (
             <div className="rounded-lg p-12 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
               <div className="text-center space-y-4">
-                <MessageSquareText className="h-12 w-12 text-muted-foreground mx-auto" />
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
                 <h3 className="text-lg font-medium">{t('myReviews.noReviews')}</h3>
                 <p className="text-muted-foreground">{t('myReviews.noReviewsDescription')}</p>
                 <Button onClick={() => navigate('/courses')} className="mt-4">
@@ -210,9 +526,22 @@ const MyReviews = () => {
                 </Button>
               </div>
             </div>
+          ) : filteredAndSortedReviews.length === 0 ? (
+            <div className="rounded-lg p-12 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
+              <div className="text-center space-y-4">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
+                <h3 className="text-lg font-medium">{t('common.noResults')}</h3>
+                <p className="text-muted-foreground">{t('pages.courses.noResultsDesc')}</p>
+                <Button onClick={handleClearAllFilters} variant="outline" className="mt-4">
+                  {t('filter.clearAll')}
+                </Button>
+              </div>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 gap-6">
-              {reviews.map((reviewInfo) => (
+            <>
+              {/* 2 Column Grid Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {paginatedReviews.map((reviewInfo) => (
                 <div key={reviewInfo.review.$id} className="rounded-lg p-4 space-y-3 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
                   {/* 評論基本信息 */}
                   <div className="flex items-start justify-between gap-3">
@@ -230,20 +559,72 @@ const MyReviews = () => {
                           {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
                         </span>
                         {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs shrink-0 hidden md:inline-flex"
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 設置學期篩選
+                            handleFiltersChange({
+                              ...filters,
+                              selectedTerms: [reviewInfo.term.term_code],
+                              currentPage: 1
+                            });
+                          }}
+                          title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                         >
                           <span className="truncate">{reviewInfo.term.name}</span>
-                        </Badge>
+                        </button>
+                        {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                        {reviewInfo.review.review_language && (
+                          <button
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // 語言篩選在MyReviews中不需要實現，因為用戶只能看自己的評論
+                              // 但我們仍然顯示語言信息
+                            }}
+                            title={getLanguageDisplayName(reviewInfo.review.review_language)}
+                          >
+                            <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language)}</span>
+                          </button>
+                        )}
                       </div>
-                      {/* 學期徽章 - 手機版顯示在下方 */}
-                      <Badge 
-                        variant="outline" 
-                        className="text-xs w-fit md:hidden"
-                      >
-                        <span className="truncate">{reviewInfo.term.name}</span>
-                      </Badge>
+                      {/* 學期和語言徽章 - 手機版顯示在下方 */}
+                      <div className="flex gap-2 md:hidden">
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 設置學期篩選
+                            handleFiltersChange({
+                              ...filters,
+                              selectedTerms: [reviewInfo.term.term_code],
+                              currentPage: 1
+                            });
+                          }}
+                          title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                        >
+                          <span className="truncate">{reviewInfo.term.name}</span>
+                        </button>
+                        {/* 語言徽章 - 手機版顯示在學期旁邊 */}
+                        {reviewInfo.review.review_language && (
+                          <button
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // 語言篩選在MyReviews中不需要實現，因為用戶只能看自己的評論
+                              // 但我們仍然顯示語言信息
+                            }}
+                            title={getLanguageDisplayName(reviewInfo.review.review_language)}
+                          >
+                            <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language)}</span>
+                          </button>
+                        )}
+                      </div>
                       {/* 課程標題 - 顯示在學生姓名/匿名行下方 */}
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
@@ -260,6 +641,7 @@ const MyReviews = () => {
                               }}
                             >
                               <div className="font-bold">{reviewInfo.review.course_code}</div>
+                              <CourseTitle courseCode={reviewInfo.review.course_code} />
                             </a>
                           </h4>
                         </div>
@@ -387,7 +769,7 @@ const MyReviews = () => {
                       <Separator />
                       <div className="min-w-0">
                         <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                          <MessageSquareText className="h-4 w-4 shrink-0" />
+                          <MessageSquare className="h-4 w-4 shrink-0" />
                           <span>{t('review.courseComments')}</span>
                         </h5>
                         <div className="bg-muted/50 p-2 rounded-md break-words">
@@ -465,29 +847,111 @@ const MyReviews = () => {
                           }
 
                           return (
-                            <div key={idx} className="p-3 bg-muted/50 rounded-lg">
-                              <div className="flex items-center justify-between gap-2 mb-2">
+                            <div key={idx} className="p-4 bg-gray-200 dark:bg-[rgb(26,35,50)] rounded-lg">
+                                                              <div className="flex items-center justify-between gap-2 mb-4">
                                 <div className="font-medium cursor-pointer hover:text-primary transition-colors"
                                      onClick={() => navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`)}
                                 >
                                   {displayName}
                                 </div>
-                                <Badge variant="outline" className="text-xs">
-                                  {instructorDetail.session_type}
+                                <Badge 
+                                  variant="secondary" 
+                                  className={`text-sm cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                    instructorDetail.session_type === 'Lecture' 
+                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                                      : instructorDetail.session_type === 'Tutorial'
+                                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
+                                      : ''
+                                  }`}
+                                  onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                >
+                                  {t(`sessionType.${instructorDetail.session_type.toLowerCase()}`)}
                                 </Badge>
                               </div>
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground mb-1">{t('review.teaching')}</div>
-                                  <StarRating rating={instructorDetail.teaching} size="sm" />
+                              <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                                <div className="text-center">
+                                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                                    <span className="font-medium text-sm sm:text-base">{t('review.teachingScore')}</span>
+                                    <div className="flex items-center justify-center lg:ml-1">
+                                      {instructorDetail.teaching === null ? (
+                                        <span className="text-muted-foreground">
+                                          {t('review.rating.notRated')}
+                                        </span>
+                                      ) : instructorDetail.teaching === -1 ? (
+                                        <span className="text-muted-foreground">
+                                          {t('review.notApplicable')}
+                                        </span>
+                                      ) : (
+                                        <StarRating rating={instructorDetail.teaching} showValue size="sm" showTooltip ratingType="teaching" />
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                                {instructorDetail.grading !== null && (
-                                  <div className="flex flex-col items-center">
-                                    <div className="text-xs text-muted-foreground mb-1">{t('review.grading')}</div>
-                                    <StarRating rating={instructorDetail.grading} size="sm" />
+                                
+                                {instructorDetail.grading !== null && instructorDetail.grading !== -1 && (
+                                  <div className="text-center">
+                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                                      <span className="font-medium text-sm sm:text-base">{t('review.gradingScore')}</span>
+                                      <div className="flex items-center justify-center lg:ml-1">
+                                        <StarRating rating={instructorDetail.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                               </div>
+
+                              {/* 服務學習 - 講師級別 */}
+                              {instructorDetail.has_service_learning && (
+                                <div className="mt-3">
+                                  <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                                    <GraduationCap className="h-3 w-3" />
+                                    {t('review.serviceLearning')}
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Badge 
+                                      variant="outline" 
+                                      className={cn(
+                                        "text-xs",
+                                        instructorDetail.service_learning_type === 'compulsory'
+                                          ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
+                                          : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                                      )}
+                                    >
+                                      {instructorDetail.service_learning_type === 'compulsory' 
+                                        ? t('review.compulsory') 
+                                        : t('review.optional')
+                                      }
+                                    </Badge>
+                                    {instructorDetail.service_learning_description && (
+                                      <div className="text-xs text-muted-foreground break-words">
+                                        {hasMarkdownFormatting(instructorDetail.service_learning_description) ? 
+                                          renderCommentMarkdown(instructorDetail.service_learning_description) : 
+                                          instructorDetail.service_learning_description
+                                        }
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 課程要求 */}
+                              <div className="mb-4">
+                                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                  <FileText className="h-4 w-4 shrink-0" />
+                                  <span>{t('review.courseRequirements')}</span>
+                                </h5>
+                                <div className="flex flex-wrap gap-2 overflow-hidden">
+                                  {renderBooleanBadge(instructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
+                                  {renderBooleanBadge(instructorDetail.has_quiz, t('review.requirements.quiz'))}
+                                  {renderBooleanBadge(instructorDetail.has_midterm, t('review.requirements.midterm'))}
+                                  {renderBooleanBadge(instructorDetail.has_final, t('review.requirements.final'))}
+                                  {renderBooleanBadge(instructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                                  {renderBooleanBadge(instructorDetail.has_group_project, t('review.requirements.groupProject'))}
+                                  {renderBooleanBadge(instructorDetail.has_presentation, t('review.requirements.presentation'))}
+                                  {renderBooleanBadge(instructorDetail.has_reading, t('review.requirements.reading'))}
+                                </div>
+                              </div>
+
                               {instructorDetail.comments && (
                                 <div className="mt-2 text-sm text-muted-foreground">
                                   {hasMarkdownFormatting(instructorDetail.comments) ? 
@@ -527,7 +991,17 @@ const MyReviews = () => {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+
+              {/* Pagination */}
+              <Pagination
+                currentPage={filters.currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => handleFiltersChange({ ...filters, currentPage: page })}
+                itemsPerPage={filters.itemsPerPage}
+                totalItems={filteredAndSortedReviews.length}
+              />
+            </>
           )}
         </>
       )}

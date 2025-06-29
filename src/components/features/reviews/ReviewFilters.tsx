@@ -17,7 +17,9 @@ import {
   ThumbsUp,
   ThumbsDown,
   GraduationCap,
-  Grid3X3
+  Grid3X3,
+  School,
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,7 +48,7 @@ export function ReviewFilters({
   allReviews,
   filteredReviews
 }: ReviewFiltersProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const updateFilters = (updates: Partial<ReviewFilters>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -85,11 +87,18 @@ export function ReviewFilters({
     updateFilters({ selectedLanguages: ['en', 'zh-TW', 'zh-CN'] });
   };
 
+  // Helper function to determine if labels should be bold based on language
+  const getLabelClassName = () => {
+    return language === 'zh-TW' || language === 'zh-CN' 
+      ? 'text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0'
+      : 'text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0';
+  };
+
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-6">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
       {/* 語言篩選行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+        <label className={getLabelClassName()}>
           <BookText className="h-4 w-4" />
           {t('filter.reviewLanguage')}
         </label>
@@ -134,7 +143,7 @@ export function ReviewFilters({
 
       {/* 排序行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+        <label className={getLabelClassName()}>
           <Hash className="h-4 w-4" />
           {t('sort.by')}
         </label>
@@ -148,6 +157,28 @@ export function ReviewFilters({
             <Calendar className="h-4 w-4" />
             {t('sort.postDate')}
             {getSortIcon('postDate')}
+          </Button>
+
+          <Button
+            variant={getSortButtonVariant('teaching')}
+            size="sm"
+            onClick={() => handleSort('teaching')}
+            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
+          >
+            <School className="h-4 w-4" />
+            {t('sort.teaching')}
+            {getSortIcon('teaching')}
+          </Button>
+
+          <Button
+            variant={getSortButtonVariant('grading')}
+            size="sm"
+            onClick={() => handleSort('grading')}
+            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
+          >
+            <CheckCircle className="h-4 w-4" />
+            {t('sort.grading')}
+            {getSortIcon('grading')}
           </Button>
 
           <Button
@@ -222,7 +253,7 @@ export function ReviewFilters({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* 左側：每頁評論數 */}
         <div className="flex items-center gap-4">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <Grid3X3 className="h-4 w-4" />
             {t('pagination.reviewsPerPage')}
           </label>

@@ -255,9 +255,15 @@ export const CourseReviewsList = ({
           break;
         case 'grade':
           // 成績按字母順序排序，A+ > A > A- > B+ 等
-          const gradeOrder = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
-          aValue = gradeOrder.indexOf(a.review.course_final_grade || '') !== -1 ? gradeOrder.indexOf(a.review.course_final_grade || '') : 999;
-          bValue = gradeOrder.indexOf(b.review.course_final_grade || '') !== -1 ? gradeOrder.indexOf(b.review.course_final_grade || '') : 999;
+          const gradeOrder = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+          // Handle N/A grades as worse than F (assign higher value than F's index)
+          const getGradeValue = (grade: string) => {
+            if (!grade || grade === '-1' || grade === 'N/A') return gradeOrder.length; // N/A worse than F
+            const index = gradeOrder.indexOf(grade);
+            return index !== -1 ? index : gradeOrder.length + 1; // Unknown grades worse than N/A
+          };
+          aValue = getGradeValue(a.review.course_final_grade || '');
+          bValue = getGradeValue(b.review.course_final_grade || '');
           break;
         case 'upvotes':
           aValue = a.upvotes || 0;
@@ -376,6 +382,15 @@ export const CourseReviewsList = ({
     return languageCounts[language] || 0;
   };
 
+  const getLanguageDisplayName = (language: string) => {
+    const languageMap: { [key: string]: string } = {
+      'en': t('language.english'),
+      'zh-TW': t('language.traditionalChinese'),
+      'zh-CN': t('language.simplifiedChinese')
+    };
+    return languageMap[language] || language;
+  };
+
   const renderRequirementBadge = (hasRequirement: boolean, label: string) => {
     return (
       <Badge 
@@ -445,13 +460,29 @@ export const CourseReviewsList = ({
               <div className="shrink-0 flex items-start pt-1">
                 <Badge 
                   variant="secondary" 
-                  className={`text-sm ${
+                  className={`text-sm cursor-pointer transition-all duration-200 hover:scale-105 ${
                     instructor.session_type === 'Lecture' 
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
                       : instructor.session_type === 'Tutorial'
-                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
                       : ''
                   }`}
+                  onClick={() => {
+                    const newFilters = { ...filters };
+                    const sessionType = instructor.session_type;
+                    
+                    // 切換篩選器
+                    if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                      newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                    } else {
+                      newFilters.selectedSessionTypes = [sessionType];
+                    }
+                    
+                    // 重置頁面到第一頁
+                    newFilters.currentPage = 1;
+                    
+                    handleFiltersChange(newFilters);
+                  }}
                 >
                   {t(`sessionType.${instructor.session_type.toLowerCase()}`)}
                 </Badge>
@@ -507,6 +538,45 @@ export const CourseReviewsList = ({
                 {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'))}
               </div>
             </div>
+
+            {/* 服務學習 */}
+            {instructor.has_service_learning && (
+              <div className="mb-4">
+                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 shrink-0" />
+                  <span>{t('review.serviceLearning')}</span>
+                </h5>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-xs",
+                        instructor.service_learning_type === 'compulsory'
+                          ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-400 dark:bg-red-950/50"
+                          : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-400 dark:bg-green-950/50"
+                      )}
+                    >
+                      {instructor.service_learning_type === 'compulsory' 
+                        ? t('review.compulsory') 
+                        : t('review.optional')
+                      }
+                    </Badge>
+                  </div>
+                  {instructor.service_learning_description && (
+                    <div className="text-sm break-words">
+                      {hasMarkdownFormatting(instructor.service_learning_description) ? (
+                        renderCommentMarkdown(instructor.service_learning_description)
+                      ) : (
+                        <p className="text-sm">
+                          {instructor.service_learning_description}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* 講師評論 */}
             {instructor.comments && (
@@ -700,9 +770,8 @@ export const CourseReviewsList = ({
                         {review.is_anon ? t('review.anonymousUser') : review.username}
                       </span>
                       {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
-                      <Badge 
-                        variant="outline" 
-                        className="text-xs shrink-0 hidden md:inline-flex cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                      <button
+                        className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -716,26 +785,65 @@ export const CourseReviewsList = ({
                         title={t('filter.clickToFilterByTerm', { term: term.name })}
                       >
                         <span className="truncate">{term.name}</span>
-                      </Badge>
+                      </button>
+                      {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                      {review.review_language && (
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 設置語言篩選
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedLanguages: [review.review_language!],
+                              currentPage: 1
+                            }));
+                          }}
+                          title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                        >
+                          <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                        </button>
+                      )}
                     </div>
                     {/* 學期徽章 - 手機版顯示在下方 */}
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs w-fit md:hidden cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // 設置學期篩選
-                        setFilters(prev => ({
-                          ...prev,
-                          selectedTerms: [term.term_code],
-                          currentPage: 1
-                        }));
-                      }}
-                      title={t('filter.clickToFilterByTerm', { term: term.name })}
-                    >
-                      <span className="truncate">{term.name}</span>
-                    </Badge>
+                    <div className="flex gap-2 md:hidden">
+                      <button
+                        className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // 設置學期篩選
+                          setFilters(prev => ({
+                            ...prev,
+                            selectedTerms: [term.term_code],
+                            currentPage: 1
+                          }));
+                        }}
+                        title={t('filter.clickToFilterByTerm', { term: term.name })}
+                      >
+                        <span className="truncate">{term.name}</span>
+                      </button>
+                      {/* 語言徽章 - 手機版顯示在學期旁邊 */}
+                      {review.review_language && (
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 設置語言篩選
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedLanguages: [review.review_language!],
+                              currentPage: 1
+                            }));
+                          }}
+                          title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                        >
+                          <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {/* 最終成績 - 右上角大顯示 */}
                   {review.course_final_grade && (

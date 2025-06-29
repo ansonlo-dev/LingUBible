@@ -10,7 +10,6 @@ import {
   Calendar,
   Hash,
   BookText,
-  Tag,
   Building2,
   Library,
   Brain,
@@ -32,6 +31,63 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
+// Helper function to get subject code from department name
+const getSubjectCodeFromDepartment = (department: string): string => {
+  const mapping: { [key: string]: string } = {
+    'English': 'ENG',
+    'Chinese': 'CHI', 
+    'Management': 'MGT',
+    'Business': 'BUS',
+    'Psychology': 'PSY',
+    'Economics': 'ECO',
+    'Philosophy': 'PHI',
+    'History': 'HST',
+    'Digital Arts and Creative Industries': 'CLA',
+    'Computer Science': 'CS',
+    'Mathematics': 'MATH',
+    'Physics': 'PHYS',
+    'Chemistry': 'CHEM',
+    'Biology': 'BIO',
+    'Sociology': 'SOC',
+    'Political Science': 'POLS',
+    'Anthropology': 'ANTH',
+    'Geography': 'GEOG',
+    'Environmental Studies': 'ENVS',
+    'Art': 'ART',
+    'Music': 'MUS',
+    'Theatre': 'THEA',
+    'Film Studies': 'FILM',
+    'Journalism': 'JOUR',
+    'Communication': 'COMM',
+    'Education': 'EDU',
+    'Social Work': 'SW',
+    'Law': 'LAW',
+    'Medicine': 'MED',
+    'Nursing': 'NURS',
+    'Engineering': 'ENG',
+    'Architecture': 'ARCH'
+  };
+  
+  return mapping[department] || department.substring(0, 3).toUpperCase();
+};
+
+/**
+ * Maps database language codes to user-friendly language names
+ */
+const mapLanguageCode = (courseLanguage: string): string => {
+  if (courseLanguage === 'E') {
+    return 'English';
+  } else if (courseLanguage === 'C') {
+    return 'Mandarin Chinese';
+  } else if (courseLanguage === 'English') {
+    return 'English';
+  } else if (courseLanguage === 'Mandarin Chinese') {
+    return 'Mandarin Chinese';
+  }
+  // Default to English for any unrecognized codes
+  return 'English';
+};
+
 export interface CourseFilters {
   searchTerm: string;
   subjectArea: string;
@@ -50,6 +106,7 @@ interface AdvancedCourseFiltersProps {
   onClearAll: () => void;
   totalCourses?: number;
   filteredCourses?: number;
+  courses?: any[]; // Add courses data for count calculation
 }
 
 export function AdvancedCourseFilters({
@@ -58,21 +115,35 @@ export function AdvancedCourseFilters({
   availableSubjects,
   onClearAll,
   totalCourses = 0,
-  filteredCourses = 0
+  filteredCourses = 0,
+  courses = []
 }: AdvancedCourseFiltersProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
+  const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
 
   // Load available terms
   useEffect(() => {
     const loadAvailableTerms = async () => {
       try {
         setTermsLoading(true);
-        const terms = await CourseService.getAllTerms();
+        
+        // 🚀 優化：使用預加載的教學記錄數據
+        console.log('🚀 Loading terms with preloaded teaching records...');
+        
+        // 並行加載學期和教學記錄數據
+        const [terms, termCoursesMap] = await Promise.all([
+          CourseService.getAllTerms(),
+          CourseService.getAllTermsCoursesOfferedBatch()
+        ]);
+        
         setAvailableTerms(terms);
+        setTermCoursesMap(termCoursesMap);
+        
+        console.log('✅ Terms and teaching data loaded successfully');
       } catch (error) {
-        console.error('Error loading available terms:', error);
+        console.error('Error loading terms:', error);
       } finally {
         setTermsLoading(false);
       }
@@ -120,11 +191,59 @@ export function AdvancedCourseFilters({
     }
   };
 
+  // Helper function to determine if labels should be bold based on language
+  const getLabelClassName = () => {
+    return language === 'zh-TW' || language === 'zh-CN' 
+      ? 'text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0'
+      : 'text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0';
+  };
+
+  // Calculate counts for each filter option
+  const getSubjectCounts = () => {
+    const counts: { [key: string]: number } = {};
+    courses.forEach(course => {
+      if (course.department) {
+        counts[course.department] = (counts[course.department] || 0) + 1;
+      }
+    });
+    return counts;
+  };
+
+  const getLanguageCounts = () => {
+    const counts: { [key: string]: number } = {};
+    courses.forEach(course => {
+      const language = mapLanguageCode(course.course_language);
+      counts[language] = (counts[language] || 0) + 1;
+    });
+    return counts;
+  };
+
+  const getTermCounts = () => {
+    const counts: { [key: string]: number } = {};
+    
+    availableTerms.forEach(term => {
+      // Get the actual courses offered in this term
+      const coursesOfferedInTerm = termCoursesMap.get(term.term_code) || new Set();
+      
+      // Count how many of the current filtered courses are offered in this term
+      let count = 0;
+      courses.forEach(course => {
+        if (coursesOfferedInTerm.has(course.course_code)) {
+          count++;
+        }
+      });
+      
+      counts[term.term_code] = count;
+    });
+    
+    return counts;
+  };
+
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-6">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
       {/* 智能搜索行 */}
       <div className="flex items-center gap-4">
-        <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+        <label className={getLabelClassName()}>
           <Sparkles className="h-4 w-4" />
           {t('search.smartSearch')}
         </label>
@@ -152,20 +271,22 @@ export function AdvancedCourseFilters({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* 學科領域 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <Library className="h-4 w-4" />
             {t('sort.subjectArea')}
           </label>
           <Select value={filters.subjectArea} onValueChange={(value) => updateFilters({ subjectArea: value })}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
               <SelectValue placeholder={t('filter.allSubjects')}>
-                {filters.subjectArea === 'all' ? t('filter.allSubjects') : (
+                {filters.subjectArea === 'all' ? (
+                  <span className="font-bold">{t('common.all')}</span>
+                ) : (
                   <span className="flex items-center gap-2">
                     <span className="font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
-                      {filters.subjectArea}
+                      {getSubjectCodeFromDepartment(filters.subjectArea)}
                     </span>
                     <span className="text-sm">
-                      {t(`subjectArea.${filters.subjectArea}` as any) || filters.subjectArea}
+                      {t(`subjectArea.${getSubjectCodeFromDepartment(filters.subjectArea)}` as any) || filters.subjectArea}
                     </span>
                   </span>
                 )}
@@ -173,21 +294,22 @@ export function AdvancedCourseFilters({
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
               <SelectItem value="all">
-                <span className="flex items-center gap-2">
-                  <Library className="h-4 w-4 text-primary" />
-                  {t('filter.allSubjects')}
+                <span className="font-bold">
+                  {t('common.all')}
                 </span>
               </SelectItem>
               {availableSubjects.map(subject => (
                 <SelectItem key={subject} value={subject}>
                   <span className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-primary/70" />
                     <span className="font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded text-xs mr-2">
-                      {subject}
+                      {getSubjectCodeFromDepartment(subject)}
                     </span>
                     <span className="text-sm text-foreground">
-                      {t(`subjectArea.${subject}` as any) || subject}
+                      {t(`subjectArea.${getSubjectCodeFromDepartment(subject)}` as any) || subject}
                     </span>
+                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                      {getSubjectCounts()[subject] || 0}
+                    </Badge>
                   </span>
                 </SelectItem>
               ))}
@@ -197,31 +319,44 @@ export function AdvancedCourseFilters({
 
         {/* 教學語言 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <BookText className="h-4 w-4" />
             {t('filter.teachingLanguage')}
           </label>
           <Select value={filters.teachingLanguage} onValueChange={(value) => updateFilters({ teachingLanguage: value })}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allLanguages')} />
+              <SelectValue placeholder={t('filter.allLanguages')}>
+                {filters.teachingLanguage === 'all' ? (
+                  <span className="font-bold">{t('common.all')}</span>
+                ) : filters.teachingLanguage === 'English' ? (
+                  t('language.english')
+                ) : filters.teachingLanguage === 'Mandarin Chinese' ? (
+                  t('language.mandarinChinese')
+                ) : (
+                  filters.teachingLanguage
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
               <SelectItem value="all">
-                <span className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-primary" />
-                  {t('filter.allLanguages')}
+                <span className="font-bold">
+                  {t('common.all')}
                 </span>
               </SelectItem>
               <SelectItem value="English">
                 <span className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-primary/70" />
                   {t('language.english')}
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {getLanguageCounts()['English'] || 0}
+                  </Badge>
                 </span>
               </SelectItem>
               <SelectItem value="Mandarin Chinese">
                 <span className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-primary/70" />
                   {t('language.mandarinChinese')}
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {getLanguageCounts()['Mandarin Chinese'] || 0}
+                  </Badge>
                 </span>
               </SelectItem>
             </SelectContent>
@@ -230,21 +365,32 @@ export function AdvancedCourseFilters({
 
         {/* 開設學期 */}
         <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
           </label>
           <Select value={filters.offeredTerm} onValueChange={(value) => updateFilters({ offeredTerm: value })}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allTerms')} />
+              <SelectValue placeholder={t('filter.allTerms')}>
+                {filters.offeredTerm === 'all' ? (
+                  <span className="font-bold">{t('common.all')}</span>
+                ) : (
+                  getTermDisplayName(filters.offeredTerm)
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">{t('filter.allTerms')}</SelectItem>
+              <SelectItem value="all">
+                <span className="font-bold">{t('common.all')}</span>
+              </SelectItem>
                              {availableTerms.map(term => (
                  <SelectItem key={term.term_code} value={term.term_code}>
                    <span className="flex items-center gap-2">
                      <div className={`w-2 h-2 ${isCurrentTerm(term.term_code) ? 'bg-green-500' : 'bg-gray-500'} rounded-full`}></div>
                      {getTermDisplayName(term.term_code)}
+                     <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                       {getTermCounts()[term.term_code] || 0}
+                     </Badge>
                    </span>
                  </SelectItem>
                ))}
@@ -256,7 +402,7 @@ export function AdvancedCourseFilters({
 
       {/* 排序行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+        <label className={getLabelClassName()}>
           <Hash className="h-4 w-4" />
           {t('sort.by')}
         </label>
@@ -289,7 +435,7 @@ export function AdvancedCourseFilters({
             onClick={() => handleSort('subject')}
             className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
           >
-            <Tag className="h-4 w-4" />
+            <Library className="h-4 w-4" />
             {t('sort.subjectArea')}
             {getSortIcon('subject')}
           </Button>
@@ -355,7 +501,7 @@ export function AdvancedCourseFilters({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* 左側：每頁課程數 */}
         <div className="flex items-center gap-4">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0">
+          <label className={getLabelClassName()}>
             <Grid3X3 className="h-4 w-4" />
             {t('pagination.coursesPerPage')}
           </label>
