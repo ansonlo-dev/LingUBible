@@ -5,7 +5,7 @@
   <!-- 首頁 - 多語言版本 -->
   <url>
     <loc>https://lingubible.com/</loc>
-    <lastmod>2025-01-12</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/?lang=en"/>
@@ -17,7 +17,7 @@
   <!-- 英文首頁 -->
   <url>
     <loc>https://lingubible.com/?lang=en</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/?lang=en"/>
@@ -29,7 +29,7 @@
   <!-- 繁體中文首頁 - Reg科聖經 -->
   <url>
     <loc>https://lingubible.com/?lang=zh-TW</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/?lang=en"/>
@@ -41,7 +41,7 @@
   <!-- 簡體中文首頁 -->
   <url>
     <loc>https://lingubible.com/?lang=zh-CN</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/?lang=en"/>
@@ -53,7 +53,7 @@
   <!-- 課程頁面 -->
   <url>
     <loc>https://lingubible.com/courses</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/courses?lang=en"/>
@@ -64,7 +64,7 @@
   <!-- 教師頁面 -->
   <url>
     <loc>https://lingubible.com/instructors</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/instructors?lang=en"/>
@@ -75,7 +75,7 @@
   <!-- 登入頁面 -->
   <url>
     <loc>https://lingubible.com/login</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/login?lang=en"/>
@@ -86,7 +86,7 @@
   <!-- 註冊頁面 -->
   <url>
     <loc>https://lingubible.com/register</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/register?lang=en"/>
@@ -97,7 +97,7 @@
   <!-- 隱私政策 -->
   <url>
     <loc>https://lingubible.com/privacy</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/privacy?lang=en"/>
@@ -108,7 +108,7 @@
   <!-- 服務條款 -->
   <url>
     <loc>https://lingubible.com/terms</loc>
-    <lastmod>2024-01-15</lastmod>
+    <lastmod>2025-06-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://lingubible.com/terms?lang=en"/>

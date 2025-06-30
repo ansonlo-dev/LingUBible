@@ -29,7 +29,7 @@ wrangler login
 ```toml
 name = "lingubible"
 main = "dist/index.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-06-30"
 
 [build]
 command = "bun run build"
@@ -73,7 +73,7 @@ bun install --save-dev vite@^6.1.0 @cloudflare/vite-plugin
 ```toml
 name = "lingubible"
 main = "dist/index.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-06-30"
 
 [build]
 command = "bun run build"

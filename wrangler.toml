@@ -1,5 +1,5 @@
 name = "lingubible"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-06-30"
 
 [build]
 command = "bun install --frozen-lockfile && VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build"

@@ -521,7 +521,7 @@ bun run readme:generate-assets  # 生成 README 资产
 本项目采用 [MIT License](../../LICENSE) 开源协议
 
 ```
-Copyright (c) 2024 LingUBible
+Copyright (c) 2025 LingUBible
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
