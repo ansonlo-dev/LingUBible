@@ -27,6 +27,7 @@ import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsLi
 import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 
 // Faculty mapping function - copied from Lecturers.tsx
 const getFacultyByDepartment = (department: string): string => {
@@ -496,44 +497,42 @@ const CourseDetail = () => {
       </Card>
 
       {/* 教學記錄 */}
-      <Card className="course-card overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
-              <Calendar className="h-5 w-5 shrink-0" />
-              <span className="truncate">{t('pages.courseDetail.offerRecords')}</span>
-            </CardTitle>
-            <div className="shrink-0">
-              {teachingInfoLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+      <CollapsibleSection
+        className="course-card"
+        title={t('pages.courseDetail.offerRecords')}
+        icon={<Calendar className="h-5 w-5" />}
+        badge={
+          teachingInfoLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Badge 
+              variant={isOfferedInCurrentTerm ? "default" : "secondary"}
+              className={`text-xs font-medium transition-all duration-200 cursor-help ${
+                isOfferedInCurrentTerm 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+              }`}
+              title={isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
+              onClick={isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
+            >
+              {isOfferedInCurrentTerm ? (
+                <>
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  {t('offered.yes')}
+                </>
               ) : (
-                <Badge 
-                  variant={isOfferedInCurrentTerm ? "default" : "secondary"}
-                  className={`text-xs font-medium transition-all duration-200 cursor-help ${
-                    isOfferedInCurrentTerm 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                  }`}
-                  title={isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
-                  onClick={isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
-                >
-                  {isOfferedInCurrentTerm ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      {t('offered.yes')}
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-3 w-3 mr-1" />
-                      {t('offered.no')}
-                    </>
-                  )}
-                </Badge>
+                <>
+                  <XCircle className="h-3 w-3 mr-1" />
+                  {t('offered.no')}
+                </>
               )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-hidden">
+            </Badge>
+          )
+        }
+        defaultExpanded={true}
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+      >
           {teachingInfoLoading ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
@@ -746,8 +745,7 @@ const CourseDetail = () => {
               </TabsContent>
             </Tabs>
           )}
-        </CardContent>
-      </Card>
+      </CollapsibleSection>
 
       {/* 課程評論 */}
       <div id="student-reviews">

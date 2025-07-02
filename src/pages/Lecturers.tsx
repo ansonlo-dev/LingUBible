@@ -48,6 +48,7 @@ import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 
 // Faculty mapping function - copied from PopularItemCard
 const getFacultyByDepartment = (department: string): string => {
@@ -811,42 +812,40 @@ const Lecturers = () => {
       )}
 
       {/* 教授課程 */}
-      <Card className="course-card overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
-              <BookOpen className="h-5 w-5 shrink-0" />
-              <span className="truncate">{t('instructors.coursesTeaching')}</span>
-            </CardTitle>
-            <div className="shrink-0">
-              {teachingCoursesLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+      <CollapsibleSection
+        className="course-card"
+        title={t('instructors.coursesTeaching')}
+        icon={<BookOpen className="h-5 w-5" />}
+        badge={
+          teachingCoursesLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Badge 
+              variant={teachingCourses.length > 0 ? "default" : "secondary"}
+              className={`text-xs font-medium transition-all duration-200 cursor-help ${
+                teachingCourses.length > 0 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105 border-green-200 dark:border-green-800' 
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-800'
+              }`}
+            >
+              {teachingCourses.length > 0 ? (
+                <>
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  {t('instructors.teaching')}
+                </>
               ) : (
-                <Badge 
-                  variant={teachingCourses.length > 0 ? "default" : "secondary"}
-                  className={`text-xs font-medium transition-all duration-200 cursor-help ${
-                    teachingCourses.length > 0 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105 border-green-200 dark:border-green-800' 
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-800'
-                  }`}
-                >
-                  {teachingCourses.length > 0 ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      {t('instructors.teaching')}
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-3 w-3 mr-1" />
-                      {t('instructors.notTeaching')}
-                    </>
-                  )}
-                </Badge>
+                <>
+                  <XCircle className="h-3 w-3 mr-1" />
+                  {t('instructors.notTeaching')}
+                </>
               )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-hidden">
+            </Badge>
+          )
+        }
+        defaultExpanded={true}
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+      >
           {teachingCoursesLoading ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
@@ -1073,18 +1072,18 @@ const Lecturers = () => {
               </TabsContent>
             </Tabs>
           )}
-        </CardContent>
-      </Card>
+      </CollapsibleSection>
 
       {/* 學生評論 */}
-      <Card className="course-card overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
-            <MessageSquare className="h-5 w-5 shrink-0" />
-            <span className="truncate">{t('instructors.studentReviews')}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-hidden space-y-4">
+      <CollapsibleSection
+        className="course-card"
+        title={t('instructors.studentReviews')}
+        icon={<MessageSquare className="h-5 w-5" />}
+        defaultExpanded={true}
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+        contentClassName="space-y-4"
+      >
           {/* 篩選器 - 只有當有評論且不在載入狀態時才顯示 */}
           {reviews && reviews.length > 0 && !reviewsLoading && (
             <>
@@ -1849,8 +1848,7 @@ const Lecturers = () => {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </CollapsibleSection>
 
       {/* 操作按鈕 */}
       <div className="flex gap-3 pb-8 md:pb-0">
