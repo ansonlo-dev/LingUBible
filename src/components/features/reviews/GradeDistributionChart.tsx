@@ -104,8 +104,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       )}
       
       {/* 圖表 */}
-      <div className="relative w-full overflow-hidden" style={{ height: `${height}px` }}>
-        <div className="flex items-end justify-center h-full gap-0.5 sm:gap-1 px-1">
+      <div className="relative w-full pt-16" style={{ height: `${height + 64}px` }}>
+        <div className="flex items-end justify-center gap-0.5 sm:gap-1 px-1" style={{ height: `${height}px` }}>
           {sortedGrades.map((grade) => {
             const count = completeDistribution[grade] || 0;
             const percentage = totalCount > 0 ? (count / totalCount) * 100 : 0;
@@ -117,16 +117,17 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 className="flex flex-col items-center group relative flex-1 max-w-[32px] min-w-[20px] sm:min-w-[28px]"
               > 
                 {/* 數值標籤 - 手機版優化 */}
-                {count > 0 && (
-                  <div className="absolute -top-5 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 bg-background px-1 rounded whitespace-nowrap">
-                    {count}
-                    {showPercentage && totalCount > 0 && (
-                      <span className="text-xs text-muted-foreground/70 ml-1">
-                        ({percentage.toFixed(1)}%)
-                      </span>
-                    )}
-                  </div>
-                )}
+                <div 
+                  className="absolute text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 bg-white dark:bg-gray-800 px-2 py-1 rounded whitespace-nowrap shadow-lg border border-gray-200 dark:border-gray-600 pointer-events-none"
+                  style={{ 
+                    top: barHeight > (height * 0.7) ? '-52px' : '-32px',
+                    left: '50%',
+                    transform: 'translateX(-50%)'
+                  }}
+                >
+                  <div>{t('chart.count')}: {count}</div>
+                  <div>{t('chart.percentage')}: {percentage.toFixed(1)}%</div>
+                </div>
                 
                 {/* 長條圖 */}
                 <div
@@ -136,14 +137,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                       : 'bg-gray-200 dark:bg-gray-700'
                   }`}
                   style={{ height: `${barHeight}px` }}
-                  title={`${grade === 'N/A' ? t('review.notApplicable') : grade}: ${count} ${t('common.students')} (${percentage.toFixed(1)}%)`}
                 />
                 
                 {/* 成績標籤 - 手機版優化 */}
-                <div className="mt-1 text-xs text-muted-foreground font-medium text-center w-full truncate">
+                <div className="mt-1 text-xs text-muted-foreground font-medium text-center w-full">
                   {grade === 'N/A' ? (
                     <span className="text-[10px] sm:text-xs">
-                      {t('review.notApplicable')}
+                      N/A
                     </span>
                   ) : (
                     grade

@@ -9,6 +9,13 @@ interface CourseDetailData {
   };
   teachingInfo: CourseTeachingInfo[];
   reviews: (CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[];
+  allReviewsForChart: (CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[];
+  isOfferedInCurrentTerm: boolean;
+  detailedStats: {
+    averageWorkload: number;
+    averageDifficulty: number;
+    averageUsefulness: number;
+  };
 }
 
 interface CourseDetailOptimized {
@@ -22,7 +29,8 @@ interface CourseDetailOptimized {
 export const useCourseDetailOptimized = (
   courseCode: string | null, 
   userId?: string,
-  language?: string
+  language?: string,
+  currentTermCode?: string
 ): CourseDetailOptimized => {
   const [data, setData] = useState<CourseDetailData>({
     course: null,
@@ -31,7 +39,14 @@ export const useCourseDetailOptimized = (
       reviewCount: 0
     },
     teachingInfo: [],
-    reviews: []
+    reviews: [],
+    allReviewsForChart: [],
+    isOfferedInCurrentTerm: false,
+    detailedStats: {
+      averageWorkload: 0,
+      averageDifficulty: 0,
+      averageUsefulness: 0
+    }
   });
   const [loading, setLoading] = useState(true);
   const [teachingInfoLoading, setTeachingInfoLoading] = useState(true);
@@ -42,72 +57,74 @@ export const useCourseDetailOptimized = (
     if (!courseCode) {
       setError('Course code not provided');
       setLoading(false);
+      setTeachingInfoLoading(false);
+      setReviewsLoading(false);
       return;
     }
 
     const loadCourseData = async () => {
       try {
         setLoading(true);
+        setTeachingInfoLoading(true);
+        setReviewsLoading(true);
         setError(null);
-        
-        // 第一階段：載入基本課程信息和統計（快速顯示）
-        const [courseData, statsData] = await Promise.all([
+
+        const startTime = Date.now();
+
+        // 並行載入所有數據（包括新增的課程開設狀態和詳細統計）
+        const baseDataPromise = Promise.all([
           CourseService.getCourseByCode(courseCode),
-          CourseService.getCourseStats(courseCode)
+          CourseService.getCourseStats(courseCode),
+          CourseService.getCourseTeachingInfoOptimized(courseCode),
+          CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId), // 所有評論（不自動過濾語言）
+          CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId), // 所有評論（用於圖表）
+          CourseService.getCourseDetailedStatsOptimized(courseCode)
         ]);
+
+        // 只有提供了 currentTermCode 時才檢查課程開設狀態
+        const offerCheckPromise = currentTermCode 
+          ? CourseService.isCourseOfferedInTerm(courseCode, currentTermCode)
+          : Promise.resolve(false);
+
+        const [baseResults, isOfferedData] = await Promise.all([
+          baseDataPromise, 
+          offerCheckPromise
+        ]);
+        
+        // 安全地解構結果
+        const [courseData, statsData, teachingInfoData, reviewsData, allReviewsData, detailedStatsData] = baseResults;
+
+        const loadTime = Date.now() - startTime;
+        console.log(`Optimized course detail data loaded in ${loadTime}ms for:`, courseCode);
 
         if (!courseData) {
           setError('Course not found');
-          setLoading(false);
           return;
         }
 
-        // 更新基本數據，允許頁面快速渲染
-        setData(prev => ({
-          ...prev,
+        // 一次性更新所有數據
+        setData({
           course: courseData,
           courseStats: {
             averageRating: statsData.averageRating,
             reviewCount: statsData.reviewCount
+          },
+          teachingInfo: teachingInfoData,
+          reviews: reviewsData,
+          allReviewsForChart: allReviewsData,
+          isOfferedInCurrentTerm: isOfferedData,
+          detailedStats: {
+            averageWorkload: detailedStatsData.averageWorkload,
+            averageDifficulty: detailedStatsData.averageDifficulty,
+            averageUsefulness: detailedStatsData.averageUsefulness
           }
-        }));
-        
-        setLoading(false);
-
-        // 第二階段：並行載入教學信息和評論（背景載入）
-        const loadDetailedData = async () => {
-          try {
-            // 並行載入教學信息和評論
-            const [teachingInfoData, reviewsData] = await Promise.all([
-              CourseService.getCourseTeachingInfoOptimized(courseCode).finally(() => {
-                setTeachingInfoLoading(false);
-              }),
-              CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId, language).finally(() => {
-                setReviewsLoading(false);
-              })
-            ]);
-
-            // 更新詳細數據
-            setData(prev => ({
-              ...prev,
-              teachingInfo: teachingInfoData,
-              reviews: reviewsData
-            }));
-
-          } catch (detailError) {
-            console.error('Failed to load detailed course data:', detailError);
-            // 詳細數據載入失敗不影響基本內容顯示
-            setTeachingInfoLoading(false);
-            setReviewsLoading(false);
-          }
-        };
-
-        // 在背景中載入詳細數據
-        loadDetailedData();
+        });
 
       } catch (error) {
         console.error('Failed to load course data:', error);
         setError('Failed to load course information');
+      } finally {
+        // 一次性關閉所有載入狀態（類似講師詳情頁面）
         setLoading(false);
         setTeachingInfoLoading(false);
         setReviewsLoading(false);
@@ -115,7 +132,7 @@ export const useCourseDetailOptimized = (
     };
 
     loadCourseData();
-  }, [courseCode, userId, language]);
+  }, [courseCode, userId, language, currentTermCode]);
 
   return {
     data,

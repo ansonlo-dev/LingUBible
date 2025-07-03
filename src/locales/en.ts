@@ -428,8 +428,7 @@ export default {
   'filter.allCourses': 'All Courses',
   'filter.allGrades': 'All Grades',
   'sort.currentSort': 'Current Sort',
-  // Common
-  'common.reviews': 'reviews',
+
   // Languages
   'language.traditionalChinese': 'Traditional Chinese',
   'language.simplifiedChinese': 'Simplified Chinese',
@@ -464,6 +463,7 @@ export default {
   'pages.courseDetail.noLectureRecords': 'No lecture records found',
   'pages.courseDetail.noTutorialRecords': 'No tutorial records found',
   'pages.courseDetail.offerRecords': 'Offer Records',
+  'pages.courseDetail.courseInfo': 'Course Info',
   'pages.instructors.title': 'Instructors Catalog',
   'pages.instructors.showingResults': 'Showing {count} of {total} instructors',
   'pages.instructors.foundCount': 'Found {count} instructors',
@@ -474,6 +474,7 @@ export default {
   'pages.instructors.noInstructorsAvailable': 'No instructors available',
   'pages.instructors.loadFailed': 'Failed to load instructor data',
   'pages.instructors.loadFailedDesc': 'An error occurred while loading instructor data, please try again later',
+  'pages.instructors.instructorInfo': 'Instructor Info',
   'card.reviews': 'reviews',
   'card.review': 'review',
   'card.students': 'students',
@@ -670,6 +671,8 @@ export default {
   'instructors.noRatingData': 'No rating data available',
   'instructors.coursesTeaching': 'Teaching Records',
   'instructors.studentReviews': 'Student Reviews',
+  'instructors.notFound': 'Instructor not found',
+  'instructors.backToList': 'Back to Instructor List',
   'search.smartSearch': 'Smart Search',
   'search.showingResults': 'Showing {count} results (out of {total} courses)',
   'search.noResults': 'No courses found matching your criteria',
@@ -1668,4 +1671,17 @@ export default {
   'faculty.socialSciences': 'Faculty of Social Sciences',
       'faculty.dataScience': 'School of Data Science',
     'faculty.interdisciplinaryStudies': 'School of Interdisciplinary Studies',
+
+  // Chart translations
+  'chart.noGradeData': 'No grade data available',
+  'chart.totalStudents': 'Total: {count} students',
+  'chart.meanGPA': 'Mean GPA: {mean}',
+  'chart.standardDeviation': 'Std Dev: {std}',
+  'chart.gradeDistribution': 'Grade Distribution',
+  'chart.count': 'Count',
+  'chart.percentage': 'Percentage',
+
+  // Common translations
+  'common.students': 'students',
+  'common.reviews': 'reviews'
 };

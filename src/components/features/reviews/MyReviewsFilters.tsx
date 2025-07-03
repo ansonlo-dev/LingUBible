@@ -1,5 +1,6 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { isCurrentTerm } from '@/utils/dateUtils';
+import { sortGradesDescending } from '@/utils/gradeUtils';
 import {
   X,
   ArrowUp,
@@ -303,16 +304,19 @@ export function MyReviewsFilters({
                   {t('common.all')}
                 </span>
               </SelectItem>
-              {Object.entries(gradeCounts).map(([grade, count]) => (
-                <SelectItem key={grade} value={grade}>
-                  <span className="flex items-center gap-2">
-                    <span>{grade === 'N/A' ? t('review.notApplicable') : grade}</span>
-                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                      {count}
-                    </Badge>
-                  </span>
-                </SelectItem>
-              ))}
+              {sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => {
+                const count = gradeCounts[grade] || 0;
+                return (
+                  <SelectItem key={grade} value={grade}>
+                    <span className="flex items-center gap-2">
+                      <span>{grade === 'N/A' ? t('review.notApplicable') : grade}</span>
+                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                        {count}
+                      </Badge>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

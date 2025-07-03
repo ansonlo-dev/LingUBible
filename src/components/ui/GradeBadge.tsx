@@ -7,12 +7,14 @@ interface GradeBadgeProps {
   grade: string;
   size?: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
+  onClick?: () => void;
 }
 
 export const GradeBadge: React.FC<GradeBadgeProps> = ({ 
   grade, 
   size = 'md', 
-  showTooltip = true 
+  showTooltip = true,
+  onClick 
 }) => {
   const { t } = useLanguage();
   
@@ -77,7 +79,7 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
     const firstLetter = grade.charAt(0).toUpperCase();
     
     if (firstLetter === 'A') {
-      // A+, A, A- - 金色漸變
+      // A, A- - 金色漸變
       return `
         bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500
         dark:from-yellow-300 dark:via-yellow-400 dark:to-amber-400
@@ -113,7 +115,7 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
         ring-2 ring-blue-500/20 dark:ring-blue-400/30
       `;
     } else if (firstLetter === 'D') {
-      // D+, D, D- - 橙色漸變
+      // D+, D - 橙色漸變
       return `
         bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600
         dark:from-orange-300 dark:via-orange-400 dark:to-orange-500
@@ -176,8 +178,14 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
           flex items-center justify-center
           backdrop-blur-sm
           ${showTooltip ? 'cursor-help' : ''}
+          ${onClick ? 'cursor-pointer hover:scale-110' : ''}
         `}
         title={getTooltipText()}
+        onClick={onClick ? (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        } : undefined}
       >
         {displayGrade}
       </div>

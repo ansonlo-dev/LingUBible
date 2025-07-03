@@ -1,5 +1,6 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { isCurrentTerm } from '@/utils/dateUtils';
+import { sortGradesDescending } from '@/utils/gradeUtils';
 import {
   Filter,
   X,
@@ -19,7 +20,8 @@ import {
   CalendarDays,
   BookOpen,
   School,
-  CheckCircle
+  CheckCircle,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +32,7 @@ export interface InstructorReviewFilters {
   selectedTerms: string[];
   selectedCourses: string[];
   selectedSessionTypes: string[];
+  selectedGrades: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   itemsPerPage: number;
@@ -43,6 +46,7 @@ interface InstructorReviewsFiltersProps {
   termCounts: { [key: string]: { name: string; count: number } };
   courseCounts: { [key: string]: { title: string; count: number } };
   sessionTypeCounts: { [key: string]: number };
+  gradeCounts: { [key: string]: number };
   totalReviews: number;
   filteredReviews: number;
   onClearAll: () => void;
@@ -55,6 +59,7 @@ export function InstructorReviewsFilters({
   termCounts,
   courseCounts,
   sessionTypeCounts,
+  gradeCounts,
   totalReviews,
   filteredReviews,
   onClearAll
@@ -97,11 +102,20 @@ export function InstructorReviewsFilters({
     }
   };
 
+  const handleGradeChange = (value: string) => {
+    if (value === 'all') {
+      updateFilters({ selectedGrades: [], currentPage: 1 });
+    } else {
+      updateFilters({ selectedGrades: [value], currentPage: 1 });
+    }
+  };
+
   const hasActiveFilters = () => {
     return (filters.selectedLanguages || []).length > 0 ||
            (filters.selectedTerms || []).length > 0 ||
            (filters.selectedCourses || []).length > 0 ||
-           (filters.selectedSessionTypes || []).length > 0;
+           (filters.selectedSessionTypes || []).length > 0 ||
+           (filters.selectedGrades || []).length > 0;
   };
 
   const getActiveFiltersCount = () => {
@@ -110,6 +124,7 @@ export function InstructorReviewsFilters({
     if ((filters.selectedTerms || []).length > 0) count++;
     if ((filters.selectedCourses || []).length > 0) count++;
     if ((filters.selectedSessionTypes || []).length > 0) count++;
+    if ((filters.selectedGrades || []).length > 0) count++;
     return count;
   };
 
@@ -156,6 +171,7 @@ export function InstructorReviewsFilters({
   const currentTerm = (filters.selectedTerms || []).length === 0 ? 'all' : (filters.selectedTerms || [])[0];
   const currentCourse = (filters.selectedCourses || []).length === 0 ? 'all' : (filters.selectedCourses || [])[0];
   const currentSessionType = (filters.selectedSessionTypes || []).length === 0 ? 'all' : (filters.selectedSessionTypes || [])[0];
+  const currentGrade = (filters.selectedGrades || []).length === 0 ? 'all' : (filters.selectedGrades || [])[0];
 
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
@@ -167,7 +183,7 @@ export function InstructorReviewsFilters({
   return (
     <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* 語言篩選 */}
         <div className="flex items-center gap-3">
           <label className={getLabelClassName()}>
@@ -295,6 +311,39 @@ export function InstructorReviewsFilters({
                   </span>
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* 成績篩選 */}
+        <div className="flex items-center gap-3">
+          <label className={getLabelClassName()}>
+            <GraduationCap className="h-4 w-4" />
+            {t('sort.grade')}
+          </label>
+          <Select value={currentGrade} onValueChange={handleGradeChange}>
+            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
+              <SelectValue placeholder={t('common.all')} />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
+              <SelectItem value="all">
+                <span className="font-bold">
+                  {t('common.all')}
+                </span>
+              </SelectItem>
+              {sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => {
+                const count = gradeCounts[grade] || 0;
+                return (
+                  <SelectItem key={grade} value={grade}>
+                    <span className="flex items-center gap-2">
+                      <span>{grade === 'N/A' ? t('review.notApplicable') : grade}</span>
+                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                        {count}
+                      </Badge>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

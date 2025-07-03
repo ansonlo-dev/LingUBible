@@ -17,7 +17,8 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Users
+  Users,
+  Info
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -28,6 +29,8 @@ import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
+import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
+import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 
 // Faculty mapping function - copied from Lecturers.tsx
 const getFacultyByDepartment = (department: string): string => {
@@ -170,81 +173,20 @@ const CourseDetail = () => {
   const currentTermName = getCurrentTermName();
   const currentTermCode = getCurrentTermCode();
   
-  // State to track if course is offered in current term
-  const [isOfferedInCurrentTerm, setIsOfferedInCurrentTerm] = useState<boolean>(false);
-  const [isCheckingOffer, setIsCheckingOffer] = useState<boolean>(false);
-  
-  // State for detailed course stats
-  const [courseDetailedStats, setCourseDetailedStats] = useState<{
-    averageWorkload: number;
-    averageDifficulty: number;
-    averageUsefulness: number;
-  }>({
-    averageWorkload: 0,
-    averageDifficulty: 0,
-    averageUsefulness: 0
-  });
-  const [isLoadingDetailedStats, setIsLoadingDetailedStats] = useState<boolean>(false);
-  
   // 使用優化的 hook
   const { data, loading, error, teachingInfoLoading, reviewsLoading } = useCourseDetailOptimized(
     courseCode || null,
-    user?.$id
+    user?.$id,
+    language,
+    currentTermCode
   );
 
-  const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
+  // 篩選狀態
   const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
+  const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
 
   // 解構數據
-  const { course, courseStats, teachingInfo, reviews: allReviews } = data;
-
-  // Check if course is offered in current term
-  useEffect(() => {
-    const checkCourseOffering = async () => {
-      if (!course) return;
-      
-      setIsCheckingOffer(true);
-      try {
-        const isOffered = await CourseService.isCourseOfferedInTerm(course.course_code, currentTermCode);
-        setIsOfferedInCurrentTerm(isOffered);
-      } catch (error) {
-        console.error('Error checking course offering:', error);
-        setIsOfferedInCurrentTerm(false);
-      } finally {
-        setIsCheckingOffer(false);
-      }
-    };
-
-    checkCourseOffering();
-  }, [course, currentTermCode]);
-
-  // Load detailed course stats
-  useEffect(() => {
-    const loadDetailedStats = async () => {
-      if (!course) return;
-      
-      setIsLoadingDetailedStats(true);
-      try {
-        const detailedStats = await CourseService.getCourseDetailedStatsOptimized(course.course_code);
-        setCourseDetailedStats({
-          averageWorkload: detailedStats.averageWorkload,
-          averageDifficulty: detailedStats.averageDifficulty,
-          averageUsefulness: detailedStats.averageUsefulness
-        });
-      } catch (error) {
-        console.error('Error loading detailed course stats:', error);
-        setCourseDetailedStats({
-          averageWorkload: 0,
-          averageDifficulty: 0,
-          averageUsefulness: 0
-        });
-      } finally {
-        setIsLoadingDetailedStats(false);
-      }
-    };
-
-    loadDetailedStats();
-  }, [course]);
+  const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
 
   // 獲取所有可用的學期
   const availableTerms = React.useMemo(() => {
@@ -363,22 +305,29 @@ const CourseDetail = () => {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6 pb-20 overflow-hidden">
       {/* 課程基本信息 */}
-      <Card className="course-card overflow-hidden">
-        <CardHeader className="overflow-hidden">
+      <CollapsibleSection
+        className="course-card"
+        title={t('pages.courseDetail.courseInfo')}
+        icon={<Info className="h-5 w-5" />}
+        defaultExpanded={true}
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+      >
+        <div className="space-y-4 overflow-hidden">
           <div className="flex items-center gap-3 overflow-hidden min-w-0">
             <BookOpen className="h-8 w-8 text-primary shrink-0" />
             <div className="min-w-0 flex-1">
-              {/* 課程代碼 - 作為主標題 */}
-              <CardTitle className="text-2xl truncate font-mono">{course.course_code}</CardTitle>
+              {/* 課程代碼 - 作為主標題，減小字體 */}
+              <CardTitle className="text-xl truncate font-mono">{course.course_code}</CardTitle>
               {/* 英文課程名稱 - 作為副標題 */}
-              <p className="text-xl text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.75rem]">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
                 {course.course_title}
               </p>
               {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
               {(language === 'zh-TW' || language === 'zh-CN') && (() => {
                 const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
                 return chineseName && (
-                  <p className="text-lg text-gray-500 dark:text-gray-500 mt-1 min-h-[1.5rem]">
+                  <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
                     {chineseName}
                   </p>
                 );
@@ -420,8 +369,7 @@ const CourseDetail = () => {
               />
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4 overflow-hidden">
+          
           {/* 課程統計信息 - 2x2 網格佈局 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
             {/* 學生評論數 */}
@@ -439,16 +387,14 @@ const CourseDetail = () => {
             {/* 平均工作量 */}
             <div className="text-center min-w-0">
               <div className="text-2xl font-bold text-primary">
-                {isLoadingDetailedStats ? (
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                ) : courseDetailedStats.averageWorkload > 0 ? (
-                  courseDetailedStats.averageWorkload.toFixed(2)
+                {detailedStats.averageWorkload > 0 ? (
+                  detailedStats.averageWorkload.toFixed(2)
                 ) : (
                   'N/A'
                 )}
               </div>
               <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageWorkload')}</div>
-              {!isLoadingDetailedStats && courseDetailedStats.averageWorkload === 0 && (
+              {detailedStats.averageWorkload === 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
                   {t('pages.courseDetail.noRatingData')}
                 </div>
@@ -458,16 +404,14 @@ const CourseDetail = () => {
             {/* 平均難度 */}
             <div className="text-center min-w-0">
               <div className="text-2xl font-bold text-primary">
-                {isLoadingDetailedStats ? (
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                ) : courseDetailedStats.averageDifficulty > 0 ? (
-                  courseDetailedStats.averageDifficulty.toFixed(2)
+                {detailedStats.averageDifficulty > 0 ? (
+                  detailedStats.averageDifficulty.toFixed(2)
                 ) : (
                   'N/A'
                 )}
               </div>
               <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageDifficulty')}</div>
-              {!isLoadingDetailedStats && courseDetailedStats.averageDifficulty === 0 && (
+              {detailedStats.averageDifficulty === 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
                   {t('pages.courseDetail.noRatingData')}
                 </div>
@@ -477,24 +421,36 @@ const CourseDetail = () => {
             {/* 平均實用性 */}
             <div className="text-center min-w-0">
               <div className="text-2xl font-bold text-primary">
-                {isLoadingDetailedStats ? (
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                ) : courseDetailedStats.averageUsefulness > 0 ? (
-                  courseDetailedStats.averageUsefulness.toFixed(2)
+                {detailedStats.averageUsefulness > 0 ? (
+                  detailedStats.averageUsefulness.toFixed(2)
                 ) : (
                   'N/A'
                 )}
               </div>
               <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageUsefulness')}</div>
-              {!isLoadingDetailedStats && courseDetailedStats.averageUsefulness === 0 && (
+              {detailedStats.averageUsefulness === 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
                   {t('pages.courseDetail.noRatingData')}
                 </div>
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* 成績分佈圖表 */}
+          {!reviewsLoading && allReviewsForChart.length > 0 && (
+            <div className="pt-4">
+              <GradeDistributionChart
+                gradeDistribution={calculateGradeDistributionFromReviews(allReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
+                loading={reviewsLoading}
+                title={t('chart.gradeDistribution')}
+                height={120}
+                showPercentage={true}
+                className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+              />
+            </div>
+          )}
+        </div>
+      </CollapsibleSection>
 
       {/* 教學記錄 */}
       <CollapsibleSection
@@ -748,13 +704,24 @@ const CourseDetail = () => {
       </CollapsibleSection>
 
       {/* 課程評論 */}
-      <div id="student-reviews">
-        <CourseReviewsList 
-          reviews={allReviews} 
-          allReviews={allReviews}
-          loading={reviewsLoading}
-        />
-      </div>
+      <CollapsibleSection
+        className="course-card"
+        title={t('review.studentReviews')}
+        icon={<MessageSquare className="h-5 w-5" />}
+        defaultExpanded={true}
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+        contentClassName="space-y-4"
+      >
+        <div id="student-reviews">
+          <CourseReviewsList 
+            reviews={allReviews} 
+            allReviews={allReviews}
+            loading={reviewsLoading}
+            hideHeader={true}
+          />
+        </div>
+      </CollapsibleSection>
 
       {/* 操作按鈕 */}
       <div className="flex gap-3 pb-8 md:pb-0">

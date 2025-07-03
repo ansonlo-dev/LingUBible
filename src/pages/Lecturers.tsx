@@ -49,6 +49,8 @@ import { cn } from '@/lib/utils';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
+import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
+import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 
 // Faculty mapping function - copied from PopularItemCard
 const getFacultyByDepartment = (department: string): string => {
@@ -202,6 +204,7 @@ const Lecturers = () => {
     selectedTerms: [],
     selectedCourses: [],
     selectedSessionTypes: [],
+    selectedGrades: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
     itemsPerPage: 12,
@@ -417,7 +420,8 @@ const Lecturers = () => {
         languageCounts: {},
         termCounts: {},
         courseCounts: {},
-        sessionTypeCounts: {}
+        sessionTypeCounts: {},
+        gradeCounts: {}
       };
     }
 
@@ -425,6 +429,7 @@ const Lecturers = () => {
     const termCounts: { [key: string]: { name: string; count: number } } = {};
     const courseCounts: { [key: string]: { title: string; count: number } } = {};
     const sessionTypeCounts: { [key: string]: number } = {};
+    const gradeCounts: { [key: string]: number } = {};
 
     reviews.forEach(reviewInfo => {
       // 語言統計
@@ -455,9 +460,16 @@ const Lecturers = () => {
           sessionTypeCounts[detail.session_type] = (sessionTypeCounts[detail.session_type] || 0) + 1;
         }
       });
+
+      // 成績統計
+      const finalGrade = reviewInfo.review.course_final_grade;
+      const normalizedGrade = finalGrade === '-1' ? 'N/A' : finalGrade;
+      if (normalizedGrade) {
+        gradeCounts[normalizedGrade] = (gradeCounts[normalizedGrade] || 0) + 1;
+      }
     });
 
-    return { languageCounts, termCounts, courseCounts, sessionTypeCounts };
+    return { languageCounts, termCounts, courseCounts, sessionTypeCounts, gradeCounts };
   };
 
   // 篩選評論
@@ -510,6 +522,15 @@ const Lecturers = () => {
           detail.session_type && filters.selectedSessionTypes.includes(detail.session_type)
         );
         if (!hasMatchingSessionType) return false;
+      }
+
+      // 成績篩選
+      if (filters.selectedGrades.length > 0) {
+        const finalGrade = reviewInfo.review.course_final_grade;
+        const normalizedGrade = finalGrade === '-1' ? 'N/A' : finalGrade;
+        if (!normalizedGrade || !filters.selectedGrades.includes(normalizedGrade)) {
+          return false;
+        }
       }
 
       return true;
@@ -599,7 +620,7 @@ const Lecturers = () => {
   const totalPages = Math.ceil(filteredReviews.length / filters.itemsPerPage);
 
   // 獲取篩選器統計數據
-  const { languageCounts, termCounts, courseCounts, sessionTypeCounts } = getFilterCounts();
+  const { languageCounts, termCounts, courseCounts, sessionTypeCounts, gradeCounts } = getFilterCounts();
 
   // 處理篩選器變更
   const handleFiltersChange = (newFilters: InstructorReviewFilters) => {
@@ -613,6 +634,7 @@ const Lecturers = () => {
       selectedTerms: [],
       selectedCourses: [],
       selectedSessionTypes: [],
+      selectedGrades: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
       itemsPerPage: 12,
@@ -679,20 +701,27 @@ const Lecturers = () => {
 
       {/* 講師基本信息 */}
       {instructor && (
-        <Card className="course-card overflow-hidden">
-          <CardHeader className="overflow-hidden">
+        <CollapsibleSection
+          className="course-card"
+          title={t('pages.instructors.instructorInfo')}
+          icon={<User className="h-5 w-5" />}
+          defaultExpanded={true}
+          expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+          collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+        >
+          <div className="space-y-4 overflow-hidden">
             <div className="flex items-center gap-3 overflow-hidden min-w-0">
               <GraduationCap className="h-8 w-8 text-primary shrink-0" />
               <div className="min-w-0 flex-1">
-                <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
+                <h3 className="text-xl font-bold truncate">{instructor.name}</h3>
                 {/* 在中文模式下顯示中文名稱 - 保留空間以維持卡片高度一致 */}
                 {language === 'zh-TW' && (
-                  <p className="text-xl text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.75rem]">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
                     {instructor.name_tc || ''}
                   </p>
                 )}
                 {language === 'zh-CN' && (
-                  <p className="text-xl text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.75rem]">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
                     {instructor.name_sc || ''}
                   </p>
                 )}
@@ -730,8 +759,7 @@ const Lecturers = () => {
                 />
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4 overflow-hidden">
+            
             <div className="flex items-center gap-2 overflow-hidden min-w-0">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
               <a 
@@ -807,8 +835,22 @@ const Lecturers = () => {
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* 成績分佈圖表 */}
+            {!reviewsLoading && reviews.length > 0 && (
+              <div className="pt-4">
+                <GradeDistributionChart
+                  gradeDistribution={calculateGradeDistributionFromReviews(reviews.map(review => ({ course_final_grade: review.review.course_final_grade })))}
+                  loading={reviewsLoading}
+                  title={t('chart.gradeDistribution')}
+                  height={120}
+                  showPercentage={true}
+                  className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+                />
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
       )}
 
       {/* 教授課程 */}
@@ -1100,6 +1142,7 @@ const Lecturers = () => {
               termCounts={termCounts}
               courseCounts={courseCounts}
               sessionTypeCounts={sessionTypeCounts}
+              gradeCounts={gradeCounts}
               totalReviews={reviews.length}
               filteredReviews={filteredReviews.length}
               onClearAll={handleClearAllFilters}
@@ -1320,6 +1363,14 @@ const Lecturers = () => {
                           grade={reviewInfo.review.course_final_grade}
                           size="md"
                           showTooltip={true}
+                          onClick={() => {
+                            const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedGrades: [normalizedGrade],
+                              currentPage: 1
+                            }));
+                          }}
                         />
                       </div>
                     )}

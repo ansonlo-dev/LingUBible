@@ -227,7 +227,7 @@ class AppwriteUserStatsService {
   public async userLogout(sessionId?: string): Promise<void> {
     try {
       // 如果沒有提供 sessionId，嘗試找到當前用戶的會話
-      let targetSessionId = sessionId;
+      const targetSessionId = sessionId;
       
       if (!targetSessionId) {
         // 查找當前用戶的會話（這裡需要用戶 ID，但我們沒有，所以保持原邏輯）
@@ -490,7 +490,7 @@ class AppwriteUserStatsService {
       const today = new Date().toDateString();
       const lastUpdated = new Date(statsDoc.lastUpdated || 0).toDateString();
 
-      let updates: any = {};
+      const updates: any = {};
 
       // 檢查是否是新的一天
       if (today !== lastUpdated) {
