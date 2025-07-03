@@ -372,14 +372,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
         <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
           {t('card.averageGPA')}
         </span>
-        <div className="relative">
-          <span className="text-3xl font-black text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text drop-shadow-sm">
-            {formatGPA(gpa)}
-          </span>
-          <span className="text-sm font-bold text-gray-600 dark:text-gray-400 ml-1">
-            / 4.0
-          </span>
-        </div>
+        <span className="text-3xl font-black text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text drop-shadow-sm">
+          {formatGPA(gpa)}
+        </span>
       </div>
     );
   };
