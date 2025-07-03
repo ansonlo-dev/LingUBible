@@ -504,6 +504,7 @@ export default {
   'card.notEnoughReviews': '评论不足',
   'card.notEnoughReviewsTooltip': '需要至少5个评论才能评级',
   'card.noReviews': '无评论',
+  'card.averageGPA': '平均 GPA',
   'specialty.programming': '程序设计',
   'specialty.dataStructures': '数据结构',
   'specialty.algorithms': '算法',

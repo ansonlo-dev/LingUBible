@@ -363,6 +363,7 @@ const Index = () => {
                       averageWorkload={course.averageWorkload}
                       averageDifficulty={course.averageDifficulty}
                       averageUsefulness={course.averageUsefulness}
+                      averageGPA={course.averageGPA}
                       isLoading={false}
                       isFavorited={user ? isFavorited('course', course.course_code) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
@@ -405,6 +406,7 @@ const Index = () => {
                       reviewCount={instructor.reviewCount}
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
+                      averageGPA={instructor.averageGPA}
                       isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
                       isLoading={false}
                       isFavorited={user ? isFavorited('instructor', instructor.name) : false}

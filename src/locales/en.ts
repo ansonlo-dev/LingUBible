@@ -502,6 +502,7 @@ export default {
   'card.notEnoughReviews': 'Not Enough Reviews',
   'card.notEnoughReviewsTooltip': 'At least 5 reviews are required for grading',
   'card.noReviews': 'No Reviews',
+  'card.averageGPA': 'Avg GPA',
   'specialty.programming': 'Programming',
   'specialty.dataStructures': 'Data Structures',
   'specialty.algorithms': 'Algorithms',

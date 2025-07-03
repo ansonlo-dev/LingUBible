@@ -502,6 +502,7 @@ export default {
   'card.notEnoughReviews': '評論不足',
   'card.notEnoughReviewsTooltip': '需要至少5個評論才能評級',
   'card.noReviews': '無評論',
+  'card.averageGPA': '平均 GPA',
   'specialty.programming': '程式設計',
   'specialty.dataStructures': '資料結構',
   'specialty.algorithms': '演算法',

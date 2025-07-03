@@ -1,6 +1,7 @@
 import { databases } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
+import { calculateGradeStatistics, calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 
 export interface Course {
   $id: string;
@@ -22,6 +23,7 @@ export interface CourseWithStats extends Course {
   averageWorkload: number;
   averageDifficulty: number;
   averageUsefulness: number;
+  averageGPA: number;
 }
 
 export interface CourseWithDetailedStats extends Course {
@@ -55,6 +57,7 @@ export interface InstructorWithDetailedStats extends Instructor {
   teachingScore: number;
   gradingFairness: number;
   isTeachingInCurrentTerm?: boolean;
+  averageGPA: number;
 }
 
 export interface TeachingRecord {
@@ -334,6 +337,7 @@ export class CourseService {
     averageWorkload: number;
     averageDifficulty: number;
     averageUsefulness: number;
+    averageGPA: number;
   }> {
     try {
       const response = await databases.listDocuments(
@@ -342,11 +346,11 @@ export class CourseService {
         [
           Query.equal('course_code', courseCode),
           Query.limit(500),
-          Query.select(['user_id', 'course_workload', 'course_difficulties', 'course_usefulness'])
+          Query.select(['user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
         ]
       );
 
-      const reviews = response.documents;
+      const reviews = response.documents as unknown as Review[];
       const reviewCount = reviews.length;
       
       if (reviewCount === 0) {
@@ -356,7 +360,8 @@ export class CourseService {
           studentCount: 0,
           averageWorkload: -1,
           averageDifficulty: -1,
-          averageUsefulness: -1
+          averageUsefulness: -1,
+          averageGPA: 0
         };
       }
 
@@ -377,14 +382,20 @@ export class CourseService {
       const uniqueUsers = new Set(reviews.map(review => review.user_id));
       const studentCount = uniqueUsers.size;
 
-              return {
-          reviewCount,
-          averageRating: averageUsefulness > 0 ? averageUsefulness : 0, // 使用實用性作為總體評分，但避免負數
-          studentCount,
-          averageWorkload,
-          averageDifficulty,
-          averageUsefulness
-        };
+      // 計算平均 GPA
+      const gradeDistribution = calculateGradeDistributionFromReviews(reviews);
+      const gradeStats = calculateGradeStatistics(gradeDistribution);
+      const averageGPA = gradeStats.mean || 0;
+
+      return {
+        reviewCount,
+        averageRating: averageUsefulness > 0 ? averageUsefulness : 0, // 使用實用性作為總體評分，但避免負數
+        studentCount,
+        averageWorkload,
+        averageDifficulty,
+        averageUsefulness,
+        averageGPA
+      };
     } catch (error) {
       console.error('Error fetching course detailed stats:', error);
       return {
@@ -393,7 +404,8 @@ export class CourseService {
         studentCount: 0,
         averageWorkload: -1,
         averageDifficulty: -1,
-        averageUsefulness: -1
+        averageUsefulness: -1,
+        averageGPA: 0
       };
     }
   }

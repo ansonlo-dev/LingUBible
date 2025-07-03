@@ -562,6 +562,7 @@ const Courses = () => {
                     averageWorkload={course.averageWorkload}
                     averageDifficulty={course.averageDifficulty}
                     averageUsefulness={course.averageUsefulness}
+                    averageGPA={course.averageGPA}
                     isLoading={statsLoading}
                   />
                 ))}

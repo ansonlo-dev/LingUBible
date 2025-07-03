@@ -8,6 +8,7 @@ import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/ut
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { useTheme } from '@/hooks/theme/useTheme';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { formatGPA } from '@/utils/gradeUtils';
 
 interface PopularCourseCardProps {
   type: 'course';
@@ -24,6 +25,7 @@ interface PopularCourseCardProps {
   averageWorkload?: number;
   averageDifficulty?: number;
   averageUsefulness?: number;
+  averageGPA?: number;
   isLoading?: boolean; // Add loading state for course cards
   // 新增：收藏狀態相關props
   isFavorited?: boolean;
@@ -39,6 +41,7 @@ interface PopularInstructorCardProps {
   reviewCount: number;
   teachingScore: number;
   gradingFairness: number;
+  averageGPA?: number;
   isTeachingInCurrentTerm?: boolean;
   isLoading?: boolean; // Add loading state for instructor cards
   // 新增：收藏狀態相關props
@@ -338,6 +341,49 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     );
   };
 
+  // Average GPA Display Component - Eye-catching without background
+  const AverageGPADisplay = ({ gpa, isLoading = false }: { gpa?: number; isLoading?: boolean }) => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center mt-2">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+            {t('card.averageGPA')}
+          </span>
+          <div className="animate-pulse">
+            <span className="text-2xl font-black text-gray-400">-.-</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (!gpa || gpa <= 0) {
+      return (
+        <div className="flex flex-col items-center mt-2">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+            {t('card.averageGPA')}
+          </span>
+          <span className="text-2xl font-black text-gray-400">{t('common.na')}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center mt-2">
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+          {t('card.averageGPA')}
+        </span>
+        <div className="relative">
+          <span className="text-3xl font-black text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text drop-shadow-sm">
+            {formatGPA(gpa)}
+          </span>
+          <span className="text-sm font-bold text-gray-600 dark:text-gray-400 ml-1">
+            / 4.0
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   if (props.type === 'course') {
     const courseUrl = `/courses/${props.code}`;
     
@@ -397,29 +443,34 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 </div>
               </div>
               
-              {/* 開設狀態徽章 - 移到右上角 */}
-              <Badge 
-                variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
-                className={`text-xs font-medium ml-2 flex-shrink-0 transition-all duration-200 ${
-                  props.isOfferedInCurrentTerm 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
-                }`}
-                title={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
-                onClick={props.isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
-              >
-                {props.isOfferedInCurrentTerm ? (
-                  <>
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    {t('offered.yes')}
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-3 w-3 mr-1" />
-                    {t('offered.no')}
-                  </>
-                )}
-              </Badge>
+              {/* 開設狀態徽章和平均GPA */}
+              <div className="flex flex-col items-end">
+                <Badge 
+                  variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
+                  className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
+                    props.isOfferedInCurrentTerm 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
+                  }`}
+                  title={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
+                  onClick={props.isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
+                >
+                  {props.isOfferedInCurrentTerm ? (
+                    <>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {t('offered.yes')}
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-3 w-3 mr-1" />
+                      {t('offered.no')}
+                    </>
+                  )}
+                </Badge>
+                
+                {/* Average GPA below offered badge */}
+                <AverageGPADisplay gpa={props.averageGPA} isLoading={courseStatsLoading} />
+              </div>
             </div>
             
             <div className="flex-1 min-w-0">
@@ -555,29 +606,34 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               </div>
             </div>
             
-            {/* 教學狀態徽章 - 移到右上角 */}
-            <Badge 
-              variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
-              className={`text-xs font-medium ml-2 flex-shrink-0 transition-all duration-200 ${
-                props.isTeachingInCurrentTerm 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
-              }`}
-              title={props.isTeachingInCurrentTerm ? t('teaching.tooltip.clickable').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}
-              onClick={props.isTeachingInCurrentTerm ? handleTeachingBadgeClick : undefined}
-            >
-              {props.isTeachingInCurrentTerm ? (
-                <>
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  {t('teaching.yes')}
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-3 w-3 mr-1" />
-                  {t('teaching.no')}
-                </>
-              )}
-            </Badge>
+            {/* 教學狀態徽章和平均GPA */}
+            <div className="flex flex-col items-end">
+              <Badge 
+                variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
+                className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
+                  props.isTeachingInCurrentTerm 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
+                }`}
+                title={props.isTeachingInCurrentTerm ? t('teaching.tooltip.clickable').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}
+                onClick={props.isTeachingInCurrentTerm ? handleTeachingBadgeClick : undefined}
+              >
+                {props.isTeachingInCurrentTerm ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    {t('teaching.yes')}
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3 mr-1" />
+                    {t('teaching.no')}
+                  </>
+                )}
+              </Badge>
+              
+              {/* Average GPA below teaching badge */}
+              <AverageGPADisplay gpa={props.averageGPA} isLoading={props.isLoading} />
+            </div>
           </div>
           
           <div className="flex-1 min-w-0">
