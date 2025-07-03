@@ -1440,7 +1440,7 @@ export class CourseService {
           [
             Query.orderDesc('$createdAt'),
             Query.limit(this.MAX_REVIEWS_LIMIT),
-            Query.select(['instructor_details'])
+            Query.select(['instructor_details', 'course_final_grade'])
           ]
         ),
         databases.listDocuments(
@@ -1515,7 +1515,8 @@ export class CourseService {
           return {
             ...instructor,
             ...stats,
-            isTeachingInCurrentTerm: currentTermInstructors.has(instructor.name)
+            isTeachingInCurrentTerm: currentTermInstructors.has(instructor.name),
+            averageGPA: 0 // Will be calculated properly later
           };
         })
         .filter(instructor => instructor.reviewCount > 0) // 只顯示有評論的講師
@@ -1560,7 +1561,7 @@ export class CourseService {
           [
             Query.orderDesc('$createdAt'),
             Query.limit(this.MAX_REVIEWS_LIMIT),
-            Query.select(['instructor_details'])
+            Query.select(['instructor_details', 'course_final_grade'])
           ]
         ),
         databases.listDocuments(
@@ -1588,6 +1589,7 @@ export class CourseService {
         reviewCount: number;
         teachingScores: number[];
         gradingScores: number[];
+        grades: string[];
       }>();
 
       // 處理每個評論中的講師詳情
@@ -1602,7 +1604,8 @@ export class CourseService {
               instructorStatsMap.set(instructorName, {
                 reviewCount: 0,
                 teachingScores: [],
-                gradingScores: []
+                gradingScores: [],
+                grades: []
               });
             }
             
@@ -1616,6 +1619,11 @@ export class CourseService {
             if (detail.grading && detail.grading > 0) {
               stats.gradingScores.push(detail.grading);
             }
+            
+            // 收集成績用於 GPA 計算
+            if (review.course_final_grade) {
+              stats.grades.push(review.course_final_grade);
+            }
           }
         } catch (error) {
           // 跳過無效的 JSON 數據
@@ -1628,6 +1636,7 @@ export class CourseService {
         reviewCount: number;
         teachingScore: number;
         gradingFairness: number;
+        averageGPA: number;
       }>();
       
       for (const [instructorName, stats] of instructorStatsMap) {
@@ -1638,10 +1647,18 @@ export class CourseService {
           ? stats.gradingScores.reduce((sum, score) => sum + score, 0) / stats.gradingScores.length 
           : 0;
           
+        // 計算平均 GPA
+        const gradeDistribution = calculateGradeDistributionFromReviews(
+          stats.grades.map(grade => ({ course_final_grade: grade }))
+        );
+        const gradeStats = calculateGradeStatistics(gradeDistribution);
+        const averageGPA = gradeStats.mean || 0;
+          
         finalInstructorStatsMap.set(instructorName, {
           reviewCount: stats.reviewCount,
           teachingScore,
-          gradingFairness
+          gradingFairness,
+          averageGPA
         });
       }
 
@@ -1651,7 +1668,8 @@ export class CourseService {
           const stats = finalInstructorStatsMap.get(instructor.name) || {
             reviewCount: 0,
             teachingScore: 0,
-            gradingFairness: 0
+            gradingFairness: 0,
+            averageGPA: 0
           };
 
           return {
@@ -1704,7 +1722,7 @@ export class CourseService {
           [
             Query.orderDesc('$createdAt'),
             Query.limit(this.MAX_REVIEWS_LIMIT),
-            Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness']) // 選擇統計需要的所有評分欄位
+            Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade']) // 選擇統計需要的所有評分欄位
           ]
         ),
         databases.listDocuments(
@@ -1719,7 +1737,7 @@ export class CourseService {
       ]);
 
       const courses = coursesResponse.documents as unknown as Course[];
-      const allReviews = reviewsResponse.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness'>[];
+      const allReviews = reviewsResponse.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
       const currentTermTeachingRecords = teachingRecordsResponse.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
 
       // 使用 Set 快速查找當前學期開設的課程
@@ -1727,15 +1745,16 @@ export class CourseService {
         currentTermTeachingRecords.map(record => record.course_code)
       );
 
-      // 使用 Map 批量計算統計信息，避免重複計算
-      const courseStatsMap = new Map<string, {
-        reviewCount: number;
-        averageRating: number;
-        studentCount: number;
-        averageWorkload: number;
-        averageDifficulty: number;
-        averageUsefulness: number;
-      }>();
+              // 使用 Map 批量計算統計信息，避免重複計算
+        const courseStatsMap = new Map<string, {
+          reviewCount: number;
+          averageRating: number;
+          studentCount: number;
+          averageWorkload: number;
+          averageDifficulty: number;
+          averageUsefulness: number;
+          averageGPA: number;
+        }>();
 
       // 按課程代碼分組評論（使用 reduce 提高性能）
       const reviewsByCourse = allReviews.reduce((acc, review) => {
@@ -1758,7 +1777,8 @@ export class CourseService {
             studentCount: 0,
             averageWorkload: -1,
             averageDifficulty: -1,
-            averageUsefulness: -1
+            averageUsefulness: -1,
+            averageGPA: 0
           });
           continue;
         }
@@ -1792,13 +1812,19 @@ export class CourseService {
           }
         }
 
+        // 計算平均 GPA
+        const gradeDistribution = calculateGradeDistributionFromReviews(reviews);
+        const gradeStats = calculateGradeStatistics(gradeDistribution);
+        const averageGPA = gradeStats.mean || 0;
+
         courseStatsMap.set(courseCode, {
           reviewCount,
           averageRating: totalRating / reviewCount,
           studentCount: uniqueUsers.size,
           averageWorkload: validWorkloadCount > 0 ? totalWorkload / validWorkloadCount : -1,
           averageDifficulty: validDifficultyCount > 0 ? totalDifficulty / validDifficultyCount : -1,
-          averageUsefulness: validUsefulnessCount > 0 ? totalUsefulness / validUsefulnessCount : -1
+          averageUsefulness: validUsefulnessCount > 0 ? totalUsefulness / validUsefulnessCount : -1,
+          averageGPA
         });
       }
 
@@ -1810,7 +1836,8 @@ export class CourseService {
           studentCount: 0,
           averageWorkload: -1,
           averageDifficulty: -1,
-          averageUsefulness: -1
+          averageUsefulness: -1,
+          averageGPA: 0
         };
 
         return {
