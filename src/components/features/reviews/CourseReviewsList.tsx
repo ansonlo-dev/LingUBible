@@ -41,6 +41,7 @@ interface CourseReviewsListProps {
   onToggleLanguage?: (language: string) => void;
   t?: (key: string, params?: Record<string, any>) => any;
   hideHeader?: boolean; // New prop to hide the card header when wrapped in CollapsibleSection
+  externalGradeFilter?: string; // External grade to filter by
 }
 
 interface ExpandedReviews {
@@ -54,7 +55,8 @@ export const CourseReviewsList = ({
   selectedLanguages = [], 
   onToggleLanguage,
   t: tProp,
-  hideHeader = false
+  hideHeader = false,
+  externalGradeFilter
 }: CourseReviewsListProps) => {
   const { t: tContext, language } = useLanguage();
   const t = tProp || tContext;
@@ -331,6 +333,17 @@ export const CourseReviewsList = ({
     setFilters(newFilters);
   };
 
+  // Apply external grade filter when it changes
+  useEffect(() => {
+    if (externalGradeFilter) {
+      setFilters(prev => ({
+        ...prev,
+        selectedGrades: [externalGradeFilter],
+        currentPage: 1
+      }));
+    }
+  }, [externalGradeFilter]);
+
   const handleClearAllFilters = () => {
     setFilters({
       selectedLanguages: [],
@@ -550,7 +563,7 @@ export const CourseReviewsList = ({
             </div>
 
             {/* 課程要求 */}
-            <div className="mb-4">
+            <div className="mb-6">
               <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                 <FileText className="h-4 w-4 shrink-0" />
                 <span>{t('review.courseRequirements')}</span>
@@ -569,7 +582,7 @@ export const CourseReviewsList = ({
 
             {/* 服務學習 */}
             {instructor.has_service_learning && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                   <GraduationCap className="h-4 w-4 shrink-0" />
                   <span>{t('review.serviceLearning')}</span>
@@ -592,11 +605,11 @@ export const CourseReviewsList = ({
                     </Badge>
                   </div>
                   {instructor.service_learning_description && (
-                    <div className="text-sm break-words">
+                    <div className="text-xs break-words">
                       {hasMarkdownFormatting(instructor.service_learning_description) ? (
-                        renderCommentMarkdown(instructor.service_learning_description)
+                        <div className="text-xs">{renderCommentMarkdown(instructor.service_learning_description)}</div>
                       ) : (
-                        <p className="text-sm">
+                        <p className="text-xs">
                           {instructor.service_learning_description}
                         </p>
                       )}
@@ -608,16 +621,16 @@ export const CourseReviewsList = ({
 
             {/* 講師評論 */}
             {instructor.comments && (
-              <div className="min-w-0">
+              <div className="min-w-0 mb-6">
                 <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                   <User className="h-4 w-4 shrink-0" />
                   <span>{t('review.instructorComments')}</span>
                 </h5>
-                <div className="break-words">
+                <div className="break-words text-xs">
                   {hasMarkdownFormatting(instructor.comments) ? (
-                    renderCommentMarkdown(instructor.comments)
+                    <div className="text-xs">{renderCommentMarkdown(instructor.comments)}</div>
                   ) : (
-                    <p className="text-sm">
+                    <p className="text-xs">
                       {instructor.comments}
                     </p>
                   )}
@@ -945,11 +958,11 @@ export const CourseReviewsList = ({
                         <MessageSquare className="h-4 w-4 shrink-0" />
                         <span>{t('review.courseComments')}</span>
                       </h5>
-                      <div className="bg-muted/50 p-2 rounded-md break-words">
+                      <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
                         {hasMarkdownFormatting(review.course_comments) ? (
-                          renderCommentMarkdown(review.course_comments)
+                          <div className="text-xs">{renderCommentMarkdown(review.course_comments)}</div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {review.course_comments}
                           </p>
                         )}
@@ -958,48 +971,7 @@ export const CourseReviewsList = ({
                   </>
                 )}
 
-                {/* 服務學習 */}
-                {review.has_service_learning && (
-                  <>
-                    <Separator />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md border border-blue-400 dark:from-blue-600 dark:to-blue-700 dark:border-blue-500 flex items-center gap-1">
-                          <GraduationCap className="h-3 w-3" />
-                          {t('review.serviceLearning')}
-                        </Badge>
-                        {/* 顯示服務學習類型 */}
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "text-xs",
-                            // 檢查是否為必修：明確標記為 compulsory 或舊格式的 [COMPULSORY] 前綴
-                            (review.service_learning_type === 'compulsory' || 
-                             review.service_learning_description?.startsWith('[COMPULSORY]'))
-                              ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
-                              : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
-                          )}
-                        >
-                          {/* 檢查是否為必修，否則顯示選修 */}
-                          {(review.service_learning_type === 'compulsory' || 
-                            review.service_learning_description?.startsWith('[COMPULSORY]'))
-                            ? t('review.compulsory')
-                            : t('review.optional')}
-                        </Badge>
-                      </div>
-                      {review.service_learning_description && (
-                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
-                          <p className="text-sm text-blue-900 dark:text-blue-100 break-words">
-                            {/* 移除舊格式的前綴 */}
-                            {review.service_learning_description
-                              .replace(/^\[COMPULSORY\]\s*/, '')
-                              .replace(/^\[OPTIONAL\]\s*/, '')}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+                {/* Service learning is now displayed per instructor in the instructor details section */}
 
                 {/* 講師評價展開/收起按鈕 */}
                 {instructorDetails.length > 0 && (

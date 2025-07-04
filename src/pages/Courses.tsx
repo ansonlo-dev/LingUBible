@@ -376,6 +376,12 @@ const Courses = () => {
         case 'reviews':
           comparison = a.reviewCount - b.reviewCount;
           break;
+        case 'averageGPA':
+          // Average GPA sorting: valid values first, sorted by value; invalid values (-1) at the end
+          const aGPA = a.averageGPA > 0 ? a.averageGPA : -999;
+          const bGPA = b.averageGPA > 0 ? b.averageGPA : -999;
+          comparison = aGPA - bGPA;
+          break;
         default:
           comparison = a.course_code.localeCompare(b.course_code);
           break;

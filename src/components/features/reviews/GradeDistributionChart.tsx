@@ -4,7 +4,8 @@ import {
   sortGradesDescending, 
   calculateGradeStatistics, 
   normalizeGrade, 
-  getCompleteGradeDistribution 
+  getCompleteGradeDistribution,
+  getGPA 
 } from '@/utils/gradeUtils';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +24,10 @@ interface GradeDistributionChartProps {
   minBarHeight?: number;
   /** 自訂類別名稱 */
   className?: string;
+  /** 點擊成績條時的回調函數 */
+  onBarClick?: (grade: string) => void;
+  /** 圖表上下文，用於確定學生評論的翻譯鍵值 */
+  context?: 'course' | 'instructor';
 }
 
 const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo(({
@@ -32,7 +37,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   title,
   showPercentage = true,
   minBarHeight = 4,
-  className
+  className,
+  onBarClick,
+  context = 'course'
 }) => {
   const { t, language } = useLanguage();
 
@@ -83,21 +90,43 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       {/* 標題 */}
       {title && (
         <div className="mb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-3">
             <h3 className="text-sm font-medium text-foreground truncate">{title}</h3>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {t('chart.totalStudents', { count: totalCount })}
-            </span>
+            
+            {/* 學生評論數 - 顯眼設計 */}
+            <div className="flex flex-col items-center sm:items-end shrink-0">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-0.5">
+                {context === 'course' ? t('pages.courseDetail.studentReviews') : t('instructors.studentReviews')}
+              </span>
+              <span className="text-2xl font-bold text-primary">
+                {totalCount}
+              </span>
+            </div>
           </div>
           
           {/* 統計數據 */}
           {statistics.mean !== null && statistics.standardDeviation !== null && (
-            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                <span className="truncate">{t('chart.meanGPA', { mean: statistics.mean.toFixed(2) })}</span>
-                <span className="truncate">{t('chart.standardDeviation', { std: statistics.standardDeviation.toFixed(2) })}</span>
+            <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+              {/* 平均GPA - 使用與課程/講師卡片相同的樣式 */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex flex-col items-start sm:items-center">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    {t('card.averageGPA')}
+                  </span>
+                  <span className="text-2xl font-black text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text drop-shadow-sm">
+                    {statistics.mean.toFixed(2)}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col items-start sm:items-end">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    {t('chart.standardDeviationLabel')}
+                  </span>
+                  <span className="text-lg font-bold text-muted-foreground">
+                    {statistics.standardDeviation.toFixed(2)}
+                  </span>
+                </div>
               </div>
-
             </div>
           )}
         </div>
@@ -114,26 +143,38 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             return (
               <div
                 key={grade}
-                className="flex flex-col items-center group relative flex-1 max-w-[32px] min-w-[20px] sm:min-w-[28px]"
+                className={`flex flex-col items-center group relative flex-1 max-w-[32px] min-w-[20px] sm:min-w-[28px] ${
+                  onBarClick && count > 0 ? 'cursor-pointer' : ''
+                }`}
+                onClick={() => {
+                  if (onBarClick && count > 0) {
+                    onBarClick(grade);
+                  }
+                }}
               > 
                 {/* 數值標籤 - 手機版優化 */}
                 <div 
                   className="absolute text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 bg-white dark:bg-gray-800 px-2 py-1 rounded whitespace-nowrap shadow-lg border border-gray-200 dark:border-gray-600 pointer-events-none"
                   style={{ 
-                    top: barHeight > (height * 0.7) ? '-52px' : '-32px',
+                    top: barHeight > (height * 0.7) ? '-80px' : '-70px',
                     left: '50%',
                     transform: 'translateX(-50%)'
                   }}
                 >
                   <div>{t('chart.count')}: {count}</div>
                   <div>{t('chart.percentage')}: {percentage.toFixed(1)}%</div>
+                  <div>{t('chart.gradePoint')}: {getGPA(grade)?.toFixed(2) || 'N/A'}</div>
                 </div>
                 
                 {/* 長條圖 */}
                 <div
                   className={`rounded-t-sm transition-all duration-300 w-full max-w-6 ${
                     count > 0 
-                      ? 'bg-gradient-to-t from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70' 
+                      ? `bg-gradient-to-t from-primary to-primary/80 ${
+                          onBarClick 
+                            ? 'hover:from-primary/90 hover:to-primary/70 hover:scale-105 hover:shadow-md' 
+                            : 'hover:from-primary/90 hover:to-primary/70'
+                        }` 
                       : 'bg-gray-200 dark:bg-gray-700'
                   }`}
                   style={{ height: `${barHeight}px` }}

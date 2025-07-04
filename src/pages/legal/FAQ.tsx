@@ -256,6 +256,21 @@ export default function FAQ() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Review Submission Limits */}
+            <Card className="legal-page-card border-gray-400 dark:border-gray-600">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-red-600" />
+                  {t('faq.reviewLimitsQuestion')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  {t('faq.reviewLimitsAnswer')}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <Separator />

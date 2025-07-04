@@ -787,13 +787,31 @@ export class CourseService {
     }
   }
 
-
-
   /**
    * 創建新的評論
    */
   static async createReview(reviewData: Omit<Review, '$id' | '$createdAt' | '$updatedAt'>): Promise<Review> {
     try {
+      // Check if user can submit a review for this course
+      const eligibilityCheck = await this.canUserSubmitReview(reviewData.user_id, reviewData.course_code);
+      
+      if (!eligibilityCheck.canSubmit) {
+        let errorMessage = 'You have reached the review limit for this course.';
+        
+        switch (eligibilityCheck.reason) {
+          case 'review.limitExceeded':
+            errorMessage = 'You have already submitted the maximum number of reviews (2) for this course.';
+            break;
+          case 'review.limitReachedWithPass':
+            errorMessage = 'You have already submitted a review for this course. Additional reviews are only allowed if your first review had a fail grade.';
+            break;
+          default:
+            errorMessage = 'Unable to submit review due to submission limits.';
+        }
+        
+        throw new Error(errorMessage);
+      }
+
       const response = await databases.createDocument(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
@@ -804,7 +822,7 @@ export class CourseService {
       return response as unknown as Review;
     } catch (error) {
       console.error('Error creating review:', error);
-      throw new Error('Failed to create review');
+      throw error; // Re-throw to preserve the specific error message
     }
   }
 
@@ -1464,8 +1482,9 @@ export class CourseService {
       // 創建講師統計映射
       const instructorStatsMap = new Map<string, {
         reviewCount: number;
-        teachingScore: number;
-        gradingFairness: number;
+        teachingScores: number[];
+        gradingScores: number[];
+        grades: string[];
       }>();
 
       // 處理每個評論中的講師詳情
@@ -1479,15 +1498,27 @@ export class CourseService {
             if (!instructorStatsMap.has(instructorName)) {
               instructorStatsMap.set(instructorName, {
                 reviewCount: 0,
-                teachingScore: 0,
-                gradingFairness: 0
+                teachingScores: [],
+                gradingScores: [],
+                grades: []
               });
             }
             
             const stats = instructorStatsMap.get(instructorName)!;
             stats.reviewCount++;
-            stats.teachingScore += detail.teaching || 0;
-            stats.gradingFairness += detail.grading || 0;
+            
+            // 收集有效評分 (> 0)，排除 N/A (-1) 和未評分 (0)
+            if (detail.teaching > 0) {
+              stats.teachingScores.push(detail.teaching);
+            }
+            if (detail.grading && detail.grading > 0) {
+              stats.gradingScores.push(detail.grading);
+            }
+            
+            // 收集成績用於 GPA 計算
+            if (review.course_final_grade) {
+              stats.grades.push(review.course_final_grade);
+            }
           }
         } catch (error) {
           // 跳過無效的 JSON 數據
@@ -1495,28 +1526,51 @@ export class CourseService {
         }
       }
 
-      // 計算平均值
+      // 計算最終統計信息
+      const finalInstructorStatsMap = new Map<string, {
+        reviewCount: number;
+        teachingScore: number;
+        gradingFairness: number;
+        averageGPA: number;
+      }>();
+      
       for (const [instructorName, stats] of instructorStatsMap) {
-        if (stats.reviewCount > 0) {
-          stats.teachingScore = stats.teachingScore / stats.reviewCount;
-          stats.gradingFairness = stats.gradingFairness / stats.reviewCount;
-        }
+        const teachingScore = stats.teachingScores.length > 0 
+          ? stats.teachingScores.reduce((sum, score) => sum + score, 0) / stats.teachingScores.length 
+          : 0;
+        const gradingFairness = stats.gradingScores.length > 0 
+          ? stats.gradingScores.reduce((sum, score) => sum + score, 0) / stats.gradingScores.length 
+          : 0;
+          
+        // 計算平均 GPA
+        const gradeDistribution = calculateGradeDistributionFromReviews(
+          stats.grades.map(grade => ({ course_final_grade: grade }))
+        );
+        const gradeStats = calculateGradeStatistics(gradeDistribution);
+        const averageGPA = gradeStats.mean || 0;
+          
+        finalInstructorStatsMap.set(instructorName, {
+          reviewCount: stats.reviewCount,
+          teachingScore,
+          gradingFairness,
+          averageGPA
+        });
       }
 
       // 組合講師和統計信息
       const instructorsWithDetailedStats: InstructorWithDetailedStats[] = instructors
         .map(instructor => {
-          const stats = instructorStatsMap.get(instructor.name) || {
+          const stats = finalInstructorStatsMap.get(instructor.name) || {
             reviewCount: 0,
             teachingScore: 0,
-            gradingFairness: 0
+            gradingFairness: 0,
+            averageGPA: 0
           };
 
           return {
             ...instructor,
             ...stats,
-            isTeachingInCurrentTerm: currentTermInstructors.has(instructor.name),
-            averageGPA: 0 // Will be calculated properly later
+            isTeachingInCurrentTerm: currentTermInstructors.has(instructor.name)
           };
         })
         .filter(instructor => instructor.reviewCount > 0) // 只顯示有評論的講師
@@ -1687,6 +1741,82 @@ export class CourseService {
     } catch (error) {
       console.error('Error fetching all instructors with detailed stats:', error);
       throw new Error('Failed to fetch all instructors with detailed statistics');
+    }
+  }
+
+  /**
+   * 獲取平均GPA最高的課程
+   */
+  static async getTopCoursesByGPA(limit: number = 6): Promise<CourseWithStats[]> {
+    try {
+      const cacheKey = `top_courses_gpa_${limit}`;
+      
+      // 檢查緩存
+      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+      
+      const coursesWithStats = await this.getCoursesWithStatsBatch();
+      
+      // 按平均GPA排序，優先考慮有GPA數據的課程
+      const sortedCourses = coursesWithStats
+        .filter(course => course.averageGPA > 0) // 只顯示有GPA數據的課程
+        .sort((a, b) => {
+          // 首先按平均GPA排序（降序）
+          if (b.averageGPA !== a.averageGPA) {
+            return b.averageGPA - a.averageGPA;
+          }
+          // GPA相同時按評論數排序
+          return b.reviewCount - a.reviewCount;
+        })
+        .slice(0, limit); // 限制數量
+
+      // 緩存結果
+      this.setCached(cacheKey, sortedCourses, 2 * 60 * 1000); // 2分鐘緩存
+      
+      return sortedCourses;
+    } catch (error) {
+      console.error('Error fetching top courses by GPA:', error);
+      throw new Error('Failed to fetch top courses by GPA');
+    }
+  }
+
+  /**
+   * 獲取平均GPA最高的講師
+   */
+  static async getTopInstructorsByGPA(limit: number = 6): Promise<InstructorWithDetailedStats[]> {
+    try {
+      const cacheKey = `top_instructors_gpa_${limit}`;
+      
+      // 檢查緩存
+      const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+      
+      const instructorsWithDetailedStats = await this.getAllInstructorsWithDetailedStats();
+      
+      // 按平均GPA排序，優先考慮有GPA數據的講師
+      const sortedInstructors = instructorsWithDetailedStats
+        .filter(instructor => instructor.averageGPA > 0) // 只顯示有GPA數據的講師
+        .sort((a, b) => {
+          // 首先按平均GPA排序（降序）
+          if (b.averageGPA !== a.averageGPA) {
+            return b.averageGPA - a.averageGPA;
+          }
+          // GPA相同時按評論數排序
+          return b.reviewCount - a.reviewCount;
+        })
+        .slice(0, limit); // 限制數量
+
+      // 緩存結果
+      this.setCached(cacheKey, sortedInstructors, 2 * 60 * 1000); // 2分鐘緩存
+      
+      return sortedInstructors;
+    } catch (error) {
+      console.error('Error fetching top instructors by GPA:', error);
+      throw new Error('Failed to fetch top instructors by GPA');
     }
   }
 
@@ -3239,6 +3369,115 @@ export class CourseService {
     } catch (error) {
       console.error('Error fetching course reviews with votes (optimized):', error);
       throw new Error('Failed to fetch course reviews');
+    }
+  }
+
+  /**
+   * Check if a user can submit a review for a specific course
+   * Rules:
+   * - Normal case: 1 review per user per course
+   * - Exception: If first review has fail grade, user can submit 1 more review
+   * - Maximum 2 reviews total per user per course
+   */
+  static async canUserSubmitReview(userId: string, courseCode: string): Promise<{
+    canSubmit: boolean;
+    reason?: string;
+    existingReviews: Review[];
+  }> {
+    try {
+      // Get all reviews by this user for this course
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.equal('user_id', userId),
+          Query.equal('course_code', courseCode),
+          Query.orderAsc('$createdAt'), // Order by creation time to identify first review
+          Query.limit(10), // Should never have more than 2 reviews per user per course
+          Query.select(['$id', 'user_id', 'course_code', 'course_final_grade', '$createdAt'])
+        ]
+      );
+
+      const existingReviews = response.documents as unknown as Review[];
+      
+      // If no existing reviews, user can submit
+      if (existingReviews.length === 0) {
+        return {
+          canSubmit: true,
+          existingReviews: []
+        };
+      }
+
+      // If user has 2 or more reviews already, they cannot submit more
+      if (existingReviews.length >= 2) {
+        return {
+          canSubmit: false,
+          reason: 'review.limitExceeded',
+          existingReviews
+        };
+      }
+
+      // If user has exactly 1 review
+      if (existingReviews.length === 1) {
+        const firstReview = existingReviews[0];
+        const firstGrade = firstReview.course_final_grade;
+        
+        // Check if the first review has a fail grade
+        // Only F (Failure) grade allows for a second review submission
+        const failGrades = ['F'];
+        const isFirstReviewFail = failGrades.includes(firstGrade);
+        
+        if (isFirstReviewFail) {
+          return {
+            canSubmit: true,
+            existingReviews
+          };
+        } else {
+          return {
+            canSubmit: false,
+            reason: 'review.limitReachedWithPass',
+            existingReviews
+          };
+        }
+      }
+
+      // This should never happen, but return safe default
+      return {
+        canSubmit: false,
+        reason: 'review.unknownError',
+        existingReviews
+      };
+
+    } catch (error) {
+      console.error('Error checking user review eligibility:', error);
+      // In case of error, allow submission (fail safe)
+      return {
+        canSubmit: true,
+        existingReviews: []
+      };
+    }
+  }
+
+  /**
+   * Get user's existing reviews for a specific course
+   */
+  static async getUserReviewsForCourse(userId: string, courseCode: string): Promise<Review[]> {
+    try {
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.equal('user_id', userId),
+          Query.equal('course_code', courseCode),
+          Query.orderDesc('$createdAt'),
+          Query.limit(10)
+        ]
+      );
+
+      return response.documents as unknown as Review[];
+    } catch (error) {
+      console.error('Error fetching user reviews for course:', error);
+      return [];
     }
   }
 } 

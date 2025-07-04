@@ -184,6 +184,7 @@ const CourseDetail = () => {
   // 篩選狀態
   const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
+  const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -370,69 +371,117 @@ const CourseDetail = () => {
             </div>
           </div>
           
-          {/* 課程統計信息 - 2x2 網格佈局 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
-            {/* 學生評論數 */}
-            <div className="text-center min-w-0">
-              <div className="text-2xl font-bold text-primary">
-                {reviewsLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                ) : (
-                  allReviews.length
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.studentReviews')}</div>
-            </div>
-
-            {/* 平均工作量 */}
-            <div className="text-center min-w-0">
-              <div className="text-2xl font-bold text-primary">
-                {detailedStats.averageWorkload > 0 ? (
-                  detailedStats.averageWorkload.toFixed(2)
-                ) : (
-                  'N/A'
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageWorkload')}</div>
-              {detailedStats.averageWorkload === 0 && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  {t('pages.courseDetail.noRatingData')}
+          {/* 課程統計信息 - 響應式佈局 */}
+          <div className="pt-4">
+            {/* Mobile: 三個評分在一行 */}
+            <div className="grid grid-cols-1 gap-4 sm:hidden">
+              {/* 三個評分在一行 */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* 平均工作量 */}
+                <div className="text-center min-w-0">
+                  <div className="text-xl font-bold text-primary">
+                    {detailedStats.averageWorkload > 0 ? (
+                      detailedStats.averageWorkload.toFixed(2)
+                    ) : (
+                      'N/A'
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{t('pages.courseDetail.averageWorkloadShort')}</div>
+                  {detailedStats.averageWorkload === 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t('pages.courseDetail.noRatingData')}
+                    </div>
+                  )}
                 </div>
-              )}
+                
+                {/* 平均難度 */}
+                <div className="text-center min-w-0">
+                  <div className="text-xl font-bold text-primary">
+                    {detailedStats.averageDifficulty > 0 ? (
+                      detailedStats.averageDifficulty.toFixed(2)
+                    ) : (
+                      'N/A'
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{t('pages.courseDetail.averageDifficultyShort')}</div>
+                  {detailedStats.averageDifficulty === 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t('pages.courseDetail.noRatingData')}
+                    </div>
+                  )}
+                </div>
+                
+                {/* 平均實用性 */}
+                <div className="text-center min-w-0">
+                  <div className="text-xl font-bold text-primary">
+                    {detailedStats.averageUsefulness > 0 ? (
+                      detailedStats.averageUsefulness.toFixed(2)
+                    ) : (
+                      'N/A'
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{t('pages.courseDetail.averageUsefulnessShort')}</div>
+                  {detailedStats.averageUsefulness === 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t('pages.courseDetail.noRatingData')}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             
-            {/* 平均難度 */}
-            <div className="text-center min-w-0">
-              <div className="text-2xl font-bold text-primary">
-                {detailedStats.averageDifficulty > 0 ? (
-                  detailedStats.averageDifficulty.toFixed(2)
-                ) : (
-                  'N/A'
+            {/* Tablet and Desktop: 原來的 1x3 佈局 */}
+            <div className="hidden sm:grid sm:grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* 平均工作量 */}
+              <div className="text-center min-w-0">
+                <div className="text-2xl font-bold text-primary">
+                  {detailedStats.averageWorkload > 0 ? (
+                    detailedStats.averageWorkload.toFixed(2)
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageWorkload')}</div>
+                {detailedStats.averageWorkload === 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {t('pages.courseDetail.noRatingData')}
+                  </div>
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageDifficulty')}</div>
-              {detailedStats.averageDifficulty === 0 && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  {t('pages.courseDetail.noRatingData')}
+              
+              {/* 平均難度 */}
+              <div className="text-center min-w-0">
+                <div className="text-2xl font-bold text-primary">
+                  {detailedStats.averageDifficulty > 0 ? (
+                    detailedStats.averageDifficulty.toFixed(2)
+                  ) : (
+                    'N/A'
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* 平均實用性 */}
-            <div className="text-center min-w-0">
-              <div className="text-2xl font-bold text-primary">
-                {detailedStats.averageUsefulness > 0 ? (
-                  detailedStats.averageUsefulness.toFixed(2)
-                ) : (
-                  'N/A'
+                <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageDifficulty')}</div>
+                {detailedStats.averageDifficulty === 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {t('pages.courseDetail.noRatingData')}
+                  </div>
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageUsefulness')}</div>
-              {detailedStats.averageUsefulness === 0 && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  {t('pages.courseDetail.noRatingData')}
+              
+              {/* 平均實用性 */}
+              <div className="text-center min-w-0">
+                <div className="text-2xl font-bold text-primary">
+                  {detailedStats.averageUsefulness > 0 ? (
+                    detailedStats.averageUsefulness.toFixed(2)
+                  ) : (
+                    'N/A'
+                  )}
                 </div>
-              )}
+                <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageUsefulness')}</div>
+                {detailedStats.averageUsefulness === 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {t('pages.courseDetail.noRatingData')}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -446,6 +495,22 @@ const CourseDetail = () => {
                 height={120}
                 showPercentage={true}
                 className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+                context="course"
+                onBarClick={(grade) => {
+                  // 設置成績篩選並滾動到學生評論區域
+                  setExternalGradeFilter(grade);
+                  
+                  // 短暫延遲後滾動，讓篩選生效
+                  setTimeout(() => {
+                    const studentReviewsElement = document.getElementById('student-reviews');
+                    if (studentReviewsElement) {
+                      studentReviewsElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                      });
+                    }
+                  }, 100);
+                }}
               />
             </div>
           )}
@@ -714,12 +779,34 @@ const CourseDetail = () => {
         contentClassName="space-y-4"
       >
         <div id="student-reviews">
-          <CourseReviewsList 
+          {reviewsLoading ? (
+            <div className="text-center py-12 space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('review.loadingCourseReviews')}</p>
+            </div>
+                     ) : allReviews.length === 0 ? (
+             <div className="text-center py-12 space-y-4">
+               <div className="flex justify-center">
+                 <div className="p-4 bg-muted/50 rounded-full">
+                   <MessageSquare className="h-12 w-12 text-muted-foreground" />
+                 </div>
+               </div>
+               <div className="space-y-2">
+                 <h3 className="text-lg font-medium text-muted-foreground">{t('course.noReviewsTitle')}</h3>
+                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                   {t('course.noReviewsDescription', { courseName: course ? `${course.course_code} ${getCourseTitle(course, language).primary}` : '' })}
+                 </p>
+               </div>
+             </div>
+          ) : (
+                      <CourseReviewsList 
             reviews={allReviews} 
             allReviews={allReviews}
             loading={reviewsLoading}
             hideHeader={true}
+            externalGradeFilter={externalGradeFilter}
           />
+          )}
         </div>
       </CollapsibleSection>
 

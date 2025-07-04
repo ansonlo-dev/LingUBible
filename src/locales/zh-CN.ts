@@ -452,8 +452,11 @@ export default {
   'pages.courseDetail.totalReviews': '总评论数',
   'pages.courseDetail.studentReviews': '学生评论',
   'pages.courseDetail.averageWorkload': '平均工作量',
+  'pages.courseDetail.averageWorkloadShort': '平均工作量',
   'pages.courseDetail.averageDifficulty': '平均难度',
+  'pages.courseDetail.averageDifficultyShort': '平均难度',
   'pages.courseDetail.averageUsefulness': '平均实用性',
+  'pages.courseDetail.averageUsefulnessShort': '平均实用性',
   'pages.courseDetail.noRatingData': '尚无评分资料',
   'pages.courseDetail.teachingRecords': '教学记录',
   'pages.courseDetail.loadingTeachingRecords': '载入教学记录中...',
@@ -529,6 +532,8 @@ export default {
   'course.showingReviews': '课程评论',
   'course.noReviews': '暂无评论',
   'course.noReviewsDesc': '目前还没有针对此讲师的评论',
+  'course.noReviewsTitle': '暂无学生评论',
+  'course.noReviewsDescription': '{courseName} 尚未收到任何学生评论。如果您曾经修读过这门课程，欢迎分享您的学习体验。',
   'course.showAllReviews': '显示所有评论',
   'course.students': '学生',
   'course.reviews': '评论',
@@ -1074,6 +1079,10 @@ export default {
   // New FAQ Questions
   'faq.coursesVsInstructorsQuestion': '为什么要分别设置课程页面和讲师页面？',
   'faq.coursesVsInstructorsAnswer': '我们提供两个页面是为了让您从不同角度探索学术信息。课程页面帮助您找到特定课程并查看所有授课讲师，而讲师页面让您发现某位讲师教授的所有课程。例如，如果您喜欢某位教授在某门课程中的教学风格，您可以轻松找到他们教授的其他课程，继续跟随他们学习。',
+  
+  // Review submission limits
+  'faq.reviewLimitsQuestion': '为什么我只能为每个课程提交有限数量的评论？',
+  'faq.reviewLimitsAnswer': '为了维护评论系统的质量和真实性，我们将每位用户限制为每个课程最多提交2份评论。通常情况下，您每个课程只能提交1份评论。但是，如果您的第一份评论显示不及格成绩（F），您可以提交一份额外的评论。这项政策有助于防止垃圾评论、虚假评论和评论操纵，同时仍允许重修不及格课程的学生分享他们的更新体验。',
 
   // =============================================================================
   // 7. ERRORS & STATES - 錯誤與狀態
@@ -1190,7 +1199,7 @@ export default {
   'review.teaching': '教学',
   'review.grading': '评分',
   'review.teachingScore': '教学质素',
-  'review.teachingScoreDescription': '教师的教学质量如何？',
+  'review.teachingScoreDescription': '教师的教学质素如何？',
   'review.gradingScore': '评分满意度',
   'review.gradingScoreDescription': '教师的评分是否满意？',
   'review.teachingComments': '教学评论',
@@ -1223,6 +1232,19 @@ export default {
   'review.submitting': '提交中...',
   'review.updateReview': '更新评论',
   'review.updating': '更新中...',
+  
+  // Review eligibility warning
+  'review.checkingEligibility': '检查评论提交资格中...',
+  'review.reviewLimitWarning': '评论限制提醒',
+  'review.reviewLimitBlocked': '评论提交被封锁',
+  'review.existingReviewInfo': '您已经为此课程提交了评论：',
+  'review.multipleReviewsInfo': '您已经为此课程提交了多个评论：',
+  'review.submittedOn': '提交于',
+  'review.canSubmitBecauseFailed': '您可以再提交一次评论，因为您之前的成绩是不及格。',
+  'review.cannotSubmitBecausePassed': '您无法再提交评论，因为您已经通过了这门课程。',
+  'review.reviewLimitExceededInfo': '您已达到此课程的最大评论限制 2 次。',
+  'review.reviewNumber': '评论 #{number}',
+  
   'review.submitSuccess': '评论提交成功！感谢您的分享。',
   'review.submitError': '提交失败，请稍后再试。',
   'review.updateSuccess': '评论更新成功！',
@@ -1436,6 +1458,8 @@ export default {
   'featured.title': '热门内容',
   'featured.courses': '热门课程',
   'featured.instructors': '热门教师',
+  'featured.topCourses': '最佳课程',
+  'featured.topInstructors': '最佳讲师',
   'featured.popularCourses': '热门课程',
   'featured.popularCoursesDesc': '根据评论数量排序的最受欢迎课程',
   'featured.popularInstructors': '热门讲师',
@@ -1464,8 +1488,10 @@ export default {
   'instructors.coursesTeaching': '教学记录',
   'instructors.studentReviews': '学生评论',
   'instructors.averageTeachingRating': '平均教学评分',
-  'instructors.averageTeachingQuality': '平均教学质量评分',
+  'instructors.averageTeachingQuality': '平均教学质素评分',
+  'instructors.averageTeachingQualityShort': '平均教学质素',
   'instructors.averageGradingSatisfaction': '平均评分满意度',
+  'instructors.averageGradingSatisfactionShort': '平均评分满意度',
   'instructors.finalGrade': '最终成绩',
   'instructors.teachingRating': '教学评分',
   'instructors.gradingFairness': '评分满意度',
@@ -1595,6 +1621,7 @@ export default {
   'sort.department': '学系',
   'sort.teaching': '教学质素',
   'sort.grading': '评分满意度',
+  'sort.averageGPA': '平均GPA',
   'sort.sortBy': '排序方式',
   'pagination.instructorsPerPage': '每页讲师数',
   'pagination.showingFiltered': '显示第 {start}-{end} 位，共 {total} 位符合条件的讲师',
@@ -1700,12 +1727,20 @@ export default {
   'chart.noGradeData': '暂无成绩数据',
   'chart.totalStudents': '总计：{count}名学生',
   'chart.meanGPA': '平均GPA：{mean}',
-  'chart.standardDeviation': '标准差：{std}',
+      'chart.standardDeviation': '标准差：{std}',
+    'chart.standardDeviationLabel': '标准差',
   'chart.gradeDistribution': '成绩分布',
   'chart.count': '数目',
   'chart.percentage': '百分比',
+  'chart.gradePoint': '积点',
 
   // Common translations
   'common.students': '学生',
   'common.reviews': '评论',
+  
+  // Review submission limits
+  'review.submitLimitReached': '您已达到此课程的评论提交限制。',
+  'review.limitExceeded': '您已达到此课程的最大评论数量（2个）。',
+  'review.limitReachedWithPass': '您已经为此课程提交过评论。只有在您的第一次评论成绩为不及格时，才能提交额外的评论。',
+  'review.clickToViewReview': '点击查看该评论详情',
 };

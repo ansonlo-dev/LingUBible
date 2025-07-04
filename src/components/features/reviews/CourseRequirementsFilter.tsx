@@ -142,7 +142,7 @@ export const CourseRequirementsFilter: React.FC<CourseRequirementsFilterProps> =
                     className={cn(
                       "h-7 px-2 text-xs font-medium transition-all duration-200 border-0",
                       filters[key] === 'all'
-                        ? "bg-primary text-white hover:bg-primary/90 shadow-sm" 
+                        ? "bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold" 
                         : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                     )}
                   >

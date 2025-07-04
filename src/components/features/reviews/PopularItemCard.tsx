@@ -345,7 +345,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const AverageGPADisplay = ({ gpa, isLoading = false }: { gpa?: number; isLoading?: boolean }) => {
     if (isLoading) {
       return (
-        <div className="flex flex-col items-center mt-2">
+        <div className="flex flex-col items-center mt-3">
           <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
             {t('card.averageGPA')}
           </span>
@@ -358,7 +358,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
 
     if (!gpa || gpa <= 0) {
       return (
-        <div className="flex flex-col items-center mt-2">
+        <div className="flex flex-col items-center mt-3">
           <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
             {t('card.averageGPA')}
           </span>
@@ -368,7 +368,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     }
 
     return (
-      <div className="flex flex-col items-center mt-2">
+      <div className="flex flex-col items-center mt-3">
         <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
           {t('card.averageGPA')}
         </span>

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,50 +9,55 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { 
+  BookOpen, 
+  User, 
   Star, 
+  MessageSquare, 
+  Eye, 
   ArrowLeft, 
   Loader2, 
   AlertCircle, 
   AlertTriangle,
-  BookOpen,
-  Calendar,
-  Users,
-  MessageSquare,
-  CheckCircle,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Mail,
-  Sparkles,
-  Smile,
-  Frown,
-  Eye,
-  Edit,
-  User,
-  Brain,
-  Target,
   Bold,
   Italic,
   Underline,
   Strikethrough,
   List,
   ListOrdered,
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Clock,
+  Users,
   GraduationCap,
   FileText,
-  XCircle
+  MessageCircle,
+  Award,
+  Target,
+  Sparkles,
+  CheckCircle2,
+  CheckCircle,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Smile,
+  Frown,
+  Calendar
 } from 'lucide-react';
-import { CourseService, Course, Term, TeachingRecord, InstructorDetail, Review } from '@/services/api/courseService';
 import { cn } from '@/lib/utils';
-import { validateWordCount } from '@/utils/textUtils';
+import { CourseService, Course, Term, Review, TeachingRecord, InstructorDetail } from '@/services/api/courseService';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 import { WordCounter } from '@/components/ui/word-counter';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
+import { validateWordCount } from '@/utils/textUtils';
+import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
-import { GradeBadge } from '@/components/ui/GradeBadge';
 
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
@@ -80,7 +85,7 @@ interface InstructorEvaluation {
 }
 
 // 新增 StarRating 組件
-interface StarRatingProps {
+interface FormStarRatingProps {
   rating: number | null;
   onRatingChange: (rating: number | null) => void;
   label: string;
@@ -89,7 +94,7 @@ interface StarRatingProps {
   required?: boolean;
 }
 
-const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t, required = false }) => {
+const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t, required = false }) => {
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   
   const getDescription = (value: number) => {
@@ -406,6 +411,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [isEditMode, setIsEditMode] = useState<boolean>(!!editReviewId);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [isPopulatingEditData, setIsPopulatingEditData] = useState<boolean>(false);
+
+  // Review eligibility states
+  const [reviewEligibility, setReviewEligibility] = useState<{
+    canSubmit: boolean;
+    reason?: string;
+    existingReviews: Review[];
+  } | null>(null);
+  const [checkingEligibility, setCheckingEligibility] = useState<boolean>(false);
 
   // Common phrases UI states
   const [coursePhrasesExpanded, setCoursePhrasesExpanded] = useState<boolean>(false);
@@ -1416,10 +1429,82 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }
   }, [isPopulatingEditData, selectedInstructors, instructorEvaluations]);
 
+  // Auto-fill service learning data after edit mode population is complete
+  useEffect(() => {
+    // Only run this effect for edit mode after initial data population is complete
+    if (!editReviewId || isPopulatingEditData || !selectedCourse || !selectedTerm || 
+        selectedInstructors.length === 0 || instructorEvaluations.length === 0 || 
+        availableInstructors.length === 0) {
+      return;
+    }
+
+    console.log('🔄 Running service learning autofill for edit mode...');
+
+    // Update instructor evaluations with current service learning data from teaching records
+    const updatedEvaluations = instructorEvaluations.map(evaluation => {
+      const teachingRecord = availableInstructors.find(
+        record => record.instructor_name === evaluation.instructorName && 
+                 record.session_type === evaluation.sessionType
+      );
+      
+      if (teachingRecord?.service_learning) {
+        // Always update to match current teaching records (even in edit mode)
+        // But preserve the existing service learning description in edit mode
+        return {
+          ...evaluation,
+          hasServiceLearning: true,
+          serviceLearningType: teachingRecord.service_learning as 'compulsory' | 'optional',
+          serviceLearningDescription: evaluation.serviceLearningDescription // Explicitly preserve existing description
+        };
+      } else {
+        // No service learning for this instructor according to current teaching records
+        // In edit mode, preserve existing service learning data if user had entered it
+        // (teaching records might have changed since the review was written)
+        if (evaluation.hasServiceLearning && evaluation.serviceLearningDescription) {
+          // Keep existing service learning data from the review
+          return {
+            ...evaluation,
+            hasServiceLearning: true, // Keep it enabled if user had data
+            serviceLearningType: evaluation.serviceLearningType // Keep existing type
+            // serviceLearningDescription is preserved by spread operator
+          };
+        } else {
+          // No existing service learning data, so disable it
+          return {
+            ...evaluation,
+            hasServiceLearning: false,
+            serviceLearningType: 'compulsory' as const,
+            serviceLearningDescription: '' // Clear description if no service learning
+          };
+        }
+      }
+    });
+
+    // Check if there are any changes needed
+    const hasChanges = updatedEvaluations.some((updatedEval, index) => {
+      const currentEval = instructorEvaluations[index];
+      return (
+        updatedEval.hasServiceLearning !== currentEval.hasServiceLearning ||
+        updatedEval.serviceLearningType !== currentEval.serviceLearningType ||
+        (updatedEval.serviceLearningDescription !== currentEval.serviceLearningDescription)
+      );
+    });
+
+    if (hasChanges) {
+      console.log('✅ Updating service learning autofill data for edit mode');
+      setInstructorEvaluations(updatedEvaluations);
+    } else {
+      console.log('ℹ️ No service learning updates needed for edit mode');
+    }
+  }, [editReviewId, isPopulatingEditData, selectedCourse, selectedTerm, selectedInstructors, availableInstructors, instructorEvaluations]);
+
   // Auto-set service learning status for each instructor based on teaching records
   useEffect(() => {
     // Don't update during edit data population to preserve existing data
     if (isPopulatingEditData) return;
+    
+    // Skip this autofill entirely for edit mode - let the edit-specific useEffect handle it
+    if (editReviewId) return;
     
     if (!selectedCourse || !selectedTerm || selectedInstructors.length === 0 || instructorEvaluations.length === 0) {
       return;
@@ -1467,6 +1552,34 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }
   }, [selectedInstructors, availableInstructors, selectedCourse, selectedTerm, isPopulatingEditData, instructorEvaluations]);
 
+  // Check review eligibility when course changes (only for new reviews, not edits)
+  useEffect(() => {
+    const checkReviewEligibility = async () => {
+      // Skip eligibility check for edit mode
+      if (isEditMode || !user?.$id || !selectedCourse) {
+        setReviewEligibility(null);
+        return;
+      }
+
+      setCheckingEligibility(true);
+      try {
+        const eligibility = await CourseService.canUserSubmitReview(user.$id, selectedCourse);
+        setReviewEligibility(eligibility);
+      } catch (error) {
+        console.error('Error checking review eligibility:', error);
+        // Default to allowing submission if check fails
+        setReviewEligibility({
+          canSubmit: true,
+          existingReviews: []
+        });
+      } finally {
+        setCheckingEligibility(false);
+      }
+    };
+
+    checkReviewEligibility();
+  }, [selectedCourse, user?.$id, isEditMode]);
+
   const handleInstructorToggle = (instructorKey: string) => {
     setSelectedInstructors(prev => 
       prev.includes(instructorKey) 
@@ -1481,6 +1594,29 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       toast({
         title: t('common.error'),
         description: t('review.fillAllFields'),
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Check review eligibility (only for new reviews, not edits)
+    if (!isEditMode && reviewEligibility && !reviewEligibility.canSubmit) {
+      let errorMessage = t('review.submitLimitReached');
+      
+      switch (reviewEligibility.reason) {
+        case 'review.limitExceeded':
+          errorMessage = t('review.limitExceeded');
+          break;
+        case 'review.limitReachedWithPass':
+          errorMessage = t('review.limitReachedWithPass');
+          break;
+        default:
+          errorMessage = t('review.submitLimitReached');
+      }
+      
+      toast({
+        title: t('common.error'),
+        description: errorMessage,
         variant: 'destructive',
       });
       return false;
@@ -1873,11 +2009,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <MessageSquare className="h-4 w-4 shrink-0" />
                     <span>{t('review.courseComments')}</span>
                   </h5>
-                  <div className="bg-muted/50 p-2 rounded-md break-words">
+                  <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
                     {hasMarkdownFormatting(courseComments) ? (
-                      renderCommentMarkdown(courseComments)
+                      <div className="text-xs">{renderCommentMarkdown(courseComments)}</div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {courseComments}
                       </p>
                     )}
@@ -2226,6 +2362,95 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         </CardContent>
       </Card>
 
+      {/* Review Eligibility Warning */}
+      {!isEditMode && selectedCourse && (
+        <div className="space-y-2">
+          {checkingEligibility ? (
+            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm text-muted-foreground">{t('review.checkingEligibility')}</span>
+            </div>
+          ) : reviewEligibility && reviewEligibility.existingReviews.length > 0 ? (
+            <div className={cn(
+              "p-4 rounded-lg border",
+              reviewEligibility.canSubmit 
+                ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+            )}>
+              <div className="flex items-start gap-3">
+                {reviewEligibility.canSubmit ? (
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                )}
+                <div className="space-y-2">
+                  <h3 className={cn(
+                    "font-semibold text-sm",
+                    reviewEligibility.canSubmit 
+                      ? "text-amber-800 dark:text-amber-200"
+                      : "text-red-800 dark:text-red-200"
+                  )}>
+                    {reviewEligibility.canSubmit ? t('review.reviewLimitWarning') : t('review.reviewLimitBlocked')}
+                  </h3>
+                  <div className={cn(
+                    "text-sm",
+                    reviewEligibility.canSubmit 
+                      ? "text-amber-700 dark:text-amber-300"
+                      : "text-red-700 dark:text-red-300"
+                  )}>
+                    {reviewEligibility.existingReviews.length === 1 ? (
+                      <>
+                        <p className="mb-2">{t('review.existingReviewInfo')}</p>
+                        <div 
+                          className="bg-white dark:bg-gray-800 rounded-md p-3 border border-amber-200 dark:border-amber-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                          onClick={() => navigate(`/courses/${selectedCourse}?review_id=${reviewEligibility.existingReviews[0].$id}`)}
+                          title={t('review.clickToViewReview')}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {t('review.submittedOn')}: {formatDateTimeUTC8(reviewEligibility.existingReviews[0].$createdAt)} (UTC+8)
+                            </span>
+                            <GradeBadge grade={reviewEligibility.existingReviews[0].course_final_grade} />
+                          </div>
+                          <p className="text-sm">
+                            {reviewEligibility.canSubmit 
+                              ? t('review.canSubmitBecauseFailed')
+                              : t('review.cannotSubmitBecausePassed')
+                            }
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mb-2">{t('review.multipleReviewsInfo')}</p>
+                        <div className="space-y-2">
+                          {reviewEligibility.existingReviews.map((review, index) => (
+                            <div 
+                              key={review.$id} 
+                              className="bg-white dark:bg-gray-800 rounded-md p-3 border border-red-200 dark:border-red-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                              onClick={() => navigate(`/courses/${selectedCourse}?review_id=${review.$id}`)}
+                              title={t('review.clickToViewReview')}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-medium text-muted-foreground">
+                                  {t('review.reviewNumber', { number: index + 1 })} - {formatDateTimeUTC8(review.$createdAt)} (UTC+8)
+                                </span>
+                                <GradeBadge grade={review.course_final_grade} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-sm">{t('review.reviewLimitExceededInfo')}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
       {/* Course Evaluation */}
       <Card>
         <CardHeader>
@@ -2239,19 +2464,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           <div className="space-y-1">
             {/* Description only shown on mobile, since desktop shows everything inline */}
             <p className="text-sm text-muted-foreground md:hidden">{t('review.workloadDescription')}</p>
-            <StarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} required />
+            <FormStarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} required />
           </div>
 
           {/* Difficulty Rating */}
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground md:hidden">{t('review.difficultyDescription')}</p>
-            <StarRating rating={difficulty} onRatingChange={setDifficulty} label={t('review.difficulty')} type="difficulty" t={t} required />
+            <FormStarRating rating={difficulty} onRatingChange={setDifficulty} label={t('review.difficulty')} type="difficulty" t={t} required />
           </div>
 
           {/* Usefulness Rating */}
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground md:hidden">{t('review.usefulnessDescription')}</p>
-            <StarRating rating={usefulness} onRatingChange={setUsefulness} label={t('review.usefulness')} type="usefulness" t={t} required />
+            <FormStarRating rating={usefulness} onRatingChange={setUsefulness} label={t('review.usefulness')} type="usefulness" t={t} required />
           </div>
 
           {/* Grade - Desktop: inline, Mobile: stacked */}
@@ -2381,9 +2606,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                    <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
                   <div className="border rounded-lg p-3 bg-muted/20 min-h-[120px]">
                     {hasMarkdownFormatting(courseComments) ? (
-                      renderCommentMarkdown(courseComments)
+                      <div className="text-xs">{renderCommentMarkdown(courseComments)}</div>
                     ) : (
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                         {courseComments}
                       </p>
                     )}
@@ -2416,13 +2641,13 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {/* Teaching Score */}
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
-                  <StarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
+                  <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
                 </div>
 
                 {/* Grading Score */}
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground md:hidden">{t('review.gradingScoreDescription')}</p>
-                  <StarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} required />
+                  <FormStarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} required />
                 </div>
 
                 {/* Course Requirements */}
@@ -2527,11 +2752,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         {evaluation.serviceLearningDescription && (
                           <div className="relative">
                             <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                            <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
+                            <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px] text-xs">
                               {hasMarkdownFormatting(evaluation.serviceLearningDescription) ? (
-                                renderCommentMarkdown(evaluation.serviceLearningDescription)
+                                <div className="text-xs">{renderCommentMarkdown(evaluation.serviceLearningDescription)}</div>
                               ) : (
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                                   {evaluation.serviceLearningDescription}
                                 </p>
                               )}
@@ -2574,11 +2799,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     {evaluation.comments && (
                       <div className="relative">
                         <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                        <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
+                        <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px] text-xs">
                           {hasMarkdownFormatting(evaluation.comments) ? (
-                            renderCommentMarkdown(evaluation.comments)
+                            <div className="text-xs">{renderCommentMarkdown(evaluation.comments)}</div>
                           ) : (
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                               {evaluation.comments}
                             </p>
                           )}

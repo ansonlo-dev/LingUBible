@@ -223,6 +223,9 @@ const Lecturers = () => {
     reading: 'all'
   });
 
+  // 外部成績篩選狀態
+  const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
+
   // Teaching tab and filter states
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
@@ -770,69 +773,118 @@ const Lecturers = () => {
               </a>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-              {/* Student Reviews */}
-              <div className="text-center min-w-0">
-                <div className="text-2xl font-bold text-primary">
-                  {reviewsLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  ) : (
-                    reviews.length
-                  )}
+            <div className="pt-4">
+              {/* Mobile: 兩個評分在一行 */}
+              <div className="grid grid-cols-1 gap-4 sm:hidden">
+                {/* 兩個評分在一行 */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Average Teaching Quality Rating */}
+                  <div className="text-center min-w-0">
+                    <div className="text-xl font-bold text-primary">
+                      {reviewsLoading ? (
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      ) : reviews.length > 0 ? (
+                        (() => {
+                          const validRatings = reviews
+                            .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.teaching)
+                            .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                          return validRatings.length > 0 
+                            ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                            : 'N/A';
+                        })()
+                      ) : (
+                        'N/A'
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{t('instructors.averageTeachingQualityShort')}</div>
+                    {!reviewsLoading && reviews.length === 0 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {t('instructors.noRatingData')}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Average Grading Satisfaction Rating */}
+                  <div className="text-center min-w-0">
+                    <div className="text-xl font-bold text-primary">
+                      {reviewsLoading ? (
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      ) : reviews.length > 0 ? (
+                        (() => {
+                          const validRatings = reviews
+                            .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
+                            .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                          return validRatings.length > 0 
+                            ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                            : 'N/A';
+                        })()
+                      ) : (
+                        'N/A'
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{t('instructors.averageGradingSatisfactionShort')}</div>
+                    {!reviewsLoading && reviews.length === 0 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {t('instructors.noRatingData')}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground">{t('instructors.studentReviews')}</div>
               </div>
               
-              {/* Average Teaching Quality Rating */}
-              <div className="text-center min-w-0">
-                <div className="text-2xl font-bold text-primary">
-                  {reviewsLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  ) : reviews.length > 0 ? (
-                    (() => {
-                      const validRatings = reviews
-                        .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.teaching)
-                        .filter(rating => rating !== null && rating !== undefined && rating !== -1);
-                      return validRatings.length > 0 
-                        ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
-                        : 'N/A';
-                    })()
-                  ) : (
-                    'N/A'
+              {/* Tablet and Desktop: 原來的 1x2 佈局 */}
+              <div className="hidden sm:grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Average Teaching Quality Rating */}
+                <div className="text-center min-w-0">
+                  <div className="text-2xl font-bold text-primary">
+                    {reviewsLoading ? (
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                    ) : reviews.length > 0 ? (
+                      (() => {
+                        const validRatings = reviews
+                          .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.teaching)
+                          .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                        return validRatings.length > 0 
+                          ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                          : 'N/A';
+                      })()
+                    ) : (
+                      'N/A'
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingQuality')}</div>
+                  {!reviewsLoading && reviews.length === 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t('instructors.noRatingData')}
+                    </div>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingQuality')}</div>
-                {!reviewsLoading && reviews.length === 0 && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t('instructors.noRatingData')}
+                
+                {/* Average Grading Satisfaction Rating */}
+                <div className="text-center min-w-0">
+                  <div className="text-2xl font-bold text-primary">
+                    {reviewsLoading ? (
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                    ) : reviews.length > 0 ? (
+                      (() => {
+                        const validRatings = reviews
+                          .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
+                          .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                        return validRatings.length > 0 
+                          ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                          : 'N/A';
+                      })()
+                    ) : (
+                      'N/A'
+                    )}
                   </div>
-                )}
-              </div>
-              
-              {/* Average Grading Satisfaction Rating */}
-              <div className="text-center min-w-0">
-                <div className="text-2xl font-bold text-primary">
-                  {reviewsLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  ) : reviews.length > 0 ? (
-                    (() => {
-                      const validRatings = reviews
-                        .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
-                        .filter(rating => rating !== null && rating !== undefined && rating !== -1);
-                      return validRatings.length > 0 
-                        ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
-                        : 'N/A';
-                    })()
-                  ) : (
-                    'N/A'
+                  <div className="text-sm text-muted-foreground">{t('instructors.averageGradingSatisfaction')}</div>
+                  {!reviewsLoading && reviews.length === 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t('instructors.noRatingData')}
+                    </div>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">{t('instructors.averageGradingSatisfaction')}</div>
-                {!reviewsLoading && reviews.length === 0 && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t('instructors.noRatingData')}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -846,6 +898,27 @@ const Lecturers = () => {
                   height={120}
                   showPercentage={true}
                   className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+                  context="instructor"
+                  onBarClick={(grade) => {
+                    // 設置成績篩選並滾動到學生評論區域
+                    setExternalGradeFilter(grade);
+                    setFilters(prev => ({
+                      ...prev,
+                      selectedGrades: [grade],
+                      currentPage: 1
+                    }));
+                    
+                    // 短暫延遲後滾動，讓篩選生效
+                    setTimeout(() => {
+                      const studentReviewsElement = document.getElementById('instructor-student-reviews');
+                      if (studentReviewsElement) {
+                        studentReviewsElement.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'start' 
+                        });
+                      }
+                    }, 100);
+                  }}
                 />
               </div>
             )}
@@ -1117,15 +1190,16 @@ const Lecturers = () => {
       </CollapsibleSection>
 
       {/* 學生評論 */}
-      <CollapsibleSection
-        className="course-card"
-        title={t('instructors.studentReviews')}
-        icon={<MessageSquare className="h-5 w-5" />}
-        defaultExpanded={true}
-        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
-        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
-        contentClassName="space-y-4"
-      >
+      <div id="instructor-student-reviews">
+        <CollapsibleSection
+          className="course-card"
+          title={t('instructors.studentReviews')}
+          icon={<MessageSquare className="h-5 w-5" />}
+          defaultExpanded={true}
+          expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+          collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+          contentClassName="space-y-4"
+        >
           {/* 篩選器 - 只有當有評論且不在載入狀態時才顯示 */}
           {reviews && reviews.length > 0 && !reviewsLoading && (
             <>
@@ -1433,11 +1507,11 @@ const Lecturers = () => {
                           <MessageSquare className="h-4 w-4 shrink-0" />
                           <span>{t('review.courseComments')}</span>
                         </h5>
-                        <div className="bg-muted/50 p-2 rounded-md break-words">
+                        <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
                           {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
-                            renderCommentMarkdown(reviewInfo.review.course_comments)
+                            <div className="text-xs">{renderCommentMarkdown(reviewInfo.review.course_comments)}</div>
                           ) : (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {reviewInfo.review.course_comments}
                             </p>
                           )}
@@ -1900,6 +1974,7 @@ const Lecturers = () => {
             </div>
           )}
       </CollapsibleSection>
+      </div>
 
       {/* 操作按鈕 */}
       <div className="flex gap-3 pb-8 md:pb-0">

@@ -36,6 +36,7 @@ interface FavoriteInstructor {
   review_count: number;
   average_teaching_score: number;
   average_grading_fairness: number;
+  average_gpa: number;
   is_teaching_in_current_term: boolean;
 }
 
@@ -120,6 +121,11 @@ const Favorites = () => {
         if (instructorData) {
           // 獲取講師統計數據
           const stats = await CourseService.getInstructorDetailedStatsOptimized(instructorData.name);
+          
+          // 獲取講師詳細統計包含GPA
+          const allInstructorsWithStats = await CourseService.getAllInstructorsWithDetailedStats();
+          const instructorWithGPA = allInstructorsWithStats.find(inst => inst.name === instructorData.name);
+          
           return {
             name: instructorData.name,
             name_tc: instructorData.name_tc,
@@ -128,6 +134,7 @@ const Favorites = () => {
             review_count: stats.reviewCount || 0,
             average_teaching_score: stats.teachingScore || 0,
             average_grading_fairness: stats.gradingFairness || 0,
+            average_gpa: instructorWithGPA?.averageGPA || 0,
             is_teaching_in_current_term: await CourseService.isInstructorTeachingInTerm(instructorData.name, getCurrentTermCode()),
           };
         }
@@ -287,6 +294,7 @@ const Favorites = () => {
                     reviewCount={instructor.review_count}
                     teachingScore={instructor.average_teaching_score}
                     gradingFairness={instructor.average_grading_fairness}
+                    averageGPA={instructor.average_gpa}
                     isTeachingInCurrentTerm={instructor.is_teaching_in_current_term}
                     isFavorited={true}
                     onFavoriteToggle={() => handleRemoveFavorite('instructor', instructor.name)}

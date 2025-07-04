@@ -478,6 +478,17 @@ export function AdvancedInstructorFilters({
             {t('sort.reviews')}
             {getSortIcon('reviews')}
           </Button>
+
+          <Button
+            variant={getSortButtonVariant('averageGPA')}
+            size="sm"
+            onClick={() => handleSort('averageGPA')}
+            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
+          >
+            <Award className="h-4 w-4" />
+            {t('sort.averageGPA')}
+            {getSortIcon('averageGPA')}
+          </Button>
         </div>
       </div>
 

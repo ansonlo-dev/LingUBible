@@ -52,6 +52,8 @@ const Index = () => {
   // 熱門內容狀態
   const [popularCourses, setPopularCourses] = useState<CourseWithStats[]>([]);
   const [popularInstructors, setPopularInstructors] = useState<InstructorWithDetailedStats[]>([]);
+  const [topCourses, setTopCourses] = useState<CourseWithStats[]>([]);
+  const [topInstructors, setTopInstructors] = useState<InstructorWithDetailedStats[]>([]);
   const [popularLoading, setPopularLoading] = useState(true);
   const [popularError, setPopularError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('courses');
@@ -99,51 +101,67 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [user, refreshUser]);
 
-  // 載入熱門內容
+  // 載入熱門內容和最佳內容
   useEffect(() => {
-    const loadPopularContent = async () => {
+    const loadAllContent = async () => {
       try {
         setPopularLoading(true);
         setPopularError(null);
 
-        const [courses, instructors] = await Promise.all([
+        const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
           CourseService.getPopularCourses(),
-          CourseService.getPopularInstructorsWithDetailedStats()
+          CourseService.getPopularInstructorsWithDetailedStats(),
+          CourseService.getTopCoursesByGPA(),
+          CourseService.getTopInstructorsByGPA()
         ]);
 
-        setPopularCourses(courses);
-        setPopularInstructors(instructors);
+        setPopularCourses(popularCourses);
+        setPopularInstructors(popularInstructors);
+        setTopCourses(topCourses);
+        setTopInstructors(topInstructors);
       } catch (error) {
-        console.error('Error loading popular content:', error);
-        setPopularError(error instanceof Error ? error.message : '載入熱門內容時發生錯誤');
+        console.error('Error loading content:', error);
+        setPopularError(error instanceof Error ? error.message : '載入內容時發生錯誤');
       } finally {
         setPopularLoading(false);
       }
     };
 
-    loadPopularContent();
+    loadAllContent();
   }, []);
 
   // 當用戶登入且課程/講師數據載入完成後，添加到收藏監控
   useEffect(() => {
-    if (user && popularCourses.length > 0) {
-      const courseItems = popularCourses.map(course => ({
+    if (user && (popularCourses.length > 0 || topCourses.length > 0)) {
+      const allCourses = [...popularCourses, ...topCourses];
+      // 去重：合併課程列表，移除重複項
+      const uniqueCourses = allCourses.filter((course, index, self) => 
+        index === self.findIndex(c => c.course_code === course.course_code)
+      );
+      
+      const courseItems = uniqueCourses.map(course => ({
         type: 'course' as const,
         itemId: course.course_code
       }));
       addItems(courseItems);
     }
-  }, [user, popularCourses, addItems]);
+  }, [user, popularCourses, topCourses, addItems]);
 
   useEffect(() => {
-    if (user && popularInstructors.length > 0) {
-      const instructorItems = popularInstructors.map(instructor => ({
+    if (user && (popularInstructors.length > 0 || topInstructors.length > 0)) {
+      const allInstructors = [...popularInstructors, ...topInstructors];
+      // 去重：合併講師列表，移除重複項
+      const uniqueInstructors = allInstructors.filter((instructor, index, self) => 
+        index === self.findIndex(i => i.name === instructor.name)
+      );
+      
+      const instructorItems = uniqueInstructors.map(instructor => ({
         type: 'instructor' as const,
         itemId: instructor.name
       }));
       addItems(instructorItems);
     }
-  }, [user, popularInstructors, addItems]);
+  }, [user, popularInstructors, topInstructors, addItems]);
 
   // Get the actions as an array directly from the translation
   const actions = t('hero.actions');
@@ -304,10 +322,22 @@ const Index = () => {
                 >
                   {t('featured.instructors')}
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="topCourses" 
+                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                >
+                  {t('featured.topCourses')}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="topInstructors" 
+                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                >
+                  {t('featured.topInstructors')}
+                </TabsTrigger>
               </TabsList>
               
               <a 
-                href={activeTab === 'courses' ? '/courses' : '/instructors'}
+                href={activeTab === 'courses' || activeTab === 'topCourses' ? '/courses' : '/instructors'}
                 onClick={(e) => {
                   // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
                   // Let normal clicks use the default link behavior
@@ -317,11 +347,11 @@ const Index = () => {
                   }
                   // For normal clicks, prevent default and use React Router
                   e.preventDefault();
-                  navigate(activeTab === 'courses' ? '/courses' : '/instructors');
+                  navigate(activeTab === 'courses' || activeTab === 'topCourses' ? '/courses' : '/instructors');
                 }}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-primary/10 hover:text-primary h-10 px-4 py-2 w-full sm:w-auto no-underline"
               >
-                {activeTab === 'courses' ? t('featured.viewAllCourses') : t('featured.viewAllInstructors')}
+                {activeTab === 'courses' || activeTab === 'topCourses' ? t('featured.viewAllCourses') : t('featured.viewAllInstructors')}
               </a>
             </div>
 
@@ -396,6 +426,98 @@ const Index = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                   {popularInstructors.map((instructor) => (
+                    <PopularItemCard
+                      key={instructor.$id}
+                      type="instructor"
+                      name={instructor.name}
+                      nameTc={instructor.name_tc}
+                      nameSc={instructor.name_sc}
+                      department={translateDepartmentName(instructor.department, t)}
+                      reviewCount={instructor.reviewCount}
+                      teachingScore={instructor.teachingScore}
+                      gradingFairness={instructor.gradingFairness}
+                      averageGPA={instructor.averageGPA}
+                      isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
+                      isLoading={false}
+                      isFavorited={user ? isFavorited('instructor', instructor.name) : false}
+                      onFavoriteToggle={() => handleFavoriteToggle('instructor', instructor.name)}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="topCourses" className="space-y-6">
+              {popularLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
+                  </div>
+                </div>
+              ) : popularError ? (
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('common.error')}</h3>
+                  <p className="text-muted-foreground">{popularError}</p>
+                </div>
+              ) : topCourses.length === 0 ? (
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('featured.noPopularCourses')}</h3>
+                  <p className="text-muted-foreground">{t('featured.noPopularCoursesDesc')}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                  {topCourses.map((course) => (
+                    <PopularItemCard
+                      key={course.$id}
+                      type="course"
+                      title={course.course_title}
+                      titleTc={course.course_title_tc}
+                      titleSc={course.course_title_sc}
+                      code={course.course_code}
+                      department={course.department}
+                      language={course.course_language}
+                      rating={course.averageRating}
+                      reviewCount={course.reviewCount}
+                      isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
+                      averageWorkload={course.averageWorkload}
+                      averageDifficulty={course.averageDifficulty}
+                      averageUsefulness={course.averageUsefulness}
+                      averageGPA={course.averageGPA}
+                      isLoading={false}
+                      isFavorited={user ? isFavorited('course', course.course_code) : false}
+                      onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="topInstructors" className="space-y-6">
+              {popularLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
+                  </div>
+                </div>
+              ) : popularError ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('common.error')}</h3>
+                  <p className="text-muted-foreground">{popularError}</p>
+                </div>
+              ) : topInstructors.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('featured.noPopularInstructors')}</h3>
+                  <p className="text-muted-foreground">{t('featured.noPopularInstructorsDesc')}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                  {topInstructors.map((instructor) => (
                     <PopularItemCard
                       key={instructor.$id}
                       type="instructor"
