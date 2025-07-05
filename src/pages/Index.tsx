@@ -309,32 +309,41 @@ const Index = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Mobile: Stack vertically, Desktop: Align with course cards edges */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 max-w-6xl mx-auto">
-              <TabsList className="bg-muted/50 backdrop-blur-sm w-full sm:w-auto">
-                <TabsTrigger 
-                  value="courses" 
-                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
-                >
-                  {t('featured.courses')}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="instructors" 
-                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
-                >
-                  {t('featured.instructors')}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="topCourses" 
-                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
-                >
-                  {t('featured.topCourses')}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="topInstructors" 
-                  className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
-                >
-                  {t('featured.topInstructors')}
-                </TabsTrigger>
-              </TabsList>
+              {/* Add a scrollable container wrapper for mobile with visual indicators */}
+              <div className="relative w-full sm:w-auto">
+                {/* Gradient fade indicators for mobile to show scrollable content */}
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 sm:hidden" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 sm:hidden" />
+                
+                <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent snap-x snap-mandatory">
+                  <TabsList className="bg-muted/50 backdrop-blur-sm inline-flex min-w-max">
+                  <TabsTrigger 
+                    value="courses" 
+                    className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
+                  >
+                    {t('featured.courses')}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="instructors" 
+                    className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
+                  >
+                    {t('featured.instructors')}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="topCourses" 
+                    className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
+                  >
+                    {t('featured.topCourses')}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="topInstructors" 
+                    className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
+                  >
+                    {t('featured.topInstructors')}
+                  </TabsTrigger>
+                </TabsList>
+                </div>
+              </div>
               
               <a 
                 href={activeTab === 'courses' || activeTab === 'topCourses' ? '/courses' : '/instructors'}
