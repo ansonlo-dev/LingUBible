@@ -231,7 +231,7 @@ const Lecturers = () => {
   const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
 
   // Grade distribution chart filter state
-  const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string>('all');
+  const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
 
   // 解碼 URL 參數
   const decodedName = instructorName ? decodeURIComponent(instructorName) : null;
@@ -276,16 +276,19 @@ const Lecturers = () => {
       .sort((a, b) => a.value.localeCompare(b.value));
   }, [reviews]);
 
-  // Filter reviews for grade distribution chart based on selected course
+  // Filter reviews for grade distribution chart based on selected course(s)
   const filteredReviewsForChart = React.useMemo(() => {
     if (!reviews || reviews.length === 0) return [];
     
-    if (selectedGradeChartFilter === 'all') {
+    // Handle both single and multiple selections
+    const selectedValues = Array.isArray(selectedGradeChartFilter) ? selectedGradeChartFilter : [selectedGradeChartFilter];
+    
+    if (selectedValues.length === 0 || selectedValues.includes('all')) {
       return reviews;
     }
     
     return reviews.filter(reviewInfo => 
-      reviewInfo.course?.course_code === selectedGradeChartFilter
+      reviewInfo.course?.course_code && selectedValues.includes(reviewInfo.course.course_code)
     );
   }, [reviews, selectedGradeChartFilter]);
 
@@ -944,6 +947,7 @@ const Lecturers = () => {
                   selectedFilter={selectedGradeChartFilter}
                   onFilterChange={setSelectedGradeChartFilter}
                   filterLabel={t('chart.filterByCourse')}
+                  rawReviewData={filteredReviewsForChart}
                   onBarClick={(grade) => {
                     // 設置成績篩選並滾動到學生評論區域
                     setExternalGradeFilter(grade);

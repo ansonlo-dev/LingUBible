@@ -182,12 +182,12 @@ const CourseDetail = () => {
   );
 
   // 篩選狀態
-  const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
+  const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
 
   // Grade distribution chart filter state
-  const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string>('all');
+  const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -195,47 +195,42 @@ const CourseDetail = () => {
   // Generate filter options for grade distribution chart (instructors)
   const gradeChartFilterOptions = React.useMemo(() => {
     if (!allReviewsForChart || allReviewsForChart.length === 0) return [];
-    
-    const instructorMap = new Map<string, { name: string; sessionType: string; count: number }>();
+
+    // Count occurrences of each instructor-session combination
+    const instructorSessionCounts = new Map<string, number>();
+    const instructorSessionLabels = new Map<string, string>();
+
     allReviewsForChart.forEach(reviewInfo => {
-      // Get instructor names from instructor_details JSON
       try {
         const instructorDetails = JSON.parse(reviewInfo.review.instructor_details);
+        
         instructorDetails.forEach((detail: any) => {
-          if (detail.instructor_name && detail.session_type) {
-            const key = `${detail.instructor_name}|${detail.session_type}`;
-            if (instructorMap.has(key)) {
-              instructorMap.get(key)!.count++;
-            } else {
-              instructorMap.set(key, {
-                name: detail.instructor_name,
-                sessionType: detail.session_type,
-                count: 1
-              });
-            }
-          }
+          const key = `${detail.instructor_name}|${detail.session_type}`;
+          const count = instructorSessionCounts.get(key) || 0;
+          instructorSessionCounts.set(key, count + 1);
+          
+          // Store the formatted label
+          const sessionTypeTranslated = detail.session_type === 'LEC' ? t('common.lecture') : t('common.tutorial');
+          instructorSessionLabels.set(key, `${detail.instructor_name} (${sessionTypeTranslated})`);
         });
       } catch (error) {
         console.warn('Failed to parse instructor details:', error);
       }
     });
-    
-    return Array.from(instructorMap.entries())
-      .map(([key, data]) => ({
+
+    return Array.from(instructorSessionCounts.entries())
+      .map(([key, count]) => ({
         value: key,
-        label: `${data.name} (${t(`sessionType.${data.sessionType.toLowerCase()}`)})`,
-        count: data.count,
-        sessionType: data.sessionType,
-        instructorName: data.name
+        label: instructorSessionLabels.get(key) || key,
+        count,
+        // Add sorting helpers
+        instructorName: key.split('|')[0],
+        sessionType: key.split('|')[1]
       }))
       .sort((a, b) => {
-        // First sort by session type: lecture before tutorial
+        // First sort by session type (LEC before TUT)
         if (a.sessionType !== b.sessionType) {
-          // Lecture comes before Tutorial
-          if (a.sessionType.toLowerCase() === 'lecture') return -1;
-          if (b.sessionType.toLowerCase() === 'lecture') return 1;
-          if (a.sessionType.toLowerCase() === 'tutorial') return -1;
-          if (b.sessionType.toLowerCase() === 'tutorial') return 1;
+          return a.sessionType === 'LEC' ? -1 : 1;
         }
         
         // Within same session type, sort by instructor name alphabetically
@@ -244,22 +239,33 @@ const CourseDetail = () => {
       .map(({ value, label, count }) => ({ value, label, count })); // Remove extra sorting fields
   }, [allReviewsForChart, t]);
 
-  // Filter reviews for grade distribution chart based on selected instructor
+  // Filter reviews for grade distribution chart based on selected instructor(s)
   const filteredReviewsForChart = React.useMemo(() => {
     if (!allReviewsForChart || allReviewsForChart.length === 0) return [];
     
-    if (selectedGradeChartFilter === 'all') {
+    // Handle both single and multiple selections
+    const selectedValues = Array.isArray(selectedGradeChartFilter) ? selectedGradeChartFilter : [selectedGradeChartFilter];
+    
+    if (selectedValues.length === 0 || selectedValues.includes('all')) {
       return allReviewsForChart;
     }
     
-    const [targetInstructor, targetSessionType] = selectedGradeChartFilter.split('|');
+    // Parse all selected instructor-session combinations
+    const targetInstructorSessions = selectedValues.map(value => {
+      const [targetInstructor, targetSessionType] = value.split('|');
+      return { targetInstructor, targetSessionType };
+    });
     
     return allReviewsForChart.filter(reviewInfo => {
       try {
         const instructorDetails = JSON.parse(reviewInfo.review.instructor_details);
+        
+        // Check if any of the instructor details match any of the selected combinations
         return instructorDetails.some((detail: any) => 
-          detail.instructor_name === targetInstructor && 
-          detail.session_type === targetSessionType
+          targetInstructorSessions.some(({ targetInstructor, targetSessionType }) =>
+            detail.instructor_name === targetInstructor && 
+            detail.session_type === targetSessionType
+          )
         );
       } catch (error) {
         console.warn('Failed to parse instructor details:', error);
@@ -268,13 +274,23 @@ const CourseDetail = () => {
     });
   }, [allReviewsForChart, selectedGradeChartFilter]);
 
-  // 獲取所有可用的學期
-  const availableTerms = React.useMemo(() => {
-    const terms = teachingInfo.map(info => info.term);
-    const uniqueTerms = terms.filter((term, index, self) => 
-      self.findIndex(t => t.term_code === term.term_code) === index
-    );
-    return uniqueTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
+  // 獲取所有可用的學期及其計數
+  const availableTermsWithCounts = React.useMemo(() => {
+    // Count teaching records per term
+    const termCountMap = new Map<string, { term: any; count: number }>();
+    
+    teachingInfo.forEach(info => {
+      const termCode = info.term.term_code;
+      if (termCountMap.has(termCode)) {
+        termCountMap.get(termCode)!.count++;
+      } else {
+        termCountMap.set(termCode, { term: info.term, count: 1 });
+      }
+    });
+    
+    // Convert to array and sort by term code (descending)
+    return Array.from(termCountMap.values())
+      .sort((a, b) => b.term.term_code.localeCompare(a.term.term_code));
   }, [teachingInfo]);
 
   // 根據選定的學期篩選教學信息
@@ -579,6 +595,7 @@ const CourseDetail = () => {
                 selectedFilter={selectedGradeChartFilter}
                 onFilterChange={setSelectedGradeChartFilter}
                 filterLabel={t('chart.filterByInstructor')}
+                rawReviewData={allReviewsForChart}
                 onBarClick={(grade) => {
                   // 設置成績篩選並滾動到學生評論區域
                   setExternalGradeFilter(grade);
@@ -673,10 +690,22 @@ const CourseDetail = () => {
                       <SelectValue placeholder={t('common.all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t('common.all')}</SelectItem>
-                      {availableTerms.map((term) => (
-                        <SelectItem key={term.term_code} value={term.term_code}>
-                          {term.name}
+                      <SelectItem value="all">
+                        <span className="flex items-center gap-2">
+                          <span>{t('common.all')}</span>
+                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                            {teachingInfo.length}
+                          </Badge>
+                        </span>
+                      </SelectItem>
+                      {availableTermsWithCounts.map((termData) => (
+                        <SelectItem key={termData.term.term_code} value={termData.term.term_code}>
+                          <span className="flex items-center gap-2">
+                            <span>{termData.term.name}</span>
+                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                              {termData.count}
+                            </Badge>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>

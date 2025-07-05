@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CourseService, Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface CourseDetailData {
   course: Course | null;
@@ -32,6 +33,7 @@ export const useCourseDetailOptimized = (
   language?: string,
   currentTermCode?: string
 ): CourseDetailOptimized => {
+  const { t } = useLanguage();
   const [data, setData] = useState<CourseDetailData>({
     course: null,
     courseStats: {
@@ -55,7 +57,7 @@ export const useCourseDetailOptimized = (
 
   useEffect(() => {
     if (!courseCode) {
-      setError('Course code not provided');
+      setError(t('pages.courseDetail.courseCodeNotProvided'));
       setLoading(false);
       setTeachingInfoLoading(false);
       setReviewsLoading(false);
@@ -98,7 +100,7 @@ export const useCourseDetailOptimized = (
         console.log(`Optimized course detail data loaded in ${loadTime}ms for:`, courseCode);
 
         if (!courseData) {
-          setError('Course not found');
+          setError(t('pages.courseDetail.courseNotFound'));
           return;
         }
 
@@ -122,7 +124,7 @@ export const useCourseDetailOptimized = (
 
       } catch (error) {
         console.error('Failed to load course data:', error);
-        setError('Failed to load course information');
+        setError(t('pages.courseDetail.failedToLoadCourse'));
       } finally {
         // 一次性關閉所有載入狀態（類似講師詳情頁面）
         setLoading(false);

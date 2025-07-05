@@ -36,54 +36,50 @@ export default defineConfig(({ command, mode }) => {
       sourcemap: isDevelopment,
       // Vite 7: Updated browser target to 'baseline-widely-available'
       target: 'baseline-widely-available',
-      minify: isProduction ? 'terser' : false,
-      terserOptions: isProduction ? {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info'],
-        },
-        mangle: {
-          safari10: true,
-        },
-        // Vite 6: Ensure compatibility with terser 5.16.0+
-        format: {
-          comments: false,
-        },
-      } : undefined,
+      minify: isProduction ? 'esbuild' : false, // 使用 esbuild 而不是 terser，速度更快
       rollupOptions: {
         treeshake: isProduction,
+        maxParallelFileOps: 5, // 限制並行文件操作以避免資源競爭
         output: {
-          // 代碼分割優化
-          manualChunks: isProduction ? {
-            // 核心 React 庫
-            'react-vendor': ['react', 'react-dom'],
-            // 路由相關
-            'router': ['react-router-dom'],
-            // UI 組件庫
-            'ui-vendor': [
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-select',
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-tooltip',
-            ],
-            // 數據查詢
-            'query-vendor': ['@tanstack/react-query'],
-            // 後端服務
-            'backend-vendor': ['appwrite'],
-            // 圖標庫
-            'icons': ['lucide-react'],
-            // 工具庫
-            'utils': ['clsx', 'tailwind-merge', 'date-fns'],
+          // 簡化代碼分割以提高構建速度
+          manualChunks: isProduction ? (id) => {
+            // 第三方庫簡單分離
+            if (id.includes('node_modules')) {
+              // React 相關
+              if (id.includes('react')) {
+                return 'react-vendor';
+              }
+              // UI 和工具庫
+              if (id.includes('@radix-ui') || id.includes('lucide-react') || 
+                  id.includes('clsx') || id.includes('tailwind-merge')) {
+                return 'ui-vendor';
+              }
+              // 後端和查詢
+              if (id.includes('@tanstack') || id.includes('appwrite')) {
+                return 'backend-vendor';
+              }
+              // 其他第三方庫
+              return 'vendor';
+            }
+            
+            // 只分離國際化文件
+            if (id.includes('/locales/')) {
+              const match = id.match(/\/locales\/([^/]+)\./);
+              if (match) {
+                return match[1]; // en, zh-CN, zh-TW
+              }
+            }
+            
+            // 默認應用代碼
+            return 'index';
           } : undefined,
           chunkFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
           entryFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
           assetFileNames: isProduction ? 'assets/[name]-[hash].[ext]' : 'assets/[name].[ext]',
         }
       },
-      chunkSizeWarningLimit: 1000,
-      reportCompressedSize: isProduction,
+      chunkSizeWarningLimit: 1500, // 增加到 1.5MB，減少不必要的警告
+      reportCompressedSize: false, // 關閉壓縮大小報告以加快構建速度
       cssCodeSplit: true,
       assetsInlineLimit: 4096,
     },
@@ -106,6 +102,11 @@ export default defineConfig(({ command, mode }) => {
       legalComments: 'none',
       // 生產環境移除 console
       drop: isProduction ? ['console', 'debugger'] : [],
+      // 添加更多 esbuild 優化
+      treeShaking: true,
+      minifyIdentifiers: isProduction,
+      minifySyntax: isProduction,
+      minifyWhitespace: isProduction,
     },
     worker: {
       format: 'es',

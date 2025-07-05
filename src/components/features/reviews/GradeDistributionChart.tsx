@@ -10,16 +10,17 @@ import {
   normalizeGrade, 
   getCompleteGradeDistribution,
   getGPA,
-  BoxPlotStatistics 
+  BoxPlotStatistics,
+  calculateGradeDistributionFromReviews
 } from '@/utils/gradeUtils';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, BoxSelect } from 'lucide-react';
+import { BarChart3, BoxSelect, BarChart } from 'lucide-react';
 
 // Chart type enum
-type ChartType = 'bar' | 'boxplot';
+type ChartType = 'bar' | 'stacked' | 'boxplot';
 
 // New interface for filter options
 interface FilterOption {
@@ -49,12 +50,19 @@ interface GradeDistributionChartProps {
   context?: 'course' | 'instructor';
   /** 篩選選項 - 用於下拉選單 */
   filterOptions?: FilterOption[];
-  /** 當前選中的篩選值 */
-  selectedFilter?: string;
-  /** 篩選變更回調函數 */
-  onFilterChange?: (value: string) => void;
+  /** 當前選中的篩選值 - 支援多選 */
+  selectedFilter?: string | string[];
+  /** 篩選變更回調函數 - 支援多選 */
+  onFilterChange?: (value: string | string[]) => void;
   /** 篩選標籤（例如 "按課程篩選" 或 "按講師篩選"） */
   filterLabel?: string;
+  /** 原始評論數據 - 用於計算真實的成績分佈 */
+  rawReviewData?: Array<{ 
+    review: { 
+      course_final_grade?: string | null; 
+      instructor_details: string; 
+    }; 
+  }>;
 }
 
 const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo(({
@@ -70,13 +78,17 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   filterOptions,
   selectedFilter,
   onFilterChange,
-  filterLabel
+  filterLabel,
+  rawReviewData
 }) => {
   const { t, language } = useLanguage();
   const { isDark } = useTheme();
   
   // Chart type state
   const [chartType, setChartType] = React.useState<ChartType>('bar');
+  
+  // Remove the restriction that clears filters for stacked and box plot charts
+  // This allows users to select specific items in dropdown for all chart types
   
   // Use responsive height with proper mobile optimization
   const [isMobile, setIsMobile] = React.useState(false);
@@ -87,96 +99,109 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
+  // Console warning suppression for passive event listeners - more aggressive approach
+  React.useEffect(() => {
+    if (!isMobile) return;
+    
+    // Store original methods
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    const originalLog = console.log;
+    
+    // More comprehensive pattern matching
+    const isEventListenerWarning = (message: string) => {
+      const msg = message.toLowerCase();
+      return (
+        msg.includes('passive') ||
+        msg.includes('preventDefault') ||
+        msg.includes('touchstart') ||
+        msg.includes('touchmove') ||
+        msg.includes('wheel') ||
+        msg.includes('mousewheel') ||
+        msg.includes('event listener') ||
+        msg.includes('non-passive') ||
+        msg.includes('scroll-blocking') ||
+        msg.includes('ignored attempt to cancel')
+      );
+    };
+    
+    // Suppress console.warn
+    console.warn = (...args) => {
+      const message = args.join(' ');
+      if (!isEventListenerWarning(message)) {
+        originalWarn(...args);
+      }
+    };
+    
+    // Suppress console.error for event listener warnings
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (!isEventListenerWarning(message)) {
+        originalError(...args);
+      }
+    };
+    
+    // Also suppress console.log for event warnings
+    console.log = (...args) => {
+      const message = args.join(' ');
+      if (!isEventListenerWarning(message)) {
+        originalLog(...args);
+      }
+    };
+    
+    // Cleanup function
+    return () => {
+      console.warn = originalWarn;
+      console.error = originalError;
+      console.log = originalLog;
+    };
+  }, [isMobile]);
+  
+  // Also disable event listener warnings at window level
+  React.useEffect(() => {
+    if (!isMobile) return;
+    
+    // Override window.addEventListener to prevent warnings
+    const originalAddEventListener = window.addEventListener;
+    
+    window.addEventListener = function(type, listener, options) {
+      // Force passive for problematic events on mobile
+      if (['touchstart', 'touchmove', 'wheel', 'mousewheel'].includes(type)) {
+        const newOptions = typeof options === 'object' ? { ...options, passive: true } : { passive: true };
+        return originalAddEventListener.call(this, type, listener, newOptions);
+      }
+      return originalAddEventListener.call(this, type, listener, options);
+    };
+    
+    return () => {
+      window.addEventListener = originalAddEventListener;
+    };
+  }, [isMobile]);
+  
   // Adjust height based on chart type and mobile status
   const getResponsiveHeight = () => {
     if (chartType === 'boxplot') {
       // For multiple box plots, we need more height
       return isMobile ? 300 : 400;
     }
-    // For bar charts on mobile, use adequate height
-    return isMobile ? 250 : height;
+    if (chartType === 'stacked') {
+      // For stacked charts with multiple instructors, we need more height
+      const instructorCount = filterOptions?.length || 1;
+      return isMobile ? Math.max(250, instructorCount * 35) : Math.max(350, instructorCount * 40);
+    }
+    // For bar charts, use same height as stacked/box plot for consistency
+    return isMobile ? 300 : 400;
   };
   
   const responsiveHeight = getResponsiveHeight();
 
-  // Force complete chart re-render when theme changes to fix grid line colors
+  // Force chart refresh when theme changes by incrementing key
   const [chartKey, setChartKey] = React.useState(0);
-  const [lastTheme, setLastTheme] = React.useState(isDark);
   
-  // More aggressive theme change detection
+  // Force chart re-render when theme changes to update axis colors
   React.useEffect(() => {
-    const handleThemeChange = () => {
-      const currentDark = document.documentElement.classList.contains('dark');
-      if (lastTheme !== currentDark) {
-        setLastTheme(currentDark);
-        // Force immediate chart re-render
-        setChartKey(prev => prev + 1);
-      }
-    };
-    
-    // Check theme changes more frequently
-    const intervalId = setInterval(handleThemeChange, 100);
-    
-    // Also listen for class changes on documentElement
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          handleThemeChange();
-        }
-      });
-    });
-    
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => {
-      clearInterval(intervalId);
-      observer.disconnect();
-    };
-  }, [lastTheme]);
-
-  // Additional theme change detection for hook changes
-  React.useEffect(() => {
-    if (lastTheme !== isDark) {
-      setLastTheme(isDark);
-      setChartKey(prev => prev + 1);
-    }
-  }, [isDark, lastTheme]);
-
-  // Completely disable console warnings for passive event listeners
-  React.useEffect(() => {
-    if (isMobile) {
-      // More aggressive console warning suppression
-      const originalWarn = console.warn;
-      const originalError = console.error;
-      
-      console.warn = (...args) => {
-        const message = args.join(' ');
-        if (message.includes('passive event listener') || 
-            message.includes('Added non-passive event listener') ||
-            message.includes('scroll-blocking') ||
-            message.includes('touchstart') ||
-            message.includes('touchmove') ||
-            message.includes('wheel')) {
-          return; // Suppress these warnings completely
-        }
-        originalWarn.apply(console, args);
-      };
-
-      console.error = (...args) => {
-        const message = args.join(' ');
-        if (message.includes('passive event listener') || 
-            message.includes('Added non-passive event listener')) {
-          return; // Suppress these errors too
-        }
-        originalError.apply(console, args);
-      };
-
-      return () => {
-        console.warn = originalWarn;
-        console.error = originalError;
-      };
-    }
-  }, [isMobile]);
+    setChartKey(prev => prev + 1);
+  }, [isDark, chartType, selectedFilter]); // Add selectedFilter to ensure refresh when filtering
 
   // 使用 useMemo 優化性能，避免重複計算
   const { completeDistribution, sortedGrades, totalCount, maxCount, statistics, boxPlotStats } = React.useMemo(() => {
@@ -206,16 +231,59 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     };
   }, [gradeDistribution]);
 
-  // ECharts theme configuration with robust grid color handling
-  const getChartTheme = () => {
-    // Get current theme state directly from DOM and hooks for reliability
-    const domIsDark = document.documentElement.classList.contains('dark');
-    const currentTheme = domIsDark || isDark; // Use both sources for reliability
+  // Helper function to filter reviews by instructor and calculate real grade distribution
+  const getGradeDistributionByInstructor = (instructorValue: string): Record<string, number> => {
+    if (!rawReviewData || rawReviewData.length === 0) {
+      return {};
+    }
     
-    const gridColor = currentTheme ? '#374151' : '#f3f4f6';
-    const axisLineColor = currentTheme ? '#4b5563' : '#d1d5db';
-    const axisLabelColor = currentTheme ? '#9ca3af' : '#6b7280';
-    const textColor = currentTheme ? '#e5e7eb' : '#374151';
+    // If 'all', return overall distribution
+    if (instructorValue === 'all') {
+      return calculateGradeDistributionFromReviews(rawReviewData.map(r => ({ course_final_grade: r.review.course_final_grade })));
+    }
+    
+    // Check if this is instructor page data structure (InstructorReviewFromDetails)
+    // vs course page data structure (CourseReviewInfo)
+    const isInstructorPage = context === 'instructor';
+    
+    if (isInstructorPage) {
+      // For instructor page: filter by course code (instructorValue is course code)
+      const filteredReviews = rawReviewData.filter(reviewInfo => {
+        // rawReviewData on instructor page has structure: { review, term, course, instructorDetails }
+        const courseCode = (reviewInfo as any).course?.course_code;
+        return courseCode === instructorValue;
+      });
+      
+      return calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
+    } else {
+      // For course page: filter by instructor (instructorValue is instructor|sessionType)
+      const [targetInstructor, targetSessionType] = instructorValue.split('|');
+      
+      // Filter reviews for specific instructor
+      const filteredReviews = rawReviewData.filter(reviewInfo => {
+        try {
+          const instructorDetails = JSON.parse(reviewInfo.review.instructor_details);
+          return instructorDetails.some((detail: any) => 
+            detail.instructor_name === targetInstructor && 
+            detail.session_type === targetSessionType
+          );
+        } catch (error) {
+          console.warn('Failed to parse instructor details:', error);
+          return false;
+        }
+      });
+      
+      return calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
+    }
+  };
+
+  // ECharts theme configuration with explicit color forcing
+  const getChartTheme = () => {
+    // Force explicit color values to ensure theme switching works
+    const gridColor = isDark ? '#374151' : '#f3f4f6';
+    const axisLineColor = isDark ? '#4b5563' : '#d1d5db';
+    const axisLabelColor = isDark ? '#ffffff' : '#000000';
+    const textColor = isDark ? '#ffffff' : '#000000';
     
     return {
       backgroundColor: 'transparent',
@@ -224,15 +292,39 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         fontSize: 12,
         fontFamily: 'ui-sans-serif, system-ui, sans-serif'
       },
-      // Force grid color refresh with explicit values
+      // Explicit theme colors that will force refresh
+      color: [
+        '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', 
+        '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#10b981'
+      ],
       grid: {
-        borderColor: axisLineColor
+        borderColor: axisLineColor,
+        backgroundColor: 'transparent'
       },
       categoryAxis: {
-        axisLine: { lineStyle: { color: axisLineColor } },
-        axisTick: { lineStyle: { color: axisLineColor } },
-        axisLabel: { color: axisLabelColor },
+        axisLine: { 
+          show: true,
+          lineStyle: { 
+            color: axisLineColor,
+            width: 1
+          } 
+        },
+        axisTick: { 
+          show: true,
+          lineStyle: { 
+            color: axisLineColor,
+            width: 1
+          } 
+        },
+        axisLabel: { 
+          show: true,
+          color: axisLabelColor,
+          fontSize: 12,
+          fontWeight: 'bold',
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+        },
         splitLine: { 
+          show: true,
           lineStyle: { 
             color: gridColor,
             width: 1,
@@ -241,10 +333,29 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         }
       },
       valueAxis: {
-        axisLine: { lineStyle: { color: axisLineColor } },
-        axisTick: { lineStyle: { color: axisLineColor } },
-        axisLabel: { color: axisLabelColor },
+        axisLine: { 
+          show: true,
+          lineStyle: { 
+            color: axisLineColor,
+            width: 1
+          } 
+        },
+        axisTick: { 
+          show: true,
+          lineStyle: { 
+            color: axisLineColor,
+            width: 1
+          } 
+        },
+        axisLabel: { 
+          show: true,
+          color: axisLabelColor,
+          fontSize: 12,
+          fontWeight: 'bold',
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+        },
         splitLine: { 
+          show: true,
           lineStyle: { 
             color: gridColor,
             width: 1,
@@ -255,45 +366,146 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     };
   };
 
-  // Get all instructors/courses for multi-box plot
-  const getAllBoxPlotData = () => {
-    if (!filterOptions || filterOptions.length === 0) {
-      // If no filter options, return current box plot data as single item
+  // Get grade colors matching the review card grade circles
+  const getGradeCircleColors = () => {
+    return {
+      'A': '#10b981',  // Base green for A
+      'A-': '#34d399', // Lighter green for A-
+      'B+': '#1d4ed8', // Darker blue for B+
+      'B': '#3b82f6',  // Base blue for B
+      'B-': '#60a5fa', // Lighter blue for B-
+      'C+': '#ca8a04', // Darker yellow for C+
+      'C': '#eab308',  // Base yellow for C
+      'C-': '#fbbf24', // Lighter yellow for C-
+      'D+': '#ea580c', // Darker orange for D+
+      'D': '#f97316',  // Base orange for D
+      'D-': '#fb923c', // Lighter orange for D-
+      'F': '#ef4444', // Red for F grades
+      'N/A': '#6b7280' // Gray for N/A
+    };
+  };
+
+  // Helper function to get consistent ordering for all chart types
+  const getConsistentFilterOrdering = () => {
+    if (!filterOptions || filterOptions.length === 0) return [];
+    
+    return [...filterOptions]
+      .filter(option => option.count >= 1)
+      .sort((a, b) => {
+        if (context === 'instructor') {
+          // For instructor page: sort by course code alphabetically
+          return a.value.localeCompare(b.value);
+        } else {
+          // For course page: sort by session type then instructor name
+          const [instructorA, sessionA] = a.value.split('|');
+          const [instructorB, sessionB] = b.value.split('|');
+          
+          // First sort by session type: lecture before tutorial
+          if (sessionA !== sessionB) {
+            if (sessionA.toLowerCase() === 'lecture') return -1;
+            if (sessionB.toLowerCase() === 'lecture') return 1;
+            if (sessionA.toLowerCase() === 'tutorial') return -1;
+            if (sessionB.toLowerCase() === 'tutorial') return 1;
+          }
+          
+          // Within same session type, sort by instructor name alphabetically
+          return instructorA.localeCompare(instructorB);
+        }
+      });
+  };
+
+  // Type definition for box plot data item
+  interface BoxPlotDataItem {
+    name: string;
+    stats: BoxPlotStatistics;
+    count: number;
+  }
+
+  const getAllBoxPlotData = (): BoxPlotDataItem[] => {
+    if (!filterOptions || filterOptions.length === 0 || !rawReviewData || rawReviewData.length === 0) {
+      // If no filter options or raw data, return current box plot data as single item
       return [{
-        name: 'All Data',
-        stats: boxPlotStats
+        name: t('common.all'),
+        stats: boxPlotStats,
+        count: totalCount
       }];
     }
     
-    // Generate box plot data for each filter option
-    return filterOptions
-      .filter(option => option.count >= 3) // Need at least 3 data points for meaningful box plot
-      .slice(0, 10) // Limit to top 10 to avoid overcrowding
+    // Determine which options to process based on selectedFilter
+    let optionsToProcess: FilterOption[] = [];
+    
+    // Handle both single and multiple selections
+    const selectedValues = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+    
+    if (selectedValues.length === 0 || selectedValues.includes('all')) {
+      // Show all options with 'All' first, then use consistent ordering
+      const allOption = {
+        value: 'all',
+        label: t('common.all'),
+        count: totalCount
+      };
+      
+      // Use consistent ordering function
+      const sortedFilterOptions = getConsistentFilterOrdering();
+      
+      // Combine all option with sorted filter options
+      optionsToProcess = [allOption, ...sortedFilterOptions];
+    } else {
+      // Only show the selected options
+      optionsToProcess = selectedValues
+        .map(value => filterOptions.find(opt => opt.value === value))
+        .filter((option): option is FilterOption => option !== undefined);
+      
+      // Fallback to all if no valid options found
+      if (optionsToProcess.length === 0) {
+        optionsToProcess = [{
+          value: 'all',
+          label: t('common.all'),
+          count: totalCount
+        }];
+      }
+    }
+    
+    // Process each option with real data
+    const allBoxPlotData: BoxPlotDataItem[] = optionsToProcess
       .map(option => {
-        // For demonstration, we'll generate representative box plot statistics
-        // In a real scenario, you'd want to pass the actual grade data for each filter
+        // Get real grade distribution for this instructor/course
+        const realDistribution = getGradeDistributionByInstructor(option.value);
         
-        // Create a distribution that's representative of the filter option
-        const simulatedDistribution: Record<string, number> = {};
-        const baseGradeKeys = Object.keys(gradeDistribution);
+        // Calculate box plot statistics for this real distribution
+        const stats = calculateBoxPlotStatistics(realDistribution);
         
-        // Simulate distribution based on the option's count
-        baseGradeKeys.forEach(grade => {
-          // Simulate some variation in grade distribution for each option
-          const baseCount = gradeDistribution[grade] || 0;
-          const variationFactor = 0.7 + Math.random() * 0.6; // Random variation between 0.7 and 1.3
-          simulatedDistribution[grade] = Math.max(0, Math.round(baseCount * variationFactor * (option.count / 100)));
-        });
+        // Skip if no valid stats
+        if (!stats) return null;
         
-        // Calculate box plot statistics for this simulated distribution
-        const stats = calculateBoxPlotStatistics(simulatedDistribution);
+        // For instructor page, use course code only in label
+        let displayLabel = option.label;
+        if (context === 'instructor' && option.value !== 'all') {
+          // Extract course code from label like "BUS1001 - Business Fundamentals"
+          displayLabel = option.value; // Just use the course code
+        } else if (context === 'course' && option.value !== 'all') {
+          // For course page, format as "Instructor Name\n(Session Type)"
+          const [instructorName, sessionType] = option.value.split('|');
+          
+          // Translate session type
+          const translatedSessionType = sessionType?.toLowerCase() === 'lecture' 
+            ? t('sessionType.lecture')
+            : sessionType?.toLowerCase() === 'tutorial' 
+              ? t('sessionType.tutorial')
+              : sessionType;
+          
+          displayLabel = `${instructorName}\n(${translatedSessionType})`;
+        }
         
         return {
-          name: option.label.length > 20 ? option.label.substring(0, 17) + '...' : option.label,
-          stats: stats
+          name: displayLabel.length > 35 ? displayLabel.substring(0, 32) + '...' : displayLabel,
+          stats: stats,
+          count: option.count
         };
       })
-      .filter(item => item.stats !== null); // Remove items with null stats
+      .filter((item): item is BoxPlotDataItem => item !== null && item.stats !== null); // Remove items with null stats
+    
+    return allBoxPlotData;
   };
 
   // Mobile-optimized ECharts configuration
@@ -302,43 +514,27 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     
     return {
       ...baseOptions,
-      // Completely disable animations on mobile
+      // Reduce animations on mobile but don't disable completely
       animation: false,
       animationDuration: 0,
-      animationEasing: 'linear',
       
-      // Disable ALL touch-based interactions
-      silent: true, // Make chart completely silent to touch events
-      
-      // Completely hide toolbox on mobile
+      // Hide toolbox on mobile
       toolbox: {
         show: false
       },
       
-      // Configure mobile-friendly interactions
-      emphasis: {
-        disabled: true // Completely disable emphasis on mobile
-      },
-      
-      // Completely disable tooltips on mobile to prevent touch events
+      // Keep tooltips enabled but configure for mobile
       tooltip: {
-        show: false // Disable tooltips entirely on mobile
+        ...baseOptions.tooltip,
+        triggerOn: 'click', // Force click trigger on mobile
+        hideDelay: 2000, // Hide tooltip after 2 seconds on mobile
+        alwaysShowContent: false
       },
       
-      // Disable zoom and other touch gestures that require event listeners
+      // Disable zoom and brush tools that cause warnings
       dataZoom: [],
       brush: {
         toolbox: []
-      },
-      
-      // Ensure proper axis styling for mobile
-      xAxis: {
-        ...baseOptions.xAxis,
-        silent: true
-      },
-      yAxis: {
-        ...baseOptions.yAxis,
-        silent: true
       }
     };
   };
@@ -355,27 +551,21 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
 
   // Chart event configuration
   const getChartEvents = () => {
-    // On mobile, disable ALL events to prevent any touch listeners
-    if (isMobile) {
-      return {};
-    }
-    
-    // Only enable click events on desktop
     const events: any = {};
     
-    if (onBarClick && chartType === 'bar') {
-      events.click = handleChartClick;
-    }
+    // Always enable click events for all chart types
+    events.click = handleChartClick;
     
     return events;
   };
 
   // Bar chart options
   const getBarChartOptions = () => {
-    const primaryColor = isDark ? '#ef4444' : '#dc2626';
+    const gradeColors = getGradeCircleColors();
+    const theme = getChartTheme();
     
     return {
-      ...getChartTheme(),
+      ...theme,
       // Disable toolbar on mobile
       toolbox: {
         show: !isMobile // Hide toolbar icons on mobile
@@ -390,8 +580,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         type: 'category',
         data: sortedGrades,
         axisLabel: {
-          color: isDark ? '#9ca3af' : '#6b7280',
+          color: isDark ? '#ffffff' : '#000000', // Fix axis label colors
           fontSize: isMobile ? 10 : 12,
+          fontWeight: 'bold',
           rotate: isMobile ? 45 : 0,
           interval: 0
         },
@@ -405,8 +596,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       yAxis: {
         type: 'value',
         axisLabel: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-          fontSize: isMobile ? 10 : 12
+          color: isDark ? '#ffffff' : '#000000', // Fix axis label colors
+          fontSize: isMobile ? 10 : 12,
+          fontWeight: 'bold'
         },
         axisLine: {
           lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
@@ -427,12 +619,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           data: sortedGrades.map((grade) => ({
             value: completeDistribution[grade] || 0,
             itemStyle: {
-              color: primaryColor,
+              color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
               borderRadius: [4, 4, 0, 0]
             },
             emphasis: {
               itemStyle: {
-                color: primaryColor,
+                color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
                 shadowBlur: 10,
                 shadowOffsetX: 0,
                 shadowOffsetY: 0,
@@ -448,11 +640,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       ],
       tooltip: {
         trigger: 'axis',
+        triggerOn: isMobile ? 'click' : 'mousemove', // Click to show tooltip on mobile
         backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
         textStyle: {
-          color: isDark ? '#e5e7eb' : '#374151',
+          color: isDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
         },
         formatter: (params: any) => {
@@ -472,7 +665,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               'D+': 1.3, 'D': 1.0, 'D-': 0.7,
               'F': 0.0
             };
-            return gradeMap[grade]?.toFixed(1) || 'N/A';
+            return gradeMap[grade]?.toFixed(2) || 'N/A';
           };
           
           const gradePoint = getGradePoint(grade);
@@ -482,10 +675,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           
           return `
             <div style="font-weight: 500; margin-bottom: 4px;">${gradeLabel}: ${grade}</div>
-            <div style="color: ${isDark ? '#9ca3af' : '#6b7280'}; line-height: 1.4;">
+            <div style="color: ${isDark ? '#ffffff' : '#000000'}; line-height: 1.4;">
               ${t('chart.studentCount', { count })}<br/>
-              ${percentage}%<br/>
-              Grade Point: ${gradePoint}
+              ${t('chart.percentage')}: ${percentage}%<br/>
+              ${t('chart.gradePoint')}: ${gradePoint}
             </div>
           `;
         },
@@ -499,59 +692,322 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     };
   };
 
-  // Box plot chart options
+  // Box plot options
   const getBoxPlotOptions = () => {
-    if (!boxPlotStats) return {};
-
-    const primaryColor = isDark ? '#ef4444' : '#dc2626';
-    const outlierColor = isDark ? '#f87171' : '#dc2626';
+    const gradeColors = getGradeCircleColors();
+    const theme = getChartTheme();
+    const outlierColor = gradeColors['F']; // Use red for outliers
     
-    // Get multi-box plot data
-    const multiBoxPlotData = getAllBoxPlotData();
+    const boxPlotData = getAllBoxPlotData();
     
-    // Prepare data for multiple box plots
-    const boxPlotSeriesData = multiBoxPlotData.map(item => [
-      item.stats?.min || 0,
-      item.stats?.q1 || 0,
-      item.stats?.median || 0,
-      item.stats?.q3 || 0,
-      item.stats?.max || 0
-    ]);
+    // If no valid data, show a message
+    if (!boxPlotData || boxPlotData.length === 0) {
+      return {
+        ...theme,
+        title: {
+          text: t('chart.noDataAvailable'),
+          textStyle: {
+            color: isDark ? '#ffffff' : '#000000',
+            fontSize: 14
+          },
+          left: 'center',
+          top: 'middle'
+        }
+      };
+    }
     
-    // Prepare outlier data for all box plots
-    const outlierData: number[][] = [];
-    multiBoxPlotData.forEach((item, index) => {
-      if (item.stats?.outliers && item.stats.outliers.length > 0) {
-        item.stats.outliers.forEach(outlier => {
-          outlierData.push([outlier, index]);
-        });
-      }
-    });
-    
-    const categoryNames = multiBoxPlotData.map(item => item.name);
-
     return {
-      ...getChartTheme(),
+      ...theme,
       // Disable toolbar on mobile
       toolbox: {
         show: !isMobile // Hide toolbar icons on mobile
       },
       grid: {
-        left: '20%', // Increased left margin for y-axis labels
+        left: '5%',
         right: '4%',
-        bottom: '10%',
-        top: '10%',
+        bottom: '3%',
         containLabel: true
       },
-      // Swap axes for horizontal box plot
       xAxis: {
+        type: 'category',
+        data: boxPlotData.map((item) => item.name),
+        axisLabel: {
+          color: isDark ? '#ffffff' : '#000000', // Fix axis label colors
+          fontSize: isMobile ? 10 : 12,
+          fontWeight: 'bold',
+          rotate: isMobile ? 45 : 0,
+          interval: 0
+        },
+        axisLine: {
+          lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
+        },
+        axisTick: {
+          lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
+        }
+      },
+      yAxis: {
         type: 'value',
         min: 0,
         max: 4,
         axisLabel: {
-          color: isDark ? '#9ca3af' : '#6b7280',
+          color: isDark ? '#ffffff' : '#000000', // Fix axis label colors
           fontSize: isMobile ? 10 : 12,
+          fontWeight: 'bold',
           formatter: (value: number) => value.toFixed(1)
+        },
+        axisLine: {
+          lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
+        },
+        axisTick: {
+          lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
+        },
+        splitLine: {
+          lineStyle: { 
+            color: isDark ? '#374151' : '#f3f4f6',
+            width: 1,
+            type: 'solid'
+          }
+        }
+      },
+      series: [
+        {
+          name: 'Box Plot',
+          type: 'boxplot',
+          data: boxPlotData.map((item) => {
+            // Convert BoxPlotStatistics to array format [min, q1, median, q3, max]
+            const stats = item.stats;
+            if (!stats) return [0, 0, 0, 0, 0];
+            return [
+              stats.min || 0,
+              stats.q1 || 0,
+              stats.median || 0,
+              stats.q3 || 0,
+              stats.max || 0
+            ];
+          }),
+          itemStyle: {
+            color: 'transparent',
+            borderColor: outlierColor, // Change to red outline
+            borderWidth: 2
+          },
+          emphasis: {
+            itemStyle: {
+              borderColor: outlierColor, // Red emphasis border
+              borderWidth: 3,
+              shadowBlur: 8,
+              shadowColor: outlierColor // Red shadow
+            }
+          },
+          boxWidth: ['7%', '50%']
+        },
+        // Add outliers as separate scatter series
+        {
+          name: 'Outliers',
+          type: 'scatter',
+          data: boxPlotData.flatMap((item, index) => {
+            const stats = item.stats;
+            if (!stats || !stats.outliers || stats.outliers.length === 0) return [];
+            
+            return stats.outliers.map(outlier => [index, outlier]);
+          }),
+          itemStyle: {
+            color: outlierColor,
+            borderColor: outlierColor
+          },
+          symbolSize: 6,
+          zlevel: 1
+        }
+      ],
+      tooltip: {
+        trigger: 'item',
+        triggerOn: isMobile ? 'click' : 'mousemove', // Click to show tooltip on mobile
+        backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDark ? '#4b5563' : '#d1d5db',
+        borderWidth: 1,
+        textStyle: {
+          color: isDark ? '#ffffff' : '#000000', // Fix tooltip text color
+          fontSize: 12
+        },
+        formatter: (params: any) => {
+          if (!params || !params.data) return '';
+          
+          if (params.seriesName === 'Outliers') {
+            const outlierValue = params.data[1];
+            const categoryIndex = params.data[0];
+            const categoryName = boxPlotData[categoryIndex]?.name || '';
+            
+            return `
+              <div style="font-weight: 500; margin-bottom: 4px;">${categoryName}</div>
+              <div style="color: ${isDark ? '#ffffff' : '#000000'}; line-height: 1.4;">
+                ${t('chart.outliers')}: ${outlierValue.toFixed(2)}
+              </div>
+            `;
+          }
+          
+          const data = params.data;
+          const name = params.name;
+          const [min, q1, median, q3, max] = data;
+          
+          // Find the corresponding item to get the count
+          const item = boxPlotData.find(item => item.name === name);
+          const count = item ? item.count : 0;
+          
+          return `
+            <div style="font-weight: 500; margin-bottom: 4px;">${name}</div>
+            <div style="color: ${isDark ? '#ffffff' : '#000000'}; line-height: 1.4;">
+              ${t('chart.studentCount', { count })}<br/>
+              ${t('chart.minimum')}: ${min.toFixed(2)}<br/>
+              ${t('chart.q1')}: ${q1.toFixed(2)}<br/>
+              ${t('chart.median')}: ${median.toFixed(2)}<br/>
+              ${t('chart.q3')}: ${q3.toFixed(2)}<br/>
+              ${t('chart.maximum')}: ${max.toFixed(2)}
+            </div>
+          `;
+        }
+      }
+    };
+  };
+
+  // Stacked normalized chart options  
+  const getStackedNormalizedOptions = () => {
+    if (!filterOptions || filterOptions.length === 0 || !rawReviewData || rawReviewData.length === 0) {
+      return getBarChartOptions(); // Fallback to bar chart if no filter options or data
+    }
+
+    // Determine which options to process based on selectedFilter
+    let optionsToProcess: FilterOption[] = [];
+    
+    // Handle both single and multiple selections
+    const selectedValues = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+    
+    if (selectedValues.length === 0 || selectedValues.includes('all')) {
+      // Show all options with 'All' first, then use consistent ordering
+      const allOption = {
+        value: 'all',
+        label: t('common.all'),
+        count: totalCount
+      };
+      
+      // Use consistent ordering function
+      const sortedFilterOptions = getConsistentFilterOrdering();
+      
+      // Combine all option with sorted filter options, limit to 10 for readability
+      optionsToProcess = [allOption, ...sortedFilterOptions].slice(0, 10);
+    } else {
+      // Only show the selected options
+      optionsToProcess = selectedValues
+        .map(value => filterOptions.find(opt => opt.value === value))
+        .filter((option): option is FilterOption => option !== undefined);
+      
+      // Fallback to all if no valid options found
+      if (optionsToProcess.length === 0) {
+        optionsToProcess = [{
+          value: 'all',
+          label: t('common.all'),
+          count: totalCount
+        }];
+      }
+    }
+
+    const gradeColors = getGradeCircleColors();
+    const theme = getChartTheme();
+    
+    // Process each option with real grade distributions
+    const stackedData: Array<{ name: string; data: number[]; realCounts: number[]; total: number }> = optionsToProcess.map(option => {
+      // Get real grade distribution for this instructor/course
+      const realDistribution = getGradeDistributionByInstructor(option.value);
+      
+      // Calculate real counts and percentages for display
+      const realCounts = sortedGrades.map(grade => realDistribution[grade] || 0);
+      const total = realCounts.reduce((sum, count) => sum + count, 0);
+      const percentages = realCounts.map(count => total > 0 ? (count / total) * 100 : 0);
+      
+      // For instructor page, use course code only in label
+      let displayLabel = option.label;
+      if (context === 'instructor' && option.value !== 'all') {
+        // Extract course code from label like "BUS1001 - Business Fundamentals"
+        displayLabel = option.value; // Just use the course code
+      } else if (context === 'course' && option.value !== 'all') {
+        // For course page, format as "Instructor Name\n(Session Type)"
+        const [instructorName, sessionType] = option.value.split('|');
+        
+        // Translate session type
+        const translatedSessionType = sessionType?.toLowerCase() === 'lecture' 
+          ? t('sessionType.lecture')
+          : sessionType?.toLowerCase() === 'tutorial' 
+            ? t('sessionType.tutorial')
+            : sessionType;
+        
+        displayLabel = `${instructorName}\n(${translatedSessionType})`;
+      }
+      
+      return {
+        name: displayLabel.length > 35 ? displayLabel.substring(0, 32) + '...' : displayLabel,
+        data: percentages,
+        realCounts: realCounts,
+        total: total
+      };
+    });
+
+    // Create series for each grade
+    const series = sortedGrades.map((grade, gradeIndex) => ({
+      name: grade,
+      type: 'bar',
+      stack: 'total',
+      emphasis: {
+        focus: 'self' // Highlight only the current segment, not the entire series
+      },
+      data: stackedData.map((item, itemIndex) => ({
+        value: item.data[gradeIndex],
+        realCount: item.realCounts[gradeIndex],
+        total: item.total,
+        itemIndex: itemIndex,
+        gradeIndex: gradeIndex,
+        grade: grade,
+        category: item.name
+      })),
+      itemStyle: {
+        color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A']
+      },
+      label: {
+        show: !isMobile, // Hide text inside bars on mobile portrait mode
+        position: 'inside',
+        formatter: (params: any) => {
+          const realCount = params.data.realCount || 0;
+          const percentage = params.value || 0;
+          
+          // Only show label if there's meaningful data (at least 1 count and 5% of total)
+          if (realCount >= 1 && percentage >= 5) {
+            return `${realCount}\n(${percentage.toFixed(0)}%)`;
+          }
+          return '';
+        },
+        fontSize: 14,
+        color: isDark ? '#000000' : '#ffffff',
+        fontWeight: 'bold'
+      }
+    }));
+
+    return {
+      ...theme,
+      // Disable toolbar on mobile
+      toolbox: {
+        show: !isMobile // Hide toolbar icons on mobile
+      },
+      grid: {
+        left: '5%', // Further reduced left padding
+        right: '4%',
+        bottom: isMobile ? '15%' : '12%', // Add more space for legend
+        containLabel: true
+      },
+      xAxis: {
+        type: 'value',
+        max: 100,
+        axisLabel: {
+          color: isDark ? '#ffffff' : '#000000', // Fix axis label colors
+          fontSize: isMobile ? 10 : 12,
+          fontWeight: 'bold',
+          formatter: '{value}%'
         },
         axisLine: {
           lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
@@ -569,10 +1025,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       },
       yAxis: {
         type: 'category',
-        data: categoryNames, // Show filter option names on y-axis
+        data: stackedData.map(item => item.name),
         axisLabel: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-          fontSize: isMobile ? 10 : 12
+          color: isDark ? '#ffffff' : '#000000', // Fix axis label colors
+          fontSize: isMobile ? 9 : 11,
+          fontWeight: 'bold',
+          interval: 0, // Show all labels
+          rotate: 0
         },
         axisLine: {
           lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
@@ -581,94 +1040,66 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           lineStyle: { color: isDark ? '#4b5563' : '#d1d5db' }
         }
       },
-      series: [
-        {
-          name: 'boxplot',
-          type: 'boxplot',
-          data: boxPlotSeriesData,
-          itemStyle: {
-            color: 'transparent', // Make box transparent to show internal lines
-            borderColor: primaryColor,
-            borderWidth: 2
-          },
-          emphasis: {
-            itemStyle: {
-              color: 'transparent',
-              borderColor: primaryColor,
-              borderWidth: 3,
-              shadowBlur: 5,
-              shadowColor: primaryColor
-            }
-          }
+      series: series,
+      legend: {
+        show: true,
+        orient: 'horizontal',
+        bottom: isMobile ? 5 : 8, // Adjust legend position to avoid overlap
+        itemGap: isMobile ? 8 : 15,
+        itemWidth: isMobile ? 12 : 18,
+        itemHeight: isMobile ? 8 : 12,
+        textStyle: {
+          color: isDark ? '#ffffff' : '#000000', // Fix legend text color
+          fontSize: isMobile ? 10 : 12
         },
-        {
-          name: 'outlier',
-          type: 'scatter',
-          data: outlierData,
-          itemStyle: {
-            color: outlierColor,
-            borderColor: outlierColor
-          },
-          symbolSize: 6
-        }
-      ],
+        data: sortedGrades.map(grade => ({
+          name: grade,
+          icon: 'rect'
+        }))
+      },
       tooltip: {
-        trigger: 'item',
+        trigger: 'axis',
+        triggerOn: isMobile ? 'click' : 'mousemove', // Click to show tooltip on mobile
+        axisPointer: {
+          type: 'shadow'
+        },
         backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
-        borderRadius: 6,
         textStyle: {
-          color: isDark ? '#e5e7eb' : '#374151',
+          color: isDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
         },
         formatter: (params: any) => {
-          if (params.seriesName === 'boxplot') {
-            const dataIndex = params.dataIndex;
-            const boxPlotItem = multiBoxPlotData[dataIndex];
-            if (!boxPlotItem || !boxPlotItem.stats) return '';
+          if (!params || !Array.isArray(params) || params.length === 0) return '';
+          
+          // Get the category name from the first parameter
+          const categoryName = params[0].name || '';
+          
+          // Find the corresponding stackedData item to get total count
+          const stackedItem = stackedData.find(item => item.name === categoryName);
+          const totalCount = stackedItem ? stackedItem.total : 0;
+          
+          // Use proper translation for grade
+          const gradeLabel = context === 'course' ? t('chart.grade') : t('chart.rating');
+          
+          let tooltip = `<div style="font-weight: 500; margin-bottom: 4px;">${categoryName}</div>`;
+          tooltip += `<div style="color: ${isDark ? '#ffffff' : '#000000'}; margin-bottom: 4px;">${t('chart.totalStudents', { count: totalCount })}</div>`;
+          
+          // Show only grades that have data
+          params.forEach((param: any) => {
+            const percentage = param.value || 0;
+            const realCount = param.data.realCount || 0;
             
-            const stats = boxPlotItem.stats;
-            
-            return `
-              <div style="font-weight: 500; margin-bottom: 8px; color: ${isDark ? '#f3f4f6' : '#111827'};">
-                ${boxPlotItem.name}
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 2px;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: ${isDark ? '#9ca3af' : '#6b7280'};">min</span>
-                  <span style="font-weight: 500;">${stats.min.toFixed(3)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: ${isDark ? '#9ca3af' : '#6b7280'};">Q1</span>
-                  <span style="font-weight: 500;">${stats.q1.toFixed(3)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: ${isDark ? '#9ca3af' : '#6b7280'};">median</span>
-                  <span style="font-weight: 500;">${stats.median.toFixed(3)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: ${isDark ? '#9ca3af' : '#6b7280'};">Q3</span>
-                  <span style="font-weight: 500;">${stats.q3.toFixed(3)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: ${isDark ? '#9ca3af' : '#6b7280'};">max</span>
-                  <span style="font-weight: 500;">${stats.max.toFixed(3)}</span>
-                </div>
-              </div>
-            `;
-          } else if (params.seriesName === 'outlier') {
-            const outlierValue = params.data[0];
-            const categoryIndex = params.data[1];
-            const categoryName = categoryNames[categoryIndex];
-            
-            return `
-              <div style="font-weight: 500; color: ${isDark ? '#f3f4f6' : '#111827'};">
-                ${categoryName} - Outlier: ${outlierValue.toFixed(3)}
-              </div>
-            `;
-          }
-          return '';
+            if (percentage > 0 && realCount > 0) {
+              tooltip += `<div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">`;
+              tooltip += `<span style="display: inline-block; width: 10px; height: 10px; background-color: ${param.color}; border-radius: 2px;"></span>`;
+              tooltip += `<span>${param.seriesName}: ${realCount} (${percentage.toFixed(1)}%)</span>`;
+              tooltip += `</div>`;
+            }
+          });
+          
+          return tooltip;
         }
       }
     };
@@ -676,6 +1107,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
 
   // Chart click handler
   const handleChartClick = (params: any) => {
+    // Handle bar chart clicks for grade filtering
     if (onBarClick && chartType === 'bar' && params.data && params.data.grade) {
       onBarClick(params.data.grade);
     }
@@ -731,6 +1163,20 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   size="sm"
                   className={cn(
                     "h-7 px-2 text-xs gap-1 flex-1 sm:flex-none",
+                    chartType === 'stacked' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('stacked')}
+                >
+                  <BarChart className="h-3 w-3" />
+                  {t('chart.stackedNormalized')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-2 text-xs gap-1 flex-1 sm:flex-none",
                     chartType === 'boxplot' 
                       ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
                       : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
@@ -743,30 +1189,112 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               </div>
             </div>
             
-            {/* 篩選器下拉選單 */}
+            {/* 篩選器下拉選單 - 支援多選 */}
             {filterOptions && filterOptions.length > 0 && onFilterChange && (
               <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto min-w-0">
                 {filterLabel && (
                   <span className="text-sm text-muted-foreground whitespace-nowrap">{filterLabel}:</span>
                 )}
-                <Select value={selectedFilter || 'all'} onValueChange={onFilterChange}>
-                  <SelectTrigger className="w-full sm:max-w-[280px] md:max-w-[320px] h-8 min-w-0">
-                    <SelectValue placeholder={t('common.all')} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-900 w-full max-w-[90vw] sm:max-w-[400px]">
-                    <SelectItem value="all">{t('common.all')}</SelectItem>
-                    {filterOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value} className="pr-12">
-                        <div className="flex items-center justify-between w-full min-w-0">
-                          <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
-                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                            {option.count}
-                          </Badge>
+                {chartType === 'bar' ? (
+                  // Single selection for bar chart
+                  <Select 
+                    value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
+                    onValueChange={(value) => onFilterChange(value)}
+                  >
+                    <SelectTrigger className="w-full sm:max-w-[280px] md:max-w-[320px] h-8 min-w-0">
+                      <SelectValue placeholder={t('common.all')} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900 w-full max-w-[90vw] sm:max-w-[400px]">
+                      <SelectItem value="all">{t('common.all')}</SelectItem>
+                      {filterOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value} className="pr-12">
+                          <div className="flex items-center justify-between w-full min-w-0">
+                            <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                              {option.count}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  // Multiple selection for stacked chart and box plot
+                  <div className="relative">
+                    <Select 
+                      value="multi-select" 
+                      onValueChange={() => {}} // Controlled by checkbox interactions
+                    >
+                      <SelectTrigger className="w-full sm:max-w-[280px] md:max-w-[320px] h-8 min-w-0">
+                        <SelectValue>
+                          {(() => {
+                            const selectedValues = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+                            if (selectedValues.length === 0 || selectedValues.includes('all')) {
+                              return t('common.all');
+                            } else if (selectedValues.length === 1) {
+                              const option = filterOptions.find(opt => opt.value === selectedValues[0]);
+                              return option ? option.label : selectedValues[0];
+                            } else {
+                              return `${selectedValues.length} selected`;
+                            }
+                          })()}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-white dark:bg-gray-900 w-full max-w-[90vw] sm:max-w-[400px]">
+                        <div className="p-2">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <input
+                              type="checkbox"
+                              id="select-all"
+                              checked={!Array.isArray(selectedFilter) || selectedFilter.length === 0 || selectedFilter.includes('all')}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  onFilterChange('all');
+                                } else {
+                                  onFilterChange([]);
+                                }
+                              }}
+                              className="rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <label htmlFor="select-all" className="text-sm font-medium">
+                              {t('common.all')}
+                            </label>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {filterOptions.map((option) => (
+                              <div key={option.value} className="flex items-center space-x-2 py-1">
+                                <input
+                                  type="checkbox"
+                                  id={`option-${option.value}`}
+                                  checked={Array.isArray(selectedFilter) && selectedFilter.includes(option.value)}
+                                  onChange={(e) => {
+                                    const currentValues = Array.isArray(selectedFilter) ? selectedFilter : [];
+                                    if (e.target.checked) {
+                                      const newValues = [...currentValues.filter(v => v !== 'all'), option.value];
+                                      onFilterChange(newValues);
+                                    } else {
+                                      const newValues = currentValues.filter(v => v !== option.value && v !== 'all');
+                                      onFilterChange(newValues.length === 0 ? 'all' : newValues);
+                                    }
+                                  }}
+                                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <label htmlFor={`option-${option.value}`} className="flex-1 text-sm cursor-pointer">
+                                  <div className="flex items-center justify-between w-full min-w-0">
+                                    <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                      {option.count}
+                                    </Badge>
+                                  </div>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -846,7 +1374,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       <div className="relative w-full" style={{ height: `${responsiveHeight + 64}px` }}>
         <ReactECharts
           key={chartKey} // Force re-render when theme changes
-          option={getMobileOptimizedOptions(chartType === 'bar' ? getBarChartOptions() : getBoxPlotOptions())}
+          option={getMobileOptimizedOptions(
+            chartType === 'bar' ? getBarChartOptions() : 
+            chartType === 'stacked' ? getStackedNormalizedOptions() : 
+            getBoxPlotOptions()
+          )}
           style={{ height: `${responsiveHeight + 32}px`, width: '100%' }}
           opts={getEChartsOpts()}
           onEvents={getChartEvents()}
