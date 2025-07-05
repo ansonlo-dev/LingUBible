@@ -230,6 +230,9 @@ const Lecturers = () => {
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
 
+  // Grade distribution chart filter state
+  const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string>('all');
+
   // 解碼 URL 參數
   const decodedName = instructorName ? decodeURIComponent(instructorName) : null;
 
@@ -242,11 +245,49 @@ const Lecturers = () => {
     error: detailError 
   } = useInstructorDetailOptimized(decodedName);
 
-
-
   // 整體載入狀態
   const loading = instructorLoading || detailLoading;
   const error = instructorError || detailError;
+
+  // Generate filter options for grade distribution chart (courses)
+  const gradeChartFilterOptions = React.useMemo(() => {
+    if (!reviews || reviews.length === 0) return [];
+    
+    const courseMap = new Map<string, { title: string; count: number }>();
+    reviews.forEach(reviewInfo => {
+      if (reviewInfo.course?.course_code) {
+        const courseCode = reviewInfo.course.course_code;
+        const courseTitle = reviewInfo.course.course_title || reviewInfo.course.course_code;
+        
+        if (courseMap.has(courseCode)) {
+          courseMap.get(courseCode)!.count++;
+        } else {
+          courseMap.set(courseCode, { title: courseTitle, count: 1 });
+        }
+      }
+    });
+    
+    return Array.from(courseMap.entries())
+      .map(([code, data]) => ({
+        value: code,
+        label: `${code} - ${data.title}`,
+        count: data.count
+      }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [reviews]);
+
+  // Filter reviews for grade distribution chart based on selected course
+  const filteredReviewsForChart = React.useMemo(() => {
+    if (!reviews || reviews.length === 0) return [];
+    
+    if (selectedGradeChartFilter === 'all') {
+      return reviews;
+    }
+    
+    return reviews.filter(reviewInfo => 
+      reviewInfo.course?.course_code === selectedGradeChartFilter
+    );
+  }, [reviews, selectedGradeChartFilter]);
 
   // 獲取所有可用的學期
   const availableTerms = React.useMemo(() => {
@@ -892,13 +933,17 @@ const Lecturers = () => {
             {!reviewsLoading && reviews.length > 0 && (
               <div className="pt-4">
                 <GradeDistributionChart
-                  gradeDistribution={calculateGradeDistributionFromReviews(reviews.map(review => ({ course_final_grade: review.review.course_final_grade })))}
+                  gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
                   loading={reviewsLoading}
                   title={t('chart.gradeDistribution')}
                   height={120}
                   showPercentage={true}
                   className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
                   context="instructor"
+                  filterOptions={gradeChartFilterOptions}
+                  selectedFilter={selectedGradeChartFilter}
+                  onFilterChange={setSelectedGradeChartFilter}
+                  filterLabel={t('chart.filterByCourse')}
                   onBarClick={(grade) => {
                     // 設置成績篩選並滾動到學生評論區域
                     setExternalGradeFilter(grade);

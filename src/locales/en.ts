@@ -1257,6 +1257,7 @@ export default {
   'review.limitReachedWithPass': 'You cannot submit another review because you already passed this course',
   'review.updateReview': 'Update Review',
   'review.updating': 'Updating...',
+  'review.updateSuccess': 'Review updated successfully!',
   
   // Review eligibility warning
   'review.checkingEligibility': 'Checking review eligibility...',
@@ -1270,6 +1271,9 @@ export default {
   'review.reviewLimitExceededInfo': 'You have reached the maximum limit of 2 reviews for this course.',
   'review.reviewNumber': 'Review #{number}',
   
+  // Grade edit restriction
+  'review.cannotEditGradeTitle': 'Cannot Edit Grade',
+  'review.cannotEditGradeMessage': 'Please delete your newer review before changing to a non-fail grade for this older review.',
   'review.fillAllFields': 'Please fill in all required fields',
   'review.loadingCourses': 'Loading courses...',
   'review.loadingTerms': 'Loading terms...',
@@ -1297,6 +1301,8 @@ export default {
   'review.positivePhrases': 'Positive',
   'review.negativePhrases': 'Negative',
   'review.reviewerLabel': 'Reviewer',
+  'review.review': 'review',
+  'review.reviews': 'reviews',
   'review.anonymousUser': 'Lingnanian',
   'review.instructorComments': 'Instructor Comments',
   'review.courseRatings': 'Course Ratings',
@@ -1713,12 +1719,22 @@ export default {
   'chart.count': 'Count',
   'chart.percentage': 'Percentage',
   'chart.gradePoint': 'Grade Point',
+  'chart.filterByCourse': 'Course',
+  'chart.filterByInstructor': 'Instructor',
+  'chart.chartType': 'Chart Type',
+  'chart.barChart': 'Bar Chart',
+  'chart.boxPlot': 'Box Plot',
+  'chart.median': 'Median',
+  'chart.q1': 'Lower Quartile',
+  'chart.q3': 'Upper Quartile',
+  'chart.min': 'Min',
+  'chart.max': 'Max',
+  'chart.outliers': 'Outliers',
+  'chart.noDataAvailable': 'No data available',
 
   // Common translations
   'common.students': 'students',
   'common.reviews': 'reviews',
   'review.clickToViewReview': 'Click to view this review in course details',
-
-
 
 };

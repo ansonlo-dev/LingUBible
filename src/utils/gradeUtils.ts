@@ -16,6 +16,16 @@ export interface GradeStatistics {
   gradeDistribution: Record<string, number>;
 }
 
+export interface BoxPlotStatistics {
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+  outliers: number[];
+  validCount: number;
+}
+
 // Standard Hong Kong university grade to GPA mapping
 const GRADE_TO_GPA_MAP: Record<string, GradeInfo> = {
   'A': { grade: 'A', gpa: 4.00, description: 'Excellent' },
@@ -232,4 +242,68 @@ export const calculateGradeDistributionFromReviews = (reviews: Array<{ course_fi
   });
   
   return distribution;
+}; 
+
+/**
+ * Calculate box plot statistics from grade distribution
+ * @param gradeDistribution - Grade distribution data
+ * @returns Box plot statistics with quartiles, median, outliers, etc.
+ */
+export const calculateBoxPlotStatistics = (gradeDistribution: Record<string, number>): BoxPlotStatistics | null => {
+  // Convert grade distribution to array of GPA values
+  const gpaValues: number[] = [];
+  
+  Object.entries(gradeDistribution).forEach(([grade, count]) => {
+    if (grade !== 'N/A' && count > 0) {
+      const gpa = getGPA(grade);
+      if (gpa !== null) {
+        // Add each GPA value 'count' times
+        for (let i = 0; i < count; i++) {
+          gpaValues.push(gpa);
+        }
+      }
+    }
+  });
+  
+  if (gpaValues.length === 0) {
+    return null;
+  }
+  
+  // Sort GPA values
+  const sortedGPAs = gpaValues.sort((a, b) => a - b);
+  const n = sortedGPAs.length;
+  
+  // Calculate quartiles
+  const q1Index = Math.floor(n * 0.25);
+  const medianIndex = Math.floor(n * 0.5);
+  const q3Index = Math.floor(n * 0.75);
+  
+  const q1 = sortedGPAs[q1Index];
+  const median = n % 2 === 0 && n > 1 
+    ? (sortedGPAs[medianIndex - 1] + sortedGPAs[medianIndex]) / 2
+    : sortedGPAs[medianIndex];
+  const q3 = sortedGPAs[q3Index];
+  
+  // Calculate IQR and outlier boundaries
+  const iqr = q3 - q1;
+  const lowerBound = q1 - 1.5 * iqr;
+  const upperBound = q3 + 1.5 * iqr;
+  
+  // Find outliers
+  const outliers = sortedGPAs.filter(gpa => gpa < lowerBound || gpa > upperBound);
+  
+  // Find min and max within non-outlier range
+  const nonOutliers = sortedGPAs.filter(gpa => gpa >= lowerBound && gpa <= upperBound);
+  const min = nonOutliers.length > 0 ? nonOutliers[0] : sortedGPAs[0];
+  const max = nonOutliers.length > 0 ? nonOutliers[nonOutliers.length - 1] : sortedGPAs[sortedGPAs.length - 1];
+  
+  return {
+    min,
+    q1,
+    median,
+    q3,
+    max,
+    outliers,
+    validCount: n
+  };
 }; 

@@ -186,8 +186,87 @@ const CourseDetail = () => {
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
 
+  // Grade distribution chart filter state
+  const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string>('all');
+
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
+
+  // Generate filter options for grade distribution chart (instructors)
+  const gradeChartFilterOptions = React.useMemo(() => {
+    if (!allReviewsForChart || allReviewsForChart.length === 0) return [];
+    
+    const instructorMap = new Map<string, { name: string; sessionType: string; count: number }>();
+    allReviewsForChart.forEach(reviewInfo => {
+      // Get instructor names from instructor_details JSON
+      try {
+        const instructorDetails = JSON.parse(reviewInfo.review.instructor_details);
+        instructorDetails.forEach((detail: any) => {
+          if (detail.instructor_name && detail.session_type) {
+            const key = `${detail.instructor_name}|${detail.session_type}`;
+            if (instructorMap.has(key)) {
+              instructorMap.get(key)!.count++;
+            } else {
+              instructorMap.set(key, {
+                name: detail.instructor_name,
+                sessionType: detail.session_type,
+                count: 1
+              });
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Failed to parse instructor details:', error);
+      }
+    });
+    
+    return Array.from(instructorMap.entries())
+      .map(([key, data]) => ({
+        value: key,
+        label: `${data.name} (${t(`sessionType.${data.sessionType.toLowerCase()}`)})`,
+        count: data.count,
+        sessionType: data.sessionType,
+        instructorName: data.name
+      }))
+      .sort((a, b) => {
+        // First sort by session type: lecture before tutorial
+        if (a.sessionType !== b.sessionType) {
+          // Lecture comes before Tutorial
+          if (a.sessionType.toLowerCase() === 'lecture') return -1;
+          if (b.sessionType.toLowerCase() === 'lecture') return 1;
+          if (a.sessionType.toLowerCase() === 'tutorial') return -1;
+          if (b.sessionType.toLowerCase() === 'tutorial') return 1;
+        }
+        
+        // Within same session type, sort by instructor name alphabetically
+        return a.instructorName.localeCompare(b.instructorName);
+      })
+      .map(({ value, label, count }) => ({ value, label, count })); // Remove extra sorting fields
+  }, [allReviewsForChart, t]);
+
+  // Filter reviews for grade distribution chart based on selected instructor
+  const filteredReviewsForChart = React.useMemo(() => {
+    if (!allReviewsForChart || allReviewsForChart.length === 0) return [];
+    
+    if (selectedGradeChartFilter === 'all') {
+      return allReviewsForChart;
+    }
+    
+    const [targetInstructor, targetSessionType] = selectedGradeChartFilter.split('|');
+    
+    return allReviewsForChart.filter(reviewInfo => {
+      try {
+        const instructorDetails = JSON.parse(reviewInfo.review.instructor_details);
+        return instructorDetails.some((detail: any) => 
+          detail.instructor_name === targetInstructor && 
+          detail.session_type === targetSessionType
+        );
+      } catch (error) {
+        console.warn('Failed to parse instructor details:', error);
+        return false;
+      }
+    });
+  }, [allReviewsForChart, selectedGradeChartFilter]);
 
   // 獲取所有可用的學期
   const availableTerms = React.useMemo(() => {
@@ -430,8 +509,8 @@ const CourseDetail = () => {
               </div>
             </div>
             
-            {/* Tablet and Desktop: 原來的 1x3 佈局 */}
-            <div className="hidden sm:grid sm:grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Tablet and Desktop: 統一使用 3 列佈局 */}
+            <div className="hidden sm:grid sm:grid-cols-3 gap-4">
               {/* 平均工作量 */}
               <div className="text-center min-w-0">
                 <div className="text-2xl font-bold text-primary">
@@ -489,13 +568,17 @@ const CourseDetail = () => {
           {!reviewsLoading && allReviewsForChart.length > 0 && (
             <div className="pt-4">
               <GradeDistributionChart
-                gradeDistribution={calculateGradeDistributionFromReviews(allReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
+                gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
                 loading={reviewsLoading}
                 title={t('chart.gradeDistribution')}
                 height={120}
                 showPercentage={true}
                 className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
                 context="course"
+                filterOptions={gradeChartFilterOptions}
+                selectedFilter={selectedGradeChartFilter}
+                onFilterChange={setSelectedGradeChartFilter}
+                filterLabel={t('chart.filterByInstructor')}
                 onBarClick={(grade) => {
                   // 設置成績篩選並滾動到學生評論區域
                   setExternalGradeFilter(grade);

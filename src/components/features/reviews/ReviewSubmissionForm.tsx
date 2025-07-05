@@ -1842,6 +1842,44 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       if (isEditMode && editReviewId) {
         console.log('✏️ Updating existing review...');
+        
+        // Validation: Prevent editing first review grade from F to non-F when user has 2 reviews
+        if (editingReview && user?.$id) {
+          const originalGrade = editingReview.course_final_grade;
+          const newGrade = reviewData.course_final_grade;
+          
+          // Check if we're changing from F (fail) to a non-F grade
+          if (originalGrade === 'F' && newGrade && newGrade !== 'F') {
+            try {
+              // Get all user's reviews for this course to check if they have 2 reviews
+              const allUserReviews = await CourseService.canUserSubmitReview(user.$id, selectedCourse);
+              
+              if (allUserReviews.existingReviews.length >= 2) {
+                // Sort reviews by creation date to identify the first review
+                const sortedReviews = allUserReviews.existingReviews.sort((a, b) => 
+                  new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime()
+                );
+                
+                // Check if the review being edited is the first review
+                const isFirstReview = sortedReviews[0].$id === editReviewId;
+                
+                if (isFirstReview) {
+                  // Prevent the edit and show error
+                  toast({
+                    title: t('review.cannotEditGradeTitle'),
+                    description: t('review.cannotEditGradeMessage'),
+                    variant: 'destructive',
+                  });
+                  return; // Exit the function without updating
+                }
+              }
+            } catch (error) {
+              console.error('Error checking review eligibility for edit validation:', error);
+              // If there's an error checking, allow the edit to proceed
+            }
+          }
+        }
+        
         // Update existing review
         await CourseService.updateReview(editReviewId, reviewData);
         toast({

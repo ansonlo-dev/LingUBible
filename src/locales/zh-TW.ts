@@ -1356,6 +1356,8 @@ export default {
   'review.wordCount.serviceLearningOptional': '選修服務學習體驗不能超過 1000 字',
   // Review display additional
   'review.reviewerLabel': '評論者',
+  'review.review': '個評論',
+  'review.reviews': '個評論',
   'review.anonymousUser': '嶺南人',
   'review.instructorComments': '講師評論',
   'review.courseRatings': '課程評分',
@@ -1669,6 +1671,18 @@ export default {
   'chart.count': '數目',
   'chart.percentage': '百分比',
   'chart.gradePoint': '積點',
+  'chart.filterByCourse': '課程',
+  'chart.filterByInstructor': '講師',
+  'chart.chartType': '圖表類型',
+  'chart.barChart': '長條圖',
+  'chart.boxPlot': '箱線圖',
+  'chart.median': '中位數',
+  'chart.q1': '下分位數',
+  'chart.q3': '上分位數',
+  'chart.min': '最小值',
+  'chart.max': '最大值',
+  'chart.outliers': '離群值',
+  'chart.noDataAvailable': '無可用數據',
 
   // Common translations
   'common.students': '學生',
@@ -1691,4 +1705,8 @@ export default {
   'review.reviewLimitExceededInfo': '您已達到此課程的最大評論限制 2 次。',
   'review.reviewNumber': '評論 #{number}',
   'review.clickToViewReview': '點擊查看該評論詳情',
+  
+  // Grade edit restriction
+  'review.cannotEditGradeTitle': '無法編輯成績',
+  'review.cannotEditGradeMessage': '請先刪除您較新的評論，然後才能將此較舊評論的成績改為非不及格。',
 };

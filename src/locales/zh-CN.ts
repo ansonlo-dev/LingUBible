@@ -1418,6 +1418,8 @@ export default {
   'review.wordCount.serviceLearningOptional': '选修服务学习体验不能超过 1000 字',
   // Review display additional
   'review.reviewerLabel': '评论者',
+  'review.review': '个评论',
+  'review.reviews': '个评论',
   'review.anonymousUser': '岭南人',
   'review.instructorComments': '讲师评论',
   'review.courseRatings': '课程评分',
@@ -1733,6 +1735,18 @@ export default {
   'chart.count': '数目',
   'chart.percentage': '百分比',
   'chart.gradePoint': '积点',
+  'chart.filterByCourse': '课程',
+  'chart.filterByInstructor': '讲师',
+  'chart.chartType': '图表类型',
+  'chart.barChart': '柱状图',
+  'chart.boxPlot': '箱线图',
+  'chart.median': '中位数',
+  'chart.q1': '下分位数',
+  'chart.q3': '上分位数',
+  'chart.min': '最小值',
+  'chart.max': '最大值',
+  'chart.outliers': '离群值',
+  'chart.noDataAvailable': '无可用数据',
 
   // Common translations
   'common.students': '学生',
@@ -1743,4 +1757,8 @@ export default {
   'review.limitExceeded': '您已达到此课程的最大评论数量（2个）。',
   'review.limitReachedWithPass': '您已经为此课程提交过评论。只有在您的第一次评论成绩为不及格时，才能提交额外的评论。',
   'review.clickToViewReview': '点击查看该评论详情',
+
+  // Grade edit restriction
+  'review.cannotEditGradeTitle': '无法编辑成绩',
+  'review.cannotEditGradeMessage': '请先删除您较新的评论，然后才能将此较旧评论的成绩改为非不及格。',
 };
