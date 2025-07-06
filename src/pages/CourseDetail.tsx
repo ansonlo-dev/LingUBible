@@ -210,7 +210,7 @@ const CourseDetail = () => {
           instructorSessionCounts.set(key, count + 1);
           
           // Store the formatted label
-          const sessionTypeTranslated = detail.session_type === 'LEC' ? t('common.lecture') : t('common.tutorial');
+          const sessionTypeTranslated = detail.session_type === 'Lecture' ? t('common.lecture') : t('common.tutorial');
           instructorSessionLabels.set(key, `${detail.instructor_name} (${sessionTypeTranslated})`);
         });
       } catch (error) {
@@ -228,9 +228,9 @@ const CourseDetail = () => {
         sessionType: key.split('|')[1]
       }))
       .sort((a, b) => {
-        // First sort by session type (LEC before TUT)
+        // First sort by session type (Lecture before Tutorial)
         if (a.sessionType !== b.sessionType) {
-          return a.sessionType === 'LEC' ? -1 : 1;
+          return a.sessionType === 'Lecture' ? -1 : 1;
         }
         
         // Within same session type, sort by instructor name alphabetically
