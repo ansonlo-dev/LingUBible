@@ -99,84 +99,49 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
-  // Console warning suppression for passive event listeners - more aggressive approach
+  // Console warning suppression - single setup on mount
   React.useEffect(() => {
-    if (!isMobile) return;
-    
-    // Store original methods
+    // Only set up once on mount to avoid repeated execution
     const originalWarn = console.warn;
     const originalError = console.error;
-    const originalLog = console.log;
     
-    // More comprehensive pattern matching
-    const isEventListenerWarning = (message: string) => {
-      const msg = message.toLowerCase();
+    // Pattern matching for event listener warnings
+    const isEventListenerWarning = (args: any[]) => {
+      if (!args || args.length === 0) return false;
+      const message = String(args[0]).toLowerCase();
       return (
-        msg.includes('passive') ||
-        msg.includes('preventDefault') ||
-        msg.includes('touchstart') ||
-        msg.includes('touchmove') ||
-        msg.includes('wheel') ||
-        msg.includes('mousewheel') ||
-        msg.includes('event listener') ||
-        msg.includes('non-passive') ||
-        msg.includes('scroll-blocking') ||
-        msg.includes('ignored attempt to cancel')
+        message.includes('passive') ||
+        message.includes('preventDefault') ||
+        message.includes('touchstart') ||
+        message.includes('touchmove') ||
+        message.includes('wheel') ||
+        message.includes('mousewheel') ||
+        message.includes('event listener') ||
+        message.includes('non-passive') ||
+        message.includes('scroll-blocking') ||
+        message.includes('ignored attempt to cancel')
       );
     };
     
-    // Suppress console.warn
-    console.warn = (...args) => {
-      const message = args.join(' ');
-      if (!isEventListenerWarning(message)) {
-        originalWarn(...args);
+    // Override console methods only once
+    console.warn = function(...args) {
+      if (!isEventListenerWarning(args)) {
+        originalWarn.apply(console, args);
       }
     };
     
-    // Suppress console.error for event listener warnings
-    console.error = (...args) => {
-      const message = args.join(' ');
-      if (!isEventListenerWarning(message)) {
-        originalError(...args);
+    console.error = function(...args) {
+      if (!isEventListenerWarning(args)) {
+        originalError.apply(console, args);
       }
     };
     
-    // Also suppress console.log for event warnings
-    console.log = (...args) => {
-      const message = args.join(' ');
-      if (!isEventListenerWarning(message)) {
-        originalLog(...args);
-      }
-    };
-    
-    // Cleanup function
+    // Cleanup on unmount
     return () => {
       console.warn = originalWarn;
       console.error = originalError;
-      console.log = originalLog;
     };
-  }, [isMobile]);
-  
-  // Also disable event listener warnings at window level
-  React.useEffect(() => {
-    if (!isMobile) return;
-    
-    // Override window.addEventListener to prevent warnings
-    const originalAddEventListener = window.addEventListener;
-    
-    window.addEventListener = function(type, listener, options) {
-      // Force passive for problematic events on mobile
-      if (['touchstart', 'touchmove', 'wheel', 'mousewheel'].includes(type)) {
-        const newOptions = typeof options === 'object' ? { ...options, passive: true } : { passive: true };
-        return originalAddEventListener.call(this, type, listener, newOptions);
-      }
-      return originalAddEventListener.call(this, type, listener, options);
-    };
-    
-    return () => {
-      window.addEventListener = originalAddEventListener;
-    };
-  }, [isMobile]);
+  }, []); // Empty dependency array - only run once on mount
   
   // Adjust height based on chart type and mobile status
   const getResponsiveHeight = () => {
@@ -201,7 +166,21 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // Force chart re-render when theme changes to update axis colors
   React.useEffect(() => {
     setChartKey(prev => prev + 1);
-  }, [isDark, chartType, selectedFilter]); // Add selectedFilter to ensure refresh when filtering
+  }, [isDark, chartType, selectedFilter, language]); // Add language to ensure refresh when language changes
+  
+  // Listen for theme change events to force immediate update
+  React.useEffect(() => {
+    const handleThemeChange = () => {
+      // Force immediate re-render
+      setChartKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('themechange', handleThemeChange);
+    
+    return () => {
+      window.removeEventListener('themechange', handleThemeChange);
+    };
+  }, []);
 
   // 使用 useMemo 優化性能，避免重複計算
   const { completeDistribution, sortedGrades, totalCount, maxCount, statistics, boxPlotStats } = React.useMemo(() => {
@@ -527,8 +506,16 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       tooltip: {
         ...baseOptions.tooltip,
         triggerOn: 'click', // Force click trigger on mobile
-        hideDelay: 2000, // Hide tooltip after 2 seconds on mobile
-        alwaysShowContent: false
+        hideDelay: 5000, // Keep tooltip visible for 5 seconds on mobile
+        alwaysShowContent: false,
+        // Ensure tooltip stays visible when clicking bars
+        confine: true, // Keep tooltip within chart bounds
+        position: function(point: number[], params: any, dom: HTMLElement, rect: any, size: any) {
+          // Position tooltip above the clicked bar to avoid overlap
+          const x = point[0];
+          const y = Math.max(10, point[1] - 100); // Position above with minimum offset from top
+          return [x - size.contentSize[0] / 2, y];
+        }
       },
       
       // Disable zoom and brush tools that cause warnings
@@ -644,6 +631,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
+        hideDelay: isMobile ? 5000 : 100, // Keep visible longer on mobile
         textStyle: {
           color: isDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
@@ -824,6 +812,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
+        hideDelay: isMobile ? 5000 : 100, // Keep visible longer on mobile
         textStyle: {
           color: isDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
@@ -1066,6 +1055,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
+        hideDelay: isMobile ? 5000 : 100, // Keep visible longer on mobile
         textStyle: {
           color: isDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
@@ -1383,7 +1373,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           opts={getEChartsOpts()}
           onEvents={getChartEvents()}
           notMerge={true}
-          lazyUpdate={true}
+          lazyUpdate={false}
           theme={isDark ? 'dark' : 'light'}
         />
       </div>
