@@ -1741,6 +1741,10 @@ export default {
   'chart.outliers': 'Outliers',
   'chart.noDataAvailable': 'No data available',
   'chart.notEnoughData': 'Not enough data for meaningful box plot (minimum 5 data points required)',
+  'chart.zoom': 'Zoom',
+  'chart.zoomReset': 'Reset Zoom',
+  'chart.restore': 'Restore',
+  'chart.saveAsImage': 'Save as Image',
 
   // Common translations
   'common.students': 'students',

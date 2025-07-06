@@ -48,7 +48,7 @@ import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
-import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
+import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 
@@ -798,9 +798,10 @@ const Lecturers = () => {
 
       {/* 講師基本信息 */}
       {instructor && (
-        <CollapsibleSection
+        <PersistentCollapsibleSection
           className="course-card"
           title={t('pages.instructors.instructorInfo')}
+          sectionKey="instructor_info"
           icon={<User className="h-5 w-5" />}
           defaultExpanded={true}
           expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
@@ -1022,13 +1023,14 @@ const Lecturers = () => {
               </div>
             )}
           </div>
-        </CollapsibleSection>
+        </PersistentCollapsibleSection>
       )}
 
       {/* 教授課程 */}
-      <CollapsibleSection
+      <PersistentCollapsibleSection
         className="course-card"
         title={t('instructors.coursesTeaching')}
+        sectionKey="teaching_records"
         icon={<BookOpen className="h-5 w-5" />}
         badge={
           teachingCoursesLoading ? (
@@ -1286,14 +1288,15 @@ const Lecturers = () => {
               </TabsContent>
             </Tabs>
           )}
-      </CollapsibleSection>
+      </PersistentCollapsibleSection>
 
       {/* 學生評論 */}
       <div id="instructor-student-reviews">
-        <CollapsibleSection
+        <PersistentCollapsibleSection
           className="course-card"
           title={t('instructors.studentReviews')}
           icon={<MessageSquare className="h-5 w-5" />}
+          sectionKey="student_reviews"
           defaultExpanded={true}
           expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
           collapsedHint={t('common.clickToExpand') || 'Click to expand'}
@@ -2072,7 +2075,7 @@ const Lecturers = () => {
               )}
             </div>
           )}
-      </CollapsibleSection>
+      </PersistentCollapsibleSection>
       </div>
 
       {/* 操作按鈕 */}

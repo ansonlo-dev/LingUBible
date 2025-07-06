@@ -28,7 +28,7 @@ import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsLi
 import { getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
-import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
+import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 
@@ -210,7 +210,7 @@ const CourseDetail = () => {
           instructorSessionCounts.set(key, count + 1);
           
           // Store the formatted label
-          const sessionTypeTranslated = detail.session_type === 'Lecture' ? t('common.lecture') : t('common.tutorial');
+          const sessionTypeTranslated = detail.session_type === 'Lecture' ? t('sessionType.lecture') : t('sessionType.tutorial');
           instructorSessionLabels.set(key, `${detail.instructor_name} (${sessionTypeTranslated})`);
         });
       } catch (error) {
@@ -401,9 +401,10 @@ const CourseDetail = () => {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6 pb-20 overflow-hidden">
       {/* 課程基本信息 */}
-      <CollapsibleSection
+      <PersistentCollapsibleSection
         className="course-card"
         title={t('pages.courseDetail.courseInfo')}
+        sectionKey="course_info"
         icon={<Info className="h-5 w-5" />}
         defaultExpanded={true}
         expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
@@ -615,10 +616,10 @@ const CourseDetail = () => {
             </div>
           )}
         </div>
-      </CollapsibleSection>
+      </PersistentCollapsibleSection>
 
       {/* 教學記錄 */}
-      <CollapsibleSection
+      <PersistentCollapsibleSection
         className="course-card"
         title={t('pages.courseDetail.offerRecords')}
         icon={<Calendar className="h-5 w-5" />}
@@ -650,6 +651,7 @@ const CourseDetail = () => {
             </Badge>
           )
         }
+        sectionKey="offer_records"
         defaultExpanded={true}
         expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
         collapsedHint={t('common.clickToExpand') || 'Click to expand'}
@@ -878,13 +880,14 @@ const CourseDetail = () => {
               </TabsContent>
             </Tabs>
           )}
-      </CollapsibleSection>
+      </PersistentCollapsibleSection>
 
       {/* 課程評論 */}
-      <CollapsibleSection
+      <PersistentCollapsibleSection
         className="course-card"
         title={t('review.studentReviews')}
         icon={<MessageSquare className="h-5 w-5" />}
+        sectionKey="student_reviews"
         defaultExpanded={true}
         expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
         collapsedHint={t('common.clickToExpand') || 'Click to expand'}
@@ -920,7 +923,7 @@ const CourseDetail = () => {
           />
           )}
         </div>
-      </CollapsibleSection>
+      </PersistentCollapsibleSection>
 
       {/* 操作按鈕 */}
       <div className="flex gap-3 pb-8 md:pb-0">

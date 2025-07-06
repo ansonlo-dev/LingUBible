@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, BoxSelect, BarChart } from 'lucide-react';
+import { BarChart3, BoxSelect, BarChart, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 
 // Chart type enum
 type ChartType = 'bar' | 'stacked' | 'boxplot';
@@ -64,6 +64,8 @@ interface GradeDistributionChartProps {
       instructor_details: string; 
     }; 
   }>;
+  /** 是否預設展開（可選，預設為 true） */
+  defaultExpanded?: boolean;
 }
 
 const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo(({
@@ -80,7 +82,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   selectedFilter,
   onFilterChange,
   filterLabel,
-  rawReviewData
+  rawReviewData,
+  defaultExpanded = true
 }) => {
   const { t, language } = useLanguage();
   const { isDark } = useTheme();
@@ -88,15 +91,20 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // Chart type state
   const [chartType, setChartType] = React.useState<ChartType>('bar');
   
+  // Expand/collapse state
+  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
+  
   // Remove the restriction that clears filters for stacked and box plot charts
   // This allows users to select specific items in dropdown for all chart types
   
   // Use responsive height with proper mobile optimization
   const [isMobile, setIsMobile] = React.useState(false);
+  const [isPortrait, setIsPortrait] = React.useState(false);
   
-  // Helper function to shorten English instructor names on mobile
+  // Helper function to shorten English instructor names on mobile portrait
   const shortenInstructorName = (name: string): string => {
-    if (!isMobile || !name) return name;
+    // Only use shortform if English language, mobile, and portrait mode
+    if (!isMobile || !isPortrait || language !== 'en' || !name) return name;
     
     // Check if name is in English format (contains English letters and possibly title)
     const englishRegex = /^(Mr\.|Ms\.|Mrs\.|Dr\.|Prof\.)\s+([A-Za-z\s]+)$/;
@@ -129,8 +137,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       const isSmallScreen = Math.min(window.innerWidth, window.innerHeight) < 640;
       const newIsMobile = isTouchDevice && (window.innerWidth < 1024 || isSmallScreen);
+      const newIsPortrait = window.innerHeight > window.innerWidth;
       
       setIsMobile(newIsMobile);
+      setIsPortrait(newIsPortrait);
     };
     
     const debouncedCheckMobile = () => {
@@ -178,61 +188,37 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     };
   }, [isMobile]);
   
-  // Console warning suppression - single setup on mount
+  // Console warning suppression for ECharts passive event listener warnings
   React.useEffect(() => {
-    // Only set up once on mount to avoid repeated execution
+    if (!isMobile) return; // Only needed on mobile
+    
+    // Store original console methods
     const originalWarn = console.warn;
-    const originalError = console.error;
-    const originalLog = console.log;
     
-    // Pattern matching for event listener warnings
-    const isEventListenerWarning = (args: any[]) => {
-      if (!args || args.length === 0) return false;
-      const message = String(args[0]).toLowerCase();
-      return (
-        message.includes('passive') ||
-        message.includes('preventDefault') ||
-        message.includes('touchstart') ||
-        message.includes('touchmove') ||
-        message.includes('wheel') ||
-        message.includes('mousewheel') ||
-        message.includes('event listener') ||
-        message.includes('non-passive') ||
-        message.includes('scroll-blocking') ||
-        message.includes('ignored attempt to cancel') ||
-        message.includes('[violation]') ||
-        message.includes('added non-passive event listener') ||
-        message.includes('consider marking event handler as') ||
-        message.includes('chromestatus.com/feature')
-      );
-    };
+    // Pattern for passive event listener warnings from ECharts
+    const suppressedPatterns = [
+      /passive event listener/i,
+      /preventDefault.*passive/i,
+      /Unable to preventDefault inside passive event listener/i,
+      /non-passive event listener/i,
+      /\[Violation\]/i
+    ];
     
-    // Override console methods only once
+    // Override console.warn for this component only
     console.warn = function(...args) {
-      if (!isEventListenerWarning(args)) {
+      const message = args[0]?.toString() || '';
+      const shouldSuppress = suppressedPatterns.some(pattern => pattern.test(message));
+      
+      if (!shouldSuppress) {
         originalWarn.apply(console, args);
-      }
-    };
-    
-    console.error = function(...args) {
-      if (!isEventListenerWarning(args)) {
-        originalError.apply(console, args);
-      }
-    };
-    
-    console.log = function(...args) {
-      if (!isEventListenerWarning(args)) {
-        originalLog.apply(console, args);
       }
     };
     
     // Cleanup on unmount
     return () => {
       console.warn = originalWarn;
-      console.error = originalError;
-      console.log = originalLog;
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, [isMobile]); // Only re-run if mobile state changes
   
   // Adjust height based on chart type and mobile status
   const getResponsiveHeight = () => {
@@ -251,46 +237,89 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   
   const responsiveHeight = getResponsiveHeight();
 
-  // Force chart refresh when theme changes by incrementing key
+  // Force chart refresh when necessary by incrementing key
   const [chartKey, setChartKey] = React.useState(0);
   
-  // Force chart re-render when theme changes to update axis colors
-  // Use a ref to track if we should update to prevent unnecessary re-renders
-  const prevValues = React.useRef({ isDark, chartType, selectedFilter, language });
+  // Track mounted state to prevent updates after unmount
+  const isMountedRef = React.useRef(true);
+  
+  // Track if this is the initial mount
+  const isInitialMount = React.useRef(true);
+  
+  // Consolidate chart re-render logic to prevent multiple renders
+  const prevValues = React.useRef({ 
+    isDark, 
+    chartType, 
+    selectedFilter: JSON.stringify(selectedFilter), 
+    language 
+  });
   
   React.useEffect(() => {
+    // Skip the very first render to prevent initial flashing
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevValues.current = {
+        isDark,
+        chartType,
+        selectedFilter: JSON.stringify(selectedFilter),
+        language
+      };
+      return;
+    }
+    
+    const currentValues = {
+      isDark,
+      chartType,
+      selectedFilter: JSON.stringify(selectedFilter),
+      language
+    };
+    
     const hasChanged = 
-      prevValues.current.isDark !== isDark ||
-      prevValues.current.chartType !== chartType ||
-      prevValues.current.selectedFilter !== selectedFilter ||
-      prevValues.current.language !== language;
+      prevValues.current.isDark !== currentValues.isDark ||
+      prevValues.current.chartType !== currentValues.chartType ||
+      prevValues.current.selectedFilter !== currentValues.selectedFilter ||
+      prevValues.current.language !== currentValues.language;
       
     if (hasChanged) {
-      prevValues.current = { isDark, chartType, selectedFilter, language };
-      setChartKey(prev => prev + 1);
+      prevValues.current = currentValues;
+      // Use requestAnimationFrame to batch updates
+      requestAnimationFrame(() => {
+        if (isMountedRef.current) {
+          setChartKey(prev => prev + 1);
+        }
+      });
     }
   }, [isDark, chartType, selectedFilter, language]);
   
-  // Listen for theme change events to force immediate update
+  // Listen for theme change events
   React.useEffect(() => {
     const handleThemeChange = () => {
-      // Check the actual DOM to get the correct theme state
-      setTimeout(() => {
-        const root = document.documentElement;
-        const newIsDark = root.classList.contains('dark');
-        
-        // Update prevValues with the new isDark value
-        prevValues.current = { ...prevValues.current, isDark: newIsDark };
-        
-        // Force immediate re-render
-        setChartKey(prev => prev + 1);
-      }, 150); // Small delay to ensure DOM is updated
+      // Use requestAnimationFrame instead of setTimeout for better performance
+      requestAnimationFrame(() => {
+        if (isMountedRef.current) {
+          const root = document.documentElement;
+          const newIsDark = root.classList.contains('dark');
+          
+          // Only update if theme actually changed
+          if (prevValues.current.isDark !== newIsDark) {
+            prevValues.current = { ...prevValues.current, isDark: newIsDark };
+            setChartKey(prev => prev + 1);
+          }
+        }
+      });
     };
     
     window.addEventListener('themechange', handleThemeChange);
     
     return () => {
       window.removeEventListener('themechange', handleThemeChange);
+    };
+  }, []);
+  
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
     };
   }, []);
 
@@ -626,62 +655,66 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   };
 
   // State to track tooltip visibility on mobile
-  const [mobileTooltipVisible, setMobileTooltipVisible] = React.useState(false);
-  const tooltipTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const chartRef = React.useRef<ReactECharts>(null);
   const isTooltipVisible = React.useRef(false);
+  const tooltipShownParams = React.useRef<{ seriesIndex?: number; dataIndex?: number } | null>(null);
+  
+  // Persist tooltip on mobile after chart re-renders
+  React.useEffect(() => {
+    if (!isMobile || !chartRef.current || !tooltipShownParams.current) return;
+    
+    // Re-show tooltip after chart re-render
+    const chartInstance = chartRef.current.getEchartsInstance();
+    if (chartInstance && isTooltipVisible.current) {
+      // Small delay to ensure chart is ready
+      requestAnimationFrame(() => {
+        chartInstance.dispatchAction({
+          type: 'showTip',
+          seriesIndex: tooltipShownParams.current?.seriesIndex,
+          dataIndex: tooltipShownParams.current?.dataIndex
+        });
+      });
+    }
+  }, [chartKey, isMobile]); // Re-run when chart re-renders
   
   // Add click outside handler for mobile
   React.useEffect(() => {
     if (!isMobile) return;
     
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      // Small delay to ensure click event on chart is processed first
-      setTimeout(() => {
-        // Check if we have a chart instance
-        if (!chartRef.current || !isTooltipVisible.current) return;
-        
-        const chartInstance = chartRef.current.getEchartsInstance();
-        if (!chartInstance) return;
-        
-        // Get the chart DOM element
-        const chartDom = chartInstance.getDom();
-        if (!chartDom) return;
-        
-        // Check if click is outside the chart
-        const target = event.target as Node;
-        
-        // Also check if target is the tooltip itself
-        const tooltipDom = chartDom.querySelector('div[_echarts_instance_]');
-        const isTooltipClick = tooltipDom && tooltipDom.contains(target);
-        
-        if (!chartDom.contains(target) && !isTooltipClick) {
-          // Hide tooltip
-          chartInstance.dispatchAction({
-            type: 'hideTip'
-          });
-          isTooltipVisible.current = false;
-          setMobileTooltipVisible(false);
-          
-          // Clear timeout if exists
-          if (tooltipTimeoutRef.current) {
-            clearTimeout(tooltipTimeoutRef.current);
-            tooltipTimeoutRef.current = null;
-          }
-        }
-      }, 100);
+    const handleDocumentClick = (event: MouseEvent | TouchEvent) => {
+      if (!chartRef.current) return;
+      
+      const chartInstance = chartRef.current.getEchartsInstance();
+      if (!chartInstance) return;
+      
+      const chartDom = chartInstance.getDom();
+      if (!chartDom) return;
+      
+      // Check if click is on the chart or its tooltip
+      const target = event.target as Node;
+      const isChartClick = chartDom.contains(target);
+      
+      // Find tooltip DOM element
+      const tooltipDom = document.querySelector('div[_echarts_instance_]');
+      const isTooltipClick = tooltipDom && tooltipDom.contains(target);
+      
+      // If clicking outside chart and tooltip, hide tooltip
+      if (!isChartClick && !isTooltipClick && isTooltipVisible.current) {
+        chartInstance.dispatchAction({
+          type: 'hideTip'
+        });
+        isTooltipVisible.current = false;
+        tooltipShownParams.current = null;
+      }
     };
     
-    // Add event listeners with a delay to avoid interfering with chart events
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside, true);
-      document.addEventListener('touchstart', handleClickOutside, { passive: true, capture: true });
-    }, 500);
+    // Use capture phase to handle events before chart
+    document.addEventListener('click', handleDocumentClick, true);
+    document.addEventListener('touchstart', handleDocumentClick, { passive: true, capture: true });
     
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('click', handleClickOutside, true);
-      document.removeEventListener('touchstart', handleClickOutside, true);
+      document.removeEventListener('click', handleDocumentClick, true);
+      document.removeEventListener('touchstart', handleDocumentClick, true);
     };
   }, [isMobile]);
   
@@ -704,21 +737,22 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       tooltip: {
         ...baseOptions.tooltip,
         trigger: 'item', // Use 'item' trigger for better mobile support
-        triggerOn: 'click', // Force click trigger on mobile
-        hideDelay: 999999999, // Very long delay to prevent auto-hide
-        alwaysShowContent: true, // Always show content once triggered
+        triggerOn: 'click', // Force click trigger on mobile  
+        showDelay: 0, // Show immediately
+        hideDelay: 0, // Don't auto-hide
+        alwaysShowContent: false, // Let manual control work
         // Ensure tooltip stays visible when clicking bars
         confine: true, // Keep tooltip within chart bounds
         position: function(point: number[], params: any, dom: HTMLElement, rect: any, size: any) {
           // Position tooltip above the clicked bar to avoid overlap
-          const x = point[0];
-          const y = Math.max(10, point[1] - 100); // Position above with minimum offset from top
+          const x = Math.min(Math.max(size.contentSize[0] / 2, point[0]), size.viewSize[0] - size.contentSize[0] / 2);
+          const y = Math.max(10, point[1] - size.contentSize[1] - 20); // Position above with space
           return [x - size.contentSize[0] / 2, y];
         },
         // Add enterable to prevent tooltip from hiding when touched
         enterable: true,
         // Prevent default touch behavior
-        extraCssText: 'pointer-events: auto; z-index: 9999;',
+        extraCssText: 'pointer-events: auto; z-index: 9999; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;',
         transitionDuration: 0 // No animation for instant response
       },
       
@@ -751,45 +785,32 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     events.click = (params: any) => {
       // Handle mobile tooltip persistence
       if (isMobile && chartRef.current) {
-        const chartInstance = chartRef.current.getEchartsInstance();
-        
-        // Clear any existing timeout
-        if (tooltipTimeoutRef.current) {
-          clearTimeout(tooltipTimeoutRef.current);
-          tooltipTimeoutRef.current = null;
-        }
-        
-        // Mark tooltip as visible
         isTooltipVisible.current = true;
-        setMobileTooltipVisible(true);
+        tooltipShownParams.current = {
+          seriesIndex: params.seriesIndex,
+          dataIndex: params.dataIndex
+        };
         
         // Manually show tooltip to ensure it stays
-        setTimeout(() => {
-          if (chartInstance && isTooltipVisible.current) {
-            chartInstance.dispatchAction({
-              type: 'showTip',
-              seriesIndex: params.seriesIndex,
-              dataIndex: params.dataIndex
-            });
-          }
-        }, 50);
+        const chartInstance = chartRef.current.getEchartsInstance();
+        if (chartInstance) {
+          chartInstance.dispatchAction({
+            type: 'showTip',
+            seriesIndex: params.seriesIndex,
+            dataIndex: params.dataIndex
+          });
+        }
       }
       
-      // Call original click handler
-      handleChartClick(params);
+      // Call original click handler for grade filtering
+      if (onBarClick && chartType === 'bar' && params.data && params.data.grade) {
+        onBarClick(params.data.grade);
+      }
     };
     
     return events;
   };
   
-  // Cleanup tooltip timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (tooltipTimeoutRef.current) {
-        clearTimeout(tooltipTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // Bar chart options
   const getBarChartOptions = () => {
@@ -799,9 +820,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     
     return {
       ...theme,
-      // Disable toolbar on mobile
+      // Completely disable toolbox
       toolbox: {
-        show: !isMobile // Hide toolbar icons on mobile
+        show: false
       },
       grid: {
         left: '3%',
@@ -810,15 +831,28 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         containLabel: true
       },
       xAxis: {
-        type: 'value',
+        type: 'category',
+        data: sortedGrades,
         axisLabel: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
           fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
-          formatter: (value: number) => {
-            // Only show integer values
-            return Number.isInteger(value) ? value.toString() : '';
-          }
+          rotate: isMobile ? 45 : 0,
+          interval: 0
+        },
+        axisLine: {
+          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+        },
+        axisTick: {
+          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
+          fontSize: isMobile ? 10 : 12,
+          fontWeight: 'bold'
         },
         axisLine: {
           lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
@@ -832,24 +866,6 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             width: 1,
             type: 'solid'
           }
-        },
-        // Ensure tick interval creates integer values
-        minInterval: 1
-      },
-      yAxis: {
-        type: 'category',
-        data: sortedGrades,
-        axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
-          fontSize: isMobile ? 10 : 12,
-          fontWeight: 'bold',
-          interval: 0
-        },
-        axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
-        },
-        axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
         }
       },
       series: [
@@ -858,7 +874,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             value: completeDistribution[grade] || 0,
             itemStyle: {
               color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
-              borderRadius: [0, 4, 4, 0]
+              borderRadius: [4, 4, 0, 0]
             },
             emphasis: {
               itemStyle: {
@@ -883,17 +899,21 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
         hideDelay: isMobile ? 999999999 : 100, // Very long delay on mobile
-        alwaysShowContent: isMobile, // Keep showing on mobile
+        alwaysShowContent: false, // Don't keep showing permanently
         enterable: true, // Allow interaction
         transitionDuration: 0, // No animation
+        confine: true, // Keep tooltip within chart bounds
         textStyle: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
         },
         formatter: (params: any) => {
-          if (!params || params.length === 0) return '';
+          if (!params) return '';
           
-          const data = params[0];
+          // Handle both array (axis trigger) and single object (item trigger)
+          const data = Array.isArray(params) ? params[0] : params;
+          if (!data) return '';
+          
           const grade = data.name; // This is the grade (e.g., "A", "B+", etc.)
           const count = data.value; // This is the student count
           const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
@@ -961,10 +981,22 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     
     return {
       ...theme,
-      // Disable toolbar on mobile
+      // Completely disable toolbox
       toolbox: {
-        show: !isMobile // Hide toolbar icons on mobile
+        show: false
       },
+      // Add horizontal zoom functionality for x-axis (GPA values)
+      dataZoom: !isMobile ? [
+        {
+          type: 'inside',
+          xAxisIndex: 0,
+          start: 0,
+          end: 100,
+          filterMode: 'weakFilter',
+          minValueSpan: 0.5, // Minimum zoom span of 0.5 GPA
+          zoomLock: false
+        }
+      ] : [],
       grid: {
         left: '5%',
         right: '4%',
@@ -1000,7 +1032,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         data: boxPlotData.map((item) => item.name),
         axisLabel: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
-          fontSize: isMobile ? 10 : 12,
+          fontSize: isMobile ? 9 : 11,
           fontWeight: 'bold',
           interval: 0
         },
@@ -1009,7 +1041,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         },
         axisTick: {
           lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
-        }
+        },
+        inverse: true // Show items from top to bottom in the order they appear
       },
       series: [
         {
@@ -1050,6 +1083,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             const stats = item.stats;
             if (!stats || !stats.outliers || stats.outliers.length === 0) return [];
             
+            // For horizontal box plot: [value, categoryIndex]
             return stats.outliers.map(outlier => [outlier, index]);
           }),
           itemStyle: {
@@ -1073,11 +1107,15 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           fontSize: 12
         },
         formatter: (params: any) => {
-          if (!params || !params.data) return '';
+          if (!params) return '';
           
-          if (params.seriesName === 'Outliers') {
-            const outlierValue = params.data[0];
-            const categoryIndex = params.data[1];
+          // Handle both array and single object params
+          const paramData = Array.isArray(params) ? params[0] : params;
+          if (!paramData || !paramData.data) return '';
+          
+          if (paramData.seriesName === 'Outliers') {
+            const outlierValue = paramData.data[0]; // Now x is the value
+            const categoryIndex = paramData.data[1]; // Now y is the category index
             const categoryName = boxPlotData[categoryIndex]?.name || '';
             
             return `
@@ -1088,25 +1126,63 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             `;
           }
           
-          const data = params.data;
-          const name = params.name;
+          const data = paramData.data;
+          const name = paramData.name;
           const [min, q1, median, q3, max] = data;
           
           // Find the corresponding item to get the count
           const item = boxPlotData.find(item => item.name === name);
           const count = item ? item.count : 0;
           
-          return `
-            <div style="font-weight: 500; margin-bottom: 4px;">${name}</div>
-            <div style="color: ${currentIsDark ? '#ffffff' : '#000000'}; line-height: 1.4;">
-              ${t('chart.studentCount', { count })}<br/>
-              ${t('chart.minimum')}: ${min.toFixed(2)}<br/>
-              ${t('chart.q1')}: ${q1.toFixed(2)}<br/>
-              ${t('chart.median')}: ${median.toFixed(2)}<br/>
-              ${t('chart.q3')}: ${q3.toFixed(2)}<br/>
-              ${t('chart.maximum')}: ${max.toFixed(2)}
-            </div>
+          // Create aligned layout with consistent spacing
+          const tooltipContent = `
+            <div style="font-weight: 500; margin-bottom: 8px;">${name}</div>
+            <div style="margin-bottom: 6px; font-weight: 500;">${t('chart.studentCount', { count })}</div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; width: 60px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.minimum')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${min.toFixed(2)}
+                </td>
+              </tr>
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.q1')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${q1.toFixed(2)}
+                </td>
+              </tr>
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.median')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${median.toFixed(2)}
+                </td>
+              </tr>
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.q3')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${q3.toFixed(2)}
+                </td>
+              </tr>
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.maximum')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${max.toFixed(2)}
+                </td>
+              </tr>
+            </table>
           `;
+          
+          return tooltipContent;
         }
       }
     };
@@ -1244,9 +1320,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
 
     return {
       ...theme,
-      // Disable toolbar on mobile
+      // Completely disable toolbox
       toolbox: {
-        show: !isMobile // Hide toolbar icons on mobile
+        show: false
       },
       grid: {
         left: '5%', // Further reduced left padding
@@ -1327,7 +1403,15 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           fontSize: 12
         },
         formatter: (params: any) => {
-          if (!params || !Array.isArray(params) || params.length === 0) return '';
+          if (!params) return '';
+          
+          // For stacked chart, we need array of params for all series
+          if (!Array.isArray(params)) {
+            // If single param, convert to array
+            params = [params];
+          }
+          
+          if (params.length === 0) return '';
           
           // Get the category name from the first parameter
           const categoryName = params[0].name || '';
@@ -1388,17 +1472,48 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   }
 
   return (
-    <div className={cn("p-1 sm:p-2 w-full", className)}>
-      {/* 標題、篩選器和圖表類型選擇 */}
-      <div className="mb-2">
-        <div className="flex flex-col gap-2 mb-2">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-            <div className="flex flex-col gap-2">
-              {title && (
-                <h3 className="text-sm font-medium text-foreground truncate">{title}</h3>
-              )}
-              
-              {/* 圖表類型切換按鈕 */}
+    <div className={cn("space-y-0 bg-[rgb(243,244,246)] dark:bg-[rgb(36,36,40)] rounded-lg", className)}>
+      {/* Header Toggle */}
+      <div className="w-full bg-[rgb(243,244,246)] hover:bg-[rgb(243,244,246)] dark:bg-[rgb(36,36,40)] dark:hover:bg-[rgb(36,36,40)] transition-all duration-200 rounded-lg">
+        <Button
+          variant="ghost"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full justify-between h-12 px-4 bg-transparent hover:bg-transparent transition-all duration-200 rounded-lg group"
+        >
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
+            <span className="font-semibold text-base">{title || t('chart.gradeDistribution')}</span>
+            {totalCount > 0 && (
+              <Badge variant="secondary" className="h-6 px-2 text-sm ml-1 bg-primary text-white font-medium shadow-sm hidden sm:inline-flex">
+                {totalCount}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2">
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            )}
+          </div>
+        </Button>
+        {totalCount > 0 && (
+          <div className="sm:hidden px-4 pb-2">
+            <Badge variant="secondary" className="h-6 px-2 text-sm bg-primary text-white font-medium shadow-sm">
+              {totalCount} {t('stats.reviews')}
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Chart Content */}
+      {isExpanded && (
+        <div className="relative p-4 rounded-xl bg-muted/20">
+          <div className="mb-2">
+            <div className="flex flex-col gap-2 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                <div className="flex flex-col gap-2">
+                  {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 w-full sm:w-auto">
                 <Button
                   variant="ghost"
@@ -1643,7 +1758,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           lazyUpdate={false}
           theme={isDark ? 'dark' : 'light'}
         />
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

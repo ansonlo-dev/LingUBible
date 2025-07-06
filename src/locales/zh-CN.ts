@@ -1757,6 +1757,10 @@ export default {
   'chart.outliers': '离群值',
   'chart.noDataAvailable': '无可用数据',
   'chart.notEnoughData': '数据不足，无法生成有意义的箱线图（至少需要5个数据点）',
+  'chart.zoom': '缩放',
+  'chart.zoomReset': '重置缩放',
+  'chart.restore': '还原',
+  'chart.saveAsImage': '保存为图片',
 
   // Common translations
   'common.students': '学生',
