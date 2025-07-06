@@ -49,8 +49,8 @@ const GRADE_TO_GPA_MAP: Record<string, GradeInfo> = {
   'AU': { grade: 'AU', gpa: 0.00, description: 'Audit' }
 };
 
-// Grade order for sorting (best to worst)
-const GRADE_ORDER = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F', 'N/A'];
+// Grade order for sorting (best to worst) - reversed for chart display (A on top, N/A on bottom)
+const GRADE_ORDER = ['N/A', 'F', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A'];
 
 /**
  * Get GPA information for a given grade

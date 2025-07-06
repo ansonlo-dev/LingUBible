@@ -249,34 +249,65 @@ const Lecturers = () => {
   const loading = instructorLoading || detailLoading;
   const error = instructorError || detailError;
 
-  // Generate filter options for grade distribution chart (courses)
+  // Generate filter options for grade distribution chart (courses with session types)
   const gradeChartFilterOptions = React.useMemo(() => {
     if (!reviews || reviews.length === 0) return [];
     
-    const courseMap = new Map<string, { title: string; count: number }>();
+    // Count occurrences of each course-session combination for the current instructor
+    const courseSessionMap = new Map<string, { title: string; sessionType: string; count: number }>();
+    
     reviews.forEach(reviewInfo => {
       if (reviewInfo.course?.course_code) {
         const courseCode = reviewInfo.course.course_code;
         const courseTitle = reviewInfo.course.course_title || reviewInfo.course.course_code;
         
-        if (courseMap.has(courseCode)) {
-          courseMap.get(courseCode)!.count++;
-        } else {
-          courseMap.set(courseCode, { title: courseTitle, count: 1 });
+        // Find the session type for the current instructor in this review
+        const instructorDetail = reviewInfo.instructorDetails.find(detail => 
+          detail.instructor_name === decodedName
+        );
+        
+        if (instructorDetail && instructorDetail.session_type) {
+          const key = `${courseCode}|${instructorDetail.session_type}`;
+          
+          if (courseSessionMap.has(key)) {
+            courseSessionMap.get(key)!.count++;
+          } else {
+            courseSessionMap.set(key, { 
+              title: courseTitle, 
+              sessionType: instructorDetail.session_type,
+              count: 1 
+            });
+          }
         }
       }
     });
     
-    return Array.from(courseMap.entries())
-      .map(([code, data]) => ({
-        value: code,
-        label: `${code} - ${data.title}`,
-        count: data.count
-      }))
-      .sort((a, b) => a.value.localeCompare(b.value));
-  }, [reviews]);
+    return Array.from(courseSessionMap.entries())
+      .map(([key, data]) => {
+        const [courseCode, sessionType] = key.split('|');
+        const sessionTypeTranslated = sessionType === 'Lecture' ? t('sessionType.lecture') : t('sessionType.tutorial');
+        return {
+          value: key,
+          label: `${courseCode} - ${data.title} (${sessionTypeTranslated})`,
+          count: data.count,
+          // Add sorting helpers
+          courseCode,
+          sessionType
+        };
+      })
+      .sort((a, b) => {
+        // First sort by session type (Lecture before Tutorial)
+        if (a.sessionType !== b.sessionType) {
+          return a.sessionType === 'Lecture' ? -1 : 1;
+        }
+        
+        // Within same session type, sort by course code alphabetically
+        return a.courseCode.localeCompare(b.courseCode);
+      })
+      .map(({ value, label, count }) => ({ value, label, count })); // Remove extra sorting fields
+  }, [reviews, decodedName, t]);
 
-  // Filter reviews for grade distribution chart based on selected course(s)
+  // Filter reviews for grade distribution chart based on selected course-session combination(s)
   const filteredReviewsForChart = React.useMemo(() => {
     if (!reviews || reviews.length === 0) return [];
     
@@ -287,10 +318,29 @@ const Lecturers = () => {
       return reviews;
     }
     
-    return reviews.filter(reviewInfo => 
-      reviewInfo.course?.course_code && selectedValues.includes(reviewInfo.course.course_code)
-    );
-  }, [reviews, selectedGradeChartFilter]);
+    // Parse all selected course-session combinations
+    const targetCourseSessions = selectedValues.map(value => {
+      const [targetCourse, targetSessionType] = value.split('|');
+      return { targetCourse, targetSessionType };
+    });
+    
+    return reviews.filter(reviewInfo => {
+      if (!reviewInfo.course?.course_code) return false;
+      
+      // Find the instructor detail for the current instructor
+      const instructorDetail = reviewInfo.instructorDetails.find(detail => 
+        detail.instructor_name === decodedName
+      );
+      
+      if (!instructorDetail || !instructorDetail.session_type) return false;
+      
+      // Check if this review matches any of the selected course-session combinations
+      return targetCourseSessions.some(({ targetCourse, targetSessionType }) =>
+        reviewInfo.course.course_code === targetCourse && 
+        instructorDetail.session_type === targetSessionType
+      );
+    });
+  }, [reviews, selectedGradeChartFilter, decodedName]);
 
   // 獲取所有可用的學期
   const availableTerms = React.useMemo(() => {
