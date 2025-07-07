@@ -39,6 +39,7 @@ import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
 import EmailPreview from "./pages/EmailPreview";
 import PerformanceTest from "./pages/PerformanceTest";
+import GoogleIconTest from "./pages/GoogleIconTest";
 
 
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
@@ -662,6 +663,7 @@ const RouterContent = ({
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />
+                    <Route path="/google-icon-test" element={<GoogleIconTest />} />
                     {/* 開發模式專用路由 */}
                     <Route 
                       path="/email-preview" 
