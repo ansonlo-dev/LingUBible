@@ -456,7 +456,7 @@ const CourseDetail = () => {
                 </div>
               )}
             </div>
-            <div className="shrink-0">
+            <div className="shrink-0 -mt-2 sm:mt-0">
               <FavoriteButton
                 type="course"
                 itemId={course.course_code}
@@ -689,10 +689,12 @@ const CourseDetail = () => {
                   <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pages.courseDetail.filterByTerm')}:</span>
                   <Select value={selectedTermFilter} onValueChange={setSelectedTermFilter}>
                     <SelectTrigger className="w-[180px] h-8">
-                      <SelectValue placeholder={t('common.all')} />
+                      <SelectValue placeholder={t('common.all')}>
+                        {selectedTermFilter === 'all' ? t('common.all') : availableTermsWithCounts.find(td => td.term.term_code === selectedTermFilter)?.term.name || selectedTermFilter}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">
+                      <SelectItem value="all" textValue={t('common.all')}>
                         <span className="flex items-center gap-2">
                           <span>{t('common.all')}</span>
                           <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
@@ -701,7 +703,7 @@ const CourseDetail = () => {
                         </span>
                       </SelectItem>
                       {availableTermsWithCounts.map((termData) => (
-                        <SelectItem key={termData.term.term_code} value={termData.term.term_code}>
+                        <SelectItem key={termData.term.term_code} value={termData.term.term_code} textValue={termData.term.name}>
                           <span className="flex items-center gap-2">
                             <span>{termData.term.name}</span>
                             <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">

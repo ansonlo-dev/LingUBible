@@ -211,9 +211,14 @@ export function MyReviewsFilters({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {availableSubjectAreas.map(subject => (
@@ -257,9 +262,14 @@ export function MyReviewsFilters({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(termCounts).map(([termCode, termInfo]) => (
@@ -299,9 +309,14 @@ export function MyReviewsFilters({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => {
@@ -343,9 +358,14 @@ export function MyReviewsFilters({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(sessionTypeCounts).map(([sessionType, count]) => (

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { BarChart3, BoxSelect, BarChart, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 
 // Chart type enum
@@ -83,7 +84,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   onFilterChange,
   filterLabel,
   rawReviewData,
-  defaultExpanded = true
+  defaultExpanded = false
 }) => {
   const { t, language } = useLanguage();
   const { isDark } = useTheme();
@@ -194,6 +195,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     
     // Store original console methods
     const originalWarn = console.warn;
+    const originalError = console.error;
     
     // Pattern for passive event listener warnings from ECharts
     const suppressedPatterns = [
@@ -201,7 +203,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       /preventDefault.*passive/i,
       /Unable to preventDefault inside passive event listener/i,
       /non-passive event listener/i,
-      /\[Violation\]/i
+      /\[Violation\]/i,
+      /touchmove/i,
+      /mouseout/i,
+      /mouseleave/i
     ];
     
     // Override console.warn for this component only
@@ -214,9 +219,20 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       }
     };
     
+    // Also suppress console.error for the same patterns
+    console.error = function(...args) {
+      const message = args[0]?.toString() || '';
+      const shouldSuppress = suppressedPatterns.some(pattern => pattern.test(message));
+      
+      if (!shouldSuppress) {
+        originalError.apply(console, args);
+      }
+    };
+    
     // Cleanup on unmount
     return () => {
       console.warn = originalWarn;
+      console.error = originalError;
     };
   }, [isMobile]); // Only re-run if mobile state changes
   
@@ -224,15 +240,15 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   const getResponsiveHeight = () => {
     if (chartType === 'boxplot') {
       // For multiple box plots, we need more height
-      return isMobile ? 300 : 400;
+      return isMobile ? 300 : 350;
     }
     if (chartType === 'stacked') {
       // For stacked charts with multiple instructors, we need more height
       const instructorCount = filterOptions?.length || 1;
-      return isMobile ? Math.max(250, instructorCount * 35) : Math.max(350, instructorCount * 40);
+      return isMobile ? Math.max(250, instructorCount * 35) : Math.max(300, instructorCount * 35);
     }
     // For bar charts, use same height as stacked/box plot for consistency
-    return isMobile ? 300 : 400;
+    return isMobile ? 300 : 350;
   };
   
   const responsiveHeight = getResponsiveHeight();
@@ -522,6 +538,23 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     };
   };
 
+  // Function to determine text color based on background color
+  const getContrastColor = (hexColor: string): string => {
+    // Remove # if present
+    const color = hexColor.replace('#', '');
+    
+    // Convert to RGB
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    
+    // Calculate relative luminance using WCAG formula
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return white for dark backgrounds, black for light backgrounds
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  };
+
   // Helper function to get consistent ordering for all chart types
   const getConsistentFilterOrdering = () => {
     if (!filterOptions || filterOptions.length === 0) return [];
@@ -658,6 +691,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   const chartRef = React.useRef<ReactECharts>(null);
   const isTooltipVisible = React.useRef(false);
   const tooltipShownParams = React.useRef<{ seriesIndex?: number; dataIndex?: number } | null>(null);
+  const tooltipTimeout = React.useRef<NodeJS.Timeout | null>(null);
   
   // Persist tooltip on mobile after chart re-renders
   React.useEffect(() => {
@@ -682,6 +716,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     if (!isMobile) return;
     
     const handleDocumentClick = (event: MouseEvent | TouchEvent) => {
+      // Clear any pending tooltip timeout
+      if (tooltipTimeout.current) {
+        clearTimeout(tooltipTimeout.current);
+        tooltipTimeout.current = null;
+      }
+      
       if (!chartRef.current) return;
       
       const chartInstance = chartRef.current.getEchartsInstance();
@@ -694,27 +734,59 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       const target = event.target as Node;
       const isChartClick = chartDom.contains(target);
       
-      // Find tooltip DOM element
-      const tooltipDom = document.querySelector('div[_echarts_instance_]');
-      const isTooltipClick = tooltipDom && tooltipDom.contains(target);
+      // Find tooltip DOM element - ECharts tooltip has a specific class
+      const tooltipDoms = document.querySelectorAll('div[style*="position: absolute"][style*="z-index"]');
+      let isTooltipClick = false;
+      
+      tooltipDoms.forEach(dom => {
+        // Check if this is likely an ECharts tooltip by looking for specific attributes
+        if (dom.innerHTML.includes('font-weight') && dom.contains(target)) {
+          isTooltipClick = true;
+        }
+      });
       
       // If clicking outside chart and tooltip, hide tooltip
       if (!isChartClick && !isTooltipClick && isTooltipVisible.current) {
-        chartInstance.dispatchAction({
-          type: 'hideTip'
+        // Add a small delay to ensure touch events are properly handled
+        tooltipTimeout.current = setTimeout(() => {
+          chartInstance.dispatchAction({
+            type: 'hideTip'
+          });
+          isTooltipVisible.current = false;
+          tooltipShownParams.current = null;
+        }, 100);
+      }
+    };
+    
+    // Use both click and touch events for better mobile support
+    const handleTouch = (event: TouchEvent) => {
+      // Convert touch event to click coordinates
+      const touch = event.touches[0] || event.changedTouches[0];
+      if (touch) {
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: touch.clientX,
+          clientY: touch.clientY
         });
-        isTooltipVisible.current = false;
-        tooltipShownParams.current = null;
+        handleDocumentClick(clickEvent);
       }
     };
     
     // Use capture phase to handle events before chart
     document.addEventListener('click', handleDocumentClick, true);
-    document.addEventListener('touchstart', handleDocumentClick, { passive: true, capture: true });
+    document.addEventListener('touchend', handleTouch, { passive: true, capture: true });
     
     return () => {
       document.removeEventListener('click', handleDocumentClick, true);
-      document.removeEventListener('touchstart', handleDocumentClick, true);
+      document.removeEventListener('touchend', handleTouch, true);
+      
+      // Clear timeout on cleanup
+      if (tooltipTimeout.current) {
+        clearTimeout(tooltipTimeout.current);
+        tooltipTimeout.current = null;
+      }
     };
   }, [isMobile]);
   
@@ -736,10 +808,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       // Keep tooltips enabled but configure for mobile
       tooltip: {
         ...baseOptions.tooltip,
-        trigger: 'item', // Use 'item' trigger for better mobile support
+        trigger: baseOptions.tooltip?.trigger || 'item', // Preserve original trigger if set
         triggerOn: 'click', // Force click trigger on mobile  
         showDelay: 0, // Show immediately
-        hideDelay: 0, // Don't auto-hide
+        hideDelay: 86400000, // 24 hours (effectively never auto-hide)
         alwaysShowContent: false, // Let manual control work
         // Ensure tooltip stays visible when clicking bars
         confine: true, // Keep tooltip within chart bounds
@@ -785,28 +857,60 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     events.click = (params: any) => {
       // Handle mobile tooltip persistence
       if (isMobile && chartRef.current) {
-        isTooltipVisible.current = true;
-        tooltipShownParams.current = {
-          seriesIndex: params.seriesIndex,
-          dataIndex: params.dataIndex
-        };
+        // Clear any pending hide timeout
+        if (tooltipTimeout.current) {
+          clearTimeout(tooltipTimeout.current);
+          tooltipTimeout.current = null;
+        }
         
-        // Manually show tooltip to ensure it stays
         const chartInstance = chartRef.current.getEchartsInstance();
         if (chartInstance) {
-          chartInstance.dispatchAction({
-            type: 'showTip',
-            seriesIndex: params.seriesIndex,
-            dataIndex: params.dataIndex
-          });
+          // If clicking the same item that's already showing tooltip, hide it
+          if (isTooltipVisible.current && 
+              tooltipShownParams.current?.seriesIndex === params.seriesIndex && 
+              tooltipShownParams.current?.dataIndex === params.dataIndex) {
+            chartInstance.dispatchAction({
+              type: 'hideTip'
+            });
+            isTooltipVisible.current = false;
+            tooltipShownParams.current = null;
+          } else {
+            // Show tooltip for the clicked item
+            isTooltipVisible.current = true;
+            tooltipShownParams.current = {
+              seriesIndex: params.seriesIndex,
+              dataIndex: params.dataIndex
+            };
+            
+            // Force show tooltip
+            chartInstance.dispatchAction({
+              type: 'showTip',
+              seriesIndex: params.seriesIndex,
+              dataIndex: params.dataIndex
+            });
+          }
         }
       }
       
-      // Call original click handler for grade filtering
+      // Call original click handler for grade filtering (only on desktop or when not showing tooltip)
       if (onBarClick && chartType === 'bar' && params.data && params.data.grade) {
-        onBarClick(params.data.grade);
+        // On mobile, only trigger bar click if we're not showing a tooltip
+        if (!isMobile || !isTooltipVisible.current) {
+          onBarClick(params.data.grade);
+        }
       }
     };
+    
+    // Prevent tooltip from auto-hiding on mobile
+    if (isMobile) {
+      events.globalout = (params: any) => {
+        // Prevent the default globalout behavior which hides tooltip
+        if (isTooltipVisible.current) {
+          // Don't hide tooltip on globalout for mobile
+          return false;
+        }
+      };
+    }
     
     return events;
   };
@@ -852,7 +956,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         axisLabel: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
           fontSize: isMobile ? 10 : 12,
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          formatter: (value: number) => {
+            // Only show integer labels for student count
+            return Number.isInteger(value) ? value.toString() : '';
+          }
         },
         axisLine: {
           lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
@@ -898,8 +1006,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
-        hideDelay: isMobile ? 999999999 : 100, // Very long delay on mobile
-        alwaysShowContent: false, // Don't keep showing permanently
+        hideDelay: isMobile ? 86400000 : 100, // 24 hours on mobile (effectively never auto-hide)
+        alwaysShowContent: false, // Let manual control work
         enterable: true, // Allow interaction
         transitionDuration: 0, // No animation
         confine: true, // Keep tooltip within chart bounds
@@ -918,30 +1026,42 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           const count = data.value; // This is the student count
           const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
           
-          // Convert grade to grade point (4.0 scale)
-          const getGradePoint = (grade: string): string => {
-            const gradeMap: { [key: string]: number } = {
-              'A+': 4.0, 'A': 4.0, 'A-': 3.7,
-              'B+': 3.3, 'B': 3.0, 'B-': 2.7,
-              'C+': 2.3, 'C': 2.0, 'C-': 1.7,
-              'D+': 1.3, 'D': 1.0, 'D-': 0.7,
-              'F': 0.0
-            };
-            return gradeMap[grade]?.toFixed(2) || 'N/A';
-          };
-          
-          const gradePoint = getGradePoint(grade);
+          // Use the getGPA function from gradeUtils for accurate grade points
+          const gpaValue = getGPA(grade);
+          const gradePoint = gpaValue !== null ? gpaValue.toFixed(2) : 'N/A';
           
           // Use proper translation for grade
           const gradeLabel = context === 'course' ? t('chart.grade') : t('chart.rating');
           
+          // Aligned layout for bar chart tooltip
           return `
             <div style="font-weight: 500; margin-bottom: 4px;">${gradeLabel}: ${grade}</div>
-            <div style="color: ${currentIsDark ? '#ffffff' : '#000000'}; line-height: 1.4;">
-              ${t('chart.studentCount', { count })}<br/>
-              ${t('chart.percentage')}: ${percentage}%<br/>
-              ${t('chart.gradePoint')}: ${gradePoint}
-            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.studentCount', { count }).split(':')[0]}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${count}
+                </td>
+              </tr>
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.percentage')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${percentage}%
+                </td>
+              </tr>
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.gradePoint')}
+                </td>
+                <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${gradePoint}
+                </td>
+              </tr>
+            </table>
           `;
         },
         axisPointer: {
@@ -985,39 +1105,54 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       toolbox: {
         show: false
       },
-      // Add horizontal zoom functionality for x-axis (GPA values)
+      // Add horizontal zoom functionality for x-axis (GPA values) with proper constraints
       dataZoom: !isMobile ? [
         {
           type: 'inside',
           xAxisIndex: 0,
           start: 0,
           end: 100,
-          filterMode: 'weakFilter',
+          filterMode: 'filter', // Use 'filter' instead of 'weakFilter' for better containment
           minValueSpan: 0.5, // Minimum zoom span of 0.5 GPA
-          zoomLock: false
+          maxValueSpan: 4, // Maximum span is the full range
+          zoomLock: false,
+          moveOnMouseMove: true,
+          preventDefaultMouseMove: true
         }
       ] : [],
       grid: {
-        left: '5%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
+        left: '8%', // Increased left margin to prevent overflow
+        right: '6%', // Increased right margin for safety
+        top: '5%', // Add top margin
+        bottom: '8%', // Increased bottom margin
+        containLabel: true,
+        show: false // Hide grid border to prevent visual conflicts
       },
       xAxis: {
         type: 'value',
         min: 0,
         max: 4,
+        boundaryGap: [0, 0], // Ensure no gap at boundaries
         axisLabel: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
           fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
-          formatter: (value: number) => value.toFixed(1)
+          formatter: (value: number) => value.toFixed(1),
+          margin: 8 // Add margin to prevent label overflow
         },
         axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          lineStyle: { 
+            color: currentIsDark ? '#4b5563' : '#d1d5db',
+            width: 1
+          },
+          onZero: false // Prevent axis line from moving during zoom
         },
         axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          lineStyle: { 
+            color: currentIsDark ? '#4b5563' : '#d1d5db',
+            width: 1
+          },
+          alignWithLabel: true // Align ticks with labels
         },
         splitLine: {
           lineStyle: { 
@@ -1030,17 +1165,27 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       yAxis: {
         type: 'category',
         data: boxPlotData.map((item) => item.name),
+        boundaryGap: true, // Add gap between categories and axis boundaries
         axisLabel: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
           fontSize: isMobile ? 9 : 11,
           fontWeight: 'bold',
-          interval: 0
+          interval: 0,
+          margin: 8, // Add margin to prevent label overflow
+          overflow: 'truncate' // Truncate long labels instead of overflowing
         },
         axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          lineStyle: { 
+            color: currentIsDark ? '#4b5563' : '#d1d5db',
+            width: 1
+          }
         },
         axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          lineStyle: { 
+            color: currentIsDark ? '#4b5563' : '#d1d5db',
+            width: 1
+          },
+          alignWithLabel: true
         },
         inverse: true // Show items from top to bottom in the order they appear
       },
@@ -1052,12 +1197,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             // Convert BoxPlotStatistics to array format [min, q1, median, q3, max]
             const stats = item.stats;
             if (!stats) return [0, 0, 0, 0, 0];
+            // Ensure values are within the chart bounds
             return [
-              stats.min || 0,
-              stats.q1 || 0,
-              stats.median || 0,
-              stats.q3 || 0,
-              stats.max || 0
+              Math.max(0, Math.min(4, stats.min || 0)),
+              Math.max(0, Math.min(4, stats.q1 || 0)),
+              Math.max(0, Math.min(4, stats.median || 0)),
+              Math.max(0, Math.min(4, stats.q3 || 0)),
+              Math.max(0, Math.min(4, stats.max || 0))
             ];
           }),
           itemStyle: {
@@ -1073,7 +1219,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               shadowColor: outlierColor // Red shadow
             }
           },
-          boxWidth: ['7%', '50%']
+          boxWidth: ['7%', '50%'],
+          clip: true // Ensure elements are clipped to chart area
         },
         // Add outliers as separate scatter series
         {
@@ -1084,14 +1231,18 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             if (!stats || !stats.outliers || stats.outliers.length === 0) return [];
             
             // For horizontal box plot: [value, categoryIndex]
-            return stats.outliers.map(outlier => [outlier, index]);
+            // Ensure outlier values are within chart bounds
+            return stats.outliers
+              .filter(outlier => outlier >= 0 && outlier <= 4) // Filter out invalid outliers
+              .map(outlier => [Math.max(0, Math.min(4, outlier)), index]);
           }),
           itemStyle: {
             color: outlierColor,
             borderColor: outlierColor
           },
           symbolSize: 6,
-          zlevel: 1
+          zlevel: 1,
+          clip: true // Ensure outliers are clipped to chart area
         }
       ],
       tooltip: {
@@ -1100,8 +1251,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
-        hideDelay: isMobile ? 0 : 100, // Don't auto-hide on mobile
-        enterable: isMobile, // Allow touch interaction on mobile
+        hideDelay: isMobile ? 86400000 : 100, // 24 hours on mobile (effectively never auto-hide)
+        alwaysShowContent: false, // Let manual control work
+        enterable: true, // Allow interaction
+        transitionDuration: 0, // No animation
+        confine: true, // Keep tooltip within chart bounds
         textStyle: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
@@ -1134,46 +1288,46 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           const item = boxPlotData.find(item => item.name === name);
           const count = item ? item.count : 0;
           
-          // Create aligned layout with consistent spacing
+          // Create aligned layout with consistent spacing (without blue dots)
           const tooltipContent = `
             <div style="font-weight: 500; margin-bottom: 8px;">${name}</div>
             <div style="margin-bottom: 6px; font-weight: 500;">${t('chart.studentCount', { count })}</div>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
-                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; width: 60px;">
-                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.minimum')}
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.minimum')}
                 </td>
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${min.toFixed(2)}
                 </td>
               </tr>
               <tr>
-                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
-                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.q1')}
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.q1')}
                 </td>
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${q1.toFixed(2)}
                 </td>
               </tr>
               <tr>
-                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
-                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.median')}
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.median')}
                 </td>
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${median.toFixed(2)}
                 </td>
               </tr>
               <tr>
-                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
-                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.q3')}
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.q3')}
                 </td>
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${q3.toFixed(2)}
                 </td>
               </tr>
               <tr>
-                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0;">
-                  <span style="display: inline-block; width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%; margin-right: 8px;"></span>${t('chart.maximum')}
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.maximum')}
                 </td>
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${max.toFixed(2)}
@@ -1313,7 +1467,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           return '';
         },
         fontSize: 14,
-        color: currentIsDark ? '#000000' : '#ffffff',
+        color: '#ffffff', // Always use white for better visibility on colored backgrounds
         fontWeight: 'bold'
       }
     }));
@@ -1379,7 +1533,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         itemWidth: isMobile ? 12 : 18,
         itemHeight: isMobile ? 8 : 12,
         textStyle: {
-          color: isDark ? '#ffffff' : '#000000', // Fix legend text color
+          color: currentIsDark ? '#ffffff' : '#000000', // Fix legend text color
           fontSize: isMobile ? 10 : 12
         },
         data: sortedGrades.map(grade => ({
@@ -1396,8 +1550,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
-        hideDelay: isMobile ? 0 : 100, // Don't auto-hide on mobile
-        enterable: isMobile, // Allow touch interaction on mobile
+        hideDelay: isMobile ? 86400000 : 100, // 24 hours on mobile (effectively never auto-hide)
+        alwaysShowContent: false, // Let manual control work
+        enterable: true, // Allow interaction
+        transitionDuration: 0, // No animation
+        confine: true, // Keep tooltip within chart bounds
         textStyle: {
           color: currentIsDark ? '#ffffff' : '#000000', // Fix tooltip text color
           fontSize: 12
@@ -1423,8 +1580,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           // Use proper translation for grade
           const gradeLabel = context === 'course' ? t('chart.grade') : t('chart.rating');
           
-          let tooltip = `<div style="font-weight: 500; margin-bottom: 4px;">${categoryName}</div>`;
-          tooltip += `<div style="color: ${currentIsDark ? '#ffffff' : '#000000'}; margin-bottom: 4px;">${t('chart.totalStudents', { count: totalCount })}</div>`;
+          let tooltip = `<div style="font-weight: 500; margin-bottom: 8px;">${categoryName}</div>`;
+          tooltip += `<div style="margin-bottom: 6px; font-weight: 500;">${t('chart.studentCount', { count: totalCount })}</div>`;
+          
+          // Create table layout like box plot tooltip
+          tooltip += `<table style="width: 100%; border-collapse: collapse;">`;
           
           // Show only grades that have data
           params.forEach((param: any) => {
@@ -1432,12 +1592,19 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             const realCount = param.data.realCount || 0;
             
             if (percentage > 0 && realCount > 0) {
-              tooltip += `<div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">`;
-              tooltip += `<span style="display: inline-block; width: 10px; height: 10px; background-color: ${param.color}; border-radius: 2px;"></span>`;
-              tooltip += `<span>${param.seriesName}: ${realCount} (${percentage.toFixed(1)}%)</span>`;
-              tooltip += `</div>`;
+              tooltip += `<tr>`;
+              tooltip += `<td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">`;
+              tooltip += `<span style="display: inline-block; width: 10px; height: 10px; background-color: ${param.color}; border-radius: 2px; margin-right: 6px; vertical-align: middle;"></span>`;
+              tooltip += `${param.seriesName}`;
+              tooltip += `</td>`;
+              tooltip += `<td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">`;
+              tooltip += `${realCount} (${percentage.toFixed(1)}%)`;
+              tooltip += `</td>`;
+              tooltip += `</tr>`;
             }
           });
+          
+          tooltip += `</table>`;
           
           return tooltip;
         }
@@ -1480,11 +1647,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full justify-between h-12 px-4 bg-transparent hover:bg-transparent transition-all duration-200 rounded-lg group"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <TrendingUp className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
             <span className="font-semibold text-base">{title || t('chart.gradeDistribution')}</span>
             {totalCount > 0 && (
-              <Badge variant="secondary" className="h-6 px-2 text-sm ml-1 bg-primary text-white font-medium shadow-sm hidden sm:inline-flex">
+              <Badge variant="secondary" className="h-6 px-2 text-sm bg-primary text-white font-medium shadow-sm inline-flex pointer-events-none min-w-[2rem] justify-center">
                 {totalCount}
               </Badge>
             )}
@@ -1497,21 +1664,14 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             )}
           </div>
         </Button>
-        {totalCount > 0 && (
-          <div className="sm:hidden px-4 pb-2">
-            <Badge variant="secondary" className="h-6 px-2 text-sm bg-primary text-white font-medium shadow-sm">
-              {totalCount} {t('stats.reviews')}
-            </Badge>
-          </div>
-        )}
       </div>
 
       {/* Chart Content */}
       {isExpanded && (
         <div className="relative p-4 rounded-xl bg-muted/20">
-          <div className="mb-2">
+          <div className="mb-2 pt-3">
             <div className="flex flex-col gap-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 sm:px-4">
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 w-full sm:w-auto">
@@ -1564,7 +1724,18 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             {filterOptions && filterOptions.length > 0 && onFilterChange && (
               <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto min-w-0">
                 {filterLabel && (
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">{filterLabel}:</span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {(() => {
+                      // Show plural form for multi-select chart types
+                      if (chartType === 'stacked' || chartType === 'boxplot') {
+                        // Add (s) for plural in English only
+                        const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                        !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                        return isEnglish ? filterLabel + '(s)' : filterLabel;
+                      }
+                      return filterLabel;
+                    })()}:
+                  </span>
                 )}
                 {chartType === 'bar' ? (
                   // Single selection for bar chart
@@ -1573,12 +1744,29 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                     onValueChange={(value) => onFilterChange(value)}
                   >
                     <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
-                      <SelectValue placeholder={t('common.all')} />
+                      <SelectValue placeholder={t('common.all')}>
+                        {(() => {
+                          const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                          if (currentValue === 'all') {
+                            return t('common.all');
+                          } else {
+                            const option = filterOptions.find(opt => opt.value === currentValue);
+                            return option ? option.label : currentValue;
+                          }
+                        })()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
-                      <SelectItem value="all">{t('common.all')}</SelectItem>
+                      <SelectItem value="all" textValue={t('common.all')}>
+                        <div className="flex items-center justify-between w-full min-w-0">
+                          <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                            {totalCount}
+                          </Badge>
+                        </div>
+                      </SelectItem>
                       {filterOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value} className="pr-12">
+                        <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
                           <div className="flex items-center justify-between w-full min-w-0">
                             <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
                             <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
@@ -1604,7 +1792,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               return t('common.all');
                             } else if (selectedValues.length === 1) {
                               const option = filterOptions.find(opt => opt.value === selectedValues[0]);
-                              return option ? option.label : selectedValues[0];
+                              // Extract the label without count in parentheses
+                              const label = option ? option.label : selectedValues[0];
+                              // Remove count in parentheses if present (e.g., "Instructor Name (Lecture)" stays, but any count is removed)
+                              return label;
                             } else {
                               return `${selectedValues.length} selected`;
                             }
@@ -1613,34 +1804,43 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                       </SelectTrigger>
                       <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
                         <div className="p-2">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <input
-                              type="checkbox"
+                          <div className="flex items-center space-x-2 mb-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-1.5 transition-colors">
+                            <Checkbox
                               id="select-all"
                               checked={!Array.isArray(selectedFilter) || selectedFilter.length === 0 || selectedFilter.includes('all')}
-                              onChange={(e) => {
-                                if (e.target.checked) {
+                              onCheckedChange={(checked) => {
+                                if (checked) {
                                   onFilterChange('all');
                                 } else {
                                   onFilterChange([]);
                                 }
                               }}
-                              className="rounded border-gray-300 text-primary focus:ring-primary"
+                              className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                             />
-                            <label htmlFor="select-all" className="text-sm font-medium">
-                              {t('common.all')}
+                            <label 
+                              htmlFor="select-all" 
+                              className="text-sm font-medium cursor-pointer select-none flex-1 text-gray-900 dark:text-gray-100"
+                            >
+                              <div className="flex items-center justify-between w-full min-w-0">
+                                <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                                <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                  {totalCount}
+                                </Badge>
+                              </div>
                             </label>
                           </div>
-                          <div className="max-h-48 overflow-y-auto">
+                          <div className="max-h-48 overflow-y-auto space-y-0.5">
                             {filterOptions.map((option) => (
-                              <div key={option.value} className="flex items-center space-x-2 py-1">
-                                <input
-                                  type="checkbox"
+                              <div 
+                                key={option.value} 
+                                className="flex items-center space-x-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 transition-colors"
+                              >
+                                <Checkbox
                                   id={`option-${option.value}`}
                                   checked={Array.isArray(selectedFilter) && selectedFilter.includes(option.value)}
-                                  onChange={(e) => {
+                                  onCheckedChange={(checked) => {
                                     const currentValues = Array.isArray(selectedFilter) ? selectedFilter : [];
-                                    if (e.target.checked) {
+                                    if (checked) {
                                       const newValues = [...currentValues.filter(v => v !== 'all'), option.value];
                                       onFilterChange(newValues);
                                     } else {
@@ -1648,9 +1848,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                                       onFilterChange(newValues.length === 0 ? 'all' : newValues);
                                     }
                                   }}
-                                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                                  className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                                 />
-                                <label htmlFor={`option-${option.value}`} className="flex-1 text-sm cursor-pointer">
+                                <label 
+                                  htmlFor={`option-${option.value}`} 
+                                  className="flex-1 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
+                                >
                                   <div className="flex items-center justify-between w-full min-w-0">
                                     <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
                                     <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
@@ -1671,11 +1874,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           </div>
         </div>
         
-        {/* 統計數據 - 重新組織 GPA 和標準差在同一側 */}
+        {/* 統計數據 - 重新組織 GPA 和標準差在同一側，移除評論數避免重複 */}
         {statistics.mean !== null && statistics.standardDeviation !== null && (
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-2">
-            {/* 移動端：單行布局 */}
-            <div className="flex flex-row justify-between items-center gap-2 sm:hidden">
+            {/* 移動端：單行布局 - 移除評論數，只顯示 GPA 和標準差 */}
+            <div className="flex flex-row justify-center items-center gap-6 sm:hidden">
               {/* 平均 GPA */}
               <div className="flex flex-col items-center flex-1">
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
@@ -1695,23 +1898,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   {statistics.standardDeviation.toFixed(2)}
                 </span>
               </div>
-              
-              {/* 學生評論數 - 移動端用簡短文字 */}
-              <div className="flex flex-col items-center flex-1">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-0.5">
-                  {t('stats.reviews')}
-                </span>
-                <span className="text-lg font-bold text-primary">
-                  {totalCount}
-                </span>
-              </div>
             </div>
             
-            {/* 桌面端：原有布局 */}
-            <div className="hidden sm:flex flex-col sm:flex-row gap-4 sm:gap-6">
+            {/* 桌面端：原有布局 - 增加左右內邊距 */}
+            <div className="hidden sm:flex flex-col sm:flex-row gap-4 sm:gap-6 sm:px-4">
               <div className="flex flex-col items-start">
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
-                  {t('card.averageGPA')}
+                  {t('sort.averageGPA')}
                 </span>
                 <span className="text-2xl font-black text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text drop-shadow-sm">
                   {statistics.mean.toFixed(2)}
@@ -1728,10 +1921,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               </div>
             </div>
             
-            {/* 桌面端：學生評論數 */}
-            <div className="hidden sm:flex flex-col items-center sm:items-end shrink-0">
+            {/* 桌面端：學生評論數 - 增加右內邊距 */}
+            <div className="hidden sm:flex flex-col items-center sm:items-end shrink-0 sm:px-4">
               <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-0.5">
-                {context === 'course' ? t('pages.courseDetail.studentReviews') : t('instructors.studentReviews')}
+                {t('review.studentReviews')}
               </span>
               <span className="text-2xl font-bold text-primary">
                 {totalCount}
@@ -1757,6 +1950,37 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           notMerge={true}
           lazyUpdate={false}
           theme={isDark ? 'dark' : 'light'}
+          onChartReady={(chartInstance: ECharts) => {
+            // Additional mobile tooltip handling
+            if (isMobile) {
+              try {
+                // Override internal mouse/touch event handlers to prevent tooltip auto-hide
+                const zr = chartInstance.getZr();
+                if (zr && (zr as any).handler) {
+                  const handlers = (zr as any).handler._handlers;
+                  
+                  if (handlers) {
+                    // Override handlers to prevent tooltip hiding
+                    if (handlers.mouseout) {
+                      handlers.mouseout = [];
+                    }
+                    if (handlers.globalout) {
+                      handlers.globalout = [];
+                    }
+                    
+                    // Intercept mousemove to prevent unwanted tooltip updates
+                    if (handlers.mousemove && Array.isArray(handlers.mousemove)) {
+                      handlers.mousemove = handlers.mousemove.filter((h: any) => {
+                        return !h.name?.includes('tooltip');
+                      });
+                    }
+                  }
+                }
+              } catch (error) {
+                // Silently fail - chart will still work without custom mobile handling
+              }
+            }
+          }}
         />
           </div>
         </div>

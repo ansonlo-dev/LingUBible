@@ -192,12 +192,19 @@ export function InstructorReviewsFilters({
           </label>
           <Select value={currentLanguage} onValueChange={handleLanguageChange}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')} />
+              <SelectValue placeholder={t('common.all')}>
+                {currentLanguage === 'all' ? t('common.all') : getLanguageDisplayName(currentLanguage)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(languageCounts || {}).map(([language, count]) => (
@@ -222,12 +229,19 @@ export function InstructorReviewsFilters({
           </label>
           <Select value={currentTerm} onValueChange={handleTermChange}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')} />
+              <SelectValue placeholder={t('common.all')}>
+                {currentTerm === 'all' ? t('common.all') : (termCounts[currentTerm]?.name || currentTerm)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
@@ -258,12 +272,19 @@ export function InstructorReviewsFilters({
           </label>
           <Select value={currentCourse} onValueChange={handleCourseChange}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')} />
+              <SelectValue placeholder={t('common.all')}>
+                {currentCourse === 'all' ? t('common.all') : currentCourse}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(courseCounts || {}).map(([courseCode, courseInfo]) => {
@@ -293,12 +314,19 @@ export function InstructorReviewsFilters({
           </label>
           <Select value={currentSessionType} onValueChange={handleSessionTypeChange}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')} />
+              <SelectValue placeholder={t('common.all')}>
+                {currentSessionType === 'all' ? t('common.all') : t(`sessionType.${currentSessionType.toLowerCase()}`)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => (
@@ -323,12 +351,19 @@ export function InstructorReviewsFilters({
           </label>
           <Select value={currentGrade} onValueChange={handleGradeChange}>
             <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')} />
+              <SelectValue placeholder={t('common.all')}>
+                {currentGrade === 'all' ? t('common.all') : (currentGrade === 'N/A' ? t('review.notApplicable') : currentGrade)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalReviews}
+                  </Badge>
                 </span>
               </SelectItem>
               {sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => {

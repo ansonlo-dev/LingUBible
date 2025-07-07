@@ -53,21 +53,25 @@
 
 <table>
 <tr>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/3b82f6/ffffff?text=📝+Course+Reviews" alt="Course Reviews"/>
 <br><strong>Course Reviews</strong>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/10b981/ffffff?text=👨‍🏫+Lecturer+Ratings" alt="Lecturer Ratings"/>
 <br><strong>Lecturer Ratings</strong>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/f59e0b/ffffff?text=🔍+Smart+Search" alt="Smart Search"/>
 <br><strong>Smart Search</strong>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/8b5cf6/ffffff?text=🌐+Multilingual" alt="Multilingual"/>
 <br><strong>Multi-language Support</strong>
+</td>
+<td align="center" width="20%">
+<img src="https://via.placeholder.com/200x150/e11d48/ffffff?text=📊+Data+Analytics" alt="Data Analytics"/>
+<br><strong>Interactive Charts</strong>
 </td>
 </tr>
 </table>
@@ -90,7 +94,7 @@
 | 📱 **Responsive Design** | Support for all devices and screen sizes | ✅ |
 | 🎨 **Modern UI** | Beautiful and intuitive user interface | ✅ |
 | 🌙 **Theme Toggle** | Free switching between dark/light themes | ✅ |
-| 📊 **Data Statistics** | Personal review statistics and achievement system | ✅ |
+| 📊 **Data Statistics** | Personal review statistics and achievement system with interactive charts | ✅ |
 | 🔔 **Real-time Notifications** | Important updates and interaction reminders | ✅ |
 | ⚡ **High Performance** | Optimized bundle size and fast loading times | ✅ |
 
@@ -113,6 +117,7 @@
 | | Vite | 7.0.0 | Build Tool |
 | | Tailwind CSS | 3.4.17 | Styling |
 | | shadcn/ui | Latest | UI Components |
+| | ECharts | Latest | Data Visualization & Charts |
 | **🔧 Backend** | Appwrite | 18.1.1 | BaaS Platform |
 | | Email Services | - | Communication |
 | | Authentication | - | User Management |

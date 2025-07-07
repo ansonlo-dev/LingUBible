@@ -55,21 +55,25 @@
 
 <table>
 <tr>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/3b82f6/ffffff?text=📝+Course+Reviews" alt="Course Reviews"/>
 <br><strong>课程评价</strong>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/10b981/ffffff?text=👨‍🏫+Lecturer+Ratings" alt="Lecturer Ratings"/>
 <br><strong>讲师评分</strong>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/f59e0b/ffffff?text=🔍+Smart+Search" alt="Smart Search"/>
 <br><strong>智能搜索</strong>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://via.placeholder.com/200x150/8b5cf6/ffffff?text=🌐+Multilingual" alt="Multilingual"/>
 <br><strong>多语言支持</strong>
+</td>
+<td align="center" width="20%">
+<img src="https://via.placeholder.com/200x150/e11d48/ffffff?text=📊+Data+Analytics" alt="Data Analytics"/>
+<br><strong>交互式图表</strong>
 </td>
 </tr>
 </table>
@@ -92,7 +96,7 @@
 | 📱 **响应式设计** | 支持所有设备和屏幕尺寸 | ✅ |
 | 🎨 **现代化 UI** | 美观直观的用户界面 | ✅ |
 | 🌙 **主题切换** | 深色/浅色主题自由切换 | ✅ |
-| 📊 **数据统计** | 个人评价统计和成就系统 | ✅ |
+| 📊 **数据统计** | 个人评价统计和成就系统，配备交互式图表 | ✅ |
 | 🔔 **实时通知** | 重要更新和互动提醒 | ✅ |
 | ⚡ **高性能表现** | 优化的打包大小和快速加载时间 | ✅ |
 
@@ -115,6 +119,7 @@
 | | Vite | 5.4.1 | 构建工具 |
 | | Tailwind CSS | 3.4.17 | 样式设计 |
 | | shadcn/ui | 最新 | UI 组件 |
+| | ECharts | 最新 | 数据可视化与图表 |
 | **🔧 后端** | Appwrite | 18.1.1 | BaaS 平台 |
 | | 邮件服务 | - | 通信功能 |
 | | 身份认证 | - | 用户管理 |

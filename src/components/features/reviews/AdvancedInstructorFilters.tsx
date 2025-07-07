@@ -349,9 +349,14 @@ export function AdvancedInstructorFilters({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl max-h-96">
-              <SelectItem value="all">
-                <span className="font-bold">
-                  {t('common.all')}
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalInstructors}
+                  </Badge>
                 </span>
               </SelectItem>
               {Object.entries(getGroupedDepartments()).map(([faculty, config]) => (
@@ -398,8 +403,15 @@ export function AdvancedInstructorFilters({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all">
-                <span className="font-bold">{t('common.all')}</span>
+              <SelectItem value="all" textValue={t('common.all')}>
+                <span className="flex items-center gap-2">
+                  <span className="font-bold">
+                    {t('common.all')}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                    {totalInstructors}
+                  </Badge>
+                </span>
               </SelectItem>
               {availableTerms.map(term => (
                 <SelectItem key={term.term_code} value={term.term_code}>

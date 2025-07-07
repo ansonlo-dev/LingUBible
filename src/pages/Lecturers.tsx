@@ -847,7 +847,7 @@ const Lecturers = () => {
                   </div>
                 )}
               </div>
-              <div className="shrink-0">
+              <div className="shrink-0 -mt-2 sm:mt-0">
                 <FavoriteButton
                   type="instructor"
                   itemId={instructor.name}
@@ -1095,13 +1095,27 @@ const Lecturers = () => {
                   <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pages.courseDetail.filterByTerm')}:</span>
                   <Select value={selectedTermFilter} onValueChange={setSelectedTermFilter}>
                     <SelectTrigger className="w-[180px] h-8">
-                      <SelectValue placeholder={t('common.all')} />
+                      <SelectValue placeholder={t('common.all')}>
+                        {selectedTermFilter === 'all' ? t('common.all') : availableTerms.find(term => term.term_code === selectedTermFilter)?.name || selectedTermFilter}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t('common.all')}</SelectItem>
+                      <SelectItem value="all" textValue={t('common.all')}>
+                        <span className="flex items-center gap-2">
+                          <span className="font-bold">{t('common.all')}</span>
+                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                            {teachingCourses?.length || 0}
+                          </Badge>
+                        </span>
+                      </SelectItem>
                       {availableTerms.map((term) => (
-                        <SelectItem key={term.term_code} value={term.term_code}>
-                          {term.name}
+                        <SelectItem key={term.term_code} value={term.term_code} textValue={term.name}>
+                          <span className="flex items-center gap-2">
+                            <span>{term.name}</span>
+                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
+                              {teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0}
+                            </Badge>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -106,7 +106,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       case 'sm':
         return 'h-3 w-3';
       case 'lg':
-        return 'h-5 w-5';
+        // Larger icon on mobile portrait, normal size on landscape and desktop
+        return 'h-6 w-6 landscape:h-5 landscape:w-5 sm:h-5 sm:w-5';
       default:
         return 'h-4 w-4';
     }
