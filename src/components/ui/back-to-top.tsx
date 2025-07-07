@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 
 export function BackToTop() {
   const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
+  const [isBottomVisible, setIsBottomVisible] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -23,7 +24,18 @@ export function BackToTop() {
         // 使用最大值確保檢測準確
         const scrollTop = Math.max(bodyScrollTop, documentScrollTop, windowScrollY);
         
+        // 計算頁面總高度和視窗高度
+        const documentHeight = Math.max(
+          document.body.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.clientHeight,
+          document.documentElement.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        const windowHeight = window.innerHeight;
+        
         const shouldBeVisible = scrollTop > 50;
+        const shouldBottomBeVisible = scrollTop + windowHeight < documentHeight - 50;
         
         // 強制狀態更新，確保 React 重新渲染
         setIsVisible(prev => {
@@ -31,6 +43,14 @@ export function BackToTop() {
             // 使用 setTimeout 確保狀態更新被處理
             setTimeout(() => setIsVisible(shouldBeVisible), 0);
             return shouldBeVisible;
+          }
+          return prev;
+        });
+        
+        setIsBottomVisible(prev => {
+          if (prev !== shouldBottomBeVisible) {
+            setTimeout(() => setIsBottomVisible(shouldBottomBeVisible), 0);
+            return shouldBottomBeVisible;
           }
           return prev;
         });
@@ -109,13 +129,37 @@ export function BackToTop() {
         });
       }
       
+      // Keep button fully opaque on mobile during scroll, then reset after scroll completes
+      const isMobile = window.innerWidth < 768 || 'ontouchstart' in window;
+      if (isMobile) {
+        const backToTopButton = document.querySelector('[aria-label*="backToTop"], [aria-label*="Back to top"]') as HTMLElement;
+        if (backToTopButton) {
+          // Immediately make button fully opaque when clicked
+          backToTopButton.style.opacity = '1';
+          
+          // Reset to half transparent after scrolling completes (after all checks are done)
+          setTimeout(() => {
+            backToTopButton.style.opacity = '0.5';
+          }, 1500); // Wait for scrolling animation to complete
+        }
+      }
+      
       // 強制檢查多次
       const forceCheck = () => {
         const bodyScrollTop = document.body.scrollTop || 0;
         const documentScrollTop = document.documentElement.scrollTop || 0;
         const windowScrollY = window.pageYOffset || 0;
         const scrollTop = Math.max(bodyScrollTop, documentScrollTop, windowScrollY);
+        const documentHeight = Math.max(
+          document.body.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.clientHeight,
+          document.documentElement.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        const windowHeight = window.innerHeight;
         setIsVisible(scrollTop > 50);
+        setIsBottomVisible(scrollTop + windowHeight < documentHeight - 50);
       };
 
       // 多個時間點檢查
@@ -139,61 +183,178 @@ export function BackToTop() {
     }
   };
 
+  const scrollToBottom = () => {
+    try {
+      // 立即隱藏按鈕（預防性）
+      setIsBottomVisible(false);
+      
+      // 計算頁面總高度
+      const documentHeight = Math.max(
+        document.body.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.clientHeight,
+        document.documentElement.scrollHeight,
+        document.documentElement.offsetHeight
+      );
+      
+      // 嘗試多種滾動方法
+      if (document.body.scrollTo) {
+        document.body.scrollTo({
+          top: documentHeight,
+          behavior: 'smooth'
+        });
+      } else if (document.documentElement.scrollTo) {
+        document.documentElement.scrollTo({
+          top: documentHeight,
+          behavior: 'smooth'
+        });
+      } else if (window.scrollTo) {
+        window.scrollTo({
+          top: documentHeight,
+          behavior: 'smooth'
+        });
+      }
+      
+      // Keep button fully opaque on mobile during scroll, then reset after scroll completes
+      const isMobile = window.innerWidth < 768 || 'ontouchstart' in window;
+      if (isMobile) {
+        const scrollToBottomButton = document.querySelector('[aria-label*="scrollToBottom"], [aria-label*="Scroll to bottom"]') as HTMLElement;
+        if (scrollToBottomButton) {
+          // Immediately make button fully opaque when clicked
+          scrollToBottomButton.style.opacity = '1';
+          
+          // Reset to half transparent after scrolling completes (after all checks are done)
+          setTimeout(() => {
+            scrollToBottomButton.style.opacity = '0.5';
+          }, 1500); // Wait for scrolling animation to complete
+        }
+      }
+      
+      // 強制檢查多次
+      const forceCheck = () => {
+        const bodyScrollTop = document.body.scrollTop || 0;
+        const documentScrollTop = document.documentElement.scrollTop || 0;
+        const windowScrollY = window.pageYOffset || 0;
+        const scrollTop = Math.max(bodyScrollTop, documentScrollTop, windowScrollY);
+        const documentHeight = Math.max(
+          document.body.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.clientHeight,
+          document.documentElement.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        const windowHeight = window.innerHeight;
+        setIsVisible(scrollTop > 50);
+        setIsBottomVisible(scrollTop + windowHeight < documentHeight - 50);
+      };
+
+      // 多個時間點檢查
+      setTimeout(forceCheck, 0);
+      setTimeout(forceCheck, 100);
+      setTimeout(forceCheck, 300);
+      setTimeout(forceCheck, 500);
+      setTimeout(forceCheck, 800);
+      setTimeout(forceCheck, 1200);
+      
+    } catch (error) {
+      // 備用方案
+      try {
+        const documentHeight = Math.max(
+          document.body.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.clientHeight,
+          document.documentElement.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        document.body.scrollTop = documentHeight;
+        document.documentElement.scrollTop = documentHeight;
+        window.scrollTo(0, documentHeight);
+        setIsBottomVisible(false);
+      } catch (fallbackError) {
+        console.error('ScrollToBottom scroll to bottom error:', fallbackError);
+      }
+    }
+  };
+
+  const buttonBaseStyle = {
+    position: 'fixed' as const,
+    right: window.innerWidth >= 768 ? '32px' : '8px',
+    zIndex: 40,
+    width: '40px',
+    height: '32px',
+    background: 'linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%)',
+    color: 'white',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    transition: 'all 0.3s ease-in-out',
+    opacity: 0.5, // Half transparent by default
+  };
+
+  const topButtonStyle = {
+    ...buttonBaseStyle,
+    borderRadius: '20px 20px 0 0', // Upper half circle
+  };
+
+  const bottomButtonStyle = {
+    ...buttonBaseStyle,
+    borderRadius: '0 0 20px 20px', // Lower half circle
+  };
+
+  const getButtonEventHandlers = (isVisible: boolean) => ({
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isVisible) {
+        e.currentTarget.style.opacity = '1';
+      }
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isVisible) {
+        e.currentTarget.style.opacity = '0.5';
+      }
+    },
+    onMouseDown: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isVisible) {
+        e.currentTarget.style.opacity = '0.8';
+      }
+    },
+    onMouseUp: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isVisible) {
+        e.currentTarget.style.opacity = '1';
+      }
+    }
+  });
+
   return (
-    <Button
-      onClick={scrollToTop}
-      size="icon"
-      style={{
-        position: 'fixed',
-        bottom: window.innerWidth >= 768 ? '64px' : '8px',
-        right: window.innerWidth >= 768 ? '32px' : '8px',
-        zIndex: 40,
-        width: '48px',
-        height: '48px',
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(136, 19, 23) 100%)',
-        color: 'white',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        transition: 'all 0.3s ease-in-out',
-        transform: isVisible 
-          ? 'translateY(0px) scale(1)' 
-          : 'translateY(32px) scale(0.75)',
-        opacity: isVisible ? 1 : 0,
-        pointerEvents: isVisible ? 'auto' : 'none'
-      }}
-      onMouseEnter={(e) => {
-        if (isVisible) {
-          e.currentTarget.style.opacity = '0.9';
-          e.currentTarget.style.transform = isVisible 
-            ? 'translateY(0px) scale(1.1)' 
-            : 'translateY(32px) scale(0.75)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (isVisible) {
-          e.currentTarget.style.opacity = '1';
-          e.currentTarget.style.transform = isVisible 
-            ? 'translateY(0px) scale(1)' 
-            : 'translateY(32px) scale(0.75)';
-        }
-      }}
-      onMouseDown={(e) => {
-        if (isVisible) {
-          e.currentTarget.style.transform = isVisible 
-            ? 'translateY(0px) scale(0.95)' 
-            : 'translateY(32px) scale(0.75)';
-        }
-      }}
-      onMouseUp={(e) => {
-        if (isVisible) {
-          e.currentTarget.style.transform = isVisible 
-            ? 'translateY(0px) scale(1.1)' 
-            : 'translateY(32px) scale(0.75)';
-        }
-      }}
-      aria-label={t('backToTop.label')}
-    >
-      <ChevronUp style={{ width: '24px', height: '24px', strokeWidth: 3 }} />
-    </Button>
+    <>
+      {/* Back to Top Button */}
+      <Button
+        onClick={scrollToTop}
+        size="icon"
+        style={{
+          ...topButtonStyle,
+          bottom: window.innerWidth >= 768 ? '96px' : '40px', // Position directly above scroll-to-bottom button (64+32=96, 8+32=40)
+          transform: 'translateY(0px) scale(1)',
+          pointerEvents: 'auto'
+        }}
+        {...getButtonEventHandlers(true)}
+        aria-label={t('backToTop.label')}
+      >
+        <ChevronUp style={{ width: '20px', height: '20px', strokeWidth: 3 }} />
+      </Button>
+
+      {/* Scroll to Bottom Button */}
+      <Button
+        onClick={scrollToBottom}
+        size="icon"
+        style={{
+          ...bottomButtonStyle,
+          bottom: window.innerWidth >= 768 ? '64px' : '8px',
+          transform: 'translateY(0px) scale(1)',
+          pointerEvents: 'auto'
+        }}
+        {...getButtonEventHandlers(true)}
+        aria-label={t('scrollToBottom.label') || 'Scroll to bottom'}
+      >
+        <ChevronDown style={{ width: '20px', height: '20px', strokeWidth: 3 }} />
+      </Button>
+    </>
   );
 } 
