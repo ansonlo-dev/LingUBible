@@ -170,8 +170,7 @@ export function BackToTop() {
       setTimeout(() => forceCheck(false), 100);
       setTimeout(() => forceCheck(false), 300);
       setTimeout(() => forceCheck(false), 500);
-      setTimeout(() => forceCheck(false), 800);
-      setTimeout(() => forceCheck(true), 1200); // Last check resets mobile opacity
+      setTimeout(() => forceCheck(true), 700); // Last check resets mobile opacity - reduced from 1200ms to 700ms
       
     } catch (error) {
       // 備用方案
@@ -259,8 +258,7 @@ export function BackToTop() {
       setTimeout(() => forceCheck(false), 100);
       setTimeout(() => forceCheck(false), 300);
       setTimeout(() => forceCheck(false), 500);
-      setTimeout(() => forceCheck(false), 800);
-      setTimeout(() => forceCheck(true), 1200); // Last check resets mobile opacity
+      setTimeout(() => forceCheck(true), 700); // Last check resets mobile opacity - reduced from 1200ms to 700ms
       
     } catch (error) {
       // 備用方案
