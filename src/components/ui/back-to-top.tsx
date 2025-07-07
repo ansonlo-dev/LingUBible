@@ -136,16 +136,11 @@ export function BackToTop() {
         if (backToTopButton) {
           // Immediately make button fully opaque when clicked
           backToTopButton.style.opacity = '1';
-          
-          // Reset to half transparent after scrolling completes (after all checks are done)
-          setTimeout(() => {
-            backToTopButton.style.opacity = '0.5';
-          }, 1500); // Wait for scrolling animation to complete
         }
       }
       
       // 強制檢查多次
-      const forceCheck = () => {
+      const forceCheck = (isLastCheck = false) => {
         const bodyScrollTop = document.body.scrollTop || 0;
         const documentScrollTop = document.documentElement.scrollTop || 0;
         const windowScrollY = window.pageYOffset || 0;
@@ -160,15 +155,23 @@ export function BackToTop() {
         const windowHeight = window.innerHeight;
         setIsVisible(scrollTop > 50);
         setIsBottomVisible(scrollTop + windowHeight < documentHeight - 50);
+        
+        // Reset mobile opacity on final check for back-to-top button
+        if (isLastCheck && isMobile) {
+          const backToTopButton = document.querySelector('[aria-label*="backToTop"], [aria-label*="Back to top"]') as HTMLElement;
+          if (backToTopButton) {
+            backToTopButton.style.opacity = '0.5';
+          }
+        }
       };
 
       // 多個時間點檢查
-      setTimeout(forceCheck, 0);
-      setTimeout(forceCheck, 100);
-      setTimeout(forceCheck, 300);
-      setTimeout(forceCheck, 500);
-      setTimeout(forceCheck, 800);
-      setTimeout(forceCheck, 1200);
+      setTimeout(() => forceCheck(false), 0);
+      setTimeout(() => forceCheck(false), 100);
+      setTimeout(() => forceCheck(false), 300);
+      setTimeout(() => forceCheck(false), 500);
+      setTimeout(() => forceCheck(false), 800);
+      setTimeout(() => forceCheck(true), 1200); // Last check resets mobile opacity
       
     } catch (error) {
       // 備用方案
@@ -222,16 +225,11 @@ export function BackToTop() {
         if (scrollToBottomButton) {
           // Immediately make button fully opaque when clicked
           scrollToBottomButton.style.opacity = '1';
-          
-          // Reset to half transparent after scrolling completes (after all checks are done)
-          setTimeout(() => {
-            scrollToBottomButton.style.opacity = '0.5';
-          }, 1500); // Wait for scrolling animation to complete
         }
       }
       
       // 強制檢查多次
-      const forceCheck = () => {
+      const forceCheck = (isLastCheck = false) => {
         const bodyScrollTop = document.body.scrollTop || 0;
         const documentScrollTop = document.documentElement.scrollTop || 0;
         const windowScrollY = window.pageYOffset || 0;
@@ -246,15 +244,23 @@ export function BackToTop() {
         const windowHeight = window.innerHeight;
         setIsVisible(scrollTop > 50);
         setIsBottomVisible(scrollTop + windowHeight < documentHeight - 50);
+        
+        // Reset mobile opacity on final check for scroll-to-bottom button
+        if (isLastCheck && isMobile) {
+          const scrollToBottomButton = document.querySelector('[aria-label*="scrollToBottom"], [aria-label*="Scroll to bottom"]') as HTMLElement;
+          if (scrollToBottomButton) {
+            scrollToBottomButton.style.opacity = '0.5';
+          }
+        }
       };
 
       // 多個時間點檢查
-      setTimeout(forceCheck, 0);
-      setTimeout(forceCheck, 100);
-      setTimeout(forceCheck, 300);
-      setTimeout(forceCheck, 500);
-      setTimeout(forceCheck, 800);
-      setTimeout(forceCheck, 1200);
+      setTimeout(() => forceCheck(false), 0);
+      setTimeout(() => forceCheck(false), 100);
+      setTimeout(() => forceCheck(false), 300);
+      setTimeout(() => forceCheck(false), 500);
+      setTimeout(() => forceCheck(false), 800);
+      setTimeout(() => forceCheck(true), 1200); // Last check resets mobile opacity
       
     } catch (error) {
       // 備用方案
