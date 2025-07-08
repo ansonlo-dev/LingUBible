@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { BarChart3, BoxSelect, BarChart, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 
 // Chart type enum
@@ -1780,93 +1781,26 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 ) : (
                   // Multiple selection for stacked chart and box plot
                   <div className="relative w-full sm:w-auto min-w-0">
-                    <Select 
-                      value="multi-select" 
-                      onValueChange={() => {}} // Controlled by checkbox interactions
-                    >
-                      <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
-                        <SelectValue>
-                          {(() => {
-                            const selectedValues = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
-                            if (selectedValues.length === 0 || selectedValues.includes('all')) {
-                              return t('common.all');
-                            } else if (selectedValues.length === 1) {
-                              const option = filterOptions.find(opt => opt.value === selectedValues[0]);
-                              // Extract the label without count in parentheses
-                              const label = option ? option.label : selectedValues[0];
-                              // Remove count in parentheses if present (e.g., "Instructor Name (Lecture)" stays, but any count is removed)
-                              return label;
-                            } else {
-                              return `${selectedValues.length} selected`;
-                            }
-                          })()}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
-                        <div className="p-2">
-                          <div className="flex items-center space-x-2 mb-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-1.5 transition-colors">
-                            <Checkbox
-                              id="select-all"
-                              checked={!Array.isArray(selectedFilter) || selectedFilter.length === 0 || selectedFilter.includes('all')}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  onFilterChange('all');
-                                } else {
-                                  onFilterChange([]);
-                                }
-                              }}
-                              className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
-                            />
-                            <label 
-                              htmlFor="select-all" 
-                              className="text-sm font-medium cursor-pointer select-none flex-1 text-gray-900 dark:text-gray-100"
-                            >
-                              <div className="flex items-center justify-between w-full min-w-0">
-                                <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
-                                <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                                  {totalCount}
-                                </Badge>
-                              </div>
-                            </label>
-                          </div>
-                          <div className="max-h-48 overflow-y-auto space-y-0.5">
-                            {filterOptions.map((option) => (
-                              <div 
-                                key={option.value} 
-                                className="flex items-center space-x-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 transition-colors"
-                              >
-                                <Checkbox
-                                  id={`option-${option.value}`}
-                                  checked={Array.isArray(selectedFilter) && selectedFilter.includes(option.value)}
-                                  onCheckedChange={(checked) => {
-                                    const currentValues = Array.isArray(selectedFilter) ? selectedFilter : [];
-                                    if (checked) {
-                                      const newValues = [...currentValues.filter(v => v !== 'all'), option.value];
-                                      onFilterChange(newValues);
-                                    } else {
-                                      const newValues = currentValues.filter(v => v !== option.value && v !== 'all');
-                                      onFilterChange(newValues.length === 0 ? 'all' : newValues);
-                                    }
-                                  }}
-                                  className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
-                                />
-                                <label 
-                                  htmlFor={`option-${option.value}`} 
-                                  className="flex-1 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
-                                >
-                                  <div className="flex items-center justify-between w-full min-w-0">
-                                    <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
-                                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                                      {option.count}
-                                    </Badge>
-                                  </div>
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </SelectContent>
-                    </Select>
+                    <MultiSelectDropdown
+                      options={filterOptions.map((option): SelectOption => ({
+                        value: option.value,
+                        label: option.label,
+                        count: option.count
+                      }))}
+                      selectedValues={Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : [])}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          onFilterChange([]);
+                        } else {
+                          onFilterChange(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="w-full sm:max-w-[320px] md:max-w-[400px]"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={totalCount}
+                    />
                   </div>
                 )}
               </div>
