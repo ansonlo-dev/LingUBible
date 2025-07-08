@@ -278,8 +278,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      /* 移動版本強制使用足夠的寬度來顯示所有文字 */
-      width: 50vw !important;
+      /* 移動版本使用1/3寬度，保證一致性 */
+      width: 33.33vw !important;
       overflow-y: auto; /* 確保內容可以滾動 */
       overflow-x: hidden;
     }
@@ -345,7 +345,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      width: 50vw !important;
+      /* 橫屏手機也使用1/3寬度，保證一致性 */
+      width: 33.33vw !important;
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -404,7 +405,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      width: 45vw !important;
+      /* 小型平板橫屏也使用1/3寬度，保證一致性 */
+      width: 33.33vw !important;
       overflow-y: auto;
       overflow-x: hidden;
     }
