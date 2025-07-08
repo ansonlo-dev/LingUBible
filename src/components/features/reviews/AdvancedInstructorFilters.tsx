@@ -318,7 +318,7 @@ export function AdvancedInstructorFilters({
             placeholder={t('search.instructorPlaceholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
-            className="pl-12 pr-12 h-10 text-base bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-lg transition-all duration-300"
+            className="pl-12 pr-12 h-8 text-base bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-lg transition-all duration-300"
           />
           {filters.searchTerm && (
             <button
