@@ -153,8 +153,7 @@ export function MultiSelectDropdown({
         disabled={disabled}
       >
         <SelectTrigger 
-          className="w-full h-10" 
-          style={{ minWidth: getOptimalWidth() }}
+          className="w-full h-10 min-w-[180px]"
         >
           <SelectValue>
             {getDisplayText()}
@@ -164,9 +163,13 @@ export function MultiSelectDropdown({
           className="bg-white dark:bg-gray-900" 
           position="popper" 
           side="bottom" 
-          align="start" 
+          align="center" 
           sideOffset={8}
-          style={{ width: 'var(--radix-select-trigger-width)', minWidth: getOptimalWidth() }}
+          avoidCollisions={true}
+          style={{ 
+            width: 'var(--radix-select-trigger-width)',
+            maxWidth: 'min(350px, calc(100vw - 2rem))'
+          }}
         >
           <div className="p-2">
             {/* Select All Option */}
