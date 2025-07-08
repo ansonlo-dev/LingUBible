@@ -21,6 +21,12 @@ function getEnhancedMobileDetection() {
   const userAgent = navigator.userAgent.toLowerCase();
   const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   
+  // Special case: iPad mini portrait mode should behave like desktop for sidebar
+  // This enables desktop-like collapse behavior instead of mobile overlay
+  if (width === 768 && height === 1024 && isTouchDevice && /ipad/i.test(userAgent)) {
+    return false; // Treat iPad mini portrait as desktop for sidebar behavior
+  }
+  
   // Enhanced detection logic for mobile landscape mode
   if (isMobileDevice && isTouchDevice) {
     // Real mobile devices: check screen dimensions considering orientation
@@ -31,10 +37,10 @@ function getEnhancedMobileDetection() {
     const isLandscapePhone = width > height && minDimension <= 430; // iPhone 14 Pro Max landscape height = 430
     const isLandscapeTablet = width > height && minDimension > 430 && minDimension < 600; // Small tablet landscape
     
-    // iPad mini portrait (768x1024) and similar should be mobile
     // Include tablets with max dimension <= 1024 as mobile for sidebar behavior
+    // (iPad mini portrait already excluded above)
     if (isLandscapePhone || maxDimension <= 1024) {
-      return true; // Definitely mobile (includes iPad mini)
+      return true; // Mobile behavior
     } else if (isLandscapeTablet) {
       // Small tablet in landscape mode - judge by width
       return maxDimension < 1200;
