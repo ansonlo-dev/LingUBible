@@ -6,6 +6,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
 import { useState, useEffect } from 'react';
+import { useMarqueePlaceholder } from '@/hooks/useMarqueePlaceholder';
 
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +23,14 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { user } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [forceRender, setForceRender] = useState(0);
+
+  // Add marquee placeholder hook for search button text
+  const marqueeHook = useMarqueePlaceholder({
+    text: t('search.placeholder'),
+    enabled: true,
+    speed: 2, // slower speed for better readability
+    pauseDuration: 1000
+  });
 
   // 檢測操作系統
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -76,13 +85,13 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
 
         {/* 中間區域 - 搜索框 */}
         <div className="flex-1 flex justify-center min-w-0 mx-1 md:mx-4">
-          <div className="w-full max-w-sm md:max-w-2xl lg:max-w-3xl">
+          <div className="w-full max-w-sm md:max-w-2xl lg:max-w-3xl" ref={marqueeHook.ref}>
             <button
               onClick={() => setIsSearchOpen(true)}
               className="w-full flex items-center justify-between px-3 py-2 text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
             >
               <Search className="h-4 w-4 flex-shrink-0" />
-              <span className="flex-1 truncate md:whitespace-nowrap text-sm text-center">{t('search.placeholder')}</span>
+              <span className="flex-1 truncate md:whitespace-nowrap text-sm text-center">{marqueeHook.displayText}</span>
               <div className="hidden md:flex items-center gap-1 flex-shrink-0">
                 <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                   <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K

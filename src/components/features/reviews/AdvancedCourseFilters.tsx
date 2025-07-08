@@ -2,6 +2,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
 import { useEffect, useState } from 'react';
+import { useMarqueePlaceholder } from '@/hooks/useMarqueePlaceholder';
 import {
   Filter,
   Search,
@@ -157,6 +158,14 @@ export function AdvancedCourseFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
+  
+  // Add marquee placeholder hook
+  const marqueeHook = useMarqueePlaceholder({
+    text: t('search.placeholder'),
+    enabled: true,
+    speed: 2, // slower speed for better readability
+    pauseDuration: 1000
+  });
 
   // Load available terms
   useEffect(() => {
@@ -336,10 +345,10 @@ export function AdvancedCourseFilters({
           <Sparkles className="h-4 w-4" />
           {t('search.smartSearch')}
         </label>
-        <div className="relative group flex-1">
+        <div className="relative group flex-1" ref={marqueeHook.ref}>
           <Input
             type="text"
-            placeholder={t('search.placeholder')}
+            placeholder={marqueeHook.displayText}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
             className="pr-12 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
