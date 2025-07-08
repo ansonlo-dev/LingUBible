@@ -1787,10 +1787,17 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         label: option.label,
                         count: option.count
                       }))}
-                      selectedValues={Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : [])}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+                        // If 'all' is selected or no values, return empty array to show placeholder
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
                       onSelectionChange={(values: string[]) => {
                         if (values.length === 0) {
-                          onFilterChange([]);
+                          onFilterChange('all'); // When nothing selected, set to 'all'
                         } else {
                           onFilterChange(values);
                         }
