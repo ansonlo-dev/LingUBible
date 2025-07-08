@@ -316,27 +316,31 @@ const Courses = () => {
     }
 
     // 學科領域篩選
-    if (filters.subjectArea !== 'all') {
-      filtered = filtered.filter(course => course.department === filters.subjectArea);
+    if (filters.subjectArea.length > 0) {
+      filtered = filtered.filter(course => 
+        filters.subjectArea.includes(course.department)
+      );
     }
 
     // 教學語言篩選
-    if (filters.teachingLanguage !== 'all') {
+    if (filters.teachingLanguage.length > 0) {
       filtered = filtered.filter(course => {
         const courseLanguage = mapLanguageCode(course.course_language);
-        return courseLanguage === filters.teachingLanguage;
+        return filters.teachingLanguage.includes(courseLanguage);
       });
     }
 
     // 開設學期篩選
-    if (filters.offeredTerm !== 'all') {
+    if (filters.offeredTerm.length > 0) {
       filtered = filtered.filter(course => {
-        // 如果選擇的是當前學期，使用預先計算的 isOfferedInCurrentTerm 屬性
-        if (filters.offeredTerm === getCurrentTermCode()) {
-          return course.isOfferedInCurrentTerm;
-        }
-        // 對於其他學期，使用非同步檢查的結果
-        return termFilteredCourses.has(course.course_code);
+        return filters.offeredTerm.some(termCode => {
+          // 如果選擇的是當前學期，使用預先計算的 isOfferedInCurrentTerm 屬性
+          if (termCode === getCurrentTermCode()) {
+            return course.isOfferedInCurrentTerm;
+          }
+          // 對於其他學期，使用非同步檢查的結果
+          return termFilteredCourses.has(course.course_code);
+        });
       });
     }
 
@@ -412,11 +416,11 @@ const Courses = () => {
   const handleFiltersChange = (newFilters: CourseFilters) => {
     // 如果不是只更改分頁相關的設置，就重置到第一頁
     if (newFilters.searchTerm !== filters.searchTerm ||
-        newFilters.subjectArea !== filters.subjectArea ||
-        newFilters.teachingLanguage !== filters.teachingLanguage ||
+        JSON.stringify(newFilters.subjectArea) !== JSON.stringify(filters.subjectArea) ||
+        JSON.stringify(newFilters.teachingLanguage) !== JSON.stringify(filters.teachingLanguage) ||
         newFilters.sortBy !== filters.sortBy ||
         newFilters.sortOrder !== filters.sortOrder ||
-        newFilters.offeredTerm !== filters.offeredTerm) {
+        JSON.stringify(newFilters.offeredTerm) !== JSON.stringify(filters.offeredTerm)) {
       newFilters.currentPage = 1;
     }
     setFilters(newFilters);
@@ -431,11 +435,11 @@ const Courses = () => {
   const handleClearAll = () => {
     setFilters({
       searchTerm: '',
-      subjectArea: 'all',
-      teachingLanguage: 'all',
+      subjectArea: [],
+      teachingLanguage: [],
       sortBy: 'code',
       sortOrder: 'asc',
-      offeredTerm: 'all',
+      offeredTerm: [],
       itemsPerPage: 6,
       currentPage: 1,
     });

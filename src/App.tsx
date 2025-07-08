@@ -39,7 +39,6 @@ import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
 import EmailPreview from "./pages/EmailPreview";
 import PerformanceTest from "./pages/PerformanceTest";
-import GoogleIconTest from "./pages/GoogleIconTest";
 
 
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
@@ -51,7 +50,7 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
-import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { useResponsive } from '@/hooks/use-responsive';
 import { initializeScrollbarCompensation } from '@/utils/ui/scrollbarCompensation';
 
 
@@ -123,7 +122,7 @@ const AppContent = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isDark, setIsDark] = useState(initialIsDark);
-  const { isDesktop, isMobile } = useDeviceDetection();
+  const { isDesktop, isMobile } = useResponsive();
   // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     // 使用智能設備檢測來決定是否讀取 cookie 狀態
@@ -663,7 +662,6 @@ const RouterContent = ({
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />
-                    <Route path="/google-icon-test" element={<GoogleIconTest />} />
                     {/* 開發模式專用路由 */}
                     <Route 
                       path="/email-preview" 

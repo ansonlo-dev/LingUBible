@@ -31,6 +31,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
+
+// Helper function to get faculty by department name
+const getFacultyByDepartment = (department: string): string => {
+  const facultyMapping: { [key: string]: string } = {
+    // Faculty of Arts
+    'Chinese': 'faculty.arts',
+    'Cultural Studies': 'faculty.arts',
+    'Digital Arts and Creative Industries': 'faculty.arts',
+    'English': 'faculty.arts',
+    'History': 'faculty.arts',
+    'Philosophy': 'faculty.arts',
+    'Translation': 'faculty.arts',
+    'Centre for English and Additional Languages': 'faculty.arts',
+    'Centre for Chinese Language and Assessment': 'faculty.arts',
+    // Faculty of Business
+    'Accountancy': 'faculty.business',
+    'Finance': 'faculty.business',
+    'Management': 'faculty.business',
+    'Marketing and International Business': 'faculty.business',
+    'Operations and Risk Management': 'faculty.business',
+    // Faculty of Social Sciences
+    'Psychology': 'faculty.socialSciences',
+    'Economics': 'faculty.socialSciences',
+    'Government and International Affairs': 'faculty.socialSciences',
+    'Sociology and Social Policy': 'faculty.socialSciences',
+    // Core and Other
+    'Core Office': 'faculty.core',
+    'Science Unit': 'faculty.core',
+    'Lui Che Woo Music and Arts': 'faculty.core',
+    'Chan Shu-Ming Data Science Institute': 'faculty.core',
+  };
+  return facultyMapping[department] || 'faculty.other';
+};
 
 // Helper function to get subject code from department name
 const getSubjectCodeFromDepartment = (department: string): string => {
@@ -91,11 +125,11 @@ const mapLanguageCode = (courseLanguage: string): string => {
 
 export interface CourseFilters {
   searchTerm: string;
-  subjectArea: string;
-  teachingLanguage: string;
+  subjectArea: string[];
+  teachingLanguage: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
-  offeredTerm: string;
+  offeredTerm: string[];
   itemsPerPage: number;
   currentPage: number;
 }
@@ -139,7 +173,14 @@ export function AdvancedCourseFilters({
           CourseService.getAllTermsCoursesOfferedBatch()
         ]);
         
-        setAvailableTerms(terms);
+        // Sort terms by start_date (most recent first)
+        const sortedTerms = terms.sort((a, b) => {
+          const dateA = new Date(a.start_date);
+          const dateB = new Date(b.start_date);
+          return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+        });
+        
+        setAvailableTerms(sortedTerms);
         setTermCoursesMap(termCoursesMap);
         
         console.log('✅ Terms and teaching data loaded successfully');
@@ -160,18 +201,18 @@ export function AdvancedCourseFilters({
   const hasActiveFilters = () => {
     return (
       filters.searchTerm.trim() !== '' ||
-      filters.subjectArea !== 'all' ||
-      filters.teachingLanguage !== 'all' ||
-      filters.offeredTerm !== 'all'
+      filters.subjectArea.length > 0 ||
+      filters.teachingLanguage.length > 0 ||
+      filters.offeredTerm.length > 0
     );
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.searchTerm.trim()) count++;
-    if (filters.subjectArea !== 'all') count++;
-    if (filters.teachingLanguage !== 'all') count++;
-    if (filters.offeredTerm !== 'all') count++;
+    if (filters.subjectArea.length > 0) count++;
+    if (filters.teachingLanguage.length > 0) count++;
+    if (filters.offeredTerm.length > 0) count++;
     return count;
   };
 
@@ -240,6 +281,53 @@ export function AdvancedCourseFilters({
     return counts;
   };
 
+  // Helper function to create grouped subject options
+  const getGroupedSubjectOptions = (): SelectOption[] => {
+    const groupedOptions: SelectOption[] = [];
+    const subjectsByFaculty: { [key: string]: typeof availableSubjects } = {};
+    
+    // Group subjects by faculty
+    availableSubjects.forEach(subject => {
+      const faculty = getFacultyByDepartment(subject);
+      if (!subjectsByFaculty[faculty]) {
+        subjectsByFaculty[faculty] = [];
+      }
+      subjectsByFaculty[faculty].push(subject);
+    });
+    
+    // Sort faculties for consistent order
+    const sortedFaculties = Object.keys(subjectsByFaculty).sort((a, b) => {
+      const order = ['faculty.arts', 'faculty.business', 'faculty.socialSciences', 'faculty.core', 'faculty.other'];
+      return order.indexOf(a) - order.indexOf(b);
+    });
+    
+    // Add grouped options
+    sortedFaculties.forEach(faculty => {
+      // Add faculty header (disabled option for grouping)
+      groupedOptions.push({
+        value: `__faculty_${faculty}`,
+        label: `📚 ${t(faculty)}`,
+        count: subjectsByFaculty[faculty].reduce((total, subject) => 
+          total + (getSubjectCounts()[subject] || 0), 0
+        )
+      });
+      
+      // Add subjects under this faculty
+      subjectsByFaculty[faculty]
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(subject => {
+          const subjectCode = getSubjectCodeFromDepartment(subject);
+          groupedOptions.push({
+            value: subject,
+            label: `  ${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
+            count: getSubjectCounts()[subject] || 0
+          });
+        });
+    });
+    
+    return groupedOptions;
+  };
+
   return (
     <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
       {/* 智能搜索行 */}
@@ -269,149 +357,84 @@ export function AdvancedCourseFilters({
       </div>
 
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {/* 學科領域 */}
         <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
             <Library className="h-4 w-4" />
             {t('sort.subjectArea')}
           </label>
-          <Select value={filters.subjectArea} onValueChange={(value) => updateFilters({ subjectArea: value })}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allSubjects')}>
-                {filters.subjectArea === 'all' ? (
-                  <span className="font-bold">{t('common.all')}</span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
-                      {getSubjectCodeFromDepartment(filters.subjectArea)}
-                    </span>
-                    <span className="text-sm">
-                      {t(`subjectArea.${getSubjectCodeFromDepartment(filters.subjectArea)}` as any) || filters.subjectArea}
-                    </span>
-                  </span>
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalCourses}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {availableSubjects.map(subject => (
-                <SelectItem key={subject} value={subject}>
-                  <span className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded text-xs mr-2">
-                      {getSubjectCodeFromDepartment(subject)}
-                    </span>
-                    <span className="text-sm text-foreground">
-                      {t(`subjectArea.${getSubjectCodeFromDepartment(subject)}` as any) || subject}
-                    </span>
-                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                      {getSubjectCounts()[subject] || 0}
-                    </Badge>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex-1 min-w-0">
+            <MultiSelectDropdown
+              options={availableSubjects
+                .sort((a, b) => {
+                  const codeA = getSubjectCodeFromDepartment(a);
+                  const codeB = getSubjectCodeFromDepartment(b);
+                  return codeA.localeCompare(codeB);
+                })
+                .map(subject => {
+                  const subjectCode = getSubjectCodeFromDepartment(subject);
+                  return {
+                    value: subject,
+                    label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
+                    count: getSubjectCounts()[subject] || 0
+                  };
+                })}
+              selectedValues={filters.subjectArea}
+              onSelectionChange={(values) => updateFilters({ subjectArea: values })}
+              placeholder={t('filter.allSubjects')}
+              totalCount={totalCourses}
+            />
+          </div>
         </div>
 
         {/* 教學語言 */}
         <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
             <BookText className="h-4 w-4" />
             {t('filter.teachingLanguage')}
           </label>
-          <Select value={filters.teachingLanguage} onValueChange={(value) => updateFilters({ teachingLanguage: value })}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allLanguages')}>
-                {filters.teachingLanguage === 'all' ? (
-                  <span className="font-bold">{t('common.all')}</span>
-                ) : filters.teachingLanguage === 'English' ? (
-                  t('language.english')
-                ) : filters.teachingLanguage === 'Mandarin Chinese' ? (
-                  t('language.mandarinChinese')
-                ) : (
-                  filters.teachingLanguage
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalCourses}
-                  </Badge>
-                </span>
-              </SelectItem>
-              <SelectItem value="English">
-                <span className="flex items-center gap-2">
-                  {t('language.english')}
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {getLanguageCounts()['English'] || 0}
-                  </Badge>
-                </span>
-              </SelectItem>
-              <SelectItem value="Mandarin Chinese">
-                <span className="flex items-center gap-2">
-                  {t('language.mandarinChinese')}
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {getLanguageCounts()['Mandarin Chinese'] || 0}
-                  </Badge>
-                </span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex-1 min-w-0">
+            <MultiSelectDropdown
+              options={[
+                {
+                  value: 'English',
+                  label: t('language.english'),
+                  count: getLanguageCounts()['English'] || 0
+                },
+                {
+                  value: 'Mandarin Chinese',
+                  label: t('language.mandarinChinese'),
+                  count: getLanguageCounts()['Mandarin Chinese'] || 0
+                }
+              ]}
+              selectedValues={filters.teachingLanguage}
+              onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
+              placeholder={t('filter.allLanguages')}
+              totalCount={totalCourses}
+            />
+          </div>
         </div>
 
         {/* 開設學期 */}
-        <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
+        <div className="flex items-center gap-3 md:col-span-2 xl:col-span-1">
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
           </label>
-          <Select value={filters.offeredTerm} onValueChange={(value) => updateFilters({ offeredTerm: value })}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allTerms')}>
-                {filters.offeredTerm === 'all' ? (
-                  <span className="font-bold">{t('common.all')}</span>
-                ) : (
-                  getTermDisplayName(filters.offeredTerm)
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">{t('common.all')}</span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalCourses}
-                  </Badge>
-                </span>
-              </SelectItem>
-                             {availableTerms.map(term => (
-                 <SelectItem key={term.term_code} value={term.term_code}>
-                   <span className="flex items-center gap-2">
-                     <div className={`w-2 h-2 ${isCurrentTerm(term.term_code) ? 'bg-green-500' : 'bg-gray-500'} rounded-full`}></div>
-                     {getTermDisplayName(term.term_code)}
-                     <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                       {getTermCounts()[term.term_code] || 0}
-                     </Badge>
-                   </span>
-                 </SelectItem>
-               ))}
-            </SelectContent>
-          </Select>
+          <div className="flex-1 min-w-0">
+            <MultiSelectDropdown
+              options={availableTerms.map(term => ({
+                value: term.term_code,
+                label: getTermDisplayName(term.term_code),
+                count: getTermCounts()[term.term_code] || 0
+              }))}
+              selectedValues={filters.offeredTerm}
+              onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
+              placeholder={t('filter.allTerms')}
+              totalCount={totalCourses}
+            />
+          </div>
         </div>
 
       </div>
@@ -555,7 +578,7 @@ export function AdvancedCourseFilters({
         <div className="flex items-center gap-4">
           {/* 統計信息 */}
           <div className="text-sm text-muted-foreground">
-            {filters.searchTerm.trim() || filters.subjectArea !== 'all' || filters.teachingLanguage !== 'all' || filters.offeredTerm !== 'all' ? (
+            {filters.searchTerm.trim() || filters.subjectArea.length > 0 || filters.teachingLanguage.length > 0 || filters.offeredTerm.length > 0 ? (
               <span>{t('pages.courses.foundCount', { count: filteredCourses })}</span>
             ) : (
               <span>{t('pages.courses.totalCount', { count: totalCourses })}</span>

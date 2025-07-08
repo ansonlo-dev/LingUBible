@@ -43,11 +43,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 
 export interface InstructorFilters {
   searchTerm: string;
-  department: string;
-  teachingTerm: string;
+  department: string[];
+  teachingTerm: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   itemsPerPage: number;
@@ -118,16 +119,16 @@ export function AdvancedInstructorFilters({
   const hasActiveFilters = () => {
     return (
       filters.searchTerm.trim() !== '' ||
-      filters.department !== 'all' ||
-      filters.teachingTerm !== 'all'
+      filters.department.length > 0 ||
+      filters.teachingTerm.length > 0
     );
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.searchTerm.trim()) count++;
-    if (filters.department !== 'all') count++;
-    if (filters.teachingTerm !== 'all') count++;
+    if (filters.department.length > 0) count++;
+    if (filters.teachingTerm.length > 0) count++;
     return count;
   };
 
@@ -334,98 +335,64 @@ export function AdvancedInstructorFilters({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 部門 */}
         <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
             <Building2 className="h-4 w-4" />
             {t('filter.department')}
           </label>
-          <Select value={filters.department} onValueChange={(value) => updateFilters({ department: value })}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allDepartments')}>
-                {filters.department === 'all' ? (
-                  <span className="font-bold">{t('common.all')}</span>
-                ) : (
-                  translateDepartmentName(filters.department, t)
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl max-h-96">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalInstructors}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {Object.entries(getGroupedDepartments()).map(([faculty, config]) => (
-                <div key={faculty}>
-                  {/* Faculty/School Header */}
-                  <div className="px-2 py-2 text-sm font-bold text-primary bg-primary/5 border-b border-primary/10 flex items-center gap-2">
-                    <config.icon className="h-4 w-4" />
-                    {t(getFacultyTranslationKey(faculty))}
-                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/20 text-primary">
-                      {config.count}
-                    </Badge>
-                  </div>
-                  {/* Departments under this faculty */}
-                  {config.departments.map(department => (
-                    <SelectItem key={department} value={department} className="pl-8">
-                      <span className="flex items-center gap-2">
-                        {translateDepartmentName(department, t)}
-                        <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                          {getDepartmentCounts()[department] || 0}
-                        </Badge>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </div>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex-1 min-w-0">
+            <MultiSelectDropdown
+              options={(() => {
+                const groupedDepartments = getGroupedDepartments();
+                const options: SelectOption[] = [];
+                
+                Object.entries(groupedDepartments).forEach(([faculty, data]) => {
+                  // Add faculty group header
+                  options.push({
+                    value: `__faculty_${faculty}`,
+                    label: t(getFacultyTranslationKey(faculty)),
+                    count: data.count,
+                    disabled: true
+                  });
+                  
+                  // Add departments under this faculty
+                  data.departments.forEach(department => {
+                    options.push({
+                      value: department,
+                      label: `  ${translateDepartmentName(department, t)}`,
+                      count: getDepartmentCounts()[department] || 0
+                    });
+                  });
+                });
+                
+                return options;
+              })()}
+              selectedValues={filters.department}
+              onSelectionChange={(values) => updateFilters({ department: values })}
+              placeholder={t('filter.allDepartments')}
+              totalCount={totalInstructors}
+            />
+          </div>
         </div>
 
         {/* 授課學期 */}
         <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
             <Calendar className="h-4 w-4" />
             {t('filter.teachingTerm')}
           </label>
-          <Select value={filters.teachingTerm} onValueChange={(value) => updateFilters({ teachingTerm: value })}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('filter.allTerms')}>
-                {filters.teachingTerm === 'all' ? (
-                  <span className="font-bold">{t('common.all')}</span>
-                ) : (
-                  getTermDisplayName(filters.teachingTerm)
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalInstructors}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {availableTerms.map(term => (
-                <SelectItem key={term.term_code} value={term.term_code}>
-                  <span className="flex items-center gap-2">
-                    <div className={`w-2 h-2 ${isCurrentTerm(term.term_code) ? 'bg-green-500' : 'bg-gray-500'} rounded-full`}></div>
-                    {getTermDisplayName(term.term_code)}
-                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                      {getTermCounts()[term.term_code] || 0}
-                    </Badge>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex-1 min-w-0">
+            <MultiSelectDropdown
+              options={availableTerms.map(term => ({
+                value: term.term_code,
+                label: getTermDisplayName(term.term_code),
+                count: getTermCounts()[term.term_code] || 0
+              }))}
+              selectedValues={filters.teachingTerm}
+              onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
+              placeholder={t('filter.allTerms')}
+              totalCount={totalInstructors}
+            />
+          </div>
         </div>
       </div>
 

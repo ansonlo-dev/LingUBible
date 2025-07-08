@@ -2492,9 +2492,17 @@ export class CourseService {
    * 批量檢查講師是否在指定學期教學（優化版本）
    * 一次性獲取所有講師在指定學期的教學狀態，避免多次 API 調用
    */
-  static async getInstructorsTeachingInTermBatch(termCode: string, instructorNames?: string[]): Promise<Set<string>> {
+  static async getInstructorsTeachingInTermBatch(termCodes: string | string[], instructorNames?: string[]): Promise<Set<string>> {
     try {
-      const cacheKey = `instructors_teaching_in_term_${termCode}`;
+      // 處理單個 term code 或多個 term codes
+      const termCodeArray = Array.isArray(termCodes) ? termCodes : [termCodes];
+      
+      // 如果沒有 term codes，返回空集合
+      if (termCodeArray.length === 0) {
+        return new Set();
+      }
+
+      const cacheKey = `instructors_teaching_in_term_${termCodeArray.sort().join('_')}`;
       
       // 檢查緩存
       const cached = this.getCached<Set<string>>(cacheKey);
@@ -2504,7 +2512,7 @@ export class CourseService {
 
       // 獲取指定學期的所有教學記錄
       const queries = [
-        Query.equal('term_code', termCode),
+        Query.equal('term_code', termCodeArray),
         Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
         Query.select(['instructor_name'])
       ];

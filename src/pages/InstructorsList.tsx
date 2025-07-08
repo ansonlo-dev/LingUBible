@@ -30,22 +30,30 @@ import { AdvancedInstructorFilters, InstructorFilters } from '@/components/featu
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { translateDepartmentName } from '@/utils/textUtils';
+import { useResponsive, InstructorGrid } from '@/components/responsive';
 
 const InstructorsList = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
   
   // 篩選器狀態
   const [filters, setFilters] = useState<InstructorFilters>({
     searchTerm: '',
-    department: 'all',
-    teachingTerm: 'all',
+    department: [],
+    teachingTerm: [],
     sortBy: 'name',
     sortOrder: 'asc',
     currentPage: 1,
-    itemsPerPage: 6,
+    itemsPerPage: 6, // Initial value, will be updated based on screen size
   });
+
+  // Update itemsPerPage when screen size changes
+  useEffect(() => {
+    const newItemsPerPage = isMobile ? 6 : isTablet ? 6 : 9;
+    setFilters(prev => ({ ...prev, itemsPerPage: newItemsPerPage }));
+  }, [isMobile, isTablet]);
 
   // 使用防抖來優化搜尋性能
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
@@ -71,13 +79,13 @@ const InstructorsList = () => {
     // 讀取部門篩選
     const department = searchParams.get('department');
     if (department) {
-      urlFilters.department = department;
+      urlFilters.department = department.split(',').filter(d => d.trim());
     }
     
     // 讀取學期篩選
     const teachingTerm = searchParams.get('teachingTerm');
     if (teachingTerm) {
-      urlFilters.teachingTerm = teachingTerm;
+      urlFilters.teachingTerm = teachingTerm.split(',').filter(t => t.trim());
     }
     
     // 讀取排序方式
@@ -127,8 +135,19 @@ const InstructorsList = () => {
 
   // 當學期篩選條件改變時，使用預加載的數據進行快速檢查
   useEffect(() => {
-    if (filters.teachingTerm === 'all' || filters.teachingTerm === getCurrentTermCode()) {
-      // 如果是 'all' 或當前學期，不需要額外檢查
+    // 確保 teachingTerm 是陣列
+    const teachingTermArray = Array.isArray(filters.teachingTerm) ? filters.teachingTerm : [];
+    
+    // 如果沒有講師數據，或者沒有選擇學期篩選，跳過
+    if (instructors.length === 0 || teachingTermArray.length === 0) {
+      setTermFilteredInstructors(new Set());
+      setTermFilterLoading(false);
+      return;
+    }
+
+    // 如果只選擇當前學期，不需要非同步檢查
+    const nonCurrentTerms = teachingTermArray.filter(term => term !== getCurrentTermCode());
+    if (nonCurrentTerms.length === 0) {
       setTermFilteredInstructors(new Set());
       setTermFilterLoading(false);
       return;
@@ -139,7 +158,7 @@ const InstructorsList = () => {
       setTermFilterLoading(true);
       try {
         // 使用預加載的數據獲取該學期的所有教學講師
-        const instructorsTeachingInTerm = await CourseService.getInstructorsTeachingInTermBatch(filters.teachingTerm);
+        const instructorsTeachingInTerm = await CourseService.getInstructorsTeachingInTermBatch(teachingTermArray);
         
         // 將講師名稱映射到ID以進行快速匹配
         const filteredInstructorIds = new Set<string>();
@@ -163,9 +182,10 @@ const InstructorsList = () => {
 
   // 📊 性能優化：記憶化學期篩選狀態檢查
   const shouldShowLoadingForTermFilter = useMemo(() => {
-    return filters.teachingTerm !== 'all' && 
-           filters.teachingTerm !== getCurrentTermCode() && 
-           termFilterLoading;
+    const teachingTermArray = Array.isArray(filters.teachingTerm) ? filters.teachingTerm : [];
+    const hasNonCurrentTerms = teachingTermArray.length > 0 && 
+                               teachingTermArray.some(term => term !== getCurrentTermCode());
+    return hasNonCurrentTerms && termFilterLoading;
   }, [filters.teachingTerm, termFilterLoading]);
 
   // 📊 性能優化：記憶化可用部門計算
@@ -275,19 +295,24 @@ const InstructorsList = () => {
     }
 
     // 部門篩選
-    if (filters.department !== 'all') {
-      filtered = filtered.filter(instructor => instructor.department === filters.department);
+    if (filters.department.length > 0) {
+      filtered = filtered.filter(instructor => 
+        filters.department.includes(instructor.department)
+      );
     }
 
     // 學期篩選
-    if (filters.teachingTerm !== 'all') {
+    const teachingTermArray = Array.isArray(filters.teachingTerm) ? filters.teachingTerm : [];
+    if (teachingTermArray.length > 0) {
       filtered = filtered.filter(instructor => {
-        // 如果選擇的是當前學期，使用預先計算的屬性
-        if (filters.teachingTerm === getCurrentTermCode()) {
-          return instructor.isTeachingInCurrentTerm;
-        }
-        // 對於其他學期，使用非同步檢查的結果
-        return termFilteredInstructors.has(instructor.$id);
+        return teachingTermArray.some(termCode => {
+          // 如果選擇的是當前學期，使用預先計算的屬性
+          if (termCode === getCurrentTermCode()) {
+            return instructor.isTeachingInCurrentTerm;
+          }
+          // 對於其他學期，使用非同步檢查的結果
+          return termFilteredInstructors.has(instructor.$id);
+        });
       });
     }
 
@@ -353,8 +378,8 @@ const InstructorsList = () => {
   const handleFiltersChange = (newFilters: InstructorFilters) => {
     // 如果不是只更改分頁相關的設置，就重置到第一頁
     if (newFilters.searchTerm !== filters.searchTerm ||
-        newFilters.department !== filters.department ||
-        newFilters.teachingTerm !== filters.teachingTerm ||
+        JSON.stringify(newFilters.department) !== JSON.stringify(filters.department) ||
+        JSON.stringify(newFilters.teachingTerm) !== JSON.stringify(filters.teachingTerm) ||
         newFilters.sortBy !== filters.sortBy ||
         newFilters.sortOrder !== filters.sortOrder) {
       newFilters.currentPage = 1;
@@ -369,11 +394,11 @@ const InstructorsList = () => {
     if (newFilters.searchTerm.trim()) {
       newSearchParams.set('search', newFilters.searchTerm);
     }
-    if (newFilters.department !== 'all') {
-      newSearchParams.set('department', newFilters.department);
+    if (newFilters.department.length > 0) {
+      newSearchParams.set('department', newFilters.department.join(','));
     }
-    if (newFilters.teachingTerm !== 'all') {
-      newSearchParams.set('teachingTerm', newFilters.teachingTerm);
+    if (newFilters.teachingTerm.length > 0) {
+      newSearchParams.set('teachingTerm', newFilters.teachingTerm.join(','));
     }
     if (newFilters.sortBy !== 'name') {
       newSearchParams.set('sortBy', newFilters.sortBy);
@@ -398,8 +423,8 @@ const InstructorsList = () => {
   const handleClearAll = () => {
     const defaultFilters: InstructorFilters = {
       searchTerm: '',
-      department: 'all',
-      teachingTerm: 'all',
+      department: [],
+      teachingTerm: [],
       sortBy: 'name',
       sortOrder: 'asc',
       itemsPerPage: 6,
@@ -453,11 +478,11 @@ const InstructorsList = () => {
           </div>
 
           {/* 講師卡片骨架 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto mt-4">
+          <InstructorGrid className="max-w-7xl mx-auto mt-4">
             {Array.from({ length: 9 }).map((_, index) => (
               <InstructorCardSkeleton key={index} />
             ))}
-          </div>
+          </InstructorGrid>
         </div>
       </div>
     );
@@ -521,11 +546,11 @@ const InstructorsList = () => {
         <div className="mt-4">
           {/* 如果正在載入學期篩選，顯示載入中的講師卡片 */}
           {shouldShowLoadingForTermFilter ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            <InstructorGrid className="max-w-7xl mx-auto">
               {Array.from({ length: filters.itemsPerPage }).map((_, index) => (
                 <InstructorCardSkeleton key={index} />
               ))}
-            </div>
+            </InstructorGrid>
           ) : filteredAndSortedInstructors.length === 0 ? (
             <div className="flex justify-center items-center min-h-[300px]">
               <Card className="max-w-md">
@@ -540,7 +565,7 @@ const InstructorsList = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
+              <InstructorGrid className="max-w-7xl mx-auto">
                 {paginationData.currentPageInstructors.map((instructor) => (
                   <PopularItemCard
                     key={instructor.$id}
@@ -556,7 +581,7 @@ const InstructorsList = () => {
                     isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm ?? false}
                   />
                 ))}
-              </div>
+              </InstructorGrid>
 
               {/* 分頁組件 */}
               <div className="mt-12">

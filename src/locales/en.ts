@@ -1177,6 +1177,7 @@ export default {
   'common.clear': 'Clear',
   'common.refresh': 'Refresh',
   'common.all': 'All',
+  'common.selectedCount': '{count} selected',
   'common.other': 'Other',
   'common.na': 'N/A',
   'common.words': 'words',

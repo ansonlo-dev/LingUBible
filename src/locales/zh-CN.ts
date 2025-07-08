@@ -1165,6 +1165,7 @@ export default {
   'common.clear': '清除',
   'common.refresh': '刷新',
   'common.all': '全部',
+  'common.selectedCount': '已选 {count} 项',
   'common.other': '其他',
   'common.na': '无数据',
   'common.words': '字',
