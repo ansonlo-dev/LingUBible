@@ -3,7 +3,6 @@ import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { MarqueeText } from '@/components/ui/MarqueeText';
 
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
 import { useState, useEffect } from 'react';
@@ -83,16 +82,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               className="w-full flex items-center justify-between px-3 py-2 text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
             >
               <Search className="h-4 w-4 flex-shrink-0" />
-              <div 
-                className="flex-1 truncate md:whitespace-nowrap text-sm text-center"
-              >
-                <MarqueeText 
-                  enabled={true}
-                  speed={120}
-                >
-                  {t('search.placeholder')}
-                </MarqueeText>
-              </div>
+              <span className="flex-1 truncate md:whitespace-nowrap text-sm text-center">{t('search.placeholder')}</span>
               <div className="hidden md:flex items-center gap-1 flex-shrink-0">
                 <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                   <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K

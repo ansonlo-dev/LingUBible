@@ -2,7 +2,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
 import { useEffect, useState } from 'react';
-import { MarqueeText } from '@/components/ui/MarqueeText';
 import {
   Filter,
   Search,
@@ -158,7 +157,7 @@ export function AdvancedCourseFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
-  
+
   // Load available terms
   useEffect(() => {
     const loadAvailableTerms = async () => {
@@ -340,18 +339,11 @@ export function AdvancedCourseFilters({
         <div className="relative group flex-1">
           <Input
             type="text"
-            placeholder={filters.searchTerm ? '' : ''}
+            placeholder={t('search.placeholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
             className="pr-12 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
-          {!filters.searchTerm && (
-            <div className="absolute inset-0 pointer-events-none flex items-center text-sm text-muted-foreground" style={{ paddingLeft: '12px', paddingRight: '48px' }}>
-              <MarqueeText enabled={true} speed={120}>
-                {t('search.placeholder')}
-              </MarqueeText>
-            </div>
-          )}
           {filters.searchTerm && (
             <button
               onClick={() => updateFilters({ searchTerm: '' })}

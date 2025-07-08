@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, type Term } from '@/services/api/courseService';
 import { translateDepartmentName } from '@/utils/textUtils';
-import { MarqueeText } from '@/components/ui/MarqueeText';
 import {
   Filter,
   Search,
@@ -315,18 +314,11 @@ export function AdvancedInstructorFilters({
         <div className="relative group flex-1">
           <Input
             type="text"
-            placeholder={filters.searchTerm ? '' : ''}
+            placeholder={t('search.instructorPlaceholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
             className="pr-12 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
-          {!filters.searchTerm && (
-            <div className="absolute inset-0 pointer-events-none flex items-center text-sm text-muted-foreground" style={{ paddingLeft: '12px', paddingRight: '48px' }}>
-              <MarqueeText enabled={true} speed={120}>
-                {t('search.instructorPlaceholder')}
-              </MarqueeText>
-            </div>
-          )}
           {filters.searchTerm && (
             <button
               onClick={() => updateFilters({ searchTerm: '' })}
