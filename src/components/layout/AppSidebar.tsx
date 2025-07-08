@@ -2,11 +2,12 @@ import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle, Mai
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
 import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 import { useState, useEffect } from 'react';
+import { useResponsive } from '@/hooks/useEnhancedResponsive';
 
 // 自定義 Home 圖示組件
 const HomeIcon = ({ className }: { className?: string }) => (
@@ -33,11 +34,12 @@ interface AppSidebarProps {
   onMobileToggle?: () => void;
 }
 
-export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileToggle }: AppSidebarProps) {
-  const { t, language, setLanguage } = useLanguage();
-  const { user, loading } = useAuth();
+export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle }: AppSidebarProps) {
+  const navigate = useNavigate();
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
+  const { t, language, setLanguage } = useLanguage(); // Add back language and setLanguage
+  const { user, loading } = useAuth(); // Add back loading
+  const { isMobile } = useResponsive(); // Use enhanced detection
   const [forceRender, setForceRender] = useState(0);
   const [dynamicHeight, setDynamicHeight] = useState('100vh');
 
@@ -114,96 +116,13 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
     };
   }, []);
 
-  // 檢測移動設備並監聽方向變化
-  useEffect(() => {
-    const checkIsMobile = () => {
-      // 檢測真正的移動設備：結合螢幕寬度和設備特徵
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-      
-      // 新的智能檢測邏輯：針對移動設備橫屏模式的特殊處理
-      // 1. 真正的移動設備（有觸控且匹配用戶代理）始終視為移動設備
-      // 2. 桌面設備即使在分屏模式下（寬度 < 640）也不視為移動設備
-      let newIsMobile;
-      
-      if (isMobileDevice && isTouchDevice) {
-        // 真正的移動設備：檢查螢幕的最大尺寸，但要考慮橫屏模式
-        const maxDimension = Math.max(width, height);
-        const minDimension = Math.min(width, height);
-        
-        // 特殊處理：如果是橫屏模式（寬度 > 高度）且高度很小，仍然視為移動設備
-        const isLandscapePhone = width > height && minDimension <= 430; // iPhone 14 Pro Max 橫屏高度是 430
-        const isLandscapeTablet = width > height && minDimension > 430 && minDimension < 600; // 小型平板橫屏
-        
-        if (isLandscapePhone || maxDimension < 1024) {
-          newIsMobile = true;
-        } else if (isLandscapeTablet) {
-          // 小型平板在橫屏模式下根據寬度判斷
-          newIsMobile = maxDimension < 1200;
-        } else {
-          newIsMobile = false; // 大平板或桌面設備
-        }
-      } else if (isTouchDevice && !isMobileDevice) {
-        // 觸控設備但不是移動設備（如Surface等），使用寬度判斷
-        newIsMobile = width < 640;
-      } else {
-        // 桌面設備：即使在分屏模式下也不視為移動設備
-        // 只有在極窄的情況下（如開發者工具模擬）才視為移動設備
-        newIsMobile = width < 480;
-      }
-      
-      setIsMobile(newIsMobile);
-      // 強制重新渲染以確保 shouldShowText 正確更新
-      setForceRender(prev => prev + 1);
-    };
-
-    // 初始檢測
-    checkIsMobile();
-
-    // 處理方向變化的函數，添加延遲確保視窗大小正確更新
-    const handleOrientationChange = () => {
-      // 立即檢測一次
-      checkIsMobile();
-      
-      // 延遲檢測，確保視窗大小已經更新
-      setTimeout(() => {
-        checkIsMobile();
-      }, 100);
-      
-      // 再次延遲檢測，處理某些設備的延遲更新
-      setTimeout(() => {
-        checkIsMobile();
-      }, 300);
-    };
-
-    // 監聽多種事件來確保捕獲所有變化
-    window.addEventListener('resize', checkIsMobile);
-    window.addEventListener('orientationchange', handleOrientationChange);
-    
-    // 監聽視覺視窗變化（PWA 特有）
-    if ('visualViewport' in window) {
-      window.visualViewport?.addEventListener('resize', checkIsMobile);
-    }
-
-    return () => {
-      window.removeEventListener('resize', checkIsMobile);
-      window.removeEventListener('orientationchange', handleOrientationChange);
-      if ('visualViewport' in window) {
-        window.visualViewport?.removeEventListener('resize', checkIsMobile);
-      }
-    };
-  }, []);
-
   // 創建一個包裝的語言切換函數，在手機版時不關閉側邊欄
   const handleLanguageChange = async (newLanguage: Language) => {
     console.log('🔄 側邊欄: 語言切換到', newLanguage, '手機版側邊欄狀態:', isMobileOpen);
     
     // 在語言切換前，如果是手機版且側邊欄開啟，保存狀態
     if (isMobile && isMobileOpen) {
-      console.log('📱 側邊欄: 保存手機版側邊欄開啟狀態到 sessionStorage');
+      console.log('�� 側邊欄: 保存手機版側邊欄開啟狀態到 sessionStorage');
       sessionStorage.setItem('mobileSidebarWasOpen', 'true');
     }
     

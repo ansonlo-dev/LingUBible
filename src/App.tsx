@@ -50,7 +50,7 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useVisitorSession } from '@/hooks/useVisitorSession';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
-import { useResponsive } from '@/hooks/use-responsive';
+import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { initializeScrollbarCompensation } from '@/utils/ui/scrollbarCompensation';
 
 
@@ -122,54 +122,18 @@ const AppContent = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isDark, setIsDark] = useState(initialIsDark);
-  const { isDesktop, isMobile } = useResponsive();
-  // 初始化側邊欄狀態：從 cookie 讀取，首次訪問桌面版默認展開
+  const { isDesktop, isMobile } = useResponsive(); // Now uses enhanced detection
+  
+  // Simplified sidebar state initialization - no complex mobile detection needed here
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-    // 使用智能設備檢測來決定是否讀取 cookie 狀態
-    if (typeof window !== 'undefined') {
-      // 檢測真正的移動設備：結合螢幕寬度和設備特徵
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-      
-      // 智能檢測邏輯：與 AppSidebar 保持一致
-      let isRealMobile;
-      
-      if (isMobileDevice && isTouchDevice) {
-        // 真正的移動設備：檢查螢幕的最大尺寸，但要考慮橫屏模式
-        const maxDimension = Math.max(width, height);
-        const minDimension = Math.min(width, height);
-        
-        // 特殊處理：如果是橫屏模式（寬度 > 高度）且高度很小，仍然視為移動設備
-        const isLandscapePhone = width > height && minDimension <= 430; // iPhone 14 Pro Max 橫屏高度是 430
-        const isLandscapeTablet = width > height && minDimension > 430 && minDimension < 600; // 小型平板橫屏
-        
-        if (isLandscapePhone || maxDimension < 1024) {
-          isRealMobile = true;
-        } else if (isLandscapeTablet) {
-          // 小型平板在橫屏模式下根據寬度判斷
-          isRealMobile = maxDimension < 1200;
-        } else {
-          isRealMobile = false; // 大平板或桌面設備
-        }
-      } else if (isTouchDevice && !isMobileDevice) {
-        // 觸控設備但不是移動設備（如Surface等），使用寬度判斷
-        isRealMobile = width < 640;
-      } else {
-        // 桌面設備：即使在分屏模式下也不視為移動設備
-        isRealMobile = width < 480;
-      }
-      
-      // 只在非手機版時從 cookie 讀取狀態
-      if (!isRealMobile) {
-        return sidebarStateCookie.getState();
-      }
+    if (typeof window !== 'undefined' && !isMobile) {
+      // Only read from cookie for non-mobile devices
+      return sidebarStateCookie.getState();
     }
-    // 手機版默認收縮
+    // Mobile devices default to collapsed
     return false;
   });
+  
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
