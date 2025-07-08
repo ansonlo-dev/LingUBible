@@ -163,8 +163,7 @@ export function AdvancedCourseFilters({
   const marqueeHook = useMarqueePlaceholder({
     text: t('search.placeholder'),
     enabled: true,
-    speed: 120, // faster speed for better UX
-    pauseDuration: 1000
+    speed: 120 // faster speed for better UX
   });
 
   // Load available terms
@@ -355,15 +354,15 @@ export function AdvancedCourseFilters({
           />
           {marqueeHook.shouldAnimate && !filters.searchTerm && (
             <div 
-              className="absolute left-0 top-0 h-8 pointer-events-none flex items-center text-sm text-muted-foreground overflow-hidden"
+              className="absolute inset-0 pointer-events-none flex items-center text-sm text-muted-foreground"
               style={{
-                left: '12px', // Account for input padding-left
-                right: '48px', // Account for input padding-right + clear button space
+                paddingLeft: '12px', // Match input padding
+                paddingRight: '48px', // Account for clear button space
                 ...marqueeHook.containerStyles
               }}
             >
               <span style={marqueeHook.textStyles}>
-                {marqueeHook.text}
+                {marqueeHook.displayText}
               </span>
             </div>
           )}

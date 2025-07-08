@@ -28,8 +28,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const marqueeHook = useMarqueePlaceholder({
     text: t('search.placeholder'),
     enabled: true,
-    speed: 120, // faster speed for better UX
-    pauseDuration: 1000
+    speed: 120 // faster speed for better UX
   });
 
   // 檢測操作系統
@@ -98,7 +97,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
                 <span 
                   style={marqueeHook.textStyles}
                 >
-                  {marqueeHook.text}
+                  {marqueeHook.displayText}
                 </span>
               </div>
               <div className="hidden md:flex items-center gap-1 flex-shrink-0">

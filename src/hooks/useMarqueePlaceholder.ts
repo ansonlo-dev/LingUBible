@@ -5,14 +5,12 @@ interface MarqueePlaceholderOptions {
   text: string;
   enabled?: boolean;
   speed?: number; // pixels per second
-  pauseDuration?: number; // pause at start/end in milliseconds
 }
 
 export function useMarqueePlaceholder({
   text,
   enabled = true,
-  speed = 120, // pixels per second - increased for faster movement
-  pauseDuration = 1000 // 1 second pause
+  speed = 120 // pixels per second - increased for faster movement
 }: MarqueePlaceholderOptions) {
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,11 +86,10 @@ export function useMarqueePlaceholder({
   const getTextStyles = () => {
     if (!shouldAnimate || !animationDistance) return {};
 
-    const scrollDuration = animationDistance / speed; // time to scroll in seconds
-    const totalDuration = scrollDuration + (pauseDuration / 1000) * 2; // scroll + pause at start + pause at end
+    const scrollDuration = (animationDistance + 100) / speed; // time to scroll one full cycle
     
     return {
-      animation: `marquee-scroll-${animationDistance} ${totalDuration}s ease-in-out infinite`,
+      animation: `marquee-continuous-${animationDistance} ${scrollDuration}s linear infinite`,
       whiteSpace: 'nowrap' as const,
       display: 'inline-block'
     };
@@ -104,7 +101,8 @@ export function useMarqueePlaceholder({
     
     return {
       overflow: 'hidden' as const,
-      position: 'relative' as const
+      position: 'relative' as const,
+      whiteSpace: 'nowrap' as const
     };
   };
 
@@ -112,7 +110,7 @@ export function useMarqueePlaceholder({
   useEffect(() => {
     if (!shouldAnimate || !animationDistance) return;
 
-    const styleId = `marquee-animation-${animationDistance}`;
+    const styleId = `marquee-continuous-${animationDistance}`;
     let existingStyle = document.getElementById(styleId);
     
     if (!existingStyle) {
@@ -121,27 +119,14 @@ export function useMarqueePlaceholder({
       document.head.appendChild(existingStyle);
     }
 
-    const scrollDuration = animationDistance / speed;
-    const totalDuration = scrollDuration + (pauseDuration / 1000) * 2;
-    const pausePercentage = (pauseDuration / 1000) / totalDuration * 100;
-    const scrollPercentage = scrollDuration / totalDuration * 100;
-
+    // For continuous scrolling, we need to scroll from 0 to negative distance, then loop back seamlessly
     existingStyle.textContent = `
-      @keyframes marquee-scroll-${animationDistance} {
+      @keyframes marquee-continuous-${animationDistance} {
         0% {
-          transform: translateX(0);
-        }
-        ${pausePercentage}% {
-          transform: translateX(0);
-        }
-        ${pausePercentage + scrollPercentage}% {
-          transform: translateX(-${animationDistance}px);
-        }
-        ${pausePercentage * 2 + scrollPercentage}% {
-          transform: translateX(-${animationDistance}px);
+          transform: translateX(100%);
         }
         100% {
-          transform: translateX(0);
+          transform: translateX(-${animationDistance + 100}px);
         }
       }
     `;
@@ -153,13 +138,15 @@ export function useMarqueePlaceholder({
         style.remove();
       }
     };
-  }, [shouldAnimate, animationDistance, speed, pauseDuration]);
+  }, [shouldAnimate, animationDistance, speed]);
 
   return {
     ref: containerRef,
     text: text,
     shouldAnimate,
     textStyles: getTextStyles(),
-    containerStyles: getContainerStyles()
+    containerStyles: getContainerStyles(),
+    // For continuous scrolling, we duplicate the text to create seamless loop
+    displayText: shouldAnimate ? `${text} • ${text}` : text
   };
 } 
