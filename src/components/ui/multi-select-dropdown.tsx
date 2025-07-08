@@ -399,8 +399,7 @@ export function MultiSelectDropdown({
                 className={cn("overflow-y-auto space-y-0.5 scrollbar-hide", maxHeight)}
                 style={{
                   scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth'
+                  msOverflowStyle: 'none'
                 }}
               >
                 {options.map((option) => {

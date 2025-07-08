@@ -535,8 +535,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 className="h-full max-h-[450px] overflow-y-auto scrollbar-hide"
                 style={{
                   scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth'
+                  msOverflowStyle: 'none'
                 }}
               >
                 {loading ? (
@@ -895,8 +894,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 className="h-full max-h-[400px] overflow-y-auto scrollbar-hide"
                 style={{
                   scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth'
+                  msOverflowStyle: 'none'
                 }}
               >
                 {loading ? (
