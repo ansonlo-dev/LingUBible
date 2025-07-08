@@ -278,8 +278,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      /* 移動版本使用1/3寬度，保證一致性 */
-      width: 33.33vw !important;
+      /* 移動版本預設使用1/2寬度（適合直向模式） */
+      width: 50vw !important;
       overflow-y: auto; /* 確保內容可以滾動 */
       overflow-x: hidden;
     }
@@ -333,6 +333,14 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
+  /* 移動設備橫屏模式 - 所有橫屏手機使用1/3寬度 */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .sidebar-container {
+      /* 橫屏模式使用1/3寬度，提供更多可視區域 */
+      width: 33.33vw !important;
+    }
+  }
+
   /* 移動設備橫屏模式特殊處理 - 針對高度較小的橫屏手機 */
   @media (max-height: 430px) and (orientation: landscape) and (pointer: coarse) {
     .sidebar-container {
@@ -345,7 +353,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      /* 橫屏手機也使用1/3寬度，保證一致性 */
+      /* 橫屏手機使用1/3寬度 */
       width: 33.33vw !important;
       overflow-y: auto;
       overflow-x: hidden;
@@ -405,7 +413,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      /* 小型平板橫屏也使用1/3寬度，保證一致性 */
+      /* 小型平板橫屏使用1/3寬度 */
       width: 33.33vw !important;
       overflow-y: auto;
       overflow-x: hidden;
