@@ -31,7 +31,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
   const isScrolling = useRef<boolean>(false);
   const scrollTimeout = useRef<number | null>(null);
   const isValidSwipeStart = useRef<boolean>(false);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const isSwipeGesture = useRef<boolean>(false);
 
   // 使用 ref 來存儲最新的選項，避免頻繁重新創建事件處理器
   const optionsRef = useRef(options);
@@ -44,6 +44,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     // 重置狀態
     isScrolling.current = false;
     isValidSwipeStart.current = false;
+    isSwipeGesture.current = false;
 
     if (!e.touches || e.touches.length === 0) {
       return;
@@ -77,7 +78,8 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     touchStartTime.current = Date.now();
     isValidSwipeStart.current = true;
     
-  }, []); // 移除所有依賴，使用 ref 來獲取最新值
+    // 不在這裡阻止默認行為，讓其他交互正常進行
+  }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     const currentOptions = optionsRef.current;
@@ -98,10 +100,15 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const deltaX = Math.abs(currentX - touchStartX.current);
     const deltaY = Math.abs(currentY - touchStartY.current);
     
-    // 更智能的滾動檢測：只有當垂直移動明顯超過水平移動且達到一定閾值時才認為是滾動
-    if (deltaY > deltaX * 1.5 && deltaY > 20) {
+    // 檢測是否是水平滑動手勢（而不是垂直滾動）
+    if (deltaX > 15 && deltaX > deltaY * 1.5) {
+      // 這看起來像一個水平滑動手勢
+      isSwipeGesture.current = true;
+    } else if (deltaY > deltaX * 1.5 && deltaY > 20) {
+      // 這是垂直滾動
       isScrolling.current = true;
-      isValidSwipeStart.current = false; // 標記為無效的滑動開始
+      isValidSwipeStart.current = false;
+      isSwipeGesture.current = false;
       
       // 清除之前的超時
       if (scrollTimeout.current) {
@@ -113,6 +120,15 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
         isScrolling.current = false;
       }, 200);
     }
+
+    // 只有當確定是滑動手勢時才阻止默認行為
+    if (isSwipeGesture.current) {
+      try {
+        e.preventDefault();
+      } catch (err) {
+        // 忽略錯誤，可能是被動監聽器
+      }
+    }
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
@@ -120,6 +136,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     if (!currentOptions.enabled || !isValidSwipeStart.current || isScrolling.current) {
       // 重置狀態
       isValidSwipeStart.current = false;
+      isSwipeGesture.current = false;
       return;
     }
 
@@ -145,7 +162,11 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const allowedTime = currentOptions.allowedTime || 300;
 
     // 檢查時間限制
-    if (elapsedTime > allowedTime) return;
+    if (elapsedTime > allowedTime) {
+      isValidSwipeStart.current = false;
+      isSwipeGesture.current = false;
+      return;
+    }
 
     // 特殊處理：左半部分到右半部分的滑動
     if (currentOptions.swipeZone === 'left-half-to-right') {
@@ -158,6 +179,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
         const adjustedThreshold = Math.min(threshold, screenWidth / 4); // 最多螢幕寬度的1/4
         
         if (Math.abs(distanceX) >= adjustedThreshold && Math.abs(distanceY) <= restraint) {
+          // 只在確認是有效滑動時才阻止默認行為並執行回調
           try {
             e.preventDefault();
           } catch (err) {
@@ -172,11 +194,13 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       
       // 重置狀態
       isValidSwipeStart.current = false;
+      isSwipeGesture.current = false;
       return;
     }
 
     // 原有的滑動邏輯
     if (Math.abs(distanceX) >= threshold && Math.abs(distanceY) <= restraint) {
+      // 只在確認是有效滑動時才阻止默認行為並執行回調
       try {
         e.preventDefault();
       } catch (err) {
@@ -194,72 +218,36 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     
     // 重置狀態
     isValidSwipeStart.current = false;
-  }, []);
-
-  // 創建透明覆蓋層來確保滑動手勢始終有效
-  const createOverlay = useCallback(() => {
-    if (!enabled || typeof window === 'undefined') return;
-
-    // 移除現有覆蓋層
-    if (overlayRef.current) {
-      document.body.removeChild(overlayRef.current);
-      overlayRef.current = null;
-    }
-
-    // 創建新的透明覆蓋層，只在需要時顯示
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 999999;
-      pointer-events: none;
-      background: transparent;
-      touch-action: manipulation;
-    `;
-    
-    // 讓覆蓋層只在滑動時接收觸摸事件
-    overlay.style.pointerEvents = 'auto';
-    
-    overlayRef.current = overlay;
-    document.body.appendChild(overlay);
-
-    // 使用 capture 階段來確保事件處理優先級最高
-    overlay.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false });
-    overlay.addEventListener('touchmove', handleTouchMove, { capture: true, passive: false });
-    overlay.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false });
-
-  }, [enabled, handleTouchStart, handleTouchMove, handleTouchEnd]);
-
-  const removeOverlay = useCallback(() => {
-    if (overlayRef.current) {
-      try {
-        document.body.removeChild(overlayRef.current);
-      } catch (err) {
-        // 元素可能已經被移除
-      }
-      overlayRef.current = null;
-    }
+    isSwipeGesture.current = false;
   }, []);
 
   const forceReinit = useCallback(() => {
     setReinitTrigger(prev => prev + 1);
   }, []);
 
-  // 主要的 effect，處理覆蓋層的創建和清理
+  // 使用 document 而不是覆蓋層，並使用被動監聽器來提高性能
   useEffect(() => {
-    if (enabled) {
-      createOverlay();
-    } else {
-      removeOverlay();
-    }
+    if (!enabled) return;
+
+    // 使用被動監聽器以避免阻止默認滾動行為
+    const options = { passive: true };
+    const activeOptions = { passive: false }; // 只在需要時使用
+
+    document.addEventListener('touchstart', handleTouchStart, options);
+    document.addEventListener('touchmove', handleTouchMove, activeOptions);
+    document.addEventListener('touchend', handleTouchEnd, activeOptions);
 
     return () => {
-      removeOverlay();
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = null;
+      }
     };
-  }, [enabled, reinitTrigger, createOverlay, removeOverlay]);
+  }, [enabled, reinitTrigger, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // 頁面可見性變化時重新初始化
   useEffect(() => {
