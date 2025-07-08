@@ -30,13 +30,12 @@ import { AdvancedInstructorFilters, InstructorFilters } from '@/components/featu
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { translateDepartmentName } from '@/utils/textUtils';
-import { useResponsive, InstructorGrid } from '@/components/responsive';
+import { InstructorGrid } from '@/components/responsive';
 
 const InstructorsList = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isMobile, isTablet, isDesktop } = useResponsive();
   
   // 篩選器狀態
   const [filters, setFilters] = useState<InstructorFilters>({
@@ -46,14 +45,8 @@ const InstructorsList = () => {
     sortBy: 'name',
     sortOrder: 'asc',
     currentPage: 1,
-    itemsPerPage: 6, // Initial value, will be updated based on screen size
+    itemsPerPage: 6,
   });
-
-  // Update itemsPerPage when screen size changes
-  useEffect(() => {
-    const newItemsPerPage = isMobile ? 6 : isTablet ? 6 : 9;
-    setFilters(prev => ({ ...prev, itemsPerPage: newItemsPerPage }));
-  }, [isMobile, isTablet]);
 
   // 使用防抖來優化搜尋性能
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
