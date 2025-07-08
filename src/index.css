@@ -265,81 +265,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
-  /* 手機版隱藏側邊欄 - 調整斷點以支援桌面分屏模式 */
-  @media (max-width: 768px) {
-    .sidebar-container {
-      transform: translateX(-100%);
-      top: 0;
-      height: 100vh; /* 備用方案 */
-      height: 100dvh; /* 使用動態視窗高度，考慮瀏覽器地址欄 */
-      height: var(--dynamic-vh); /* JavaScript 動態設定的高度 */
-      /* 為不支援 dvh 的瀏覽器提供 JavaScript 回退 */
-      min-height: 100vh;
-      min-height: 100dvh;
-      min-height: var(--dynamic-vh);
-      z-index: 50;
-      /* 移動版本預設使用1/2寬度（適合直向模式） */
-      width: 50vw !important;
-      overflow-y: auto; /* 確保內容可以滾動 */
-      overflow-x: hidden;
-    }
-    
-    .sidebar-container.mobile-open {
-      transform: translateX(0);
-    }
 
-    /* 手機版不支援摺疊 */
-    .sidebar-container.collapsed {
-      width: var(--sidebar-width);
-    }
 
-    /* 確保側邊欄內容在手機版中正確佈局 */
-    .sidebar-container > div {
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
 
-    /* 確保底部設置區域始終可見 */
-    .sidebar-container nav {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    /* 手機版懸停效果調整 - 完全禁用懸停效果 */
-    .sidebar-container nav a:hover {
-      transform: none; /* 手機版不使用 translateX */
-      background-color: inherit; /* 重置背景色 */
-      color: inherit; /* 重置文字顏色 */
-      box-shadow: none; /* 移除陰影 */
-    }
-
-    /* 手機版活動狀態項目的懸停效果也要重置 */
-    .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
-      transform: none;
-      background-color: rgb(var(--sidebar-accent)); /* 保持原有的活動狀態背景 */
-      color: rgb(var(--sidebar-accent-foreground)); /* 保持原有的活動狀態文字色 */
-    }
-
-    /* 手機版圖標懸停效果重置 */
-    .sidebar-container nav a:hover svg {
-      transform: none;
-    }
-
-    /* 手機版觸摸反饋 */
-    .sidebar-container nav a:active {
-      transform: scale(0.98);
-      transition: transform 0.1s ease;
-    }
-  }
-
-  /* 移動設備橫屏模式 - 所有橫屏手機使用1/3寬度 */
-  @media (max-width: 768px) and (orientation: landscape) {
-    .sidebar-container {
-      /* 橫屏模式使用1/3寬度，提供更多可視區域 */
-      width: 33.33vw !important;
-    }
-  }
 
   /* 移動設備橫屏模式特殊處理 - 針對高度較小的橫屏手機 */
   @media (max-height: 430px) and (orientation: landscape) and (pointer: coarse) {
@@ -1410,6 +1338,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    line-clamp: 2; /* Standard property for compatibility */
     overflow: hidden;
   }
 
@@ -1417,6 +1346,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+    line-clamp: 3; /* Standard property for compatibility */
     overflow: hidden;
   }
 
@@ -2774,6 +2704,33 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   /* 手機和平板直向模式的側邊欄處理 - 擴展支援到834px以包含iPad */
   @media (max-width: 834px) {
+    body.mobile-sidebar-open {
+      /* 防止背景滾動 */
+      overflow: hidden !important;
+      position: fixed;
+      width: 100%;
+    }
+
+    body.mobile-sidebar-open .main-container {
+      /* 防止主容器被遮罩影響 */
+      overflow: hidden !important;
+      /* 確保主容器不會滾動 */
+      max-height: 100vh;
+      max-height: 100dvh;
+    }
+
+    body.mobile-sidebar-open .header-sticky {
+      /* 確保header不會被側邊欄遮蓋 */
+      z-index: 105 !important;
+    }
+
+    /* 防止背景滾動時的內容區域 */
+    body.mobile-sidebar-open .content-area {
+      overflow: hidden !important;
+      height: calc(100vh - var(--header-height));
+      height: calc(100dvh - var(--header-height));
+    }
+
     .sidebar-container {
       transform: translateX(-100%);
       top: 0;
@@ -2845,28 +2802,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
     .sidebar-container {
       /* 橫屏模式使用1/3寬度，提供更多可視區域 */
       width: 33.33vw !important;
-    }
-  }
-
-  @media (max-width: 834px) {
-    body.mobile-sidebar-open .main-container {
-      /* 防止主容器被遮罩影響 */
-      overflow: hidden !important;
-      /* 確保主容器不會滾動 */
-      max-height: 100vh;
-      max-height: 100dvh;
-    }
-
-    body.mobile-sidebar-open .header-sticky {
-      /* 確保header不會被側邊欄遮蓋 */
-      z-index: 105 !important;
-    }
-
-    /* 防止背景滾動時的內容區域 */
-    body.mobile-sidebar-open .content-area {
-      overflow: hidden !important;
-      height: calc(100vh - var(--header-height));
-      height: calc(100dvh - var(--header-height));
     }
   }
 }
