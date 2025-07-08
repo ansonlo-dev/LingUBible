@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -77,12 +77,37 @@ export function MultiSelectDropdown({
 
   // Filter out disabled options (group headers) for counting
   const selectableOptions = options.filter(option => !option.value.startsWith('__faculty_'));
-  
+
+  // Normalize selectedValues to ensure consistency:
+  // If empty or only has 'all' without individual items, treat as all selected
+  const normalizedSelectedValues = (() => {
+    if (selectableOptions.length === 0) return safeSelectedValues;
+    
+    const hasAllFlag = safeSelectedValues.includes('all');
+    const individualSelections = safeSelectedValues.filter(v => v !== 'all');
+    const allOptionValues = selectableOptions.map(opt => opt.value);
+    
+    // If empty selection (first visit) or 'all' is selected but individual items are missing
+    if (safeSelectedValues.length === 0 || 
+        (hasAllFlag && individualSelections.length < selectableOptions.length)) {
+      return ['all', ...allOptionValues];
+    }
+    
+        return safeSelectedValues;
+  })();
+
+  // Update parent component if normalized values differ from input
+  useEffect(() => {
+    if (JSON.stringify(normalizedSelectedValues) !== JSON.stringify(safeSelectedValues)) {
+      onSelectionChange(normalizedSelectedValues);
+    }
+  }, [JSON.stringify(normalizedSelectedValues), JSON.stringify(safeSelectedValues), onSelectionChange]);
+
   // Check if all options are selected
-  const isAllSelected = safeSelectedValues.length === 0 || 
-    safeSelectedValues.includes('all') ||
-    (safeSelectedValues.length > 0 && 
-     safeSelectedValues.length === selectableOptions.length);
+  const isAllSelected = normalizedSelectedValues.length === 0 || 
+    normalizedSelectedValues.includes('all') ||
+    (normalizedSelectedValues.length > 0 && 
+     normalizedSelectedValues.length === selectableOptions.length);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -118,7 +143,7 @@ export function MultiSelectDropdown({
       
       if (checked) {
         // Add all departments under this faculty
-        const currentIndividualSelections = safeSelectedValues.filter(v => v !== 'all');
+        const currentIndividualSelections = normalizedSelectedValues.filter(v => v !== 'all');
         newValues = [...new Set([...currentIndividualSelections, ...facultyDepartments])];
         
         // Check if all options are now selected
@@ -127,7 +152,7 @@ export function MultiSelectDropdown({
         }
       } else {
         // Remove all departments under this faculty and remove 'all' if it exists
-        newValues = safeSelectedValues.filter(v => !facultyDepartments.includes(v) && v !== 'all');
+        newValues = normalizedSelectedValues.filter(v => !facultyDepartments.includes(v) && v !== 'all');
       }
       
       onSelectionChange(newValues);
@@ -138,7 +163,7 @@ export function MultiSelectDropdown({
     
     if (checked) {
       // Add the option to existing selections
-      const currentIndividualSelections = safeSelectedValues.filter(v => v !== 'all');
+      const currentIndividualSelections = normalizedSelectedValues.filter(v => v !== 'all');
       newValues = [...new Set([...currentIndividualSelections, optionValue])];
       
       // Check if all individual options are now selected
@@ -148,20 +173,21 @@ export function MultiSelectDropdown({
       }
     } else {
       // Remove the option and remove 'all' if it exists
-      newValues = safeSelectedValues.filter(v => v !== optionValue && v !== 'all');
+      newValues = normalizedSelectedValues.filter(v => v !== optionValue && v !== 'all');
     }
     
     onSelectionChange(newValues);
   };
 
   const getDisplayText = () => {
-    if (safeSelectedValues.includes('all') || safeSelectedValues.length === 0) {
+    if (normalizedSelectedValues.includes('all') || normalizedSelectedValues.length === 0) {
       return t('common.all');
-    } else if (safeSelectedValues.length === 1) {
-      const option = options.find(opt => opt.value === safeSelectedValues[0]);
-      return option ? option.label : safeSelectedValues[0];
+    } else if (normalizedSelectedValues.length === 1) {
+      const option = options.find(opt => opt.value === normalizedSelectedValues[0]);
+      return option ? option.label : normalizedSelectedValues[0];
     } else {
-      return t('common.selectedCount', { count: safeSelectedValues.length });
+      const individualCount = normalizedSelectedValues.filter(v => v !== 'all').length;
+      return t('common.selectedCount', { count: individualCount });
     }
   };
 
@@ -256,9 +282,9 @@ export function MultiSelectDropdown({
                     .map(opt => opt.value);
                   
                   const isFacultySelected = 
-                    safeSelectedValues.includes('all') ||
+                    normalizedSelectedValues.includes('all') ||
                     (facultyDepartments.length > 0 && 
-                     facultyDepartments.every(dept => safeSelectedValues.includes(dept)));
+                     facultyDepartments.every(dept => normalizedSelectedValues.includes(dept)));
                   
                   // Render faculty group header with checkbox
                   return (
@@ -301,7 +327,7 @@ export function MultiSelectDropdown({
                   >
                     <Checkbox
                       id={`option-${option.value}`}
-                      checked={safeSelectedValues.includes('all') || safeSelectedValues.includes(option.value)}
+                      checked={normalizedSelectedValues.includes('all') || normalizedSelectedValues.includes(option.value)}
                       onCheckedChange={(checked) => handleOptionToggle(option.value, !!checked)}
                       className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                     />
