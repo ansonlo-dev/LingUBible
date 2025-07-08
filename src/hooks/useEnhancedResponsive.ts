@@ -31,8 +31,10 @@ function getEnhancedMobileDetection() {
     const isLandscapePhone = width > height && minDimension <= 430; // iPhone 14 Pro Max landscape height = 430
     const isLandscapeTablet = width > height && minDimension > 430 && minDimension < 600; // Small tablet landscape
     
-    if (isLandscapePhone || maxDimension < 1024) {
-      return true; // Definitely mobile
+    // iPad mini portrait (768x1024) and similar should be mobile
+    // Include tablets with max dimension <= 1024 as mobile for sidebar behavior
+    if (isLandscapePhone || maxDimension <= 1024) {
+      return true; // Definitely mobile (includes iPad mini)
     } else if (isLandscapeTablet) {
       // Small tablet in landscape mode - judge by width
       return maxDimension < 1200;
