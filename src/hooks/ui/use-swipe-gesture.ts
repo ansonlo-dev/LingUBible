@@ -31,6 +31,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
   const isScrolling = useRef<boolean>(false);
   const scrollTimeout = useRef<number | null>(null);
   const isValidSwipeStart = useRef<boolean>(false);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   // 使用 ref 來存儲最新的選項，避免頻繁重新創建事件處理器
   const optionsRef = useRef(options);
@@ -40,47 +41,9 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const currentOptions = optionsRef.current;
     if (!currentOptions.enabled) return;
 
-    // 如果正在滾動，忽略觸摸開始
-    if (isScrolling.current) return;
-
-    // 檢查觸摸是否發生在互動元素上
-    const target = e.target as Element;
-    if (target && (
-      target.closest('[role="dialog"]') ||
-      target.closest('.search-container') ||
-      target.closest('[data-radix-dialog-content]') ||
-      target.closest('input[type="text"]') ||
-      target.closest('textarea') ||
-      target.closest('select') ||
-      target.closest('[cmdk-root]') ||
-      target.closest('.fixed.left-4.right-4') // 搜索結果下拉框
-    )) {
-      return;
-    }
-
-    // 檢查是否是真正的按鈕或鏈接，但允許課程卡片和講師卡片的主要連結區域
-    if (target) {
-      const isInCourseCard = target.closest('.course-card');
-      const isInInstructorCard = target.closest('[class*="instructor-card"]') || isInCourseCard; // instructor cards often use course-card class
-      
-      // 如果在課程卡片或講師卡片內，只阻止特定的交互元素
-      if (isInCourseCard || isInInstructorCard) {
-        // 允許在卡片的主要區域開始滑動，但阻止這些特定元素
-        if (target.closest('button:not(.card-main-link)') || 
-            target.closest('.favorite-button') ||
-            target.closest('[role="button"]:not(.card-main-link)') ||
-            target.closest('input') ||
-            target.closest('textarea') ||
-            target.closest('select')) {
-          return;
-        }
-      } else {
-        // 如果不在卡片內，使用原來的邏輯阻止所有按鈕和鏈接
-        if (target.closest('button') || target.closest('a[href]')) {
-          return;
-        }
-      }
-    }
+    // 重置狀態
+    isScrolling.current = false;
+    isValidSwipeStart.current = false;
 
     if (!e.touches || e.touches.length === 0) {
       return;
@@ -90,7 +53,7 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     if (!touch) {
       return;
     }
-    
+
     const startX = touch.clientX;
     const startY = touch.clientY;
     const screenWidth = window.innerWidth;
@@ -114,7 +77,6 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     touchStartTime.current = Date.now();
     isValidSwipeStart.current = true;
     
-
   }, []); // 移除所有依賴，使用 ref 來獲取最新值
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -155,53 +117,10 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     const currentOptions = optionsRef.current;
-    if (!currentOptions.enabled) return;
-
-    // 如果正在滾動或不是有效的滑動開始，忽略觸摸結束
-    if (isScrolling.current || !isValidSwipeStart.current) {
+    if (!currentOptions.enabled || !isValidSwipeStart.current || isScrolling.current) {
       // 重置狀態
-      isScrolling.current = false;
       isValidSwipeStart.current = false;
       return;
-    }
-
-    // 檢查觸摸結束是否發生在互動元素上
-    const target = e.target as Element;
-    if (target && (
-      target.closest('[role="dialog"]') ||
-      target.closest('.search-container') ||
-      target.closest('[data-radix-dialog-content]') ||
-      target.closest('input[type="text"]') ||
-      target.closest('textarea') ||
-      target.closest('select') ||
-      target.closest('[cmdk-root]') ||
-      target.closest('.fixed.left-4.right-4') // 搜索結果下拉框
-    )) {
-      return;
-    }
-
-    // 檢查是否是真正的按鈕或鏈接，但允許課程卡片和講師卡片的主要連結區域
-    if (target) {
-      const isInCourseCard = target.closest('.course-card');
-      const isInInstructorCard = target.closest('[class*="instructor-card"]') || isInCourseCard; // instructor cards often use course-card class
-      
-      // 如果在課程卡片或講師卡片內，只阻止特定的交互元素
-      if (isInCourseCard || isInInstructorCard) {
-        // 允許在卡片的主要區域結束滑動，但阻止這些特定元素
-        if (target.closest('button:not(.card-main-link)') || 
-            target.closest('.favorite-button') ||
-            target.closest('[role="button"]:not(.card-main-link)') ||
-            target.closest('input') ||
-            target.closest('textarea') ||
-            target.closest('select')) {
-          return;
-        }
-      } else {
-        // 如果不在卡片內，使用原來的邏輯阻止所有按鈕和鏈接
-        if (target.closest('button') || target.closest('a[href]')) {
-          return;
-        }
-      }
     }
 
     if (!e.changedTouches || e.changedTouches.length === 0) {
@@ -256,15 +175,14 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
       return;
     }
 
-    // 檢查是否為有效的水平滑動
+    // 原有的滑動邏輯
     if (Math.abs(distanceX) >= threshold && Math.abs(distanceY) <= restraint) {
-      // 阻止默認行為以避免頁面滾動等干擾
       try {
         e.preventDefault();
       } catch (err) {
         // 忽略錯誤，可能是被動監聽器
       }
-
+      
       if (distanceX > 0 && currentOptions.onSwipeRight) {
         // 向右滑動
         currentOptions.onSwipeRight();
@@ -276,53 +194,103 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     
     // 重置狀態
     isValidSwipeStart.current = false;
-  }, []); // 移除所有依賴，使用 ref 來獲取最新值
+  }, []);
 
-  // 強制重新初始化的函數
+  // 創建透明覆蓋層來確保滑動手勢始終有效
+  const createOverlay = useCallback(() => {
+    if (!enabled || typeof window === 'undefined') return;
+
+    // 移除現有覆蓋層
+    if (overlayRef.current) {
+      document.body.removeChild(overlayRef.current);
+      overlayRef.current = null;
+    }
+
+    // 創建新的透明覆蓋層，只在需要時顯示
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999999;
+      pointer-events: none;
+      background: transparent;
+      touch-action: manipulation;
+    `;
+    
+    // 讓覆蓋層只在滑動時接收觸摸事件
+    overlay.style.pointerEvents = 'auto';
+    
+    overlayRef.current = overlay;
+    document.body.appendChild(overlay);
+
+    // 使用 capture 階段來確保事件處理優先級最高
+    overlay.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false });
+    overlay.addEventListener('touchmove', handleTouchMove, { capture: true, passive: false });
+    overlay.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false });
+
+  }, [enabled, handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  const removeOverlay = useCallback(() => {
+    if (overlayRef.current) {
+      try {
+        document.body.removeChild(overlayRef.current);
+      } catch (err) {
+        // 元素可能已經被移除
+      }
+      overlayRef.current = null;
+    }
+  }, []);
+
   const forceReinit = useCallback(() => {
     setReinitTrigger(prev => prev + 1);
-  }, [reinitTrigger]);
+  }, []);
 
+  // 主要的 effect，處理覆蓋層的創建和清理
   useEffect(() => {
-    const element = elementRef.current || document;
-    const currentCount = reinitTrigger;
-
-    // 添加延遲以確保在頁面導航後正確綁定
-    const bindEvents = () => {
-      // 總是添加事件監聽器，在處理器內部檢查 enabled 狀態
-      // touchstart 和 touchmove 使用 passive 來提高性能
-      element.addEventListener('touchstart', handleTouchStart, { passive: true });
-      element.addEventListener('touchmove', handleTouchMove, { passive: true });
-      element.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-
-    };
-
-    // 立即綁定
-    bindEvents();
-
-    // 也在下一個事件循環中再次綁定，以防頁面導航時的時機問題
-    const timeoutId = setTimeout(() => {
-      // 先移除可能存在的監聽器，避免重複綁定
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchmove', handleTouchMove);
-      element.removeEventListener('touchend', handleTouchEnd);
-      // 重新綁定
-      bindEvents();
-
-    }, 100);
+    if (enabled) {
+      createOverlay();
+    } else {
+      removeOverlay();
+    }
 
     return () => {
-      clearTimeout(timeoutId);
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchmove', handleTouchMove);
-      element.removeEventListener('touchend', handleTouchEnd);
-
+      removeOverlay();
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd, reinitTrigger]); // 添加 reinitTrigger 作為依賴
+  }, [enabled, reinitTrigger, createOverlay, removeOverlay]);
 
-  return { ref: elementRef, forceReinit };
+  // 頁面可見性變化時重新初始化
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && enabled) {
+        setTimeout(() => {
+          forceReinit();
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [enabled, forceReinit]);
+
+  // 窗口大小變化時重新初始化
+  useEffect(() => {
+    const handleResize = () => {
+      if (enabled) {
+        setTimeout(() => {
+          forceReinit();
+        }, 100);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [enabled, forceReinit]);
+
+  return {
+    ref: elementRef,
+    forceReinit
+  };
 } 
