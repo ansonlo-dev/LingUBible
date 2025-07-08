@@ -345,17 +345,11 @@ export function MultiSelectDropdown({
           </SelectValue>
         </SelectTrigger>
         <SelectContent 
-          className="bg-white dark:bg-gray-900 overflow-hidden" 
+          className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px] overflow-hidden" 
           position="popper" 
           side="bottom" 
-          align="start" 
+          align="end" 
           sideOffset={8}
-          avoidCollisions={true}
-          style={{ 
-            minWidth: 'var(--radix-select-trigger-width)',
-            maxWidth: 'min(500px, calc(100vw - 2rem))',
-            width: 'auto'
-          }}
         >
           <div className="p-2 relative">
             {/* Select All Button */}

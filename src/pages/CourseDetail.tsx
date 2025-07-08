@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { 
   ArrowLeft, 
   Star, 
@@ -187,7 +188,7 @@ const CourseDetail = () => {
   const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
 
   // Grade distribution chart filter state
-  const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
+  const [selectedTermFilter, setSelectedTermFilter] = useState<string | string[]>('all');
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -295,10 +296,14 @@ const CourseDetail = () => {
 
   // 根據選定的學期篩選教學信息
   const filteredTeachingInfo = React.useMemo(() => {
-    if (selectedTermFilter === 'all') {
+    // Handle both single and multiple selections
+    const selectedValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : [selectedTermFilter];
+    
+    if (selectedValues.length === 0 || selectedValues.includes('all')) {
       return teachingInfo;
     }
-    return teachingInfo.filter(info => info.term.term_code === selectedTermFilter);
+    
+    return teachingInfo.filter(info => selectedValues.includes(info.term.term_code));
   }, [teachingInfo, selectedTermFilter]);
 
   const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
@@ -687,33 +692,35 @@ const CourseDetail = () => {
                 {/* 學期篩選器 - 移到右側 */}
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pages.courseDetail.filterByTerm')}:</span>
-                  <Select value={selectedTermFilter} onValueChange={setSelectedTermFilter}>
-                    <SelectTrigger className="w-[180px] h-8">
-                      <SelectValue placeholder={t('common.all')}>
-                        {selectedTermFilter === 'all' ? t('common.all') : availableTermsWithCounts.find(td => td.term.term_code === selectedTermFilter)?.term.name || selectedTermFilter}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all" textValue={t('common.all')}>
-                        <span className="flex items-center gap-2">
-                          <span>{t('common.all')}</span>
-                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                            {teachingInfo.length}
-                          </Badge>
-                        </span>
-                      </SelectItem>
-                      {availableTermsWithCounts.map((termData) => (
-                        <SelectItem key={termData.term.term_code} value={termData.term.term_code} textValue={termData.term.name}>
-                          <span className="flex items-center gap-2">
-                            <span>{termData.term.name}</span>
-                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                              {termData.count}
-                            </Badge>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative w-full sm:w-auto min-w-0">
+                    <MultiSelectDropdown
+                      options={availableTermsWithCounts.map((termData): SelectOption => ({
+                        value: termData.term.term_code,
+                        label: termData.term.name,
+                        count: termData.count
+                      }))}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
+                        // If 'all' is selected or no values, return empty array to show placeholder
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          setSelectedTermFilter('all'); // When nothing selected, set to 'all'
+                        } else {
+                          setSelectedTermFilter(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="w-[180px]"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={teachingInfo.length}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -776,17 +783,25 @@ const CourseDetail = () => {
                             <button
                               key={termIndex}
                               onClick={() => {
-                                // 如果已經選中該學期，則取消篩選（設為 'all'）
-                                if (selectedTermFilter === term.term_code) {
-                                  setSelectedTermFilter('all');
+                                const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                const isSelected = currentValues.includes(term.term_code);
+                                
+                                if (isSelected) {
+                                  // Remove from selection
+                                  const newValues = currentValues.filter(v => v !== term.term_code);
+                                  setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
                                 } else {
-                                  setSelectedTermFilter(term.term_code);
+                                  // Add to selection
+                                  setSelectedTermFilter([...currentValues, term.term_code]);
                                 }
                               }}
                               className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                selectedTermFilter === term.term_code
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background hover:bg-muted border-border hover:border-primary/50'
+                                (() => {
+                                  const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                  return currentValues.includes(term.term_code)
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                })()
                               }`}
                             >
                               {term.name}
@@ -858,17 +873,25 @@ const CourseDetail = () => {
                             <button
                               key={termIndex}
                               onClick={() => {
-                                // 如果已經選中該學期，則取消篩選（設為 'all'）
-                                if (selectedTermFilter === term.term_code) {
-                                  setSelectedTermFilter('all');
+                                const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                const isSelected = currentValues.includes(term.term_code);
+                                
+                                if (isSelected) {
+                                  // Remove from selection
+                                  const newValues = currentValues.filter(v => v !== term.term_code);
+                                  setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
                                 } else {
-                                  setSelectedTermFilter(term.term_code);
+                                  // Add to selection
+                                  setSelectedTermFilter([...currentValues, term.term_code]);
                                 }
                               }}
                               className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                selectedTermFilter === term.term_code
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background hover:bg-muted border-border hover:border-primary/50'
+                                (() => {
+                                  const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                  return currentValues.includes(term.term_code)
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                })()
                               }`}
                             >
                               {term.name}

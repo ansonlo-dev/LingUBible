@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { InstructorReviewsFilters, InstructorReviewFilters } from '@/components/features/reviews/InstructorReviewsFilters';
 import { CourseRequirementsFilter, CourseRequirementsFilters } from '@/components/features/reviews/CourseRequirementsFilter';
@@ -228,7 +229,7 @@ const Lecturers = () => {
 
   // Teaching tab and filter states
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
-  const [selectedTermFilter, setSelectedTermFilter] = useState<string>('all');
+  const [selectedTermFilter, setSelectedTermFilter] = useState<string | string[]>('all');
 
   // Grade distribution chart filter state
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
@@ -353,10 +354,14 @@ const Lecturers = () => {
 
   // 根據選定的學期篩選教學課程
   const filteredTeachingCourses = React.useMemo(() => {
-    if (selectedTermFilter === 'all') {
+    // Handle both single and multiple selections
+    const selectedValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : [selectedTermFilter];
+    
+    if (selectedValues.length === 0 || selectedValues.includes('all')) {
       return teachingCourses;
     }
-    return teachingCourses.filter(teaching => teaching.term.term_code === selectedTermFilter);
+    
+    return teachingCourses.filter(teaching => selectedValues.includes(teaching.term.term_code));
   }, [teachingCourses, selectedTermFilter]);
 
   useEffect(() => {
@@ -1093,33 +1098,35 @@ const Lecturers = () => {
                 {/* 學期篩選器 - 移到右側 */}
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pages.courseDetail.filterByTerm')}:</span>
-                  <Select value={selectedTermFilter} onValueChange={setSelectedTermFilter}>
-                    <SelectTrigger className="w-[180px] h-8">
-                      <SelectValue placeholder={t('common.all')}>
-                        {selectedTermFilter === 'all' ? t('common.all') : availableTerms.find(term => term.term_code === selectedTermFilter)?.name || selectedTermFilter}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all" textValue={t('common.all')}>
-                        <span className="flex items-center gap-2">
-                          <span className="font-bold">{t('common.all')}</span>
-                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                            {teachingCourses?.length || 0}
-                          </Badge>
-                        </span>
-                      </SelectItem>
-                      {availableTerms.map((term) => (
-                        <SelectItem key={term.term_code} value={term.term_code} textValue={term.name}>
-                          <span className="flex items-center gap-2">
-                            <span>{term.name}</span>
-                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                              {teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0}
-                            </Badge>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative w-full sm:w-auto min-w-0">
+                    <MultiSelectDropdown
+                      options={availableTerms.map((term): SelectOption => ({
+                        value: term.term_code,
+                        label: term.name,
+                        count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0
+                      }))}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
+                        // If 'all' is selected or no values, return empty array to show placeholder
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          setSelectedTermFilter('all'); // When nothing selected, set to 'all'
+                        } else {
+                          setSelectedTermFilter(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="w-[180px]"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={teachingCourses?.length || 0}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1189,17 +1196,25 @@ const Lecturers = () => {
                             <button
                               key={termIndex}
                               onClick={() => {
-                                // 如果已經選中該學期，則取消篩選（設為 'all'）
-                                if (selectedTermFilter === term.term_code) {
-                                  setSelectedTermFilter('all');
+                                const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                const isSelected = currentValues.includes(term.term_code);
+                                
+                                if (isSelected) {
+                                  // Remove from selection
+                                  const newValues = currentValues.filter(v => v !== term.term_code);
+                                  setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
                                 } else {
-                                  setSelectedTermFilter(term.term_code);
+                                  // Add to selection
+                                  setSelectedTermFilter([...currentValues, term.term_code]);
                                 }
                               }}
                               className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                selectedTermFilter === term.term_code
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background hover:bg-muted border-border hover:border-primary/50'
+                                (() => {
+                                  const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                  return currentValues.includes(term.term_code)
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                })()
                               }`}
                             >
                               {term.name}
@@ -1278,17 +1293,25 @@ const Lecturers = () => {
                             <button
                               key={termIndex}
                               onClick={() => {
-                                // 如果已經選中該學期，則取消篩選（設為 'all'）
-                                if (selectedTermFilter === term.term_code) {
-                                  setSelectedTermFilter('all');
+                                const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                const isSelected = currentValues.includes(term.term_code);
+                                
+                                if (isSelected) {
+                                  // Remove from selection
+                                  const newValues = currentValues.filter(v => v !== term.term_code);
+                                  setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
                                 } else {
-                                  setSelectedTermFilter(term.term_code);
+                                  // Add to selection
+                                  setSelectedTermFilter([...currentValues, term.term_code]);
                                 }
                               }}
                               className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                selectedTermFilter === term.term_code
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background hover:bg-muted border-border hover:border-primary/50'
+                                (() => {
+                                  const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                  return currentValues.includes(term.term_code)
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                })()
                               }`}
                             >
                               {term.name}
