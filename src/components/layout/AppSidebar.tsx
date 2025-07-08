@@ -119,19 +119,33 @@ export function AppSidebar({ isCollapsed = false, onToggle, isMobileOpen = false
     const checkIsMobile = () => {
       // 檢測真正的移動設備：結合螢幕寬度和設備特徵
       const width = window.innerWidth;
+      const height = window.innerHeight;
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       
-      // 新的智能檢測邏輯：
+      // 新的智能檢測邏輯：針對移動設備橫屏模式的特殊處理
       // 1. 真正的移動設備（有觸控且匹配用戶代理）始終視為移動設備
       // 2. 桌面設備即使在分屏模式下（寬度 < 640）也不視為移動設備
       let newIsMobile;
       
       if (isMobileDevice && isTouchDevice) {
-        // 真正的移動設備：檢查螢幕的最大尺寸
-        const maxDimension = Math.max(window.innerWidth, window.innerHeight);
-        newIsMobile = maxDimension < 1024; // 真正移動設備的最大尺寸限制
+        // 真正的移動設備：檢查螢幕的最大尺寸，但要考慮橫屏模式
+        const maxDimension = Math.max(width, height);
+        const minDimension = Math.min(width, height);
+        
+        // 特殊處理：如果是橫屏模式（寬度 > 高度）且高度很小，仍然視為移動設備
+        const isLandscapePhone = width > height && minDimension <= 430; // iPhone 14 Pro Max 橫屏高度是 430
+        const isLandscapeTablet = width > height && minDimension > 430 && minDimension < 600; // 小型平板橫屏
+        
+        if (isLandscapePhone || maxDimension < 1024) {
+          newIsMobile = true;
+        } else if (isLandscapeTablet) {
+          // 小型平板在橫屏模式下根據寬度判斷
+          newIsMobile = maxDimension < 1200;
+        } else {
+          newIsMobile = false; // 大平板或桌面設備
+        }
       } else if (isTouchDevice && !isMobileDevice) {
         // 觸控設備但不是移動設備（如Surface等），使用寬度判斷
         newIsMobile = width < 640;
