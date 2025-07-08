@@ -354,14 +354,14 @@ export function MultiSelectDropdown({
           <div className="p-2 relative">
             {/* Select All Button */}
             <div 
-              className="flex items-center justify-between mb-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-1.5 transition-colors cursor-pointer"
+              className="flex items-center justify-between mb-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 sm:py-1.5 transition-colors cursor-pointer min-h-[44px] sm:min-h-[auto]"
               onClick={handleSelectAll}
             >
               <span className="text-sm font-medium text-primary">
                 {isAllSelected ? t('common.deselectAll') : t('common.selectAll')}
               </span>
               {showCounts && (
-                <Badge variant="secondary" className="ml-2 text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                <Badge variant="secondary" className="ml-4 text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                   {calculatedTotalCount}
                 </Badge>
               )}
@@ -444,7 +444,7 @@ export function MultiSelectDropdown({
                             )}
                           </div>
                           {showCounts && option.count !== undefined && (
-                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                            <Badge variant="secondary" className="ml-6 text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                               {option.count}
                             </Badge>
                           )}
@@ -488,7 +488,7 @@ export function MultiSelectDropdown({
                             )}
                           </div>
                           {showCounts && option.count !== undefined && (
-                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                            <Badge variant="secondary" className="ml-6 text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                               {option.count}
                             </Badge>
                           )}

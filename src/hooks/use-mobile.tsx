@@ -7,9 +7,8 @@ export function useIsMobile() {
 
   React.useEffect(() => {
     const checkIsMobile = () => {
-      // Check if it's actually a mobile device using multiple criteria
+      // Simplified and more reliable mobile detection
       const width = window.innerWidth
-      const height = window.innerHeight
       const userAgent = navigator.userAgent
       
       // Check for mobile user agent
@@ -18,14 +17,11 @@ export function useIsMobile() {
       // Check for touch capability
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
       
-      // For truly mobile devices, use the width breakpoint
-      if (isMobileUserAgent || (isTouchDevice && width < MOBILE_BREAKPOINT && height < 1024)) {
-        return true
-      }
-      
-      // For desktop browsers, only consider it mobile if the width is very small (likely a phone)
-      // This prevents desktop windows resized to half-screen from being considered mobile
-      return width < 480
+      // Simplified logic: Consider it mobile if:
+      // 1. Has mobile user agent, OR
+      // 2. Is a touch device AND screen width is below breakpoint
+      // This makes browser emulation and real devices behave consistently
+      return isMobileUserAgent || (isTouchDevice && width < MOBILE_BREAKPOINT)
     }
 
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
