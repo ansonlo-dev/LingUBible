@@ -11,9 +11,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 interface MobileSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isSidebarCollapsed?: boolean;
 }
 
-export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
+export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false }: MobileSearchModalProps) {
   // 包裝 onClose 函數以處理 history 清理
   const handleClose = () => {
     if (hasAddedHistoryEntry.current) {
@@ -43,6 +44,39 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasAddedHistoryEntry = useRef(false);
+  
+  // Track viewport dimensions for responsive positioning
+  const [viewportDimensions, setViewportDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+    isLandscape: typeof window !== 'undefined' ? window.innerWidth > window.innerHeight : false,
+    isTabletSize: typeof window !== 'undefined' ? window.innerWidth >= 640 && window.innerWidth < 1024 : false
+  });
+
+  // Track viewport changes for responsive positioning
+  useEffect(() => {
+    const updateViewportDimensions = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      setViewportDimensions({
+        width,
+        height,
+        isLandscape: width > height,
+        isTabletSize: width >= 640 && width < 1024
+      });
+    };
+
+    window.addEventListener('resize', updateViewportDimensions);
+    window.addEventListener('orientationchange', () => {
+      // Delay to ensure the viewport has updated after orientation change
+      setTimeout(updateViewportDimensions, 100);
+    });
+
+    return () => {
+      window.removeEventListener('resize', updateViewportDimensions);
+      window.removeEventListener('orientationchange', updateViewportDimensions);
+    };
+  }, []);
 
   // Scroll arrow functionality
   const [showScrollButtons, setShowScrollButtons] = useState({ up: false, down: false });
@@ -71,8 +105,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       return;
     }
     
-    const canScrollUp = scrollTop > 0;
-    const canScrollDown = scrollTop < scrollHeight - clientHeight - 1;
+    // Add tolerance for scroll position detection (2px tolerance)
+    const tolerance = 2;
+    const canScrollUp = scrollTop > tolerance;
+    const canScrollDown = scrollTop < scrollHeight - clientHeight - tolerance;
     
     setShowScrollButtons({
       up: canScrollUp,
@@ -182,17 +218,19 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
 
   // Check scroll buttons when content changes
   useEffect(() => {
-    // Use multiple timeouts to ensure DOM has updated
-    const timer1 = setTimeout(checkScrollButtons, 100);
-    const timer2 = setTimeout(checkScrollButtons, 300);
-    const timer3 = setTimeout(checkScrollButtons, 500);
-    
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, [searchQuery, loading, popularCourses, popularInstructors, allCourses, allInstructors]);
+    if (isOpen && isInitialized && !loading) {
+      // Use multiple timeouts to ensure DOM has updated
+      const timer1 = setTimeout(checkScrollButtons, 100);
+      const timer2 = setTimeout(checkScrollButtons, 300);
+      const timer3 = setTimeout(checkScrollButtons, 500);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
+  }, [searchQuery, loading, popularCourses, popularInstructors, allCourses, allInstructors, isOpen, isInitialized]);
 
   // Add scroll event listener to update buttons on manual scroll
   useEffect(() => {
@@ -203,24 +241,23 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       checkScrollButtons();
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     
     return () => {
       container.removeEventListener('scroll', handleScroll);
     };
-  }, [scrollContainerRef.current]);
+  }, [isOpen, isInitialized]);
 
   // Extra check when loading finishes
   useEffect(() => {
-    if (!loading && isInitialized) {
-      console.log('Loading finished, doing final check');
+    if (!loading && isInitialized && isOpen) {
       const timer = setTimeout(() => {
         checkScrollButtons();
       }, 200);
       
       return () => clearTimeout(timer);
     }
-  }, [loading, isInitialized]);
+  }, [loading, isInitialized, isOpen]);
 
   // Check scroll buttons when modal is opened and initialized
   useEffect(() => {
@@ -283,8 +320,8 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         try {
           // 載入熱門課程和講師以及所有數據用於搜索
           const [coursesData, instructorsData, allCoursesData, allInstructorsData] = await Promise.all([
-            CourseService.getPopularCourses(6), // 獲取前6個熱門課程
-            CourseService.getPopularInstructorsWithDetailedStats(6), // 獲取前6個熱門講師
+            CourseService.getPopularCourses(12), // 獲取前12個熱門課程，充分利用較大空間
+            CourseService.getPopularInstructorsWithDetailedStats(12), // 獲取前12個熱門講師，充分利用較大空間
             CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
             CourseService.getAllInstructorsWithDetailedStats() // 獲取所有講師用於搜索
           ]);
@@ -330,7 +367,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         );
       })
       .sort((a, b) => b.reviewCount - a.reviewCount) // 按評論數降序排序
-      .slice(0, 10) // 限制搜索結果數量
+      .slice(0, 20) // 充分利用較大空間的搜索結果數量
     : [];
 
   const filteredInstructors = searchQuery.trim()
@@ -417,7 +454,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
         );
       })
       .sort((a, b) => b.reviewCount - a.reviewCount) // 按評論數降序排序
-      .slice(0, 10) // 限制搜索結果數量
+      .slice(0, 20) // 充分利用較大空間的搜索結果數量
     : [];
 
   // 處理課程點擊
@@ -484,7 +521,14 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
       onClick={handleClose}
     >
       {!isMobile ? (
-        <div className="fixed inset-x-0 top-16 mx-auto max-w-4xl px-4">
+        <div 
+          className="fixed top-16 mx-auto max-w-4xl px-4"
+          style={{
+            left: isSidebarCollapsed ? '3rem' : '10rem', // Adjust left position based on sidebar state
+            right: '0',
+            width: isSidebarCollapsed ? 'calc(100vw - 3rem)' : 'calc(100vw - 10rem)'
+          }}
+        >
           <div 
             className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[70vh] flex flex-col overflow-hidden desktop-search-modal"
             onClick={(e) => e.stopPropagation()}
@@ -514,10 +558,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
               {/* 上箭頭 */}
               {showScrollButtons.up && (
                 <div 
-                  className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 cursor-pointer select-none"
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-b-lg cursor-pointer select-none"
                   onMouseEnter={() => !isMobile && startScrolling('up')}
                   onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => isMobile && startScrolling('up')}
+                  onClick={() => startScrolling('up')}
                   onTouchStart={(e) => {
                     if (isMobile) {
                       e.preventDefault();
@@ -532,7 +576,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
               {/* 滾動內容 */}
               <div 
                 ref={scrollContainerRef}
-                className="h-full max-h-[450px] overflow-y-auto scrollbar-hide"
+                className="h-full max-h-[500px] overflow-y-auto scrollbar-hide"
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none'
@@ -827,10 +871,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
               {/* 下箭頭 */}
               {showScrollButtons.down && (
                 <div 
-                  className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 cursor-pointer select-none"
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-t-lg cursor-pointer select-none"
                   onMouseEnter={() => !isMobile && startScrolling('down')}
                   onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => isMobile && startScrolling('down')}
+                  onClick={() => startScrolling('down')}
                   onTouchStart={(e) => {
                     if (isMobile) {
                       e.preventDefault();
@@ -845,9 +889,31 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
           </div>
         </div>
       ) : (
-        <div className="fixed inset-x-4 top-16 bottom-16 mx-auto max-w-4xl">
+        <div 
+          className="fixed top-16 mx-auto max-w-4xl"
+          style={{
+            // On mobile landscape mode (especially tablets), we might need to account for sidebar
+            left: (() => {
+              // If it's tablet size in landscape, treat like desktop
+              if (viewportDimensions.isLandscape && viewportDimensions.isTabletSize) {
+                return isSidebarCollapsed ? '3rem' : '10rem';
+              }
+              // Otherwise, use normal mobile spacing
+              return '1rem';
+            })(),
+            right: '1rem',
+            width: (() => {
+              // If it's tablet size in landscape, treat like desktop
+              if (viewportDimensions.isLandscape && viewportDimensions.isTabletSize) {
+                return isSidebarCollapsed ? 'calc(100vw - 4rem)' : 'calc(100vw - 11rem)';
+              }
+              // Otherwise, use normal mobile spacing
+              return 'calc(100vw - 2rem)';
+            })()
+          }}
+        >
           <div 
-            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden"
+            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[80vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
@@ -873,10 +939,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
               {/* 上箭頭 */}
               {showScrollButtons.up && (
                 <div 
-                  className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 cursor-pointer select-none"
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-b-lg cursor-pointer select-none"
                   onMouseEnter={() => !isMobile && startScrolling('up')}
                   onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => isMobile && startScrolling('up')}
+                  onClick={() => startScrolling('up')}
                   onTouchStart={(e) => {
                     if (isMobile) {
                       e.preventDefault();
@@ -891,7 +957,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
               {/* 滾動內容 */}
               <div 
                 ref={scrollContainerRef}
-                className="h-full max-h-[400px] overflow-y-auto scrollbar-hide"
+                className="h-full max-h-[65vh] overflow-y-auto scrollbar-hide"
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none'
@@ -1186,10 +1252,10 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
               {/* 下箭頭 */}
               {showScrollButtons.down && (
                 <div 
-                  className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 cursor-pointer select-none"
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-t-lg cursor-pointer select-none"
                   onMouseEnter={() => !isMobile && startScrolling('down')}
                   onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => isMobile && startScrolling('down')}
+                  onClick={() => startScrolling('down')}
                   onTouchStart={(e) => {
                     if (isMobile) {
                       e.preventDefault();

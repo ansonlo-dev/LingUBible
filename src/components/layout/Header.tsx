@@ -116,6 +116,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
       <MobileSearchModal 
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
+        isSidebarCollapsed={isSidebarCollapsed}
       />
     </>
   );
