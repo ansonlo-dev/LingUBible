@@ -88,7 +88,7 @@ export function AdvancedInstructorFilters({
   const marqueeHook = useMarqueePlaceholder({
     text: t('search.instructorPlaceholder'),
     enabled: true,
-    speed: 2, // slower speed for better readability
+    speed: 120, // faster speed for better UX
     pauseDuration: 1000
   });
 
@@ -330,8 +330,12 @@ export function AdvancedInstructorFilters({
           />
           {marqueeHook.shouldAnimate && !filters.searchTerm && (
             <div 
-              className="absolute inset-0 pointer-events-none flex items-center px-3 text-sm text-muted-foreground"
-              style={marqueeHook.containerStyles}
+              className="absolute left-0 top-0 h-8 pointer-events-none flex items-center text-sm text-muted-foreground overflow-hidden"
+              style={{
+                left: '12px', // Account for input padding-left
+                right: '48px', // Account for input padding-right + clear button space
+                ...marqueeHook.containerStyles
+              }}
             >
               <span style={marqueeHook.textStyles}>
                 {marqueeHook.text}

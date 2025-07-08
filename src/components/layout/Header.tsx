@@ -28,7 +28,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const marqueeHook = useMarqueePlaceholder({
     text: t('search.placeholder'),
     enabled: true,
-    speed: 2, // slower speed for better readability
+    speed: 120, // faster speed for better UX
     pauseDuration: 1000
   });
 

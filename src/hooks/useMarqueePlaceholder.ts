@@ -11,7 +11,7 @@ interface MarqueePlaceholderOptions {
 export function useMarqueePlaceholder({
   text,
   enabled = true,
-  speed = 50, // pixels per second
+  speed = 120, // pixels per second - increased for faster movement
   pauseDuration = 1000 // 1 second pause
 }: MarqueePlaceholderOptions) {
   const isMobile = useIsMobile();
