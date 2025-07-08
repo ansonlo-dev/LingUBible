@@ -338,7 +338,7 @@ export function MultiSelectDropdown({
         onOpenChange={setIsOpen}
       >
         <SelectTrigger 
-          className="w-full h-10 min-w-[180px]"
+          className="w-full h-8 min-w-0"
         >
           <SelectValue>
             {getDisplayText()}
