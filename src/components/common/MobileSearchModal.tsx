@@ -89,7 +89,7 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
 
     const scroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const scrollAmount = direction === 'up' ? -3 : 3;
+      const scrollAmount = direction === 'up' ? -6 : 6;
       
       // Check if we've reached the limits before scrolling
       const atTop = scrollTop <= 0;
@@ -535,7 +535,8 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 className="h-full max-h-[450px] overflow-y-auto scrollbar-hide"
                 style={{
                   scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth'
                 }}
               >
                 {loading ? (
@@ -894,7 +895,8 @@ export function MobileSearchModal({ isOpen, onClose }: MobileSearchModalProps) {
                 className="h-full max-h-[400px] overflow-y-auto scrollbar-hide"
                 style={{
                   scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth'
                 }}
               >
                 {loading ? (

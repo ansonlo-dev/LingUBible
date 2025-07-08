@@ -132,7 +132,7 @@ export function MultiSelectDropdown({
 
     const scroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const scrollAmount = direction === 'up' ? -3 : 3;
+      const scrollAmount = direction === 'up' ? -6 : 6;
       const tolerance = 1;
       
       // Check if we've reached the limits before scrolling
@@ -399,7 +399,8 @@ export function MultiSelectDropdown({
                 className={cn("overflow-y-auto space-y-0.5 scrollbar-hide", maxHeight)}
                 style={{
                   scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth'
                 }}
               >
                 {options.map((option) => {
