@@ -68,7 +68,6 @@ export function MultiSelectDropdown({
 }: MultiSelectDropdownProps) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Ensure selectedValues is always an array
   const safeSelectedValues = Array.isArray(selectedValues) ? selectedValues : [];
@@ -79,44 +78,13 @@ export function MultiSelectDropdown({
   // Filter out disabled options (group headers) for counting
   const selectableOptions = options.filter(option => !option.value.startsWith('__faculty_'));
 
-    // Normalize selectedValues to ensure consistency:
-  // Only auto-select all if user hasn't interacted yet and selection is empty
-  const normalizedSelectedValues = (() => {
-    if (selectableOptions.length === 0) return safeSelectedValues;
-    
-    const hasAllFlag = safeSelectedValues.includes('all');
-    const individualSelections = safeSelectedValues.filter(v => v !== 'all');
-    const allOptionValues = selectableOptions.map(opt => opt.value);
-    
-    // Only auto-select all on first visit (user hasn't interacted yet)
-    if (!hasUserInteracted && safeSelectedValues.length === 0) {
-      return ['all', ...allOptionValues];
-    }
-    
-    // If 'all' is selected but individual items are missing (for backward compatibility)
-    if (hasAllFlag && individualSelections.length < selectableOptions.length) {
-      return ['all', ...allOptionValues];
-    }
-    
-    return safeSelectedValues;
-  })();
-
-  // Update parent component if normalized values differ from input
-  useEffect(() => {
-    if (JSON.stringify(normalizedSelectedValues) !== JSON.stringify(safeSelectedValues)) {
-      onSelectionChange(normalizedSelectedValues);
-    }
-  }, [JSON.stringify(normalizedSelectedValues), JSON.stringify(safeSelectedValues), onSelectionChange]);
-
-  // Check if all options are selected
-  const isAllSelected = normalizedSelectedValues.includes('all') ||
-    (normalizedSelectedValues.length > 0 && 
-     normalizedSelectedValues.length === selectableOptions.length &&
-     !normalizedSelectedValues.includes('all'));
+  // Check if all options are selected  
+  const isAllSelected = safeSelectedValues.includes('all') ||
+    (safeSelectedValues.length > 0 && 
+     safeSelectedValues.length === selectableOptions.length &&
+     !safeSelectedValues.includes('all'));
 
   const handleSelectAll = (checked: boolean) => {
-    setHasUserInteracted(true); // Mark that user has interacted
-    
     if (checked) {
       // When "All" is selected, select all individual options
       const allOptionValues = selectableOptions.map(opt => opt.value);
@@ -128,7 +96,6 @@ export function MultiSelectDropdown({
   };
 
   const handleOptionToggle = (optionValue: string, checked: boolean) => {
-    setHasUserInteracted(true); // Mark that user has interacted
     
     // Handle group selection for faculty headers
     if (optionValue.startsWith('__faculty_')) {
@@ -152,7 +119,7 @@ export function MultiSelectDropdown({
       
       if (checked) {
         // Add all departments under this faculty
-        const currentIndividualSelections = normalizedSelectedValues.filter(v => v !== 'all');
+        const currentIndividualSelections = safeSelectedValues.filter(v => v !== 'all');
         newValues = [...new Set([...currentIndividualSelections, ...facultyDepartments])];
         
         // Check if all options are now selected
@@ -161,7 +128,7 @@ export function MultiSelectDropdown({
         }
       } else {
         // Remove all departments under this faculty and remove 'all' if it exists
-        newValues = normalizedSelectedValues.filter(v => !facultyDepartments.includes(v) && v !== 'all');
+        newValues = safeSelectedValues.filter(v => !facultyDepartments.includes(v) && v !== 'all');
       }
       
       onSelectionChange(newValues);
@@ -172,7 +139,7 @@ export function MultiSelectDropdown({
     
     if (checked) {
       // Add the option to existing selections
-      const currentIndividualSelections = normalizedSelectedValues.filter(v => v !== 'all');
+      const currentIndividualSelections = safeSelectedValues.filter(v => v !== 'all');
       newValues = [...new Set([...currentIndividualSelections, optionValue])];
       
       // Check if all individual options are now selected
@@ -182,22 +149,22 @@ export function MultiSelectDropdown({
       }
     } else {
       // Remove the option and remove 'all' if it exists
-      newValues = normalizedSelectedValues.filter(v => v !== optionValue && v !== 'all');
+      newValues = safeSelectedValues.filter(v => v !== optionValue && v !== 'all');
     }
     
     onSelectionChange(newValues);
   };
 
   const getDisplayText = () => {
-    if (normalizedSelectedValues.includes('all')) {
+    if (safeSelectedValues.includes('all')) {
       return t('common.all');
-    } else if (normalizedSelectedValues.length === 0) {
+    } else if (safeSelectedValues.length === 0) {
       return placeholder; // Show placeholder when nothing is selected
-    } else if (normalizedSelectedValues.length === 1) {
-      const option = options.find(opt => opt.value === normalizedSelectedValues[0]);
-      return option ? option.label : normalizedSelectedValues[0];
+    } else if (safeSelectedValues.length === 1) {
+      const option = options.find(opt => opt.value === safeSelectedValues[0]);
+      return option ? option.label : safeSelectedValues[0];
     } else {
-      const individualCount = normalizedSelectedValues.filter(v => v !== 'all').length;
+      const individualCount = safeSelectedValues.filter(v => v !== 'all').length;
       return t('common.selectedCount', { count: individualCount });
     }
   };
@@ -293,9 +260,9 @@ export function MultiSelectDropdown({
                     .map(opt => opt.value);
                   
                   const isFacultySelected = 
-                    normalizedSelectedValues.includes('all') ||
+                    safeSelectedValues.includes('all') ||
                     (facultyDepartments.length > 0 && 
-                     facultyDepartments.every(dept => normalizedSelectedValues.includes(dept)));
+                     facultyDepartments.every(dept => safeSelectedValues.includes(dept)));
                   
                   // Render faculty group header with checkbox
                   return (
@@ -338,7 +305,7 @@ export function MultiSelectDropdown({
                   >
                     <Checkbox
                       id={`option-${option.value}`}
-                      checked={normalizedSelectedValues.includes('all') || normalizedSelectedValues.includes(option.value)}
+                      checked={safeSelectedValues.includes('all') || safeSelectedValues.includes(option.value)}
                       onCheckedChange={(checked) => handleOptionToggle(option.value, !!checked)}
                       className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                     />
