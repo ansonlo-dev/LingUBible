@@ -21,7 +21,7 @@ function getEnhancedMobileDetection() {
   const userAgent = navigator.userAgent.toLowerCase();
   const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   
-  // Special case: iPad mini should behave like desktop for sidebar in both orientations
+  // Special case: iPad models should behave like desktop for sidebar in both orientations
   // This enables desktop-like collapse behavior instead of mobile overlay
   if (isTouchDevice && /ipad/i.test(userAgent)) {
     // iPad mini portrait: 768x1024
@@ -30,6 +30,14 @@ function getEnhancedMobileDetection() {
     }
     // iPad mini landscape: 1024x768
     if (width === 1024 && height === 768) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+    // iPad Air portrait: 820x1180
+    if (width === 820 && height === 1180) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+    // iPad Air landscape: 1180x820
+    if (width === 1180 && height === 820) {
       return false; // Treat as desktop for sidebar behavior
     }
   }
