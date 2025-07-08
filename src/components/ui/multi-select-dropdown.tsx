@@ -163,12 +163,13 @@ export function MultiSelectDropdown({
           className="bg-white dark:bg-gray-900" 
           position="popper" 
           side="bottom" 
-          align="center" 
+          align="start" 
           sideOffset={8}
           avoidCollisions={true}
           style={{ 
-            width: 'var(--radix-select-trigger-width)',
-            maxWidth: 'min(350px, calc(100vw - 2rem))'
+            minWidth: 'var(--radix-select-trigger-width)',
+            maxWidth: 'min(500px, calc(100vw - 2rem))',
+            width: 'auto'
           }}
         >
           <div className="p-2">
@@ -184,8 +185,8 @@ export function MultiSelectDropdown({
                 htmlFor="select-all" 
                 className="text-sm font-medium cursor-pointer select-none flex-1 text-gray-900 dark:text-gray-100"
               >
-                <div className="flex items-center justify-between w-full min-w-0">
-                  <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                <div className="flex items-center justify-between w-full">
+                  <span className="flex-1 mr-2 whitespace-nowrap">{t('common.all')}</span>
                   {showCounts && (
                     <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                       {calculatedTotalCount}
@@ -238,8 +239,8 @@ export function MultiSelectDropdown({
                         htmlFor={`faculty-${option.value}`} 
                         className="flex-1 cursor-pointer select-none"
                       >
-                        <div className="flex items-center justify-between w-full min-w-0">
-                          <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                        <div className="flex items-center justify-between w-full">
+                          <span className="flex-1 mr-2 whitespace-nowrap">{option.label}</span>
                           {showCounts && option.count !== undefined && (
                             <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                               {option.count}
@@ -262,30 +263,30 @@ export function MultiSelectDropdown({
                       onCheckedChange={(checked) => handleOptionToggle(option.value, !!checked)}
                       className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                     />
-                    <label 
-                      htmlFor={`option-${option.value}`} 
-                      className="flex-1 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
-                    >
-                      <div className="flex items-center justify-between w-full min-w-0">
-                        {isSubjectOption ? (
-                          // For subject options, apply monospace font to the subject code part
-                          <span className="truncate flex-1 mr-2 min-w-0">
-                            {option.label.split(' - ').map((part, index) => (
-                              <span key={index} className={index === 0 ? 'font-mono font-semibold' : ''}>
-                                {index === 0 ? part : ` - ${part}`}
-                              </span>
-                            ))}
-                          </span>
-                        ) : (
-                          <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
-                        )}
-                        {showCounts && option.count !== undefined && (
-                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                            {option.count}
-                          </Badge>
-                        )}
-                      </div>
-                    </label>
+                                          <label 
+                        htmlFor={`option-${option.value}`} 
+                        className="flex-1 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          {isSubjectOption ? (
+                            // For subject options, apply monospace font to the subject code part
+                            <span className="flex-1 mr-2 whitespace-nowrap">
+                              {option.label.split(' - ').map((part, index) => (
+                                <span key={index} className={index === 0 ? 'font-mono font-semibold' : ''}>
+                                  {index === 0 ? part : ` - ${part}`}
+                                </span>
+                              ))}
+                            </span>
+                          ) : (
+                            <span className="flex-1 mr-2 whitespace-nowrap">{option.label}</span>
+                          )}
+                          {showCounts && option.count !== undefined && (
+                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                              {option.count}
+                            </Badge>
+                          )}
+                        </div>
+                      </label>
                   </div>
                 );
               })}
