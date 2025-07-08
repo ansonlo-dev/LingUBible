@@ -454,7 +454,7 @@ const Courses = () => {
   // 頂部區域組件，確保翻譯正確載入
   const HeaderSection = () => (
     <div className="text-center">
-      <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+      <h1 className="text-4xl font-bold leading-relaxed bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
         {t('pages.courses.title')}
       </h1>
     </div>
