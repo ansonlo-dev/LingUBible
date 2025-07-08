@@ -1646,7 +1646,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         <Button
           variant="ghost"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full justify-between h-12 px-4 bg-transparent hover:bg-transparent transition-all duration-200 rounded-lg group"
+          className="w-full justify-between h-12 px-2 sm:px-4 bg-transparent hover:bg-transparent transition-all duration-200 rounded-lg group"
         >
           <div className="flex items-center gap-2 sm:gap-3">
             <TrendingUp className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
@@ -1669,10 +1669,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
 
       {/* Chart Content */}
       {isExpanded && (
-        <div className="relative p-4 rounded-xl bg-muted/20">
-          <div className="mb-2 pt-3">
+        <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-muted/20">
+          <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 sm:px-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 w-full sm:w-auto">
@@ -1817,7 +1817,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         
         {/* 統計數據 - 重新組織 GPA 和標準差在同一側，移除評論數避免重複 */}
         {statistics.mean !== null && statistics.standardDeviation !== null && (
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-2 px-2 sm:px-0">
             {/* 移動端：單行布局 - 移除評論數，只顯示 GPA 和標準差 */}
             <div className="flex flex-row justify-center items-center gap-6 sm:hidden">
               {/* 平均 GPA */}
@@ -1876,7 +1876,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       </div>
       
       {/* ECharts 圖表 */}
-      <div className="relative w-full" style={{ height: `${responsiveHeight + 64}px` }}>
+      <div className="relative w-full px-2 sm:px-0" style={{ height: `${responsiveHeight + 64}px` }}>
         <ReactECharts
           ref={chartRef}
           key={chartKey} // Force re-render when theme changes
