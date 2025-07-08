@@ -357,84 +357,81 @@ export function AdvancedCourseFilters({
       </div>
 
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* 學科領域 */}
-        <div className="flex items-center gap-2">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[100px] whitespace-nowrap">
+        <div className="flex items-center gap-3">
+          <label className={getLabelClassName()}>
             <Library className="h-4 w-4" />
             {t('sort.subjectArea')}
           </label>
-          <div className="flex-1 min-w-0">
-            <MultiSelectDropdown
-              options={availableSubjects
-                .sort((a, b) => {
-                  const codeA = getSubjectCodeFromDepartment(a);
-                  const codeB = getSubjectCodeFromDepartment(b);
-                  return codeA.localeCompare(codeB);
-                })
-                .map(subject => {
-                  const subjectCode = getSubjectCodeFromDepartment(subject);
-                  return {
-                    value: subject,
-                    label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
-                    count: getSubjectCounts()[subject] || 0
-                  };
-                })}
-              selectedValues={filters.subjectArea}
-              onSelectionChange={(values) => updateFilters({ subjectArea: values })}
-              placeholder={t('filter.allSubjects')}
-              totalCount={totalCourses}
-            />
-          </div>
+          <MultiSelectDropdown
+            options={availableSubjects
+              .sort((a, b) => {
+                const codeA = getSubjectCodeFromDepartment(a);
+                const codeB = getSubjectCodeFromDepartment(b);
+                return codeA.localeCompare(codeB);
+              })
+              .map(subject => {
+                const subjectCode = getSubjectCodeFromDepartment(subject);
+                return {
+                  value: subject,
+                  label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
+                  count: getSubjectCounts()[subject] || 0
+                };
+              })}
+            selectedValues={filters.subjectArea}
+            onSelectionChange={(values) => updateFilters({ subjectArea: values })}
+            placeholder={t('filter.allSubjects')}
+            totalCount={totalCourses}
+            className="flex-1"
+          />
         </div>
 
         {/* 教學語言 */}
-        <div className="flex items-center gap-2">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[100px] whitespace-nowrap">
+        <div className="flex items-center gap-3">
+          <label className={getLabelClassName()}>
             <BookText className="h-4 w-4" />
             {t('filter.teachingLanguage')}
           </label>
-          <div className="flex-1 min-w-0">
-            <MultiSelectDropdown
-              options={[
-                {
-                  value: 'English',
-                  label: t('language.english'),
-                  count: getLanguageCounts()['English'] || 0
-                },
-                {
-                  value: 'Mandarin Chinese',
-                  label: t('language.mandarinChinese'),
-                  count: getLanguageCounts()['Mandarin Chinese'] || 0
-                }
-              ]}
-              selectedValues={filters.teachingLanguage}
-              onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
-              placeholder={t('filter.allLanguages')}
-              totalCount={totalCourses}
-            />
-          </div>
+          <MultiSelectDropdown
+            options={[
+              {
+                value: 'English',
+                label: t('language.english'),
+                count: getLanguageCounts()['English'] || 0
+              },
+              {
+                value: 'Mandarin Chinese',
+                label: t('language.mandarinChinese'),
+                count: getLanguageCounts()['Mandarin Chinese'] || 0
+              }
+            ]}
+            selectedValues={filters.teachingLanguage}
+            onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
+            placeholder={t('filter.allLanguages')}
+            totalCount={totalCourses}
+            className="flex-1"
+          />
         </div>
 
         {/* 開設學期 */}
-        <div className="flex items-center gap-2 md:col-span-2 xl:col-span-1">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[100px] whitespace-nowrap">
+        <div className="flex items-center gap-3">
+          <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
           </label>
-          <div className="flex-1 min-w-0">
-            <MultiSelectDropdown
-              options={availableTerms.map(term => ({
-                value: term.term_code,
-                label: getTermDisplayName(term.term_code),
-                count: getTermCounts()[term.term_code] || 0
-              }))}
-              selectedValues={filters.offeredTerm}
-              onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
-              placeholder={t('filter.allTerms')}
-              totalCount={totalCourses}
-            />
-          </div>
+          <MultiSelectDropdown
+            options={availableTerms.map(term => ({
+              value: term.term_code,
+              label: getTermDisplayName(term.term_code),
+              count: getTermCounts()[term.term_code] || 0
+            }))}
+            selectedValues={filters.offeredTerm}
+            onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
+            placeholder={t('filter.allTerms')}
+            totalCount={totalCourses}
+            className="flex-1"
+          />
         </div>
 
       </div>

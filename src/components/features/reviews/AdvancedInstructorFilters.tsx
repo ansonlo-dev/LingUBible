@@ -334,65 +334,63 @@ export function AdvancedInstructorFilters({
       {/* 篩選器行 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 部門 */}
-        <div className="flex items-center gap-2">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[80px] whitespace-nowrap">
+        <div className="flex items-center gap-3">
+          <label className={getLabelClassName()}>
             <Building2 className="h-4 w-4" />
             {t('filter.department')}
           </label>
-          <div className="flex-1 min-w-0">
-            <MultiSelectDropdown
-              options={(() => {
-                const groupedDepartments = getGroupedDepartments();
-                const options: SelectOption[] = [];
-                
-                Object.entries(groupedDepartments).forEach(([faculty, data]) => {
-                  // Add faculty group header
-                  options.push({
-                    value: `__faculty_${faculty}`,
-                    label: t(getFacultyTranslationKey(faculty)),
-                    count: data.count,
-                    disabled: true
-                  });
-                  
-                  // Add departments under this faculty
-                  data.departments.forEach(department => {
-                    options.push({
-                      value: department,
-                      label: `  ${translateDepartmentName(department, t)}`,
-                      count: getDepartmentCounts()[department] || 0
-                    });
-                  });
+          <MultiSelectDropdown
+            options={(() => {
+              const groupedDepartments = getGroupedDepartments();
+              const options: SelectOption[] = [];
+              
+              Object.entries(groupedDepartments).forEach(([faculty, data]) => {
+                // Add faculty group header
+                options.push({
+                  value: `__faculty_${faculty}`,
+                  label: t(getFacultyTranslationKey(faculty)),
+                  count: data.count,
+                  disabled: true
                 });
                 
-                return options;
-              })()}
-              selectedValues={filters.department}
-              onSelectionChange={(values) => updateFilters({ department: values })}
-              placeholder={t('filter.allDepartments')}
-              totalCount={totalInstructors}
-            />
-          </div>
+                // Add departments under this faculty
+                data.departments.forEach(department => {
+                  options.push({
+                    value: department,
+                    label: `  ${translateDepartmentName(department, t)}`,
+                    count: getDepartmentCounts()[department] || 0
+                  });
+                });
+              });
+              
+              return options;
+            })()}
+            selectedValues={filters.department}
+            onSelectionChange={(values) => updateFilters({ department: values })}
+            placeholder={t('filter.allDepartments')}
+            totalCount={totalInstructors}
+            className="flex-1"
+          />
         </div>
 
         {/* 授課學期 */}
-        <div className="flex items-center gap-2">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[80px] whitespace-nowrap">
+        <div className="flex items-center gap-3">
+          <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.teachingTerm')}
           </label>
-          <div className="flex-1 min-w-0">
-            <MultiSelectDropdown
-              options={availableTerms.map(term => ({
-                value: term.term_code,
-                label: getTermDisplayName(term.term_code),
-                count: getTermCounts()[term.term_code] || 0
-              }))}
-              selectedValues={filters.teachingTerm}
-              onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
-              placeholder={t('filter.allTerms')}
-              totalCount={totalInstructors}
-            />
-          </div>
+          <MultiSelectDropdown
+            options={availableTerms.map(term => ({
+              value: term.term_code,
+              label: getTermDisplayName(term.term_code),
+              count: getTermCounts()[term.term_code] || 0
+            }))}
+            selectedValues={filters.teachingTerm}
+            onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
+            placeholder={t('filter.allTerms')}
+            totalCount={totalInstructors}
+            className="flex-1"
+          />
         </div>
       </div>
 
