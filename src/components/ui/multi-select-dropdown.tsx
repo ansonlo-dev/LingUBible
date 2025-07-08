@@ -112,8 +112,10 @@ export function MultiSelectDropdown({
       return;
     }
     
-    const canScrollUp = scrollTop > 0;
-    const canScrollDown = scrollTop < scrollHeight - clientHeight - 1;
+    // Add tolerance for scroll position detection (1px tolerance)
+    const tolerance = 1;
+    const canScrollUp = scrollTop > tolerance;
+    const canScrollDown = scrollTop < scrollHeight - clientHeight - tolerance;
     
     setShowScrollButtons({
       up: canScrollUp,
@@ -131,10 +133,11 @@ export function MultiSelectDropdown({
     const scroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
       const scrollAmount = direction === 'up' ? -3 : 3;
+      const tolerance = 1;
       
       // Check if we've reached the limits before scrolling
-      const atTop = scrollTop <= 0;
-      const atBottom = scrollTop >= scrollHeight - clientHeight - 1;
+      const atTop = scrollTop <= tolerance;
+      const atBottom = scrollTop >= scrollHeight - clientHeight - tolerance;
       
       if ((direction === 'up' && atTop) || (direction === 'down' && atBottom)) {
         stopScrolling();
@@ -150,8 +153,8 @@ export function MultiSelectDropdown({
       
       // Check again after scrolling in case we just reached the limit
       const newScrollTop = container.scrollTop;
-      const newAtTop = newScrollTop <= 0;
-      const newAtBottom = newScrollTop >= scrollHeight - clientHeight - 1;
+      const newAtTop = newScrollTop <= tolerance;
+      const newAtBottom = newScrollTop >= scrollHeight - clientHeight - tolerance;
       
       if ((direction === 'up' && newAtTop) || (direction === 'down' && newAtBottom)) {
         stopScrolling();
@@ -269,11 +272,15 @@ export function MultiSelectDropdown({
     if (!container) return;
 
     const handleScroll = () => {
-      checkScrollButtons();
       // Stop auto-scrolling when user manually scrolls
       if (scrollIntervalRef.current) {
         stopScrolling();
       }
+      // Update scroll buttons immediately and with a small delay for better responsiveness
+      checkScrollButtons();
+      requestAnimationFrame(() => {
+        checkScrollButtons();
+      });
     };
     
     const handleTouchStart = () => {
