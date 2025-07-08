@@ -4,37 +4,33 @@ import { useIsMobile } from './use-mobile';
 interface MarqueePlaceholderOptions {
   text: string;
   enabled?: boolean;
-  speed?: number; // characters per second
-  pauseDuration?: number; // pause at end in milliseconds
+  speed?: number; // pixels per second
+  pauseDuration?: number; // pause at start/end in milliseconds
 }
 
 export function useMarqueePlaceholder({
   text,
   enabled = true,
-  speed = 3, // characters per second
+  speed = 50, // pixels per second
   pauseDuration = 1000 // 1 second pause
 }: MarqueePlaceholderOptions) {
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [displayText, setDisplayText] = useState(text);
   const [shouldAnimate, setShouldAnimate] = useState(false);
-  const animationRef = useRef<number>();
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const [animationDistance, setAnimationDistance] = useState(0);
 
-  // Check if text would be truncated
+  // Check if text would be truncated and calculate animation distance
   const checkTruncation = () => {
     if (!containerRef.current || !isMobile || !enabled) {
       setShouldAnimate(false);
-      setDisplayText(text);
       return;
     }
 
     const element = containerRef.current;
-    const input = element.querySelector('input') || element;
+    const input = element.querySelector('input') || element.querySelector('span') || element;
     
     if (!input) {
       setShouldAnimate(false);
-      setDisplayText(text);
       return;
     }
 
@@ -61,52 +57,14 @@ export function useMarqueePlaceholder({
     // Add some buffer to account for slight measurement differences
     const needsMarquee = textWidth > (availableWidth - 20);
     
-    setShouldAnimate(needsMarquee);
-    if (!needsMarquee) {
-      setDisplayText(text);
-    }
-  };
-
-  // Marquee animation function
-  const startMarqueeAnimation = () => {
-    if (!shouldAnimate || !text) return;
-
-    let currentIndex = 0;
-    const textLength = text.length;
-    const intervalDuration = 1000 / speed; // milliseconds per character
-
-    const animate = () => {
-      if (currentIndex <= textLength) {
-        // Show characters from start up to currentIndex
-        setDisplayText(text.substring(0, currentIndex));
-        currentIndex++;
-        
-        timeoutRef.current = setTimeout(() => {
-          animationRef.current = requestAnimationFrame(animate);
-        }, intervalDuration);
-      } else {
-        // Animation complete, pause then restart
-        setDisplayText(text);
-        timeoutRef.current = setTimeout(() => {
-          currentIndex = 0;
-          animationRef.current = requestAnimationFrame(animate);
-        }, pauseDuration);
-      }
-    };
-
-    // Start the animation
-    animate();
-  };
-
-  // Stop animation and cleanup
-  const stopAnimation = () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = undefined;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
+    if (needsMarquee) {
+      // Calculate how far we need to scroll to show all text
+      const scrollDistance = textWidth - availableWidth + 40; // extra buffer
+      setAnimationDistance(scrollDistance);
+      setShouldAnimate(true);
+    } else {
+      setShouldAnimate(false);
+      setAnimationDistance(0);
     }
   };
 
@@ -126,30 +84,82 @@ export function useMarqueePlaceholder({
     };
   }, [text, isMobile, enabled]);
 
-  // Start/stop animation based on shouldAnimate
-  useEffect(() => {
-    stopAnimation(); // Clean up any existing animation
+  // Generate CSS animation styles for the text element
+  const getTextStyles = () => {
+    if (!shouldAnimate || !animationDistance) return {};
 
-    if (shouldAnimate && isMobile && enabled) {
-      // Small delay before starting animation
-      timeoutRef.current = setTimeout(() => {
-        startMarqueeAnimation();
-      }, 500);
-    } else {
-      setDisplayText(text);
+    const scrollDuration = animationDistance / speed; // time to scroll in seconds
+    const totalDuration = scrollDuration + (pauseDuration / 1000) * 2; // scroll + pause at start + pause at end
+    
+    return {
+      animation: `marquee-scroll-${animationDistance} ${totalDuration}s ease-in-out infinite`,
+      whiteSpace: 'nowrap' as const,
+      display: 'inline-block'
+    };
+  };
+
+  // Generate CSS styles for the container
+  const getContainerStyles = () => {
+    if (!shouldAnimate) return {};
+    
+    return {
+      overflow: 'hidden' as const,
+      position: 'relative' as const
+    };
+  };
+
+  // Inject CSS keyframes if needed
+  useEffect(() => {
+    if (!shouldAnimate || !animationDistance) return;
+
+    const styleId = `marquee-animation-${animationDistance}`;
+    let existingStyle = document.getElementById(styleId);
+    
+    if (!existingStyle) {
+      existingStyle = document.createElement('style');
+      existingStyle.id = styleId;
+      document.head.appendChild(existingStyle);
     }
 
-    return stopAnimation;
-  }, [shouldAnimate, text, speed, pauseDuration, isMobile, enabled]);
+    const scrollDuration = animationDistance / speed;
+    const totalDuration = scrollDuration + (pauseDuration / 1000) * 2;
+    const pausePercentage = (pauseDuration / 1000) / totalDuration * 100;
+    const scrollPercentage = scrollDuration / totalDuration * 100;
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return stopAnimation;
-  }, []);
+    existingStyle.textContent = `
+      @keyframes marquee-scroll-${animationDistance} {
+        0% {
+          transform: translateX(0);
+        }
+        ${pausePercentage}% {
+          transform: translateX(0);
+        }
+        ${pausePercentage + scrollPercentage}% {
+          transform: translateX(-${animationDistance}px);
+        }
+        ${pausePercentage * 2 + scrollPercentage}% {
+          transform: translateX(-${animationDistance}px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+    `;
+
+    return () => {
+      // Cleanup: remove styles when component unmounts or animation stops
+      const style = document.getElementById(styleId);
+      if (style && !shouldAnimate) {
+        style.remove();
+      }
+    };
+  }, [shouldAnimate, animationDistance, speed, pauseDuration]);
 
   return {
     ref: containerRef,
-    displayText: shouldAnimate ? displayText : text,
-    isAnimating: shouldAnimate
+    text: text,
+    shouldAnimate,
+    textStyles: getTextStyles(),
+    containerStyles: getContainerStyles()
   };
 } 

@@ -91,7 +91,16 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               className="w-full flex items-center justify-between px-3 py-2 text-muted-foreground bg-background border border-muted-foreground/20 rounded-lg hover:border-primary transition-colors"
             >
               <Search className="h-4 w-4 flex-shrink-0" />
-              <span className="flex-1 truncate md:whitespace-nowrap text-sm text-center">{marqueeHook.displayText}</span>
+              <div 
+                className="flex-1 truncate md:whitespace-nowrap text-sm text-center"
+                style={marqueeHook.containerStyles}
+              >
+                <span 
+                  style={marqueeHook.textStyles}
+                >
+                  {marqueeHook.text}
+                </span>
+              </div>
               <div className="hidden md:flex items-center gap-1 flex-shrink-0">
                 <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                   <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K

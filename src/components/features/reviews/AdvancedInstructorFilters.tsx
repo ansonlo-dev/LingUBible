@@ -323,11 +323,21 @@ export function AdvancedInstructorFilters({
         <div className="relative group flex-1" ref={marqueeHook.ref}>
           <Input
             type="text"
-            placeholder={marqueeHook.displayText}
+            placeholder={marqueeHook.shouldAnimate ? '' : marqueeHook.text}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
             className="pr-12 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
+          {marqueeHook.shouldAnimate && !filters.searchTerm && (
+            <div 
+              className="absolute inset-0 pointer-events-none flex items-center px-3 text-sm text-muted-foreground"
+              style={marqueeHook.containerStyles}
+            >
+              <span style={marqueeHook.textStyles}>
+                {marqueeHook.text}
+              </span>
+            </div>
+          )}
           {filters.searchTerm && (
             <button
               onClick={() => updateFilters({ searchTerm: '' })}
