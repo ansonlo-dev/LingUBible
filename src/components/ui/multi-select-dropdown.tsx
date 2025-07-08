@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Status indicator component for terms
 const StatusDot = ({ status }: { status: 'current' | 'past' | 'future' }) => {
@@ -67,7 +69,14 @@ export function MultiSelectDropdown({
   totalCount
 }: MultiSelectDropdownProps) {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Scroll arrow functionality
+  const [showScrollButtons, setShowScrollButtons] = useState({ up: false, down: false });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Ensure selectedValues is always an array
   const safeSelectedValues = Array.isArray(selectedValues) ? selectedValues : [];
@@ -81,6 +90,95 @@ export function MultiSelectDropdown({
   // Check if all options are selected
   const isAllSelected = safeSelectedValues.length === selectableOptions.length &&
     selectableOptions.every(opt => safeSelectedValues.includes(opt.value));
+
+  // Scroll button functions
+  const checkScrollButtons = () => {
+    const container = scrollContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    
+    // Ensure dimensions are valid
+    if (scrollHeight <= 0 || clientHeight <= 0) {
+      return;
+    }
+    
+    // Check if content is scrollable
+    const hasOverflow = scrollHeight > clientHeight;
+    if (!hasOverflow) {
+      setShowScrollButtons({ up: false, down: false });
+      return;
+    }
+    
+    const canScrollUp = scrollTop > 0;
+    const canScrollDown = scrollTop < scrollHeight - clientHeight - 1;
+    
+    setShowScrollButtons({
+      up: canScrollUp,
+      down: canScrollDown
+    });
+  };
+
+  const startScrolling = (direction: 'up' | 'down') => {
+    stopScrolling();
+    const container = scrollContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const scroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const scrollAmount = direction === 'up' ? -3 : 3;
+      
+      // Check if we've reached the limits before scrolling
+      const atTop = scrollTop <= 0;
+      const atBottom = scrollTop >= scrollHeight - clientHeight - 1;
+      
+      if ((direction === 'up' && atTop) || (direction === 'down' && atBottom)) {
+        stopScrolling();
+        return;
+      }
+      
+      container.scrollBy(0, scrollAmount);
+      
+      // Update scroll buttons immediately after scrolling
+      setTimeout(() => {
+        checkScrollButtons();
+      }, 10);
+      
+      // Check again after scrolling in case we just reached the limit
+      const newScrollTop = container.scrollTop;
+      const newAtTop = newScrollTop <= 0;
+      const newAtBottom = newScrollTop >= scrollHeight - clientHeight - 1;
+      
+      if ((direction === 'up' && newAtTop) || (direction === 'down' && newAtBottom)) {
+        stopScrolling();
+        return;
+      }
+    };
+
+    scrollIntervalRef.current = setInterval(scroll, 16); // ~60fps
+    
+    // For mobile devices, auto-stop after 1 second to prevent infinite scrolling
+    if (isMobile) {
+      mobileScrollTimeoutRef.current = setTimeout(() => {
+        stopScrolling();
+      }, 1000);
+    }
+  };
+
+  const stopScrolling = () => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
+    if (mobileScrollTimeoutRef.current) {
+      clearTimeout(mobileScrollTimeoutRef.current);
+      mobileScrollTimeoutRef.current = null;
+    }
+  };
 
   const handleSelectAll = () => {
     if (isAllSelected) {
@@ -165,6 +263,64 @@ export function MultiSelectDropdown({
     return `${estimatedWidth}px`;
   };
 
+  // Scroll button effect hooks
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      checkScrollButtons();
+      // Stop auto-scrolling when user manually scrolls
+      if (scrollIntervalRef.current) {
+        stopScrolling();
+      }
+    };
+    
+    const handleTouchStart = () => {
+      // Stop auto-scrolling when user starts touching the container
+      if (scrollIntervalRef.current) {
+        stopScrolling();
+      }
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    
+    // Check initially and when content changes
+    const observer = new ResizeObserver(() => {
+      // Use a small delay to ensure the resize has completed
+      setTimeout(checkScrollButtons, 50);
+    });
+    observer.observe(container);
+
+    // Initial check with a delay to ensure container is properly sized
+    const initialTimer = setTimeout(checkScrollButtons, 300);
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('touchstart', handleTouchStart);
+      observer.disconnect();
+      stopScrolling();
+      clearTimeout(initialTimer);
+    };
+  }, []);
+
+  // Check scroll buttons when content changes
+  useEffect(() => {
+    if (isOpen) {
+      // Use multiple timeouts to ensure DOM has updated
+      const timer1 = setTimeout(checkScrollButtons, 100);
+      const timer2 = setTimeout(checkScrollButtons, 300);
+      const timer3 = setTimeout(checkScrollButtons, 500);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
+  }, [isOpen, options, selectedValues]);
+
   return (
     <div className={cn("relative w-full", className)}>
       <Select 
@@ -182,7 +338,7 @@ export function MultiSelectDropdown({
           </SelectValue>
         </SelectTrigger>
         <SelectContent 
-          className="bg-white dark:bg-gray-900" 
+          className="bg-white dark:bg-gray-900 overflow-hidden" 
           position="popper" 
           side="bottom" 
           align="start" 
@@ -194,7 +350,7 @@ export function MultiSelectDropdown({
             width: 'auto'
           }}
         >
-          <div className="p-2">
+          <div className="p-2 relative">
             {/* Select All Button */}
             <div 
               className="flex items-center justify-between mb-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-1.5 transition-colors cursor-pointer"
@@ -210,9 +366,36 @@ export function MultiSelectDropdown({
               )}
             </div>
             
-            {/* Individual Options */}
-            <div className={cn("overflow-y-auto space-y-0.5", maxHeight)}>
-              {options.map((option) => {
+            {/* Scrollable container with arrow indicators */}
+            <div className="relative">
+              {/* Up arrow */}
+              {showScrollButtons.up && (
+                <div 
+                  className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-gray-900 dark:via-gray-900/90 flex items-center justify-center py-2 cursor-pointer select-none"
+                  onMouseEnter={() => !isMobile && startScrolling('up')}
+                  onMouseLeave={() => !isMobile && stopScrolling()}
+                  onClick={() => isMobile && startScrolling('up')}
+                  onTouchStart={(e) => {
+                    if (isMobile) {
+                      e.preventDefault();
+                      startScrolling('up');
+                    }
+                  }}
+                >
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+
+              {/* Individual Options */}
+              <div 
+                ref={scrollContainerRef}
+                className={cn("overflow-y-auto space-y-0.5 scrollbar-hide", maxHeight)}
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
+              >
+                {options.map((option) => {
                 const isGroupHeader = option.value.startsWith('__faculty_');
                 const isSubjectOption = !isGroupHeader && option.label.includes(' - ');
                 
@@ -313,6 +496,25 @@ export function MultiSelectDropdown({
                   </div>
                 );
               })}
+              </div>
+
+              {/* Down arrow */}
+              {showScrollButtons.down && (
+                <div 
+                  className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-gray-900 dark:via-gray-900/90 flex items-center justify-center py-2 cursor-pointer select-none"
+                  onMouseEnter={() => !isMobile && startScrolling('down')}
+                  onMouseLeave={() => !isMobile && stopScrolling()}
+                  onClick={() => isMobile && startScrolling('down')}
+                  onTouchStart={(e) => {
+                    if (isMobile) {
+                      e.preventDefault();
+                      startScrolling('down');
+                    }
+                  }}
+                >
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
             </div>
           </div>
         </SelectContent>
