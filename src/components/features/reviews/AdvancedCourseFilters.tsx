@@ -337,13 +337,12 @@ export function AdvancedCourseFilters({
           {t('search.smartSearch')}
         </label>
         <div className="relative group flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-primary/70" />
           <Input
             type="text"
             placeholder={t('search.placeholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
-            className="pl-12 pr-12 h-8 text-base bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-lg transition-all duration-300"
+            className="pr-12 h-8 text-base bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-lg transition-all duration-300"
           />
           {filters.searchTerm && (
             <button
