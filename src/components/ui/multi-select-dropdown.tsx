@@ -68,6 +68,7 @@ export function MultiSelectDropdown({
 }: MultiSelectDropdownProps) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Ensure selectedValues is always an array
   const safeSelectedValues = Array.isArray(selectedValues) ? selectedValues : [];
@@ -78,8 +79,8 @@ export function MultiSelectDropdown({
   // Filter out disabled options (group headers) for counting
   const selectableOptions = options.filter(option => !option.value.startsWith('__faculty_'));
 
-  // Normalize selectedValues to ensure consistency:
-  // If empty or only has 'all' without individual items, treat as all selected
+    // Normalize selectedValues to ensure consistency:
+  // Only auto-select all if user hasn't interacted yet and selection is empty
   const normalizedSelectedValues = (() => {
     if (selectableOptions.length === 0) return safeSelectedValues;
     
@@ -87,13 +88,17 @@ export function MultiSelectDropdown({
     const individualSelections = safeSelectedValues.filter(v => v !== 'all');
     const allOptionValues = selectableOptions.map(opt => opt.value);
     
-    // If empty selection (first visit) or 'all' is selected but individual items are missing
-    if (safeSelectedValues.length === 0 || 
-        (hasAllFlag && individualSelections.length < selectableOptions.length)) {
+    // Only auto-select all on first visit (user hasn't interacted yet)
+    if (!hasUserInteracted && safeSelectedValues.length === 0) {
       return ['all', ...allOptionValues];
     }
     
-        return safeSelectedValues;
+    // If 'all' is selected but individual items are missing (for backward compatibility)
+    if (hasAllFlag && individualSelections.length < selectableOptions.length) {
+      return ['all', ...allOptionValues];
+    }
+    
+    return safeSelectedValues;
   })();
 
   // Update parent component if normalized values differ from input
@@ -104,23 +109,27 @@ export function MultiSelectDropdown({
   }, [JSON.stringify(normalizedSelectedValues), JSON.stringify(safeSelectedValues), onSelectionChange]);
 
   // Check if all options are selected
-  const isAllSelected = normalizedSelectedValues.length === 0 || 
-    normalizedSelectedValues.includes('all') ||
+  const isAllSelected = normalizedSelectedValues.includes('all') ||
     (normalizedSelectedValues.length > 0 && 
-     normalizedSelectedValues.length === selectableOptions.length);
+     normalizedSelectedValues.length === selectableOptions.length &&
+     !normalizedSelectedValues.includes('all'));
 
   const handleSelectAll = (checked: boolean) => {
+    setHasUserInteracted(true); // Mark that user has interacted
+    
     if (checked) {
       // When "All" is selected, select all individual options
       const allOptionValues = selectableOptions.map(opt => opt.value);
       onSelectionChange(['all', ...allOptionValues]);
     } else {
-      // Deselect all
+      // Deselect all - allow empty selection
       onSelectionChange([]);
     }
   };
 
   const handleOptionToggle = (optionValue: string, checked: boolean) => {
+    setHasUserInteracted(true); // Mark that user has interacted
+    
     // Handle group selection for faculty headers
     if (optionValue.startsWith('__faculty_')) {
       const facultyName = optionValue.replace('__faculty_', '');
@@ -180,8 +189,10 @@ export function MultiSelectDropdown({
   };
 
   const getDisplayText = () => {
-    if (normalizedSelectedValues.includes('all') || normalizedSelectedValues.length === 0) {
+    if (normalizedSelectedValues.includes('all')) {
       return t('common.all');
+    } else if (normalizedSelectedValues.length === 0) {
+      return placeholder; // Show placeholder when nothing is selected
     } else if (normalizedSelectedValues.length === 1) {
       const option = options.find(opt => opt.value === normalizedSelectedValues[0]);
       return option ? option.label : normalizedSelectedValues[0];
