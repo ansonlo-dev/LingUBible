@@ -5,11 +5,42 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
+// Status indicator component for terms
+const StatusDot = ({ status }: { status: 'current' | 'past' | 'future' }) => {
+  const getStatusStyles = () => {
+    switch (status) {
+      case 'current':
+        return 'bg-green-500 shadow-green-500/50';
+      case 'past':
+        return 'bg-gray-400 shadow-gray-400/50';
+      case 'future':
+        return 'bg-blue-500 shadow-blue-500/50';
+      default:
+        return 'bg-gray-400 shadow-gray-400/50';
+    }
+  };
+
+  return (
+    <div 
+      className={cn(
+        "w-2 h-2 rounded-full shadow-sm shrink-0",
+        getStatusStyles()
+      )}
+      title={
+        status === 'current' ? 'Current Term' : 
+        status === 'past' ? 'Past Term' : 
+        'Future Term'
+      }
+    />
+  );
+};
+
 export interface SelectOption {
   value: string;
   label: string;
   count?: number;
   disabled?: boolean; // For group headers
+  status?: 'current' | 'past' | 'future'; // For term status indicators
 }
 
 interface MultiSelectDropdownProps {
@@ -244,7 +275,12 @@ export function MultiSelectDropdown({
                         className="flex-1 cursor-pointer select-none"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="flex-1 mr-2 whitespace-nowrap">{option.label}</span>
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="flex-1 whitespace-nowrap">{option.label}</span>
+                            {option.status && (
+                              <StatusDot status={option.status} />
+                            )}
+                          </div>
                           {showCounts && option.count !== undefined && (
                             <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                               {option.count}
@@ -272,18 +308,23 @@ export function MultiSelectDropdown({
                         className="flex-1 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
                       >
                         <div className="flex items-center justify-between w-full">
-                          {isSubjectOption ? (
-                            // For subject options, apply monospace font to the subject code part
-                            <span className="flex-1 mr-2 whitespace-nowrap">
-                              {option.label.split(' - ').map((part, index) => (
-                                <span key={index} className={index === 0 ? 'font-mono font-semibold' : ''}>
-                                  {index === 0 ? part : ` - ${part}`}
-                                </span>
-                              ))}
-                            </span>
-                          ) : (
-                            <span className="flex-1 mr-2 whitespace-nowrap">{option.label}</span>
-                          )}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {isSubjectOption ? (
+                              // For subject options, apply monospace font to the subject code part
+                              <span className="flex-1 whitespace-nowrap">
+                                {option.label.split(' - ').map((part, index) => (
+                                  <span key={index} className={index === 0 ? 'font-mono font-semibold' : ''}>
+                                    {index === 0 ? part : ` - ${part}`}
+                                  </span>
+                                ))}
+                              </span>
+                            ) : (
+                              <span className="flex-1 whitespace-nowrap">{option.label}</span>
+                            )}
+                            {option.status && (
+                              <StatusDot status={option.status} />
+                            )}
+                          </div>
                           {showCounts && option.count !== undefined && (
                             <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
                               {option.count}

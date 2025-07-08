@@ -424,7 +424,9 @@ export function AdvancedCourseFilters({
             options={availableTerms.map(term => ({
               value: term.term_code,
               label: getTermDisplayName(term.term_code),
-              count: getTermCounts()[term.term_code] || 0
+              count: getTermCounts()[term.term_code] || 0,
+              status: isCurrentTerm(term.term_code) ? 'current' : 
+                     new Date(term.end_date) < new Date() ? 'past' : 'future'
             }))}
             selectedValues={filters.offeredTerm}
             onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
