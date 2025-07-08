@@ -428,8 +428,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
-  /* 桌面分屏模式支援：769px-1023px 寬度範圍 */
-  @media (min-width: 769px) and (max-width: 1023px) {
+  /* 桌面分屏模式支援：835px-1023px 寬度範圍 */
+  @media (min-width: 835px) and (max-width: 1023px) {
     .sidebar-container {
       /* 在分屏模式下保持側邊欄可見但使用較小寬度 */
       width: 9rem; /* 從 11rem 減少到 9rem */
@@ -488,29 +488,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     max-width: calc(100% - var(--sidebar-collapsed-width));
   }
 
-  @media (max-width: 768px) {
-    .main-container,
-    .main-container.sidebar-collapsed {
-      margin-left: 0;
-      width: 100%;
-      max-width: 100vw;
-      overflow: visible !important; /* 手機版也要確保overflow不影響sticky */
-    }
-    
-    .content-area {
-      padding-bottom: 2rem;
-      overflow: visible !important; /* 確保不影響sticky定位 */
-      width: 100%;
-      max-width: 100%;
-    }
-    
-    .container.mx-auto {
-      padding-bottom: 2rem;
-      overflow: visible !important; /* 確保不影響sticky定位 */
-      width: 100%;
-      max-width: 100%;
-    }
-  }
+
 
   /* 移動設備橫屏模式的主容器處理 */
   @media (max-height: 430px) and (orientation: landscape) and (pointer: coarse) {
@@ -586,7 +564,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 桌面版sidebar摺疊時的header調整 - 不再需要，因為header在main-container內部 */
 
   /* 手機版 header 樣式 */
-  @media (max-width: 768px) {
+  @media (max-width: 834px) {
     .header-sticky {
       /* 手機版使用正常padding */
       padding: 0 0.75rem !important;
@@ -2792,5 +2770,103 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .dark [data-radix-select-content] .bg-primary\/5:hover {
     background-color: rgba(227, 31, 38, 0.25) !important;
     color: white !important;
+  }
+
+  /* 手機和平板直向模式的側邊欄處理 - 擴展支援到834px以包含iPad */
+  @media (max-width: 834px) {
+    .sidebar-container {
+      transform: translateX(-100%);
+      top: 0;
+      height: 100vh; /* 備用方案 */
+      height: 100dvh; /* 使用動態視窗高度，考慮瀏覽器地址欄 */
+      height: var(--dynamic-vh); /* JavaScript 動態設定的高度 */
+      /* 為不支援 dvh 的瀏覽器提供 JavaScript 回退 */
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: var(--dynamic-vh);
+      z-index: 50;
+      /* 移動版本預設使用1/2寬度（適合直向模式） */
+      width: 50vw !important;
+      overflow-y: auto; /* 確保內容可以滾動 */
+      overflow-x: hidden;
+    }
+    
+    .sidebar-container.mobile-open {
+      transform: translateX(0);
+    }
+
+    /* 手機版不支援摺疊 */
+    .sidebar-container.collapsed {
+      width: var(--sidebar-width);
+    }
+
+    /* 確保側邊欄內容在手機版中正確佈局 */
+    .sidebar-container > div {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 確保底部設置區域始終可見 */
+    .sidebar-container nav {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* 手機版懸停效果調整 - 完全禁用懸停效果 */
+    .sidebar-container nav a:hover {
+      transform: none; /* 手機版不使用 translateX */
+      background-color: inherit; /* 重置背景色 */
+      color: inherit; /* 重置文字顏色 */
+      box-shadow: none; /* 移除陰影 */
+    }
+
+    /* 手機版活動狀態項目的懸停效果也要重置 */
+    .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
+      transform: none;
+      background-color: rgb(var(--sidebar-accent)); /* 保持原有的活動狀態背景 */
+      color: rgb(var(--sidebar-accent-foreground)); /* 保持原有的活動狀態文字色 */
+    }
+
+    /* 手機版圖標懸停效果重置 */
+    .sidebar-container nav a:hover svg {
+      transform: none;
+    }
+
+    /* 手機版觸摸反饋 */
+    .sidebar-container nav a:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+  }
+
+  /* 移動設備橫屏模式 - 所有橫屏手機和小平板使用1/3寬度 */
+  @media (max-width: 834px) and (orientation: landscape) {
+    .sidebar-container {
+      /* 橫屏模式使用1/3寬度，提供更多可視區域 */
+      width: 33.33vw !important;
+    }
+  }
+
+  @media (max-width: 834px) {
+    body.mobile-sidebar-open .main-container {
+      /* 防止主容器被遮罩影響 */
+      overflow: hidden !important;
+      /* 確保主容器不會滾動 */
+      max-height: 100vh;
+      max-height: 100dvh;
+    }
+
+    body.mobile-sidebar-open .header-sticky {
+      /* 確保header不會被側邊欄遮蓋 */
+      z-index: 105 !important;
+    }
+
+    /* 防止背景滾動時的內容區域 */
+    body.mobile-sidebar-open .content-area {
+      overflow: hidden !important;
+      height: calc(100vh - var(--header-height));
+      height: calc(100dvh - var(--header-height));
+    }
   }
 }
