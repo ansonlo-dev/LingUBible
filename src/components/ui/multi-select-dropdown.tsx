@@ -78,17 +78,17 @@ export function MultiSelectDropdown({
   // Filter out disabled options (group headers) for counting
   const selectableOptions = options.filter(option => !option.value.startsWith('__faculty_'));
   
-  // Check if all options are selected or none are selected
+  // Check if all options are selected
   const isAllSelected = safeSelectedValues.length === 0 || 
-    (safeSelectedValues.length === 1 && safeSelectedValues[0] === 'all') ||
+    safeSelectedValues.includes('all') ||
     (safeSelectedValues.length > 0 && 
-     safeSelectedValues.length === selectableOptions.length && 
-     !safeSelectedValues.includes('all'));
+     safeSelectedValues.length === selectableOptions.length);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      // When "All" is selected, clear individual selections and just use 'all'
-      onSelectionChange(['all']);
+      // When "All" is selected, select all individual options
+      const allOptionValues = selectableOptions.map(opt => opt.value);
+      onSelectionChange(['all', ...allOptionValues]);
     } else {
       // Deselect all
       onSelectionChange([]);
@@ -118,9 +118,15 @@ export function MultiSelectDropdown({
       
       if (checked) {
         // Add all departments under this faculty
-        newValues = [...new Set([...safeSelectedValues.filter(v => v !== 'all'), ...facultyDepartments])];
+        const currentIndividualSelections = safeSelectedValues.filter(v => v !== 'all');
+        newValues = [...new Set([...currentIndividualSelections, ...facultyDepartments])];
+        
+        // Check if all options are now selected
+        if (newValues.length === selectableOptions.length) {
+          newValues = ['all', ...newValues];
+        }
       } else {
-        // Remove all departments under this faculty
+        // Remove all departments under this faculty and remove 'all' if it exists
         newValues = safeSelectedValues.filter(v => !facultyDepartments.includes(v) && v !== 'all');
       }
       
@@ -131,21 +137,17 @@ export function MultiSelectDropdown({
     let newValues: string[];
     
     if (checked) {
-      // If currently "all" is selected, start fresh with just this option
-      if (safeSelectedValues.includes('all') || safeSelectedValues.length === 0) {
-        newValues = [optionValue];
-      } else {
-        // Add the option to existing selections
-        newValues = [...safeSelectedValues.filter(v => v !== 'all'), optionValue];
-        
-        // Check if all individual options are now selected
-        if (newValues.length === selectableOptions.length) {
-          // If all options are selected, switch to 'all' mode
-          newValues = ['all'];
-        }
+      // Add the option to existing selections
+      const currentIndividualSelections = safeSelectedValues.filter(v => v !== 'all');
+      newValues = [...new Set([...currentIndividualSelections, optionValue])];
+      
+      // Check if all individual options are now selected
+      if (newValues.length === selectableOptions.length) {
+        // If all options are selected, add 'all' to the selection
+        newValues = ['all', ...newValues];
       }
     } else {
-      // Remove the option
+      // Remove the option and remove 'all' if it exists
       newValues = safeSelectedValues.filter(v => v !== optionValue && v !== 'all');
     }
     
@@ -153,7 +155,7 @@ export function MultiSelectDropdown({
   };
 
   const getDisplayText = () => {
-    if (isAllSelected) {
+    if (safeSelectedValues.includes('all') || safeSelectedValues.length === 0) {
       return t('common.all');
     } else if (safeSelectedValues.length === 1) {
       const option = options.find(opt => opt.value === safeSelectedValues[0]);
@@ -254,7 +256,7 @@ export function MultiSelectDropdown({
                     .map(opt => opt.value);
                   
                   const isFacultySelected = 
-                    !safeSelectedValues.includes('all') &&
+                    safeSelectedValues.includes('all') ||
                     (facultyDepartments.length > 0 && 
                      facultyDepartments.every(dept => safeSelectedValues.includes(dept)));
                   
@@ -299,7 +301,7 @@ export function MultiSelectDropdown({
                   >
                     <Checkbox
                       id={`option-${option.value}`}
-                      checked={safeSelectedValues.includes(option.value) && !safeSelectedValues.includes('all')}
+                      checked={safeSelectedValues.includes('all') || safeSelectedValues.includes(option.value)}
                       onCheckedChange={(checked) => handleOptionToggle(option.value, !!checked)}
                       className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                     />
