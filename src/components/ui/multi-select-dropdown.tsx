@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,6 +36,7 @@ export function MultiSelectDropdown({
   totalCount
 }: MultiSelectDropdownProps) {
   const { t } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Ensure selectedValues is always an array
   const safeSelectedValues = Array.isArray(selectedValues) ? selectedValues : [];
@@ -151,6 +152,8 @@ export function MultiSelectDropdown({
         value="multi-select" 
         onValueChange={() => {}} // Controlled by checkbox interactions
         disabled={disabled}
+        open={isOpen}
+        onOpenChange={setIsOpen}
       >
         <SelectTrigger 
           className="w-full h-10 min-w-[180px]"
@@ -183,7 +186,8 @@ export function MultiSelectDropdown({
               />
               <label 
                 htmlFor="select-all" 
-                className="text-sm font-medium cursor-pointer select-none flex-1 text-gray-900 dark:text-gray-100"
+                className={cn("text-sm cursor-pointer select-none flex-1 text-gray-900 dark:text-gray-100", 
+                  isOpen ? "font-bold" : "font-medium")}
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="flex-1 mr-2 whitespace-nowrap">{t('common.all')}</span>
