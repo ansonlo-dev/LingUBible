@@ -2896,4 +2896,103 @@ div[style*="position: fixed"][style*="right: 14px"] {
       width: var(--sidebar-collapsed-width) !important;
     }
   }
+
+  /* iPad mini landscape mode special handling - desktop-like sidebar behavior */
+  @media (width: 1024px) and (height: 768px) and (orientation: landscape) {
+    /* Override mobile behavior for iPad mini landscape - use desktop-like collapse */
+    .sidebar-container {
+      transform: translateX(0) !important; /* Always visible, no sliding */
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: var(--sidebar-width) !important; /* Use desktop width when expanded */
+      height: 100vh !important;
+      height: 100dvh !important;
+      height: var(--dynamic-vh) !important;
+      z-index: 40 !important; /* Desktop z-index, not mobile z-index: 50 */
+      background: rgb(var(--sidebar-background)) !important;
+      border-right: 1px solid rgb(var(--sidebar-border)) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* When collapsed, show icons only (desktop behavior) */
+    .sidebar-container.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+      transform: translateX(0) !important; /* Stay visible */
+    }
+
+    /* When expanded, use full width but not mobile 50vw */
+    .sidebar-container:not(.collapsed) {
+      width: var(--sidebar-width) !important;
+    }
+
+    /* Ensure main container adjusts for sidebar like desktop */
+    .main-container {
+      margin-left: var(--sidebar-width) !important;
+      width: calc(100% - var(--sidebar-width)) !important;
+      max-width: calc(100% - var(--sidebar-width)) !important;
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .main-container.sidebar-collapsed {
+      margin-left: var(--sidebar-collapsed-width) !important;
+      width: calc(100% - var(--sidebar-collapsed-width)) !important;
+      max-width: calc(100% - var(--sidebar-collapsed-width)) !important;
+    }
+
+    /* Enable desktop-like hover effects */
+    .sidebar-container nav a:hover {
+      transform: translateX(4px) !important;
+      background-color: rgba(var(--sidebar-accent), 0.1) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .sidebar-container nav a:hover svg {
+      transform: scale(1.1) !important;
+      transition: transform 0.2s ease !important;
+    }
+
+    /* Collapsed state text hiding (desktop behavior) */
+    .sidebar-container.collapsed nav a span {
+      opacity: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      transition: opacity 0.15s ease-in-out !important;
+    }
+
+    .sidebar-container:not(.collapsed) nav a span {
+      opacity: 1 !important;
+      width: auto !important;
+      transition: opacity 0.15s ease-in-out !important;
+    }
+
+    /* Remove mobile-specific overrides */
+    body.mobile-sidebar-open {
+      overflow: auto !important;
+      position: static !important;
+      width: auto !important;
+    }
+
+    body.mobile-sidebar-open .main-container {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    body.mobile-sidebar-open .content-area {
+      overflow: visible !important;
+      height: auto !important;
+    }
+
+    /* Ensure mobile-open class doesn't interfere */
+    .sidebar-container.mobile-open {
+      transform: translateX(0) !important;
+      width: var(--sidebar-width) !important;
+    }
+
+    .sidebar-container.mobile-open.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+    }
+  }
 }

@@ -21,10 +21,17 @@ function getEnhancedMobileDetection() {
   const userAgent = navigator.userAgent.toLowerCase();
   const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   
-  // Special case: iPad mini portrait mode should behave like desktop for sidebar
+  // Special case: iPad mini should behave like desktop for sidebar in both orientations
   // This enables desktop-like collapse behavior instead of mobile overlay
-  if (width === 768 && height === 1024 && isTouchDevice && /ipad/i.test(userAgent)) {
-    return false; // Treat iPad mini portrait as desktop for sidebar behavior
+  if (isTouchDevice && /ipad/i.test(userAgent)) {
+    // iPad mini portrait: 768x1024
+    if (width === 768 && height === 1024) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+    // iPad mini landscape: 1024x768
+    if (width === 1024 && height === 768) {
+      return false; // Treat as desktop for sidebar behavior
+    }
   }
   
   // Enhanced detection logic for mobile landscape mode
