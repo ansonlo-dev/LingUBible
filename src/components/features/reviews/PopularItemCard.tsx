@@ -563,22 +563,21 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 {props.name}
               </CardTitle>
               <div className="mt-1">
-                {/* 在中文模式下顯示中文名稱 - 保留空間以維持卡片高度一致 */}
-                <div className="min-h-[2.5rem] flex flex-col justify-start">
-                  {currentLanguage === 'zh-TW' && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium min-h-[1.25rem]">
-                      {props.nameTc || ''}
-                    </p>
-                  )}
-                  {currentLanguage === 'zh-CN' && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium min-h-[1.25rem]">
-                      {props.nameSc || ''}
-                    </p>
-                  )}
-                  {currentLanguage === 'en' && (
-                    <div className="min-h-[1.25rem] mb-1"></div>
-                  )}
-                </div>
+                {/* 在中文模式下顯示中文名稱 - 只在有中文名稱時顯示 */}
+                {((currentLanguage === 'zh-TW' && props.nameTc) || (currentLanguage === 'zh-CN' && props.nameSc)) && (
+                  <div className="mb-1">
+                    {currentLanguage === 'zh-TW' && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        {props.nameTc}
+                      </p>
+                    )}
+                    {currentLanguage === 'zh-CN' && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        {props.nameSc}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground">
                   <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                     {/* Faculty Badge */}
