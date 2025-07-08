@@ -208,7 +208,7 @@ const Lecturers = () => {
     selectedGrades: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
-    itemsPerPage: 12,
+    itemsPerPage: 6,
     currentPage: 1
   });
 
@@ -739,7 +739,7 @@ const Lecturers = () => {
       selectedGrades: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
-      itemsPerPage: 12,
+      itemsPerPage: 6,
       currentPage: 1
     });
     

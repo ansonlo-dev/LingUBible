@@ -76,7 +76,7 @@ export const CourseReviewsList = ({
     selectedGrades: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
-    itemsPerPage: 12,
+    itemsPerPage: 6,
     currentPage: 1
   });
 
@@ -353,7 +353,7 @@ export const CourseReviewsList = ({
       selectedGrades: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
-      itemsPerPage: 12,
+      itemsPerPage: 6,
       currentPage: 1
     });
     
