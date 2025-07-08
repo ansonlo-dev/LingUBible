@@ -201,7 +201,7 @@ export function MultiSelectDropdown({
               onClick={handleSelectAll}
             >
               <span className="text-sm font-medium text-primary">
-                {isAllSelected ? 'Deselect All' : 'Select All'}
+                {isAllSelected ? t('common.deselectAll') : t('common.selectAll')}
               </span>
               {showCounts && (
                 <Badge variant="secondary" className="ml-2 text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">

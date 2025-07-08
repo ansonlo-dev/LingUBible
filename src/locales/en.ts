@@ -1174,6 +1174,7 @@ export default {
   'common.redo': 'Redo',
   'common.select': 'Select',
   'common.selectAll': 'Select All',
+  'common.deselectAll': 'Deselect All',
   'common.clear': 'Clear',
   'common.refresh': 'Refresh',
   'common.all': 'All',
