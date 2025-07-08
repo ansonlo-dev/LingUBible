@@ -334,8 +334,8 @@ export function AdvancedInstructorFilters({
       {/* 篩選器行 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 部門 */}
-        <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[80px] whitespace-nowrap">
             <Building2 className="h-4 w-4" />
             {t('filter.department')}
           </label>
@@ -375,8 +375,8 @@ export function AdvancedInstructorFilters({
         </div>
 
         {/* 授課學期 */}
-        <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[80px] whitespace-nowrap">
             <Calendar className="h-4 w-4" />
             {t('filter.teachingTerm')}
           </label>

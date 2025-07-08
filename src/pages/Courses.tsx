@@ -36,11 +36,11 @@ const Courses = () => {
   // 篩選器狀態
   const [filters, setFilters] = useState<CourseFilters>({
     searchTerm: '',
-    subjectArea: 'all',
-    teachingLanguage: 'all',
+    subjectArea: [],
+    teachingLanguage: [],
     sortBy: 'code',
     sortOrder: 'asc',
-    offeredTerm: 'all',
+    offeredTerm: [],
     itemsPerPage: 6,
     currentPage: 1,
   });
@@ -163,8 +163,8 @@ const Courses = () => {
 
   // 當學期篩選條件改變時，非同步檢查課程是否在該學期開設
   useEffect(() => {
-    if (filters.offeredTerm === 'all' || filters.offeredTerm === getCurrentTermCode()) {
-      // 如果是 'all' 或當前學期，不需要額外檢查
+    if (filters.offeredTerm.length === 0 || filters.offeredTerm.includes(getCurrentTermCode())) {
+      // 如果沒有選擇學期或包含當前學期，不需要額外檢查
       setTermFilteredCourses(new Set());
       setTermFilterLoading(false);
       return;
@@ -174,9 +174,15 @@ const Courses = () => {
     const checkCoursesForTerm = async () => {
       setTermFilterLoading(true);
       try {
-        // 使用批量方法獲取該學期開設的所有課程
-        const coursesOfferedInTerm = await CourseService.getCoursesOfferedInTermBatch(filters.offeredTerm);
-        setTermFilteredCourses(coursesOfferedInTerm);
+        // 使用批量方法獲取這些學期開設的所有課程
+        const allCoursesOffered = new Set<string>();
+        for (const termCode of filters.offeredTerm) {
+          if (termCode !== getCurrentTermCode()) {
+            const coursesOfferedInTerm = await CourseService.getCoursesOfferedInTermBatch(termCode);
+            coursesOfferedInTerm.forEach(courseCode => allCoursesOffered.add(courseCode));
+          }
+        }
+        setTermFilteredCourses(allCoursesOffered);
       } catch (error) {
         console.error('Error checking courses for term:', error);
         setTermFilteredCourses(new Set());
@@ -205,9 +211,9 @@ const Courses = () => {
 
   // 📊 性能優化：記憶化學期篩選狀態檢查
   const shouldShowLoadingForTermFilter = useMemo(() => {
-    return filters.offeredTerm !== 'all' && 
-           filters.offeredTerm !== getCurrentTermCode() && 
-           termFilterLoading;
+    const hasNonCurrentTerms = filters.offeredTerm.length > 0 && 
+                               filters.offeredTerm.some(termCode => termCode !== getCurrentTermCode());
+    return hasNonCurrentTerms && termFilterLoading;
   }, [filters.offeredTerm, termFilterLoading]);
 
   // 篩選和排序課程

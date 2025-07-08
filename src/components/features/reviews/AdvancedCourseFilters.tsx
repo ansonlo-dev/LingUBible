@@ -359,8 +359,8 @@ export function AdvancedCourseFilters({
       {/* 篩選器行 */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {/* 學科領域 */}
-        <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[100px] whitespace-nowrap">
             <Library className="h-4 w-4" />
             {t('sort.subjectArea')}
           </label>
@@ -389,8 +389,8 @@ export function AdvancedCourseFilters({
         </div>
 
         {/* 教學語言 */}
-        <div className="flex items-center gap-3">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[100px] whitespace-nowrap">
             <BookText className="h-4 w-4" />
             {t('filter.teachingLanguage')}
           </label>
@@ -417,8 +417,8 @@ export function AdvancedCourseFilters({
         </div>
 
         {/* 開設學期 */}
-        <div className="flex items-center gap-3 md:col-span-2 xl:col-span-1">
-          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 min-w-[120px] whitespace-nowrap">
+        <div className="flex items-center gap-2 md:col-span-2 xl:col-span-1">
+          <label className="text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-[100px] whitespace-nowrap">
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
           </label>
