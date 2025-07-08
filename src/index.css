@@ -337,12 +337,18 @@ div[style*="position: fixed"][style*="right: 14px"] {
       margin-left: 9rem;
       width: calc(100% - 9rem);
       max-width: calc(100% - 9rem);
+      /* 確保沒有間隙 */
+      position: relative;
+      left: 0;
     }
     
     .main-container.sidebar-collapsed {
       margin-left: var(--sidebar-collapsed-width);
       width: calc(100% - var(--sidebar-collapsed-width));
       max-width: calc(100% - var(--sidebar-collapsed-width));
+      /* 確保沒有間隙 */
+      position: relative;
+      left: 0;
     }
     
     /* 分屏模式下側邊欄文字稍微小一點以節省空間 */
@@ -352,6 +358,25 @@ div[style*="position: fixed"][style*="right: 14px"] {
     
     .sidebar-container .text-xl {
       font-size: 1rem;
+    }
+
+    /* 確保sidebar在分屏模式下正確定位 */
+    .sidebar-container {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      z-index: 40;
+    }
+
+    /* 確保分屏模式下的transition是smooth的 */
+    .main-container,
+    .main-container.sidebar-collapsed {
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .sidebar-container {
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
   }
 
