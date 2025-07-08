@@ -26,6 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 
 export interface InstructorReviewFilters {
   selectedLanguages: string[];
@@ -70,44 +71,24 @@ export function InstructorReviewsFilters({
     onFiltersChange({ ...filters, ...updates });
   };
 
-  const handleLanguageChange = (value: string) => {
-    if (value === 'all') {
-      updateFilters({ selectedLanguages: [], currentPage: 1 });
-    } else {
-      updateFilters({ selectedLanguages: [value], currentPage: 1 });
-    }
+  const handleLanguageChange = (values: string[]) => {
+    updateFilters({ selectedLanguages: values, currentPage: 1 });
   };
 
-  const handleTermChange = (value: string) => {
-    if (value === 'all') {
-      updateFilters({ selectedTerms: [], currentPage: 1 });
-    } else {
-      updateFilters({ selectedTerms: [value], currentPage: 1 });
-    }
+  const handleTermChange = (values: string[]) => {
+    updateFilters({ selectedTerms: values, currentPage: 1 });
   };
 
-  const handleCourseChange = (value: string) => {
-    if (value === 'all') {
-      updateFilters({ selectedCourses: [], currentPage: 1 });
-    } else {
-      updateFilters({ selectedCourses: [value], currentPage: 1 });
-    }
+  const handleCourseChange = (values: string[]) => {
+    updateFilters({ selectedCourses: values, currentPage: 1 });
   };
 
-  const handleSessionTypeChange = (value: string) => {
-    if (value === 'all') {
-      updateFilters({ selectedSessionTypes: [], currentPage: 1 });
-    } else {
-      updateFilters({ selectedSessionTypes: [value], currentPage: 1 });
-    }
+  const handleSessionTypeChange = (values: string[]) => {
+    updateFilters({ selectedSessionTypes: values, currentPage: 1 });
   };
 
-  const handleGradeChange = (value: string) => {
-    if (value === 'all') {
-      updateFilters({ selectedGrades: [], currentPage: 1 });
-    } else {
-      updateFilters({ selectedGrades: [value], currentPage: 1 });
-    }
+  const handleGradeChange = (values: string[]) => {
+    updateFilters({ selectedGrades: values, currentPage: 1 });
   };
 
   const hasActiveFilters = () => {
@@ -166,12 +147,7 @@ export function InstructorReviewsFilters({
     { value: 'downvotes', label: t('sort.downvotes'), icon: ThumbsDown }
   ];
 
-  // Get current selected values for dropdowns
-  const currentLanguage = (filters.selectedLanguages || []).length === 0 ? 'all' : (filters.selectedLanguages || [])[0];
-  const currentTerm = (filters.selectedTerms || []).length === 0 ? 'all' : (filters.selectedTerms || [])[0];
-  const currentCourse = (filters.selectedCourses || []).length === 0 ? 'all' : (filters.selectedCourses || [])[0];
-  const currentSessionType = (filters.selectedSessionTypes || []).length === 0 ? 'all' : (filters.selectedSessionTypes || [])[0];
-  const currentGrade = (filters.selectedGrades || []).length === 0 ? 'all' : (filters.selectedGrades || [])[0];
+
 
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
@@ -190,35 +166,19 @@ export function InstructorReviewsFilters({
             <Languages className="h-4 w-4" />
             {t('filter.reviewLanguage')}
           </label>
-          <Select value={currentLanguage} onValueChange={handleLanguageChange}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')}>
-                {currentLanguage === 'all' ? t('common.all') : getLanguageDisplayName(currentLanguage)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalReviews}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {Object.entries(languageCounts || {}).map(([language, count]) => (
-                <SelectItem key={language} value={language}>
-                  <span className="flex items-center gap-2">
-                    <span>{getLanguageDisplayName(language)}</span>
-                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                      {count}
-                    </Badge>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectDropdown
+            options={Object.entries(languageCounts || {}).map(([language, count]) => ({
+              value: language,
+              label: getLanguageDisplayName(language),
+              count: count
+            }))}
+            selectedValues={filters.selectedLanguages}
+            onSelectionChange={handleLanguageChange}
+            placeholder={t('common.all')}
+            totalCount={totalReviews}
+            className="flex-1 h-10"
+            showCounts={true}
+          />
         </div>
 
         {/* 學期篩選 */}
@@ -227,41 +187,25 @@ export function InstructorReviewsFilters({
             <CalendarDays className="h-4 w-4" />
             {t('filter.reviewTerm')}
           </label>
-          <Select value={currentTerm} onValueChange={handleTermChange}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')}>
-                {currentTerm === 'all' ? t('common.all') : (termCounts[currentTerm]?.name || currentTerm)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalReviews}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
-                if (!termInfo || typeof termInfo !== 'object') {
-                  return null;
-                }
-                return (
-                  <SelectItem key={termCode} value={termCode}>
-                    <span className="flex items-center gap-2">
-                      <div className={`w-2 h-2 ${isCurrentTerm(termCode) ? 'bg-green-500' : 'bg-gray-500'} rounded-full`}></div>
-                      <span>{(termInfo && termInfo.name) ? termInfo.name : termCode}</span>
-                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                        {(termInfo && termInfo.count) ? termInfo.count : 0}
-                      </Badge>
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <MultiSelectDropdown
+            options={Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
+              if (!termInfo || typeof termInfo !== 'object') {
+                return null;
+              }
+              return {
+                value: termCode,
+                label: (termInfo && termInfo.name) ? termInfo.name : termCode,
+                count: (termInfo && termInfo.count) ? termInfo.count : 0,
+                status: isCurrentTerm(termCode) ? 'current' : 'past'
+              };
+            }).filter(Boolean) as SelectOption[]}
+            selectedValues={filters.selectedTerms}
+            onSelectionChange={handleTermChange}
+            placeholder={t('common.all')}
+            totalCount={totalReviews}
+            className="flex-1 h-10"
+            showCounts={true}
+          />
         </div>
 
         {/* 課程篩選 */}
@@ -270,40 +214,24 @@ export function InstructorReviewsFilters({
             <BookOpen className="h-4 w-4" />
             {t('filter.reviewCourse')}
           </label>
-          <Select value={currentCourse} onValueChange={handleCourseChange}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')}>
-                {currentCourse === 'all' ? t('common.all') : currentCourse}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalReviews}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {Object.entries(courseCounts || {}).map(([courseCode, courseInfo]) => {
-                if (!courseInfo || typeof courseInfo !== 'object') {
-                  return null;
-                }
-                return (
-                  <SelectItem key={courseCode} value={courseCode}>
-                    <span className="flex items-center gap-2">
-                      <span>{courseCode} - {(courseInfo && courseInfo.title) ? courseInfo.title : courseCode}</span>
-                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                        {(courseInfo && courseInfo.count) ? courseInfo.count : 0}
-                      </Badge>
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <MultiSelectDropdown
+            options={Object.entries(courseCounts || {}).map(([courseCode, courseInfo]) => {
+              if (!courseInfo || typeof courseInfo !== 'object') {
+                return null;
+              }
+              return {
+                value: courseCode,
+                label: `${courseCode} - ${(courseInfo && courseInfo.title) ? courseInfo.title : courseCode}`,
+                count: (courseInfo && courseInfo.count) ? courseInfo.count : 0
+              };
+            }).filter(Boolean) as SelectOption[]}
+            selectedValues={filters.selectedCourses}
+            onSelectionChange={handleCourseChange}
+            placeholder={t('common.all')}
+            totalCount={totalReviews}
+            className="flex-1 h-10"
+            showCounts={true}
+          />
         </div>
 
         {/* 課堂類型篩選 */}
@@ -312,35 +240,19 @@ export function InstructorReviewsFilters({
             <School className="h-4 w-4" />
             {t('filter.reviewSessionType')}
           </label>
-          <Select value={currentSessionType} onValueChange={handleSessionTypeChange}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')}>
-                {currentSessionType === 'all' ? t('common.all') : t(`sessionType.${currentSessionType.toLowerCase()}`)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalReviews}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => (
-                <SelectItem key={sessionType} value={sessionType}>
-                  <span className="flex items-center gap-2">
-                    <span>{t(`sessionType.${sessionType.toLowerCase()}`)}</span>
-                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                      {count}
-                    </Badge>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelectDropdown
+            options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
+              value: sessionType,
+              label: t(`sessionType.${sessionType.toLowerCase()}`),
+              count: count
+            }))}
+            selectedValues={filters.selectedSessionTypes}
+            onSelectionChange={handleSessionTypeChange}
+            placeholder={t('common.all')}
+            totalCount={totalReviews}
+            className="flex-1 h-10"
+            showCounts={true}
+          />
         </div>
 
         {/* 成績篩選 */}
@@ -349,38 +261,19 @@ export function InstructorReviewsFilters({
             <GraduationCap className="h-4 w-4" />
             {t('sort.grade')}
           </label>
-          <Select value={currentGrade} onValueChange={handleGradeChange}>
-            <SelectTrigger className="bg-background hover:border-primary/30 focus:border-primary h-10 rounded-lg flex-1">
-              <SelectValue placeholder={t('common.all')}>
-                {currentGrade === 'all' ? t('common.all') : (currentGrade === 'N/A' ? t('review.notApplicable') : currentGrade)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-900 border shadow-xl">
-              <SelectItem value="all" textValue={t('common.all')}>
-                <span className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {t('common.all')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                    {totalReviews}
-                  </Badge>
-                </span>
-              </SelectItem>
-              {sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => {
-                const count = gradeCounts[grade] || 0;
-                return (
-                  <SelectItem key={grade} value={grade}>
-                    <span className="flex items-center gap-2">
-                      <span>{grade === 'N/A' ? t('review.notApplicable') : grade}</span>
-                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20">
-                        {count}
-                      </Badge>
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <MultiSelectDropdown
+            options={sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => ({
+              value: grade,
+              label: grade === 'N/A' ? t('review.notApplicable') : grade,
+              count: gradeCounts[grade] || 0
+            }))}
+            selectedValues={filters.selectedGrades}
+            onSelectionChange={handleGradeChange}
+            placeholder={t('common.all')}
+            totalCount={totalReviews}
+            className="flex-1 h-10"
+            showCounts={true}
+          />
         </div>
       </div>
 
