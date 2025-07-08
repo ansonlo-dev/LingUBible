@@ -70,30 +70,58 @@ export const PersistentCollapsibleSection: React.FC<PersistentCollapsibleSection
   return (
     <Card className={cn('overflow-hidden transition-all duration-300', className)}>
       <CardHeader className={cn('cursor-pointer select-none', headerClassName)} onClick={toggleExpanded}>
-        <div className="flex items-center justify-between gap-4">
-          <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
-            {icon && <span className="shrink-0">{icon}</span>}
-            <span className="truncate">{title}</span>
-          </CardTitle>
-          <div className="flex items-center gap-2 shrink-0">
-            {badge && <span>{badge}</span>}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 transition-colors hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleExpanded();
-              }}
-              title={isExpanded ? expandedHint : collapsedHint}
-              aria-label={isExpanded ? expandedHint : collapsedHint}
-            >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4 transition-transform duration-200" />
-              ) : (
-                <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-              )}
-            </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          {/* Title and icon row */}
+          <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0">
+            <CardTitle className="flex items-center gap-2 overflow-hidden min-w-0">
+              {icon && <span className="shrink-0">{icon}</span>}
+              <span className="truncate">{title}</span>
+            </CardTitle>
+            {/* Toggle button - mobile only */}
+            <div className="sm:hidden shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 transition-colors hover:bg-muted"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpanded();
+                }}
+                title={isExpanded ? expandedHint : collapsedHint}
+                aria-label={isExpanded ? expandedHint : collapsedHint}
+              >
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4 transition-transform duration-200" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                )}
+              </Button>
+            </div>
+          </div>
+          
+          {/* Badge and toggle button row */}
+          <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+            {badge && <span className="flex-1 sm:flex-none">{badge}</span>}
+            {/* Toggle button - desktop only */}
+            <div className="hidden sm:block shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 transition-colors hover:bg-muted"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpanded();
+                }}
+                title={isExpanded ? expandedHint : collapsedHint}
+                aria-label={isExpanded ? expandedHint : collapsedHint}
+              >
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4 transition-transform duration-200" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
