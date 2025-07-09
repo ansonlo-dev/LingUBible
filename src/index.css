@@ -1131,11 +1131,11 @@ div[style*="position: fixed"][style*="right: 14px"] {
   @media (max-width: 834px) and (orientation: landscape) {
     [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
       position: fixed;
-      left: calc(50% + 140px); /* Adjust for sidebar width in landscape */
+      left: calc(50vw + 5.5rem); /* Center in available content area (sidebar is 11rem) */
       top: 50%;
       transform: translate(-50%, -50%);
-      width: calc(90vw - 280px); /* Account for sidebar width */
-      max-width: 500px;
+      width: calc(90vw - 11rem - 2rem); /* Account for sidebar width + padding */
+      max-width: 480px;
       max-height: 80vh;
     }
   }
