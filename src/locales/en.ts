@@ -704,6 +704,7 @@ export default {
   'filter.allDepartments': 'All Departments',
   'filter.selectDepartment': 'Select Department',
   'filter.department': 'Department',
+  'filter.departmentMobile': 'Dept.',
   'filter.selectLecturer': 'Select Lecturer',
   'filter.allSubjects': 'All Subjects',
   'filter.teachingLanguage': 'Teaching Language',

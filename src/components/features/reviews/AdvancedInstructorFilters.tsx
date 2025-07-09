@@ -385,7 +385,7 @@ export function AdvancedInstructorFilters({
         <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <Building2 className="h-4 w-4" />
-            {t('filter.department')}
+            {isMobile ? t('filter.departmentMobile') : t('filter.department')}
           </label>
           <MultiSelectDropdown
             options={(() => {
