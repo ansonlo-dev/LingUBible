@@ -1127,6 +1127,19 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
+  /* Mobile landscape search dialog positioning - account for sidebar */
+  @media (max-width: 834px) and (orientation: landscape) {
+    [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
+      position: fixed;
+      left: calc(50% + 140px); /* Adjust for sidebar width in landscape */
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: calc(90vw - 280px); /* Account for sidebar width */
+      max-width: 500px;
+      max-height: 80vh;
+    }
+  }
+
   /* 滾動條樣式 - 桌面版 */
   ::-webkit-scrollbar {
     width: 8px;
@@ -3195,18 +3208,30 @@ div[style*="position: fixed"][style*="right: 14px"] {
       width: var(--sidebar-width) !important;
     }
 
-    /* Ensure main container adjusts for sidebar like desktop */
+    /* Ensure main container adjusts for sidebar like desktop but fix footer sticking issue */
     .main-container {
       margin-left: var(--sidebar-width) !important;
       width: calc(100% - var(--sidebar-width)) !important;
       max-width: calc(100% - var(--sidebar-width)) !important;
       transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      /* Fix footer sticking issue - use regular block layout instead of flex */
+      display: block !important;
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      min-height: var(--dynamic-vh) !important;
     }
 
     .main-container.sidebar-collapsed {
       margin-left: var(--sidebar-collapsed-width) !important;
       width: calc(100% - var(--sidebar-collapsed-width)) !important;
       max-width: calc(100% - var(--sidebar-collapsed-width)) !important;
+    }
+
+    /* Ensure content area doesn't use flex: 1 which causes footer sticking */
+    .content-area {
+      flex: none !important;
+      min-height: auto !important;
+      display: block !important;
     }
 
     /* Enable desktop-like hover effects */
