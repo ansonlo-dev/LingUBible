@@ -509,7 +509,7 @@ export function AdvancedInstructorFilters({
       )}
 
       {/* 分頁行 */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
             <Grid3X3 className="h-4 w-4" />
@@ -530,9 +530,9 @@ export function AdvancedInstructorFilters({
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {filteredInstructors !== undefined && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
               {t('pagination.foundInstructors', { count: filteredInstructors })}
             </span>
           )}
