@@ -1,4 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
+import { processPluralTranslation } from '@/utils/textUtils';
 import { isCurrentTerm } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -487,9 +488,9 @@ export function CourseReviewsFilters({
         <div className="flex items-center gap-2">
           <div className="text-sm text-muted-foreground">
             {hasActiveFilters() ? (
-              <span>{t('pages.courseDetail.filteredReviewsCount', { count: filteredReviews })}</span>
+              <span>{processPluralTranslation(t('pages.courseDetail.filteredReviewsCount', { count: filteredReviews }), filteredReviews)}</span>
             ) : (
-              <span>{t('pages.courseDetail.totalReviewsCount', { count: totalReviews })}</span>
+              <span>{processPluralTranslation(t('pages.courseDetail.totalReviewsCount', { count: totalReviews }), totalReviews)}</span>
             )}
           </div>
           

@@ -276,4 +276,30 @@ export function translateDepartmentName(departmentName: string, t: (key: string)
   }
   
   return translated;
+}
+
+/**
+ * 處理英文單複數形式
+ * @param count 數量
+ * @param singular 單數形式
+ * @param plural 複數形式
+ * @returns 根據數量返回適當的單複數形式
+ */
+export function pluralize(count: number, singular: string, plural: string): string {
+  return count === 1 ? singular : plural;
+}
+
+/**
+ * 處理包含單複數形式的翻譯字符串
+ * @param text 包含 {count} 和 singular|plural 格式的翻譯字符串
+ * @param count 數量
+ * @returns 處理後的翻譯字符串
+ */
+export function processPluralTranslation(text: string, count: number): string {
+  // 查找 singular|plural 格式的部分
+  const pluralRegex = /(\w+)\|(\w+)/g;
+  
+  return text.replace(pluralRegex, (match, singular, plural) => {
+    return count === 1 ? singular : plural;
+  });
 } 

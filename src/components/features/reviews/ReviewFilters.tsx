@@ -1,4 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
+import { processPluralTranslation } from '@/utils/textUtils';
 import {
   Filter,
   X,
@@ -281,9 +282,9 @@ export function ReviewFilters({
           {/* 統計信息 */}
           <div className="text-sm text-muted-foreground">
             {hasActiveFilters() ? (
-              <span>{t('pages.courseDetail.filteredReviewsCount', { count: filteredReviews.length })}</span>
+              <span>{processPluralTranslation(t('pages.courseDetail.filteredReviewsCount', { count: filteredReviews.length }), filteredReviews.length)}</span>
             ) : (
-              <span>{t('pages.courseDetail.totalReviewsCount', { count: allReviews.length })}</span>
+              <span>{processPluralTranslation(t('pages.courseDetail.totalReviewsCount', { count: allReviews.length }), allReviews.length)}</span>
             )}
           </div>
 

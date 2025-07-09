@@ -1,6 +1,7 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
+import { processPluralTranslation } from '@/utils/textUtils';
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -517,7 +518,7 @@ export function AdvancedCourseFilters({
         <div className="flex items-center gap-2">
           {filteredCourses !== undefined && (
             <span className="text-sm text-muted-foreground">
-              {t('pagination.foundCourses', { count: filteredCourses })}
+              {processPluralTranslation(t('pagination.foundCourses', { count: filteredCourses }), filteredCourses)}
             </span>
           )}
           {hasActiveFilters() && (

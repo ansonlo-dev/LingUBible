@@ -2,7 +2,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useState, useEffect, useMemo } from 'react';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, type Term } from '@/services/api/courseService';
-import { translateDepartmentName } from '@/utils/textUtils';
+import { translateDepartmentName, processPluralTranslation } from '@/utils/textUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Filter,
@@ -533,7 +533,7 @@ export function AdvancedInstructorFilters({
         <div className="flex items-center gap-2 flex-wrap">
           {filteredInstructors !== undefined && (
             <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {t('pagination.foundInstructors', { count: filteredInstructors })}
+              {processPluralTranslation(t('pagination.foundInstructors', { count: filteredInstructors }), filteredInstructors)}
             </span>
           )}
           {hasActiveFilters() && (
