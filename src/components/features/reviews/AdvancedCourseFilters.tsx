@@ -2,36 +2,27 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
 import { useEffect, useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  Filter,
-  Search,
   X,
-  Sparkles,
+  Search,
+  BookOpen,
+  Globe,
   Calendar,
   Hash,
-  BookText,
-  Building2,
-  Library,
-  Brain,
-  Target,
-  Clock,
-  Users,
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
-  MessageSquare,
+  ChevronDown,
   Grid3X3,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Award
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // Helper function to get faculty by department name
 const getFacultyByDepartment = (department: string): string => {
@@ -154,6 +145,8 @@ export function AdvancedCourseFilters({
   courses = []
 }: AdvancedCourseFiltersProps) {
   const { t, language } = useLanguage();
+  const isMobile = useIsMobile(); // Add mobile detection
+  const [isSortOpen, setIsSortOpen] = useState(false); // Add mobile sort collapsible state
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
@@ -236,8 +229,8 @@ export function AdvancedCourseFilters({
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
     return language === 'zh-TW' || language === 'zh-CN' 
-      ? 'text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0'
-      : 'text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0';
+      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24'
+      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24';
   };
 
   // Calculate counts for each filter option
@@ -328,10 +321,26 @@ export function AdvancedCourseFilters({
     return groupedOptions;
   };
 
+  // Helper function to get sort field display name
+  const getSortFieldDisplayName = (sortBy: string): string => {
+    const sortKeyMap: { [key: string]: string } = {
+      'code': 'sort.courseCode',
+      'title': 'sort.courseName',
+      'subject': 'sort.subjectArea',
+      'language': 'sort.language',
+      'workload': 'sort.workload',
+      'difficulty': 'sort.difficulty',
+      'usefulness': 'sort.usefulness',
+      'reviews': 'sort.reviews',
+      'averageGPA': 'sort.averageGPA'
+    };
+    return t(sortKeyMap[sortBy] || sortBy);
+  };
+
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 flex flex-col gap-2">
       {/* 智能搜索行 */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <label className={getLabelClassName()}>
           <Sparkles className="h-4 w-4" />
           {t('search.smartSearch')}
@@ -342,54 +351,41 @@ export function AdvancedCourseFilters({
             placeholder={t('search.placeholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
-            className="pr-12 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
+            className="pr-10 h-10 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
           {filters.searchTerm && (
             <button
               onClick={() => updateFilters({ searchTerm: '' })}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>
       </div>
 
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         {/* 學科領域 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
-            <Library className="h-4 w-4" />
-            {t('sort.subjectArea')}
+            <BookOpen className="h-4 w-4" />
+            {t('filter.subjectArea')}
           </label>
           <MultiSelectDropdown
-            options={availableSubjects
-              .sort((a, b) => {
-                const codeA = getSubjectCodeFromDepartment(a);
-                const codeB = getSubjectCodeFromDepartment(b);
-                return codeA.localeCompare(codeB);
-              })
-              .map(subject => {
-                const subjectCode = getSubjectCodeFromDepartment(subject);
-                return {
-                  value: subject,
-                  label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
-                  count: getSubjectCounts()[subject] || 0
-                };
-              })}
+            options={getGroupedSubjectOptions()}
             selectedValues={filters.subjectArea}
             onSelectionChange={(values) => updateFilters({ subjectArea: values })}
             placeholder={t('filter.allSubjects')}
             totalCount={totalCourses}
-            className="flex-1"
+            className="flex-1 h-10 text-sm"
           />
         </div>
 
-        {/* 教學語言 */}
-        <div className="flex items-center gap-3">
+        {/* 授課語言 */}
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
-            <BookText className="h-4 w-4" />
+            <Globe className="h-4 w-4" />
             {t('filter.teachingLanguage')}
           </label>
           <MultiSelectDropdown
@@ -409,12 +405,12 @@ export function AdvancedCourseFilters({
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}
             totalCount={totalCourses}
-            className="flex-1"
+            className="flex-1 h-10 text-sm"
           />
         </div>
 
         {/* 開設學期 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
@@ -431,173 +427,113 @@ export function AdvancedCourseFilters({
             onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
             placeholder={t('filter.allTerms')}
             totalCount={totalCourses}
-            className="flex-1"
+            className="flex-1 h-10 text-sm"
           />
         </div>
-
       </div>
 
-      {/* 排序行 */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        <label className={getLabelClassName()}>
-          <Hash className="h-4 w-4" />
-          {t('sort.by')}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={getSortButtonVariant('code')}
-            size="sm"
-            onClick={() => handleSort('code')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Hash className="h-4 w-4" />
-            {t('sort.courseCode')}
-            {getSortIcon('code')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('title')}
-            size="sm"
-            onClick={() => handleSort('title')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <BookText className="h-4 w-4" />
-            {t('sort.courseName')}
-            {getSortIcon('title')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('subject')}
-            size="sm"
-            onClick={() => handleSort('subject')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Library className="h-4 w-4" />
-            {t('sort.subjectArea')}
-            {getSortIcon('subject')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('language')}
-            size="sm"
-            onClick={() => handleSort('language')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <BookText className="h-4 w-4" />
-            {t('sort.language')}
-            {getSortIcon('language')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('workload')}
-            size="sm"
-            onClick={() => handleSort('workload')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Clock className="h-4 w-4" />
-            {t('sort.workload')}
-            {getSortIcon('workload')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('difficulty')}
-            size="sm"
-            onClick={() => handleSort('difficulty')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Brain className="h-4 w-4" />
-            {t('sort.difficulty')}
-            {getSortIcon('difficulty')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('usefulness')}
-            size="sm"
-            onClick={() => handleSort('usefulness')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Target className="h-4 w-4" />
-            {t('sort.usefulness')}
-            {getSortIcon('usefulness')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('reviews')}
-            size="sm"
-            onClick={() => handleSort('reviews')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <MessageSquare className="h-4 w-4" />
-            {t('sort.reviews')}
-            {getSortIcon('reviews')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('averageGPA')}
-            size="sm"
-            onClick={() => handleSort('averageGPA')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Award className="h-4 w-4" />
-            {t('sort.averageGPA')}
-            {getSortIcon('averageGPA')}
-          </Button>
-        </div>
-      </div>
-
-      {/* 每頁課程數和統計 */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* 左側：每頁課程數 */}
-        <div className="flex items-center gap-4">
+      {/* 排序行 - Mobile-aware version */}
+      {isMobile ? (
+        /* Mobile: Collapsible sort section */
+        <Collapsible open={isSortOpen} onOpenChange={setIsSortOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center justify-between w-full h-10 rounded-lg transition-all duration-200 border-0 px-0"
+            >
+              <div className="flex items-center gap-2 w-full">
+                <Hash className="h-4 w-4" />
+                <span className={`${language === 'zh-TW' || language === 'zh-CN' ? 'text-sm font-bold' : 'text-sm font-medium'} text-muted-foreground`}>
+                  {t('sort.by')}
+                </span>
+                <div className="flex-1 flex items-center" style={{ marginLeft: 'calc(96px - 24px - 0.5rem - 4ch)' }}>
+                  <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                    {getSortFieldDisplayName(filters.sortBy)} {filters.sortOrder === 'desc' ? '↓' : '↑'}
+                  </Badge>
+                </div>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {[
+                { value: 'code', label: t('sort.courseCode') },
+                { value: 'title', label: t('sort.courseName') },
+                { value: 'subject', label: t('sort.subjectArea') },
+                { value: 'language', label: t('sort.language') },
+                { value: 'workload', label: t('sort.workload') },
+                { value: 'difficulty', label: t('sort.difficulty') },
+                { value: 'usefulness', label: t('sort.usefulness') },
+                { value: 'reviews', label: t('sort.reviews') },
+                { value: 'averageGPA', label: t('sort.averageGPA') }
+              ].map((option) => (
+                <Button
+                  key={option.value}
+                  variant={filters.sortBy === option.value ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleSort(option.value)}
+                  className="h-8 px-3 text-xs"
+                >
+                  {option.label}
+                  {getSortIcon(option.value)}
+                </Button>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : (
+        /* Desktop: Always visible sort buttons */
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
-            <Grid3X3 className="h-4 w-4" />
-            {t('pagination.coursesPerPage')}
+            <Hash className="h-4 w-4" />
+            {t('sort.by')}
           </label>
-          <div className="flex gap-2">
-            {[6, 12, 24].map((count) => (
+          <div className="flex flex-wrap gap-2 flex-1">
+            {[
+              { value: 'code', label: t('sort.courseCode') },
+              { value: 'title', label: t('sort.courseName') },
+              { value: 'subject', label: t('sort.subjectArea') },
+              { value: 'language', label: t('sort.language') },
+              { value: 'workload', label: t('sort.workload') },
+              { value: 'difficulty', label: t('sort.difficulty') },
+              { value: 'usefulness', label: t('sort.usefulness') },
+              { value: 'reviews', label: t('sort.reviews') },
+              { value: 'averageGPA', label: t('sort.averageGPA') }
+            ].map((option) => (
               <Button
-                key={count}
-                variant={filters.itemsPerPage === count ? "default" : "outline"}
+                key={option.value}
+                variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => updateFilters({ itemsPerPage: count, currentPage: 1 })}
-                className={`h-9 px-3 ${
-                  filters.itemsPerPage === count
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background hover:bg-muted'
-                }`}
+                onClick={() => handleSort(option.value)}
+                className="h-8 px-3 text-xs"
               >
-                {count}
+                {option.label}
+                {getSortIcon(option.value)}
               </Button>
             ))}
           </div>
         </div>
+      )}
 
-        {/* 右側：課程統計和清除篩選器 */}
-        <div className="flex items-center gap-4">
-          {/* 統計信息 */}
-          <div className="text-sm text-muted-foreground">
-            {filters.searchTerm.trim() || filters.subjectArea.length > 0 || filters.teachingLanguage.length > 0 || filters.offeredTerm.length > 0 ? (
-              <span>{t('pages.courses.foundCount', { count: filteredCourses })}</span>
-            ) : (
-              <span>{t('pages.courses.totalCount', { count: totalCourses })}</span>
-            )}
-          </div>
-
-          {/* 清除篩選器按鈕 */}
-          {hasActiveFilters() && (
+      {/* 分頁行 */}
+      <div className="flex items-center gap-2">
+        <label className={getLabelClassName()}>
+          <Grid3X3 className="h-4 w-4" />
+          {t('pagination.coursesPerPage')}
+        </label>
+        <div className="flex gap-2">
+          {[6, 12, 24].map((count) => (
             <Button
-              variant="outline"
+              key={count}
+              variant={filters.itemsPerPage === count ? "default" : "outline"}
               size="sm"
-              onClick={onClearAll}
-              className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => updateFilters({ itemsPerPage: count, currentPage: 1 })}
+              className="h-8 px-3 text-xs"
             >
-              <X className="h-4 w-4" />
-              {t('filter.clearAll')}
-              <Badge variant="destructive" className="ml-1 text-xs">
-                {getActiveFiltersCount()}
-              </Badge>
+              {count}
             </Button>
-          )}
+          ))}
         </div>
       </div>
     </div>

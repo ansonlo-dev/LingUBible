@@ -1,32 +1,30 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { isCurrentTerm } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Filter,
   X,
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
-  MessageSquare,
-  Calendar,
-  Brain,
-  Target,
-  Clock,
-  GraduationCap,
-  ThumbsUp,
-  ThumbsDown,
   Languages,
   Grid3X3,
   CalendarDays,
   BookOpen,
   School,
   CheckCircle,
-  User
+  User,
+  GraduationCap,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState } from 'react';
 
 export interface InstructorReviewFilters {
   selectedLanguages: string[];
@@ -64,8 +62,10 @@ export function InstructorReviewsFilters({
   totalReviews,
   filteredReviews,
   onClearAll
-}: InstructorReviewsFiltersProps) {
-  const { t, language } = useLanguage();
+  }: InstructorReviewsFiltersProps) {
+    const { t, language } = useLanguage();
+    const isMobile = useIsMobile();
+    const [isSortOpen, setIsSortOpen] = useState(false);
 
   const updateFilters = (updates: Partial<InstructorReviewFilters>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -136,175 +136,334 @@ export function InstructorReviewsFilters({
   };
 
   const sortOptions = [
-    { value: 'postDate', label: t('sort.postDate'), icon: Calendar },
-    { value: 'teaching', label: t('sort.teaching'), icon: School },
-    { value: 'grading', label: t('sort.grading'), icon: CheckCircle },
-    { value: 'workload', label: t('sort.workload'), icon: Clock },
-    { value: 'difficulty', label: t('sort.difficulty'), icon: Brain },
-    { value: 'usefulness', label: t('sort.usefulness'), icon: Target },
-    { value: 'grade', label: t('sort.grade'), icon: GraduationCap },
-    { value: 'upvotes', label: t('sort.upvotes'), icon: ThumbsUp },
-    { value: 'downvotes', label: t('sort.downvotes'), icon: ThumbsDown }
+    { value: 'postDate', label: t('sort.postDate') },
+    { value: 'teaching', label: t('sort.teaching') },
+    { value: 'grading', label: t('sort.grading') },
+    { value: 'workload', label: t('sort.workload') },
+    { value: 'difficulty', label: t('sort.difficulty') },
+    { value: 'usefulness', label: t('sort.usefulness') },
+    { value: 'grade', label: t('sort.grade') },
+    { value: 'upvotes', label: t('sort.upvotes') },
+    { value: 'downvotes', label: t('sort.downvotes') }
   ];
+
+  // Helper function to get sort field display name
+  const getSortFieldDisplayName = (sortBy: string): string => {
+    const sortOption = sortOptions.find(option => option.value === sortBy);
+    return sortOption ? sortOption.label : sortBy;
+  };
 
 
 
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
     return language === 'zh-TW' || language === 'zh-CN' 
-      ? 'text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0'
-      : 'text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0';
+      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24'
+      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24';
   };
 
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 flex flex-col gap-2">
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* 語言篩選 */}
-        <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
-            <Languages className="h-4 w-4" />
-            {t('filter.reviewLanguage')}
-          </label>
-          <MultiSelectDropdown
-            options={Object.entries(languageCounts || {}).map(([language, count]) => ({
-              value: language,
-              label: getLanguageDisplayName(language),
-              count: count
-            }))}
-            selectedValues={filters.selectedLanguages}
-            onSelectionChange={handleLanguageChange}
-            placeholder={t('common.all')}
-            totalCount={totalReviews}
-            className="flex-1 h-10"
-            showCounts={true}
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-2 md:gap-0 md:w-full">
+        {/* Mobile: Traditional layout */}
+        <div className="grid grid-cols-1 gap-2 md:hidden">
+          {/* 語言篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <Languages className="h-4 w-4" />
+              {t('filter.reviewLanguage')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(languageCounts || {}).map(([language, count]) => ({
+                value: language,
+                label: getLanguageDisplayName(language),
+                count: count
+              }))}
+              selectedValues={filters.selectedLanguages}
+              onSelectionChange={handleLanguageChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+            />
+          </div>
 
-        {/* 學期篩選 */}
-        <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
-            <CalendarDays className="h-4 w-4" />
-            {t('filter.reviewTerm')}
-          </label>
-          <MultiSelectDropdown
-            options={Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
-              if (!termInfo || typeof termInfo !== 'object') {
-                return null;
-              }
-              return {
-                value: termCode,
-                label: (termInfo && termInfo.name) ? termInfo.name : termCode,
-                count: (termInfo && termInfo.count) ? termInfo.count : 0,
-                status: isCurrentTerm(termCode) ? 'current' : 'past'
-              };
-            }).filter(Boolean) as SelectOption[]}
-            selectedValues={filters.selectedTerms}
-            onSelectionChange={handleTermChange}
-            placeholder={t('common.all')}
-            totalCount={totalReviews}
-            className="flex-1 h-10"
-            showCounts={true}
-          />
-        </div>
-
-        {/* 課程篩選 */}
-        <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
-            <BookOpen className="h-4 w-4" />
-            {t('filter.reviewCourse')}
-          </label>
-          <MultiSelectDropdown
-            options={Object.entries(courseCounts || {}).map(([courseCode, courseInfo]) => {
-              if (!courseInfo || typeof courseInfo !== 'object') {
-                return null;
-              }
-              return {
+          {/* 課程篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <BookOpen className="h-4 w-4" />
+              {t('filter.reviewCourse')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(courseCounts || {}).map(([courseCode, courseInfo]) => ({
                 value: courseCode,
-                label: `${courseCode} - ${(courseInfo && courseInfo.title) ? courseInfo.title : courseCode}`,
-                count: (courseInfo && courseInfo.count) ? courseInfo.count : 0
-              };
-            }).filter(Boolean) as SelectOption[]}
-            selectedValues={filters.selectedCourses}
-            onSelectionChange={handleCourseChange}
-            placeholder={t('common.all')}
-            totalCount={totalReviews}
-            className="flex-1 h-10"
-            showCounts={true}
-          />
+                label: courseInfo.title ? `${courseCode} - ${courseInfo.title}` : courseCode,
+                count: courseInfo.count
+              }))}
+              selectedValues={filters.selectedCourses}
+              onSelectionChange={handleCourseChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+            />
+          </div>
+
+          {/* 學期篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <CalendarDays className="h-4 w-4" />
+              {t('filter.reviewTerm')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
+                if (!termInfo || typeof termInfo !== 'object') {
+                  return null;
+                }
+                return {
+                  value: termCode,
+                  label: (termInfo && termInfo.name) ? termInfo.name : termCode,
+                  count: (termInfo && termInfo.count) ? termInfo.count : 0,
+                  status: isCurrentTerm(termCode) ? 'current' : 
+                         'past' // Since we don't have end_date here, we'll default to past for non-current terms
+                };
+              }).filter(Boolean) as SelectOption[]}
+              selectedValues={filters.selectedTerms}
+              onSelectionChange={handleTermChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+            />
+          </div>
+
+          {/* 課堂類型篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <School className="h-4 w-4" />
+              {t('filter.reviewSessionType')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
+                value: sessionType,
+                label: t(`sessionType.${sessionType.toLowerCase()}`),
+                count: count
+              }))}
+              selectedValues={filters.selectedSessionTypes}
+              onSelectionChange={handleSessionTypeChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+            />
+          </div>
+
+          {/* 成績篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <GraduationCap className="h-4 w-4" />
+              {t('sort.grade')}
+            </label>
+            <MultiSelectDropdown
+              options={sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => ({
+                value: grade,
+                label: grade === 'N/A' ? t('review.notApplicable') : grade,
+                count: gradeCounts[grade] || 0
+              }))}
+              selectedValues={filters.selectedGrades}
+              onSelectionChange={handleGradeChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+            />
+          </div>
         </div>
 
-        {/* 課堂類型篩選 */}
-        <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
-            <School className="h-4 w-4" />
-            {t('filter.reviewSessionType')}
-          </label>
-          <MultiSelectDropdown
-            options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
-              value: sessionType,
-              label: t(`sessionType.${sessionType.toLowerCase()}`),
-              count: count
-            }))}
-            selectedValues={filters.selectedSessionTypes}
-            onSelectionChange={handleSessionTypeChange}
-            placeholder={t('common.all')}
-            totalCount={totalReviews}
-            className="flex-1 h-10"
-            showCounts={true}
-          />
-        </div>
+        {/* Desktop: Two-row layout with labels above dropdowns */}
+        <div className="hidden md:block">
+          {/* Labels row */}
+          <div className="flex gap-2 mb-2">
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <Languages className="h-4 w-4" />
+              <span>{t('filter.reviewLanguage')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <BookOpen className="h-4 w-4" />
+              <span>{t('filter.reviewCourse')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <CalendarDays className="h-4 w-4" />
+              <span>{t('filter.reviewTerm')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <School className="h-4 w-4" />
+              <span>{t('filter.reviewSessionType')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <GraduationCap className="h-4 w-4" />
+              <span>{t('sort.grade')}</span>
+            </div>
+          </div>
 
-        {/* 成績篩選 */}
-        <div className="flex items-center gap-3">
-          <label className={getLabelClassName()}>
-            <GraduationCap className="h-4 w-4" />
-            {t('sort.grade')}
-          </label>
-          <MultiSelectDropdown
-            options={sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => ({
-              value: grade,
-              label: grade === 'N/A' ? t('review.notApplicable') : grade,
-              count: gradeCounts[grade] || 0
-            }))}
-            selectedValues={filters.selectedGrades}
-            onSelectionChange={handleGradeChange}
-            placeholder={t('common.all')}
-            totalCount={totalReviews}
-            className="flex-1 h-10"
-            showCounts={true}
-          />
+          {/* Dropdowns row */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(languageCounts || {}).map(([language, count]) => ({
+                  value: language,
+                  label: getLanguageDisplayName(language),
+                  count: count
+                }))}
+                selectedValues={filters.selectedLanguages}
+                onSelectionChange={handleLanguageChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(courseCounts || {}).map(([courseCode, courseInfo]) => ({
+                  value: courseCode,
+                  label: courseInfo.title ? `${courseCode} - ${courseInfo.title}` : courseCode,
+                  count: courseInfo.count
+                }))}
+                selectedValues={filters.selectedCourses}
+                onSelectionChange={handleCourseChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
+                  if (!termInfo || typeof termInfo !== 'object') {
+                    return null;
+                  }
+                  return {
+                    value: termCode,
+                    label: (termInfo && termInfo.name) ? termInfo.name : termCode,
+                    count: (termInfo && termInfo.count) ? termInfo.count : 0,
+                    status: isCurrentTerm(termCode) ? 'current' : 
+                           'past' // Since we don't have end_date here, we'll default to past for non-current terms
+                  };
+                }).filter(Boolean) as SelectOption[]}
+                selectedValues={filters.selectedTerms}
+                onSelectionChange={handleTermChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
+                  value: sessionType,
+                  label: t(`sessionType.${sessionType.toLowerCase()}`),
+                  count: count
+                }))}
+                selectedValues={filters.selectedSessionTypes}
+                onSelectionChange={handleSessionTypeChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => ({
+                  value: grade,
+                  label: grade === 'N/A' ? t('review.notApplicable') : grade,
+                  count: gradeCounts[grade] || 0
+                }))}
+                selectedValues={filters.selectedGrades}
+                onSelectionChange={handleGradeChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* 排序選項 */}
-      <div className="flex items-center gap-4">
-        <label className={getLabelClassName()}>
-          <Filter className="h-4 w-4" />
-          {t('sort.sortBy')}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {sortOptions.map(({ value, label, icon: Icon }) => (
+      {isMobile ? (
+        <Collapsible open={isSortOpen} onOpenChange={setIsSortOpen}>
+          <CollapsibleTrigger asChild>
             <Button
-              key={value}
-              variant={getSortButtonVariant(value)}
-              size="sm"
-              onClick={() => handleSort(value)}
-              className="flex items-center gap-2 transition-all duration-200 hover:bg-red-500/10"
+              variant="ghost"
+              className="flex items-center justify-between w-full h-10 rounded-lg transition-all duration-200 border-0 px-0"
             >
-              <Icon className="h-4 w-4" />
-              <span>{label}</span>
-              {getSortIcon(value)}
+              <div className="flex items-center gap-2 w-full">
+                <Filter className="h-4 w-4" />
+                <span className={`${language === 'zh-TW' || language === 'zh-CN' ? 'text-sm font-bold' : 'text-sm font-medium'} text-muted-foreground`}>
+                  {t('sort.sortBy')}
+                </span>
+                <div className="flex-1 flex items-center" style={{ marginLeft: 'calc(96px - 24px - 0.5rem - 4ch)' }}>
+                  <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                    {getSortFieldDisplayName(filters.sortBy)} {filters.sortOrder === 'desc' ? '↓' : '↑'}
+                  </Badge>
+                </div>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
             </Button>
-          ))}
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2">
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="grid grid-cols-2 gap-0.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                {sortOptions.map(({ value, label }) => (
+                  <Button
+                    key={value}
+                    variant={getSortButtonVariant(value)}
+                    size="sm"
+                    onClick={() => handleSort(value)}
+                    className="flex items-center justify-center gap-1 py-2 px-1 text-xs sm:text-sm sm:gap-1.5 sm:px-2 rounded-lg transition-all duration-200 min-h-0"
+                  >
+                    <span className="text-center flex-1 min-w-0 leading-tight">{label}</span>
+                    <span className="shrink-0">{getSortIcon(value)}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : (
+        <div className="flex items-center gap-2">
+          <label className={getLabelClassName()}>
+            <Filter className="h-4 w-4" />
+            {t('sort.sortBy')}
+          </label>
+          <div className="flex flex-wrap gap-2 flex-1">
+            {sortOptions.map(({ value, label }) => (
+              <Button
+                key={value}
+                variant={getSortButtonVariant(value)}
+                size="sm"
+                onClick={() => handleSort(value)}
+                className="h-8 px-3 text-xs transition-all duration-200 hover:bg-red-500/10"
+              >
+                <span>{label}</span>
+                {getSortIcon(value)}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 每頁評論數和統計 */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
         {/* 左側：每頁評論數 */}
-        <div className="flex items-center gap-4">
-          <label className={getLabelClassName()}>
+        <div className="flex items-center gap-2">
+          <label className={`${language === 'zh-TW' || language === 'zh-CN' ? 'text-sm font-bold' : 'text-sm font-medium'} text-muted-foreground flex items-center gap-2 shrink-0 whitespace-nowrap`}>
             <Grid3X3 className="h-4 w-4" />
             {t('pagination.reviewsPerPage')}
           </label>
@@ -315,7 +474,7 @@ export function InstructorReviewsFilters({
                 variant={filters.itemsPerPage === count ? "default" : "ghost"}
                 size="sm"
                 onClick={() => updateFilters({ itemsPerPage: count, currentPage: 1 })}
-                className={`h-9 px-3 ${
+                className={`h-8 px-3 text-xs ${
                   filters.itemsPerPage === count
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-background hover:bg-red-500/10 border-0'
@@ -328,7 +487,7 @@ export function InstructorReviewsFilters({
         </div>
 
         {/* 右側：統計信息和清除篩選器 */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="text-sm text-muted-foreground">
             {hasActiveFilters() ? (
               <span>{t('pages.courseDetail.filteredReviewsCount', { count: filteredReviews })}</span>
@@ -343,7 +502,7 @@ export function InstructorReviewsFilters({
               variant="outline"
               size="sm"
               onClick={onClearAll}
-              className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground"
+              className="flex items-center gap-2 h-8 px-3 text-xs rounded-lg transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground"
             >
               <X className="h-4 w-4" />
               {t('filter.clearAll')}

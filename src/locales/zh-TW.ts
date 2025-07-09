@@ -626,6 +626,7 @@ export default {
   'filter.department': '學系',
   'filter.selectLecturer': '選擇講師',
   'filter.allSubjects': '所有學科',
+  'filter.subjectArea': '學科領域',
   'filter.teachingLanguage': '教學語言',
   // Teaching Languages
   'language.english': '英語',

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, type Term } from '@/services/api/courseService';
 import { translateDepartmentName } from '@/utils/textUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Filter,
   Search,
@@ -21,7 +22,6 @@ import {
   ArrowDown,
   ArrowUpDown,
   MessageSquare,
-  Grid3X3,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -37,13 +37,18 @@ import {
   Calculator,
   Palette,
   Heart,
-  Globe
+  Globe,
+  ChevronDown,
+  ChevronUp,
+  MoreHorizontal,
+  Grid3X3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export interface InstructorFilters {
   searchTerm: string;
@@ -79,6 +84,8 @@ export function AdvancedInstructorFilters({
   instructors = []
 }: AdvancedInstructorFiltersProps) {
   const { t, language } = useLanguage();
+  const isMobile = useIsMobile(); // Add mobile detection
+  const [isSortOpen, setIsSortOpen] = useState(false); // Add mobile sort collapsible state
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termInstructorsMap, setTermInstructorsMap] = useState<Map<string, Set<string>>>(new Map());
@@ -299,14 +306,54 @@ export function AdvancedInstructorFilters({
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
     return language === 'zh-TW' || language === 'zh-CN' 
-      ? 'text-base font-bold text-muted-foreground flex items-center gap-2 shrink-0'
-      : 'text-base font-medium text-muted-foreground flex items-center gap-2 shrink-0';
+      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24'
+      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24';
+  };
+
+  // Helper function to get sort field display name
+  const getSortFieldDisplayName = (sortBy: string): string => {
+    const sortKeyMap: { [key: string]: string } = {
+      'name': 'sort.instructorName',
+      'department': 'sort.department',
+      'teaching': 'sort.teaching',
+      'grading': 'sort.grading',
+      'reviews': 'sort.reviews',
+      'averageGPA': 'sort.averageGPA'
+    };
+    return t(sortKeyMap[sortBy] || sortBy);
+  };
+
+  const sortOptions = [
+    { value: 'name', label: t('sort.instructorName') },
+    { value: 'department', label: t('sort.department') },
+    { value: 'teaching', label: t('sort.teaching') },
+    { value: 'grading', label: t('sort.grading') },
+    { value: 'reviews', label: t('sort.reviews') },
+    { value: 'averageGPA', label: t('sort.averageGPA') }
+  ];
+
+  const getSortButtonText = (field: string) => {
+    const option = sortOptions.find(opt => opt.value === field);
+    if (!option) return field;
+    return option.label;
+  };
+
+  const handleSortChange = (field: string) => {
+    if (filters.sortBy === field) {
+      updateFilters({ sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' });
+    } else {
+      updateFilters({ sortBy: field, sortOrder: 'asc' });
+    }
+  };
+
+  const onPageSizeChange = (size: number) => {
+    updateFilters({ itemsPerPage: size });
   };
 
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-6 flex flex-col gap-3">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 flex flex-col gap-2">
       {/* 智能搜索行 */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <label className={getLabelClassName()}>
           <Sparkles className="h-4 w-4" />
           {t('search.smartSearch')}
@@ -317,23 +364,23 @@ export function AdvancedInstructorFilters({
             placeholder={t('search.instructorPlaceholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
-            className="pr-12 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
+            className="pr-10 h-10 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
           {filters.searchTerm && (
             <button
               onClick={() => updateFilters({ searchTerm: '' })}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>
       </div>
 
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         {/* 部門 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
             <Building2 className="h-4 w-4" />
             {t('filter.department')}
@@ -368,12 +415,12 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ department: values })}
             placeholder={t('filter.allDepartments')}
             totalCount={totalInstructors}
-            className="flex-1"
+            className="flex-1 h-10 text-sm"
           />
         </div>
 
         {/* 授課學期 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.teachingTerm')}
@@ -390,154 +437,93 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
             placeholder={t('filter.allTerms')}
             totalCount={totalInstructors}
-            className="flex-1"
+            className="flex-1 h-10 text-sm"
           />
         </div>
       </div>
 
-      {/* 排序行 */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        <label className={getLabelClassName()}>
-          <Hash className="h-4 w-4" />
-          {t('sort.sortBy')}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={getSortButtonVariant('name')}
-            size="sm"
-            onClick={() => handleSort('name')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <GraduationCap className="h-4 w-4" />
-            {t('sort.instructorName')}
-            {getSortIcon('name')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('department')}
-            size="sm"
-            onClick={() => handleSort('department')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Building2 className="h-4 w-4" />
-            {t('sort.department')}
-            {getSortIcon('department')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('teaching')}
-            size="sm"
-            onClick={() => handleSort('teaching')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <School className="h-4 w-4" />
-            {t('sort.teaching')}
-            {getSortIcon('teaching')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('grading')}
-            size="sm"
-            onClick={() => handleSort('grading')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <CheckCircle className="h-4 w-4" />
-            {t('sort.grading')}
-            {getSortIcon('grading')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('reviews')}
-            size="sm"
-            onClick={() => handleSort('reviews')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <MessageSquare className="h-4 w-4" />
-            {t('sort.reviews')}
-            {getSortIcon('reviews')}
-          </Button>
-
-          <Button
-            variant={getSortButtonVariant('averageGPA')}
-            size="sm"
-            onClick={() => handleSort('averageGPA')}
-            className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200"
-          >
-            <Award className="h-4 w-4" />
-            {t('sort.averageGPA')}
-            {getSortIcon('averageGPA')}
-          </Button>
-        </div>
-      </div>
-
-      {/* 每頁項目數和清除篩選器 */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* 排序行 - Mobile-aware version */}
+      {isMobile ? (
+        /* Mobile: Collapsible sort section */
+        <Collapsible open={isSortOpen} onOpenChange={setIsSortOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center justify-between w-full h-10 rounded-lg transition-all duration-200 border-0 px-0"
+            >
+              <div className="flex items-center gap-2 w-full">
+                <Hash className="h-4 w-4" />
+                <span className={`${language === 'zh-TW' || language === 'zh-CN' ? 'text-sm font-bold' : 'text-sm font-medium'} text-muted-foreground`}>
+                  {t('sort.sortBy')}
+                </span>
+                <div className="flex-1 flex items-center" style={{ marginLeft: 'calc(96px - 24px - 0.5rem - 4ch)' }}>
+                  <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                    {getSortButtonText(filters.sortBy)} {filters.sortOrder === 'desc' ? '↓' : '↑'}
+                  </Badge>
+                </div>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {sortOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  variant={filters.sortBy === option.value ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleSortChange(option.value)}
+                  className="h-8 px-3 text-xs"
+                >
+                  {option.label}
+                  {getSortIcon(option.value)}
+                </Button>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : (
+        /* Desktop: Always visible sort buttons */
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
-            <Grid3X3 className="h-4 w-4" />
-            {t('pagination.instructorsPerPage')}
+            <Hash className="h-4 w-4" />
+            {t('sort.sortBy')}
           </label>
-          <div className="flex gap-2">
-            {[6, 12, 24].map(count => (
+          <div className="flex flex-wrap gap-2 flex-1">
+            {sortOptions.map((option) => (
               <Button
-                key={count}
-                variant={filters.itemsPerPage === count ? 'default' : 'outline'}
+                key={option.value}
+                variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => updateFilters({ itemsPerPage: count })}
-                className="h-9 px-3 text-sm rounded-lg transition-all duration-200"
+                onClick={() => handleSortChange(option.value)}
+                className="h-8 px-3 text-xs"
               >
-                {count}
+                {option.label}
+                {getSortIcon(option.value)}
               </Button>
             ))}
           </div>
         </div>
+      )}
 
-        <div className="flex items-center gap-4">
-          {/* 統計信息 */}
-          <div className="text-sm text-muted-foreground">
-            {filteredInstructors !== totalInstructors ? (
-              filteredInstructors > 0 && currentPageStart && currentPageEnd ? (
-                <span>
-                  {t('pagination.showingItems', {
-                    start: currentPageStart,
-                    end: currentPageEnd,
-                    total: filteredInstructors
-                  })} {t('pagination.filtered')}
-                </span>
-              ) : filteredInstructors === 0 ? (
-                <span>
-                  {t('pagination.noResults')}
-                </span>
-              ) : (
-                <span>
-                  {t('pagination.showingFiltered', {
-                    filtered: filteredInstructors,
-                    total: totalInstructors
-                  })}
-                </span>
-              )
-            ) : (
-              <span>
-                {t('pagination.totalInstructors', { total: totalInstructors })}
-              </span>
-            )}
-          </div>
-
-          {/* 清除篩選器按鈕 */}
-          {hasActiveFilters() && (
+      {/* 分頁行 */}
+      <div className="flex items-center gap-2">
+        <label className={getLabelClassName()}>
+          <Grid3X3 className="h-4 w-4" />
+          {t('pagination.instructorsPerPage')}
+        </label>
+        <div className="flex gap-2">
+          {[10, 20, 50].map((size) => (
             <Button
-              variant="outline"
+              key={size}
+              variant={filters.itemsPerPage === size ? 'default' : 'outline'}
               size="sm"
-              onClick={onClearAll}
-              className="flex items-center gap-2 h-9 px-3 text-sm rounded-lg transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => onPageSizeChange(size)}
+              className="h-8 px-3 text-xs"
             >
-              <X className="h-4 w-4" />
-              {t('filter.clearAll')}
-              <Badge variant="destructive" className="ml-1 text-xs">
-                {getActiveFiltersCount()}
-              </Badge>
+              {size}
             </Button>
-          )}
+          ))}
         </div>
       </div>
     </div>

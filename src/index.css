@@ -1131,11 +1131,11 @@ div[style*="position: fixed"][style*="right: 14px"] {
   @media (max-width: 834px) and (orientation: landscape) {
     [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
       position: fixed;
-      left: calc(50vw + 5.5rem); /* Center in available content area (sidebar is 11rem) */
+      left: calc(50% + 140px); /* Adjust for sidebar width in landscape */
       top: 50%;
       transform: translate(-50%, -50%);
-      width: calc(90vw - 11rem - 2rem); /* Account for sidebar width + padding */
-      max-width: 480px;
+      width: calc(90vw - 280px); /* Account for sidebar width */
+      max-width: 500px;
       max-height: 80vh;
     }
   }
@@ -1505,23 +1505,23 @@ div[style*="position: fixed"][style*="right: 14px"] {
   
   /* 更具體的規則確保 CourseCard 中的 outline 按鈕顏色正確 */
   .course-card button[data-variant="outline"],
-  .course-card .inline-flex.items-center.justify-center.border {
+  .course-card .inline-flex.items-center.justify-center.border:not(.bg-primary) {
     color: rgb(var(--foreground)) !important;
   }
   
   .dark .course-card button[data-variant="outline"],
-  .dark .course-card .inline-flex.items-center.justify-center.border {
+  .dark .course-card .inline-flex.items-center.justify-center.border:not(.bg-primary) {
     color: rgb(var(--foreground)) !important;
   }
 
   /* 講師卡片按鈕樣式 - 與課程卡片一致 */
   .lecturer-card button[data-variant="outline"],
-  .lecturer-card .inline-flex.items-center.justify-center.border {
+  .lecturer-card .inline-flex.items-center.justify-center.border:not(.bg-primary) {
     color: rgb(var(--foreground)) !important;
   }
   
   .dark .lecturer-card button[data-variant="outline"],
-  .dark .lecturer-card .inline-flex.items-center.justify-center.border {
+  .dark .lecturer-card .inline-flex.items-center.justify-center.border:not(.bg-primary) {
     color: rgb(var(--foreground)) !important;
   }
   
@@ -3511,5 +3511,28 @@ div[style*="position: fixed"][style*="right: 14px"] {
       width: max(280px, 35vw);
       max-width: 400px;
     }
+  }
+
+  /* 清除篩選器按鈕 */
+  
+  /* Filter components consistent styling */
+  .h-10.text-sm [data-radix-select-trigger] {
+    height: 40px !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+  
+  /* Ensure MultiSelectDropdown trigger has consistent height */
+  [data-radix-select-trigger].h-10 {
+    height: 40px !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+  
+  /* Additional rule for Select component within filter contexts */
+  .h-10 [data-radix-select-trigger] {
+    height: 40px !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
   }
 }
