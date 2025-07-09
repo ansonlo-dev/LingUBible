@@ -7,6 +7,7 @@ import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/s
 import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const { t, language: currentLanguage } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { addToHistory } = useSearchHistory();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
@@ -47,6 +49,20 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasAddedHistoryEntry = useRef(false);
+
+  // Handle search history item clicks
+  const handleHistoryItemClick = (query: string) => {
+    setSearchQuery(query);
+    addToHistory(query);
+    inputRef.current?.focus();
+  };
+
+  // Handle search execution (when user actually searches)
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      addToHistory(query.trim());
+    }
+  };
   
   // Track viewport dimensions for responsive positioning
   const [viewportDimensions, setViewportDimensions] = useState({
@@ -272,6 +288,10 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
   // 處理課程點擊
   const handleCourseClick = (courseCode: string, event?: React.MouseEvent) => {
+    // Add to search history if there's a search query
+    if (searchQuery.trim()) {
+      addToHistory(searchQuery.trim());
+    }
     // This function is now simplified since we're using <a> tags
     // The browser will handle navigation naturally
     handleClose();
@@ -279,6 +299,10 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
   // 處理講師點擊
   const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
+    // Add to search history if there's a search query
+    if (searchQuery.trim()) {
+      addToHistory(searchQuery.trim());
+    }
     // This function is now simplified since we're using <a> tags
     // The browser will handle navigation naturally
     handleClose();
@@ -366,6 +390,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               </button>
             </div>
 
+            {/* Search History - Only show when no search query */}
+            {!searchQuery.trim() && (
+              <SearchHistory onHistoryItemClick={handleHistoryItemClick} />
+            )}
+
             {/* Tab Switcher - Only show when no search query */}
             {!searchQuery.trim() && (
               <div className="px-4 py-3">
@@ -381,7 +410,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <BookOpenIcon className="h-4 w-4 text-red-600" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.courses')}</span>
-                      <span className="text-xs opacity-75">(most reviews)</span>
+                      <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
                   <button
@@ -395,7 +424,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <GraduationCap className="h-4 w-4 text-red-600" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.instructors')}</span>
-                      <span className="text-xs opacity-75">(most reviews)</span>
+                      <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
                   <button
@@ -409,7 +438,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <BookOpenIcon className="h-4 w-4 text-gray-500" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.topCourses')}</span>
-                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                      <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
                   <button
@@ -423,7 +452,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <GraduationCap className="h-4 w-4 text-gray-500" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.topInstructors')}</span>
-                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                      <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
                 </div>
@@ -581,7 +610,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <BookOpenIcon className="h-5 w-5 text-red-600" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} (most reviews)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} ({t('featured.mostReviews')})</h3>
                             </div>
                             <div className="space-y-2">
                               {popularCourses.map((course) => {
@@ -660,7 +689,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <GraduationCap className="h-5 w-5 text-red-600" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} (most reviews)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} ({t('featured.mostReviews')})</h3>
                             </div>
                             <div className="space-y-2">
                               {popularInstructors.map((instructor) => {
@@ -736,7 +765,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <BookOpenIcon className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} (highest Avg. GPA)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} ({t('featured.highestAvgGPA')})</h3>
                             </div>
                             <div className="space-y-2">
                               {topCourses.map((course) => {
@@ -815,7 +844,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <GraduationCap className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} (highest Avg. GPA)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} ({t('featured.highestAvgGPA')})</h3>
                             </div>
                             <div className="space-y-2">
                               {topInstructors.map((instructor) => {
@@ -940,6 +969,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               </button>
             </div>
 
+            {/* Search History - Only show when no search query */}
+            {!searchQuery.trim() && (
+              <SearchHistory onHistoryItemClick={handleHistoryItemClick} />
+            )}
+
             {/* Tab Switcher - Only show when no search query */}
             {!searchQuery.trim() && (
               <div className="px-4 py-3">
@@ -955,7 +989,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <BookOpenIcon className="h-4 w-4 text-red-600" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.courses')}</span>
-                      <span className="text-xs opacity-75">(most reviews)</span>
+                      <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
                   <button
@@ -969,7 +1003,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <GraduationCap className="h-4 w-4 text-red-600" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.instructors')}</span>
-                      <span className="text-xs opacity-75">(most reviews)</span>
+                      <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
                   <button
@@ -983,7 +1017,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <BookOpenIcon className="h-4 w-4 text-gray-500" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.topCourses')}</span>
-                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                      <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
                   <button
@@ -997,7 +1031,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <GraduationCap className="h-4 w-4 text-gray-500" />
                     <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
                       <span>{t('featured.topInstructors')}</span>
-                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                      <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
                 </div>
@@ -1155,7 +1189,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <BookOpenIcon className="h-5 w-5 text-red-600" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} (most reviews)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} ({t('featured.mostReviews')})</h3>
                             </div>
                             <div className="space-y-2">
                               {popularCourses.map((course) => {
@@ -1234,7 +1268,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <GraduationCap className="h-5 w-5 text-red-600" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} (most reviews)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} ({t('featured.mostReviews')})</h3>
                             </div>
                             <div className="space-y-2">
                               {popularInstructors.map((instructor) => {
@@ -1310,7 +1344,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <BookOpenIcon className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} (highest Avg. GPA)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} ({t('featured.highestAvgGPA')})</h3>
                             </div>
                             <div className="space-y-2">
                               {topCourses.map((course) => {
@@ -1389,7 +1423,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
                               <GraduationCap className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} (highest Avg. GPA)</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} ({t('featured.highestAvgGPA')})</h3>
                             </div>
                             <div className="space-y-2">
                               {topInstructors.map((instructor) => {

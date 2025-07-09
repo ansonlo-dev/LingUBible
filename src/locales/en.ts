@@ -697,6 +697,10 @@ export default {
   'search.manageReviews': 'Manage your reviews',
   'search.browsePopular': 'Browse Popular Courses',
   'search.discoverCourses': 'Discover popular courses',
+  'search.history.title': 'Search History',
+  'search.history.clearAll': 'Clear All',
+  'search.history.done': 'Done',
+  'search.history.showMore': 'Show {count} more',
   'filter.allDepartments': 'All Departments',
   'filter.selectDepartment': 'Select Department',
   'filter.department': 'Department',
@@ -1754,5 +1758,7 @@ export default {
   'common.students': 'students',
   'common.reviews': 'reviews',
   'review.clickToViewReview': 'Click to view this review in course details',
+  'featured.mostReviews': 'most reviews',
+  'featured.highestAvgGPA': 'highest Avg. GPA',
 
 };
