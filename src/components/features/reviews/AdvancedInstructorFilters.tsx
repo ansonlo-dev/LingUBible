@@ -385,7 +385,7 @@ export function AdvancedInstructorFilters({
         <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <Building2 className="h-4 w-4" />
-            {isMobile ? t('filter.departmentMobile') : t('filter.department')}
+            {t('filter.department')}
           </label>
           <MultiSelectDropdown
             options={(() => {
@@ -405,7 +405,7 @@ export function AdvancedInstructorFilters({
                 data.departments.forEach(department => {
                   options.push({
                     value: department,
-                    label: `  ${translateDepartmentName(department, t)}`,
+                    label: `  ${translateDepartmentName(department, t, isMobile)}`,
                     count: departmentCounts[department] || 0
                   });
                 });

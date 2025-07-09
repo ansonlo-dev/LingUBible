@@ -194,9 +194,10 @@ export function getInstructorName(
  * 翻譯部門名稱
  * @param departmentName 原始部門名稱
  * @param t 翻譯函數
+ * @param isMobile 是否為移動設備，用於選擇短格式部門名稱
  * @returns 翻譯後的部門名稱，如果沒有對應翻譯則返回原始名稱
  */
-export function translateDepartmentName(departmentName: string, t: (key: string) => string): string {
+export function translateDepartmentName(departmentName: string, t: (key: string) => string, isMobile?: boolean): string {
   if (!departmentName) return '';
   
   // 直接映射到真實學系的對應關係
@@ -234,10 +235,20 @@ export function translateDepartmentName(departmentName: string, t: (key: string)
   
   // 檢查是否有直接映射
   if (departmentMapping[departmentName]) {
-    const translationKey = `department.${departmentMapping[departmentName]}`;
+    const keyPrefix = isMobile ? 'departmentMobile' : 'department';
+    const translationKey = `${keyPrefix}.${departmentMapping[departmentName]}`;
     const translated = t(translationKey);
     if (translated !== translationKey) {
       return translated;
+    }
+    
+    // 如果移動版本沒有翻譯，回退到桌面版本
+    if (isMobile) {
+      const fallbackKey = `department.${departmentMapping[departmentName]}`;
+      const fallbackTranslated = t(fallbackKey);
+      if (fallbackTranslated !== fallbackKey) {
+        return fallbackTranslated;
+      }
     }
   }
   
@@ -249,9 +260,20 @@ export function translateDepartmentName(departmentName: string, t: (key: string)
     // 轉換為駝峰命名法
     .replace(/^./, match => match.toLowerCase());
   
-  const translationKey = `department.${normalizedName}`;
+  const keyPrefix = isMobile ? 'departmentMobile' : 'department';
+  const translationKey = `${keyPrefix}.${normalizedName}`;
   const translated = t(translationKey);
   
-  // 如果翻譯結果與鍵值相同，說明沒有找到翻譯，返回原始名稱
-  return translated === translationKey ? departmentName : translated;
+  // 如果翻譯結果與鍵值相同，說明沒有找到翻譯
+  if (translated === translationKey) {
+    // 如果是移動版本，嘗試回退到桌面版本
+    if (isMobile) {
+      const fallbackKey = `department.${normalizedName}`;
+      const fallbackTranslated = t(fallbackKey);
+      return fallbackTranslated === fallbackKey ? departmentName : fallbackTranslated;
+    }
+    return departmentName;
+  }
+  
+  return translated;
 } 

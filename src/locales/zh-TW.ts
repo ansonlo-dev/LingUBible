@@ -630,7 +630,6 @@ export default {
   'filter.allDepartments': '所有學系',
   'filter.selectDepartment': '選擇學系',
   'filter.department': '學系',
-  'filter.departmentMobile': '學系',
   'filter.selectLecturer': '選擇講師',
   'filter.allSubjects': '所有學科',
   'filter.subjectArea': '學科領域',

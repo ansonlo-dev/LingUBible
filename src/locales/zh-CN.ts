@@ -698,7 +698,6 @@ export default {
   'filter.allDepartments': '所有学系',
   'filter.selectDepartment': '选择学系',
   'filter.department': '学系',
-  'filter.departmentMobile': '学系',
   'filter.selectLecturer': '选择讲师',
   'filter.allSubjects': '所有学科',
   'filter.applied': '已应用筛选条件',

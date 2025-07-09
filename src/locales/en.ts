@@ -704,7 +704,6 @@ export default {
   'filter.allDepartments': 'All Departments',
   'filter.selectDepartment': 'Select Department',
   'filter.department': 'Department',
-  'filter.departmentMobile': 'Dept.',
   'filter.selectLecturer': 'Select Lecturer',
   'filter.allSubjects': 'All Subjects',
   'filter.teachingLanguage': 'Teaching Language',
@@ -1711,6 +1710,29 @@ export default {
   'department.scienceUnit': 'Science Unit',
   'department.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
   'department.dataScience': 'LEO Dr David P. Chan Institute of Data Science',
+  
+  // Mobile-specific department names (shorter versions)
+  'departmentMobile.chinese': 'Dept. of Chinese',
+  'departmentMobile.culturalStudies': 'Dept. of Cultural Studies',
+  'departmentMobile.digitalArts': 'Dept. of Digital Arts and Creative Industries',
+  'departmentMobile.english': 'Dept. of English',
+  'departmentMobile.history': 'Dept. of History',
+  'departmentMobile.philosophy': 'Dept. of Philosophy',
+  'departmentMobile.translation': 'Dept. of Translation',
+  'departmentMobile.englishLanguageCentre': 'Centre for English and Additional Languages',
+  'departmentMobile.chineseLanguageCentre': 'Chinese Language Education and Assessment Centre',
+  'departmentMobile.accountancy': 'Dept. of Accountancy',
+  'departmentMobile.finance': 'Dept. of Finance',
+  'departmentMobile.management': 'Dept. of Management',
+  'departmentMobile.marketing': 'Dept. of Marketing and International Business',
+  'departmentMobile.operations': 'Dept. of Operations and Risk Management',
+  'departmentMobile.psychology': 'Dept. of Psychology',
+  'departmentMobile.economics': 'Dept. of Economics',
+  'departmentMobile.government': 'Dept. of Government and International Affairs',
+  'departmentMobile.sociology': 'Dept. of Sociology and Social Policy',
+  'departmentMobile.scienceUnit': 'Science Unit',
+  'departmentMobile.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
+  'departmentMobile.dataScience': 'LEO Dr David P. Chan Institute of Data Science',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 學院與學系
