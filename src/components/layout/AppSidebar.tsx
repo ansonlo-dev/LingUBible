@@ -133,7 +133,9 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
   };
 
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
-  const shouldShowText = !isCollapsed || isMobile;
+  // For landscape phones, always show text when sidebar is open
+  const isLandscapePhone = isMobile && window.innerWidth > window.innerHeight && window.innerHeight <= 450;
+  const shouldShowText = !isCollapsed || isMobile || (isLandscapePhone && isMobileOpen);
 
   // 修復手機版懸停狀態持續的問題
   useEffect(() => {

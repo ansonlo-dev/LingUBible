@@ -240,7 +240,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
 
   /* 移動設備橫屏模式特殊處理 - 針對高度較小的橫屏手機 */
-  @media (max-height: 430px) and (orientation: landscape) and (pointer: coarse) {
+  @media (max-height: 450px) and (orientation: landscape) and (pointer: coarse) {
     .sidebar-container {
       transform: translateX(-100%);
       top: 0;
@@ -251,18 +251,20 @@ div[style*="position: fixed"][style*="right: 14px"] {
       min-height: 100dvh;
       min-height: var(--dynamic-vh);
       z-index: 50;
-      /* 橫屏手機使用1/3寬度 */
-      width: 33.33vw !important;
+      /* 橫屏手機使用適當寬度 - 約1/3屏幕寬度但有最小值 */
+      width: max(280px, 30vw) !important;
       overflow-y: auto;
       overflow-x: hidden;
+      transition: transform 0.3s ease;
     }
     
     .sidebar-container.mobile-open {
       transform: translateX(0);
     }
 
+    /* 橫屏手機始終顯示文字，不使用摺疊狀態 */
     .sidebar-container.collapsed {
-      width: var(--sidebar-width);
+      width: max(280px, 30vw) !important;
     }
 
     .sidebar-container > div {
@@ -276,6 +278,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
       overflow-y: auto;
     }
 
+    /* 橫屏手機禁用懸停效果，使用觸摸反饋 */
     .sidebar-container nav a:hover {
       transform: none;
       background-color: inherit;
@@ -296,6 +299,23 @@ div[style*="position: fixed"][style*="right: 14px"] {
     .sidebar-container nav a:active {
       transform: scale(0.98);
       transition: transform 0.1s ease;
+    }
+
+    /* 確保文字始終顯示 */
+    .sidebar-container.collapsed nav a span {
+      opacity: 1;
+      width: auto;
+    }
+  }
+
+  /* 舊的較小高度橫屏手機處理 - 保持向後兼容 */
+  @media (max-height: 430px) and (orientation: landscape) and (pointer: coarse) {
+    .sidebar-container {
+      width: max(280px, 33.33vw) !important;
+    }
+    
+    .sidebar-container.collapsed {
+      width: max(280px, 33.33vw) !important;
     }
   }
 
@@ -327,56 +347,100 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* 桌面分屏模式支援：835px-1023px 寬度範圍 */
+  /* Split-screen desktop mode (835px to 1023px width) - Ultimate gap elimination */
   @media (min-width: 835px) and (max-width: 1023px) {
-    .sidebar-container {
-      /* 在分屏模式下保持側邊欄可見但使用較小寬度 */
-      width: 9rem; /* 從 11rem 減少到 9rem */
-    }
-    
-    .main-container {
-      margin-left: 9rem;
-      width: calc(100% - 9rem);
-      max-width: calc(100% - 9rem);
-      /* 確保沒有間隙 */
-      position: relative;
-      left: 0;
-    }
-    
-    .main-container.sidebar-collapsed {
-      margin-left: var(--sidebar-collapsed-width);
-      width: calc(100% - var(--sidebar-collapsed-width));
-      max-width: calc(100% - var(--sidebar-collapsed-width));
-      /* 確保沒有間隙 */
-      position: relative;
-      left: 0;
-    }
-    
-    /* 分屏模式下側邊欄文字稍微小一點以節省空間 */
-    .sidebar-container nav a span {
-      font-size: 0.8rem;
-    }
-    
-    .sidebar-container .text-xl {
-      font-size: 1rem;
+    /* Define split-screen specific variables */
+    :root {
+      --split-screen-sidebar-width: 9rem;
     }
 
-    /* 確保sidebar在分屏模式下正確定位 */
-    .sidebar-container {
-      position: fixed;
-      left: 0;
-      top: 0;
-      height: 100vh;
-      z-index: 40;
+    /* Force perfect viewport sizing */
+    #root {
+      width: 100vw !important;
+      min-width: 100vw !important;
+      max-width: 100vw !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden !important;
+      box-sizing: border-box !important;
     }
 
-    /* 確保分屏模式下的transition是smooth的 */
-    .main-container,
-    .main-container.sidebar-collapsed {
-      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-
+    /* Perfect sidebar positioning */
     .sidebar-container {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: var(--split-screen-sidebar-width) !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      height: var(--dynamic-vh) !important;
+      z-index: 40 !important;
+      background: rgb(var(--sidebar-background)) !important;
+      border-right: 1px solid rgb(var(--sidebar-border)) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
       transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      transform: translateX(0) !important;
+      box-sizing: border-box !important;
+    }
+
+    .sidebar-container.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+    }
+
+    /* Perfect main container alignment - eliminate all gaps */
+    .main-container {
+      position: relative !important;
+      left: 0 !important;
+      top: 0 !important;
+      margin-left: var(--split-screen-sidebar-width) !important;
+      margin-right: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      width: calc(100vw - var(--split-screen-sidebar-width)) !important;
+      min-width: calc(100vw - var(--split-screen-sidebar-width)) !important;
+      max-width: calc(100vw - var(--split-screen-sidebar-width)) !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      height: var(--dynamic-vh) !important;
+      box-sizing: border-box !important;
+      padding: 0 !important;
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      overflow-x: hidden !important;
+      background: rgb(var(--background)) !important;
+    }
+
+    .main-container.sidebar-collapsed {
+      margin-left: var(--sidebar-collapsed-width) !important;
+      width: calc(100vw - var(--sidebar-collapsed-width)) !important;
+      min-width: calc(100vw - var(--sidebar-collapsed-width)) !important;
+      max-width: calc(100vw - var(--sidebar-collapsed-width)) !important;
+    }
+
+    /* Ensure content area fills perfectly */
+    .main-container .content-area {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+    }
+
+    /* Force perfect sizing on all child containers */
+    .main-container > * {
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Split-screen specific text sizing for space efficiency */
+    .sidebar-container nav a span {
+      font-size: 0.8rem !important;
+    }
+
+    .sidebar-container .text-xl {
+      font-size: 1rem !important;
     }
   }
 
@@ -2697,131 +2761,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     color: white !important;
   }
 
-  /* 手機和平板直向模式的側邊欄處理 - 擴展支援到834px以包含iPad */
-  @media (max-width: 834px) {
-    body.mobile-sidebar-open {
-      /* 防止背景滾動 */
-      overflow: hidden !important;
-      position: fixed;
-      width: 100%;
-    }
 
-    body.mobile-sidebar-open .main-container {
-      /* 防止主容器被遮罩影響 */
-      overflow: hidden !important;
-      /* 確保主容器不會滾動 */
-      max-height: 100vh;
-      max-height: 100dvh;
-    }
-
-    body.mobile-sidebar-open .header-sticky {
-      /* 確保header不會被側邊欄遮蓋 */
-      z-index: 105 !important;
-    }
-
-    /* 防止背景滾動時的內容區域 */
-    body.mobile-sidebar-open .content-area {
-      overflow: hidden !important;
-      height: calc(100vh - var(--header-height));
-      height: calc(100dvh - var(--header-height));
-    }
-
-    /* 主容器在手機/平板模式下的調整 */
-    .main-container,
-    .main-container.sidebar-collapsed {
-      margin-left: 0;
-      width: 100%;
-      max-width: 100vw;
-      overflow: visible !important; /* 手機版也要確保overflow不影響sticky */
-    }
-    
-    .content-area {
-      padding-bottom: 2rem;
-      overflow: visible !important; /* 確保不影響sticky定位 */
-      width: 100%;
-      max-width: 100%;
-    }
-    
-    .container.mx-auto {
-      padding-bottom: 2rem;
-      overflow: visible !important; /* 確保不影響sticky定位 */
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .sidebar-container {
-      transform: translateX(-100%);
-      top: 0;
-      height: 100vh; /* 備用方案 */
-      height: 100dvh; /* 使用動態視窗高度，考慮瀏覽器地址欄 */
-      height: var(--dynamic-vh); /* JavaScript 動態設定的高度 */
-      /* 為不支援 dvh 的瀏覽器提供 JavaScript 回退 */
-      min-height: 100vh;
-      min-height: 100dvh;
-      min-height: var(--dynamic-vh);
-      z-index: 50;
-      /* 移動版本預設使用1/2寬度（適合直向模式） */
-      width: 50vw !important;
-      overflow-y: auto; /* 確保內容可以滾動 */
-      overflow-x: hidden;
-    }
-    
-    .sidebar-container.mobile-open {
-      transform: translateX(0);
-    }
-
-    /* 手機版不支援摺疊 */
-    .sidebar-container.collapsed {
-      width: var(--sidebar-width);
-    }
-
-    /* 確保側邊欄內容在手機版中正確佈局 */
-    .sidebar-container > div {
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* 確保底部設置區域始終可見 */
-    .sidebar-container nav {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    /* 手機版懸停效果調整 - 完全禁用懸停效果 */
-    .sidebar-container nav a:hover {
-      transform: none; /* 手機版不使用 translateX */
-      background-color: inherit; /* 重置背景色 */
-      color: inherit; /* 重置文字顏色 */
-      box-shadow: none; /* 移除陰影 */
-    }
-
-    /* 手機版活動狀態項目的懸停效果也要重置 */
-    .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
-      transform: none;
-      background-color: rgb(var(--sidebar-accent)); /* 保持原有的活動狀態背景 */
-      color: rgb(var(--sidebar-accent-foreground)); /* 保持原有的活動狀態文字色 */
-    }
-
-    /* 手機版圖標懸停效果重置 */
-    .sidebar-container nav a:hover svg {
-      transform: none;
-    }
-
-    /* 手機版觸摸反饋 */
-    .sidebar-container nav a:active {
-      transform: scale(0.98);
-      transition: transform 0.1s ease;
-    }
-  }
-
-  /* 移動設備橫屏模式 - 所有橫屏手機和小平板使用1/3寬度 */
-  @media (max-width: 834px) and (orientation: landscape) {
-    .sidebar-container {
-      /* 橫屏模式使用1/3寬度，提供更多可視區域 */
-      width: 33.33vw !important;
-    }
-  }
 
   /* iPad mini portrait mode special handling - desktop-like sidebar behavior */
   @media (width: 768px) and (height: 1024px) and (orientation: portrait) {
@@ -3216,6 +3156,335 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
     .sidebar-container.mobile-open.collapsed {
       width: var(--sidebar-collapsed-width) !important;
+    }
+  }
+
+  /* iPhone landscape modes special handling - desktop-like sidebar behavior */
+  @media (width: 896px) and (height: 414px) and (orientation: landscape), 
+         (width: 844px) and (height: 390px) and (orientation: landscape),
+         (width: 932px) and (height: 430px) and (orientation: landscape),
+         (width: 915px) and (height: 412px) and (orientation: landscape),
+         (width: 914px) and (height: 412px) and (orientation: landscape),
+         (width: 882px) and (height: 344px) and (orientation: landscape) {
+    /* Override mobile behavior for these landscape modes - use desktop-like collapse */
+    .sidebar-container {
+      transform: translateX(0) !important; /* Always visible, no sliding */
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: var(--sidebar-width) !important; /* Use desktop width when expanded */
+      height: 100vh !important;
+      height: 100dvh !important;
+      height: var(--dynamic-vh) !important;
+      z-index: 40 !important; /* Desktop z-index, not mobile z-index: 50 */
+      background: rgb(var(--sidebar-background)) !important;
+      border-right: 1px solid rgb(var(--sidebar-border)) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* When collapsed, show icons only (desktop behavior) */
+    .sidebar-container.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+      transform: translateX(0) !important; /* Stay visible */
+    }
+
+    /* When expanded, use full width but not mobile percentage */
+    .sidebar-container:not(.collapsed) {
+      width: var(--sidebar-width) !important;
+    }
+
+    /* Ensure main container adjusts for sidebar like desktop */
+    .main-container {
+      margin-left: var(--sidebar-width) !important;
+      width: calc(100% - var(--sidebar-width)) !important;
+      max-width: calc(100% - var(--sidebar-width)) !important;
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .main-container.sidebar-collapsed {
+      margin-left: var(--sidebar-collapsed-width) !important;
+      width: calc(100% - var(--sidebar-collapsed-width)) !important;
+      max-width: calc(100% - var(--sidebar-collapsed-width)) !important;
+    }
+
+    /* Enable desktop-like hover effects */
+    .sidebar-container nav a:hover {
+      transform: translateX(4px) !important;
+      background-color: rgba(var(--sidebar-accent), 0.1) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .sidebar-container nav a:hover svg {
+      transform: scale(1.1) !important;
+      transition: transform 0.2s ease !important;
+    }
+
+    /* Collapsed state text hiding (desktop behavior) */
+    .sidebar-container.collapsed nav a span {
+      opacity: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      transition: opacity 0.15s ease-in-out !important;
+    }
+
+    .sidebar-container:not(.collapsed) nav a span {
+      opacity: 1 !important;
+      width: auto !important;
+      transition: opacity 0.15s ease-in-out !important;
+    }
+
+    /* Remove mobile-specific overrides */
+    body.mobile-sidebar-open {
+      overflow: auto !important;
+      position: static !important;
+      width: auto !important;
+    }
+
+    body.mobile-sidebar-open .main-container {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    body.mobile-sidebar-open .content-area {
+      overflow: visible !important;
+      height: auto !important;
+    }
+
+    /* Ensure mobile-open class doesn't interfere */
+    .sidebar-container.mobile-open {
+      transform: translateX(0) !important;
+      width: var(--sidebar-width) !important;
+    }
+
+    .sidebar-container.mobile-open.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+    }
+  }
+
+  /* Surface Duo portrait mode special handling - desktop-like sidebar behavior */
+  @media (width: 720px) and (height: 1114px) and (orientation: portrait) {
+    /* Override mobile behavior for Surface Duo portrait - use desktop-like collapse */
+    .sidebar-container {
+      transform: translateX(0) !important; /* Always visible, no sliding */
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: var(--sidebar-width) !important; /* Use desktop width when expanded */
+      height: 100vh !important;
+      height: 100dvh !important;
+      height: var(--dynamic-vh) !important;
+      z-index: 40 !important; /* Desktop z-index, not mobile z-index: 50 */
+      background: rgb(var(--sidebar-background)) !important;
+      border-right: 1px solid rgb(var(--sidebar-border)) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* When collapsed, show icons only (desktop behavior) */
+    .sidebar-container.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+      transform: translateX(0) !important; /* Stay visible */
+    }
+
+    /* When expanded, use full width but not mobile percentage */
+    .sidebar-container:not(.collapsed) {
+      width: var(--sidebar-width) !important;
+    }
+
+    /* Ensure main container adjusts for sidebar like desktop */
+    .main-container {
+      margin-left: var(--sidebar-width) !important;
+      width: calc(100% - var(--sidebar-width)) !important;
+      max-width: calc(100% - var(--sidebar-width)) !important;
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .main-container.sidebar-collapsed {
+      margin-left: var(--sidebar-collapsed-width) !important;
+      width: calc(100% - var(--sidebar-collapsed-width)) !important;
+      max-width: calc(100% - var(--sidebar-collapsed-width)) !important;
+    }
+
+    /* Enable desktop-like hover effects */
+    .sidebar-container nav a:hover {
+      transform: translateX(4px) !important;
+      background-color: rgba(var(--sidebar-accent), 0.1) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .sidebar-container nav a:hover svg {
+      transform: scale(1.1) !important;
+      transition: transform 0.2s ease !important;
+    }
+
+    /* Collapsed state text hiding (desktop behavior) */
+    .sidebar-container.collapsed nav a span {
+      opacity: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      transition: opacity 0.15s ease-in-out !important;
+    }
+
+    .sidebar-container:not(.collapsed) nav a span {
+      opacity: 1 !important;
+      width: auto !important;
+      transition: opacity 0.15s ease-in-out !important;
+    }
+
+    /* Remove mobile-specific overrides */
+    body.mobile-sidebar-open {
+      overflow: auto !important;
+      position: static !important;
+      width: auto !important;
+    }
+
+    body.mobile-sidebar-open .main-container {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    body.mobile-sidebar-open .content-area {
+      overflow: visible !important;
+      height: auto !important;
+    }
+
+    /* Ensure mobile-open class doesn't interfere */
+    .sidebar-container.mobile-open {
+      transform: translateX(0) !important;
+      width: var(--sidebar-width) !important;
+    }
+
+    .sidebar-container.mobile-open.collapsed {
+      width: var(--sidebar-collapsed-width) !important;
+    }
+  }
+
+  /* 移動設備樣式 */
+  @media (max-width: 834px) {
+    /* 手機版身體滾動鎖定 - 包括橫屏手機 */
+    body.mobile-sidebar-open {
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+
+    body.mobile-sidebar-open .main-container {
+      overflow: hidden;
+    }
+
+    body.mobile-sidebar-open .header-sticky {
+      position: fixed;
+      width: 100%;
+      z-index: 100;
+    }
+
+    body.mobile-sidebar-open .content-area {
+      overflow: hidden;
+    }
+
+    /* 移動設備側邊欄基本樣式 */
+    .main-container,
+    .main-container.sidebar-collapsed {
+      margin-left: 0;
+      width: 100%;
+      max-width: 100vw;
+      overflow: visible !important;
+    }
+
+    .content-area {
+      overflow: visible !important;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .container.mx-auto {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* 移動設備側邊欄隱藏狀態 */
+    .sidebar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      height: 100dvh;
+      height: var(--dynamic-vh);
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: var(--dynamic-vh);
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      width: max(280px, 75vw);
+      max-width: 320px;
+    }
+
+    .sidebar-container.mobile-open {
+      transform: translateX(0);
+    }
+
+    /* 移動設備不使用摺疊狀態 */
+    .sidebar-container.collapsed {
+      width: max(280px, 75vw);
+      max-width: 320px;
+    }
+
+    .sidebar-container > div {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-container nav {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* 移動設備觸摸優化 */
+    .sidebar-container nav a:hover {
+      transform: none;
+      background-color: inherit;
+      color: inherit;
+      box-shadow: none;
+    }
+
+    .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
+      transform: none;
+      background-color: rgb(var(--sidebar-accent));
+      color: rgb(var(--sidebar-accent-foreground));
+    }
+
+    .sidebar-container nav a:hover svg {
+      transform: none;
+    }
+
+    .sidebar-container nav a:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+
+    /* 確保移動設備文字始終顯示 */
+    .sidebar-container.collapsed nav a span {
+      opacity: 1;
+      width: auto;
+    }
+  }
+
+  /* 移動設備橫屏模式特殊處理 */
+  @media (max-width: 834px) and (orientation: landscape) {
+    .sidebar-container {
+      width: max(280px, 35vw);
+      max-width: 400px;
+    }
+    
+    .sidebar-container.collapsed {
+      width: max(280px, 35vw);
+      max-width: 400px;
     }
   }
 }

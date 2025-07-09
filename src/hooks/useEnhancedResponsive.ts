@@ -21,9 +21,9 @@ function getEnhancedMobileDetection() {
   const userAgent = navigator.userAgent.toLowerCase();
   const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   
-  // Special case: iPad models should behave like desktop for sidebar in both orientations
+  // Special case: iPad models and iPhone landscape should behave like desktop for sidebar in both orientations
   // This enables desktop-like collapse behavior instead of mobile overlay
-  if (isTouchDevice && /ipad/i.test(userAgent)) {
+  if (isTouchDevice && (/ipad/i.test(userAgent) || /iphone/i.test(userAgent))) {
     // iPad mini portrait: 768x1024
     if (width === 768 && height === 1024) {
       return false; // Treat as desktop for sidebar behavior
@@ -38,6 +38,27 @@ function getEnhancedMobileDetection() {
     }
     // iPad Air landscape: 1180x820
     if (width === 1180 && height === 820) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+  }
+
+  // Common landscape phone dimensions should get desktop-like sidebar behavior regardless of device type
+  // This includes iPhone, Samsung, Pixel, and other Android devices
+  if (isTouchDevice && width > height) { // Only in landscape mode
+    // iPhone XR landscape: 896x414
+    if (width === 896 && height === 414) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+    // iPhone 12 Pro landscape: 844x390
+    if (width === 844 && height === 390) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+    // iPhone 14 Pro Max landscape: 932x430
+    if (width === 932 && height === 430) {
+      return false; // Treat as desktop for sidebar behavior
+    }
+    // Common landscape dimension: 915x412 (iPhone 15 Pro, Samsung Galaxy S20 Ultra, Pixel 7, etc.)
+    if (width === 915 && height === 412) {
       return false; // Treat as desktop for sidebar behavior
     }
   }

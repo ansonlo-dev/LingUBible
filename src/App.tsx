@@ -128,7 +128,7 @@ const AppContent = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && !isMobile) {
       // Only read from cookie for non-mobile devices
-      return sidebarStateCookie.getState();
+        return sidebarStateCookie.getState();
     }
     // Mobile devices default to collapsed
     return false;
