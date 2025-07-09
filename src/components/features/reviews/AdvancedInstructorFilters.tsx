@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, type Term } from '@/services/api/courseService';
 import { translateDepartmentName } from '@/utils/textUtils';
@@ -226,21 +226,21 @@ export function AdvancedInstructorFilters({
     };
   };
 
-  // Calculate counts for each filter option
-  const getDepartmentCounts = () => {
+  // Calculate counts for each filter option - memoized
+  const departmentCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
     instructors.forEach(instructor => {
       if (instructor.department) {
         counts[instructor.department] = (counts[instructor.department] || 0) + 1;
       }
     });
+
     return counts;
-  };
+  }, [instructors]);
 
   // Group departments by faculty
   const getGroupedDepartments = () => {
     const facultyGrouping = getFacultyGrouping();
-    const departmentCounts = getDepartmentCounts();
     const grouped: { [key: string]: { icon: any; departments: string[]; count: number } } = {};
     
     // Initialize grouped structure
@@ -282,7 +282,7 @@ export function AdvancedInstructorFilters({
     return grouped;
   };
 
-  const getTermCounts = () => {
+  const termCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
     
     availableTerms.forEach(term => {
@@ -300,14 +300,15 @@ export function AdvancedInstructorFilters({
       counts[term.term_code] = count;
     });
     
+
     return counts;
-  };
+  }, [instructors, availableTerms, termInstructorsMap]);
 
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
     return language === 'zh-TW' || language === 'zh-CN' 
-      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24'
-      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24';
+      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24 lg:w-auto'
+      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24 lg:w-auto';
   };
 
   // Helper function to get sort field display name
@@ -364,7 +365,7 @@ export function AdvancedInstructorFilters({
             placeholder={t('search.instructorPlaceholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
-            className="pr-10 h-10 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
+            className="pr-10 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
           {filters.searchTerm && (
             <button
@@ -375,12 +376,13 @@ export function AdvancedInstructorFilters({
             </button>
           )}
         </div>
+        
       </div>
 
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-2">
         {/* 部門 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <Building2 className="h-4 w-4" />
             {t('filter.department')}
@@ -404,7 +406,7 @@ export function AdvancedInstructorFilters({
                   options.push({
                     value: department,
                     label: `  ${translateDepartmentName(department, t)}`,
-                    count: getDepartmentCounts()[department] || 0
+                    count: departmentCounts[department] || 0
                   });
                 });
               });
@@ -415,12 +417,12 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ department: values })}
             placeholder={t('filter.allDepartments')}
             totalCount={totalInstructors}
-            className="flex-1 h-10 text-sm"
+            className="flex-1 h-8 text-sm"
           />
         </div>
 
         {/* 授課學期 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.teachingTerm')}
@@ -429,7 +431,7 @@ export function AdvancedInstructorFilters({
             options={availableTerms.map(term => ({
               value: term.term_code,
               label: getTermDisplayName(term.term_code),
-              count: getTermCounts()[term.term_code] || 0,
+              count: termCounts[term.term_code] || 0,
               status: isCurrentTerm(term.term_code) ? 'current' : 
                      new Date(term.end_date) < new Date() ? 'past' : 'future'
             }))}
@@ -437,7 +439,7 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
             placeholder={t('filter.allTerms')}
             totalCount={totalInstructors}
-            className="flex-1 h-10 text-sm"
+            className="flex-1 h-8 text-sm"
           />
         </div>
       </div>
@@ -507,23 +509,47 @@ export function AdvancedInstructorFilters({
       )}
 
       {/* 分頁行 */}
-      <div className="flex items-center gap-2">
-        <label className={getLabelClassName()}>
-          <Grid3X3 className="h-4 w-4" />
-          {t('pagination.instructorsPerPage')}
-        </label>
-        <div className="flex gap-2">
-          {[10, 20, 50].map((size) => (
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <label className={getLabelClassName()}>
+            <Grid3X3 className="h-4 w-4" />
+            {t('pagination.instructorsPerPage')}
+          </label>
+          <div className="flex gap-2">
+            {[6, 12, 24].map((size) => (
+              <Button
+                key={size}
+                variant={filters.itemsPerPage === size ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onPageSizeChange(size)}
+                className="h-8 px-3 text-xs border-0"
+              >
+                {size}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {filteredInstructors !== undefined && (
+            <span className="text-sm text-muted-foreground">
+              {t('pagination.foundInstructors', { count: filteredInstructors })}
+            </span>
+          )}
+          {hasActiveFilters() && (
             <Button
-              key={size}
-              variant={filters.itemsPerPage === size ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              onClick={() => onPageSizeChange(size)}
-              className="h-8 px-3 text-xs"
+              onClick={onClearAll}
+              className="h-8 px-3 text-xs bg-white dark:bg-transparent hover:bg-red-500 dark:hover:bg-red-500 border-black dark:border-white hover:border-red-500 dark:hover:border-red-500 text-black dark:text-white hover:text-white transition-all duration-200 whitespace-nowrap flex items-center gap-2"
             >
-              {size}
+              <X className="h-3 w-3" />
+              <span>{t('filter.clearAll')}</span>
+              <span className="bg-red-500 hover:bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium transition-colors duration-200">
+                {getActiveFiltersCount()}
+              </span>
             </Button>
-          ))}
+          )}
         </div>
       </div>
     </div>

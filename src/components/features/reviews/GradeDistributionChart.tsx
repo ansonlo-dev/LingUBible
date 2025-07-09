@@ -1727,14 +1727,11 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 {filterLabel && (
                   <span className="text-sm text-muted-foreground whitespace-nowrap">
                     {(() => {
-                      // Show plural form for multi-select chart types
-                      if (chartType === 'stacked' || chartType === 'boxplot') {
-                        // Add (s) for plural in English only
-                        const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
-                                        !filterLabel.includes('课程') && !filterLabel.includes('教师');
-                        return isEnglish ? filterLabel + '(s)' : filterLabel;
-                      }
-                      return filterLabel;
+                      // Show plural form for all chart types
+                      // Add (s) for plural in English only
+                      const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                      !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                      return isEnglish ? filterLabel + '(s)' : filterLabel;
                     })()}:
                   </span>
                 )}

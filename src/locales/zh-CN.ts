@@ -417,6 +417,8 @@ export default {
   'pagination.previous': '上一页',
   'pagination.next': '下一页',
   'pagination.last': '末页',
+      'pagination.foundCourses': '找到 {count} 个课程',
+    'pagination.foundInstructors': '找到 {count} 位讲师',
   // Review filters
   'filter.reviewLanguage': '评论语言',
   'filter.reviewTerm': '学期',
@@ -652,7 +654,7 @@ export default {
   // =============================================================================
   // 4. SEARCH & FILTERING - 搜索與過濾
   // =============================================================================
-  'search.placeholder': '搜索课程代码、课程名称或讲师姓名（支持多语言）',
+  'search.placeholder': '课程代码/名称、教师',
   'search.courses': '搜索课程',
   'search.coursesPlaceholder': '搜索课程代码、课程名称...',
   'search.instructors': '搜索教师',
@@ -1463,10 +1465,10 @@ export default {
   'myReviews.viewCourse': '查看课程 {course}',
   // Featured content
   'featured.title': '热门内容',
-  'featured.courses': '热门课程',
-  'featured.instructors': '热门教师',
-  'featured.topCourses': '最佳课程',
-  'featured.topInstructors': '最佳讲师',
+      'featured.courses': '热门课程',
+    'featured.instructors': '热门教师',
+    'featured.topCourses': '最佳课程',
+    'featured.topInstructors': '最佳讲师',
   'featured.popularCourses': '热门课程',
   'featured.popularCoursesDesc': '根据评论数量排序的最受欢迎课程',
   'featured.popularInstructors': '热门讲师',
@@ -1623,7 +1625,7 @@ export default {
   'grading.feature3': '豪华视觉处理',
   'grading.feature4': '代表顶级教育质量',
   // Additional search and pagination keys
-  'search.instructorPlaceholder': '搜索讲师姓名、学系（支持多语言）',
+  'search.instructorPlaceholder': '教师、学系',
   'sort.instructorName': '讲师姓名',
   'sort.department': '学系',
   'sort.teaching': '教学质素',

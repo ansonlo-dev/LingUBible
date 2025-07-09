@@ -43,6 +43,8 @@ const Index = () => {
       };
     }
   };
+
+
   
   const [isMobile, setIsMobile] = useState(false);
   const [showHeavenTransition, setShowHeavenTransition] = useState(false);

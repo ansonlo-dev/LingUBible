@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, BookOpen as BookOpenIcon, GraduationCap, MessageSquare, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, BookOpen as BookOpenIcon, GraduationCap, MessageSquare, Loader2, TrendingUp } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
-import { CourseService } from '@/services/api/courseService';
-import type { CourseWithStats, InstructorWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
+import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
 import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/utils/textUtils';
+import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MobileSearchModalProps {
@@ -41,6 +41,9 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const [popularInstructors, setPopularInstructors] = useState<InstructorWithDetailedStats[]>([]);
   const [allCourses, setAllCourses] = useState<CourseWithStats[]>([]);
   const [allInstructors, setAllInstructors] = useState<InstructorWithDetailedStats[]>([]);
+  const [topCourses, setTopCourses] = useState<CourseWithStats[]>([]);
+  const [topInstructors, setTopInstructors] = useState<InstructorWithDetailedStats[]>([]);
+  const [activeTab, setActiveTab] = useState<'courses' | 'instructors' | 'topCourses' | 'topInstructors'>('courses'); // Updated tab state
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasAddedHistoryEntry = useRef(false);
@@ -78,199 +81,9 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     };
   }, []);
 
-  // Scroll arrow functionality
-  const [showScrollButtons, setShowScrollButtons] = useState({ up: false, down: false });
-  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const mobileScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Removed debug functionality - arrows now work with proper max-height
 
-  const checkScrollButtons = () => {
-    const container = scrollContainerRef.current;
-    if (!container) {
-      return;
-    }
 
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    
-    // Ensure dimensions are valid
-    if (scrollHeight <= 0 || clientHeight <= 0) {
-      return;
-    }
-    
-    // Check if content is scrollable
-    const hasOverflow = scrollHeight > clientHeight;
-    if (!hasOverflow) {
-      setShowScrollButtons({ up: false, down: false });
-      return;
-    }
-    
-    // Add tolerance for scroll position detection (2px tolerance)
-    const tolerance = 2;
-    const canScrollUp = scrollTop > tolerance;
-    const canScrollDown = scrollTop < scrollHeight - clientHeight - tolerance;
-    
-    setShowScrollButtons({
-      up: canScrollUp,
-      down: canScrollDown
-    });
-  };
-
-  const startScrolling = (direction: 'up' | 'down') => {
-    stopScrolling();
-    const container = scrollContainerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const scroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const scrollAmount = direction === 'up' ? -6 : 6;
-      
-      // Check if we've reached the limits before scrolling
-      const atTop = scrollTop <= 0;
-      const atBottom = scrollTop >= scrollHeight - clientHeight - 1;
-      
-      if ((direction === 'up' && atTop) || (direction === 'down' && atBottom)) {
-        stopScrolling();
-        return;
-      }
-      
-      container.scrollBy(0, scrollAmount);
-      
-      // Update scroll buttons immediately after scrolling
-      setTimeout(() => {
-        checkScrollButtons();
-      }, 10);
-      
-      // Check again after scrolling in case we just reached the limit
-      const newScrollTop = container.scrollTop;
-      const newAtTop = newScrollTop <= 0;
-      const newAtBottom = newScrollTop >= scrollHeight - clientHeight - 1;
-      
-      if ((direction === 'up' && newAtTop) || (direction === 'down' && newAtBottom)) {
-        stopScrolling();
-        return;
-      }
-    };
-
-    scrollIntervalRef.current = setInterval(scroll, 16); // ~60fps
-    
-    // For mobile devices, auto-stop after 1 second to prevent infinite scrolling
-    if (isMobile) {
-      mobileScrollTimeoutRef.current = setTimeout(() => {
-        stopScrolling();
-      }, 1000);
-    }
-  };
-
-  const stopScrolling = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
-    if (mobileScrollTimeoutRef.current) {
-      clearTimeout(mobileScrollTimeoutRef.current);
-      mobileScrollTimeoutRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      checkScrollButtons();
-      // Stop auto-scrolling when user manually scrolls
-      if (scrollIntervalRef.current) {
-        stopScrolling();
-      }
-    };
-    
-    const handleTouchStart = () => {
-      // Stop auto-scrolling when user starts touching the container
-      if (scrollIntervalRef.current) {
-        stopScrolling();
-      }
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    
-    // Check initially and when content changes
-    const observer = new ResizeObserver(() => {
-      // Use a small delay to ensure the resize has completed
-      setTimeout(checkScrollButtons, 50);
-    });
-    observer.observe(container);
-
-    // Initial check with a delay to ensure container is properly sized
-    const initialTimer = setTimeout(checkScrollButtons, 300);
-
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      container.removeEventListener('touchstart', handleTouchStart);
-      observer.disconnect();
-      stopScrolling();
-      clearTimeout(initialTimer);
-    };
-  }, []);
-
-  // Check scroll buttons when content changes
-  useEffect(() => {
-    if (isOpen && isInitialized && !loading) {
-      // Use multiple timeouts to ensure DOM has updated
-      const timer1 = setTimeout(checkScrollButtons, 100);
-      const timer2 = setTimeout(checkScrollButtons, 300);
-      const timer3 = setTimeout(checkScrollButtons, 500);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-        clearTimeout(timer3);
-      };
-    }
-  }, [searchQuery, loading, popularCourses, popularInstructors, allCourses, allInstructors, isOpen, isInitialized]);
-
-  // Add scroll event listener to update buttons on manual scroll
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      checkScrollButtons();
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-    };
-  }, [isOpen, isInitialized]);
-
-  // Extra check when loading finishes
-  useEffect(() => {
-    if (!loading && isInitialized && isOpen) {
-      const timer = setTimeout(() => {
-        checkScrollButtons();
-      }, 200);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [loading, isInitialized, isOpen]);
-
-  // Check scroll buttons when modal is opened and initialized
-  useEffect(() => {
-    if (isOpen && isInitialized && !loading) {
-      const timer = setTimeout(() => {
-        checkScrollButtons();
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isInitialized, loading]);
-
- // Get faculty by department name
+  // Get faculty by department name
   const getFacultyByDepartment = (department: string): string => {
     const facultyMapping: { [key: string]: string } = {
       // Faculty of Arts
@@ -318,27 +131,27 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       
       const loadData = async () => {
         try {
-          // 載入熱門課程和講師以及所有數據用於搜索
-          const [coursesData, instructorsData, allCoursesData, allInstructorsData] = await Promise.all([
-            CourseService.getPopularCourses(12), // 獲取前12個熱門課程，充分利用較大空間
-            CourseService.getPopularInstructorsWithDetailedStats(12), // 獲取前12個熱門講師，充分利用較大空間
+          // 載入熱門課程和講師以及所有數據用於搜索，還有最佳課程和講師
+          const [coursesData, instructorsData, allCoursesData, allInstructorsData, topCoursesData, topInstructorsData] = await Promise.all([
+            CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
+            CourseService.getPopularInstructorsWithDetailedStats(20), // 獲取前20個熱門講師，提供更多建議選項
             CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
-            CourseService.getAllInstructorsWithDetailedStats() // 獲取所有講師用於搜索
+            CourseService.getAllInstructorsWithDetailedStats(), // 獲取所有講師用於搜索
+            CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
+            CourseService.getTopInstructorsByGPA(20) // 獲取前20個最佳講師，提供更多建議選項
           ]);
           
           setPopularCourses(coursesData);
           setPopularInstructors(instructorsData);
           setAllCourses(allCoursesData);
           setAllInstructors(allInstructorsData);
+          setTopCourses(topCoursesData);
+          setTopInstructors(topInstructorsData);
         } catch (error) {
           console.error('Error loading search data:', error);
         } finally {
           setLoading(false);
           setIsInitialized(true);
-          // Check scroll buttons after content is loaded
-          setTimeout(() => {
-            checkScrollButtons();
-          }, 200);
         }
       };
 
@@ -513,6 +326,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     setSelectedIndex(-1);
   }, [searchQuery]);
 
+
+
   if (!isOpen) return null;
 
   return (
@@ -534,7 +349,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
-            <div className="flex items-center border-b border-gray-200 dark:border-gray-700 px-4">
+            <div className="flex items-center px-4">
               <input
                 ref={inputRef}
                 type="text"
@@ -551,28 +366,72 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               </button>
             </div>
 
+            {/* Tab Switcher - Only show when no search query */}
+            {!searchQuery.trim() && (
+              <div className="px-4 py-3">
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  <button
+                    onClick={() => setActiveTab('courses')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'courses'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <BookOpenIcon className="h-4 w-4 text-red-600" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.courses')}</span>
+                      <span className="text-xs opacity-75">(most reviews)</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('instructors')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'instructors'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <GraduationCap className="h-4 w-4 text-red-600" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.instructors')}</span>
+                      <span className="text-xs opacity-75">(most reviews)</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('topCourses')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'topCourses'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <BookOpenIcon className="h-4 w-4 text-gray-500" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.topCourses')}</span>
+                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('topInstructors')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'topInstructors'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <GraduationCap className="h-4 w-4 text-gray-500" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.topInstructors')}</span>
+                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* 搜索結果容器 */}
             <div className="flex-1 relative overflow-hidden">
-
-
-              {/* 上箭頭 */}
-              {showScrollButtons.up && (
-                <div 
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-b-lg cursor-pointer select-none"
-                  onMouseEnter={() => !isMobile && startScrolling('up')}
-                  onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => startScrolling('up')}
-                  onTouchStart={(e) => {
-                    if (isMobile) {
-                      e.preventDefault();
-                      startScrolling('up');
-                    }
-                  }}
-                >
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
-
               {/* 滾動內容 */}
               <div 
                 ref={scrollContainerRef}
@@ -600,29 +459,18 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               <h3 className="font-medium text-gray-900 dark:text-white">{t('search.courses')}</h3>
                             </div>
                             <div className="space-y-2">
-                              {filteredCourses.map((course) => {
+                              {filteredCourses.map((course, index) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
                                 const facultyKey = getFacultyByDepartment(course.department);
                                 const courseUrl = `/courses/${course.course_code}`;
+                                
                                 return (
                                   <a
                                     key={course.course_code}
                                     href={courseUrl}
-                                    onClick={(e) => {
-                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                      // Let normal clicks use the default link behavior
-                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                        // Let browser handle these naturally
-                                        handleClose();
-                                        return;
-                                      }
-                                      // For normal clicks, prevent default and use React Router
-                                      e.preventDefault();
-                                      navigate(courseUrl);
-                                      handleClose();
-                                    }}
-                                    className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                    onClick={() => handleCourseClick(course.course_code)}
+                                    className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
@@ -632,7 +480,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                           {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
                                         </div>
-                                        <div className="flex items-center gap-1 flex-wrap mt-1">
+                                        <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex items-center gap-1 flex-wrap'} mt-1`}>
                                           {facultyKey && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                                               {t(facultyKey)}
@@ -643,9 +491,19 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
-                                        <MessageSquare className="h-4 w-4" />
-                                        <span>{course.reviewCount}</span>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{course.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as course cards */}
+                                        {course.averageGPA && course.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(course.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
                                       </div>
                                     </div>
                                   </a>
@@ -663,54 +521,40 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               <h3 className="font-medium text-gray-900 dark:text-white">{t('search.instructors')}</h3>
                             </div>
                             <div className="space-y-2">
-                              {filteredInstructors.map((instructor) => {
-                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                              {filteredInstructors.map((instructor, index) => {
+                                const instructorName = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                                
                                 return (
                                   <a
                                     key={instructor.name}
                                     href={instructorUrl}
-                                    onClick={(e) => {
-                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                      // Let normal clicks use the default link behavior
-                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                        // Let browser handle these naturally
-                                        handleClose();
-                                        return;
-                                      }
-                                      // For normal clicks, prevent default and use React Router
-                                      e.preventDefault();
-                                      navigate(instructorUrl);
-                                      handleClose();
-                                    }}
-                                    className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                    onClick={() => handleInstructorClick(instructor.name)}
+                                    className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
-                                        <div className="font-medium text-gray-900 dark:text-white">
-                                          {nameInfo.primary}
+                                        <div className="font-medium text-gray-900 dark:text-white truncate">
+                                          {instructorName.primary}
                                         </div>
-                                        {nameInfo.secondary && (
-                                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                            {nameInfo.secondary}
-                                          </div>
-                                        )}
-                                        <div className="flex items-center gap-1 flex-wrap mt-1">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                                            {departmentName}
-                                          </span>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                          {departmentName}
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1 text-sm text-gray-500 flex-shrink-0">
-                                        <MessageSquare className="h-4 w-4" />
-                                        <span>{instructor.reviewCount}</span>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{instructor.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as instructor cards */}
+                                        {instructor.averageGPA && instructor.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(instructor.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
                                       </div>
                                     </div>
                                   </a>
@@ -732,159 +576,321 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     {/* 熱門內容 - 只在沒有搜索時顯示 */}
                     {!searchQuery.trim() && (
                       <>
-                        {/* 熱門課程 */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-3 px-2">
-                            <BookOpenIcon className="h-5 w-5 text-red-600" />
-                            <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {popularCourses.map((course) => {
-                              const titleInfo = getCourseTitle(course, currentLanguage);
-                              const departmentName = translateDepartmentName(course.department, t);
-                              const facultyKey = getFacultyByDepartment(course.department);
-                              const courseUrl = `/courses/${course.course_code}`;
-                              return (
-                                <a
-                                  key={course.course_code}
-                                  href={courseUrl}
-                                  onClick={(e) => {
-                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                    // Let normal clicks use the default link behavior
-                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                      // Let browser handle these naturally
+                        {/* 熱門課程 - Only show when courses tab is active */}
+                        {activeTab === 'courses' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <BookOpenIcon className="h-5 w-5 text-red-600" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} (most reviews)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {popularCourses.map((course) => {
+                                const titleInfo = getCourseTitle(course, currentLanguage);
+                                const departmentName = translateDepartmentName(course.department, t);
+                                const facultyKey = getFacultyByDepartment(course.department);
+                                const courseUrl = `/courses/${course.course_code}`;
+                                return (
+                                  <a
+                                    key={course.course_code}
+                                    href={courseUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(courseUrl);
                                       handleClose();
-                                      return;
-                                    }
-                                    // For normal clicks, prevent default and use React Router
-                                    e.preventDefault();
-                                    navigate(courseUrl);
-                                    handleClose();
-                                  }}
-                                  className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="min-w-0 flex-1 space-y-1">
-                                      {/* 第1行：課程代碼 */}
-                                      <div className="font-medium text-gray-900 dark:text-white font-mono">
-                                        {course.course_code}
-                                      </div>
-                                      {/* 第2行：課程名稱 */}
-                                      <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
-                                        {titleInfo.secondary 
-                                          ? `${titleInfo.primary} • ${titleInfo.secondary}`
-                                          : titleInfo.primary
-                                        }
-                                      </div>
-                                      {/* 第3行：學院和系所 */}
-                                      <div className="flex items-center gap-1 flex-wrap">
-                                        {facultyKey && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                            {t(facultyKey)}
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：課程代碼 */}
+                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                          {course.course_code}
+                                        </div>
+                                        {/* 第2行：課程名稱 */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
+                                          {titleInfo.secondary 
+                                            ? `${titleInfo.primary} • ${titleInfo.secondary}`
+                                            : titleInfo.primary
+                                          }
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
                                           </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{course.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as course cards */}
+                                        {course.averageGPA && course.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(course.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
                                         )}
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                                          {departmentName}
-                                        </span>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
-                                      <MessageSquare className="h-4 w-4" />
-                                      <span>{course.reviewCount}</span>
-                                    </div>
-                                  </div>
-                                </a>
-                              );
-                            })}
+                                  </a>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
-                        {/* 熱門講師 */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-3 px-2">
-                            <GraduationCap className="h-5 w-5 text-red-600" />
-                            <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {popularInstructors.map((instructor) => {
-                              const nameInfo = getInstructorName(instructor, currentLanguage);
-                              const departmentName = translateDepartmentName(instructor.department, t);
-                              const facultyKey = getFacultyByDepartment(instructor.department);
-                              const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
-                              return (
-                                <a
-                                  key={instructor.name}
-                                  href={instructorUrl}
-                                  onClick={(e) => {
-                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                    // Let normal clicks use the default link behavior
-                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                      // Let browser handle these naturally
+                        {/* 熱門講師 - Only show when instructors tab is active */}
+                        {activeTab === 'instructors' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <GraduationCap className="h-5 w-5 text-red-600" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} (most reviews)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {popularInstructors.map((instructor) => {
+                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const departmentName = translateDepartmentName(instructor.department, t);
+                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                                return (
+                                  <a
+                                    key={instructor.name}
+                                    href={instructorUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(instructorUrl);
                                       handleClose();
-                                      return;
-                                    }
-                                    // For normal clicks, prevent default and use React Router
-                                    e.preventDefault();
-                                    navigate(instructorUrl);
-                                    handleClose();
-                                  }}
-                                  className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="min-w-0 flex-1 space-y-1">
-                                      {/* 第1行：英文名稱 */}
-                                      <div className="font-medium text-gray-900 dark:text-white">
-                                        {nameInfo.primary}
-                                      </div>
-                                      {/* 第2行：中文名稱（保留空間以維持高度一致） */}
-                                      <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        {nameInfo.secondary || ''}
-                                      </div>
-                                      {/* 第3行：學院和系所 */}
-                                      <div className="flex items-center gap-1 flex-wrap">
-                                        {facultyKey && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                            {t(facultyKey)}
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：英文名稱 */}
+                                        <div className="font-medium text-gray-900 dark:text-white">
+                                          {nameInfo.primary}
+                                        </div>
+                                        {/* 第2行：中文名稱（保留空間以維持高度一致） */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300">
+                                          {nameInfo.secondary || ''}
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
                                           </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{instructor.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as instructor cards */}
+                                        {instructor.averageGPA && instructor.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(instructor.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
                                         )}
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                                          {departmentName}
-                                        </span>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
-                                      <MessageSquare className="h-4 w-4" />
-                                      <span>{instructor.reviewCount}</span>
-                                    </div>
-                                  </div>
-                                </a>
-                              );
-                            })}
+                                  </a>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
+
+                        {/* 最佳課程 - Only show when topCourses tab is active */}
+                        {activeTab === 'topCourses' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <BookOpenIcon className="h-5 w-5 text-gray-500" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} (highest Avg. GPA)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {topCourses.map((course) => {
+                                const titleInfo = getCourseTitle(course, currentLanguage);
+                                const departmentName = translateDepartmentName(course.department, t);
+                                const facultyKey = getFacultyByDepartment(course.department);
+                                const courseUrl = `/courses/${course.course_code}`;
+                                return (
+                                  <a
+                                    key={course.course_code}
+                                    href={courseUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(courseUrl);
+                                      handleClose();
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：課程代碼 */}
+                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                          {course.course_code}
+                                        </div>
+                                        {/* 第2行：課程名稱 */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
+                                          {titleInfo.secondary 
+                                            ? `${titleInfo.primary} • ${titleInfo.secondary}`
+                                            : titleInfo.primary
+                                          }
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{course.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as course cards */}
+                                        {course.averageGPA && course.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(course.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 最佳講師 - Only show when topInstructors tab is active */}
+                        {activeTab === 'topInstructors' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <GraduationCap className="h-5 w-5 text-gray-500" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} (highest Avg. GPA)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {topInstructors.map((instructor) => {
+                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const departmentName = translateDepartmentName(instructor.department, t);
+                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                                return (
+                                  <a
+                                    key={instructor.name}
+                                    href={instructorUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(instructorUrl);
+                                      handleClose();
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：英文名稱 */}
+                                        <div className="font-medium text-gray-900 dark:text-white">
+                                          {nameInfo.primary}
+                                        </div>
+                                        {/* 第2行：中文名稱（保留空間以維持高度一致） */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300">
+                                          {nameInfo.secondary || ''}
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{instructor.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as instructor cards */}
+                                        {instructor.averageGPA && instructor.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(instructor.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* 下箭頭 */}
-              {showScrollButtons.down && (
-                <div 
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-t-lg cursor-pointer select-none"
-                  onMouseEnter={() => !isMobile && startScrolling('down')}
-                  onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => startScrolling('down')}
-                  onTouchStart={(e) => {
-                    if (isMobile) {
-                      e.preventDefault();
-                      startScrolling('down');
-                    }
-                  }}
-                >
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -917,7 +923,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
-            <div className="flex items-center border-b border-gray-200 dark:border-gray-700 px-4">
+            <div className="flex items-center px-4">
               <input
                 ref={inputRef}
                 type="text"
@@ -934,26 +940,72 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               </button>
             </div>
 
+            {/* Tab Switcher - Only show when no search query */}
+            {!searchQuery.trim() && (
+              <div className="px-4 py-3">
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  <button
+                    onClick={() => setActiveTab('courses')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'courses'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <BookOpenIcon className="h-4 w-4 text-red-600" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.courses')}</span>
+                      <span className="text-xs opacity-75">(most reviews)</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('instructors')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'instructors'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <GraduationCap className="h-4 w-4 text-red-600" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.instructors')}</span>
+                      <span className="text-xs opacity-75">(most reviews)</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('topCourses')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'topCourses'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <BookOpenIcon className="h-4 w-4 text-gray-500" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.topCourses')}</span>
+                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('topInstructors')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      activeTab === 'topInstructors'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <GraduationCap className="h-4 w-4 text-gray-500" />
+                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                      <span>{t('featured.topInstructors')}</span>
+                      <span className="text-xs opacity-75">(highest Avg. GPA)</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* 搜索結果容器 */}
             <div className="flex-1 relative overflow-hidden">
-              {/* 上箭頭 */}
-              {showScrollButtons.up && (
-                <div 
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-b from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-b-lg cursor-pointer select-none"
-                  onMouseEnter={() => !isMobile && startScrolling('up')}
-                  onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => startScrolling('up')}
-                  onTouchStart={(e) => {
-                    if (isMobile) {
-                      e.preventDefault();
-                      startScrolling('up');
-                    }
-                  }}
-                >
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
-
               {/* 滾動內容 */}
               <div 
                 ref={scrollContainerRef}
@@ -981,29 +1033,18 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               <h3 className="font-medium text-gray-900 dark:text-white">{t('search.courses')}</h3>
                             </div>
                             <div className="space-y-2">
-                              {filteredCourses.map((course) => {
+                              {filteredCourses.map((course, index) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
                                 const facultyKey = getFacultyByDepartment(course.department);
                                 const courseUrl = `/courses/${course.course_code}`;
+                                
                                 return (
                                   <a
                                     key={course.course_code}
                                     href={courseUrl}
-                                    onClick={(e) => {
-                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                      // Let normal clicks use the default link behavior
-                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                        // Let browser handle these naturally
-                                        handleClose();
-                                        return;
-                                      }
-                                      // For normal clicks, prevent default and use React Router
-                                      e.preventDefault();
-                                      navigate(courseUrl);
-                                      handleClose();
-                                    }}
-                                    className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                    onClick={() => handleCourseClick(course.course_code)}
+                                    className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
@@ -1024,9 +1065,19 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
-                                        <MessageSquare className="h-4 w-4" />
-                                        <span>{course.reviewCount}</span>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{course.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as course cards */}
+                                        {course.averageGPA && course.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(course.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
                                       </div>
                                     </div>
                                   </a>
@@ -1044,54 +1095,40 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               <h3 className="font-medium text-gray-900 dark:text-white">{t('search.instructors')}</h3>
                             </div>
                             <div className="space-y-2">
-                              {filteredInstructors.map((instructor) => {
-                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                              {filteredInstructors.map((instructor, index) => {
+                                const instructorName = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                                
                                 return (
                                   <a
                                     key={instructor.name}
                                     href={instructorUrl}
-                                    onClick={(e) => {
-                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                      // Let normal clicks use the default link behavior
-                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                        // Let browser handle these naturally
-                                        handleClose();
-                                        return;
-                                      }
-                                      // For normal clicks, prevent default and use React Router
-                                      e.preventDefault();
-                                      navigate(instructorUrl);
-                                      handleClose();
-                                    }}
-                                    className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                    onClick={() => handleInstructorClick(instructor.name)}
+                                    className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
-                                        <div className="font-medium text-gray-900 dark:text-white">
-                                          {nameInfo.primary}
+                                        <div className="font-medium text-gray-900 dark:text-white truncate">
+                                          {instructorName.primary}
                                         </div>
-                                        {nameInfo.secondary && (
-                                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                            {nameInfo.secondary}
-                                          </div>
-                                        )}
-                                        <div className="flex items-center gap-1 flex-wrap mt-1">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                                            {departmentName}
-                                          </span>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                          {departmentName}
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1 text-sm text-gray-500 flex-shrink-0">
-                                        <MessageSquare className="h-4 w-4" />
-                                        <span>{instructor.reviewCount}</span>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{instructor.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as instructor cards */}
+                                        {instructor.averageGPA && instructor.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(instructor.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
                                       </div>
                                     </div>
                                   </a>
@@ -1113,159 +1150,321 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     {/* 熱門內容 - 只在沒有搜索時顯示 */}
                     {!searchQuery.trim() && (
                       <>
-                        {/* 熱門課程 */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-3 px-2">
-                            <BookOpenIcon className="h-5 w-5 text-red-600" />
-                            <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')}</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {popularCourses.map((course) => {
-                              const titleInfo = getCourseTitle(course, currentLanguage);
-                              const departmentName = translateDepartmentName(course.department, t);
-                              const facultyKey = getFacultyByDepartment(course.department);
-                              const courseUrl = `/courses/${course.course_code}`;
-                              return (
-                                <a
-                                  key={course.course_code}
-                                  href={courseUrl}
-                                  onClick={(e) => {
-                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                    // Let normal clicks use the default link behavior
-                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                      // Let browser handle these naturally
+                        {/* 熱門課程 - Only show when courses tab is active */}
+                        {activeTab === 'courses' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <BookOpenIcon className="h-5 w-5 text-red-600" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} (most reviews)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {popularCourses.map((course) => {
+                                const titleInfo = getCourseTitle(course, currentLanguage);
+                                const departmentName = translateDepartmentName(course.department, t);
+                                const facultyKey = getFacultyByDepartment(course.department);
+                                const courseUrl = `/courses/${course.course_code}`;
+                                return (
+                                  <a
+                                    key={course.course_code}
+                                    href={courseUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(courseUrl);
                                       handleClose();
-                                      return;
-                                    }
-                                    // For normal clicks, prevent default and use React Router
-                                    e.preventDefault();
-                                    navigate(courseUrl);
-                                    handleClose();
-                                  }}
-                                  className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="min-w-0 flex-1 space-y-1">
-                                      {/* 第1行：課程代碼 */}
-                                      <div className="font-medium text-gray-900 dark:text-white font-mono">
-                                        {course.course_code}
-                                      </div>
-                                      {/* 第2行：課程名稱 */}
-                                      <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
-                                        {titleInfo.secondary 
-                                          ? `${titleInfo.primary} • ${titleInfo.secondary}`
-                                          : titleInfo.primary
-                                        }
-                                      </div>
-                                      {/* 第3行：學院和系所 */}
-                                      <div className="flex items-center gap-1 flex-wrap">
-                                        {facultyKey && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                            {t(facultyKey)}
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：課程代碼 */}
+                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                          {course.course_code}
+                                        </div>
+                                        {/* 第2行：課程名稱 */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
+                                          {titleInfo.secondary 
+                                            ? `${titleInfo.primary} • ${titleInfo.secondary}`
+                                            : titleInfo.primary
+                                          }
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
                                           </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{course.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as course cards */}
+                                        {course.averageGPA && course.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(course.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
                                         )}
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                                          {departmentName}
-                                        </span>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
-                                      <MessageSquare className="h-4 w-4" />
-                                      <span>{course.reviewCount}</span>
-                                    </div>
-                                  </div>
-                                </a>
-                              );
-                            })}
+                                  </a>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
-                        {/* 熱門講師 */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-3 px-2">
-                            <GraduationCap className="h-5 w-5 text-red-600" />
-                            <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {popularInstructors.map((instructor) => {
-                              const nameInfo = getInstructorName(instructor, currentLanguage);
-                              const departmentName = translateDepartmentName(instructor.department, t);
-                              const facultyKey = getFacultyByDepartment(instructor.department);
-                              const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
-                              return (
-                                <a
-                                  key={instructor.name}
-                                  href={instructorUrl}
-                                  onClick={(e) => {
-                                    // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                    // Let normal clicks use the default link behavior
-                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                      // Let browser handle these naturally
+                        {/* 熱門講師 - Only show when instructors tab is active */}
+                        {activeTab === 'instructors' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <GraduationCap className="h-5 w-5 text-red-600" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} (most reviews)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {popularInstructors.map((instructor) => {
+                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const departmentName = translateDepartmentName(instructor.department, t);
+                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                                return (
+                                  <a
+                                    key={instructor.name}
+                                    href={instructorUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(instructorUrl);
                                       handleClose();
-                                      return;
-                                    }
-                                    // For normal clicks, prevent default and use React Router
-                                    e.preventDefault();
-                                    navigate(instructorUrl);
-                                    handleClose();
-                                  }}
-                                  className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="min-w-0 flex-1 space-y-1">
-                                      {/* 第1行：英文名稱 */}
-                                      <div className="font-medium text-gray-900 dark:text-white">
-                                        {nameInfo.primary}
-                                      </div>
-                                      {/* 第2行：中文名稱（保留空間以維持高度一致） */}
-                                      <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        {nameInfo.secondary || ''}
-                                      </div>
-                                      {/* 第3行：學院和系所 */}
-                                      <div className="flex items-center gap-1 flex-wrap">
-                                        {facultyKey && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                            {t(facultyKey)}
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：英文名稱 */}
+                                        <div className="font-medium text-gray-900 dark:text-white">
+                                          {nameInfo.primary}
+                                        </div>
+                                        {/* 第2行：中文名稱（保留空間以維持高度一致） */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300">
+                                          {nameInfo.secondary || ''}
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
                                           </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{instructor.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as instructor cards */}
+                                        {instructor.averageGPA && instructor.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(instructor.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
                                         )}
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                                          {departmentName}
-                                        </span>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
-                                      <MessageSquare className="h-4 w-4" />
-                                      <span>{instructor.reviewCount}</span>
-                                    </div>
-                                  </div>
-                                </a>
-                              );
-                            })}
+                                  </a>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
+
+                        {/* 最佳課程 - Only show when topCourses tab is active */}
+                        {activeTab === 'topCourses' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <BookOpenIcon className="h-5 w-5 text-gray-500" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} (highest Avg. GPA)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {topCourses.map((course) => {
+                                const titleInfo = getCourseTitle(course, currentLanguage);
+                                const departmentName = translateDepartmentName(course.department, t);
+                                const facultyKey = getFacultyByDepartment(course.department);
+                                const courseUrl = `/courses/${course.course_code}`;
+                                return (
+                                  <a
+                                    key={course.course_code}
+                                    href={courseUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(courseUrl);
+                                      handleClose();
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：課程代碼 */}
+                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                          {course.course_code}
+                                        </div>
+                                        {/* 第2行：課程名稱 */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300 leading-tight">
+                                          {titleInfo.secondary 
+                                            ? `${titleInfo.primary} • ${titleInfo.secondary}`
+                                            : titleInfo.primary
+                                          }
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{course.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as course cards */}
+                                        {course.averageGPA && course.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(course.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 最佳講師 - Only show when topInstructors tab is active */}
+                        {activeTab === 'topInstructors' && (
+                          <div>
+                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
+                              <GraduationCap className="h-5 w-5 text-gray-500" />
+                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} (highest Avg. GPA)</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {topInstructors.map((instructor) => {
+                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const departmentName = translateDepartmentName(instructor.department, t);
+                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
+                                return (
+                                  <a
+                                    key={instructor.name}
+                                    href={instructorUrl}
+                                    onClick={(e) => {
+                                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                      // Let normal clicks use the default link behavior
+                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                        // Let browser handle these naturally
+                                        handleClose();
+                                        return;
+                                      }
+                                      // For normal clicks, prevent default and use React Router
+                                      e.preventDefault();
+                                      navigate(instructorUrl);
+                                      handleClose();
+                                    }}
+                                    className="block w-full text-left px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        {/* 第1行：英文名稱 */}
+                                        <div className="font-medium text-gray-900 dark:text-white">
+                                          {nameInfo.primary}
+                                        </div>
+                                        {/* 第2行：中文名稱（保留空間以維持高度一致） */}
+                                        <div className="text-sm text-gray-600 dark:text-gray-300">
+                                          {nameInfo.secondary || ''}
+                                        </div>
+                                        {/* 第3行：學院和系所 */}
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-4 w-4" />
+                                          <span>{instructor.reviewCount}</span>
+                                        </div>
+                                        {/* Average GPA with same styling as instructor cards */}
+                                        {instructor.averageGPA && instructor.averageGPA > 0 ? (
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                            {formatGPA(instructor.averageGPA)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm font-bold text-gray-400">N/A</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* 下箭頭 */}
-              {showScrollButtons.down && (
-                <div 
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-card dark:via-card/90 flex items-center justify-center py-2 px-4 rounded-t-lg cursor-pointer select-none"
-                  onMouseEnter={() => !isMobile && startScrolling('down')}
-                  onMouseLeave={() => !isMobile && stopScrolling()}
-                  onClick={() => startScrolling('down')}
-                  onTouchStart={(e) => {
-                    if (isMobile) {
-                      e.preventDefault();
-                      startScrolling('down');
-                    }
-                  }}
-                >
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
             </div>
           </div>
         </div>

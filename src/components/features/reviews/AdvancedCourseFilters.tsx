@@ -229,8 +229,8 @@ export function AdvancedCourseFilters({
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
     return language === 'zh-TW' || language === 'zh-CN' 
-      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24'
-      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24';
+      ? 'text-sm font-bold text-muted-foreground flex items-center gap-2 shrink-0 w-24 lg:w-auto'
+      : 'text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24 lg:w-auto';
   };
 
   // Calculate counts for each filter option
@@ -274,51 +274,27 @@ export function AdvancedCourseFilters({
     return counts;
   };
 
-  // Helper function to create grouped subject options
-  const getGroupedSubjectOptions = (): SelectOption[] => {
-    const groupedOptions: SelectOption[] = [];
-    const subjectsByFaculty: { [key: string]: typeof availableSubjects } = {};
-    
-    // Group subjects by faculty
-    availableSubjects.forEach(subject => {
-      const faculty = getFacultyByDepartment(subject);
-      if (!subjectsByFaculty[faculty]) {
-        subjectsByFaculty[faculty] = [];
-      }
-      subjectsByFaculty[faculty].push(subject);
+  // Helper function to create subject options sorted alphabetically by subject code
+  const getSubjectOptions = (): SelectOption[] => {
+    // Create array of subjects with their codes for sorting
+    const subjectsWithCodes = availableSubjects.map(subject => {
+      const subjectCode = getSubjectCodeFromDepartment(subject);
+      return {
+        subject,
+        subjectCode,
+        count: getSubjectCounts()[subject] || 0
+      };
     });
-    
-    // Sort faculties for consistent order
-    const sortedFaculties = Object.keys(subjectsByFaculty).sort((a, b) => {
-      const order = ['faculty.arts', 'faculty.business', 'faculty.socialSciences', 'faculty.core', 'faculty.other'];
-      return order.indexOf(a) - order.indexOf(b);
-    });
-    
-    // Add grouped options
-    sortedFaculties.forEach(faculty => {
-      // Add faculty header (disabled option for grouping)
-      groupedOptions.push({
-        value: `__faculty_${faculty}`,
-        label: `📚 ${t(faculty)}`,
-        count: subjectsByFaculty[faculty].reduce((total, subject) => 
-          total + (getSubjectCounts()[subject] || 0), 0
-        )
-      });
-      
-      // Add subjects under this faculty
-      subjectsByFaculty[faculty]
-        .sort((a, b) => a.localeCompare(b))
-        .forEach(subject => {
-          const subjectCode = getSubjectCodeFromDepartment(subject);
-          groupedOptions.push({
-            value: subject,
-            label: `  ${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
-            count: getSubjectCounts()[subject] || 0
-          });
-        });
-    });
-    
-    return groupedOptions;
+
+    // Sort alphabetically by subject code (A to Z)
+    subjectsWithCodes.sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
+
+    // Return simple flat list of options
+    return subjectsWithCodes.map(({ subject, subjectCode, count }) => ({
+      value: subject,
+      label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
+      count
+    }));
   };
 
   // Helper function to get sort field display name
@@ -351,7 +327,7 @@ export function AdvancedCourseFilters({
             placeholder={t('search.placeholder')}
             value={filters.searchTerm || ''}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
-            className="pr-10 h-10 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
+            className="pr-10 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
           />
           {filters.searchTerm && (
             <button
@@ -365,25 +341,25 @@ export function AdvancedCourseFilters({
       </div>
 
       {/* 篩選器行 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-2">
         {/* 學科領域 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <BookOpen className="h-4 w-4" />
             {t('filter.subjectArea')}
           </label>
           <MultiSelectDropdown
-            options={getGroupedSubjectOptions()}
+            options={getSubjectOptions()}
             selectedValues={filters.subjectArea}
             onSelectionChange={(values) => updateFilters({ subjectArea: values })}
             placeholder={t('filter.allSubjects')}
             totalCount={totalCourses}
-            className="flex-1 h-10 text-sm"
+            className="flex-1 h-8 text-sm"
           />
         </div>
 
         {/* 授課語言 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <Globe className="h-4 w-4" />
             {t('filter.teachingLanguage')}
@@ -405,12 +381,12 @@ export function AdvancedCourseFilters({
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}
             totalCount={totalCourses}
-            className="flex-1 h-10 text-sm"
+            className="flex-1 h-8 text-sm"
           />
         </div>
 
         {/* 開設學期 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:flex-1">
           <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
@@ -427,7 +403,7 @@ export function AdvancedCourseFilters({
             onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
             placeholder={t('filter.allTerms')}
             totalCount={totalCourses}
-            className="flex-1 h-10 text-sm"
+            className="flex-1 h-8 text-sm"
           />
         </div>
       </div>
@@ -517,23 +493,47 @@ export function AdvancedCourseFilters({
       )}
 
       {/* 分頁行 */}
-      <div className="flex items-center gap-2">
-        <label className={getLabelClassName()}>
-          <Grid3X3 className="h-4 w-4" />
-          {t('pagination.coursesPerPage')}
-        </label>
-        <div className="flex gap-2">
-          {[6, 12, 24].map((count) => (
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <label className={getLabelClassName()}>
+            <Grid3X3 className="h-4 w-4" />
+            {t('pagination.coursesPerPage')}
+          </label>
+          <div className="flex gap-2">
+            {[6, 12, 24].map((count) => (
+              <Button
+                key={count}
+                variant={filters.itemsPerPage === count ? "default" : "outline"}
+                size="sm"
+                onClick={() => updateFilters({ itemsPerPage: count, currentPage: 1 })}
+                className="h-8 px-3 text-xs border-0"
+              >
+                {count}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {filteredCourses !== undefined && (
+            <span className="text-sm text-muted-foreground">
+              {t('pagination.foundCourses', { count: filteredCourses })}
+            </span>
+          )}
+          {hasActiveFilters() && (
             <Button
-              key={count}
-              variant={filters.itemsPerPage === count ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => updateFilters({ itemsPerPage: count, currentPage: 1 })}
-              className="h-8 px-3 text-xs"
+              onClick={onClearAll}
+              className="h-8 px-3 text-xs bg-white dark:bg-transparent hover:bg-red-500 dark:hover:bg-red-500 border-black dark:border-white hover:border-red-500 dark:hover:border-red-500 text-black dark:text-white hover:text-white transition-all duration-200 whitespace-nowrap flex items-center gap-2"
             >
-              {count}
+              <X className="h-3 w-3" />
+              <span>{t('filter.clearAll')}</span>
+              <span className="bg-red-500 hover:bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium transition-colors duration-200">
+                {getActiveFiltersCount()}
+              </span>
             </Button>
-          ))}
+          )}
         </div>
       </div>
     </div>

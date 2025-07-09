@@ -415,6 +415,8 @@ export default {
   'pagination.previous': '上一頁',
   'pagination.next': '下一頁',
   'pagination.last': '末頁',
+      'pagination.foundCourses': '找到 {count} 個課程',
+    'pagination.foundInstructors': '找到 {count} 位講師',
   // Review filters
   'filter.reviewLanguage': '評論語言',
   'filter.reviewTerm': '學期',
@@ -582,7 +584,7 @@ export default {
   // 4. SEARCH & FILTERING - 搜索與過濾
   // =============================================================================
   'search.search': '搜尋',
-  'search.placeholder': '搜尋課程代碼、課程名稱或講師姓名（支援多語言）',
+  'search.placeholder': '課程代碼/名稱、教師',
   'search.courses': '搜尋課程',
   'search.coursesPlaceholder': '搜尋課程代碼、課程名稱...',
   'search.instructors': '搜尋教師',
@@ -1402,10 +1404,10 @@ export default {
   'myReviews.viewCourse': '查看課程 {course}',
   // Featured content
   'featured.title': '熱門內容',
-  'featured.courses': '熱門課程',
-  'featured.instructors': '熱門教師',
-  'featured.topCourses': '最佳課程',
-  'featured.topInstructors': '最佳講師',
+      'featured.courses': '熱門課程',
+    'featured.instructors': '熱門教師',
+    'featured.topCourses': '最佳課程',
+    'featured.topInstructors': '最佳講師',
   'featured.popularCourses': '熱門課程',
   'featured.popularCoursesDesc': '根據評論數量排序的最受歡迎課程',
   'featured.popularInstructors': '熱門講師',
@@ -1560,7 +1562,7 @@ export default {
   'grading.feature3': '豪華視覺處理',
   'grading.feature4': '代表頂級教育質量',
   // Additional search and pagination keys
-  'search.instructorPlaceholder': '搜尋講師姓名、學系（支援多語言）',
+  'search.instructorPlaceholder': '教師、學系',
   'sort.instructorName': '講師姓名',
   'sort.department': '學系',
   'sort.teaching': '教學質素',

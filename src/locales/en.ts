@@ -415,6 +415,8 @@ export default {
   'pagination.previous': 'Previous',
   'pagination.next': 'Next',
   'pagination.last': 'Last',
+      'pagination.foundCourses': 'Found {count} courses',
+    'pagination.foundInstructors': 'Found {count} instructors',
   // Review filters
   'filter.reviewLanguage': 'Review Language',
   'filter.reviewTerm': 'Term',
@@ -644,7 +646,7 @@ export default {
   // =============================================================================
   // 4. SEARCH & FILTERING - 搜索與過濾
   // =============================================================================
-  'search.placeholder': 'Search by course codes, course names, instructors (supports multiple languages)',
+  'search.placeholder': 'Course code/name, Instructor',
   'search.courses': 'Search Courses',
   'search.coursesPlaceholder': 'Search course codes, course names...',
   'search.instructors': 'Search Instructors',
@@ -1608,7 +1610,7 @@ export default {
   'grading.feature3': 'Premium visual treatment',
   'grading.feature4': 'Represents top-tier educational quality',
   // Additional search and pagination keys
-  'search.instructorPlaceholder': 'Search instructor names, departments (supports multiple languages)',
+  'search.instructorPlaceholder': 'Instructor, Department',
   'sort.instructorName': 'Instructor Name',
   'sort.department': 'Department',
   'sort.teaching': 'Teaching Quality',
