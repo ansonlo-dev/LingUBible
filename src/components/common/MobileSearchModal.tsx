@@ -567,9 +567,9 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   }}
                 >
                   {loading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                      <p className="text-muted-foreground">{t('common.loading')}</p>
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                      <p className="text-muted-foreground text-center">{t('common.loading')}</p>
                     </div>
                   ) : (
                     <div className="p-4 pb-8 space-y-6">
@@ -1150,9 +1150,9 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   }}
               >
                 {loading ? (
-                  <div className="h-full flex flex-col items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                    <p className="mt-2 text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+                  <div className="h-full flex flex-col items-center justify-center min-h-0">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 text-center">{t('common.loading')}</p>
                   </div>
                 ) : (
                   <div 
