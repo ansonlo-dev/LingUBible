@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { X, BookOpen as BookOpenIcon, GraduationCap, MessageSquare, Loader2, TrendingUp } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
@@ -34,6 +34,51 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const { t, language: currentLanguage } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  
+  // Track viewport dimensions for responsive positioning
+  const [viewportDimensions, setViewportDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+    isLandscape: typeof window !== 'undefined' ? window.innerWidth > window.innerHeight : false,
+    isTabletSize: typeof window !== 'undefined' ? window.innerWidth >= 640 && window.innerWidth < 1024 : false
+  });
+  
+  // Use a stable value for desktop mode detection based on viewport state
+  const isDesktopMode = !isMobile && viewportDimensions.width >= 1024;
+  
+  // Detect iPad Mini landscape specifically
+  const isIPadMiniLandscape = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const width = viewportDimensions.width;
+    const height = viewportDimensions.height;
+    // iPad Mini landscape is 1024x768 (or close to it)
+    // Allow some flexibility for browser dev tools UI
+    const isIPadMini = width >= 1020 && width <= 1030 && height >= 690 && height <= 820 && width > height;
+    
+    // Debug logging
+    if (isOpen) {
+      console.log('Search Modal - Viewport:', { width, height, isIPadMini, isDesktopMode, isSidebarCollapsed });
+    }
+    
+    return isIPadMini;
+  }, [viewportDimensions.width, viewportDimensions.height, isOpen, isDesktopMode, isSidebarCollapsed]); // Include all relevant deps
+  
+  // Memoize sidebar positions to prevent recalculation
+  const sidebarPositions = useMemo(() => ({
+    collapsed: 4,
+    expanded: 11
+  }), []);
+  
+  const modalLeftPosition = useMemo(() => {
+    if (!isDesktopMode) return 0;
+    return isSidebarCollapsed ? sidebarPositions.collapsed : sidebarPositions.expanded;
+  }, [isDesktopMode, isSidebarCollapsed, sidebarPositions]);
+  
+  // Determine if we should use right-aligned positioning
+  const useRightAlign = useMemo(() => {
+    return isIPadMiniLandscape && !isSidebarCollapsed;
+  }, [isIPadMiniLandscape, isSidebarCollapsed]);
+  
   const { addToHistory } = useSearchHistory();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -64,38 +109,56 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     }
   };
   
-  // Track viewport dimensions for responsive positioning
-  const [viewportDimensions, setViewportDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768,
-    isLandscape: typeof window !== 'undefined' ? window.innerWidth > window.innerHeight : false,
-    isTabletSize: typeof window !== 'undefined' ? window.innerWidth >= 640 && window.innerWidth < 1024 : false
-  });
-
   // Track viewport changes for responsive positioning
   useEffect(() => {
     const updateViewportDimensions = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      setViewportDimensions({
-        width,
-        height,
-        isLandscape: width > height,
-        isTabletSize: width >= 640 && width < 1024
+      setViewportDimensions(prev => {
+        // Only update if dimensions actually changed
+        if (prev.width === width && prev.height === height) {
+          return prev;
+        }
+        return {
+          width,
+          height,
+          isLandscape: width > height,
+          isTabletSize: width >= 640 && width < 1024
+        };
       });
     };
 
+    // Update immediately
+    updateViewportDimensions();
+
+    // Listen for resize events
     window.addEventListener('resize', updateViewportDimensions);
+    
+    // Also listen for orientation changes
     window.addEventListener('orientationchange', () => {
       // Delay to ensure the viewport has updated after orientation change
       setTimeout(updateViewportDimensions, 100);
     });
 
+    // Additional check for dev tools changes
+    const resizeObserver = new ResizeObserver(() => {
+      updateViewportDimensions();
+    });
+    
+    if (document.body) {
+      resizeObserver.observe(document.body);
+    }
+
     return () => {
       window.removeEventListener('resize', updateViewportDimensions);
       window.removeEventListener('orientationchange', updateViewportDimensions);
+      resizeObserver.disconnect();
     };
-  }, []);
+  }, [isOpen]); // Re-run when modal opens to ensure fresh dimensions
+
+
+
+
 
 
 
@@ -355,21 +418,50 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-      onClick={handleClose}
-    >
-      {!isMobile ? (
+    <div className="fixed inset-0 z-50" style={{ pointerEvents: 'auto' }}>
+      {/* Backdrop */}
+      <div 
+        className="fixed bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out"
+        style={{
+          top: 0,
+          bottom: 0,
+          ...(useRightAlign ? {
+            left: 0,
+            right: 0
+          } : {
+            left: `${modalLeftPosition}rem`,
+            right: 0
+          }),
+          transform: 'translateZ(0)' // Force GPU acceleration
+        }}
+        onClick={handleClose}
+      />
+      
+      {/* Search Modal Content */}
+      {isDesktopMode ? (
         <div 
-          className="fixed top-16 mx-auto max-w-4xl px-4"
+          className="fixed top-16"
           style={{
-            left: isSidebarCollapsed ? '3rem' : '10rem', // Adjust left position based on sidebar state
-            right: '0',
-            width: isSidebarCollapsed ? 'calc(100vw - 3rem)' : 'calc(100vw - 10rem)'
+            ...(useRightAlign ? {
+              left: `${modalLeftPosition}rem`,
+              right: 'auto',
+              width: `calc(100% - ${modalLeftPosition}rem - 2rem)`,
+              maxWidth: '50rem'
+            } : {
+              left: `${modalLeftPosition}rem`,
+              right: '1rem'
+            }),
+            zIndex: 51, // Ensure it's above the backdrop
+            pointerEvents: 'auto',
+            transform: 'translateZ(0)', // Force GPU acceleration for smooth transition
+            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Explicit transition on left and width properties
           }}
         >
           <div 
-            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[70vh] flex flex-col overflow-hidden desktop-search-modal"
+            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[70vh] flex flex-col overflow-hidden desktop-search-modal ${useRightAlign ? 'ml-auto' : 'mx-auto'}`}
+            style={{
+              maxWidth: useRightAlign ? '100%' : '64rem' // max-w-4xl equivalent
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
@@ -925,26 +1017,14 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         </div>
       ) : (
         <div 
-          className="fixed top-16 mx-auto max-w-4xl"
+          className="fixed top-16 mx-auto"
           style={{
-            // On mobile landscape mode (especially tablets), we might need to account for sidebar
-            left: (() => {
-              // If it's tablet size in landscape, treat like desktop
-              if (viewportDimensions.isLandscape && viewportDimensions.isTabletSize) {
-                return isSidebarCollapsed ? '3rem' : '10rem';
-              }
-              // Otherwise, use normal mobile spacing
-              return '1rem';
-            })(),
+            // Mobile: sidebar is hidden when collapsed, so we don't need to account for it
+            left: '1rem',
             right: '1rem',
-            width: (() => {
-              // If it's tablet size in landscape, treat like desktop
-              if (viewportDimensions.isLandscape && viewportDimensions.isTabletSize) {
-                return isSidebarCollapsed ? 'calc(100vw - 4rem)' : 'calc(100vw - 11rem)';
-              }
-              // Otherwise, use normal mobile spacing
-              return 'calc(100vw - 2rem)';
-            })()
+            width: 'calc(100vw - 2rem)',
+            maxWidth: '48rem', // Slightly smaller max-width for mobile
+            zIndex: 51 // Ensure it's above the backdrop
           }}
         >
           <div 
@@ -1498,7 +1578,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         </div>
