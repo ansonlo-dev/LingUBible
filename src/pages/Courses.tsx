@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useSearchParams } from 'react-router-dom';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { PopularItemCard } from '@/components/features/reviews/PopularItemCard';
 import { CourseCardSkeleton } from '@/components/features/reviews/CourseCardSkeleton';
@@ -15,34 +16,51 @@ import { translateDepartmentName } from '@/utils/textUtils';
 
 /**
  * Maps database language codes to user-friendly language names
+ * Note: Language filtering is deprecated as course_language field has been removed
  */
-const mapLanguageCode = (courseLanguage: string): string => {
-  if (courseLanguage === 'E') {
-    return 'English';
-  } else if (courseLanguage === 'C') {
-    return 'Mandarin Chinese';
-  } else if (courseLanguage === 'English') {
-    return 'English';
-  } else if (courseLanguage === 'Mandarin Chinese') {
-    return 'Mandarin Chinese';
-  }
-  // Default to English for any unrecognized codes
+const mapLanguageCode = (courseLanguage?: string): string => {
+  // Always return English as default since language field is no longer available
   return 'English';
 };
 
 const Courses = () => {
   const { t, language } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  // 篩選器狀態
-  const [filters, setFilters] = useState<CourseFilters>({
-    searchTerm: '',
-    subjectArea: [],
-    teachingLanguage: [],
-    sortBy: 'code',
-    sortOrder: 'asc',
-    offeredTerm: [],
-    itemsPerPage: 6,
-    currentPage: 1,
+  // 從 URL 參數初始化篩選器狀態
+  const [filters, setFilters] = useState<CourseFilters>(() => {
+    const initialFilters: CourseFilters = {
+      searchTerm: '',
+      subjectArea: [],
+      teachingLanguage: [],
+      sortBy: 'code',
+      sortOrder: 'asc',
+      offeredTerm: [],
+      itemsPerPage: 6,
+      currentPage: 1,
+    };
+
+    // 從 URL 參數讀取篩選器設置
+    const searchTerm = searchParams.get('search') || '';
+    const subjectArea = searchParams.getAll('subjectArea');
+    const teachingLanguage = searchParams.getAll('teachingLanguage');
+    const sortBy = searchParams.get('sortBy') || 'code';
+    const sortOrder = searchParams.get('sortOrder') || 'asc';
+    const offeredTerm = searchParams.getAll('offeredTerm');
+    const itemsPerPage = parseInt(searchParams.get('itemsPerPage') || '6', 10);
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+    return {
+      ...initialFilters,
+      searchTerm,
+      subjectArea,
+      teachingLanguage,
+      sortBy: sortBy as CourseFilters['sortBy'],
+      sortOrder: sortOrder as CourseFilters['sortOrder'],
+      offeredTerm,
+      itemsPerPage,
+      currentPage,
+    };
   });
 
   // 學期篩選結果狀態
@@ -328,11 +346,18 @@ const Courses = () => {
       );
     }
 
-    // 教學語言篩選
+    // 教學語言篩選 - 使用教學記錄中的語言代碼
     if (filters.teachingLanguage.length > 0) {
       filtered = filtered.filter(course => {
-        const courseLanguage = mapLanguageCode(course.course_language);
-        return filters.teachingLanguage.includes(courseLanguage);
+        // 檢查課程是否有任何教學語言與篩選條件匹配
+        if (!course.teachingLanguages || course.teachingLanguages.length === 0) {
+          return false; // 沒有教學語言記錄的課程不匹配任何篩選
+        }
+        
+        // 檢查課程的教學語言是否包含任何篩選的語言代碼
+        return course.teachingLanguages.some(langCode => 
+          filters.teachingLanguage.includes(langCode)
+        );
       });
     }
 
@@ -430,6 +455,38 @@ const Courses = () => {
       newFilters.currentPage = 1;
     }
     setFilters(newFilters);
+    
+    // 同時更新 URL 參數
+    const newSearchParams = new URLSearchParams();
+    if (newFilters.searchTerm) newSearchParams.set('search', newFilters.searchTerm);
+    if (newFilters.subjectArea.length > 0) {
+      newFilters.subjectArea.forEach(area => newSearchParams.append('subjectArea', area));
+    }
+    if (newFilters.teachingLanguage.length > 0) {
+      newFilters.teachingLanguage.forEach(lang => newSearchParams.append('teachingLanguage', lang));
+    }
+    if (newFilters.sortBy !== 'code') newSearchParams.set('sortBy', newFilters.sortBy);
+    if (newFilters.sortOrder !== 'asc') newSearchParams.set('sortOrder', newFilters.sortOrder);
+    if (newFilters.offeredTerm.length > 0) {
+      newFilters.offeredTerm.forEach(term => newSearchParams.append('offeredTerm', term));
+    }
+    if (newFilters.itemsPerPage !== 6) newSearchParams.set('itemsPerPage', newFilters.itemsPerPage.toString());
+    if (newFilters.currentPage !== 1) newSearchParams.set('page', newFilters.currentPage.toString());
+    
+    setSearchParams(newSearchParams);
+  };
+
+  const handleTeachingLanguageClick = (languages: string[]) => {
+    // 合併現有的教學語言篩選與新點擊的語言
+    const currentLanguages = new Set(filters.teachingLanguage);
+    languages.forEach(lang => currentLanguages.add(lang));
+    
+    // 更新篩選器
+    setFilters(prev => ({
+      ...prev,
+      teachingLanguage: Array.from(currentLanguages),
+      currentPage: 1 // 重置到第一頁
+    }));
   };
 
   const handlePageChange = (page: number) => {
@@ -563,24 +620,26 @@ const Courses = () => {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
                 {paginationData.currentPageCourses.map((course) => (
-                  <PopularItemCard
-                    key={course.$id}
-                    type="course"
-                    title={course.course_title}
-                    titleTc={course.course_title_tc}
-                    titleSc={course.course_title_sc}
-                    code={course.course_code}
-                    department={translateDepartmentName(course.department, t)}
-                    language={course.course_language}
-                    rating={course.averageRating}
-                    reviewCount={course.reviewCount}
-                    isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
-                    averageWorkload={course.averageWorkload}
-                    averageDifficulty={course.averageDifficulty}
-                    averageUsefulness={course.averageUsefulness}
-                    averageGPA={course.averageGPA}
-                    isLoading={statsLoading}
-                  />
+                                  <PopularItemCard
+                  key={course.$id}
+                  type="course"
+                  title={course.course_title}
+                  titleTc={course.course_title_tc}
+                  titleSc={course.course_title_sc}
+                  code={course.course_code}
+                  department={translateDepartmentName(course.department, t)}
+                  teachingLanguages={course.teachingLanguages}
+                  currentTermTeachingLanguage={course.currentTermTeachingLanguage}
+                  rating={course.averageRating}
+                  reviewCount={course.reviewCount}
+                  isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
+                  averageWorkload={course.averageWorkload}
+                  averageDifficulty={course.averageDifficulty}
+                  averageUsefulness={course.averageUsefulness}
+                  averageGPA={course.averageGPA}
+                  isLoading={statsLoading}
+                  onTeachingLanguageClick={handleTeachingLanguageClick}
+                />
                 ))}
               </div>
 

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { StarRating } from '@/components/ui/star-rating';
-import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { useTheme } from '@/hooks/theme/useTheme';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
@@ -17,7 +17,8 @@ interface PopularCourseCardProps {
   titleSc?: string;
   code: string;
   department: string;
-  language: string;
+  teachingLanguages?: string[]; // Array of teaching language codes in chronological order
+  currentTermTeachingLanguage?: string | null; // Current term's teaching language for bolding
   rating: number;
   reviewCount: number;
   isOfferedInCurrentTerm?: boolean;
@@ -30,6 +31,8 @@ interface PopularCourseCardProps {
   // 新增：收藏狀態相關props
   isFavorited?: boolean;
   onFavoriteToggle?: (newState: boolean) => void;
+  // 新增：教學語言點擊回調
+  onTeachingLanguageClick?: (languages: string[]) => void;
 }
 
 interface PopularInstructorCardProps {
@@ -44,12 +47,18 @@ interface PopularInstructorCardProps {
   averageGPA?: number;
   isTeachingInCurrentTerm?: boolean;
   isLoading?: boolean; // Add loading state for instructor cards
+  teachingLanguages?: string[]; // Array of teaching language codes in chronological order
+  currentTermTeachingLanguage?: string | null; // Current term's teaching language for bolding
   // 新增：收藏狀態相關props
   isFavorited?: boolean;
   onFavoriteToggle?: (newState: boolean) => void;
+  // 新增：教學語言點擊回調
+  onTeachingLanguageClick?: (languages: string[]) => void;
 }
 
 type PopularItemCardProps = PopularCourseCardProps | PopularInstructorCardProps;
+
+
 
 export const PopularItemCard = (props: PopularItemCardProps) => {
   const navigate = useNavigate();
@@ -126,6 +135,16 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       // For instructor cards, navigate to instructors catalog with department filter
       searchParams.set('department', rawDepartmentName);
       navigate(`/instructors?${searchParams.toString()}`);
+    }
+  };
+
+  const handleTeachingLanguageClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent link navigation
+    
+    // Call the callback with all teaching languages
+    if (props.onTeachingLanguageClick && props.teachingLanguages) {
+      props.onTeachingLanguageClick(props.teachingLanguages);
     }
   };
 
@@ -412,7 +431,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {titleInfo?.secondary || ''}
                   </p>
-                  {/* Faculty and Department Badges */}
+                  {/* Faculty, Department and Teaching Language Badges */}
                   <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground mt-2">
                     <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                       {/* Faculty Badge */}
@@ -433,6 +452,26 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                           {translateDepartmentName(props.department, t)}
                         </span>
                       </Badge>
+                      {/* Teaching Language Badge */}
+                      {props.teachingLanguages && props.teachingLanguages.length > 0 && (
+                        <Badge 
+                          variant="outline"
+                          className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 w-fit cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
+                          title={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
+                          onClick={handleTeachingLanguageClick}
+                        >
+                          {props.teachingLanguages.map((code, index) => (
+                            <span key={code}>
+                              {code === props.currentTermTeachingLanguage ? (
+                                <strong>{code}</strong>
+                              ) : (
+                                code
+                              )}
+                              {index < props.teachingLanguages!.length - 1 && '/'}
+                            </span>
+                          ))}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -600,6 +639,26 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                         {translateDepartmentName(props.department, t)}
                       </span>
                     </Badge>
+                    {/* Teaching Language Badge */}
+                    {props.teachingLanguages && props.teachingLanguages.length > 0 && (
+                      <Badge 
+                        variant="outline"
+                        className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 w-fit cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
+                        title={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
+                        onClick={handleTeachingLanguageClick}
+                      >
+                        {props.teachingLanguages.map((code, index) => (
+                          <span key={code}>
+                            {code === props.currentTermTeachingLanguage ? (
+                              <strong>{code}</strong>
+                            ) : (
+                              code
+                            )}
+                            {index < props.teachingLanguages!.length - 1 && '/'}
+                          </span>
+                        ))}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>

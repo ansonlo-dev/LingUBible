@@ -205,6 +205,13 @@ const Index = () => {
     }
   };
 
+  const handleTeachingLanguageClick = (languages: string[]) => {
+    // 導航到課程頁面並應用教學語言篩選器
+    const searchParams = new URLSearchParams();
+    languages.forEach(lang => searchParams.append('teachingLanguage', lang));
+    navigate(`/courses?${searchParams.toString()}`);
+  };
+
   return (
     <>
       {/* 全頁面浮動效果 - 固定定位覆蓋整個視窗，放在最外層 */}
@@ -397,7 +404,8 @@ const Index = () => {
                       titleSc={course.course_title_sc}
                       code={course.course_code}
                       department={course.department}
-                      language={course.course_language}
+                      teachingLanguages={course.teachingLanguages || []}
+                      currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                       rating={course.averageRating}
                       reviewCount={course.reviewCount}
                       isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
@@ -408,6 +416,7 @@ const Index = () => {
                       isLoading={false}
                       isFavorited={user ? isFavorited('course', course.course_code) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
+                      onTeachingLanguageClick={handleTeachingLanguageClick}
                     />
                   ))}
                 </div>
@@ -489,7 +498,8 @@ const Index = () => {
                       titleSc={course.course_title_sc}
                       code={course.course_code}
                       department={course.department}
-                      language={course.course_language}
+                      teachingLanguages={course.teachingLanguages || []}
+                      currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                       rating={course.averageRating}
                       reviewCount={course.reviewCount}
                       isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
@@ -500,6 +510,7 @@ const Index = () => {
                       isLoading={false}
                       isFavorited={user ? isFavorited('course', course.course_code) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
+                      onTeachingLanguageClick={handleTeachingLanguageClick}
                     />
                   ))}
                 </div>

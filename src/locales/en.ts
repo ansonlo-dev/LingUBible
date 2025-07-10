@@ -422,6 +422,7 @@ export default {
   'filter.reviewTerm': 'Term',
   'filter.reviewInstructor': 'Instructor',
   'filter.reviewSessionType': 'Session Type',
+  'filter.reviewTeachingLanguage': 'Teaching Language',
   'filter.reviewCourse': 'Course',
   'filter.allLanguages': 'All Languages',
   'filter.allTerms': 'All Terms',
@@ -713,14 +714,15 @@ export default {
   // Teaching Languages
   'language.english': 'English',
   'language.mandarinChinese': 'Mandarin Chinese',
-  'filter.offeredTerms': 'Offered Terms',
+  'filter.offeredTerms': 'Offered Term',
   'filter.applied': 'Filters applied',
   'filter.clearAll': 'Clear All',
   'filter.clear': 'Clear filters',
   'filter.checkingTerm': 'Checking courses for selected term...',
   'filter.clickToFilterDepartment': 'Click to filter instructors by this department',
-  'filter.clickToFilterByTerm': 'Click to filter by {term}',
-  'filter.clickToFilterByLanguage': 'Click to filter by {language}',
+  'filter.clickToFilterByTerm': 'Click to filter by term: {term}',
+  'filter.clickToFilterByLanguage': 'Click to filter by language: {language}',
+  'filter.clickToFilterByTeachingLanguage': 'Click to filter by teaching language: {language}',
   'filter.courseRequirements': 'Course Requirements Filter',
   'filter.courseRequirementsInstructions': 'Filter reviews by course requirements. Click All/✓/✗ for each requirement.',
   'filter.active': 'active',
@@ -1783,5 +1785,15 @@ export default {
   'review.clickToViewReview': 'Click to view this review in course details',
   'featured.mostReviews': 'most reviews',
   'featured.highestAvgGPA': 'highest Avg. GPA',
+
+  // Teaching language codes
+  'teachingLanguage.english': 'English',
+  'teachingLanguage.cantonese': 'Cantonese',
+  'teachingLanguage.putonghua': 'Putonghua',
+  'teachingLanguage.englishCantonese': 'English/Cantonese',
+  'teachingLanguage.englishPutonghua': 'English/Putonghua',
+  'teachingLanguage.cantonesePutonghua': 'Cantonese/Putonghua',
+  'teachingLanguage.englishCantonesePutonghua': 'English/Cantonese/Putonghua',
+  'teachingLanguage.others': 'Others',
 
 };

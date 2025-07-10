@@ -19,7 +19,7 @@ interface FavoriteCourse {
   course_title_tc?: string;
   course_title_sc?: string;
   department: string;
-  language: string;
+  teachingLanguages: string[];
   average_rating: number;
   review_count: number;
   is_offered_in_current_term: boolean;
@@ -91,7 +91,7 @@ const Favorites = () => {
             course_title_tc: courseData.course_title_tc,
             course_title_sc: courseData.course_title_sc,
             department: courseData.department,
-            language: courseData.course_language,
+            teachingLanguages: await CourseService.getCourseTeachingLanguages(courseData.course_code),
             average_rating: stats.averageRating || 0,
             review_count: stats.reviewCount || 0,
             is_offered_in_current_term: await CourseService.isCourseOfferedInTerm(courseData.course_code, getCurrentTermCode()),
@@ -188,6 +188,13 @@ const Favorites = () => {
     }
   };
 
+  const handleTeachingLanguageClick = (languages: string[]) => {
+    // 導航到課程頁面並應用教學語言篩選器
+    const searchParams = new URLSearchParams();
+    languages.forEach(lang => searchParams.append('teachingLanguage', lang));
+    navigate(`/courses?${searchParams.toString()}`);
+  };
+
 
 
   return (
@@ -243,24 +250,26 @@ const Favorites = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {favoriteCourses.map((course) => (
-                  <PopularItemCard
-                    key={course.course_code}
-                    type="course"
-                    code={course.course_code}
-                    title={course.course_title}
-                    titleTc={course.course_title_tc}
-                    titleSc={course.course_title_sc}
-                    department={course.department}
-                    language={course.language}
-                    rating={course.average_rating}
-                    reviewCount={course.review_count}
-                    isOfferedInCurrentTerm={course.is_offered_in_current_term}
-                    averageWorkload={course.average_workload}
-                    averageDifficulty={course.average_difficulty}
-                    averageUsefulness={course.average_usefulness}
-                    isFavorited={true}
-                    onFavoriteToggle={() => handleRemoveFavorite('course', course.course_code)}
-                  />
+                                  <PopularItemCard
+                  key={course.course_code}
+                  type="course"
+                  code={course.course_code}
+                  title={course.course_title}
+                  titleTc={course.course_title_tc}
+                  titleSc={course.course_title_sc}
+                  department={course.department}
+                  teachingLanguages={course.teachingLanguages}
+                  currentTermTeachingLanguage={null}
+                  rating={course.average_rating}
+                  reviewCount={course.review_count}
+                  isOfferedInCurrentTerm={course.is_offered_in_current_term}
+                  averageWorkload={course.average_workload}
+                  averageDifficulty={course.average_difficulty}
+                  averageUsefulness={course.average_usefulness}
+                  isFavorited={true}
+                  onFavoriteToggle={() => handleRemoveFavorite('course', course.course_code)}
+                  onTeachingLanguageClick={handleTeachingLanguageClick}
+                />
                 ))}
               </div>
             )}

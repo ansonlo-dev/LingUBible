@@ -42,6 +42,7 @@ const InstructorsList = () => {
     searchTerm: '',
     department: [],
     teachingTerm: [],
+    teachingLanguage: [],
     sortBy: 'name',
     sortOrder: 'asc',
     currentPage: 1,
@@ -79,6 +80,12 @@ const InstructorsList = () => {
     const teachingTerm = searchParams.get('teachingTerm');
     if (teachingTerm) {
       urlFilters.teachingTerm = teachingTerm.split(',').filter(t => t.trim());
+    }
+    
+    // 讀取教學語言篩選
+    const teachingLanguage = searchParams.get('teachingLanguage');
+    if (teachingLanguage) {
+      urlFilters.teachingLanguage = teachingLanguage.split(',').filter(l => l.trim());
     }
     
     // 讀取排序方式
@@ -309,6 +316,21 @@ const InstructorsList = () => {
       });
     }
 
+    // 教學語言篩選
+    if (filters.teachingLanguage.length > 0) {
+      filtered = filtered.filter(instructor => {
+        // 檢查講師是否有教學語言數據
+        if (!instructor.teachingLanguages || instructor.teachingLanguages.length === 0) {
+          return false;
+        }
+        
+        // 檢查選定的語言是否與講師的教學語言匹配
+        return filters.teachingLanguage.some(selectedLang => 
+          instructor.teachingLanguages.includes(selectedLang)
+        );
+      });
+    }
+
     // 排序
     const sortedInstructors = [...filtered].sort((a, b) => {
       let comparison = 0;
@@ -373,6 +395,7 @@ const InstructorsList = () => {
     if (newFilters.searchTerm !== filters.searchTerm ||
         JSON.stringify(newFilters.department) !== JSON.stringify(filters.department) ||
         JSON.stringify(newFilters.teachingTerm) !== JSON.stringify(filters.teachingTerm) ||
+        JSON.stringify(newFilters.teachingLanguage) !== JSON.stringify(filters.teachingLanguage) ||
         newFilters.sortBy !== filters.sortBy ||
         newFilters.sortOrder !== filters.sortOrder) {
       newFilters.currentPage = 1;
@@ -392,6 +415,9 @@ const InstructorsList = () => {
     }
     if (newFilters.teachingTerm.length > 0) {
       newSearchParams.set('teachingTerm', newFilters.teachingTerm.join(','));
+    }
+    if (newFilters.teachingLanguage.length > 0) {
+      newSearchParams.set('teachingLanguage', newFilters.teachingLanguage.join(','));
     }
     if (newFilters.sortBy !== 'name') {
       newSearchParams.set('sortBy', newFilters.sortBy);
@@ -418,6 +444,7 @@ const InstructorsList = () => {
       searchTerm: '',
       department: [],
       teachingTerm: [],
+      teachingLanguage: [],
       sortBy: 'name',
       sortOrder: 'asc',
       itemsPerPage: 6,
@@ -428,6 +455,12 @@ const InstructorsList = () => {
     
     // 清除 URL 查詢參數
     setSearchParams(new URLSearchParams(), { replace: true });
+  };
+
+  // 處理教學語言標籤點擊
+  const handleTeachingLanguageClick = (languages: string[]) => {
+    const newFilters = { ...filters, teachingLanguage: languages };
+    handleFiltersChange(newFilters);
   };
 
   // 頂部區域組件，與課程頁面保持一致
@@ -572,6 +605,9 @@ const InstructorsList = () => {
                     reviewCount={instructor.reviewCount}
                     averageGPA={instructor.averageGPA}
                     isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm ?? false}
+                    teachingLanguages={instructor.teachingLanguages}
+                    currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
+                    onTeachingLanguageClick={handleTeachingLanguageClick}
                   />
                 ))}
               </InstructorGrid>

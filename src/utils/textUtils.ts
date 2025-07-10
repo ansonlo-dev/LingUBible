@@ -197,86 +197,52 @@ export function getInstructorName(
  * @param isMobile 是否為移動設備，用於選擇短格式部門名稱
  * @returns 翻譯後的部門名稱，如果沒有對應翻譯則返回原始名稱
  */
-export function translateDepartmentName(departmentName: string, t: (key: string) => string, isMobile?: boolean): string {
-  if (!departmentName) return '';
-  
-  // 直接映射到真實學系的對應關係
-  const departmentMapping: { [key: string]: string } = {
-    // 真實學系的直接映射
-    'Chinese': 'chinese',
-    'Cultural Studies': 'culturalStudies',
-    'Digital Arts and Creative Industries': 'digitalArts',
-    'English': 'english',
-    'History': 'history',
-    'Philosophy': 'philosophy',
-    'Translation': 'translation',
-    'Centre for English and Additional Languages': 'englishLanguageCentre',
-    'Chinese Language Education and Assessment Centre': 'chineseLanguageCentre',
-    'Accountancy': 'accountancy',
-    'Finance': 'finance',
-    'Management': 'management',
-    'Marketing and International Business': 'marketing',
-    'Operations and Risk Management': 'operations',
-    'Psychology': 'psychology',
-    'Economics': 'economics',
-    'Government and International Affairs': 'government',
-    'Sociology and Social Policy': 'sociology',
-    'Office of the Core Curriculum': 'coreOffice',
-    'Science Unit': 'scienceUnit',
-    'Wong Bing Lai Music and Performing Arts Unit': 'musicUnit',
-    'LEO Dr David P. Chan Institute of Data Science': 'dataScience',
-    
-    // 舊的不存在學系映射到新的真實學系
-    'Computing & Decision Sciences': 'digitalArts', // 映射到數碼藝術及創意產業系
-    'Business': 'management', // 映射到管理學系
-    'Computer Science': 'digitalArts', // 映射到數碼藝術及創意產業系
-    'Decision Sciences': 'digitalArts', // 映射到數碼藝術及創意產業系
+export const translateDepartmentName = (department: string, t: any): string => {
+  const departmentMap: { [key: string]: string } = {
+    // Faculty of Arts departments
+    'CHI': t('departments.chinese'),
+    'CDS': t('departments.cds'),
+    'ECO': t('departments.economics'),
+    'ENG': t('departments.english'),
+    'HIS': t('departments.history'),
+    'PHI': t('departments.philosophy'),
+    'TRS': t('departments.translation'),
+    'VPA': t('departments.visualArts'),
+    'POL': t('departments.politics'),
+    // Faculty of Liberal Arts and Social Sciences
+    'CUS': t('departments.culturalStudies'),
+    'GLE': t('departments.globalLiberalArts'),
+    'PS': t('departments.socialSciences'),
+    'PSY': t('departments.psychology'),
+    'SOC': t('departments.sociology'),
+    // Faculty of Business departments  
+    'ACC': t('departments.accounting'),
+    'BUS': t('departments.business'),
+    'FIN': t('departments.finance'),
+    'HRM': t('departments.management'),
+    'MKT': t('departments.marketing'),
+    'ISE': t('departments.information'),
+    // Default fallback
+    default: department
   };
   
-  // 檢查是否有直接映射
-  if (departmentMapping[departmentName]) {
-    const keyPrefix = isMobile ? 'departmentMobile' : 'department';
-    const translationKey = `${keyPrefix}.${departmentMapping[departmentName]}`;
-    const translated = t(translationKey);
-    if (translated !== translationKey) {
-      return translated;
-    }
-    
-    // 如果移動版本沒有翻譯，回退到桌面版本
-    if (isMobile) {
-      const fallbackKey = `department.${departmentMapping[departmentName]}`;
-      const fallbackTranslated = t(fallbackKey);
-      if (fallbackTranslated !== fallbackKey) {
-        return fallbackTranslated;
-      }
-    }
-  }
-  
-  // 如果沒有直接映射，嘗試標準化處理
-  const normalizedName = departmentName
-    .toLowerCase()
-    .replace(/\s+/g, '') // 移除空格
-    .replace(/[^a-z]/g, '') // 移除非字母字符
-    // 轉換為駝峰命名法
-    .replace(/^./, match => match.toLowerCase());
-  
-  const keyPrefix = isMobile ? 'departmentMobile' : 'department';
-  const translationKey = `${keyPrefix}.${normalizedName}`;
-  const translated = t(translationKey);
-  
-  // 如果翻譯結果與鍵值相同，說明沒有找到翻譯
-  if (translated === translationKey) {
-    // 如果是移動版本，嘗試回退到桌面版本
-    if (isMobile) {
-      const fallbackKey = `department.${normalizedName}`;
-      const fallbackTranslated = t(fallbackKey);
-      return fallbackTranslated === fallbackKey ? departmentName : fallbackTranslated;
-    }
-    return departmentName;
-  }
-  
-  return translated;
-}
+  return departmentMap[department] || departmentMap.default;
+};
+
+// Teaching language code mappings with translation support
+export const getTeachingLanguageName = (code: string, t: any): string => {
+  const translationKeys: { [key: string]: string } = {
+    'E': 'teachingLanguage.english',
+    'C': 'teachingLanguage.cantonese', 
+    'P': 'teachingLanguage.putonghua',
+    '1': 'teachingLanguage.englishCantonese',
+    '2': 'teachingLanguage.englishPutonghua', 
+    '3': 'teachingLanguage.cantonesePutonghua',
+    '4': 'teachingLanguage.englishCantonesePutonghua',
+    '5': 'teachingLanguage.others'
+  };
+  return translationKeys[code] ? t(translationKeys[code]) : code;
+};
 
 /**
  * 處理英文單複數形式

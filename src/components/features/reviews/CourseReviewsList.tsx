@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
-import { getInstructorName } from '@/utils/textUtils';
+import { getInstructorName, getTeachingLanguageName } from '@/utils/textUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,32 @@ export const CourseReviewsList = ({
   const navigate = useNavigate();
   const [expandedReviews, setExpandedReviews] = useState<ExpandedReviews>({});
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
+
+  // Extract course code and term code for teaching languages hook
+  const firstReview = allReviews?.[0];
+  const courseCode = firstReview?.review.course_code || '';
+  const termCode = firstReview?.term.term_code || '';
+  
+  // Collect all instructor details for teaching languages hook
+  const allInstructorDetails = useMemo(() => {
+    if (!allReviews) return [];
+    const details: InstructorDetail[] = [];
+    allReviews.forEach(reviewInfo => {
+      details.push(...reviewInfo.instructorDetails);
+    });
+    return details;
+  }, [allReviews]);
+
+  // Use teaching languages hook
+  const { 
+    teachingLanguages, 
+    loading: teachingLanguagesLoading, 
+    getTeachingLanguageForInstructor 
+  } = useInstructorDetailTeachingLanguages({
+    instructorDetails: allInstructorDetails,
+    courseCode,
+    termCode
+  });
   
 
   
@@ -73,6 +100,7 @@ export const CourseReviewsList = ({
     selectedTerms: [],
     selectedInstructors: [],
     selectedSessionTypes: [],
+    selectedTeachingLanguages: [],
     selectedGrades: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
@@ -190,6 +218,32 @@ export const CourseReviewsList = ({
     return counts;
   }, [allReviews]);
 
+  // 計算各教學語言的評論數量
+  const teachingLanguageCounts = useMemo(() => {
+    if (!allReviews || teachingLanguagesLoading) return {};
+    const counts: { [key: string]: number } = {};
+    
+    allReviews.forEach(reviewInfo => {
+      const languages = new Set<string>();
+      reviewInfo.instructorDetails.forEach(instructorDetail => {
+        const teachingLanguage = getTeachingLanguageForInstructor(
+          instructorDetail.instructor_name, 
+          instructorDetail.session_type
+        );
+        if (teachingLanguage) {
+          languages.add(teachingLanguage);
+        }
+      });
+      
+      // Count each unique teaching language for this review
+      languages.forEach(lang => {
+        counts[lang] = (counts[lang] || 0) + 1;
+      });
+    });
+    
+    return counts;
+  }, [allReviews, teachingLanguagesLoading, getTeachingLanguageForInstructor]);
+
   // 篩選和排序評論
   const filteredAndSortedReviews = useMemo(() => {
     let filteredReviews = allReviews || [];
@@ -246,6 +300,19 @@ export const CourseReviewsList = ({
         return reviewInfo.instructorDetails.some(instructorDetail => 
           filters.selectedSessionTypes.includes(instructorDetail.session_type || 'Unknown')
         );
+      });
+    }
+
+    // 教學語言篩選
+    if (filters.selectedTeachingLanguages.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        return reviewInfo.instructorDetails.some(instructorDetail => {
+          const teachingLanguage = getTeachingLanguageForInstructor(
+            instructorDetail.instructor_name,
+            instructorDetail.session_type
+          );
+          return teachingLanguage && filters.selectedTeachingLanguages.includes(teachingLanguage);
+        });
       });
     }
 
@@ -315,7 +382,7 @@ export const CourseReviewsList = ({
     });
 
     return filteredReviews;
-  }, [allReviews, filters, languageCounts, requirementsFilters]);
+  }, [allReviews, filters, languageCounts, requirementsFilters, getTeachingLanguageForInstructor]);
 
   const totalReviews = allReviews?.length || 0;
   const filteredCount = filteredAndSortedReviews.length;
@@ -350,6 +417,7 @@ export const CourseReviewsList = ({
       selectedTerms: [],
       selectedInstructors: [],
       selectedSessionTypes: [],
+      selectedTeachingLanguages: [],
       selectedGrades: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
@@ -498,7 +566,43 @@ export const CourseReviewsList = ({
                   </a>
                 </h4>
               </div>
-              <div className="shrink-0 flex items-start pt-1">
+              <div className="shrink-0 flex items-start gap-2 pt-1">
+                {/* 教學語言徽章 */}
+                {(() => {
+                  const teachingLanguage = getTeachingLanguageForInstructor(
+                    instructor.instructor_name,
+                    instructor.session_type
+                  );
+                  if (teachingLanguage) {
+                    return (
+                      <Badge 
+                        variant="secondary" 
+                        className="text-sm cursor-pointer transition-all duration-200 hover:scale-105 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800 hover:bg-orange-200 dark:hover:bg-orange-900/50"
+                        onClick={() => {
+                          const newFilters = { ...filters };
+                          
+                          // 切換教學語言篩選器
+                          if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                            newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                          } else {
+                            newFilters.selectedTeachingLanguages = [teachingLanguage];
+                          }
+                          
+                          // 重置頁面到第一頁
+                          newFilters.currentPage = 1;
+                          
+                          handleFiltersChange(newFilters);
+                        }}
+                        title={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                      >
+                        {getTeachingLanguageName(teachingLanguage, t)}
+                      </Badge>
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {/* 課堂類型徽章 */}
                 <Badge 
                   variant="secondary" 
                   className={`text-sm cursor-pointer transition-all duration-200 hover:scale-105 ${
@@ -768,6 +872,7 @@ export const CourseReviewsList = ({
           termCounts={termCounts}
           instructorCounts={instructorCounts}
           sessionTypeCounts={sessionTypeCounts}
+          teachingLanguageCounts={teachingLanguageCounts}
           gradeCounts={gradeCounts}
           totalReviews={totalReviews}
           filteredReviews={filteredCount}
@@ -1065,6 +1170,7 @@ export const CourseReviewsList = ({
           termCounts={termCounts}
           instructorCounts={instructorCounts}
           sessionTypeCounts={sessionTypeCounts}
+          teachingLanguageCounts={teachingLanguageCounts}
           gradeCounts={gradeCounts}
           totalReviews={totalReviews}
           filteredReviews={filteredCount}

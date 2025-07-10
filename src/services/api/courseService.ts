@@ -10,7 +10,6 @@ export interface Course {
   course_title_tc?: string;
   course_title_sc?: string;
   department: string;
-  course_language: string;
   $createdAt: string;
   $updatedAt: string;
 }
@@ -24,6 +23,8 @@ export interface CourseWithStats extends Course {
   averageDifficulty: number;
   averageUsefulness: number;
   averageGPA: number;
+  teachingLanguages?: string[]; // Teaching language codes from teaching records (chronological order)
+  currentTermTeachingLanguage?: string | null; // Current term's teaching language
 }
 
 export interface CourseWithDetailedStats extends Course {
@@ -58,6 +59,8 @@ export interface InstructorWithDetailedStats extends Instructor {
   gradingFairness: number;
   isTeachingInCurrentTerm?: boolean;
   averageGPA: number;
+  teachingLanguages?: string[]; // Teaching language codes from teaching records (chronological order)
+  currentTermTeachingLanguage?: string | null; // Current term's teaching language
 }
 
 export interface TeachingRecord {
@@ -67,6 +70,7 @@ export interface TeachingRecord {
   instructor_name: string;
   session_type: string;
   service_learning: string | null; // null, 'compulsory', or 'optional'
+  teaching_language: string; // Teaching language code: E, C, P, 1, 2, 3, 4, 5
   $createdAt: string;
   $updatedAt: string;
 }
@@ -234,7 +238,7 @@ export class CourseService {
         [
           Query.orderAsc('course_code'),
           Query.limit(this.MAX_COURSES_LIMIT),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'course_language', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
         ]
       );
       
@@ -261,7 +265,7 @@ export class CourseService {
         [
           Query.search('course_title', searchTerm),
           Query.limit(this.MAX_SEARCH_RESULTS), // 使用常數限制搜尋結果
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'course_language']) // 只選擇搜尋需要的欄位
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department']) // 只選擇搜尋需要的欄位
         ]
       );
 
@@ -1731,13 +1735,26 @@ export class CourseService {
             ...stats,
             isTeachingInCurrentTerm: instructorsTeachingInCurrentTerm.has(instructor.name)
           };
-        })
-        .sort((a, b) => {
-          // 首先按名字排序（字母順序）
-          return a.name.localeCompare(b.name);
         });
 
-      return instructorsWithDetailedStats;
+      // 獲取所有講師的教學語言數據
+      const instructorNames = instructors.map(instructor => instructor.name);
+      const [teachingLanguagesMap, currentTermTeachingLanguagesMap] = await Promise.all([
+        this.getBatchInstructorTeachingLanguages(instructorNames),
+        this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
+      ]);
+
+      // 添加教學語言數據到結果中
+      const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
+        ...instructor,
+        teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
+        currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
+      })).sort((a, b) => {
+        // 首先按名字排序（字母順序）
+        return a.name.localeCompare(b.name);
+      });
+
+      return finalInstructorsWithDetailedStats;
     } catch (error) {
       console.error('Error fetching all instructors with detailed stats:', error);
       throw new Error('Failed to fetch all instructors with detailed statistics');
@@ -1843,7 +1860,7 @@ export class CourseService {
           [
             Query.orderAsc('course_code'),
             Query.limit(this.MAX_COURSES_LIMIT),
-            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'course_language', '$createdAt', '$updatedAt'])
+            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
         databases.listDocuments(
@@ -1958,6 +1975,13 @@ export class CourseService {
         });
       }
 
+      // 獲取所有課程的教學語言數據
+      const courseCodes = courses.map(course => course.course_code);
+      const [teachingLanguagesMap, currentTermTeachingLanguagesMap] = await Promise.all([
+        this.getBatchCourseTeachingLanguages(courseCodes),
+        this.getBatchCourseCurrentTermTeachingLanguages(courseCodes)
+      ]);
+
       // 組合課程和統計信息（使用 map 一次性處理）
       const coursesWithStats: CourseWithStats[] = courses.map(course => {
         const stats = courseStatsMap.get(course.course_code) || {
@@ -1970,10 +1994,16 @@ export class CourseService {
           averageGPA: 0
         };
 
+        // 獲取教學語言數據
+        const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
+        const currentTermTeachingLanguage = currentTermTeachingLanguagesMap.get(course.course_code) || null;
+
         return {
           ...course,
           ...stats,
-          isOfferedInCurrentTerm: coursesOfferedInCurrentTerm.has(course.course_code)
+          isOfferedInCurrentTerm: coursesOfferedInCurrentTerm.has(course.course_code),
+          teachingLanguages,
+          currentTermTeachingLanguage
         };
       });
 
@@ -2996,7 +3026,7 @@ export class CourseService {
           [
             Query.equal('course_code', uniqueCourseCodes),
             Query.limit(uniqueCourseCodes.length),
-            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'course_language'])
+            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
           ]
         ),
         databases.listDocuments(
@@ -3107,7 +3137,7 @@ export class CourseService {
           [
             Query.equal('course_code', uniqueCourseCodes),
             Query.limit(uniqueCourseCodes.length),
-            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'course_language'])
+            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
           ]
         ),
         databases.listDocuments(
@@ -3486,6 +3516,452 @@ export class CourseService {
     } catch (error) {
       console.error('Error fetching user reviews for course:', error);
       return [];
+    }
+  }
+
+  /**
+   * 獲取課程在當前學期的教學語言
+   */
+  static async getCourseCurrentTermTeachingLanguage(courseCode: string): Promise<string | null> {
+    try {
+      const currentTermCode = getCurrentTermCode();
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCode),
+          Query.equal('term_code', currentTermCode),
+          Query.select(['teaching_language']),
+          Query.limit(1)
+        ]
+      );
+
+      if (response.documents.length > 0) {
+        const record = response.documents[0] as unknown as TeachingRecord;
+        return record.teaching_language;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching current term teaching language:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 批量獲取多個課程在當前學期的教學語言
+   */
+  static async getBatchCourseCurrentTermTeachingLanguages(courseCodes: string[]): Promise<Map<string, string | null>> {
+    try {
+      const currentTermCode = getCurrentTermCode();
+      const cacheKey = `batch_current_term_teaching_languages_${currentTermCode}`;
+      
+      // 檢查緩存
+      const cached = this.getCached<Map<string, string | null>>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      if (courseCodes.length === 0) {
+        return new Map();
+      }
+
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCodes),
+          Query.equal('term_code', currentTermCode),
+          Query.select(['course_code', 'teaching_language']),
+          Query.limit(courseCodes.length)
+        ]
+      );
+
+      const teachingLanguagesMap = new Map<string, string | null>();
+      
+      // 初始化所有課程為 null
+      courseCodes.forEach(courseCode => {
+        teachingLanguagesMap.set(courseCode, null);
+      });
+
+      // 填入找到的教學語言
+      response.documents.forEach((doc: any) => {
+        const record = doc as unknown as TeachingRecord;
+        teachingLanguagesMap.set(record.course_code, record.teaching_language);
+      });
+
+      // 緩存結果
+      this.setCached(cacheKey, teachingLanguagesMap, 5 * 60 * 1000); // 5分鐘緩存
+
+      return teachingLanguagesMap;
+    } catch (error) {
+      console.error('Error fetching batch current term teaching languages:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * Get teaching languages for a course from teaching records (chronological order)
+   */
+  static async getCourseTeachingLanguages(courseCode: string): Promise<string[]> {
+    try {
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCode),
+          Query.orderAsc('$createdAt'), // Order by creation time to get chronological order
+          Query.select(['teaching_language'])
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      
+      // Extract unique teaching languages while preserving chronological order
+      const seenLanguages = new Set<string>();
+      const orderedLanguages: string[] = [];
+      
+      teachingRecords.forEach(record => {
+        if (record.teaching_language && !seenLanguages.has(record.teaching_language)) {
+          seenLanguages.add(record.teaching_language);
+          orderedLanguages.push(record.teaching_language);
+        }
+      });
+
+      return orderedLanguages;
+    } catch (error) {
+      console.error('Error fetching course teaching languages:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get teaching languages for multiple courses (batch)
+   */
+  static async getBatchCourseTeachingLanguages(courseCodes: string[]): Promise<Map<string, string[]>> {
+    try {
+      if (courseCodes.length === 0) {
+        return new Map();
+      }
+
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCodes),
+          Query.orderAsc('$createdAt'),
+          Query.select(['course_code', 'teaching_language', '$createdAt']),
+          Query.limit(1000) // Reasonable limit for batch processing
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as (TeachingRecord & { teaching_language: string })[];
+      
+      // Group by course code and maintain chronological order
+      const courseLanguagesMap = new Map<string, string[]>();
+      
+      // Initialize maps for each course
+      courseCodes.forEach(courseCode => {
+        courseLanguagesMap.set(courseCode, []);
+      });
+      
+      // Process records by course
+      const recordsByCourse = new Map<string, (TeachingRecord & { teaching_language: string })[]>();
+      teachingRecords.forEach(record => {
+        if (!recordsByCourse.has(record.course_code)) {
+          recordsByCourse.set(record.course_code, []);
+        }
+        recordsByCourse.get(record.course_code)!.push(record);
+      });
+      
+      // Extract unique teaching languages for each course in chronological order
+      recordsByCourse.forEach((records, courseCode) => {
+        const seenLanguages = new Set<string>();
+        const orderedLanguages: string[] = [];
+        
+        records.forEach(record => {
+          if (record.teaching_language && !seenLanguages.has(record.teaching_language)) {
+            seenLanguages.add(record.teaching_language);
+            orderedLanguages.push(record.teaching_language);
+          }
+        });
+        
+        courseLanguagesMap.set(courseCode, orderedLanguages);
+      });
+
+      return courseLanguagesMap;
+    } catch (error) {
+      console.error('Error fetching batch course teaching languages:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * Get teaching language for a specific instructor detail
+   * Based on course code, term code, instructor name, and session type
+   */
+  static async getInstructorDetailTeachingLanguage(
+    courseCode: string, 
+    termCode: string, 
+    instructorName: string, 
+    sessionType: string
+  ): Promise<string | null> {
+    try {
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCode),
+          Query.equal('term_code', termCode),
+          Query.equal('instructor_name', instructorName),
+          Query.equal('session_type', sessionType),
+          Query.select(['teaching_language']),
+          Query.limit(1)
+        ]
+      );
+
+      if (response.documents.length > 0) {
+        const record = response.documents[0] as unknown as TeachingRecord;
+        return record.teaching_language;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching instructor detail teaching language:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Batch get teaching languages for multiple instructor details
+   * Optimized for performance when getting multiple instructor teaching languages at once
+   */
+  static async getBatchInstructorDetailTeachingLanguages(
+    instructorDetails: Array<{
+      courseCode: string;
+      termCode: string;
+      instructorName: string;
+      sessionType: string;
+    }>
+  ): Promise<Map<string, string | null>> {
+    try {
+      if (instructorDetails.length === 0) {
+        return new Map();
+      }
+
+      // Create unique identifiers and collect unique values for batch queries
+      const uniqueCourseCodes = [...new Set(instructorDetails.map(detail => detail.courseCode))];
+      const uniqueTermCodes = [...new Set(instructorDetails.map(detail => detail.termCode))];
+      const uniqueInstructorNames = [...new Set(instructorDetails.map(detail => detail.instructorName))];
+      const uniqueSessionTypes = [...new Set(instructorDetails.map(detail => detail.sessionType))];
+
+      // Query all relevant teaching records
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', uniqueCourseCodes),
+          Query.equal('term_code', uniqueTermCodes),
+          Query.equal('instructor_name', uniqueInstructorNames),
+          Query.equal('session_type', uniqueSessionTypes),
+          Query.select(['course_code', 'term_code', 'instructor_name', 'session_type', 'teaching_language']),
+          Query.limit(instructorDetails.length * 2) // Allow some buffer for multiple matches
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      
+      // Create a map for quick lookup by composite key
+      const recordsMap = new Map<string, string>();
+      teachingRecords.forEach(record => {
+        const key = `${record.course_code}|${record.term_code}|${record.instructor_name}|${record.session_type}`;
+        recordsMap.set(key, record.teaching_language);
+      });
+
+      // Build result map
+      const result = new Map<string, string | null>();
+      instructorDetails.forEach(detail => {
+        const key = `${detail.courseCode}|${detail.termCode}|${detail.instructorName}|${detail.sessionType}`;
+        const teachingLanguage = recordsMap.get(key) || null;
+        result.set(key, teachingLanguage);
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching batch instructor detail teaching languages:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * Get all teaching languages for an instructor across all courses and terms
+   * Returns unique teaching language codes in chronological order
+   */
+  static async getInstructorTeachingLanguages(instructorName: string): Promise<string[]> {
+    try {
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('instructor_name', instructorName),
+          Query.orderAsc('term_code'), // Chronological order
+          Query.limit(200), // Reasonable limit for instructor teaching records
+          Query.select(['teaching_language', 'term_code'])
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      
+      // Get unique teaching languages in chronological order
+      const languageSet = new Set<string>();
+      const languageOrder: string[] = [];
+      
+      teachingRecords.forEach(record => {
+        if (record.teaching_language && !languageSet.has(record.teaching_language)) {
+          languageSet.add(record.teaching_language);
+          languageOrder.push(record.teaching_language);
+        }
+      });
+
+      return languageOrder;
+    } catch (error) {
+      console.error('Error fetching instructor teaching languages:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get teaching languages for multiple instructors in batch
+   */
+  static async getBatchInstructorTeachingLanguages(instructorNames: string[]): Promise<Map<string, string[]>> {
+    if (instructorNames.length === 0) {
+      return new Map();
+    }
+
+    try {
+      // Fetch all teaching records for the specified instructors
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('instructor_name', instructorNames),
+          Query.orderAsc('term_code'), // Chronological order
+          Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
+          Query.select(['instructor_name', 'teaching_language', 'term_code'])
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      
+      // Group records by instructor
+      const instructorRecordsMap = new Map<string, TeachingRecord[]>();
+      teachingRecords.forEach(record => {
+        if (!instructorRecordsMap.has(record.instructor_name)) {
+          instructorRecordsMap.set(record.instructor_name, []);
+        }
+        instructorRecordsMap.get(record.instructor_name)!.push(record);
+      });
+
+      // Build result map with unique languages in chronological order
+      const result = new Map<string, string[]>();
+      
+      instructorNames.forEach(instructorName => {
+        const records = instructorRecordsMap.get(instructorName) || [];
+        
+        const languageSet = new Set<string>();
+        const languageOrder: string[] = [];
+        
+        records.forEach(record => {
+          if (record.teaching_language && !languageSet.has(record.teaching_language)) {
+            languageSet.add(record.teaching_language);
+            languageOrder.push(record.teaching_language);
+          }
+        });
+
+        result.set(instructorName, languageOrder);
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching batch instructor teaching languages:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * Get current term teaching language for an instructor
+   * Returns the teaching language this instructor is using in the current term
+   */
+  static async getInstructorCurrentTermTeachingLanguage(instructorName: string): Promise<string | null> {
+    try {
+      const currentTermCode = getCurrentTermCode();
+      
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('instructor_name', instructorName),
+          Query.equal('term_code', currentTermCode),
+          Query.limit(1),
+          Query.select(['teaching_language'])
+        ]
+      );
+
+      if (response.documents.length === 0) {
+        return null;
+      }
+
+      const teachingRecord = response.documents[0] as unknown as TeachingRecord;
+      return teachingRecord.teaching_language || null;
+    } catch (error) {
+      console.error('Error fetching instructor current term teaching language:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get current term teaching languages for multiple instructors in batch
+   */
+  static async getBatchInstructorCurrentTermTeachingLanguages(instructorNames: string[]): Promise<Map<string, string | null>> {
+    if (instructorNames.length === 0) {
+      return new Map();
+    }
+
+    try {
+      const currentTermCode = getCurrentTermCode();
+      
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('term_code', currentTermCode),
+          Query.equal('instructor_name', instructorNames),
+          Query.limit(200),
+          Query.select(['instructor_name', 'teaching_language'])
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      
+      // Build result map - use the first teaching language found for each instructor in current term
+      const result = new Map<string, string | null>();
+      
+      // Initialize all instructors with null
+      instructorNames.forEach(name => {
+        result.set(name, null);
+      });
+      
+      // Fill in actual values from teaching records
+      teachingRecords.forEach(record => {
+        if (record.teaching_language && !result.get(record.instructor_name)) {
+          result.set(record.instructor_name, record.teaching_language);
+        }
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching batch instructor current term teaching languages:', error);
+      return new Map();
     }
   }
 } 

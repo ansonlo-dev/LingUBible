@@ -42,7 +42,7 @@ import PerformanceTest from "./pages/PerformanceTest";
 
 
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { theme } from '@/lib/utils';
 import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
 import { swipeHintCookie } from '@/lib/cookies';
@@ -388,8 +388,8 @@ const AppContent = () => {
     }
   };
 
-  // 滑動手勢處理 - 只在手機版且側邊欄關閉時啟用
-  const { ref: swipeRef, forceReinit: forceSwipeReinit } = useSwipeGesture({
+  // 滑動手勢處理 - 打開側邊欄（從左半部分滑動到右半部分）
+  const { ref: swipeOpenRef, forceReinit: forceSwipeOpenReinit } = useSwipeGesture({
     onSwipeRight: () => {
       if (isMobile && !isMobileSidebarOpen) {
         setIsMobileSidebarOpen(true);
@@ -398,17 +398,32 @@ const AppContent = () => {
         setShowSwipeHint(false);
       }
     },
-    onSwipeLeft: () => {
-      if (isMobile && isMobileSidebarOpen) {
-        setIsMobileSidebarOpen(false);
-      }
-    },
-    enabled: isMobile,
+    enabled: isMobile && !isMobileSidebarOpen,
     swipeZone: 'left-half-to-right', // 從左半部分滑動到右半部分觸發
     threshold: 80, // 適中的滑動距離要求，考慮到用戶需要滑動更長距離
     restraint: 100, // 允許更多垂直偏移，因為滑動距離更長
     allowedTime: 800 // 增加允許時間，因為滑動距離更長
   });
+
+  // 滑動手勢處理 - 關閉側邊欄（從右半部分滑動到左半部分）
+  const { ref: swipeCloseRef, forceReinit: forceSwipeCloseReinit } = useSwipeGesture({
+    onSwipeLeft: () => {
+      if (isMobile && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    },
+    enabled: isMobile && isMobileSidebarOpen,
+    swipeZone: 'right-half-to-left', // 從右半部分滑動到左半部分觸發
+    threshold: 80, // 適中的滑動距離要求，考慮到用戶需要滑動更長距離
+    restraint: 100, // 允許更多垂直偏移，因為滑動距離更長
+    allowedTime: 800 // 增加允許時間，因為滑動距離更長
+  });
+
+  // 統一的滑動手勢重新初始化函數
+  const forceSwipeReinit = useCallback(() => {
+    forceSwipeOpenReinit();
+    forceSwipeCloseReinit();
+  }, [forceSwipeOpenReinit, forceSwipeCloseReinit]);
 
   // Show loading screen while translations are loading
   if (translationsLoading) {
@@ -444,7 +459,6 @@ const AppContent = () => {
           toggleSidebar={toggleSidebar}
           toggleMobileSidebar={toggleMobileSidebar}
           handleSidebarToggle={handleSidebarToggle}
-          swipeRef={swipeRef}
           forceSwipeReinit={forceSwipeReinit}
         />
       </BrowserRouter>
@@ -467,7 +481,6 @@ const RouterContent = ({
   toggleSidebar,
   toggleMobileSidebar,
   handleSidebarToggle,
-  swipeRef,
   forceSwipeReinit
 }: {
   isDark: boolean;
@@ -483,7 +496,6 @@ const RouterContent = ({
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
   handleSidebarToggle: () => void;
-  swipeRef: React.RefObject<HTMLDivElement>;
   forceSwipeReinit: () => void;
 }) => {
   const { t } = useLanguage();
@@ -555,7 +567,6 @@ const RouterContent = ({
               
               {/* 主要內容區域包含header和content */}
               <div 
-                ref={swipeRef}
                 className={`main-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}
               >
                 {/* 頂部 Header - 回到main-container內部但保持sticky */}

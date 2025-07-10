@@ -2,7 +2,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useState, useEffect, useMemo } from 'react';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, type Term } from '@/services/api/courseService';
-import { translateDepartmentName, processPluralTranslation } from '@/utils/textUtils';
+import { translateDepartmentName, processPluralTranslation, getTeachingLanguageName } from '@/utils/textUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Filter,
@@ -54,6 +54,7 @@ export interface InstructorFilters {
   searchTerm: string;
   department: string[];
   teachingTerm: string[];
+  teachingLanguage: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   itemsPerPage: number;
@@ -123,11 +124,27 @@ export function AdvancedInstructorFilters({
     onFiltersChange({ ...filters, ...updates });
   };
 
+  // Teaching language mapping function
+  const mapLanguageCode = (langCode: string, t: any): string => {
+    const translationKeys: { [key: string]: string } = {
+      'E': 'teachingLanguage.english',
+      'C': 'teachingLanguage.cantonese', 
+      'P': 'teachingLanguage.putonghua',
+      '1': 'teachingLanguage.englishCantonese',
+      '2': 'teachingLanguage.englishPutonghua', 
+      '3': 'teachingLanguage.cantonesePutonghua',
+      '4': 'teachingLanguage.englishCantonesePutonghua',
+      '5': 'teachingLanguage.others'
+    };
+    return translationKeys[langCode] ? t(translationKeys[langCode]) : langCode;
+  };
+
   const hasActiveFilters = () => {
     return (
       filters.searchTerm.trim() !== '' ||
       filters.department.length > 0 ||
-      filters.teachingTerm.length > 0
+      filters.teachingTerm.length > 0 ||
+      filters.teachingLanguage.length > 0
     );
   };
 
@@ -136,6 +153,7 @@ export function AdvancedInstructorFilters({
     if (filters.searchTerm.trim()) count++;
     if (filters.department.length > 0) count++;
     if (filters.teachingTerm.length > 0) count++;
+    if (filters.teachingLanguage.length > 0) count++;
     return count;
   };
 
@@ -304,6 +322,41 @@ export function AdvancedInstructorFilters({
     return counts;
   }, [instructors, availableTerms, termInstructorsMap]);
 
+  // Calculate language counts for instructors
+  const languageCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    
+    // Initialize counts for all 8 teaching language codes in the desired order
+    const allLanguageCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+    allLanguageCodes.forEach(code => {
+      counts[code] = 0;
+    });
+    
+    // Count instructors for each teaching language code
+    instructors.forEach(instructor => {
+      if (instructor.teachingLanguages && instructor.teachingLanguages.length > 0) {
+        instructor.teachingLanguages.forEach(langCode => {
+          if (counts.hasOwnProperty(langCode)) {
+            counts[langCode]++;
+          }
+        });
+      }
+    });
+    
+    return counts;
+  }, [instructors]);
+
+  // Helper function to get ordered language options
+  const getOrderedLanguageOptions = () => {
+    const orderedCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+    
+    return orderedCodes.map(langCode => ({
+      value: langCode,
+      label: `${langCode} - ${mapLanguageCode(langCode, t)}`,
+      count: languageCounts[langCode] || 0
+    }));
+  };
+
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
     return language === 'zh-TW' || language === 'zh-CN' 
@@ -405,7 +458,7 @@ export function AdvancedInstructorFilters({
                 data.departments.forEach(department => {
                   options.push({
                     value: department,
-                    label: `  ${translateDepartmentName(department, t, isMobile)}`,
+                    label: `  ${translateDepartmentName(department, t)}`,
                     count: departmentCounts[department] || 0
                   });
                 });
@@ -438,6 +491,22 @@ export function AdvancedInstructorFilters({
             selectedValues={filters.teachingTerm}
             onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
             placeholder={t('filter.allTerms')}
+            totalCount={totalInstructors}
+            className="flex-1 h-8 text-sm"
+          />
+        </div>
+
+        {/* 授課語言 */}
+        <div className="flex items-center gap-2 lg:flex-1">
+          <label className={getLabelClassName()}>
+            <Globe className="h-4 w-4" />
+            {t('filter.teachingLanguage')}
+          </label>
+          <MultiSelectDropdown
+            options={getOrderedLanguageOptions()}
+            selectedValues={filters.teachingLanguage}
+            onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
+            placeholder={t('filter.allLanguages')}
             totalCount={totalInstructors}
             className="flex-1 h-8 text-sm"
           />

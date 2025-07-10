@@ -424,6 +424,7 @@ export default {
   'filter.reviewTerm': '学期',
   'filter.reviewInstructor': '讲师',
   'filter.reviewSessionType': '课堂类型',
+  'filter.reviewTeachingLanguage': '教学语言',
   'filter.reviewCourse': '课程',
   'filter.allLanguages': '所有语言',
   'filter.allTerms': '所有学期',
@@ -709,6 +710,7 @@ export default {
   'filter.clickToFilterDepartment': '点击以按此学系筛选讲师',
   'filter.clickToFilterByTerm': '点击以依{term}筛选',
   'filter.clickToFilterByLanguage': '点击以依{language}筛选',
+  'filter.clickToFilterByTeachingLanguage': '点击以依教学语言筛选：{language}',
   'filter.courseRequirements': '课程要求筛选器',
   'filter.courseRequirementsInstructions': '按课程要求筛选评论。点击 全部/✓/✗ 来筛选每个要求。',
   'filter.active': '个筛选',
@@ -1785,4 +1787,15 @@ export default {
   // Grade edit restriction
   'review.cannotEditGradeTitle': '无法编辑成绩',
   'review.cannotEditGradeMessage': '请先删除您较新的评论，然后才能将此较旧评论的成绩改为非不及格。',
+
+  // Teaching language codes
+  'teachingLanguage.english': '英语',
+  'teachingLanguage.cantonese': '粤语',
+  'teachingLanguage.putonghua': '普通话',
+  'teachingLanguage.englishCantonese': '英语/粤语',
+  'teachingLanguage.englishPutonghua': '英语/普通话',
+  'teachingLanguage.cantonesePutonghua': '粤语/普通话',
+  'teachingLanguage.englishCantonesePutonghua': '英语/粤语/普通话',
+  'teachingLanguage.others': '其他',
+
 };

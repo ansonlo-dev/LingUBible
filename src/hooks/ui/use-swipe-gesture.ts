@@ -7,7 +7,7 @@ interface SwipeGestureOptions {
   restraint?: number;
   allowedTime?: number;
   enabled?: boolean;
-  swipeZone?: 'full' | 'right-half' | 'left-edge' | 'left-half-to-right';
+  swipeZone?: 'full' | 'right-half' | 'left-edge' | 'left-half-to-right' | 'right-half-to-left';
   edgeThreshold?: number;
 }
 
@@ -70,6 +70,11 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
 
     // 新增：左半部分到右半部分的滑動檢測
     if (currentOptions.swipeZone === 'left-half-to-right' && startX > screenWidth / 2) {
+      return;
+    }
+
+    // 新增：右半部分到左半部分的滑動檢測
+    if (currentOptions.swipeZone === 'right-half-to-left' && startX < screenWidth / 2) {
       return;
     }
 
@@ -188,6 +193,36 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
           
           if (currentOptions.onSwipeRight) {
             currentOptions.onSwipeRight();
+          }
+        }
+      }
+      
+      // 重置狀態
+      isValidSwipeStart.current = false;
+      isSwipeGesture.current = false;
+      return;
+    }
+
+    // 特殊處理：右半部分到左半部分的滑動
+    if (currentOptions.swipeZone === 'right-half-to-left') {
+      const screenWidth = window.innerWidth;
+      const startX = touchStartX.current;
+      
+      // 確保滑動從右半部分開始，在左半部分結束，且是向左滑動
+      if (startX >= screenWidth / 2 && endX < screenWidth / 2 && distanceX < 0) {
+        // 對於這種模式，使用較小的閾值，因為用戶已經滑動了較長距離
+        const adjustedThreshold = Math.min(threshold, screenWidth / 4); // 最多螢幕寬度的1/4
+        
+        if (Math.abs(distanceX) >= adjustedThreshold && Math.abs(distanceY) <= restraint) {
+          // 只在確認是有效滑動時才阻止默認行為並執行回調
+          try {
+            e.preventDefault();
+          } catch (err) {
+            // 忽略錯誤，可能是被動監聽器
+          }
+          
+          if (currentOptions.onSwipeLeft) {
+            currentOptions.onSwipeLeft();
           }
         }
       }

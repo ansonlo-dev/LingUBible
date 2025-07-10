@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { processPluralTranslation } from '@/utils/textUtils';
+import { processPluralTranslation, getTeachingLanguageName } from '@/utils/textUtils';
 import { isCurrentTerm } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,6 +31,7 @@ export interface ReviewFilters {
   selectedTerms: string[];
   selectedInstructors: string[];
   selectedSessionTypes: string[];
+  selectedTeachingLanguages: string[];
   selectedGrades: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -45,6 +46,7 @@ interface CourseReviewsFiltersProps {
   termCounts: { [key: string]: { name: string; count: number } };
   instructorCounts: { [key: string]: number };
   sessionTypeCounts: { [key: string]: number };
+  teachingLanguageCounts: { [key: string]: number };
   gradeCounts: { [key: string]: number };
   totalReviews: number;
   filteredReviews: number;
@@ -58,6 +60,7 @@ export function CourseReviewsFilters({
   termCounts,
   instructorCounts,
   sessionTypeCounts,
+  teachingLanguageCounts,
   gradeCounts,
   totalReviews,
   filteredReviews,
@@ -87,6 +90,10 @@ export function CourseReviewsFilters({
     updateFilters({ selectedSessionTypes: values, currentPage: 1 });
   };
 
+  const handleTeachingLanguageChange = (values: string[]) => {
+    updateFilters({ selectedTeachingLanguages: values, currentPage: 1 });
+  };
+
   const handleGradeChange = (values: string[]) => {
     updateFilters({ selectedGrades: values, currentPage: 1 });
   };
@@ -96,6 +103,7 @@ export function CourseReviewsFilters({
            (filters.selectedTerms || []).length > 0 ||
            (filters.selectedInstructors || []).length > 0 ||
            (filters.selectedSessionTypes || []).length > 0 ||
+           (filters.selectedTeachingLanguages || []).length > 0 ||
            (filters.selectedGrades || []).length > 0;
   };
 
@@ -105,6 +113,7 @@ export function CourseReviewsFilters({
     if ((filters.selectedTerms || []).length > 0) count++;
     if ((filters.selectedInstructors || []).length > 0) count++;
     if ((filters.selectedSessionTypes || []).length > 0) count++;
+    if ((filters.selectedTeachingLanguages || []).length > 0) count++;
     if ((filters.selectedGrades || []).length > 0) count++;
     return count;
   };
@@ -257,6 +266,27 @@ export function CourseReviewsFilters({
             />
           </div>
 
+          {/* 教學語言篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <BookOpen className="h-4 w-4" />
+              {t('filter.reviewTeachingLanguage')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(teachingLanguageCounts || {}).map(([language, count]) => ({
+                value: language,
+                label: getTeachingLanguageName(language, t),
+                count: count
+              }))}
+              selectedValues={filters.selectedTeachingLanguages}
+              onSelectionChange={handleTeachingLanguageChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+            />
+          </div>
+
           {/* 成績篩選 */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
@@ -298,6 +328,10 @@ export function CourseReviewsFilters({
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
               <School className="h-4 w-4" />
               <span>{t('filter.reviewSessionType')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <BookOpen className="h-4 w-4" />
+              <span>{t('filter.reviewTeachingLanguage')}</span>
             </div>
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
               <GraduationCap className="h-4 w-4" />
@@ -368,6 +402,21 @@ export function CourseReviewsFilters({
                 }))}
                 selectedValues={filters.selectedSessionTypes}
                 onSelectionChange={handleSessionTypeChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(teachingLanguageCounts || {}).map(([language, count]) => ({
+                  value: language,
+                  label: getTeachingLanguageName(language, t),
+                  count: count
+                }))}
+                selectedValues={filters.selectedTeachingLanguages}
+                onSelectionChange={handleTeachingLanguageChange}
                 placeholder={t('common.all')}
                 totalCount={totalReviews}
                 className="w-full h-10 text-sm"

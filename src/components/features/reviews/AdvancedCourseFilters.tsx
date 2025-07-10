@@ -99,20 +99,20 @@ const getSubjectCodeFromDepartment = (department: string): string => {
 };
 
 /**
- * Maps database language codes to user-friendly language names
+ * Maps teaching language codes to user-friendly language names with translation support
  */
-const mapLanguageCode = (courseLanguage: string): string => {
-  if (courseLanguage === 'E') {
-    return 'English';
-  } else if (courseLanguage === 'C') {
-    return 'Mandarin Chinese';
-  } else if (courseLanguage === 'English') {
-    return 'English';
-  } else if (courseLanguage === 'Mandarin Chinese') {
-    return 'Mandarin Chinese';
-  }
-  // Default to English for any unrecognized codes
-  return 'English';
+const mapLanguageCode = (langCode: string, t: any): string => {
+  const translationKeys: { [key: string]: string } = {
+    'E': 'teachingLanguage.english',
+    'C': 'teachingLanguage.cantonese', 
+    'P': 'teachingLanguage.putonghua',
+    '1': 'teachingLanguage.englishCantonese',
+    '2': 'teachingLanguage.englishPutonghua', 
+    '3': 'teachingLanguage.cantonesePutonghua',
+    '4': 'teachingLanguage.englishCantonesePutonghua',
+    '5': 'teachingLanguage.others'
+  };
+  return translationKeys[langCode] ? t(translationKeys[langCode]) : langCode;
 };
 
 export interface CourseFilters {
@@ -247,11 +247,37 @@ export function AdvancedCourseFilters({
 
   const getLanguageCounts = () => {
     const counts: { [key: string]: number } = {};
-    courses.forEach(course => {
-      const language = mapLanguageCode(course.course_language);
-      counts[language] = (counts[language] || 0) + 1;
+    
+    // Initialize counts for all 8 teaching language codes in the desired order
+    const allLanguageCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+    allLanguageCodes.forEach(code => {
+      counts[code] = 0;
     });
+    
+    // Count courses for each teaching language code
+    courses.forEach(course => {
+      if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+        course.teachingLanguages.forEach(langCode => {
+          if (counts.hasOwnProperty(langCode)) {
+            counts[langCode]++;
+          }
+        });
+      }
+    });
+    
     return counts;
+  };
+
+  // Helper function to get ordered language options
+  const getOrderedLanguageOptions = () => {
+    const languageCounts = getLanguageCounts();
+    const orderedCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+    
+    return orderedCodes.map(langCode => ({
+      value: langCode,
+      label: `${langCode} - ${mapLanguageCode(langCode, t)}`,
+      count: languageCounts[langCode] || 0
+    }));
   };
 
   const getTermCounts = () => {
@@ -366,18 +392,7 @@ export function AdvancedCourseFilters({
             {t('filter.teachingLanguage')}
           </label>
           <MultiSelectDropdown
-            options={[
-              {
-                value: 'English',
-                label: t('language.english'),
-                count: getLanguageCounts()['English'] || 0
-              },
-              {
-                value: 'Mandarin Chinese',
-                label: t('language.mandarinChinese'),
-                count: getLanguageCounts()['Mandarin Chinese'] || 0
-              }
-            ]}
+            options={getOrderedLanguageOptions()}
             selectedValues={filters.teachingLanguage}
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}

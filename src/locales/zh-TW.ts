@@ -422,6 +422,7 @@ export default {
   'filter.reviewTerm': '學期',
   'filter.reviewInstructor': '講師',
   'filter.reviewSessionType': '課堂類型',
+  'filter.reviewTeachingLanguage': '教學語言',
   'filter.reviewCourse': '課程',
   'filter.allLanguages': '所有語言',
   'filter.allTerms': '所有學期',
@@ -648,6 +649,7 @@ export default {
   'filter.clickToFilterDepartment': '點擊以按此學系篩選講師',
   'filter.clickToFilterByTerm': '點擊以依{term}篩選',
   'filter.clickToFilterByLanguage': '點擊以依{language}篩選',
+  'filter.clickToFilterByTeachingLanguage': '點擊以依教學語言篩選：{language}',
   'filter.courseRequirements': '課程要求篩選器',
   'filter.courseRequirementsInstructions': '按課程要求篩選評論。點擊 全部/✓/✗ 來篩選每個要求。',
   'filter.active': '個篩選',
@@ -1734,4 +1736,15 @@ export default {
   // Grade edit restriction
   'review.cannotEditGradeTitle': '無法編輯成績',
   'review.cannotEditGradeMessage': '請先刪除您較新的評論，然後才能將此較舊評論的成績改為非不及格。',
+
+  // Teaching language codes
+  'teachingLanguage.english': '英語',
+  'teachingLanguage.cantonese': '粵語',
+  'teachingLanguage.putonghua': '普通話',
+  'teachingLanguage.englishCantonese': '英語/粵語',
+  'teachingLanguage.englishPutonghua': '英語/普通話',
+  'teachingLanguage.cantonesePutonghua': '粵語/普通話',
+  'teachingLanguage.englishCantonesePutonghua': '英語/粵語/普通話',
+  'teachingLanguage.others': '其他',
+
 };
