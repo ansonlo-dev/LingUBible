@@ -16,7 +16,7 @@ export const APP_CONFIG = {
   
   // UI 配置
   UI: {
-    SIDEBAR_BREAKPOINT: 768, // px
+    SIDEBAR_BREAKPOINT: 1024, // px
     SWIPE_HINT_DURATION: 4000, // ms
     TOAST_DURATION: 3000, // ms
   },

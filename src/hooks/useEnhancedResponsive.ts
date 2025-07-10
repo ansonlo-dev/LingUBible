@@ -21,75 +21,14 @@ function getEnhancedMobileDetection() {
   const userAgent = navigator.userAgent.toLowerCase();
   const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   
-  // Special case: iPad models and iPhone landscape should behave like desktop for sidebar in both orientations
-  // This enables desktop-like collapse behavior instead of mobile overlay
-  if (isTouchDevice && (/ipad/i.test(userAgent) || /iphone/i.test(userAgent))) {
-    // iPad mini portrait: 768x1024
-    if (width === 768 && height === 1024) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-    // iPad mini landscape: 1024x768
-    if (width === 1024 && height === 768) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-    // iPad Air portrait: 820x1180
-    if (width === 820 && height === 1180) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-    // iPad Air landscape: 1180x820
-    if (width === 1180 && height === 820) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-  }
-
-  // Common landscape phone dimensions should get desktop-like sidebar behavior regardless of device type
-  // This includes iPhone, Samsung, Pixel, and other Android devices
-  if (isTouchDevice && width > height) { // Only in landscape mode
-    // iPhone XR landscape: 896x414
-    if (width === 896 && height === 414) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-    // iPhone 12 Pro landscape: 844x390
-    if (width === 844 && height === 390) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-    // iPhone 14 Pro Max landscape: 932x430
-    if (width === 932 && height === 430) {
-      return false; // Treat as desktop for sidebar behavior
-    }
-    // Common landscape dimension: 915x412 (iPhone 15 Pro, Samsung Galaxy S20 Ultra, Pixel 7, etc.)
-    if (width === 915 && height === 412) {
-      return false; // Treat as desktop for sidebar behavior
-    }
+  // Simple mobile detection based on screen width
+  // All devices under 1024px are treated as mobile for consistent sidebar behavior
+  if (width < 1024) {
+    return true; // Mobile behavior with sliding sidebar
   }
   
-  // Enhanced detection logic for mobile landscape mode
-  if (isMobileDevice && isTouchDevice) {
-    // Real mobile devices: check screen dimensions considering orientation
-    const maxDimension = Math.max(width, height);
-    const minDimension = Math.min(width, height);
-    
-    // Special handling for landscape mode phones
-    const isLandscapePhone = width > height && minDimension <= 430; // iPhone 14 Pro Max landscape height = 430
-    const isLandscapeTablet = width > height && minDimension > 430 && minDimension < 600; // Small tablet landscape
-    
-    // Include tablets with max dimension <= 1024 as mobile for sidebar behavior
-    // (iPad mini portrait already excluded above)
-    if (isLandscapePhone || maxDimension <= 1024) {
-      return true; // Mobile behavior
-    } else if (isLandscapeTablet) {
-      // Small tablet in landscape mode - judge by width
-      return maxDimension < 1200;
-    } else {
-      return false; // Large tablet or desktop device
-    }
-  } else if (isTouchDevice && !isMobileDevice) {
-    // Touch device but not mobile device (like Surface), use width
-    return width < 640;
-  } else {
-    // Desktop device: even in split-screen mode, don't treat as mobile
-    return width < 480;
-  }
+  // Desktop behavior for screens 1024px and above
+  return false;
 }
 
 // Enhanced responsive hook
