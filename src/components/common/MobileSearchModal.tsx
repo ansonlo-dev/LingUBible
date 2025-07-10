@@ -458,10 +458,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           }}
         >
           <div 
-            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[70vh] flex flex-col overflow-hidden desktop-search-modal ${useRightAlign ? 'ml-auto' : 'mx-auto'}`}
-            style={{
-              maxWidth: useRightAlign ? '100%' : '64rem' // max-w-4xl equivalent
-            }}
+            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${useRightAlign ? 'ml-auto' : 'mx-auto'}`}
+                          style={{
+                maxWidth: useRightAlign ? '100%' : '64rem', // max-w-4xl equivalent
+                // Dynamic height calculation for smaller screens
+                maxHeight: viewportDimensions.height <= 600 ? 'calc(100vh - 4rem)' : '70vh'
+              }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
@@ -556,19 +558,21 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               {/* 滾動內容 */}
               <div 
                 ref={scrollContainerRef}
-                className="h-full max-h-[500px] overflow-y-auto scrollbar-hide"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
-                }}
-              >
-                {loading ? (
-                  <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                    <p className="text-muted-foreground">{t('common.loading')}</p>
-                  </div>
-                ) : (
-                  <div className="p-4 space-y-6">
+                className="h-full overflow-y-auto scrollbar-hide"
+                                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    // Dynamic max height for desktop responsive behavior
+                                        maxHeight: viewportDimensions.height <= 600 ? 'calc(100vh - 8rem)' : '500px'
+                  }}
+                >
+                  {loading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                      <p className="text-muted-foreground">{t('common.loading')}</p>
+                    </div>
+                  ) : (
+                    <div className="p-4 pb-8 space-y-6">
                     {/* 搜尋結果 */}
                     {searchQuery.trim() && (
                       <div className="space-y-6">
@@ -1028,7 +1032,16 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           }}
         >
           <div 
-            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[80vh] flex flex-col overflow-hidden"
+            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
+            style={{
+              // Dynamic height calculation for different device types in landscape
+              maxHeight: viewportDimensions.height <= 500 
+                ? (viewportDimensions.height <= 450 
+                    ? 'calc(100vh - 4rem)' // Mobile phones in landscape (more conservative)
+                    : 'calc(100vh - 2rem)' // Tablets in landscape
+                  )
+                : '80vh' // Portrait mode
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
@@ -1123,11 +1136,18 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               {/* 滾動內容 */}
               <div 
                 ref={scrollContainerRef}
-                className="h-full max-h-[65vh] overflow-y-auto scrollbar-hide"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
-                }}
+                className="h-full overflow-y-auto scrollbar-hide"
+                                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    // Dynamic max height based on device type and orientation
+                    maxHeight: viewportDimensions.height <= 500 
+                      ? (viewportDimensions.height <= 450 
+                          ? 'calc(100vh - 10rem)' // Mobile phones in landscape (more conservative)
+                          : 'calc(100vh - 7rem)'  // Tablets in landscape  
+                        )
+                      : '65vh' // Portrait mode
+                  }}
               >
                 {loading ? (
                   <div className="h-full flex flex-col items-center justify-center">
@@ -1135,7 +1155,13 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <p className="mt-2 text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
                   </div>
                 ) : (
-                  <div className="p-4 space-y-6">
+                  <div 
+                    className="p-4 space-y-6"
+                    style={{
+                      // Extra bottom padding to simulate additional items
+                      paddingBottom: viewportDimensions.height <= 450 ? '12rem' : '16rem'
+                    }}
+                  >
                     {/* 搜尋結果 */}
                     {searchQuery.trim() && (
                       <div className="space-y-6">
