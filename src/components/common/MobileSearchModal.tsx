@@ -461,8 +461,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${useRightAlign ? 'ml-auto' : 'mx-auto'}`}
                           style={{
                 maxWidth: useRightAlign ? '100%' : '64rem', // max-w-4xl equivalent
-                // Dynamic height calculation for smaller screens
-                maxHeight: viewportDimensions.height <= 600 ? 'calc(100vh - 4rem)' : '70vh'
+                // Fixed height to prevent jumping between loading and loaded states
+                height: viewportDimensions.height <= 600 ? 'calc(100vh - 4rem)' : '70vh'
               }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -567,7 +567,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   }}
                 >
                   {loading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                    <div className="flex-1 flex flex-col items-center justify-center">
                       <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
                       <p className="text-muted-foreground">{t('common.loading')}</p>
                     </div>
@@ -1034,8 +1034,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           <div 
             className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
             style={{
-              // Dynamic height calculation for different device types in landscape
-              maxHeight: viewportDimensions.height <= 500 
+              // Fixed height to prevent jumping between loading and loaded states
+              height: viewportDimensions.height <= 500 
                 ? (viewportDimensions.height <= 450 
                     ? 'calc(100vh - 4rem)' // Mobile phones in landscape (more conservative)
                     : 'calc(100vh - 2rem)' // Tablets in landscape
