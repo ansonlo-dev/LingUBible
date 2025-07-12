@@ -4,7 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
-import { getCourseTitle, getInstructorName, translateDepartmentName } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
@@ -210,20 +210,37 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       
       const loadData = async () => {
         try {
-          // 載入熱門課程和講師以及所有數據用於搜索，還有最佳課程和講師
-          const [coursesData, instructorsData, allCoursesData, allInstructorsData, topCoursesData, topInstructorsData] = await Promise.all([
-            CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
-            CourseService.getPopularInstructorsWithDetailedStats(20), // 獲取前20個熱門講師，提供更多建議選項
+          // 採用分階段載入減少API併發壓力
+          // 第一階段：載入搜索必須的基礎數據
+          const [allCoursesData, allInstructorsData] = await Promise.all([
             CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
             CourseService.getAllInstructorsWithDetailedStats(), // 獲取所有講師用於搜索
-            CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
-            CourseService.getTopInstructorsByGPA(20) // 獲取前20個最佳講師，提供更多建議選項
+          ]);
+          
+          setAllCourses(allCoursesData);
+          setAllInstructors(allInstructorsData);
+          
+          // 短暫延遲避免API過載
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // 第二階段：載入熱門項目（用戶經常訪問）
+          const [coursesData, instructorsData] = await Promise.all([
+            CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
+            CourseService.getPopularInstructorsWithDetailedStats(20), // 獲取前20個熱門講師，提供更多建議選項
           ]);
           
           setPopularCourses(coursesData);
           setPopularInstructors(instructorsData);
-          setAllCourses(allCoursesData);
-          setAllInstructors(allInstructorsData);
+          
+          // 短暫延遲避免API過載
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // 第三階段：載入最佳項目（較少使用的標籤）
+          const [topCoursesData, topInstructorsData] = await Promise.all([
+            CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
+            CourseService.getTopInstructorsByGPA(20) // 獲取前20個最佳教師，提供更多建議選項
+          ]);
+          
           setTopCourses(topCoursesData);
           setTopInstructors(topInstructorsData);
         } catch (error) {
@@ -614,6 +631,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === course.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
@@ -665,6 +706,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                           {departmentName}
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-wrap mt-1">
+                                          {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === instructor.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -756,6 +823,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === course.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -832,6 +923,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === instructor.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -911,6 +1026,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === course.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -935,7 +1074,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           </div>
                         )}
 
-                        {/* 最佳講師 - Only show when topInstructors tab is active */}
+                        {/* 最佳教師 - Only show when topInstructors tab is active */}
                         {activeTab === 'topInstructors' && (
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
@@ -987,6 +1126,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === instructor.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -1203,6 +1366,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === course.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
@@ -1254,6 +1441,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                           {departmentName}
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-wrap mt-1">
+                                          {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === instructor.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -1325,7 +1538,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：課程代碼 */}
-                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                        <div className="font-bold text-gray-900 dark:text-white font-mono">
                                           {course.course_code}
                                         </div>
                                         {/* 第2行：課程名稱 */}
@@ -1345,6 +1558,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === course.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -1421,6 +1658,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === instructor.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -1480,7 +1741,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：課程代碼 */}
-                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                        <div className="font-bold text-gray-900 dark:text-white font-mono">
                                           {course.course_code}
                                         </div>
                                         {/* 第2行：課程名稱 */}
@@ -1500,6 +1761,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === course.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -1524,7 +1809,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           </div>
                         )}
 
-                        {/* 最佳講師 - Only show when topInstructors tab is active */}
+                        {/* 最佳教師 - Only show when topInstructors tab is active */}
                         {activeTab === 'topInstructors' && (
                           <div>
                             <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
@@ -1576,6 +1861,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
+                                          {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <div className="flex items-center">
+                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                  <span 
+                                                    key={code}
+                                                    className={`${
+                                                      index === 0 
+                                                        ? 'pr-1' 
+                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
+                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
+                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                    }`}
+                                                  >
+                                                    {code === instructor.currentTermTeachingLanguage ? (
+                                                      <strong>{code}</strong>
+                                                    ) : (
+                                                      code
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">

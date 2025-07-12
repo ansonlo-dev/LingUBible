@@ -89,6 +89,7 @@ export interface CourseTeachingInfo {
   term: Term;
   instructor: Instructor;
   sessionType: string;
+  teachingLanguage: string; // Teaching language code from teaching records
 }
 
 export interface Review {
@@ -224,6 +225,379 @@ export class CourseService {
    */
   static clearCache(): void {
     this.cache.clear();
+  }
+
+  /**
+   * 🚀 OPTIMIZATION: 高效統計方法 - 只計算數量，不載入完整數據
+   * 專為主頁統計設計，避免載入大量不必要的數據
+   */
+  
+  // 快速計算有評論的課程數量（不載入完整課程數據）
+  static async getCoursesWithReviewsCount(): Promise<number> {
+    const cacheKey = 'coursesWithReviewsCount';
+    const cached = this.getCached<number>(cacheKey);
+    if (cached !== null) return cached;
+
+    try {
+      // 獲取所有評論的課程代碼
+      const reviews = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.orderDesc('$createdAt'),
+          Query.limit(2000),
+          Query.select(['course_code'])
+        ]
+      );
+
+      // 統計唯一課程數量
+      const uniqueCourses = new Set(reviews.documents.map((review: any) => review.course_code));
+      const count = uniqueCourses.size;
+
+      this.setCached(cacheKey, count, 5 * 60 * 1000); // 5分鐘緩存
+      return count;
+    } catch (error) {
+      console.error('Error getting courses with reviews count:', error);
+      return 0;
+    }
+  }
+
+  // 快速計算有評論的講師數量（不載入完整講師數據）
+  static async getInstructorsWithReviewsCount(): Promise<number> {
+    const cacheKey = 'instructorsWithReviewsCount';
+    const cached = this.getCached<number>(cacheKey);
+    if (cached !== null) return cached;
+
+    try {
+      // 獲取所有評論的講師詳情
+      const reviews = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.orderDesc('$createdAt'),
+          Query.limit(2000),
+          Query.select(['instructor_details'])
+        ]
+      );
+
+      // 統計唯一講師數量
+      const uniqueInstructors = new Set<string>();
+      reviews.documents.forEach((review: any) => {
+        try {
+          const instructorDetails = JSON.parse(review.instructor_details);
+          instructorDetails.forEach((detail: any) => {
+            uniqueInstructors.add(detail.instructor_name);
+          });
+        } catch (error) {
+          // 忽略解析錯誤
+        }
+      });
+
+      const count = uniqueInstructors.size;
+      this.setCached(cacheKey, count, 5 * 60 * 1000); // 5分鐘緩存
+      return count;
+    } catch (error) {
+      console.error('Error getting instructors with reviews count:', error);
+      return 0;
+    }
+  }
+
+  // 快速計算評論總數
+  static async getReviewsCount(): Promise<number> {
+    const cacheKey = 'reviewsCount';
+    const cached = this.getCached<number>(cacheKey);
+    if (cached !== null) return cached;
+
+    try {
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.limit(1), // 只需要獲取總數，不需要實際文檔
+          Query.select(['$id'])
+        ]
+      );
+
+      const count = response.total;
+      this.setCached(cacheKey, count, 2 * 60 * 1000); // 2分鐘緩存
+      return count;
+    } catch (error) {
+      console.error('Error getting reviews count:', error);
+      return 0;
+    }
+  }
+
+  // 快速計算30天內的統計變化
+  static async getRecentActivityStats(): Promise<{
+    reviewsLast30Days: number;
+    coursesWithReviewsLast30Days: number;
+    instructorsWithReviewsLast30Days: number;
+  }> {
+    const cacheKey = 'recentActivityStats';
+    const cached = this.getCached<{
+      reviewsLast30Days: number;
+      coursesWithReviewsLast30Days: number;
+      instructorsWithReviewsLast30Days: number;
+    }>(cacheKey);
+    if (cached !== null) return cached;
+
+    try {
+      // 計算30天前的日期
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+
+      // 獲取過去30天的評論
+      const recentReviews = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.greaterThan('$createdAt', thirtyDaysAgoISO),
+          Query.orderDesc('$createdAt'),
+          Query.limit(1000),
+          Query.select(['course_code', 'instructor_details'])
+        ]
+      );
+
+      const reviewsLast30Days = recentReviews.documents.length;
+
+      // 計算30天內新增有評論的課程
+      const coursesWithReviewsInLast30Days = new Set<string>();
+      const instructorsWithReviewsInLast30Days = new Set<string>();
+
+      recentReviews.documents.forEach((review: any) => {
+        coursesWithReviewsInLast30Days.add(review.course_code);
+        
+        try {
+          const instructorDetails = JSON.parse(review.instructor_details);
+          instructorDetails.forEach((detail: any) => {
+            instructorsWithReviewsInLast30Days.add(detail.instructor_name);
+          });
+        } catch (error) {
+          // 忽略解析錯誤
+        }
+      });
+
+      const result = {
+        reviewsLast30Days,
+        coursesWithReviewsLast30Days: coursesWithReviewsInLast30Days.size,
+        instructorsWithReviewsLast30Days: instructorsWithReviewsInLast30Days.size
+      };
+
+      this.setCached(cacheKey, result, 5 * 60 * 1000); // 5分鐘緩存
+      return result;
+    } catch (error) {
+      console.error('Error getting recent activity stats:', error);
+      return {
+        reviewsLast30Days: 0,
+        coursesWithReviewsLast30Days: 0,
+        instructorsWithReviewsLast30Days: 0
+      };
+    }
+  }
+
+  // 批量獲取主頁統計（最優化）
+  static async getMainPageStatsOptimized(): Promise<{
+    coursesWithReviewsCount: number;
+    instructorsWithReviewsCount: number;
+    instructorsCount: number;
+    reviewsCount: number;
+    reviewsLast30Days: number;
+    coursesWithReviewsLast30Days: number;
+    instructorsWithReviewsLast30Days: number;
+  }> {
+    try {
+      // 並行執行所有統計查詢
+      const [
+        coursesWithReviewsCount,
+        instructorsWithReviewsCount,
+        instructorsCount,
+        reviewsCount,
+        recentActivityStats
+      ] = await Promise.all([
+        this.getCoursesWithReviewsCount(),
+        this.getInstructorsWithReviewsCount(),
+        this.getAllInstructors().then(instructors => instructors.length),
+        this.getReviewsCount(),
+        this.getRecentActivityStats()
+      ]);
+
+      return {
+        coursesWithReviewsCount,
+        instructorsWithReviewsCount,
+        instructorsCount,
+        reviewsCount,
+        ...recentActivityStats
+      };
+    } catch (error) {
+      console.error('Error getting optimized main page stats:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 🚀 OPTIMIZATION: 批量獲取收藏課程數據（避免個別API調用）
+   * 專為收藏頁面設計，一次性獲取所有收藏課程的完整信息
+   */
+  static async getBatchFavoriteCoursesData(courseCodes: string[]): Promise<Map<string, {
+    course: Course;
+    stats: {
+      reviewCount: number;
+      averageRating: number;
+      studentCount: number;
+      averageWorkload: number;
+      averageDifficulty: number;
+      averageUsefulness: number;
+      averageGPA: number;
+    };
+    teachingLanguages: string[];
+    currentTermTeachingLanguage: string | null;
+    isOfferedInCurrentTerm: boolean;
+  }>> {
+    if (courseCodes.length === 0) {
+      return new Map();
+    }
+
+    try {
+      // 並行獲取所有需要的數據
+      const [
+        courses,
+        statsMap,
+        teachingLanguagesMap,
+        currentTermLanguagesMap,
+        currentTermOfferedCourses
+      ] = await Promise.all([
+        // 獲取所有課程基本信息
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.COURSES_COLLECTION_ID,
+          [
+            Query.equal('course_code', courseCodes),
+            Query.limit(courseCodes.length),
+            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
+          ]
+        ),
+        // 獲取所有課程統計
+        this.getBatchCourseDetailedStats(courseCodes),
+        // 獲取教學語言
+        this.getBatchCourseTeachingLanguages(courseCodes),
+        // 獲取當前學期教學語言
+        this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
+        // 獲取當前學期開設狀態
+        this.getCoursesOfferedInTermBatch(getCurrentTermCode(), courseCodes)
+      ]);
+
+      const result = new Map();
+      const coursesArray = courses.documents as unknown as Course[];
+
+      coursesArray.forEach(course => {
+        const stats = statsMap.get(course.course_code) || {
+          reviewCount: 0,
+          averageRating: 0,
+          studentCount: 0,
+          averageWorkload: -1,
+          averageDifficulty: -1,
+          averageUsefulness: -1,
+          averageGPA: 0
+        };
+
+        result.set(course.course_code, {
+          course,
+          stats,
+          teachingLanguages: teachingLanguagesMap.get(course.course_code) || [],
+          currentTermTeachingLanguage: currentTermLanguagesMap.get(course.course_code) || null,
+          isOfferedInCurrentTerm: currentTermOfferedCourses.has(course.course_code)
+        });
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error getting batch favorite courses data:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * 🚀 OPTIMIZATION: 批量獲取收藏講師數據（避免個別API調用）
+   * 專為收藏頁面設計，一次性獲取所有收藏講師的完整信息
+   */
+  static async getBatchFavoriteInstructorsData(instructorNames: string[]): Promise<Map<string, {
+    instructor: Instructor;
+    stats: {
+      reviewCount: number;
+      teachingScore: number;
+      gradingFairness: number;
+      averageGPA: number;
+    };
+    teachingLanguages: string[];
+    currentTermTeachingLanguage: string | null;
+    isTeachingInCurrentTerm: boolean;
+  }>> {
+    if (instructorNames.length === 0) {
+      return new Map();
+    }
+
+    try {
+      // 並行獲取所有需要的數據
+      const [
+        instructors,
+        statsMap,
+        instructorsWithGPA,
+        teachingLanguagesMap,
+        currentTermLanguagesMap,
+        currentTermTeachingInstructors
+      ] = await Promise.all([
+        // 獲取所有講師基本信息
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.INSTRUCTORS_COLLECTION_ID,
+          [
+            Query.equal('name', instructorNames),
+            Query.limit(instructorNames.length),
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department'])
+          ]
+        ),
+        // 獲取講師詳細統計
+        this.getBatchInstructorDetailedStats(instructorNames),
+        // 獲取包含GPA的講師統計
+        this.getAllInstructorsWithDetailedStats().then(allInstructors => 
+          new Map(allInstructors.map(inst => [inst.name, inst.averageGPA]))
+        ),
+        // 獲取教學語言
+        this.getBatchInstructorTeachingLanguages(instructorNames),
+        // 獲取當前學期教學語言
+        this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames),
+        // 獲取當前學期教學狀態
+        this.getInstructorsTeachingInTermBatch(getCurrentTermCode(), instructorNames)
+      ]);
+
+      const result = new Map();
+      const instructorsArray = instructors.documents as unknown as Instructor[];
+
+      instructorsArray.forEach(instructor => {
+        const stats = statsMap.get(instructor.name) || {
+          reviewCount: 0,
+          teachingScore: 0,
+          gradingFairness: 0
+        };
+
+        result.set(instructor.name, {
+          instructor,
+          stats: {
+            ...stats,
+            averageGPA: instructorsWithGPA.get(instructor.name) || 0
+          },
+          teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
+          currentTermTeachingLanguage: currentTermLanguagesMap.get(instructor.name) || null,
+          isTeachingInCurrentTerm: currentTermTeachingInstructors.has(instructor.name)
+        });
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error getting batch favorite instructors data:', error);
+      return new Map();
+    }
   }
 
   /**
@@ -710,7 +1084,8 @@ export class CourseService {
           return {
             term,
             instructor,
-            sessionType: record.session_type
+            sessionType: record.session_type,
+            teachingLanguage: record.teaching_language
           };
         })
       );
@@ -1585,10 +1960,43 @@ export class CourseService {
           }
           // 教學評分相同時按評論數排序
           return b.reviewCount - a.reviewCount;
-        })
-        .slice(0, limit); // 限制數量
+        });
 
-      return instructorsWithDetailedStats;
+      // 獲取教學語言數據（帶錯誤處理的優雅降級）
+      const instructorNames = instructorsWithDetailedStats.map(instructor => instructor.name);
+      let teachingLanguagesMap = new Map<string, string[]>();
+      let currentTermTeachingLanguagesMap = new Map<string, string | null>();
+
+      try {
+        // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
+        const [languagesResult, currentTermResult] = await Promise.allSettled([
+          this.getBatchInstructorTeachingLanguages(instructorNames),
+          this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
+        ]);
+
+        if (languagesResult.status === 'fulfilled') {
+          teachingLanguagesMap = languagesResult.value;
+        } else {
+          console.warn('Failed to fetch instructor teaching languages, continuing without language badges:', languagesResult.reason);
+        }
+
+        if (currentTermResult.status === 'fulfilled') {
+          currentTermTeachingLanguagesMap = currentTermResult.value;
+        } else {
+          console.warn('Failed to fetch current term teaching languages, continuing without current term language:', currentTermResult.reason);
+        }
+      } catch (error) {
+        console.warn('Error fetching teaching language data for popular instructors, continuing without language badges:', error);
+      }
+
+      // 添加教學語言數據到結果中並限制數量
+      const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
+        ...instructor,
+        teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
+        currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
+      })).slice(0, limit); // 限制數量
+
+      return finalInstructorsWithDetailedStats;
     } catch (error) {
       console.error('Error fetching popular instructors with detailed stats:', error);
       throw new Error('Failed to fetch popular instructors with detailed statistics');
@@ -1737,12 +2145,32 @@ export class CourseService {
           };
         });
 
-      // 獲取所有講師的教學語言數據
+      // 獲取所有講師的教學語言數據（帶錯誤處理的優雅降級）
       const instructorNames = instructors.map(instructor => instructor.name);
-      const [teachingLanguagesMap, currentTermTeachingLanguagesMap] = await Promise.all([
-        this.getBatchInstructorTeachingLanguages(instructorNames),
-        this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
-      ]);
+      let teachingLanguagesMap = new Map<string, string[]>();
+      let currentTermTeachingLanguagesMap = new Map<string, string | null>();
+
+      try {
+        // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
+        const [languagesResult, currentTermResult] = await Promise.allSettled([
+          this.getBatchInstructorTeachingLanguages(instructorNames),
+          this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
+        ]);
+
+        if (languagesResult.status === 'fulfilled') {
+          teachingLanguagesMap = languagesResult.value;
+        } else {
+          console.warn('Failed to fetch all instructor teaching languages, continuing without language badges:', languagesResult.reason);
+        }
+
+        if (currentTermResult.status === 'fulfilled') {
+          currentTermTeachingLanguagesMap = currentTermResult.value;
+        } else {
+          console.warn('Failed to fetch all instructor current term teaching languages, continuing without current term language:', currentTermResult.reason);
+        }
+      } catch (error) {
+        console.warn('Error fetching teaching language data for all instructors, continuing without language badges:', error);
+      }
 
       // 添加教學語言數據到結果中
       const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
@@ -1975,12 +2403,32 @@ export class CourseService {
         });
       }
 
-      // 獲取所有課程的教學語言數據
+      // 獲取所有課程的教學語言數據（帶錯誤處理的優雅降級）
       const courseCodes = courses.map(course => course.course_code);
-      const [teachingLanguagesMap, currentTermTeachingLanguagesMap] = await Promise.all([
-        this.getBatchCourseTeachingLanguages(courseCodes),
-        this.getBatchCourseCurrentTermTeachingLanguages(courseCodes)
-      ]);
+      let teachingLanguagesMap = new Map<string, string[]>();
+      let currentTermTeachingLanguagesMap = new Map<string, string | null>();
+
+      try {
+        // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
+        const [languagesResult, currentTermResult] = await Promise.allSettled([
+          this.getBatchCourseTeachingLanguages(courseCodes),
+          this.getBatchCourseCurrentTermTeachingLanguages(courseCodes)
+        ]);
+
+        if (languagesResult.status === 'fulfilled') {
+          teachingLanguagesMap = languagesResult.value;
+        } else {
+          console.warn('Failed to fetch course teaching languages, continuing without language badges:', languagesResult.reason);
+        }
+
+        if (currentTermResult.status === 'fulfilled') {
+          currentTermTeachingLanguagesMap = currentTermResult.value;
+        } else {
+          console.warn('Failed to fetch course current term teaching languages, continuing without current term language:', currentTermResult.reason);
+        }
+      } catch (error) {
+        console.warn('Error fetching teaching language data for courses, continuing without language badges:', error);
+      }
 
       // 組合課程和統計信息（使用 map 一次性處理）
       const coursesWithStats: CourseWithStats[] = courses.map(course => {
@@ -3278,7 +3726,8 @@ export class CourseService {
           return {
             term,
             instructor,
-            sessionType: record.session_type
+            sessionType: record.session_type,
+            teachingLanguage: record.teaching_language
           };
         })
         .filter((info): info is NonNullable<typeof info> => info !== null)

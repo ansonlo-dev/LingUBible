@@ -9,6 +9,68 @@ export function BackToTop() {
   const [isBottomVisible, setIsBottomVisible] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 檢測設備類型和方向以決定按鈕位置
+  const getButtonPosition = () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isLandscape = width > height;
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const aspectRatio = width / height;
+    
+    // 判斷是否應該使用"靠近邊緣"的定位
+    // 條件：觸摸設備在橫屏模式，或者寬高比很大的橫屏，或者明確的手機尺寸
+    const shouldUseClosePositioning = 
+      width < 768 || // 明確的手機尺寸
+      (isTouchDevice && isLandscape) || // 觸摸設備橫屏
+      (isLandscape && aspectRatio > 1.5 && width < 1200); // 明顯的橫屏比例但不是大螢幕
+    
+    if (shouldUseClosePositioning) {
+      return {
+        right: '8px',
+        bottomButton: '8px',
+        topButton: '40px' // 8px + 32px height
+      };
+    } else {
+      // 桌面或大螢幕 - 增加底部間距避免擋住頁腳
+      return {
+        right: '32px',
+        bottomButton: '100px', // 從 64px 增加到 100px
+        topButton: '132px' // 從 96px 增加到 132px (100px + 32px height)
+      };
+    }
+  };
+
+  const [buttonPosition, setButtonPosition] = useState(() => getButtonPosition());
+
+  // 更新按鈕位置的函數
+  const updateButtonPosition = () => {
+    const newPosition = getButtonPosition();
+    setButtonPosition(newPosition);
+  };
+
+  // 監聽視窗變化和方向變化
+  useEffect(() => {
+    const handleResize = () => {
+      updateButtonPosition();
+    };
+
+    const handleOrientationChange = () => {
+      // 方向變化時稍微延遲，等待瀏覽器完成佈局調整
+      setTimeout(updateButtonPosition, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // 初始更新
+    updateButtonPosition();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
   useEffect(() => {
     let mounted = true;
 
@@ -282,7 +344,7 @@ export function BackToTop() {
 
   const buttonBaseStyle = {
     position: 'fixed' as const,
-    right: window.innerWidth >= 768 ? '32px' : '8px',
+    right: buttonPosition.right,
     zIndex: 40,
     width: '40px',
     height: '32px',
@@ -334,7 +396,7 @@ export function BackToTop() {
         size="icon"
         style={{
           ...topButtonStyle,
-          bottom: window.innerWidth >= 768 ? '96px' : '40px', // Position directly above scroll-to-bottom button (64+32=96, 8+32=40)
+          bottom: buttonPosition.topButton, // Position directly above scroll-to-bottom button (64+32=96, 8+32=40)
           transform: 'translateY(0px) scale(1)',
           pointerEvents: 'auto'
         }}
@@ -350,7 +412,7 @@ export function BackToTop() {
         size="icon"
         style={{
           ...bottomButtonStyle,
-          bottom: window.innerWidth >= 768 ? '64px' : '8px',
+          bottom: buttonPosition.bottomButton,
           transform: 'translateY(0px) scale(1)',
           pointerEvents: 'auto'
         }}

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { 
   BookOpen, 
@@ -50,7 +51,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CourseService, Course, Term, Review, TeachingRecord, InstructorDetail } from '@/services/api/courseService';
+import { CourseService, Course, Term, Review, TeachingRecord, InstructorDetail, Instructor } from '@/services/api/courseService';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { WordCounter } from '@/components/ui/word-counter';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
@@ -58,6 +59,10 @@ import { validateWordCount } from '@/utils/textUtils';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
+import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
+import { getTeachingLanguageName } from '@/utils/textUtils';
+import { getInstructorName } from '@/utils/textUtils';
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
@@ -372,7 +377,7 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
 };
 
 const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSubmissionFormProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -388,6 +393,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [courses, setCourses] = useState<Course[]>([]);
   const [terms, setTerms] = useState<Term[]>([]);
   const [availableInstructors, setAvailableInstructors] = useState<TeachingRecord[]>([]);
+  const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
 
   // Form states
   const [selectedCourse, setSelectedCourse] = useState<string>('');
@@ -425,11 +431,80 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [teachingPhrasesExpanded, setTeachingPhrasesExpanded] = useState<{[key: number]: boolean}>({});
   const [courseActiveTab, setCourseActiveTab] = useState<string>('content');
   const [teachingActiveTabs, setTeachingActiveTabs] = useState<{[key: number]: string}>({});
+  
+  // Instructor selection tab state
+  const [activeInstructorTab, setActiveInstructorTab] = useState<string>('Lecture');
 
   // Textarea refs for formatting
   const courseCommentsRef = useRef<HTMLTextAreaElement>(null);
   const teachingCommentsRefs = useRef<{[key: number]: HTMLTextAreaElement | null}>({});
   const serviceLearningRef = useRef<HTMLTextAreaElement>(null);
+
+  // Teaching languages hook for preview (selected instructors)
+  const allInstructorDetails = useMemo(() => {
+    return instructorEvaluations.map(instructorEval => ({
+      instructor_name: instructorEval.instructorName,
+      session_type: instructorEval.sessionType,
+      teaching: instructorEval.teachingScore,
+      grading: instructorEval.gradingScore,
+      comments: instructorEval.comments,
+      has_midterm: instructorEval.hasMidterm,
+      has_final: instructorEval.hasFinal,
+      has_quiz: instructorEval.hasQuiz,
+      has_group_project: instructorEval.hasGroupProject,
+      has_individual_assignment: instructorEval.hasIndividualAssignment,
+      has_presentation: instructorEval.hasPresentation,
+      has_reading: instructorEval.hasReading,
+      has_attendance_requirement: instructorEval.hasAttendanceRequirement,
+      has_service_learning: instructorEval.hasServiceLearning,
+      service_learning_type: instructorEval.serviceLearningType,
+      service_learning_description: instructorEval.serviceLearningDescription
+    }));
+  }, [instructorEvaluations]);
+
+  // Teaching languages hook for all available instructors (for selection UI)
+  const allAvailableInstructorDetails = useMemo(() => {
+    return availableInstructors.map(instructor => ({
+      instructor_name: instructor.instructor_name,
+      session_type: instructor.session_type,
+      teaching: null,
+      grading: null,
+      comments: '',
+      has_midterm: false,
+      has_final: false,
+      has_quiz: false,
+      has_group_project: false,
+      has_individual_assignment: false,
+      has_presentation: false,
+      has_reading: false,
+      has_attendance_requirement: false,
+      has_service_learning: false,
+      service_learning_type: 'compulsory' as const,
+      service_learning_description: ''
+    }));
+  }, [availableInstructors]);
+
+  // Use teaching languages hook for preview (selected instructors)
+  const { 
+    teachingLanguages: previewTeachingLanguages, 
+    loading: teachingLanguagesLoading, 
+    getTeachingLanguageForInstructor: getPreviewTeachingLanguageForInstructor 
+  } = useInstructorDetailTeachingLanguages({
+    instructorDetails: allInstructorDetails,
+    courseCode: selectedCourse,
+    termCode: selectedTerm
+  });
+
+  // Use teaching languages hook for all available instructors (for selection UI)
+  const { 
+    teachingLanguages: availableTeachingLanguages, 
+    loading: availableTeachingLanguagesLoading, 
+    getTeachingLanguageForInstructor: getAvailableTeachingLanguageForInstructor 
+  } = useInstructorDetailTeachingLanguages({
+    instructorDetails: allAvailableInstructorDetails,
+    courseCode: selectedCourse,
+    termCode: selectedTerm
+  });
 
   // Formatting functions
   const applyFormatting = (textareaRef: React.RefObject<HTMLTextAreaElement>, setValue: (value: string) => void, formatType: string) => {
@@ -1429,6 +1504,29 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }
   }, [isPopulatingEditData, selectedInstructors, instructorEvaluations]);
 
+  // Dynamically set the default tab based on available instructor types
+  useEffect(() => {
+    if (availableInstructors.length > 0) {
+      const lectureInstructors = availableInstructors.filter(record => record.session_type === 'Lecture');
+      const tutorialInstructors = availableInstructors.filter(record => record.session_type === 'Tutorial');
+      
+      const hasLectureInstructors = lectureInstructors.length > 0;
+      const hasTutorialInstructors = tutorialInstructors.length > 0;
+      
+      // Set appropriate default tab based on availability
+      if (hasLectureInstructors && !hasTutorialInstructors) {
+        setActiveInstructorTab('Lecture');
+      } else if (!hasLectureInstructors && hasTutorialInstructors) {
+        setActiveInstructorTab('Tutorial');
+      } else if (hasLectureInstructors && hasTutorialInstructors) {
+        // Both available, keep current tab if valid, otherwise default to Lecture
+        if (activeInstructorTab !== 'Lecture' && activeInstructorTab !== 'Tutorial') {
+          setActiveInstructorTab('Lecture');
+        }
+      }
+    }
+  }, [availableInstructors, activeInstructorTab]);
+
   // Auto-fill service learning data after edit mode population is complete
   useEffect(() => {
     // Only run this effect for edit mode after initial data population is complete
@@ -1579,6 +1677,37 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
     checkReviewEligibility();
   }, [selectedCourse, user?.$id, isEditMode]);
+
+  // Load instructor information for preview display
+  useEffect(() => {
+    const fetchInstructorsInfo = async () => {
+      if (instructorEvaluations.length === 0) return;
+      
+      const instructorNames = new Set<string>();
+      instructorEvaluations.forEach(evaluation => {
+        instructorNames.add(evaluation.instructorName);
+      });
+
+      const newInstructorsMap = new Map<string, Instructor>();
+      
+      // 並行獲取所有講師信息
+      const promises = Array.from(instructorNames).map(async (name) => {
+        try {
+          const instructor = await CourseService.getInstructorByName(name);
+          if (instructor) {
+            newInstructorsMap.set(name, instructor);
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch instructor info for ${name}:`, error);
+        }
+      });
+
+      await Promise.all(promises);
+      setInstructorsMap(newInstructorsMap);
+    };
+
+    fetchInstructorsInfo();
+  }, [instructorEvaluations]);
 
   const handleInstructorToggle = (instructorKey: string) => {
     setSelectedInstructors(prev => 
@@ -2095,25 +2224,62 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                   window.open(url, '_blank');
                                 }
                               }}
-                              className="text-primary px-2 py-1 rounded-md inline-block hover:bg-red-500/20 transition-all duration-200 focus:outline-none focus:bg-red-500/20"
+                              className="text-primary px-2 py-1 rounded-md inline-block hover:bg-primary/10 hover:text-primary transition-colors no-underline focus:outline-none focus:bg-primary/10"
                             >
-                              {instructor.instructorName}
+                              {(() => {
+                                const fullInstructor = instructorsMap.get(instructor.instructorName);
+                                if (fullInstructor) {
+                                  const nameInfo = getInstructorName(fullInstructor, language);
+                                  return (
+                                                                        <div className="text-left">
+                                      <div className="font-bold">{nameInfo.primary}</div>
+                                      {nameInfo.secondary && (
+                                        <div className="text-sm text-muted-foreground font-normal mt-0.5 text-left">
+                                          {nameInfo.secondary}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="font-bold text-left">{instructor.instructorName}</div>
+                                );
+                              })()}
                             </button>
                           </h4>
                         </div>
-                        <div className="shrink-0 flex items-start pt-1">
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-sm ${
+                        <div className="shrink-0 flex items-start gap-2 pt-1">
+                                    {/* 教學語言徽章 */}
+          {(() => {
+            const teachingLanguage = getPreviewTeachingLanguageForInstructor(
+              instructor.instructorName,
+              instructor.sessionType
+            );
+                            if (teachingLanguage) {
+                              return (
+                                <span 
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
+                                  title={getTeachingLanguageName(teachingLanguage, t)}
+                                >
+                                  {getTeachingLanguageName(teachingLanguage, t)}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                          
+                          {/* 課堂類型徽章 */}
+                          <span 
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
                               instructor.sessionType === 'Lecture' 
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
                                 : instructor.sessionType === 'Tutorial'
-                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                                ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
                                 : ''
                             }`}
                           >
-                            {t(`sessionType.${instructor.sessionType.toLowerCase()}`)}
-                          </Badge>
+                            {t(`sessionTypeBadge.${instructor.sessionType.toLowerCase()}`)}
+                          </span>
                         </div>
                       </div>
                       
@@ -2194,17 +2360,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           </h5>
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <Badge 
-                                variant="outline" 
+                              <span 
                                 className={cn(
-                                  "text-xs",
+                                  "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                                   instructor.serviceLearningType === 'compulsory'
-                                    ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
-                                    : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                                    ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                    : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                                 )}
                               >
                                 {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
-                              </Badge>
+                              </span>
                             </div>
                             {instructor.serviceLearningDescription && (
                               <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
@@ -2279,14 +2444,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       </div>
 
       {/* Course Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            {t('review.courseInfo')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <CollapsibleSection
+        title={t('review.courseInfo')}
+        icon={<BookOpen className="h-5 w-5" />}
+        defaultExpanded={true}
+        className="course-card"
+        contentClassName="space-y-3"
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+      >
           {/* Course Selection - Desktop: inline, Mobile: stacked */}
           <div className="space-y-2 md:space-y-0">
             <div className="md:flex md:items-center md:gap-4">
@@ -2349,56 +2515,97 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   <div className="flex items-center justify-center h-10 px-3 border rounded-md text-center text-muted-foreground opacity-50 cursor-not-allowed">
                     {t('review.noInstructors')}
                   </div>
-                ) : (
-                  <div className="space-y-2 border rounded-md p-3">
-                    {availableInstructors
-                      .sort((a, b) => {
-                        // Sort by session type first, then by instructor name
-                        const typeOrder = { 'Lecture': 0, 'Tutorial': 1, 'Lab': 2, 'Seminar': 3 };
-                        const aTypeOrder = typeOrder[a.session_type as keyof typeof typeOrder] ?? 999;
-                        const bTypeOrder = typeOrder[b.session_type as keyof typeof typeOrder] ?? 999;
-                        
-                        if (aTypeOrder !== bTypeOrder) {
-                          return aTypeOrder - bTypeOrder;
-                        }
-                        
-                        // If same type, sort by instructor name alphabetically
-                        return a.instructor_name.localeCompare(b.instructor_name);
-                      })
-                      .map((record) => {
-                        const instructorKey = `${record.instructor_name}|${record.session_type}`;
-                        const isSelected = selectedInstructors.includes(instructorKey);
-                        
-                        // Debug logging
-                        if (editReviewId) {
-                          console.log(`🎯 Instructor ${instructorKey}: selected=${isSelected}, selectedInstructors=`, selectedInstructors);
-                        }
-                        
-                        return (
-                          <div key={instructorKey} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={instructorKey}
-                              checked={isSelected}
-                              onCheckedChange={() => handleInstructorToggle(instructorKey)}
-                            />
-                            <Label htmlFor={instructorKey} className="flex-1 cursor-pointer">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{record.instructor_name}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {record.session_type}
-                                </Badge>
-                              </div>
-                            </Label>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
+                ) : (() => {
+                  // Filter instructors by session type
+                  const lectureInstructors = availableInstructors.filter(record => record.session_type === 'Lecture');
+                  const tutorialInstructors = availableInstructors.filter(record => record.session_type === 'Tutorial');
+                  
+                  const hasLectureInstructors = lectureInstructors.length > 0;
+                  const hasTutorialInstructors = tutorialInstructors.length > 0;
+                  
+                  // Helper function to render instructor list
+                  const renderInstructorList = (instructors: typeof availableInstructors) => (
+                    <div className="space-y-2">
+                      {instructors
+                        .sort((a, b) => a.instructor_name.localeCompare(b.instructor_name))
+                        .map((record) => {
+                          const instructorKey = `${record.instructor_name}|${record.session_type}`;
+                          const isSelected = selectedInstructors.includes(instructorKey);
+                          
+                          // Get teaching language for this instructor
+                          const teachingLanguage = getAvailableTeachingLanguageForInstructor(record.instructor_name, record.session_type);
+                          
+                          return (
+                            <div key={instructorKey} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={instructorKey}
+                                checked={isSelected}
+                                onCheckedChange={() => handleInstructorToggle(instructorKey)}
+                              />
+                              <Label htmlFor={instructorKey} className="flex-1 cursor-pointer">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{record.instructor_name}</span>
+                                  {teachingLanguage && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800">
+                                      {getTeachingLanguageName(teachingLanguage, t)}
+                                    </span>
+                                  )}
+                                </div>
+                              </Label>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  );
+                  
+                  // If both types have instructors, show tabs
+                  if (hasLectureInstructors && hasTutorialInstructors) {
+                    return (
+                      <div className="border rounded-md p-3">
+                        <Tabs value={activeInstructorTab} onValueChange={setActiveInstructorTab}>
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="Lecture">
+                              {t('review.lectureInstructors')}
+                            </TabsTrigger>
+                            <TabsTrigger value="Tutorial">
+                              {t('review.tutorialInstructors')}
+                            </TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="Lecture" className="space-y-2 mt-3">
+                            {renderInstructorList(lectureInstructors)}
+                          </TabsContent>
+                          
+                          <TabsContent value="Tutorial" className="space-y-2 mt-3">
+                            {renderInstructorList(tutorialInstructors)}
+                          </TabsContent>
+                        </Tabs>
+                      </div>
+                    );
+                  }
+                  
+                  // If only one type has instructors, show without tabs
+                  if (hasLectureInstructors || hasTutorialInstructors) {
+                    const instructorsToShow = hasLectureInstructors ? lectureInstructors : tutorialInstructors;
+                    const sectionTitle = hasLectureInstructors ? t('review.lectureInstructors') : t('review.tutorialInstructors');
+                    
+                    return (
+                      <div className="border rounded-md p-3">
+                        <div className="mb-3">
+                          <h4 className="text-sm font-medium text-muted-foreground">{sectionTitle}</h4>
+                        </div>
+                        {renderInstructorList(instructorsToShow)}
+                      </div>
+                    );
+                  }
+                  
+                  // This should not happen since we already check availableInstructors.length === 0 above
+                  return null;
+                })()}
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </CollapsibleSection>
 
       {/* Review Eligibility Warning */}
       {!isEditMode && selectedCourse && (
@@ -2490,14 +2697,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       )}
 
       {/* Course Evaluation */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5" />
-            {t('review.courseReview')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <CollapsibleSection
+        title={t('review.courseReview')}
+        icon={<Star className="h-5 w-5" />}
+        defaultExpanded={true}
+        className="course-card"
+        contentClassName="space-y-2"
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+      >
           {/* Workload Rating */}
           <div className="space-y-1">
             {/* Description only shown on mobile, since desktop shows everything inline */}
@@ -2660,22 +2868,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           <div className="space-y-3">
             {/* Service learning is now handled per instructor, not at course level */}
           </div>
-        </CardContent>
-      </Card>
+      </CollapsibleSection>
 
       {/* Instructor Evaluations */}
       {instructorEvaluations.length > 0 && (
         <div className="space-y-4">
           {instructorEvaluations.map((evaluation, index) => (
-            <Card key={`${evaluation.instructorName}-${evaluation.sessionType}`}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  {t('review.instructorEvaluation')}: {evaluation.instructorName}
-                  <Badge variant="outline">{evaluation.sessionType}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
+            <CollapsibleSection
+              key={`${evaluation.instructorName}-${evaluation.sessionType}`}
+              title={
+                <div className="flex items-center gap-2">
+                  <span>{t('review.instructorEvaluation')}: {evaluation.instructorName}</span>
+                  <Badge variant="outline">
+                    {evaluation.sessionType === 'Tutorial' ? t('review.tutorial') : 
+                     evaluation.sessionType === 'Lecture' ? t('review.lecture') : 
+                     evaluation.sessionType}
+                  </Badge>
+                </div>
+              }
+              icon={<Users className="h-5 w-5" />}
+              defaultExpanded={true}
+              className="course-card"
+              contentClassName="space-y-2"
+              expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+              collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+            >
                 {/* Teaching Score */}
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
@@ -2733,17 +2950,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         </span>
                       </div>
                       {evaluation.hasServiceLearning && (
-                        <Badge 
-                          variant="outline" 
+                        <span 
                           className={cn(
-                            "text-xs",
+                            "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                             evaluation.serviceLearningType === 'compulsory'
-                              ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
-                              : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                              ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                              : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                           )}
                         >
                           {evaluation.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
-                        </Badge>
+                        </span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -2850,21 +3066,21 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </CollapsibleSection>
           ))}
         </div>
       )}
 
       {/* Submission Options */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            {t('review.submit')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <CollapsibleSection
+        title={t('review.submit')}
+        icon={<CheckCircle className="h-5 w-5" />}
+        defaultExpanded={true}
+        className="course-card"
+        contentClassName="space-y-3"
+        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
+        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
+      >
           <div className="space-y-3">
             {/* Review Language Selection */}
             <div className="space-y-3">
@@ -2971,8 +3187,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </CollapsibleSection>
     </div>
   );
 };

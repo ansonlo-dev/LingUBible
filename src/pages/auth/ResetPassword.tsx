@@ -258,8 +258,8 @@ export default function ResetPassword() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
               {/* 新密碼 */}
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.newPassword')}</Label>
+              <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                <Label htmlFor="password" className="md:w-32 md:flex-shrink-0 md:text-right">{t('auth.newPassword')}</Label>
                 <PasswordInput
                   id="password"
                   value={password}
@@ -267,37 +267,45 @@ export default function ResetPassword() {
                   placeholder={t('auth.newPasswordPlaceholder')}
                   disabled={isLoading}
                   required
+                  className="md:flex-1"
                 />
               </div>
 
               {/* 密碼強度檢查器 */}
               {password && (
-                <PasswordStrengthChecker
-                  password={password}
-                  onValidationChange={setIsPasswordValid}
-                />
+                <div className="flex flex-col md:flex-row md:space-x-4">
+                  <div className="md:w-32 md:flex-shrink-0"></div>
+                  <div className="md:flex-1">
+                    <PasswordStrengthChecker
+                      password={password}
+                      onValidationChange={setIsPasswordValid}
+                    />
+                  </div>
+                </div>
               )}
 
               {/* 確認密碼 */}
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-                <PasswordInput
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t('auth.confirmPasswordPlaceholder')}
-                  disabled={isLoading}
-                  required
-                />
-                
-                {/* 密碼不一致提示 */}
-                {confirmPassword && password !== confirmPassword && (
-                  <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-                    <AlertDescription className="text-red-600 dark:text-red-400">
-                      {t('auth.passwordMismatch')}
-                    </AlertDescription>
-                  </Alert>
-                )}
+              <div className="flex flex-col md:flex-row md:items-start space-y-2 md:space-y-0 md:space-x-4">
+                <Label htmlFor="confirmPassword" className="md:w-32 md:flex-shrink-0 md:text-right md:pt-2">{t('auth.confirmPassword')}</Label>
+                <div className="md:flex-1 space-y-2">
+                  <PasswordInput
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t('auth.confirmPasswordPlaceholder')}
+                    disabled={isLoading}
+                    required
+                  />
+                  
+                  {/* 密碼不一致提示 */}
+                  {confirmPassword && password !== confirmPassword && (
+                    <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                      <AlertDescription className="text-red-600 dark:text-red-400">
+                        {t('auth.passwordMismatch')}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
               </div>
 
               {error && (
@@ -309,7 +317,7 @@ export default function ResetPassword() {
                 </Alert>
               )}
 
-              <div className="text-xs text-muted-foreground space-y-1">
+              <div className="text-xs text-muted-foreground text-center mt-4 space-y-1">
                 <p>• {t('auth.passwordRequirements')}</p>
                 <p>• {t('auth.passwordSecurityTip')}</p>
               </div>

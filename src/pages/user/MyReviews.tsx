@@ -39,11 +39,12 @@ import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { cn } from '@/lib/utils';
 import { VotingButtons } from '@/components/ui/voting-buttons';
-import { getInstructorName, getCourseTitle } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, getTeachingLanguageName } from '@/utils/textUtils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MyReviewsFilters, MyReviewFilters } from '@/components/features/reviews/MyReviewsFilters';
 import { Pagination } from '@/components/features/reviews/Pagination';
+import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 
 
 interface UserReviewInfo extends CourseReviewInfo {
@@ -61,7 +62,7 @@ interface ReviewInfoWithInstructors extends CourseReviewInfo {
 
 // CourseTitle component for fetching and displaying course title
 const CourseTitle = React.memo(({ courseCode }: { courseCode: string }) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -84,7 +85,7 @@ const CourseTitle = React.memo(({ courseCode }: { courseCode: string }) => {
   if (loading) {
     return (
       <div>
-        <div className="text-sm text-muted-foreground font-normal">Loading...</div>
+        <div className="text-sm text-muted-foreground font-normal">{t('common.loading')}</div>
       </div>
     );
   }
@@ -134,6 +135,31 @@ const MyReviews = () => {
     sortOrder: 'desc',
     itemsPerPage: 2, // 只顯示2個評論（1行）
     currentPage: 1
+  });
+
+  // Teaching languages hook - collect all instructor details for teaching languages
+  const allInstructorDetails = useMemo(() => {
+    const details: InstructorDetail[] = [];
+    reviews.forEach(reviewInfo => {
+      details.push(...reviewInfo.instructorDetails);
+    });
+    return details;
+  }, [reviews]);
+
+  // Extract course code and term code for teaching languages hook
+  const firstReview = reviews[0];
+  const courseCode = firstReview?.review.course_code || '';
+  const termCode = firstReview?.term.term_code || '';
+
+  // Use teaching languages hook
+  const { 
+    teachingLanguages, 
+    loading: teachingLanguagesLoading, 
+    getTeachingLanguageForInstructor 
+  } = useInstructorDetailTeachingLanguages({
+    instructorDetails: allInstructorDetails,
+    courseCode,
+    termCode
   });
 
   useEffect(() => {
@@ -796,36 +822,107 @@ const MyReviews = () => {
                           // 從 instructorData 中獲取真實的講師信息
                           const instructor = reviewInfo.instructorData.get(instructorDetail.instructor_name);
                           
-                          // 如果有講師信息，使用 getInstructorName 獲取正確的名字顯示
-                          let displayName = instructorDetail.instructor_name;
-                          if (instructor) {
-                            const nameInfo = getInstructorName(instructor, language);
-                            displayName = nameInfo.secondary ? 
-                              `${nameInfo.primary} (${nameInfo.secondary})` : 
-                              nameInfo.primary;
-                          }
+                          // 獲取講師姓名信息用於分行顯示
+                          const nameInfo = instructor ? getInstructorName(instructor, language) : null;
 
                           return (
                             <div key={idx} className="p-4 bg-gray-200 dark:bg-[rgb(26,35,50)] rounded-lg">
-                                                              <div className="flex items-center justify-between gap-2 mb-4">
-                                <div className="font-medium cursor-pointer hover:text-primary transition-colors"
-                                     onClick={() => navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`)}
-                                >
-                                  {displayName}
+                                                              <div className="space-y-2 mb-3">
+                                {/* Instructor name and badges container */}
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
+                                  <div className="font-semibold text-lg min-w-0 md:flex-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`)}
+                                      className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+                                    >
+                                      {nameInfo ? (
+                                        <div className="text-left">
+                                          <div className="font-bold">{nameInfo.primary}</div>
+                                          {nameInfo.secondary && (
+                                            <div className="text-sm text-muted-foreground font-normal mt-0.5 text-left">
+                                              {nameInfo.secondary}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="font-bold text-left">{instructorDetail.instructor_name}</div>
+                                      )}
+                                    </button>
+                                  </div>
+                                  
+                                  {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
+                                  <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
+                                    {/* 教學語言徽章 */}
+                                    {(() => {
+                                      const teachingLanguage = getTeachingLanguageForInstructor(
+                                        instructorDetail.instructor_name,
+                                        instructorDetail.session_type
+                                      );
+                                      if (teachingLanguage) {
+                                        return (
+                                          <span 
+                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
+                                            title={getTeachingLanguageName(teachingLanguage, t)}
+                                          >
+                                            {getTeachingLanguageName(teachingLanguage, t)}
+                                          </span>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
+                                    
+                                    {/* 課堂類型徽章 */}
+                                    <span 
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                        instructorDetail.session_type === 'Lecture' 
+                                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                          : instructorDetail.session_type === 'Tutorial'
+                                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                          : ''
+                                      }`}
+                                      onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                    >
+                                      {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
+                                    </span>
+                                  </div>
                                 </div>
-                                <Badge 
-                                  variant="secondary" 
-                                  className={`text-sm cursor-pointer transition-all duration-200 hover:scale-105 ${
-                                    instructorDetail.session_type === 'Lecture' 
-                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                                      : instructorDetail.session_type === 'Tutorial'
-                                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
-                                      : ''
-                                  }`}
-                                  onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
-                                >
-                                  {t(`sessionType.${instructorDetail.session_type.toLowerCase()}`)}
-                                </Badge>
+                                
+                                {/* Mobile: Badges on separate lines below instructor name */}
+                                <div className="flex md:hidden flex-wrap items-center gap-2">
+                                  {/* 教學語言徽章 */}
+                                  {(() => {
+                                    const teachingLanguage = getTeachingLanguageForInstructor(
+                                      instructorDetail.instructor_name,
+                                      instructorDetail.session_type
+                                    );
+                                    if (teachingLanguage) {
+                                      return (
+                                        <span 
+                                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
+                                          title={getTeachingLanguageName(teachingLanguage, t)}
+                                        >
+                                          {getTeachingLanguageName(teachingLanguage, t)}
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                  
+                                  {/* 課堂類型徽章 */}
+                                  <span 
+                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                      instructorDetail.session_type === 'Lecture' 
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                        : instructorDetail.session_type === 'Tutorial'
+                                        ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                        : ''
+                                    }`}
+                                    onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                  >
+                                    {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
+                                  </span>
+                                </div>
                               </div>
                               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                                 <div className="text-center">
@@ -867,20 +964,19 @@ const MyReviews = () => {
                                     <span>{t('review.serviceLearning')}</span>
                                   </h5>
                                   <div className="space-y-2">
-                                    <Badge 
-                                      variant="outline" 
+                                    <span 
                                       className={cn(
-                                        "text-xs",
+                                        "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                                         instructorDetail.service_learning_type === 'compulsory'
-                                          ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
-                                          : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                                          ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                          : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                                       )}
                                     >
                                       {instructorDetail.service_learning_type === 'compulsory' 
                                         ? t('review.compulsory') 
                                         : t('review.optional')
                                       }
-                                    </Badge>
+                                    </span>
                                     {instructorDetail.service_learning_description && (
                                       <div className="text-xs text-muted-foreground break-words">
                                         {hasMarkdownFormatting(instructorDetail.service_learning_description) ? 

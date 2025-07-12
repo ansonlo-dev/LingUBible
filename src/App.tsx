@@ -676,6 +676,7 @@ const RouterContent = ({
                 
                 {/* Footer */}
                 <Footer />
+                <BackToTop />
               </div>
             </div>
           } 
@@ -722,7 +723,6 @@ const App = () => {
           <RecaptchaProvider>
             <AuthProvider>
               <AppContent />
-              <BackToTop />
               <Toaster />
               <CookieConsent />
               {/* <DevModeIndicator /> */}

@@ -436,41 +436,46 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                     <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                       {/* Faculty Badge */}
                       {getFacultyByDepartment(props.department) && (
-                        <Badge 
-                          variant="outline"
-                          className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
-                        >
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0">
                           {t(getFacultyByDepartment(props.department))}
-                        </Badge>
+                        </span>
                       )}
                       {/* Department Badge */}
-                      <Badge 
-                        variant="outline"
-                        className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit max-w-full"
-                      >
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
                         <span className="break-words hyphens-auto">
                           {translateDepartmentName(props.department, t)}
                         </span>
-                      </Badge>
+                      </span>
                       {/* Teaching Language Badge */}
                       {props.teachingLanguages && props.teachingLanguages.length > 0 && (
-                        <Badge 
-                          variant="outline"
-                          className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 w-fit cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
+                        <span 
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
                           title={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
                           onClick={handleTeachingLanguageClick}
                         >
-                          {props.teachingLanguages.map((code, index) => (
-                            <span key={code}>
-                              {code === props.currentTermTeachingLanguage ? (
-                                <strong>{code}</strong>
-                              ) : (
-                                code
-                              )}
-                              {index < props.teachingLanguages!.length - 1 && '/'}
-                            </span>
-                          ))}
-                        </Badge>
+                          <div className="flex items-center">
+                            {props.teachingLanguages.map((code, index) => (
+                              <span 
+                                key={code}
+                                className={`${
+                                  props.teachingLanguages!.length === 1
+                                    ? 'px-1' // Single item: equal padding on both sides
+                                    : index === 0 
+                                    ? 'pr-1' // First item: only right padding
+                                    : index === props.teachingLanguages!.length - 1 
+                                    ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
+                                    : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
+                                }`}
+                              >
+                                {code === props.currentTermTeachingLanguage ? (
+                                  <strong>{code}</strong>
+                                ) : (
+                                  code
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        </span>
                       )}
                     </div>
                   </div>
@@ -621,43 +626,50 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                     {/* Faculty Badge */}
                     {getFacultyByDepartment(props.department) && (
-                      <Badge 
-                        variant="outline"
-                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
-                      >
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0">
                         {t(getFacultyByDepartment(props.department))}
-                      </Badge>
+                      </span>
                     )}
                     {/* Department Badge */}
-                    <Badge 
-                      variant="outline"
-                      className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help hover:bg-primary/5 hover:text-primary hover:border-primary hover:shadow-sm transition-all duration-200 shrink-0 w-fit max-w-full"
+                    <span 
+                      className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help hover:bg-primary/5 hover:text-primary hover:border-primary hover:shadow-sm transition-all duration-200 shrink-0 max-w-full"
                       onClick={handleDepartmentBadgeClick}
                       title={t('filter.clickToFilterDepartment')}
                     >
                       <span className="break-words hyphens-auto">
                         {translateDepartmentName(props.department, t)}
                       </span>
-                    </Badge>
+                    </span>
                     {/* Teaching Language Badge */}
                     {props.teachingLanguages && props.teachingLanguages.length > 0 && (
-                      <Badge 
-                        variant="outline"
-                        className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 w-fit cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
+                      <span 
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
                         title={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
                         onClick={handleTeachingLanguageClick}
                       >
-                        {props.teachingLanguages.map((code, index) => (
-                          <span key={code}>
-                            {code === props.currentTermTeachingLanguage ? (
-                              <strong>{code}</strong>
-                            ) : (
-                              code
-                            )}
-                            {index < props.teachingLanguages!.length - 1 && '/'}
-                          </span>
-                        ))}
-                      </Badge>
+                        <div className="flex items-center">
+                          {props.teachingLanguages.map((code, index) => (
+                            <span 
+                              key={code}
+                              className={`${
+                                props.teachingLanguages!.length === 1
+                                  ? 'px-1' // Single item: equal padding on both sides
+                                  : index === 0 
+                                  ? 'pr-1' // First item: only right padding
+                                  : index === props.teachingLanguages!.length - 1 
+                                  ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
+                                  : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
+                              }`}
+                            >
+                              {code === props.currentTermTeachingLanguage ? (
+                                <strong>{code}</strong>
+                              ) : (
+                                code
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      </span>
                     )}
                   </div>
                 </div>

@@ -334,10 +334,15 @@ export default {
   'oauth.accountCreationBlocked': '帳戶建立被阻止',
   'oauth.accountCreationBlockedDescription': '非學生信箱地址無法在此平台建立帳戶。',
   // Session types
-  'sessionType.lecture': '講課',
-  'sessionType.tutorial': '導修',
+  'sessionType.lecture': '講課 (Lecture)',
+  'sessionType.tutorial': '導修 (Tutorial)',
   'sessionType.lab': '實驗',
   'sessionType.seminar': '研討',
+  // Session types for review cards (without brackets)
+  'sessionTypeBadge.lecture': '講課',
+  'sessionTypeBadge.tutorial': '導修',
+  'sessionTypeBadge.lab': '實驗',
+  'sessionTypeBadge.seminar': '研討',
   // Grade and GPA
   'grade.tooltip.title': '成績資訊',
   'grade.gpa': 'GPA',
@@ -415,8 +420,8 @@ export default {
   'pagination.previous': '上一頁',
   'pagination.next': '下一頁',
   'pagination.last': '末頁',
-      'pagination.foundCourses': '找到 {count} 個課程',
-    'pagination.foundInstructors': '找到 {count} 位講師',
+  'pagination.foundCourses': '找到 {count} 個課程',
+  'pagination.foundInstructors': '找到 {count} 位講師',
   // Review filters
   'filter.reviewLanguage': '評論語言',
   'filter.reviewTerm': '學期',
@@ -467,7 +472,8 @@ export default {
   'pages.courseDetail.termCode': '學期代碼',
   'pages.courseDetail.startDate': '開始日期',
   'pages.courseDetail.endDate': '結束日期',
-  'pages.courseDetail.filterByTerm': '按學期篩選',
+  'pages.courseDetail.filterByTerm': '學期',
+  'pages.courseDetail.filterByTeachingLanguage': '教學語言',
   'pages.courseDetail.noLectureRecords': '沒有找到講座記錄',
   'pages.courseDetail.noTutorialRecords': '沒有找到導修記錄',
   'pages.courseDetail.offerRecords': '開設記錄',
@@ -628,9 +634,9 @@ export default {
   'filters.assessmentMethods': '評估方式',
   'filters.courseFeatures': '課程特色',
   // Filter and Sort
-  'filter.allDepartments': '所有學系',
-  'filter.selectDepartment': '選擇學系',
-  'filter.department': '學系',
+  'filter.allDepartments': '所有學院學系',
+  'filter.selectDepartment': '選擇學院學系',
+  'filter.department': '學院學系',
   'filter.selectLecturer': '選擇講師',
   'filter.allSubjects': '所有學科',
   'filter.subjectArea': '學科領域',
@@ -1023,11 +1029,11 @@ export default {
   'faq.ratingAnswer': '我們使用1-5星評分系統。1星表示非常不滿意，5星表示非常滿意。總評分是所有用戶評分的平均值，會即時更新以反映最新的評論。',
   'faq.anonymousQuestion': '我可以匿名發表評論嗎？',
   'faq.anonymousAnswer': '是的，您可以選擇匿名發表評論。即使選擇匿名，您的評論仍然有效且會被計入總評分。我們保護所有用戶的隱私，不會透露您的真實身份。',
-  
+
   // Review submission limits
   'faq.reviewLimitsQuestion': '為什麼我只能為每個課程提交有限數量的評論？',
   'faq.reviewLimitsAnswer': '為了維護評論系統的質量和真實性，我們將每位用戶限制為每個課程最多提交2份評論。通常情況下，您每個課程只能提交1份評論。但是，如果您的第一份評論顯示不及格成績（F），您可以提交一份額外的評論。這項政策有助於防止垃圾評論、虛假評論和評論操縱，同時仍允許重修不及格課程的學生分享他們的更新體驗。',
-  
+
   'faq.languageQuestion': '網站支援哪些語言？',
   'faq.languageAnswer': '我們的網站支援繁體中文、簡體中文和英文。您可以在頁面右上角的語言選擇器中切換語言，您的偏好設定會被保存。',
   'faq.updateQuestion': '課程資訊多久更新一次？',
@@ -1133,6 +1139,9 @@ export default {
   'common.words': '字',
   'common.noResults': '找不到結果',
   'common.tutorial': '導修課',
+  'common.info': '資訊',
+  'common.teaching': '教學',
+  'common.courses': '課程',
   // Back to Top
   'backToTop.label': '回到頂部',
 
@@ -1149,6 +1158,12 @@ export default {
   'review.selectTermPlaceholder': '請選擇學期',
   'review.selectInstructors': '選擇教師',
   'review.selectInstructorsPlaceholder': '請選擇教師（可多選）',
+  'review.lectureInstructors': '講課 (Lecture)',
+  'review.tutorialInstructors': '導修 (Tutorial)',
+  'review.noLectureInstructors': '沒有講課教師',
+  'review.noTutorialInstructors': '沒有導修教師',
+  'review.tutorial': '導修',
+  'review.lecture': '講課',
   'review.courseInfo': '課程資訊',
   'review.courseReview': '課程評論',
   'review.workload': '課程工作量',
@@ -1400,7 +1415,7 @@ export default {
   'myReviews.noReviewsDescription': '您還沒有撰寫任何課程評論。開始瀏覽課程並分享您的體驗吧！',
   'myReviews.browseCoursesToReview': '瀏覽課程以撰寫評論',
   'myReviews.searchPlaceholder': '搜尋課程代碼、課程名稱或講師姓名（支援多語言）',
-  'myReviews.totalReviews': '總評論數：{count}',
+  'myReviews.totalReviews': '總共 {count} 條評論',
   'myReviews.deleteConfirmTitle': '刪除評論',
   'myReviews.deleteConfirmDescription': '您確定要刪除這個評論嗎？此操作無法復原。',
   'myReviews.deleteSuccess': '評論刪除成功',
@@ -1410,10 +1425,10 @@ export default {
   'myReviews.viewCourse': '查看課程 {course}',
   // Featured content
   'featured.title': '熱門內容',
-      'featured.courses': '熱門課程',
-    'featured.instructors': '熱門教師',
-    'featured.topCourses': '最佳課程',
-    'featured.topInstructors': '最佳講師',
+  'featured.courses': '熱門課程',
+  'featured.instructors': '熱門教師',
+  'featured.topCourses': '最佳課程',
+  'featured.topInstructors': '最佳教師',
   'featured.popularCourses': '熱門課程',
   'featured.popularCoursesDesc': '根據評論數量排序的最受歡迎課程',
   'featured.popularInstructors': '熱門講師',
@@ -1436,8 +1451,8 @@ export default {
   'instructors.noTeachingTitle': '暫無教學記錄',
   'instructors.noLectureRecords': '沒有找到講課記錄',
   'instructors.noTutorialRecords': '沒有找到導修記錄',
-  'instructors.teaching': '正在教學',
-  'instructors.notTeaching': '未在教學',
+  'instructors.teaching': '正在授課',
+  'instructors.notTeaching': '未授課',
   'instructors.noTeachingDesc': '{name} 的教學記錄尚未在系統中更新，或可能使用了不同的姓名格式。',
   'instructors.noRatingData': '尚無評分資料',
   'instructors.coursesTeaching': '教學記錄',
@@ -1445,6 +1460,8 @@ export default {
   'instructors.averageTeachingRating': '平均教學評分',
   'instructors.averageTeachingQuality': '平均教學質素評分',
   'instructors.averageTeachingQualityShort': '平均教學質素',
+  'instructors.averageTeaching': '教學質素',
+  'instructors.averageGrading': '評分滿意度',
   'instructors.averageGradingSatisfaction': '平均評分滿意度',
   'instructors.averageGradingSatisfactionShort': '平均評分滿意度',
   'instructors.finalGrade': '最終成績',
@@ -1572,7 +1589,7 @@ export default {
   // Additional search and pagination keys
   'search.instructorPlaceholder': '教師、學系',
   'sort.instructorName': '講師姓名',
-  'sort.department': '學系',
+  'sort.department': '學院學系',
   'sort.teaching': '教學質素',
   'sort.grading': '評分滿意度',
   'sort.averageGPA': '平均GPA',
@@ -1681,8 +1698,8 @@ export default {
   'chart.noGradeData': '暫無成績數據',
   'chart.totalStudents': '總計：{count}名學生',
   'chart.meanGPA': '平均GPA：{mean}',
-      'chart.standardDeviation': '標準差：{std}',
-    'chart.standardDeviationLabel': '標準差',
+  'chart.standardDeviation': '標準差：{std}',
+  'chart.standardDeviationLabel': '標準差',
   'chart.gradeDistribution': '成績分佈',
   'chart.count': '數目',
   'chart.percentage': '百分比',
@@ -1714,12 +1731,13 @@ export default {
   // Common translations
   'common.students': '學生',
   'common.reviews': '評論',
-  
+  'common.grades': '成績',
+
   // Review submission limits
   'review.submitLimitReached': '您已達到此課程的評論提交限制。',
   'review.limitExceeded': '您已達到此課程的最大評論數量（2個）。',
   'review.limitReachedWithPass': '您已經為此課程提交過評論。只有在您的第一次評論成績為不及格時，才能提交額外的評論。',
-  
+
   // Review eligibility warning
   'review.checkingEligibility': '檢查評論提交資格中...',
   'review.reviewLimitWarning': '評論限制提醒',
@@ -1732,7 +1750,7 @@ export default {
   'review.reviewLimitExceededInfo': '您已達到此課程的最大評論限制 2 次。',
   'review.reviewNumber': '評論 #{number}',
   'review.clickToViewReview': '點擊查看該評論詳情',
-  
+
   // Grade edit restriction
   'review.cannotEditGradeTitle': '無法編輯成績',
   'review.cannotEditGradeMessage': '請先刪除您較新的評論，然後才能將此較舊評論的成績改為非不及格。',
@@ -1747,4 +1765,6 @@ export default {
   'teachingLanguage.englishCantonesePutonghua': '英語/粵語/普通話',
   'teachingLanguage.others': '其他',
 
+  // Chart translations
+  'chart.noGradeDataDescription': '當有評論資料時，將顯示成績分佈圖表。',
 };

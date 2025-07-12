@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
   ArrowLeft,
@@ -20,7 +20,8 @@ import {
   User,
   ChevronDown,
   Clock,
-  Building
+  Building,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,14 +37,17 @@ import {
   Instructor, 
   InstructorTeachingCourse, 
   InstructorReviewInfo,
-  InstructorReviewFromDetails
+  InstructorReviewFromDetails,
+  InstructorDetail
 } from '@/services/api/courseService';
 import { CourseService } from '@/services/api/courseService';
 import { useInstructorDetailOptimized } from '@/hooks/useInstructorDetailOptimized';
+import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
+import { getCurrentTermCode, getCurrentTermName } from '@/utils/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
-import { getInstructorName, getCourseTitle, translateDepartmentName } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
@@ -205,6 +209,7 @@ const Lecturers = () => {
     selectedTerms: [],
     selectedCourses: [],
     selectedSessionTypes: [],
+    selectedTeachingLanguages: [],
     selectedGrades: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
@@ -230,6 +235,7 @@ const Lecturers = () => {
   // Teaching tab and filter states
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [selectedTermFilter, setSelectedTermFilter] = useState<string | string[]>('all');
+  const [selectedTeachingLanguageFilter, setSelectedTeachingLanguageFilter] = useState<string | string[]>('all');
 
   // Grade distribution chart filter state
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
@@ -247,8 +253,147 @@ const Lecturers = () => {
   } = useInstructorDetailOptimized(decodedName);
 
   // 整體載入狀態
+  // 整體載入狀態
   const loading = instructorLoading || detailLoading;
   const error = instructorError || detailError;
+
+  // Derived state variables
+  const allReviews = reviews; // For consistency with CourseDetail
+  const currentTermName = getCurrentTermName();
+  const currentTermCode = getCurrentTermCode();
+  
+  // Calculate if instructor is teaching in current term
+  const isTeachingInCurrentTerm = useMemo(() => {
+    if (!teachingCourses || teachingCourses.length === 0) return false;
+    return teachingCourses.some(tc => tc.term.term_code === currentTermCode);
+  }, [teachingCourses, currentTermCode]);
+
+  // Calculate unique courses taught
+  const uniqueCourses = useMemo(() => {
+    if (!teachingCourses || teachingCourses.length === 0) return [];
+    const coursesMap = new Map();
+    teachingCourses.forEach(tc => {
+      if (!coursesMap.has(tc.course.course_code)) {
+        coursesMap.set(tc.course.course_code, tc.course);
+      }
+    });
+    return Array.from(coursesMap.values());
+  }, [teachingCourses]);
+
+  // Calculate detailed statistics
+  const detailedStats = useMemo(() => {
+    if (!reviews || reviews.length === 0) {
+      return {
+        averageTeachingQuality: 0,
+        averageGradingSatisfaction: 0
+      };
+    }
+
+    // Extract ratings for the current instructor
+    const teachingRatings: number[] = [];
+    const gradingRatings: number[] = [];
+
+    reviews.forEach(reviewInfo => {
+      const instructorDetail = reviewInfo.instructorDetails.find(
+        detail => detail.instructor_name === decodedName
+      );
+      
+      if (instructorDetail) {
+        if (instructorDetail.teaching !== null && instructorDetail.teaching !== undefined && instructorDetail.teaching !== -1) {
+          teachingRatings.push(instructorDetail.teaching);
+        }
+        if (instructorDetail.grading !== null && instructorDetail.grading !== undefined && instructorDetail.grading !== -1) {
+          gradingRatings.push(instructorDetail.grading);
+        }
+      }
+    });
+
+    return {
+      averageTeachingQuality: teachingRatings.length > 0 
+        ? teachingRatings.reduce((sum, rating) => sum + rating, 0) / teachingRatings.length
+        : 0,
+      averageGradingSatisfaction: gradingRatings.length > 0
+        ? gradingRatings.reduce((sum, rating) => sum + rating, 0) / gradingRatings.length
+        : 0
+    };
+  }, [reviews, decodedName]);
+
+  // Teaching badge click handler
+  const handleTeachingBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Navigate to instructors list with current term filter applied
+    const searchParams = new URLSearchParams();
+    searchParams.set('teachingTerm', currentTermCode);
+    
+    navigate(`/instructors?${searchParams.toString()}`);
+  };
+
+  // Collect all instructor details for teaching languages hook
+  const allInstructorDetails = useMemo(() => {
+    if (!reviews) return [];
+    const details: InstructorDetail[] = [];
+    reviews.forEach(reviewInfo => {
+      details.push(...reviewInfo.instructorDetails);
+    });
+    return details;
+  }, [reviews]);
+
+  // State for teaching languages in teaching records section
+  const [teachingRecordsLanguages, setTeachingRecordsLanguages] = useState<Map<string, string>>(new Map());
+  const [teachingRecordsLanguagesLoading, setTeachingRecordsLanguagesLoading] = useState(false);
+  
+  // Load teaching languages for teaching records
+  useEffect(() => {
+    const loadTeachingRecordsLanguages = async () => {
+      if (!teachingCourses.length || !decodedName) return;
+      
+      setTeachingRecordsLanguagesLoading(true);
+      try {
+        // Create instructor detail params for each teaching record
+        const instructorDetailParams = teachingCourses.map(teaching => ({
+          courseCode: teaching.course.course_code,
+          termCode: teaching.term.term_code,
+          instructorName: decodedName,
+          sessionType: teaching.sessionType
+        }));
+        
+        // Batch load teaching languages
+        const teachingLanguagesMap = await CourseService.getBatchInstructorDetailTeachingLanguages(instructorDetailParams);
+        setTeachingRecordsLanguages(teachingLanguagesMap);
+      } catch (error) {
+        console.error('Error loading teaching records languages:', error);
+        setTeachingRecordsLanguages(new Map());
+      } finally {
+        setTeachingRecordsLanguagesLoading(false);
+      }
+    };
+    
+    loadTeachingRecordsLanguages();
+  }, [teachingCourses, decodedName]);
+  
+  // Helper function to get teaching language for teaching records
+  const getTeachingLanguageForTeachingRecord = (courseCode: string, termCode: string, sessionType: string): string | null => {
+    if (!decodedName) return null;
+    const key = `${courseCode}|${termCode}|${decodedName}|${sessionType}`;
+    return teachingRecordsLanguages.get(key) || null;
+  };
+  
+  // Use teaching languages hook for reviews section (keep existing logic)
+  const firstReview = reviews?.[0];
+  const courseCode = firstReview?.course?.course_code || '';
+  const termCode = firstReview?.term?.term_code || '';
+  
+  const { 
+    teachingLanguages, 
+    loading: teachingLanguagesLoading, 
+    getTeachingLanguageForInstructor 
+  } = useInstructorDetailTeachingLanguages({
+    instructorDetails: allInstructorDetails,
+    courseCode,
+    termCode
+  });
 
   // Generate filter options for grade distribution chart (courses with session types)
   const gradeChartFilterOptions = React.useMemo(() => {
@@ -352,17 +497,31 @@ const Lecturers = () => {
     return uniqueTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
   }, [teachingCourses]);
 
-  // 根據選定的學期篩選教學課程
+  // 根據選定的學期和教學語言篩選教學課程
   const filteredTeachingCourses = React.useMemo(() => {
-    // Handle both single and multiple selections
-    const selectedValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : [selectedTermFilter];
+    let filtered = teachingCourses;
     
-    if (selectedValues.length === 0 || selectedValues.includes('all')) {
-      return teachingCourses;
+    // Handle term filtering
+    const selectedTermValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : [selectedTermFilter];
+    if (selectedTermValues.length > 0 && !selectedTermValues.includes('all')) {
+      filtered = filtered.filter(teaching => selectedTermValues.includes(teaching.term.term_code));
     }
     
-    return teachingCourses.filter(teaching => selectedValues.includes(teaching.term.term_code));
-  }, [teachingCourses, selectedTermFilter]);
+    // Handle teaching language filtering
+    const selectedLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : [selectedTeachingLanguageFilter];
+    if (selectedLanguageValues.length > 0 && !selectedLanguageValues.includes('all')) {
+      filtered = filtered.filter(teaching => {
+        const teachingLanguage = getTeachingLanguageForTeachingRecord(
+          teaching.course.course_code,
+          teaching.term.term_code,
+          teaching.sessionType
+        );
+        return teachingLanguage && selectedLanguageValues.includes(teachingLanguage);
+      });
+    }
+    
+    return filtered;
+  }, [teachingCourses, selectedTermFilter, selectedTeachingLanguageFilter, getTeachingLanguageForInstructor, decodedName]);
 
   useEffect(() => {
     const loadInstructorBasicData = async () => {
@@ -483,6 +642,22 @@ const Lecturers = () => {
     // The browser will handle navigation naturally
   };
 
+  const handleTeachingLanguageBadgeClick = (languageCode: string) => {
+    const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+    const isSelected = currentValues.includes(languageCode);
+    
+    if (isSelected) {
+      // Remove from selection
+      const newValues = currentValues.filter(v => v !== languageCode);
+      setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
+    } else {
+      // Add to selection
+      setSelectedTeachingLanguageFilter([...currentValues, languageCode]);
+    }
+  };
+
+
+
   const getLanguageDisplayName = (language: string) => {
     const languageMap: { [key: string]: string } = {
       'en': t('language.english'),
@@ -517,126 +692,163 @@ const Lecturers = () => {
 
   // 計算篩選器統計數據
   const getFilterCounts = () => {
-    if (!reviews || reviews.length === 0) {
-      return {
-        languageCounts: {},
-        termCounts: {},
-        courseCounts: {},
-        sessionTypeCounts: {},
-        gradeCounts: {}
-      };
-    }
+    if (!reviews) return {
+      languageCounts: {},
+      termCounts: {},
+      courseCounts: {},
+      sessionTypeCounts: {},
+      teachingLanguageCounts: {},
+      gradeCounts: {}
+    };
 
     const languageCounts: { [key: string]: number } = {};
     const termCounts: { [key: string]: { name: string; count: number } } = {};
     const courseCounts: { [key: string]: { title: string; count: number } } = {};
     const sessionTypeCounts: { [key: string]: number } = {};
+    const teachingLanguageCounts: { [key: string]: number } = {};
     const gradeCounts: { [key: string]: number } = {};
 
     reviews.forEach(reviewInfo => {
-      // 語言統計
-      const language = reviewInfo.review.review_language || 'en';
-      languageCounts[language] = (languageCounts[language] || 0) + 1;
+      // 語言計數
+      const reviewLanguage = reviewInfo.review.review_language || 'en';
+      languageCounts[reviewLanguage] = (languageCounts[reviewLanguage] || 0) + 1;
 
-      // 學期統計
-      if (reviewInfo.term?.term_code) {
-        const termCode = reviewInfo.term.term_code;
-        if (!termCounts[termCode]) {
-          termCounts[termCode] = { name: reviewInfo.term.name || termCode, count: 0 };
+      // 學期計數
+      const termCode = reviewInfo.term.term_code;
+      const termName = reviewInfo.term.name;
+      if (!termCounts[termCode]) {
+        termCounts[termCode] = { name: termName, count: 0 };
+      }
+      termCounts[termCode].count++;
+
+      // 課程計數
+      const courseCode = reviewInfo.course.course_code;
+      const courseTitle = reviewInfo.course.course_title || '';
+      if (!courseCounts[courseCode]) {
+        courseCounts[courseCode] = { title: courseTitle, count: 0 };
+      }
+      courseCounts[courseCode].count++;
+
+      // 課堂類型計數和教學語言計數 - 僅計算當前講師的
+      const currentInstructorDetail = reviewInfo.instructorDetails.find(detail => detail.instructor_name === decodedName);
+      if (currentInstructorDetail) {
+        const sessionType = currentInstructorDetail.session_type;
+        sessionTypeCounts[sessionType] = (sessionTypeCounts[sessionType] || 0) + 1;
+
+        // 教學語言計數
+        const teachingLanguage = getTeachingLanguageForInstructor(
+          currentInstructorDetail.instructor_name,
+          currentInstructorDetail.session_type
+        );
+        if (teachingLanguage) {
+          teachingLanguageCounts[teachingLanguage] = (teachingLanguageCounts[teachingLanguage] || 0) + 1;
         }
-        termCounts[termCode].count++;
       }
 
-      // 課程統計
-      if (reviewInfo.course?.course_code) {
-        const courseCode = reviewInfo.course.course_code;
-        if (!courseCounts[courseCode]) {
-          courseCounts[courseCode] = { title: reviewInfo.course.course_title || courseCode, count: 0 };
-        }
-        courseCounts[courseCode].count++;
-      }
-
-      // 課堂類型統計（從講師詳情中獲取）
-      reviewInfo.instructorDetails.forEach(detail => {
-        if (detail.session_type) {
-          sessionTypeCounts[detail.session_type] = (sessionTypeCounts[detail.session_type] || 0) + 1;
-        }
-      });
-
-      // 成績統計
-      const finalGrade = reviewInfo.review.course_final_grade;
-      const normalizedGrade = finalGrade === '-1' ? 'N/A' : finalGrade;
-      if (normalizedGrade) {
+      // 成績計數
+      const grade = reviewInfo.review.course_final_grade;
+      if (grade) {
+        const normalizedGrade = grade === '-1' ? 'N/A' : grade;
         gradeCounts[normalizedGrade] = (gradeCounts[normalizedGrade] || 0) + 1;
       }
     });
 
-    return { languageCounts, termCounts, courseCounts, sessionTypeCounts, gradeCounts };
+    return {
+      languageCounts,
+      termCounts,
+      courseCounts,
+      sessionTypeCounts,
+      teachingLanguageCounts,
+      gradeCounts
+    };
   };
 
   // 篩選評論
   const getFilteredReviews = () => {
-    if (!reviews || reviews.length === 0) return [];
+    if (!reviews) return [];
 
-    return reviews.filter(reviewInfo => {
-      // 課程要求篩選 (先執行，因為可能會大幅減少評論數量)
-      const hasMatchingRequirements = reviewInfo.instructorDetails.some(detail => {
-        const checks = [
-          requirementsFilters.attendance === 'all' || (requirementsFilters.attendance === 'has' && detail.has_attendance_requirement) || (requirementsFilters.attendance === 'no' && !detail.has_attendance_requirement),
-          requirementsFilters.quiz === 'all' || (requirementsFilters.quiz === 'has' && detail.has_quiz) || (requirementsFilters.quiz === 'no' && !detail.has_quiz),
-          requirementsFilters.midterm === 'all' || (requirementsFilters.midterm === 'has' && detail.has_midterm) || (requirementsFilters.midterm === 'no' && !detail.has_midterm),
-          requirementsFilters.final === 'all' || (requirementsFilters.final === 'has' && detail.has_final) || (requirementsFilters.final === 'no' && !detail.has_final),
-          requirementsFilters.individualAssignment === 'all' || (requirementsFilters.individualAssignment === 'has' && detail.has_individual_assignment) || (requirementsFilters.individualAssignment === 'no' && !detail.has_individual_assignment),
-          requirementsFilters.groupProject === 'all' || (requirementsFilters.groupProject === 'has' && detail.has_group_project) || (requirementsFilters.groupProject === 'no' && !detail.has_group_project),
-          requirementsFilters.presentation === 'all' || (requirementsFilters.presentation === 'has' && detail.has_presentation) || (requirementsFilters.presentation === 'no' && !detail.has_presentation),
-          requirementsFilters.reading === 'all' || (requirementsFilters.reading === 'has' && detail.has_reading) || (requirementsFilters.reading === 'no' && !detail.has_reading)
-        ];
-        
-        // 所有條件都必須滿足 (AND logic)
-        return checks.every(check => check);
-      });
+    let filteredReviews = reviews.filter(reviewInfo => {
+      // 課程要求篩選
+      const currentInstructorDetail = reviewInfo.instructorDetails.find(detail => detail.instructor_name === decodedName);
+      if (!currentInstructorDetail) return false;
+
+      const checks = [
+        requirementsFilters.attendance === 'all' || (requirementsFilters.attendance === 'has' && currentInstructorDetail.has_attendance_requirement) || (requirementsFilters.attendance === 'no' && !currentInstructorDetail.has_attendance_requirement),
+        requirementsFilters.quiz === 'all' || (requirementsFilters.quiz === 'has' && currentInstructorDetail.has_quiz) || (requirementsFilters.quiz === 'no' && !currentInstructorDetail.has_quiz),
+        requirementsFilters.midterm === 'all' || (requirementsFilters.midterm === 'has' && currentInstructorDetail.has_midterm) || (requirementsFilters.midterm === 'no' && !currentInstructorDetail.has_midterm),
+        requirementsFilters.final === 'all' || (requirementsFilters.final === 'has' && currentInstructorDetail.has_final) || (requirementsFilters.final === 'no' && !currentInstructorDetail.has_final),
+        requirementsFilters.individualAssignment === 'all' || (requirementsFilters.individualAssignment === 'has' && currentInstructorDetail.has_individual_assignment) || (requirementsFilters.individualAssignment === 'no' && !currentInstructorDetail.has_individual_assignment),
+        requirementsFilters.groupProject === 'all' || (requirementsFilters.groupProject === 'has' && currentInstructorDetail.has_group_project) || (requirementsFilters.groupProject === 'no' && !currentInstructorDetail.has_group_project),
+        requirementsFilters.presentation === 'all' || (requirementsFilters.presentation === 'has' && currentInstructorDetail.has_presentation) || (requirementsFilters.presentation === 'no' && !currentInstructorDetail.has_presentation),
+        requirementsFilters.reading === 'all' || (requirementsFilters.reading === 'has' && currentInstructorDetail.has_reading) || (requirementsFilters.reading === 'no' && !currentInstructorDetail.has_reading)
+      ];
       
-      if (!hasMatchingRequirements) return false;
-
-      // 語言篩選
-      if (filters.selectedLanguages.length > 0) {
-        const reviewLanguage = reviewInfo.review.review_language || 'en';
-        if (!filters.selectedLanguages.includes(reviewLanguage)) return false;
-      }
-
-      // 學期篩選
-      if (filters.selectedTerms.length > 0) {
-        if (!reviewInfo.term?.term_code || !filters.selectedTerms.includes(reviewInfo.term.term_code)) {
-          return false;
-        }
-      }
-
-      // 課程篩選
-      if (filters.selectedCourses.length > 0) {
-        if (!reviewInfo.course?.course_code || !filters.selectedCourses.includes(reviewInfo.course.course_code)) {
-          return false;
-        }
-      }
-
-      // 課堂類型篩選
-      if (filters.selectedSessionTypes.length > 0) {
-        const hasMatchingSessionType = reviewInfo.instructorDetails.some(detail => 
-          detail.session_type && filters.selectedSessionTypes.includes(detail.session_type)
-        );
-        if (!hasMatchingSessionType) return false;
-      }
-
-      // 成績篩選
-      if (filters.selectedGrades.length > 0) {
-        const finalGrade = reviewInfo.review.course_final_grade;
-        const normalizedGrade = finalGrade === '-1' ? 'N/A' : finalGrade;
-        if (!normalizedGrade || !filters.selectedGrades.includes(normalizedGrade)) {
-          return false;
-        }
-      }
-
-      return true;
+      return checks.every(check => check);
     });
+
+    // 語言篩選
+    if (filters.selectedLanguages.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const reviewLanguage = reviewInfo.review.review_language || 'en';
+        return filters.selectedLanguages.includes(reviewLanguage);
+      });
+    }
+
+    // 學期篩選
+    if (filters.selectedTerms.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        return filters.selectedTerms.includes(reviewInfo.term.term_code);
+      });
+    }
+
+    // 課程篩選
+    if (filters.selectedCourses.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        return filters.selectedCourses.includes(reviewInfo.course.course_code);
+      });
+    }
+
+    // 課堂類型篩選
+    if (filters.selectedSessionTypes.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const currentInstructorDetail = reviewInfo.instructorDetails.find(detail => detail.instructor_name === decodedName);
+        return currentInstructorDetail && filters.selectedSessionTypes.includes(currentInstructorDetail.session_type);
+      });
+    }
+
+    // 教學語言篩選
+    if (filters.selectedTeachingLanguages.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const currentInstructorDetail = reviewInfo.instructorDetails.find(detail => detail.instructor_name === decodedName);
+        if (!currentInstructorDetail) return false;
+        
+        const teachingLanguage = getTeachingLanguageForInstructor(
+          currentInstructorDetail.instructor_name,
+          currentInstructorDetail.session_type
+        );
+        return teachingLanguage && filters.selectedTeachingLanguages.includes(teachingLanguage);
+      });
+    }
+
+    // 成績篩選
+    if (filters.selectedGrades.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const grade = reviewInfo.review.course_final_grade;
+        const normalizedGrade = grade === '-1' ? 'N/A' : grade;
+        return filters.selectedGrades.includes(normalizedGrade);
+      });
+    }
+
+    // 外部成績篩選（來自圖表點擊）
+    if (externalGradeFilter) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const grade = reviewInfo.review.course_final_grade;
+        const normalizedGrade = grade === '-1' ? 'N/A' : grade;
+        return normalizedGrade === externalGradeFilter;
+      });
+    }
+
+    return filteredReviews;
   };
 
   // 排序評論
@@ -722,7 +934,7 @@ const Lecturers = () => {
   const totalPages = Math.ceil(filteredReviews.length / filters.itemsPerPage);
 
   // 獲取篩選器統計數據
-  const { languageCounts, termCounts, courseCounts, sessionTypeCounts, gradeCounts } = getFilterCounts();
+  const { languageCounts, termCounts, courseCounts, sessionTypeCounts, teachingLanguageCounts, gradeCounts } = getFilterCounts();
 
   // 處理篩選器變更
   const handleFiltersChange = (newFilters: InstructorReviewFilters) => {
@@ -736,6 +948,7 @@ const Lecturers = () => {
       selectedTerms: [],
       selectedCourses: [],
       selectedSessionTypes: [],
+      selectedTeachingLanguages: [],
       selectedGrades: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
@@ -799,47 +1012,44 @@ const Lecturers = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6 overflow-hidden">
-
-      {/* 講師基本信息 */}
-      {instructor && (
-        <PersistentCollapsibleSection
-          className="course-card"
-          title={t('pages.instructors.instructorInfo')}
-          sectionKey="instructor_info"
-          icon={<User className="h-5 w-5" />}
-          defaultExpanded={true}
-          expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
-          collapsedHint={t('common.clickToExpand') || 'Click to expand'}
-        >
-          <div className="space-y-4 overflow-hidden">
-            <div className="flex items-center gap-3 overflow-hidden min-w-0">
-              <GraduationCap className="h-8 w-8 text-primary shrink-0" />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xl font-bold truncate">{instructor.name}</h3>
-                {/* 在中文模式下顯示中文名稱 - 保留空間以維持卡片高度一致 */}
-                {language === 'zh-TW' && (
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
-                    {instructor.name_tc || ''}
-                  </p>
-                )}
-                {language === 'zh-CN' && (
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
-                    {instructor.name_sc || ''}
-                  </p>
-                )}
-                {/* Faculty and Department Badges - matching PopularItemCard styling */}
-                {instructor.department && (
-                  <div className={`${language === 'en' ? 'flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} mt-2`} style={{ minHeight: '2rem' }}>
+    <div className="container mx-auto px-4 py-6 overflow-hidden">
+      {/* Instructor Header - Always visible above tabs */}
+      <div className="mb-6">
+        {instructor && (
+          <Card className="course-card">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <GraduationCap className="h-8 w-8 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <CardTitle className="text-2xl truncate">{instructor.name}</CardTitle>
+                      {/* 中文講師名稱 - 作為副標題（只在中文模式下顯示） */}
+                      {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                        const chineseName = language === 'zh-TW' ? instructor.name_tc : instructor.name_sc;
+                        return chineseName && (
+                          <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
+                            {chineseName}
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  
+                  {/* 系所徽章 */}
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5" style={{ minHeight: '2rem' }}>
                     {/* Faculty Badge */}
-                    {getFacultyByDepartment(instructor.department) && (
-                      <Badge 
-                        variant="outline"
-                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
-                      >
-                        {t(getFacultyByDepartment(instructor.department))}
-                      </Badge>
-                    )}
+                    {(() => {
+                      const faculty = getFacultyByDepartment(instructor.department);
+                      return faculty && (
+                        <Badge 
+                          variant="outline"
+                          className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
+                        >
+                          {t(faculty)}
+                        </Badge>
+                      );
+                    })()}
                     {/* Department Badge */}
                     <Badge 
                       variant="outline"
@@ -849,224 +1059,312 @@ const Lecturers = () => {
                         {language === 'en' ? `Department of ${translateDepartmentName(instructor.department, t)}` : translateDepartmentName(instructor.department, t)}
                       </span>
                     </Badge>
-                  </div>
-                )}
-              </div>
-              <div className="shrink-0 -mt-2 sm:mt-0">
-                <FavoriteButton
-                  type="instructor"
-                  itemId={instructor.name}
-                  size="lg"
-                  showText={true}
-                  variant="outline"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 overflow-hidden min-w-0">
-              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <a 
-                href={`mailto:${instructor.email}`}
-                className="text-sm truncate flex-1 min-w-0 hover:underline hover:text-primary transition-colors block"
-              >
-                {instructor.email}
-              </a>
-            </div>
-            
-            <div className="pt-4">
-              {/* Mobile: 兩個評分在一行 */}
-              <div className="grid grid-cols-1 gap-4 sm:hidden">
-                {/* 兩個評分在一行 */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Average Teaching Quality Rating */}
-                  <div className="text-center min-w-0">
-                    <div className="text-xl font-bold text-primary">
-                      {reviewsLoading ? (
-                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                      ) : reviews.length > 0 ? (
-                        (() => {
-                          const validRatings = reviews
-                            .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.teaching)
-                            .filter(rating => rating !== null && rating !== undefined && rating !== -1);
-                          return validRatings.length > 0 
-                            ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
-                            : 'N/A';
-                        })()
-                      ) : (
-                        'N/A'
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{t('instructors.averageTeachingQualityShort')}</div>
-                    {!reviewsLoading && reviews.length === 0 && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {t('instructors.noRatingData')}
-                      </div>
+                    {/* Current Term Teaching Badge */}
+                    {isTeachingInCurrentTerm !== null && (
+                      <Badge 
+                        variant={isTeachingInCurrentTerm ? "default" : "outline"}
+                        className={`text-xs cursor-pointer transition-colors ${
+                          isTeachingInCurrentTerm 
+                            ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' 
+                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                        }`}
+                        onClick={handleTeachingBadgeClick}
+                      >
+                        <div className="flex items-center gap-1">
+                          {isTeachingInCurrentTerm ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          <span>
+                            {isTeachingInCurrentTerm ? t('offered.yes') : t('offered.no')} ({currentTermName})
+                          </span>
+                        </div>
+                      </Badge>
                     )}
                   </div>
                   
-                  {/* Average Grading Satisfaction Rating */}
+                  {/* 電子郵件 */}
+                  {instructor.email && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <a 
+                        href={`mailto:${instructor.email}`} 
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {instructor.email}
+                      </a>
+                    </div>
+                  )}
+                </div>
+                <div className="shrink-0 -mt-2 sm:mt-0">
+                  <FavoriteButton
+                    type="instructor"
+                    itemId={instructor.name}
+                    size="lg"
+                    showText={true}
+                    variant="outline"
+                  />
+                </div>
+              </div>
+              
+              {/* 講師基本統計信息 - 響應式佈局 */}
+              <div className="pt-4 border-t">
+                {/* Mobile: 統計在兩行 */}
+                <div className="grid grid-cols-1 gap-4 sm:hidden">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* 平均教學質素 */}
+                    <div className="text-center min-w-0">
+                      <div className="text-lg font-bold text-primary">
+                        {detailedStats.averageTeachingQuality > 0 ? (
+                          detailedStats.averageTeachingQuality.toFixed(2)
+                        ) : (
+                          'N/A'
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{t('instructors.averageTeaching')}</div>
+                    </div>
+                    
+                    {/* 評分滿意度 */}
+                    <div className="text-center min-w-0">
+                      <div className="text-lg font-bold text-primary">
+                        {detailedStats.averageGradingSatisfaction > 0 ? (
+                          detailedStats.averageGradingSatisfaction.toFixed(2)
+                        ) : (
+                          'N/A'
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{t('instructors.averageGrading')}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* 評論數量 */}
+                    <div className="text-center min-w-0">
+                      <div className="text-lg font-bold text-primary">
+                        {allReviews?.length || 0}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {t('instructors.reviews')}
+                      </div>
+                    </div>
+                    
+                    {/* 教授課程數 */}
+                    <div className="text-center min-w-0">
+                      <div className="text-lg font-bold text-primary">
+                        {uniqueCourses.length || 0}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        {t('instructors.courses')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Desktop: 統一使用 4 列佈局 */}
+                <div className="hidden sm:grid sm:grid-cols-4 gap-4">
+                  {/* 平均教學質素 */}
                   <div className="text-center min-w-0">
                     <div className="text-xl font-bold text-primary">
-                      {reviewsLoading ? (
-                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                      ) : reviews.length > 0 ? (
-                        (() => {
-                          const validRatings = reviews
-                            .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
-                            .filter(rating => rating !== null && rating !== undefined && rating !== -1);
-                          return validRatings.length > 0 
-                            ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
-                            : 'N/A';
-                        })()
+                      {detailedStats.averageTeachingQuality > 0 ? (
+                        detailedStats.averageTeachingQuality.toFixed(2)
                       ) : (
                         'N/A'
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">{t('instructors.averageGradingSatisfactionShort')}</div>
-                    {!reviewsLoading && reviews.length === 0 && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {t('instructors.noRatingData')}
-                      </div>
-                    )}
+                    <div className="text-sm text-muted-foreground">{t('instructors.averageTeaching')}</div>
                   </div>
-                </div>
-              </div>
-              
-              {/* Tablet and Desktop: 原來的 1x2 佈局 */}
-              <div className="hidden sm:grid sm:grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Average Teaching Quality Rating */}
-                <div className="text-center min-w-0">
-                  <div className="text-2xl font-bold text-primary">
-                    {reviewsLoading ? (
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                    ) : reviews.length > 0 ? (
-                      (() => {
-                        const validRatings = reviews
-                          .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.teaching)
-                          .filter(rating => rating !== null && rating !== undefined && rating !== -1);
-                        return validRatings.length > 0 
-                          ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
-                          : 'N/A';
-                      })()
-                    ) : (
-                      'N/A'
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingQuality')}</div>
-                  {!reviewsLoading && reviews.length === 0 && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {t('instructors.noRatingData')}
+                  
+                  {/* 評分滿意度 */}
+                  <div className="text-center min-w-0">
+                    <div className="text-xl font-bold text-primary">
+                      {detailedStats.averageGradingSatisfaction > 0 ? (
+                        detailedStats.averageGradingSatisfaction.toFixed(2)
+                      ) : (
+                        'N/A'
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                {/* Average Grading Satisfaction Rating */}
-                <div className="text-center min-w-0">
-                  <div className="text-2xl font-bold text-primary">
-                    {reviewsLoading ? (
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                    ) : reviews.length > 0 ? (
-                      (() => {
-                        const validRatings = reviews
-                          .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
-                          .filter(rating => rating !== null && rating !== undefined && rating !== -1);
-                        return validRatings.length > 0 
-                          ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
-                          : 'N/A';
-                      })()
-                    ) : (
-                      'N/A'
-                    )}
+                    <div className="text-sm text-muted-foreground">{t('instructors.averageGrading')}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground">{t('instructors.averageGradingSatisfaction')}</div>
-                  {!reviewsLoading && reviews.length === 0 && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {t('instructors.noRatingData')}
+                  
+                  {/* 評論數量 */}
+                  <div className="text-center min-w-0">
+                    <div className="text-xl font-bold text-primary">
+                      {allReviews?.length || 0}
                     </div>
-                  )}
+                    <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                      <MessageSquare className="h-4 w-4" />
+                      {t('instructors.reviews')}
+                    </div>
+                  </div>
+                  
+                  {/* 教授課程數 */}
+                  <div className="text-center min-w-0">
+                    <div className="text-xl font-bold text-primary">
+                      {uniqueCourses.length || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                      <BookOpen className="h-4 w-4" />
+                      {t('instructors.courses')}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
-            {/* 成績分佈圖表 */}
-            {!reviewsLoading && reviews.length > 0 && (
-              <div className="pt-4">
-                <GradeDistributionChart
-                  gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
-                  loading={reviewsLoading}
-                  title={t('chart.gradeDistribution')}
-                  height={120}
-                  showPercentage={true}
-                  className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
-                  context="instructor"
-                  filterOptions={gradeChartFilterOptions}
-                  selectedFilter={selectedGradeChartFilter}
-                  onFilterChange={setSelectedGradeChartFilter}
-                  filterLabel={t('chart.filterByCourse')}
-                  rawReviewData={filteredReviewsForChart}
-                  onBarClick={(grade) => {
-                    // 設置成績篩選並滾動到學生評論區域
-                    setExternalGradeFilter(grade);
-                    setFilters(prev => ({
-                      ...prev,
-                      selectedGrades: [grade],
-                      currentPage: 1
-                    }));
-                    
-                    // 短暫延遲後滾動，讓篩選生效
-                    setTimeout(() => {
-                      const studentReviewsElement = document.getElementById('instructor-student-reviews');
-                      if (studentReviewsElement) {
-                        studentReviewsElement.scrollIntoView({ 
-                          behavior: 'smooth', 
-                          block: 'start' 
-                        });
-                      }
-                    }, 100);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        </PersistentCollapsibleSection>
-      )}
-
-      {/* 教授課程 */}
-      <PersistentCollapsibleSection
-        className="course-card"
-        title={t('instructors.coursesTeaching')}
-        sectionKey="teaching_records"
-        icon={<BookOpen className="h-5 w-5" />}
-        badge={
-          teachingCoursesLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Badge 
-              variant={teachingCourses.length > 0 ? "default" : "secondary"}
-              className={`text-xs font-medium transition-all duration-200 cursor-help ${
-                teachingCourses.length > 0 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105 border-green-200 dark:border-green-800' 
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-800'
-              }`}
+      <Tabs defaultValue="reviews" className="w-full">
+        {/* Tab Navigation */}
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b mb-6 -mx-4 px-4 pb-4">
+          <TabsList className="bg-muted/30 p-1 rounded-lg border shadow-sm w-full md:w-auto">
+            <TabsTrigger 
+              value="reviews" 
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-muted/50"
             >
-              {teachingCourses.length > 0 ? (
-                <>
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  {t('instructors.teaching')}
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-3 w-3 mr-1" />
-                  {t('instructors.notTeaching')}
-                </>
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('review.studentReviews')}</span>
+              <span className="sm:hidden">{t('common.reviews')}</span>
+              {allReviews && allReviews.length > 0 && (
+                <div className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs font-semibold">
+                  {allReviews.length}
+                </div>
               )}
-            </Badge>
-          )
-        }
-        defaultExpanded={true}
-        expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
-        collapsedHint={t('common.clickToExpand') || 'Click to expand'}
-      >
+            </TabsTrigger>
+            <TabsTrigger 
+              value="courses" 
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-muted/50"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('instructors.teachingCourses')}</span>
+              <span className="sm:hidden">{t('common.courses')}</span>
+              {isTeachingInCurrentTerm && (
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="grades" 
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-muted/50"
+            >
+              <Info className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('chart.gradeDistribution')}</span>
+              <span className="sm:hidden">{t('common.grades')}</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Instructor Info Tab */}
+        <TabsContent value="info" className="mt-0">
+          {instructor && (
+            <Card className="course-card">
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {/* 詳細統計說明 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        {reviewsLoading ? (
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                        ) : reviews.length > 0 ? (
+                          (() => {
+                            const validRatings = reviews
+                              .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.teaching)
+                              .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                            return validRatings.length > 0 
+                              ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                              : 'N/A';
+                          })()
+                        ) : (
+                          'N/A'
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{t('instructors.averageTeachingQuality')}</div>
+                      {!reviewsLoading && reviews.length === 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {t('instructors.noRatingData')}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        {reviewsLoading ? (
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                        ) : reviews.length > 0 ? (
+                          (() => {
+                            const validRatings = reviews
+                              .map(r => r.instructorDetails.find(detail => detail.instructor_name === decodedName)?.grading)
+                              .filter(rating => rating !== null && rating !== undefined && rating !== -1);
+                            return validRatings.length > 0 
+                              ? (validRatings.reduce((sum, rating) => sum + rating!, 0) / validRatings.length).toFixed(2).replace(/\.?0+$/, '')
+                              : 'N/A';
+                          })()
+                        ) : (
+                          'N/A'
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{t('instructors.averageGradingSatisfaction')}</div>
+                      {!reviewsLoading && reviews.length === 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {t('instructors.noRatingData')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 成績分佈圖表 */}
+                  {!reviewsLoading && reviews.length > 0 && (
+                    <div>
+                      <GradeDistributionChart
+                        gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
+                        loading={reviewsLoading}
+                        title={t('chart.gradeDistribution')}
+                        height={120}
+                        showPercentage={true}
+                        className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+                        context="instructor"
+                        filterOptions={gradeChartFilterOptions}
+                        selectedFilter={selectedGradeChartFilter}
+                        onFilterChange={setSelectedGradeChartFilter}
+                        filterLabel={t('chart.filterByCourse')}
+                        rawReviewData={filteredReviewsForChart}
+                        defaultExpanded={true}
+                        onBarClick={(grade) => {
+                          // 設置成績篩選並滾動到學生評論區域
+                          setExternalGradeFilter(grade);
+                          setFilters(prev => ({
+                            ...prev,
+                            selectedGrades: [grade],
+                            currentPage: 1
+                          }));
+                          
+                          // 短暫延遲後滾動，讓篩選生效
+                          setTimeout(() => {
+                            const studentReviewsElement = document.getElementById('instructor-student-reviews');
+                            if (studentReviewsElement) {
+                              studentReviewsElement.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'start' 
+                              });
+                            }
+                          }, 100);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Teaching Courses Tab */}
+        <TabsContent value="courses" className="mt-0">
+          <Card className="course-card">
+            <CardContent className="p-6">
           {teachingCoursesLoading ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
@@ -1079,26 +1377,42 @@ const Lecturers = () => {
             </div>
           ) : (
             <Tabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <TabsList className="bg-muted/50 backdrop-blur-sm w-full sm:w-auto">
+              {/* Mobile: Tabs and filters in separate rows */}
+              <div className="flex flex-col gap-4 mb-4 md:hidden">
+                {/* Tab switcher row */}
+                <TabsList className="bg-muted/50 backdrop-blur-sm w-full">
                   <TabsTrigger 
                     value="lecture" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
                   >
-                    {t('sessionType.lecture')} ({filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length})
+                    <div className="flex items-center gap-2">
+                      <span>{t('sessionType.lecture')}</span>
+                      <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
+                      </div>
+                    </div>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="tutorial" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1 sm:flex-none"
+                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
                   >
-                    {t('sessionType.tutorial')} ({filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length})
+                    <div className="flex items-center gap-2">
+                      <span>{t('sessionType.tutorial')}</span>
+                      <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                      </div>
+                    </div>
                   </TabsTrigger>
                 </TabsList>
 
-                {/* 學期篩選器 - 移到右側 */}
-                <div className="flex items-center gap-2 sm:ml-auto">
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t('pages.courseDetail.filterByTerm')}:</span>
-                  <div className="relative w-full sm:w-auto min-w-0">
+                {/* Filters row */}
+                <div className="grid grid-cols-1 gap-2">
+                  {/* Term filter */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24">
+                      <Calendar className="h-4 w-4" />
+                      {t('pages.courseDetail.filterByTerm')}
+                    </label>
                     <MultiSelectDropdown
                       options={availableTerms.map((term): SelectOption => ({
                         value: term.term_code,
@@ -1107,7 +1421,6 @@ const Lecturers = () => {
                       }))}
                       selectedValues={(() => {
                         const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
-                        // If 'all' is selected or no values, return empty array to show placeholder
                         if (values.length === 0 || values.includes('all')) {
                           return [];
                         }
@@ -1115,13 +1428,214 @@ const Lecturers = () => {
                       })()}
                       onSelectionChange={(values: string[]) => {
                         if (values.length === 0) {
-                          setSelectedTermFilter('all'); // When nothing selected, set to 'all'
+                          setSelectedTermFilter('all');
                         } else {
                           setSelectedTermFilter(values);
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[180px]"
+                      className="flex-1 h-10 text-sm"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={teachingCourses?.length || 0}
+                    />
+                  </div>
+
+                  {/* Teaching language filter */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24">
+                      <BookOpen className="h-4 w-4" />
+                      {t('pages.courseDetail.filterByTeachingLanguage')}
+                    </label>
+                    <MultiSelectDropdown
+                      options={(() => {
+                        const languageCounts = new Map<string, number>();
+                        teachingCourses.forEach(teaching => {
+                          const teachingLanguage = getTeachingLanguageForTeachingRecord(
+                            teaching.course.course_code,
+                            teaching.term.term_code,
+                            teaching.sessionType
+                          );
+                          if (teachingLanguage) {
+                            languageCounts.set(teachingLanguage, (languageCounts.get(teachingLanguage) || 0) + 1);
+                          }
+                        });
+                        
+                        // Define the desired order: E, C, P, 1, 2, 3, 4, 5
+                        const teachingLanguageOrder = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+                        
+                        return Array.from(languageCounts.entries())
+                          .sort(([a], [b]) => {
+                            const aIndex = teachingLanguageOrder.indexOf(a);
+                            const bIndex = teachingLanguageOrder.indexOf(b);
+                            
+                            // If both languages are in the order list, sort by their position
+                            if (aIndex !== -1 && bIndex !== -1) {
+                              return aIndex - bIndex;
+                            }
+                            
+                            // If only one is in the order list, it comes first
+                            if (aIndex !== -1) return -1;
+                            if (bIndex !== -1) return 1;
+                            
+                            // If neither is in the order list, sort alphabetically
+                            return a.localeCompare(b);
+                          })
+                          .map(([language, count]): SelectOption => ({
+                            value: language,
+                            label: `${language} - ${getTeachingLanguageName(language, t)}`,
+                            count
+                          }));
+                      })()}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          setSelectedTeachingLanguageFilter('all');
+                        } else {
+                          setSelectedTeachingLanguageFilter(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="flex-1 h-10 text-sm"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={teachingCourses?.length || 0}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop: Tab switcher and filters in the same row */}
+              <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-4">
+                <TabsList className="bg-muted/50 backdrop-blur-sm">
+                  <TabsTrigger 
+                    value="lecture" 
+                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{t('sessionType.lecture')}</span>
+                      <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
+                      </div>
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="tutorial" 
+                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{t('sessionType.tutorial')}</span>
+                      <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                      </div>
+                    </div>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Desktop filters - inline with tab switcher */}
+                <div className="flex items-center gap-4 ml-auto">
+                  {/* Term filter */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      <Calendar className="h-4 w-4" />
+                      {t('pages.courseDetail.filterByTerm')}
+                    </label>
+                    <MultiSelectDropdown
+                      options={availableTerms.map((term): SelectOption => ({
+                        value: term.term_code,
+                        label: term.name,
+                        count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0
+                      }))}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          setSelectedTermFilter('all');
+                        } else {
+                          setSelectedTermFilter(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="w-[180px] h-10 text-sm"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={teachingCourses?.length || 0}
+                    />
+                  </div>
+                  
+                  {/* Teaching language filter */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      <BookOpen className="h-4 w-4" />
+                      {t('pages.courseDetail.filterByTeachingLanguage')}
+                    </label>
+                    <MultiSelectDropdown
+                      options={(() => {
+                        const languageCounts = new Map<string, number>();
+                        teachingCourses.forEach(teaching => {
+                          const teachingLanguage = getTeachingLanguageForTeachingRecord(
+                            teaching.course.course_code,
+                            teaching.term.term_code,
+                            teaching.sessionType
+                          );
+                          if (teachingLanguage) {
+                            languageCounts.set(teachingLanguage, (languageCounts.get(teachingLanguage) || 0) + 1);
+                          }
+                        });
+                        
+                        // Define the desired order: E, C, P, 1, 2, 3, 4, 5
+                        const teachingLanguageOrder = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+                        
+                        return Array.from(languageCounts.entries())
+                          .sort(([a], [b]) => {
+                            const aIndex = teachingLanguageOrder.indexOf(a);
+                            const bIndex = teachingLanguageOrder.indexOf(b);
+                            
+                            // If both languages are in the order list, sort by their position
+                            if (aIndex !== -1 && bIndex !== -1) {
+                              return aIndex - bIndex;
+                            }
+                            
+                            // If only one is in the order list, it comes first
+                            if (aIndex !== -1) return -1;
+                            if (bIndex !== -1) return 1;
+                            
+                            // If neither is in the order list, sort alphabetically
+                            return a.localeCompare(b);
+                          })
+                          .map(([language, count]): SelectOption => ({
+                            value: language,
+                            label: `${language} - ${getTeachingLanguageName(language, t)}`,
+                            count
+                          }));
+                      })()}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          setSelectedTeachingLanguageFilter('all');
+                        } else {
+                          setSelectedTeachingLanguageFilter(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="w-[180px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}
@@ -1188,38 +1702,103 @@ const Lecturers = () => {
                           </a>
                         </div>
                         
-                        {/* Right side: Terms */}
+                        {/* Right side: Combined Term and Teaching Language Badges */}
                         <div className="flex items-center gap-2 flex-wrap justify-end">
                           {data.terms
                             .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
-                            .map((term, termIndex) => (
-                            <button
-                              key={termIndex}
-                              onClick={() => {
-                                const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                const isSelected = currentValues.includes(term.term_code);
-                                
-                                if (isSelected) {
-                                  // Remove from selection
-                                  const newValues = currentValues.filter(v => v !== term.term_code);
-                                  setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                } else {
-                                  // Add to selection
-                                  setSelectedTermFilter([...currentValues, term.term_code]);
-                                }
-                              }}
-                              className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                (() => {
-                                  const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                  return currentValues.includes(term.term_code)
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-background hover:bg-muted border-border hover:border-primary/50';
-                                })()
-                              }`}
-                            >
-                              {term.name}
-                            </button>
-                          ))}
+                            .map((term, termIndex) => {
+                              // Find the teaching language for this specific term, course, and instructor
+                              const teachingLanguage = getTeachingLanguageForTeachingRecord(
+                                courseCode,
+                                term.term_code,
+                                'Lecture'
+                              );
+                              
+                              return (
+                                <div key={termIndex} className="flex items-center">
+                                  {/* Combined term and teaching language badge */}
+                                  {teachingLanguage ? (
+                                    <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
+                                      {/* Term part (left side) */}
+                                      <button
+                                        onClick={() => {
+                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                          const isSelected = currentValues.includes(term.term_code);
+                                          
+                                          if (isSelected) {
+                                            // Remove from selection
+                                            const newValues = currentValues.filter(v => v !== term.term_code);
+                                            setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
+                                          } else {
+                                            // Add to selection
+                                            setSelectedTermFilter([...currentValues, term.term_code]);
+                                          }
+                                        }}
+                                        className={`px-2 py-1 text-xs transition-colors ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground'
+                                              : 'bg-background hover:bg-muted';
+                                          })()
+                                        }`}
+                                        title={`Filter by term: ${term.name}`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                      
+                                      {/* Divider */}
+                                      <div className="w-px bg-border"></div>
+                                      
+                                      {/* Teaching language part (right side) */}
+                                      <button
+                                        onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                        className={`px-2 py-1 text-xs transition-colors ${
+                                          (() => {
+                                            const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                            const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
+                                            return isLanguageSelected
+                                              ? 'bg-orange-500 text-orange-50 font-bold'
+                                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50';
+                                          })()
+                                        }`}
+                                        title={`${t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}`}
+                                      >
+                                        {teachingLanguage}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    // Fallback to term-only badge if no teaching language
+                                    <button
+                                      onClick={() => {
+                                        const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                        const isSelected = currentValues.includes(term.term_code);
+                                        
+                                        if (isSelected) {
+                                          // Remove from selection
+                                          const newValues = currentValues.filter(v => v !== term.term_code);
+                                          setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
+                                        } else {
+                                          // Add to selection
+                                          setSelectedTermFilter([...currentValues, term.term_code]);
+                                        }
+                                      }}
+                                      className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                        (() => {
+                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                          return currentValues.includes(term.term_code)
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                        })()
+                                      }`}
+                                    >
+                                      {term.name}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })
+                          }
                         </div>
                       </div>
                     ))}
@@ -1285,38 +1864,103 @@ const Lecturers = () => {
                           </a>
                         </div>
                         
-                        {/* Right side: Terms */}
+                        {/* Right side: Combined Term and Teaching Language Badges */}
                         <div className="flex items-center gap-2 flex-wrap justify-end">
                           {data.terms
                             .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
-                            .map((term, termIndex) => (
-                            <button
-                              key={termIndex}
-                              onClick={() => {
-                                const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                const isSelected = currentValues.includes(term.term_code);
-                                
-                                if (isSelected) {
-                                  // Remove from selection
-                                  const newValues = currentValues.filter(v => v !== term.term_code);
-                                  setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                } else {
-                                  // Add to selection
-                                  setSelectedTermFilter([...currentValues, term.term_code]);
-                                }
-                              }}
-                              className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                (() => {
-                                  const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                  return currentValues.includes(term.term_code)
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-background hover:bg-muted border-border hover:border-primary/50';
-                                })()
-                              }`}
-                            >
-                              {term.name}
-                            </button>
-                          ))}
+                            .map((term, termIndex) => {
+                              // Find the teaching language for this specific term, course, and instructor
+                              const teachingLanguage = getTeachingLanguageForTeachingRecord(
+                                courseCode,
+                                term.term_code,
+                                'Tutorial'
+                              );
+                              
+                              return (
+                                <div key={termIndex} className="flex items-center">
+                                  {/* Combined term and teaching language badge */}
+                                  {teachingLanguage ? (
+                                    <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
+                                      {/* Term part (left side) */}
+                                      <button
+                                        onClick={() => {
+                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                          const isSelected = currentValues.includes(term.term_code);
+                                          
+                                          if (isSelected) {
+                                            // Remove from selection
+                                            const newValues = currentValues.filter(v => v !== term.term_code);
+                                            setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
+                                          } else {
+                                            // Add to selection
+                                            setSelectedTermFilter([...currentValues, term.term_code]);
+                                          }
+                                        }}
+                                        className={`px-2 py-1 text-xs transition-colors ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground'
+                                              : 'bg-background hover:bg-muted';
+                                          })()
+                                        }`}
+                                        title={`Filter by term: ${term.name}`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                      
+                                      {/* Divider */}
+                                      <div className="w-px bg-border"></div>
+                                      
+                                      {/* Teaching language part (right side) */}
+                                      <button
+                                        onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                        className={`px-2 py-1 text-xs transition-colors ${
+                                          (() => {
+                                            const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                            const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
+                                            return isLanguageSelected
+                                              ? 'bg-orange-500 text-orange-50 font-bold'
+                                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50';
+                                          })()
+                                        }`}
+                                        title={`${t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}`}
+                                      >
+                                        {teachingLanguage}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    // Fallback to term-only badge if no teaching language
+                                    <button
+                                      onClick={() => {
+                                        const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                        const isSelected = currentValues.includes(term.term_code);
+                                        
+                                        if (isSelected) {
+                                          // Remove from selection
+                                          const newValues = currentValues.filter(v => v !== term.term_code);
+                                          setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
+                                        } else {
+                                          // Add to selection
+                                          setSelectedTermFilter([...currentValues, term.term_code]);
+                                        }
+                                      }}
+                                      className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                        (() => {
+                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                          return currentValues.includes(term.term_code)
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                        })()
+                                      }`}
+                                    >
+                                      {term.name}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })
+                          }
                         </div>
                       </div>
                     ))}
@@ -1325,20 +1969,15 @@ const Lecturers = () => {
               </TabsContent>
             </Tabs>
           )}
-      </PersistentCollapsibleSection>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* 學生評論 */}
-      <div id="instructor-student-reviews">
-        <PersistentCollapsibleSection
-          className="course-card"
-          title={t('instructors.studentReviews')}
-          icon={<MessageSquare className="h-5 w-5" />}
-          sectionKey="student_reviews"
-          defaultExpanded={true}
-          expandedHint={t('common.clickToCollapse') || 'Click to collapse'}
-          collapsedHint={t('common.clickToExpand') || 'Click to expand'}
-          contentClassName="space-y-4"
-        >
+        {/* Student Reviews Tab */}
+        <TabsContent value="reviews" className="mt-0">
+                    <div id="instructor-student-reviews">
+            <Card className="course-card">
+              <CardContent className="p-6 space-y-4">
           {/* 篩選器 - 只有當有評論且不在載入狀態時才顯示 */}
           {reviews && reviews.length > 0 && !reviewsLoading && (
             <>
@@ -1355,6 +1994,7 @@ const Lecturers = () => {
               termCounts={termCounts}
               courseCounts={courseCounts}
               sessionTypeCounts={sessionTypeCounts}
+              teachingLanguageCounts={teachingLanguageCounts}
               gradeCounts={gradeCounts}
               totalReviews={reviews.length}
               filteredReviews={filteredReviews.length}
@@ -1499,7 +2139,7 @@ const Lecturers = () => {
                          </button>
                        </div>
                       {/* 課程標題 - 顯示在學生姓名/匿名行下方 */}
-                      <div className="flex items-start gap-2">
+                      <div className="space-y-2">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-lg">
                             <a
@@ -1534,39 +2174,6 @@ const Lecturers = () => {
                             </a>
                           </h4>
                         </div>
-                        {(() => {
-                          const currentInstructorDetail = reviewInfo.instructorDetails.find(detail => detail.instructor_name === decodedName);
-                          return currentInstructorDetail ? (
-                            <Badge 
-                              variant="secondary" 
-                              className={`text-sm shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 ${
-                                currentInstructorDetail.session_type === 'Lecture' 
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                                  : currentInstructorDetail.session_type === 'Tutorial'
-                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
-                                  : ''
-                              }`}
-                              onClick={() => {
-                                const newFilters = { ...filters };
-                                const sessionType = currentInstructorDetail.session_type;
-                                
-                                // 切換篩選器
-                                if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                  newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                } else {
-                                  newFilters.selectedSessionTypes = [sessionType];
-                                }
-                                
-                                // 重置頁面到第一頁
-                                newFilters.currentPage = 1;
-                                
-                                handleFiltersChange(newFilters);
-                              }}
-                            >
-                              {t(`sessionType.${currentInstructorDetail.session_type.toLowerCase()}`)}
-                            </Badge>
-                          ) : null;
-                        })()}
                       </div>
                     </div>
                     {/* 最終成績 - 右上角大顯示 */}
@@ -1670,15 +2277,14 @@ const Lecturers = () => {
                             {t('review.serviceLearning')}
                           </Badge>
                           {/* 顯示服務學習類型 */}
-                          <Badge 
-                            variant="outline" 
+                          <span 
                             className={cn(
-                              "text-xs",
+                              "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                               // 檢查是否為必修：明確標記為 compulsory 或舊格式的 [COMPULSORY] 前綴
                               (reviewInfo.review.service_learning_type === 'compulsory' || 
                                reviewInfo.review.service_learning_description?.startsWith('[COMPULSORY]'))
-                                ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-950/30"
-                                : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-300 dark:bg-green-950/30"
+                                ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                             )}
                           >
                             {/* 檢查是否為必修，否則顯示選修 */}
@@ -1686,7 +2292,7 @@ const Lecturers = () => {
                               reviewInfo.review.service_learning_description?.startsWith('[COMPULSORY]'))
                               ? t('review.compulsory')
                               : t('review.optional')}
-                          </Badge>
+                          </span>
                         </div>
                         {reviewInfo.review.service_learning_description && (
                           <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
@@ -1713,55 +2319,167 @@ const Lecturers = () => {
                           <>
                             <Separator />
                             <div className="rounded-lg p-4 overflow-hidden bg-[#e8e9ea] dark:bg-[#1a2332]">
-                              <div className="flex items-start justify-between mb-3 gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-lg">
-                                    {(() => {
-                                      if (instructor) {
-                                        const nameInfo = getInstructorName(instructor, language);
+                              <div className="space-y-2 mb-3">
+                                {/* Instructor name and badges container */}
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
+                                  <h4 className="font-semibold text-lg min-w-0 md:flex-1">
+                                    <span>
+                                      {(() => {
+                                        const fullInstructor = otherInstructorsMap.get(currentInstructorDetail.instructor_name);
+                                        if (fullInstructor) {
+                                          const nameInfo = getInstructorName(fullInstructor, language);
+                                          return (
+                                            <div>
+                                              <div>{nameInfo.primary}</div>
+                                              {nameInfo.secondary && (
+                                                <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                                                  {nameInfo.secondary}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        }
                                         return (
                                           <div>
-                                            <div>{nameInfo.primary}</div>
-                                            {nameInfo.secondary && (
-                                              <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                                {nameInfo.secondary}
-                                              </div>
-                                            )}
+                                            <div>{currentInstructorDetail.instructor_name}</div>
                                           </div>
                                         );
-                                      }
-                                      return currentInstructorDetail.instructor_name;
-                                    })()}
+                                      })()}
+                                    </span>
                                   </h4>
+                                  
+                                  {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
+                                  <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
+                                    {/* 教學語言徽章 */}
+                                    {(() => {
+                                      const teachingLanguage = getTeachingLanguageForInstructor(
+                                        currentInstructorDetail.instructor_name,
+                                        currentInstructorDetail.session_type
+                                      );
+                                      if (teachingLanguage) {
+                                        return (
+                                          <span 
+                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
+                                            onClick={() => {
+                                              const newFilters = { ...filters };
+                                              
+                                              // 切換教學語言篩選器
+                                              if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                                                newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                                              } else {
+                                                newFilters.selectedTeachingLanguages = [teachingLanguage];
+                                              }
+                                              
+                                              // 重置頁面到第一頁
+                                              newFilters.currentPage = 1;
+                                              
+                                              handleFiltersChange(newFilters);
+                                            }}
+                                            title={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                          >
+                                            <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
+                                          </span>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
+                                    
+                                    {/* 課堂類型徽章 */}
+                                    <span 
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                        currentInstructorDetail.session_type === 'Lecture' 
+                                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                          : currentInstructorDetail.session_type === 'Tutorial'
+                                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                          : ''
+                                      }`}
+                                      onClick={() => {
+                                        const newFilters = { ...filters };
+                                        const sessionType = currentInstructorDetail.session_type;
+                                        
+                                        // 切換篩選器
+                                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                        } else {
+                                          newFilters.selectedSessionTypes = [sessionType];
+                                        }
+                                        
+                                        // 重置頁面到第一頁
+                                        newFilters.currentPage = 1;
+                                        
+                                        handleFiltersChange(newFilters);
+                                      }}
+                                    >
+                                      {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
+                                    </span>
+                                  </div>
                                 </div>
-                                <Badge 
-                                  variant="secondary" 
-                                  className={`text-sm shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 ${
-                                    currentInstructorDetail.session_type === 'Lecture' 
-                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                                      : currentInstructorDetail.session_type === 'Tutorial'
-                                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
-                                      : ''
-                                  }`}
-                                  onClick={() => {
-                                    const newFilters = { ...filters };
-                                    const sessionType = currentInstructorDetail.session_type;
-                                    
-                                    // 切換篩選器
-                                    if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                      newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                    } else {
-                                      newFilters.selectedSessionTypes = [sessionType];
+                                
+                                {/* Mobile: Badges on separate lines below instructor name */}
+                                <div className="flex md:hidden flex-wrap items-center gap-2">
+                                  {/* 教學語言徽章 */}
+                                  {(() => {
+                                    const teachingLanguage = getTeachingLanguageForInstructor(
+                                      currentInstructorDetail.instructor_name,
+                                      currentInstructorDetail.session_type
+                                    );
+                                    if (teachingLanguage) {
+                                      return (
+                                        <span 
+                                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
+                                          onClick={() => {
+                                            const newFilters = { ...filters };
+                                            
+                                            // 切換教學語言篩選器
+                                            if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                                              newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                                            } else {
+                                              newFilters.selectedTeachingLanguages = [teachingLanguage];
+                                            }
+                                            
+                                            // 重置頁面到第一頁
+                                            newFilters.currentPage = 1;
+                                            
+                                            handleFiltersChange(newFilters);
+                                          }}
+                                          title={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                        >
+                                          <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
+                                        </span>
+                                      );
                                     }
-                                    
-                                    // 重置頁面到第一頁
-                                    newFilters.currentPage = 1;
-                                    
-                                    handleFiltersChange(newFilters);
-                                  }}
-                                >
-                                  {t(`sessionType.${currentInstructorDetail.session_type.toLowerCase()}`)}
-                                </Badge>
+                                    return null;
+                                  })()}
+                                  
+                                  {/* 課堂類型徽章 */}
+                                  <span 
+                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                      currentInstructorDetail.session_type === 'Lecture' 
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                        : currentInstructorDetail.session_type === 'Tutorial'
+                                        ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                        : ''
+                                    }`}
+                                    onClick={() => {
+                                      const newFilters = { ...filters };
+                                      const sessionType = currentInstructorDetail.session_type;
+                                      
+                                      // 切換篩選器
+                                      if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                        newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                      } else {
+                                        newFilters.selectedSessionTypes = [sessionType];
+                                      }
+                                      
+                                      // 重置頁面到第一頁
+                                      newFilters.currentPage = 1;
+                                      
+                                      handleFiltersChange(newFilters);
+                                    }}
+                                  >
+                                    {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
+                                  </span>
+                                </div>
                               </div>
                               
                               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -1823,20 +2541,19 @@ const Lecturers = () => {
                                   </h5>
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <Badge 
-                                        variant="outline" 
+                                      <span 
                                         className={cn(
-                                          "text-xs",
+                                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                                           currentInstructorDetail.service_learning_type === 'compulsory'
-                                            ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-400 dark:bg-red-950/50"
-                                            : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-400 dark:bg-green-950/50"
+                                            ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                            : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                                         )}
                                       >
                                         {currentInstructorDetail.service_learning_type === 'compulsory' 
                                           ? t('review.compulsory') 
                                           : t('review.optional')
                                         }
-                                      </Badge>
+                                      </span>
                                     </div>
                                     {currentInstructorDetail.service_learning_description && (
                                       <div className="text-sm break-words">
@@ -1892,22 +2609,16 @@ const Lecturers = () => {
                               <div className="space-y-4 mt-4">
                                 {otherInstructorDetails.map((instructor, index) => (
                                   <div key={index} className="rounded-lg p-4 overflow-hidden bg-[#e8e9ea] dark:bg-[#1a2332]">
-                                    <div className="flex items-start justify-between mb-3 gap-2">
-                                      <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-lg">
+                                    <div className="space-y-2 mb-3">
+                                      {/* Instructor name and badges container */}
+                                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
+                                        <h4 className="font-semibold text-lg cursor-pointer hover:text-primary transition-colors min-w-0 md:flex-1">
                                           <a
-                                            href={`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewInfo.review.$id}`}
-                                            className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+                                            href={`/instructors/${encodeURIComponent(instructor.instructor_name)}`}
+                                            className="hover:underline"
                                             onClick={(e) => {
-                                              // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                                              // Let normal clicks use the default link behavior
-                                              if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                                // Let browser handle these naturally
-                                                return;
-                                              }
-                                              // For normal clicks, prevent default and use React Router
                                               e.preventDefault();
-                                              navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewInfo.review.$id}`);
+                                              navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`);
                                             }}
                                           >
                                             {(() => {
@@ -1925,39 +2636,149 @@ const Lecturers = () => {
                                                   </div>
                                                 );
                                               }
-                                              return instructor.instructor_name;
+                                              return (
+                                                <div>
+                                                  <div>{instructor.instructor_name}</div>
+                                                </div>
+                                              );
                                             })()}
                                           </a>
                                         </h4>
+                                        
+                                        {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
+                                        <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
+                                          {/* 教學語言徽章 */}
+                                          {(() => {
+                                            const teachingLanguage = getTeachingLanguageForInstructor(
+                                              instructor.instructor_name,
+                                              instructor.session_type
+                                            );
+                                            if (teachingLanguage) {
+                                              return (
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
+                                                  onClick={() => {
+                                                    const newFilters = { ...filters };
+                                                    const language = teachingLanguage;
+                                                    
+                                                    // 切換篩選器
+                                                    if (newFilters.selectedTeachingLanguages.includes(language)) {
+                                                      newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== language);
+                                                    } else {
+                                                      newFilters.selectedTeachingLanguages = [language];
+                                                    }
+                                                    
+                                                    // 重置頁面到第一頁
+                                                    newFilters.currentPage = 1;
+                                                    
+                                                    handleFiltersChange(newFilters);
+                                                  }}
+                                                  title={getTeachingLanguageName(teachingLanguage, t)}
+                                                >
+                                                  {getTeachingLanguageName(teachingLanguage, t)}
+                                                </span>
+                                              );
+                                            }
+                                            return null;
+                                          })()}
+                                          
+                                          {/* 課堂類型徽章 */}
+                                          <span 
+                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                              instructor.session_type === 'Lecture' 
+                                                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                                : instructor.session_type === 'Tutorial'
+                                                ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                                : ''
+                                            }`}
+                                            onClick={() => {
+                                              const newFilters = { ...filters };
+                                              const sessionType = instructor.session_type;
+                                              
+                                              // 切換篩選器
+                                              if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                                newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                              } else {
+                                                newFilters.selectedSessionTypes = [sessionType];
+                                              }
+                                              
+                                              // 重置頁面到第一頁
+                                              newFilters.currentPage = 1;
+                                              
+                                              handleFiltersChange(newFilters);
+                                            }}
+                                          >
+                                            {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                                          </span>
+                                        </div>
                                       </div>
-                                      <Badge 
-                                        variant="secondary" 
-                                        className={`text-sm shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 ${
-                                          instructor.session_type === 'Lecture' 
-                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                                            : instructor.session_type === 'Tutorial'
-                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
-                                            : ''
-                                        }`}
-                                        onClick={() => {
-                                          const newFilters = { ...filters };
-                                          const sessionType = instructor.session_type;
-                                          
-                                          // 切換篩選器
-                                          if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                            newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                          } else {
-                                            newFilters.selectedSessionTypes = [sessionType];
+                                      
+                                      {/* Mobile: Badges on separate lines below instructor name */}
+                                      <div className="flex md:hidden flex-wrap items-center gap-2">
+                                        {/* 教學語言徽章 */}
+                                        {(() => {
+                                          const teachingLanguage = getTeachingLanguageForInstructor(
+                                            instructor.instructor_name,
+                                            instructor.session_type
+                                          );
+                                          if (teachingLanguage) {
+                                            return (
+                                              <span 
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
+                                                onClick={() => {
+                                                  const newFilters = { ...filters };
+                                                  const language = teachingLanguage;
+                                                  
+                                                  // 切換篩選器
+                                                  if (newFilters.selectedTeachingLanguages.includes(language)) {
+                                                    newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== language);
+                                                  } else {
+                                                    newFilters.selectedTeachingLanguages = [language];
+                                                  }
+                                                  
+                                                  // 重置頁面到第一頁
+                                                  newFilters.currentPage = 1;
+                                                  
+                                                  handleFiltersChange(newFilters);
+                                                }}
+                                                title={getTeachingLanguageName(teachingLanguage, t)}
+                                              >
+                                                {getTeachingLanguageName(teachingLanguage, t)}
+                                              </span>
+                                            );
                                           }
-                                          
-                                          // 重置頁面到第一頁
-                                          newFilters.currentPage = 1;
-                                          
-                                          handleFiltersChange(newFilters);
-                                        }}
-                                      >
-                                        {t(`sessionType.${instructor.session_type.toLowerCase()}`)}
-                                      </Badge>
+                                          return null;
+                                        })()}
+                                        
+                                        {/* 課堂類型徽章 */}
+                                        <span 
+                                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                            instructor.session_type === 'Lecture' 
+                                              ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                              : instructor.session_type === 'Tutorial'
+                                              ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                              : ''
+                                          }`}
+                                          onClick={() => {
+                                            const newFilters = { ...filters };
+                                            const sessionType = instructor.session_type;
+                                            
+                                            // 切換篩選器
+                                            if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                              newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                            } else {
+                                              newFilters.selectedSessionTypes = [sessionType];
+                                            }
+                                            
+                                            // 重置頁面到第一頁
+                                            newFilters.currentPage = 1;
+                                            
+                                            handleFiltersChange(newFilters);
+                                          }}
+                                        >
+                                          {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                                        </span>
+                                      </div>
                                     </div>
                                     
                                     <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -2019,20 +2840,19 @@ const Lecturers = () => {
                                         </h5>
                                         <div className="space-y-2">
                                           <div className="flex items-center gap-2">
-                                            <Badge 
-                                              variant="outline" 
+                                            <span 
                                               className={cn(
-                                                "text-xs",
+                                                "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                                                 instructor.service_learning_type === 'compulsory'
-                                                  ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-400 dark:bg-red-950/50"
-                                                  : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-400 dark:bg-green-950/50"
+                                                  ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                                  : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                                               )}
                                             >
                                               {instructor.service_learning_type === 'compulsory' 
                                                 ? t('review.compulsory') 
                                                 : t('review.optional')
                                               }
-                                            </Badge>
+                                            </span>
                                           </div>
                                           {instructor.service_learning_description && (
                                             <div className="text-sm break-words">
@@ -2112,8 +2932,67 @@ const Lecturers = () => {
               )}
             </div>
           )}
-      </PersistentCollapsibleSection>
-      </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        {/* Grade Distribution Tab */}
+        <TabsContent value="grades" className="mt-0">
+          <Card className="course-card">
+            <CardContent className="p-6">
+              {/* 成績分佈圖表 */}
+              {!reviewsLoading && filteredReviewsForChart.length > 0 ? (
+                <div>
+                  <GradeDistributionChart
+                    gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(reviewInfo => ({ course_final_grade: reviewInfo.review.course_final_grade })))}
+                    loading={reviewsLoading}
+                    title={t('chart.gradeDistribution')}
+                    height={120}
+                    showPercentage={true}
+                    className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+                    context="instructor"
+                    filterOptions={gradeChartFilterOptions}
+                    selectedFilter={selectedGradeChartFilter}
+                    onFilterChange={setSelectedGradeChartFilter}
+                    filterLabel={t('chart.filterByCourse')}
+                    rawReviewData={filteredReviewsForChart}
+                    hideHeader={true}
+                    onBarClick={(grade) => {
+                      // 設置成績篩選並滾動到學生評論區域
+                      setExternalGradeFilter(grade);
+                      
+                      // 短暫延遲後滾動，讓篩選生效
+                      setTimeout(() => {
+                        const studentReviewsElement = document.getElementById('instructor-student-reviews');
+                        if (studentReviewsElement) {
+                          studentReviewsElement.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                          });
+                        }
+                      }, 100);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-12 space-y-4">
+                  <div className="flex justify-center">
+                    <div className="p-4 bg-muted/50 rounded-full">
+                      <Info className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-medium text-muted-foreground">{t('chart.noGradeData')}</h3>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      {t('chart.noGradeDataDescription')}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        </Tabs>
 
       {/* 操作按鈕 */}
       <div className="flex gap-3 pb-8 md:pb-0">

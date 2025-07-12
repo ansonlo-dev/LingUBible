@@ -33,13 +33,22 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
 
     const t = translations[language] || translations.en
 
+    // 分離flex相關的類和其他類
+    const flexClasses = className?.split(' ').filter(cls => 
+      cls.includes('flex') || cls.includes('grow') || cls.includes('shrink') || cls.includes('basis')
+    ).join(' ') || ''
+    
+    const inputClasses = className?.split(' ').filter(cls => 
+      !cls.includes('flex') && !cls.includes('grow') && !cls.includes('shrink') && !cls.includes('basis')
+    ).join(' ') || ''
+
     return (
-      <div className="relative">
+      <div className={cn("relative", flexClasses)}>
         <input
           type={showPassword ? "text" : "password"}
           className={cn(
             "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-            className
+            inputClasses
           )}
           ref={ref}
           {...props}

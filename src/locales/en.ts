@@ -358,6 +358,11 @@ export default {
   'sessionType.tutorial': 'Tutorial',
   'sessionType.lab': 'Lab',
   'sessionType.seminar': 'Seminar',
+  // Session types for review cards (same as above for English)
+  'sessionTypeBadge.lecture': 'Lecture',
+  'sessionTypeBadge.tutorial': 'Tutorial',
+  'sessionTypeBadge.lab': 'Lab',
+  'sessionTypeBadge.seminar': 'Seminar',
   // Grade and GPA
   'grade.tooltip.title': 'Grade Information',
   'grade.gpa': 'GPA',
@@ -415,8 +420,8 @@ export default {
   'pagination.previous': 'Previous',
   'pagination.next': 'Next',
   'pagination.last': 'Last',
-      'pagination.foundCourses': 'Found {count} course|courses',
-    'pagination.foundInstructors': 'Found {count} instructor|instructors',
+  'pagination.foundCourses': 'Found {count} course|courses',
+  'pagination.foundInstructors': 'Found {count} instructor|instructors',
   // Review filters
   'filter.reviewLanguage': 'Review Language',
   'filter.reviewTerm': 'Term',
@@ -467,7 +472,8 @@ export default {
   'pages.courseDetail.termCode': 'Term Code',
   'pages.courseDetail.startDate': 'Start Date',
   'pages.courseDetail.endDate': 'End Date',
-  'pages.courseDetail.filterByTerm': 'Filter by Term',
+  'pages.courseDetail.filterByTerm': 'Term',
+  'pages.courseDetail.filterByTeachingLanguage': 'Teaching Language',
   'pages.courseDetail.noLectureRecords': 'No lecture records found',
   'pages.courseDetail.noTutorialRecords': 'No tutorial records found',
   'pages.courseDetail.offerRecords': 'Offer Records',
@@ -1101,7 +1107,7 @@ export default {
   // New FAQ Questions
   'faq.coursesVsInstructorsQuestion': 'Why are there separate Courses and Instructors pages?',
   'faq.coursesVsInstructorsAnswer': 'We provide both pages to give you different perspectives when exploring academic information. The Courses page helps you find specific courses and see all instructors who teach them, while the Instructors page lets you discover all courses taught by a particular instructor. For example, if you like a professor\'s teaching style from one course, you can easily find other courses they teach to continue learning with them.',
-  
+
   // Review submission limits
   'faq.reviewLimitsQuestion': 'Why can I only submit a limited number of reviews per course?',
   'faq.reviewLimitsAnswer': 'To maintain the quality and authenticity of our review system, we limit each user to a maximum of 2 reviews per course. Normally, you can submit 1 review per course. However, if your first review shows a fail grade (F), you may submit one additional review. This policy helps prevent spam, fake reviews, and review manipulation while still allowing students who retake failed courses to share their updated experience.',
@@ -1192,6 +1198,9 @@ export default {
   'common.words': 'words',
   'common.tutorial': 'Tutorial',
   'common.noResults': 'No Results Found',
+  'common.info': 'Info',
+  'common.teaching': 'Teaching',
+  'common.courses': 'Courses',
   'backToTop.label': 'Back to top',
 
   // =============================================================================
@@ -1213,6 +1222,12 @@ export default {
   'review.selectTermPlaceholder': 'Choose a term...',
   'review.selectInstructors': 'Select Instructors',
   'review.selectInstructorsPlaceholder': 'Please select instructors (multiple allowed)',
+  'review.lectureInstructors': 'Lecture',
+  'review.tutorialInstructors': 'Tutorial',
+  'review.noLectureInstructors': 'No lecture instructors available',
+  'review.noTutorialInstructors': 'No tutorial instructors available',
+  'review.tutorial': 'Tutorial',
+  'review.lecture': 'Lecture',
   'review.courseInfo': 'Course Information',
   'review.courseReview': 'Course Review',
   'review.workload': 'Workload',
@@ -1271,7 +1286,7 @@ export default {
   'review.updateReview': 'Update Review',
   'review.updating': 'Updating...',
   'review.updateSuccess': 'Review updated successfully!',
-  
+
   // Review eligibility warning
   'review.checkingEligibility': 'Checking review eligibility...',
   'review.reviewLimitWarning': 'Review Limit Notice',
@@ -1283,7 +1298,7 @@ export default {
   'review.cannotSubmitBecausePassed': 'You cannot submit another review because you already passed this course.',
   'review.reviewLimitExceededInfo': 'You have reached the maximum limit of 2 reviews for this course.',
   'review.reviewNumber': 'Review #{number}',
-  
+
   // Grade edit restriction
   'review.cannotEditGradeTitle': 'Cannot Edit Grade',
   'review.cannotEditGradeMessage': 'Please delete your newer review before changing to a non-fail grade for this older review.',
@@ -1522,7 +1537,7 @@ export default {
   'myReviews.noReviewsDescription': 'You haven\'t written any course reviews yet. Start by browsing courses and sharing your experience!',
   'myReviews.browseCoursesToReview': 'Browse Courses to Review',
   'myReviews.searchPlaceholder': 'Search by course code, course name, or instructor name (supports multiple languages)',
-  'myReviews.totalReviews': 'Total reviews: {count}',
+  'myReviews.totalReviews': 'Total {count} reviews',
   'myReviews.deleteConfirmTitle': 'Delete Review',
   'myReviews.deleteConfirmDescription': 'Are you sure you want to delete this review? This action cannot be undone.',
   'myReviews.deleteSuccess': 'Review deleted successfully',
@@ -1532,22 +1547,24 @@ export default {
   'myReviews.viewCourse': 'View course {course}',
   // Featured content
   'featured.title': 'Popular Content',
-      'featured.courses': 'Popular Courses',
-    'featured.instructors': 'Popular Instructors',
-    'featured.topCourses': 'Top Courses',
-    'featured.topInstructors': 'Top Instructors',
-    'featured.viewAllCourses': 'View All Courses',
-    'featured.viewAllInstructors': 'View All Instructors',
-    'featured.popularCourses': 'Popular Courses',
-    'featured.popularCoursesDesc': 'Most popular courses based on review count',
-    'featured.popularInstructors': 'Popular Instructors',
-    'featured.popularInstructorsDesc': 'Most popular instructors based on review count',
-    'featured.noPopularCourses': 'No Popular Courses',
-    'featured.noPopularCoursesDesc': 'Not enough course review data available yet',
-    'featured.noPopularInstructors': 'No Popular Instructors',
-    'featured.noPopularInstructorsDesc': 'Not enough instructor review data available yet',
-    // Additional instructor detail translations
-    'instructors.averageTeachingRating': 'Average Teaching Rating',
+  'featured.courses': 'Popular Courses',
+  'featured.instructors': 'Popular Instructors',
+  'featured.topCourses': 'Top Courses',
+  'featured.topInstructors': 'Top Instructors',
+  'featured.viewAllCourses': 'View All Courses',
+  'featured.viewAllInstructors': 'View All Instructors',
+  'featured.popularCourses': 'Popular Courses',
+  'featured.popularCoursesDesc': 'Most popular courses based on review count',
+  'featured.popularInstructors': 'Popular Instructors',
+  'featured.popularInstructorsDesc': 'Most popular instructors based on review count',
+  'featured.noPopularCourses': 'No Popular Courses',
+  'featured.noPopularCoursesDesc': 'Not enough course review data available yet',
+  'featured.noPopularInstructors': 'No Popular Instructors',
+  'featured.noPopularInstructorsDesc': 'Not enough instructor review data available yet',
+  // Additional instructor detail translations
+  'instructors.averageTeachingRating': 'Average Teaching Rating',
+  'instructors.averageTeaching': 'Teaching',
+  'instructors.averageGrading': 'Grading',
   'instructors.averageTeachingQuality': 'Average Teaching Quality',
   'instructors.averageTeachingQualityShort': 'Avg. Teaching Quality',
   'instructors.averageGradingSatisfaction': 'Average Grading Satisfaction',
@@ -1712,7 +1729,7 @@ export default {
   'department.scienceUnit': 'Science Unit',
   'department.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
   'department.dataScience': 'LEO Dr David P. Chan Institute of Data Science',
-  
+
   // Mobile-specific department names (shorter versions)
   'departmentMobile.chinese': 'Chinese',
   'departmentMobile.culturalStudies': 'Cultural Studies',
@@ -1742,15 +1759,16 @@ export default {
   'faculty.arts': 'Faculty of Arts',
   'faculty.business': 'Faculty of Business', 
   'faculty.socialSciences': 'Faculty of Social Sciences',
-      'faculty.dataScience': 'School of Data Science',
-    'faculty.interdisciplinaryStudies': 'School of Interdisciplinary Studies',
+  'faculty.dataScience': 'School of Data Science',
+  'faculty.interdisciplinaryStudies': 'School of Interdisciplinary Studies',
 
   // Chart translations
   'chart.noGradeData': 'No grade data available',
+  'chart.noGradeDataDescription': 'Grade distribution will be shown when review data is available.',
   'chart.totalStudents': 'Total: {count} students',
   'chart.meanGPA': 'Mean GPA: {mean}',
-      'chart.standardDeviation': 'Std Dev: {std}',
-    'chart.standardDeviationLabel': 'Std Dev',
+  'chart.standardDeviation': 'Std Dev: {std}',
+  'chart.standardDeviationLabel': 'Std Dev',
   'chart.gradeDistribution': 'Grade Distribution',
   'chart.count': 'Count',
   'chart.percentage': 'Percentage',
@@ -1782,6 +1800,7 @@ export default {
   // Common translations
   'common.students': 'students',
   'common.reviews': 'reviews',
+  'common.grades': 'Grades',
   'review.clickToViewReview': 'Click to view this review in course details',
   'featured.mostReviews': 'most reviews',
   'featured.highestAvgGPA': 'highest Avg. GPA',
@@ -1795,5 +1814,4 @@ export default {
   'teachingLanguage.cantonesePutonghua': 'Cantonese/Putonghua',
   'teachingLanguage.englishCantonesePutonghua': 'English/Cantonese/Putonghua',
   'teachingLanguage.others': 'Others',
-
 };

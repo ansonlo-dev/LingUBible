@@ -200,28 +200,34 @@ export function getInstructorName(
 export const translateDepartmentName = (department: string, t: any): string => {
   const departmentMap: { [key: string]: string } = {
     // Faculty of Arts departments
-    'CHI': t('departments.chinese'),
-    'CDS': t('departments.cds'),
-    'ECO': t('departments.economics'),
-    'ENG': t('departments.english'),
-    'HIS': t('departments.history'),
-    'PHI': t('departments.philosophy'),
-    'TRS': t('departments.translation'),
-    'VPA': t('departments.visualArts'),
-    'POL': t('departments.politics'),
+    'Chinese': t('department.chinese'),
+    'Digital Arts and Creative Industries': t('department.digitalArts'),
+    'English': t('department.english'),
+    'History': t('department.history'),
+    'Philosophy': t('department.philosophy'),
+    'Translation': t('department.translation'),
+    'Centre for English and Additional Languages': t('department.englishLanguageCentre'),
+    'Chinese Language Education and Assessment Centre': t('department.chineseLanguageCentre'),
+    
     // Faculty of Liberal Arts and Social Sciences
-    'CUS': t('departments.culturalStudies'),
-    'GLE': t('departments.globalLiberalArts'),
-    'PS': t('departments.socialSciences'),
-    'PSY': t('departments.psychology'),
-    'SOC': t('departments.sociology'),
+    'Cultural Studies': t('department.culturalStudies'),
+    'Psychology': t('department.psychology'),
+    'Economics': t('department.economics'),
+    'Government and International Affairs': t('department.government'),
+    'Sociology and Social Policy': t('department.sociology'),
+    
     // Faculty of Business departments  
-    'ACC': t('departments.accounting'),
-    'BUS': t('departments.business'),
-    'FIN': t('departments.finance'),
-    'HRM': t('departments.management'),
-    'MKT': t('departments.marketing'),
-    'ISE': t('departments.information'),
+    'Accountancy': t('department.accountancy'),
+    'Finance': t('department.finance'),
+    'Management': t('department.management'),
+    'Marketing and International Business': t('department.marketing'),
+    'Operations and Risk Management': t('department.operations'),
+    
+    // Other units
+    'Science Unit': t('department.scienceUnit'),
+    'Wong Bing Lai Music and Performing Arts Unit': t('department.musicUnit'),
+    'LEO Dr David P. Chan Institute of Data Science': t('department.dataScience'),
+    
     // Default fallback
     default: department
   };

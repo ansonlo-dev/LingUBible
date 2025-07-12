@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   X,
-  Search,
   BookOpen,
   Globe,
   Calendar,
@@ -58,45 +57,7 @@ const getFacultyByDepartment = (department: string): string => {
   return facultyMapping[department] || 'faculty.other';
 };
 
-// Helper function to get subject code from department name
-const getSubjectCodeFromDepartment = (department: string): string => {
-  const mapping: { [key: string]: string } = {
-    'English': 'ENG',
-    'Chinese': 'CHI', 
-    'Management': 'MGT',
-    'Business': 'BUS',
-    'Psychology': 'PSY',
-    'Economics': 'ECO',
-    'Philosophy': 'PHI',
-    'History': 'HST',
-    'Digital Arts and Creative Industries': 'CLA',
-    'Computer Science': 'CS',
-    'Mathematics': 'MATH',
-    'Physics': 'PHYS',
-    'Chemistry': 'CHEM',
-    'Biology': 'BIO',
-    'Sociology': 'SOC',
-    'Political Science': 'POLS',
-    'Anthropology': 'ANTH',
-    'Geography': 'GEOG',
-    'Environmental Studies': 'ENVS',
-    'Art': 'ART',
-    'Music': 'MUS',
-    'Theatre': 'THEA',
-    'Film Studies': 'FILM',
-    'Journalism': 'JOUR',
-    'Communication': 'COMM',
-    'Education': 'EDU',
-    'Social Work': 'SW',
-    'Law': 'LAW',
-    'Medicine': 'MED',
-    'Nursing': 'NURS',
-    'Engineering': 'ENG',
-    'Architecture': 'ARCH'
-  };
-  
-  return mapping[department] || department.substring(0, 3).toUpperCase();
-};
+
 
 /**
  * Maps teaching language codes to user-friendly language names with translation support
@@ -303,23 +264,35 @@ export function AdvancedCourseFilters({
 
   // Helper function to create subject options sorted alphabetically by subject code
   const getSubjectOptions = (): SelectOption[] => {
-    // Create array of subjects with their codes for sorting
-    const subjectsWithCodes = availableSubjects.map(subject => {
-      const subjectCode = getSubjectCodeFromDepartment(subject);
-      return {
-        subject,
-        subjectCode,
-        count: getSubjectCounts()[subject] || 0
-      };
+    // Extract subject codes from course codes instead of using department names
+    const subjectCodeMap = new Map<string, { count: number; department: string }>();
+    
+    courses.forEach(course => {
+      if (course.course_code && course.department) {
+        // Extract subject code from course code (e.g., "BUS1001" -> "BUS")
+        const subjectCode = course.course_code.replace(/\d.*$/, '');
+        
+        if (subjectCodeMap.has(subjectCode)) {
+          subjectCodeMap.get(subjectCode)!.count++;
+        } else {
+          subjectCodeMap.set(subjectCode, { count: 1, department: course.department });
+        }
+      }
     });
 
-    // Sort alphabetically by subject code (A to Z)
-    subjectsWithCodes.sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
+    // Convert to array and sort alphabetically by subject code
+    const subjectsWithCodes = Array.from(subjectCodeMap.entries())
+      .map(([subjectCode, data]) => ({
+        subjectCode,
+        department: data.department,
+        count: data.count
+      }))
+      .sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
 
-    // Return simple flat list of options
-    return subjectsWithCodes.map(({ subject, subjectCode, count }) => ({
-      value: subject,
-      label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subject}`,
+    // Return formatted options
+    return subjectsWithCodes.map(({ subjectCode, department, count }) => ({
+      value: department, // Use department as value for filtering
+      label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subjectCode}`,
       count
     }));
   };

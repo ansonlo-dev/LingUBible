@@ -103,33 +103,50 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [user, refreshUser]);
 
-  // 載入熱門內容和最佳內容
+  // 🚀 優化：分階段載入內容，減少首次載入時間
   useEffect(() => {
-    const loadAllContent = async () => {
+    const loadContentStaggered = async () => {
       try {
         setPopularLoading(true);
         setPopularError(null);
 
-        const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
+        // 第一階段：優先載入熱門內容（用戶最常瀏覽）
+        console.log('🚀 Loading popular content first...');
+        const [popularCourses, popularInstructors] = await Promise.all([
           CourseService.getPopularCourses(),
-          CourseService.getPopularInstructorsWithDetailedStats(),
-          CourseService.getTopCoursesByGPA(),
-          CourseService.getTopInstructorsByGPA()
+          CourseService.getPopularInstructorsWithDetailedStats()
         ]);
 
         setPopularCourses(popularCourses);
         setPopularInstructors(popularInstructors);
-        setTopCourses(topCourses);
-        setTopInstructors(topInstructors);
+        setPopularLoading(false); // 提前結束載入狀態
+
+        // 第二階段：背景載入最佳內容（延遲500ms）
+        setTimeout(async () => {
+          try {
+            console.log('🚀 Loading top content in background...');
+            const [topCourses, topInstructors] = await Promise.all([
+              CourseService.getTopCoursesByGPA(),
+              CourseService.getTopInstructorsByGPA()
+            ]);
+
+            setTopCourses(topCourses);
+            setTopInstructors(topInstructors);
+            console.log('✅ All content loaded successfully');
+          } catch (error) {
+            console.warn('Failed to load top content:', error);
+            // 最佳內容載入失敗不影響整體體驗
+          }
+        }, 500);
+
       } catch (error) {
-        console.error('Error loading content:', error);
+        console.error('Error loading popular content:', error);
         setPopularError(error instanceof Error ? error.message : '載入內容時發生錯誤');
-      } finally {
         setPopularLoading(false);
       }
     };
 
-    loadAllContent();
+    loadContentStaggered();
   }, []);
 
   // 當用戶登入且課程/講師數據載入完成後，添加到收藏監控
@@ -206,10 +223,18 @@ const Index = () => {
   };
 
   const handleTeachingLanguageClick = (languages: string[]) => {
-    // 導航到課程頁面並應用教學語言篩選器
+    // 根據當前標籤頁決定導航目標
+    const isInstructorTab = activeTab === 'instructors' || activeTab === 'topInstructors';
     const searchParams = new URLSearchParams();
     languages.forEach(lang => searchParams.append('teachingLanguage', lang));
-    navigate(`/courses?${searchParams.toString()}`);
+    
+    if (isInstructorTab) {
+      // 講師標籤頁：導航到講師列表頁面並應用教學語言篩選器
+      navigate(`/instructors?${searchParams.toString()}`);
+    } else {
+      // 課程標籤頁：導航到課程列表頁面並應用教學語言篩選器
+      navigate(`/courses?${searchParams.toString()}`);
+    }
   };
 
   return (
@@ -458,9 +483,12 @@ const Index = () => {
                       gradingFairness={instructor.gradingFairness}
                       averageGPA={instructor.averageGPA}
                       isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
+                      teachingLanguages={instructor.teachingLanguages || []}
+                      currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
                       isLoading={false}
                       isFavorited={user ? isFavorited('instructor', instructor.name) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('instructor', instructor.name)}
+                      onTeachingLanguageClick={handleTeachingLanguageClick}
                     />
                   ))}
                 </div>
@@ -552,9 +580,12 @@ const Index = () => {
                       gradingFairness={instructor.gradingFairness}
                       averageGPA={instructor.averageGPA}
                       isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
+                      teachingLanguages={instructor.teachingLanguages || []}
+                      currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
                       isLoading={false}
                       isFavorited={user ? isFavorited('instructor', instructor.name) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('instructor', instructor.name)}
+                      onTeachingLanguageClick={handleTeachingLanguageClick}
                     />
                   ))}
                 </div>

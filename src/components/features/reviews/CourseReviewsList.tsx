@@ -8,9 +8,6 @@ import {
   ChevronUp, 
   User, 
   MessageSquare,
-  BookOpen,
-  Brain,
-  Target,
   GraduationCap,
   CheckCircle,
   XCircle,
@@ -43,6 +40,7 @@ interface CourseReviewsListProps {
   t?: (key: string, params?: Record<string, any>) => any;
   hideHeader?: boolean; // New prop to hide the card header when wrapped in CollapsibleSection
   externalGradeFilter?: string; // External grade to filter by
+  currentInstructorName?: string; // Current instructor name to disable hover effects for same instructor
 }
 
 interface ExpandedReviews {
@@ -57,8 +55,10 @@ export const CourseReviewsList = ({
   onToggleLanguage,
   t: tProp,
   hideHeader = false,
-  externalGradeFilter
+  externalGradeFilter,
+  currentInstructorName
 }: CourseReviewsListProps) => {
+
   const { t: tContext, language } = useLanguage();
   const t = tProp || tContext;
   const { user } = useAuth();
@@ -445,47 +445,7 @@ export const CourseReviewsList = ({
     }));
   };
 
-  const getWorkloadText = (workload: number | null) => {
-    if (workload === null) return t('review.rating.notRated');
-    if (workload === -1) return t('review.notApplicable');
-    if (workload === 0) return t('review.workload.none');
-    const workloadMap = {
-      1: t('review.workload.veryLight'),
-      2: t('review.workload.light'),
-      3: t('review.workload.moderate'),
-      4: t('review.workload.heavy'),
-      5: t('review.workload.veryHeavy')
-    };
-    return workloadMap[Math.ceil(workload) as keyof typeof workloadMap] || workload.toString();
-  };
 
-  const getDifficultyText = (difficulty: number | null) => {
-    if (difficulty === null) return t('review.rating.notRated');
-    if (difficulty === -1) return t('review.notApplicable');
-    if (difficulty === 0) return t('review.difficulty.none');
-    const difficultyMap = {
-      1: t('review.difficulty.veryEasy'),
-      2: t('review.difficulty.easy'),
-      3: t('review.difficulty.moderate'),
-      4: t('review.difficulty.hard'),
-      5: t('review.difficulty.veryHard')
-    };
-    return difficultyMap[Math.ceil(difficulty) as keyof typeof difficultyMap] || difficulty.toString();
-  };
-
-  const getUsefulnessText = (usefulness: number | null) => {
-    if (usefulness === null) return t('review.rating.notRated');
-    if (usefulness === -1) return t('review.notApplicable');
-    if (usefulness === 0) return t('review.usefulness.none');
-    const usefulnessMap = {
-      1: t('review.usefulness.notUseful'),
-      2: t('review.usefulness.slightlyUseful'),
-      3: t('review.usefulness.moderatelyUseful'),
-      4: t('review.usefulness.veryUseful'),
-      5: t('review.usefulness.extremelyUseful')
-    };
-    return usefulnessMap[Math.ceil(usefulness) as keyof typeof usefulnessMap] || usefulness.toString();
-  };
 
   const getLanguageCount = (language: string) => {
     return languageCounts[language] || 0;
@@ -524,23 +484,17 @@ export const CourseReviewsList = ({
             key={index} 
             className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[rgb(26_35_50)]"
           >
-            <div className="flex items-start justify-between mb-3 gap-2">
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-lg">
-                  <a
-                    href={`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`}
-                    className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+            <div className="space-y-2 mb-3">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
+                <h4 className="font-semibold text-lg flex items-center gap-2 min-w-0 md:flex-1">
+                  {instructor.instructor_name !== currentInstructorName ? (
+                  <a 
+                    href={`/instructors/${encodeURIComponent(instructor.instructor_name)}`}
                     onClick={(e) => {
-                      // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                      // Let normal clicks use the default link behavior
-                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                        // Let browser handle these naturally
-                        return;
-                      }
-                      // For normal clicks, prevent default and use React Router
                       e.preventDefault();
-                      navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`);
+                      navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`);
                     }}
+                      className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
                   >
                     {(() => {
                       const fullInstructor = instructorsMap.get(instructor.instructor_name);
@@ -548,7 +502,7 @@ export const CourseReviewsList = ({
                         const nameInfo = getInstructorName(fullInstructor, language);
                         return (
                           <div>
-                            <div>{nameInfo.primary}</div>
+                              <div className="font-bold">{nameInfo.primary}</div>
                             {nameInfo.secondary && (
                               <div className="text-sm text-muted-foreground font-normal mt-0.5">
                                 {nameInfo.secondary}
@@ -559,14 +513,107 @@ export const CourseReviewsList = ({
                       }
                       return (
                         <div>
-                          <div>{instructor.instructor_name}</div>
+                            <div className="font-bold">{instructor.instructor_name}</div>
                         </div>
                       );
                     })()}
                   </a>
+                  ) : (
+                    <span>
+                      {(() => {
+                        const fullInstructor = instructorsMap.get(instructor.instructor_name);
+                        if (fullInstructor) {
+                          const nameInfo = getInstructorName(fullInstructor, language);
+                          return (
+                            <div>
+                              <div className="font-bold">{nameInfo.primary}</div>
+                              {nameInfo.secondary && (
+                                <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                                  {nameInfo.secondary}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div>
+                            <div className="font-bold">{instructor.instructor_name}</div>
+                          </div>
+                        );
+                      })()}
+                    </span>
+                  )}
                 </h4>
+                
+                {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
+                <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
+                  {/* 教學語言徽章 */}
+                  {(() => {
+                    const teachingLanguage = getTeachingLanguageForInstructor(
+                      instructor.instructor_name,
+                      instructor.session_type
+                    );
+                    if (teachingLanguage) {
+                      return (
+                        <span 
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
+                          onClick={() => {
+                            const newFilters = { ...filters };
+                            
+                            // 切換教學語言篩選器
+                            if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                              newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                            } else {
+                              newFilters.selectedTeachingLanguages = [teachingLanguage];
+                            }
+                            
+                            // 重置頁面到第一頁
+                            newFilters.currentPage = 1;
+                            
+                            handleFiltersChange(newFilters);
+                          }}
+                          title={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                        >
+                          <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* 課堂類型徽章 */}
+                  <span 
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                      instructor.session_type === 'Lecture' 
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                        : instructor.session_type === 'Tutorial'
+                        ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      const newFilters = { ...filters };
+                      const sessionType = instructor.session_type;
+                      
+                      // 切換篩選器
+                      if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                        newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                      } else {
+                        newFilters.selectedSessionTypes = [sessionType];
+                      }
+                      
+                      // 重置頁面到第一頁
+                      newFilters.currentPage = 1;
+                      
+                      handleFiltersChange(newFilters);
+                    }}
+                  >
+                    {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                  </span>
+                </div>
               </div>
-              <div className="shrink-0 flex items-start gap-2 pt-1">
+              
+              {/* Mobile: Badges on separate lines below instructor name */}
+              <div className="flex md:hidden flex-wrap items-center gap-2">
                 {/* 教學語言徽章 */}
                 {(() => {
                   const teachingLanguage = getTeachingLanguageForInstructor(
@@ -575,9 +622,8 @@ export const CourseReviewsList = ({
                   );
                   if (teachingLanguage) {
                     return (
-                      <Badge 
-                        variant="secondary" 
-                        className="text-sm cursor-pointer transition-all duration-200 hover:scale-105 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800 hover:bg-orange-200 dark:hover:bg-orange-900/50"
+                      <span 
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                         onClick={() => {
                           const newFilters = { ...filters };
                           
@@ -595,21 +641,20 @@ export const CourseReviewsList = ({
                         }}
                         title={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                       >
-                        {getTeachingLanguageName(teachingLanguage, t)}
-                      </Badge>
+                        <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
+                      </span>
                     );
                   }
                   return null;
                 })()}
                 
                 {/* 課堂類型徽章 */}
-                <Badge 
-                  variant="secondary" 
-                  className={`text-sm cursor-pointer transition-all duration-200 hover:scale-105 ${
+                <span 
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
                     instructor.session_type === 'Lecture' 
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                       : instructor.session_type === 'Tutorial'
-                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
                       : ''
                   }`}
                   onClick={() => {
@@ -629,8 +674,8 @@ export const CourseReviewsList = ({
                     handleFiltersChange(newFilters);
                   }}
                 >
-                  {t(`sessionType.${instructor.session_type.toLowerCase()}`)}
-                </Badge>
+                  {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                </span>
               </div>
             </div>
             
@@ -693,20 +738,19 @@ export const CourseReviewsList = ({
                 </h5>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Badge 
-                      variant="outline" 
+                    <span 
                       className={cn(
-                        "text-xs",
+                        "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
                         instructor.service_learning_type === 'compulsory'
-                          ? "border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-400 dark:bg-red-950/50"
-                          : "border-green-300 text-green-700 bg-green-50 dark:border-green-700 dark:text-green-400 dark:bg-green-950/50"
+                          ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                          : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
                       )}
                     >
                       {instructor.service_learning_type === 'compulsory' 
                         ? t('review.compulsory') 
                         : t('review.optional')
                       }
-                    </Badge>
+                    </span>
                   </div>
                   {instructor.service_learning_description && (
                     <div className="text-xs break-words">
@@ -1193,8 +1237,243 @@ export const CourseReviewsList = ({
               
               return (
                 <div key={review.$id} data-review-id={review.$id} className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
-                {/* Review content would go here - using same structure as hideHeader case */}
-                <div className="text-sm text-muted-foreground">Review content placeholder</div>
+                {/* 評論基本信息 */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col gap-2 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ReviewAvatar
+                        isAnonymous={review.is_anon}
+                        userId={review.user_id}
+                        username={review.username}
+                        reviewId={review.$id}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                      <span className="font-medium truncate">
+                        {review.is_anon ? t('review.anonymousUser') : review.username}
+                      </span>
+                      {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
+                      <button
+                        className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // 設置學期篩選
+                          setFilters(prev => ({
+                            ...prev,
+                            selectedTerms: [term.term_code],
+                            currentPage: 1
+                          }));
+                        }}
+                        title={t('filter.clickToFilterByTerm', { term: term.name })}
+                      >
+                        <span className="truncate">{term.name}</span>
+                      </button>
+                      {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                      {review.review_language && (
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 設置語言篩選
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedLanguages: [review.review_language!],
+                              currentPage: 1
+                            }));
+                          }}
+                          title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                        >
+                          <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                        </button>
+                      )}
+                    </div>
+                    {/* 學期徽章 - 手機版顯示在下方 */}
+                    <div className="flex gap-2 md:hidden">
+                      <button
+                        className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // 設置學期篩選
+                          setFilters(prev => ({
+                            ...prev,
+                            selectedTerms: [term.term_code],
+                            currentPage: 1
+                          }));
+                        }}
+                        title={t('filter.clickToFilterByTerm', { term: term.name })}
+                      >
+                        <span className="truncate">{term.name}</span>
+                      </button>
+                      {/* 語言徽章 - 手機版顯示在學期旁邊 */}
+                      {review.review_language && (
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 設置語言篩選
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedLanguages: [review.review_language!],
+                              currentPage: 1
+                            }));
+                          }}
+                          title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                        >
+                          <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {/* 最終成績 - 右上角大顯示 */}
+                  {review.course_final_grade && (
+                    <div className="flex flex-col items-center shrink-0">
+                      <GradeBadge 
+                        grade={review.course_final_grade}
+                        size="md"
+                        showTooltip={true}
+                        onClick={() => {
+                          const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
+                          setFilters(prev => ({
+                            ...prev,
+                            selectedGrades: [normalizedGrade],
+                            currentPage: 1
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 課程評分 */}
+                <div className="grid grid-cols-3 gap-1 text-xs">
+                  <div className="text-center">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                      <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
+                      <div className="flex items-center justify-center lg:ml-1">
+                        {review.course_workload === null || review.course_workload === -1 ? (
+                          <span className="text-muted-foreground">
+                            {review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                          </span>
+                        ) : (
+                          <StarRating rating={review.course_workload} showValue size="sm" showTooltip ratingType="workload" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                      <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
+                      <div className="flex items-center justify-center lg:ml-1">
+                        {review.course_difficulties === null || review.course_difficulties === -1 ? (
+                          <span className="text-muted-foreground">
+                            {review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                          </span>
+                        ) : (
+                          <StarRating rating={review.course_difficulties} showValue size="sm" showTooltip ratingType="difficulty" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                      <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
+                      <div className="flex items-center justify-center lg:ml-1">
+                        {review.course_usefulness === null || review.course_usefulness === -1 ? (
+                          <span className="text-muted-foreground">
+                            {review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
+                          </span>
+                        ) : (
+                          <StarRating rating={review.course_usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 課程評論 */}
+                {review.course_comments && (
+                  <>
+                    <Separator />
+                    <div className="min-w-0">
+                      <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 shrink-0" />
+                        <span>{t('review.courseComments')}</span>
+                      </h5>
+                      <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
+                        {hasMarkdownFormatting(review.course_comments) ? (
+                          <div className="text-xs">{renderCommentMarkdown(review.course_comments)}</div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {review.course_comments}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Service learning is now displayed per instructor in the instructor details section */}
+
+                {/* 講師評價展開/收起按鈕 */}
+                {instructorDetails.length > 0 && (
+                  <>
+                    <Separator />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleReviewExpansion(review.$id)}
+                      className="w-full justify-center"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp className="h-4 w-4 mr-2" />
+                          {t('review.hideInstructorDetails')}
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4 mr-2" />
+                          {t('review.showInstructorDetails')} ({instructorDetails.length})
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {/* 講師詳細評價 */}
+                {isExpanded && instructorDetails.length > 0 && (
+                  <>
+                    <Separator />
+                    {renderInstructorDetails(instructorDetails, review.$id)}
+                  </>
+                )}
+
+                {/* 投票按鈕 */}
+                <Separator />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 overflow-hidden">
+                  <div className="flex-shrink-0">
+                    <VotingButtons
+                      reviewId={review.$id}
+                      upvotes={reviewInfo.upvotes}
+                      downvotes={reviewInfo.downvotes}
+                      userVote={reviewInfo.userVote}
+                      size="sm"
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+                    <span 
+                      className="truncate cursor-help" 
+                      title={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}
+                    >
+                      {formatDateTimeUTC8(review.submitted_at)}
+                    </span>
+                  </div>
+                </div>
                 </div>
               );
             })}

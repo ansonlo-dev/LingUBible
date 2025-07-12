@@ -102,7 +102,7 @@ export default function ForgotPassword() {
                 <p className="font-medium text-foreground">{email}</p>
               </div>
               
-              <div className="text-xs text-muted-foreground space-y-1">
+              <div className="text-xs text-muted-foreground text-center mt-4 space-y-1">
                 <p>• {t('auth.resetLinkWillExpire')}</p>
                 <p>• {t('auth.checkSpamFolder')}</p>
                 <p>• {t('auth.canRetryReset')}</p>
@@ -173,8 +173,9 @@ export default function ForgotPassword() {
           
           <CardContent className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-4 forgot-password-form">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t('auth.studentEmailAddress')}</Label>
+              {/* Email field with responsive layout */}
+              <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                <Label htmlFor="email" className="md:w-32 md:flex-shrink-0 md:text-right">{t('auth.studentEmailAddress')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -184,6 +185,7 @@ export default function ForgotPassword() {
                   autoComplete="email"
                   required
                   disabled={isLoading}
+                  className="md:flex-1"
                 />
               </div>
 
@@ -196,7 +198,7 @@ export default function ForgotPassword() {
                 </Alert>
               )}
 
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground text-center mt-4">
                 <p>• {t('auth.useSchoolEmail')}</p>
                 <p>• {t('auth.resetLinkWillExpire')}</p>
               </div>

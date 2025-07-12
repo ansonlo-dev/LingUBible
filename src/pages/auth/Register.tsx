@@ -252,8 +252,9 @@ export default function Register() {
               <div className="space-y-6">
                 {/* 郵箱驗證區域 */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t('auth.email')}</Label>
+                  {/* Email field with responsive layout */}
+                  <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                    <Label htmlFor="email" className="md:w-24 md:flex-shrink-0 md:text-right">{t('auth.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -263,6 +264,7 @@ export default function Register() {
                       autoComplete="email"
                       required
                       disabled={loading}
+                      className="md:flex-1"
                     />
                   </div>
                   
@@ -293,74 +295,76 @@ export default function Register() {
 
                 {/* 用戶名區域 */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">{t('auth.username')}</Label>
-                    <Input
-                      id="username"
-                      type="text"
-                      value={username}
-                      onChange={handleUsernameChange}
-                      placeholder={t('auth.usernamePlaceholder')}
-                      autoComplete="username"
-                      required
-                      disabled={loading}
-                      className={usernameError ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : isUsernameValid && username ? 'border-green-500' : ''}
-                    />
-                    
-                    {/* 檢查中提示 */}
-                    {isCheckingUsername && (
-                      <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        {t('settings.usernameChecking')}
-                      </p>
-                    )}
-                    
-                    {/* 用戶名驗證提示 */}
-                    {!isCheckingUsername && usernameError && (
-                      <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        {usernameError}
-                      </p>
-                    )}
-                    
-                    {!isCheckingUsername && isUsernameValid && username && (
-                      <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        {t('auth.usernameAvailable')}
-                      </p>
-                    )}
-                    
-                    {/* 用戶名建議 */}
-                    {usernameSuggestion && !username && (
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-sm text-blue-600 dark:text-blue-400">
-                              {t('auth.usernameSuggestion')}<strong>{usernameSuggestion}</strong>
-                            </span>
+                  {/* Username field with responsive layout */}
+                  <div className="flex flex-col md:flex-row md:items-start space-y-2 md:space-y-0 md:space-x-4">
+                    <Label htmlFor="username" className="md:w-24 md:flex-shrink-0 md:text-right md:pt-2">{t('auth.username')}</Label>
+                    <div className="md:flex-1 space-y-2">
+                      <Input
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={handleUsernameChange}
+                        placeholder={t('auth.usernamePlaceholder')}
+                        autoComplete="username"
+                        required
+                        disabled={loading}
+                        className={usernameError ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : isUsernameValid && username ? 'border-green-500' : ''}
+                      />
+                      
+                      {/* 檢查中提示 */}
+                      {isCheckingUsername && (
+                        <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          {t('settings.usernameChecking')}
+                        </p>
+                      )}
+                      
+                      {/* 用戶名驗證提示 */}
+                      {!isCheckingUsername && usernameError && (
+                        <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {usernameError}
+                        </p>
+                      )}
+                      
+                      {!isCheckingUsername && isUsernameValid && username && (
+                        <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          {t('auth.usernameAvailable')}
+                        </p>
+                      )}
+                      
+                      {/* 用戶名建議 */}
+                      {usernameSuggestion && !username && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <span className="text-sm text-blue-600 dark:text-blue-400">
+                                {t('auth.usernameSuggestion')}<strong>{usernameSuggestion}</strong>
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleUseSuggestion}
+                              className="text-xs"
+                            >
+                              {t('auth.useSuggestion')}
+                            </Button>
                           </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleUseSuggestion}
-                            className="text-xs"
-                          >
-                            {t('auth.useSuggestion')}
-                          </Button>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                  
-
                 </div>
 
                 {/* 密碼區域 */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t('auth.password')}</Label>
+                  {/* Password field with responsive layout */}
+                  <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                    <Label htmlFor="password" className="md:w-24 md:flex-shrink-0 md:text-right">{t('auth.password')}</Label>
                     <PasswordInput
                       id="password"
                       value={password}
@@ -369,42 +373,51 @@ export default function Register() {
                       autoComplete="new-password"
                       required
                       disabled={loading}
+                      className="md:flex-1"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-                    <PasswordInput
-                      id="confirmPassword"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder={t('auth.confirmPasswordPlaceholder')}
-                      autoComplete="new-password"
-                      required
-                      disabled={loading}
-                    />
-                    {/* 密碼確認檢查 */}
-                    {confirmPassword && password !== confirmPassword && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {t('auth.passwordMismatch')}
-                      </p>
-                    )}
-                    {confirmPassword && password === confirmPassword && (
-                      <p className="text-sm text-green-600 dark:text-green-400">
-                        {t('auth.passwordMatch')}
-                      </p>
-                    )}
+                  {/* Confirm Password field with responsive layout */}
+                  <div className="flex flex-col md:flex-row md:items-start space-y-2 md:space-y-0 md:space-x-4">
+                    <Label htmlFor="confirmPassword" className="md:w-24 md:flex-shrink-0 md:text-right md:pt-2">{t('auth.confirmPassword')}</Label>
+                    <div className="md:flex-1 space-y-2">
+                      <PasswordInput
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder={t('auth.confirmPasswordPlaceholder')}
+                        autoComplete="new-password"
+                        required
+                        disabled={loading}
+                        className="md:flex-1"
+                      />
+                      {/* 密碼確認檢查 */}
+                      {confirmPassword && password !== confirmPassword && (
+                        <p className="text-sm text-red-600 dark:text-red-400">
+                          {t('auth.passwordMismatch')}
+                        </p>
+                      )}
+                      {confirmPassword && password === confirmPassword && (
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          {t('auth.passwordMatch')}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* 密碼強度檢查器 */}
                   {password && (
-                    <PasswordStrengthChecker
-                      password={password}
-                      email={email}
-                      onValidationChange={handlePasswordValidationChange}
-                    />
+                    <div className="flex flex-col md:flex-row md:space-x-4">
+                      <div className="md:w-24 md:flex-shrink-0"></div>
+                      <div className="md:flex-1">
+                        <PasswordStrengthChecker
+                          password={password}
+                          email={email}
+                          onValidationChange={handlePasswordValidationChange}
+                        />
+                      </div>
+                    </div>
                   )}
-
                 </div>
               </div>
 

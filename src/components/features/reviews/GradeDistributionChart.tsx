@@ -68,6 +68,8 @@ interface GradeDistributionChartProps {
   }>;
   /** 是否預設展開（可選，預設為 true） */
   defaultExpanded?: boolean;
+  /** 是否隱藏標題頭部（用於已有標題的容器中） */
+  hideHeader?: boolean;
 }
 
 const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo(({
@@ -85,7 +87,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   onFilterChange,
   filterLabel,
   rawReviewData,
-  defaultExpanded = false
+  defaultExpanded = false,
+  hideHeader = false
 }) => {
   const { t, language } = useLanguage();
   const { isDark } = useTheme();
@@ -1635,6 +1638,268 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     return (
       <div className={cn("p-4 text-center text-muted-foreground", className)}>
         <div className="text-sm">{t('chart.noGradeData')}</div>
+      </div>
+    );
+  }
+
+  // When hideHeader is true, render chart content directly without collapsible wrapper
+  if (hideHeader) {
+    return (
+      <div className={cn("space-y-0", className)}>
+        {/* Chart Content - Always visible when hideHeader is true */}
+        <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-muted/20">
+          <div className="mb-2 pt-3 px-2 sm:px-0">
+            <div className="flex flex-col gap-2 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
+                <div className="flex flex-col gap-2">
+                  {/* 圖表類型切換按鈕 */}
+              <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 w-full sm:w-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    chartType === 'bar' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('bar')}
+                >
+                  <BarChart3 className="h-3 w-3" />
+                  <span className="truncate">{t('chart.barChart')}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    chartType === 'stacked' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('stacked')}
+                >
+                  <BarChart className="h-3 w-3" />
+                  <span className="truncate">{t('chart.stackedNormalized')}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    chartType === 'boxplot' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('boxplot')}
+                >
+                  <BoxSelect className="h-3 w-3" />
+                  <span className="truncate">{t('chart.boxPlot')}</span>
+                </Button>
+              </div>
+            </div>
+            
+            {/* 篩選器下拉選單 - 支援多選 */}
+            {filterOptions && filterOptions.length > 0 && onFilterChange && (
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto min-w-0">
+                {filterLabel && (
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {(() => {
+                      // Show plural form for all chart types
+                      // Add (s) for plural in English only
+                      const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                      !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                      return isEnglish ? filterLabel + '(s)' : filterLabel;
+                    })()}:
+                  </span>
+                )}
+                {chartType === 'bar' ? (
+                  // Single selection for bar chart
+                  <Select 
+                    value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
+                    onValueChange={(value) => onFilterChange(value)}
+                  >
+                    <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
+                      <SelectValue placeholder={t('common.all')}>
+                        {(() => {
+                          const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                          if (currentValue === 'all') {
+                            return t('common.all');
+                          } else {
+                            const option = filterOptions.find(opt => opt.value === currentValue);
+                            return option ? option.label : currentValue;
+                          }
+                        })()}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                      <SelectItem value="all" textValue={t('common.all')}>
+                        <div className="flex items-center justify-between w-full min-w-0">
+                          <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                            {totalCount}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                      {filterOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
+                          <div className="flex items-center justify-between w-full min-w-0">
+                            <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                              {option.count}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  // Multiple selection for stacked chart and box plot
+                  <div className="relative w-full sm:w-auto min-w-0">
+                    <MultiSelectDropdown
+                      options={filterOptions.map((option): SelectOption => ({
+                        value: option.value,
+                        label: option.label,
+                        count: option.count
+                      }))}
+                      selectedValues={(() => {
+                        const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+                        // If 'all' is selected or no values, return empty array to show placeholder
+                        if (values.length === 0 || values.includes('all')) {
+                          return [];
+                        }
+                        return values;
+                      })()}
+                      onSelectionChange={(values: string[]) => {
+                        if (values.length === 0) {
+                          onFilterChange('all'); // When nothing selected, set to 'all'
+                        } else {
+                          onFilterChange(values);
+                        }
+                      }}
+                      placeholder={t('common.all')}
+                      className="w-full sm:max-w-[320px] md:max-w-[400px]"
+                      showCounts={true}
+                      maxHeight="max-h-48"
+                      totalCount={totalCount}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* 統計數據 - 重新組織 GPA 和標準差在同一側，移除評論數避免重複 */}
+        {statistics.mean !== null && statistics.standardDeviation !== null && (
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-2 px-2 sm:px-0">
+            {/* 移動端：單行布局 - 移除評論數，只顯示 GPA 和標準差 */}
+            <div className="flex flex-row justify-center items-center gap-6 sm:hidden">
+              {/* 平均 GPA */}
+              <div className="flex flex-col items-center flex-1">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                  {t('card.averageGPA')}
+                </span>
+                <span className="text-lg font-black text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text drop-shadow-sm">
+                  {statistics.mean.toFixed(2)}
+                </span>
+              </div>
+              
+              {/* 標準差 */}
+              <div className="flex flex-col items-center flex-1">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                  {t('chart.standardDeviationLabel')}
+                </span>
+                <span className="text-sm font-bold text-muted-foreground">
+                  {statistics.standardDeviation.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {/* 桌面端：原有布局 - 增加左右內邊距 */}
+            <div className="hidden sm:flex flex-col sm:flex-row gap-4 sm:gap-6 sm:px-4">
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                  {t('sort.averageGPA')}
+                </span>
+                <span className="text-2xl font-black text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text drop-shadow-sm">
+                  {statistics.mean.toFixed(2)}
+                </span>
+              </div>
+              
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                  {t('chart.standardDeviationLabel')}
+                </span>
+                <span className="text-lg font-bold text-muted-foreground">
+                  {statistics.standardDeviation.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {/* 桌面端：學生評論數 - 增加右內邊距 */}
+            <div className="hidden sm:flex flex-col items-center sm:items-end shrink-0 sm:px-4">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-0.5">
+                {t('review.studentReviews')}
+              </span>
+              <span className="text-2xl font-bold text-primary">
+                {totalCount}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* ECharts 圖表 */}
+      <div className="relative w-full px-2 sm:px-0" style={{ height: `${responsiveHeight + 64}px` }}>
+        <ReactECharts
+          ref={chartRef}
+          key={chartKey} // Force re-render when theme changes
+          option={getMobileOptimizedOptions(
+            chartType === 'bar' ? getBarChartOptions() : 
+            chartType === 'stacked' ? getStackedNormalizedOptions() : 
+            getBoxPlotOptions()
+          )}
+          style={{ height: `${responsiveHeight + 32}px`, width: '100%' }}
+          opts={getEChartsOpts()}
+          onEvents={getChartEvents()}
+          notMerge={true}
+          lazyUpdate={false}
+          theme={isDark ? 'dark' : 'light'}
+          onChartReady={(chartInstance: ECharts) => {
+            // Additional mobile tooltip handling
+            if (isMobile) {
+              try {
+                // Override internal mouse/touch event handlers to prevent tooltip auto-hide
+                const zr = chartInstance.getZr();
+                if (zr && (zr as any).handler) {
+                  const handlers = (zr as any).handler._handlers;
+                  
+                  if (handlers) {
+                    // Override handlers to prevent tooltip hiding
+                    if (handlers.mouseout) {
+                      handlers.mouseout = [];
+                    }
+                    if (handlers.globalout) {
+                      handlers.globalout = [];
+                    }
+                    
+                    // Intercept mousemove to prevent unwanted tooltip updates
+                    if (handlers.mousemove && Array.isArray(handlers.mousemove)) {
+                      handlers.mousemove = handlers.mousemove.filter((h: any) => {
+                        return !h.name?.includes('tooltip');
+                      });
+                    }
+                  }
+                }
+              } catch (error) {
+                // Silently fail - chart will still work without custom mobile handling
+              }
+            }
+          }}
+        />
+          </div>
+        </div>
       </div>
     );
   }

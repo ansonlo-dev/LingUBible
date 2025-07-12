@@ -144,8 +144,9 @@ export default function Login() {
           
           <CardContent className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-4 login-form">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t('auth.email')}</Label>
+              {/* Email field with responsive layout */}
+              <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                <Label htmlFor="email" className="md:w-24 md:flex-shrink-0 md:text-right">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -155,11 +156,13 @@ export default function Login() {
                   autoComplete="email"
                   required
                   disabled={loading}
+                  className="md:flex-1"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.password')}</Label>
+              {/* Password field with responsive layout */}
+              <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                <Label htmlFor="password" className="md:w-24 md:flex-shrink-0 md:text-right">{t('auth.password')}</Label>
                 <PasswordInput
                   id="password"
                   value={password}
@@ -168,6 +171,7 @@ export default function Login() {
                   autoComplete="current-password"
                   required
                   disabled={loading}
+                  className="md:flex-1"
                 />
               </div>
 

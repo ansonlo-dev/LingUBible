@@ -84,33 +84,26 @@ const Courses = () => {
     enableProgressiveLoading: true
   });
 
-  // 組件載入時清除學期相關緩存，確保獲取最新數據
+  // 🚀 組件載入時的選擇性預加載 - 只載入必要數據
   useEffect(() => {
-    const initializePerformanceOptimizations = async () => {
+    const initializeOptimizations = async () => {
       try {
-        // 清除舊的緩存
-        CourseService.clearCache();
+        // 只在用戶實際需要時預加載（延遲加載）
+        console.log('🚀 Initializing selective preloading...');
         
-        // 🚀 預加載所有教學記錄以實現零延遲篩選
-        console.log('🚀 Preloading teaching records for optimal filtering performance...');
-        const termCoursesMap = await CourseService.getAllTermsCoursesOfferedBatch();
-        console.log('✅ Teaching records preloaded successfully');
-
-        // 🔍 構建講師-課程映射以支援講師搜尋
-        console.log('🔍 Building instructor-course mapping for search...');
+        // 🔍 構建基本講師映射以支援講師搜尋（輕量版）
+        console.log('🔍 Building basic instructor mapping...');
         const instructorMap = new Map<string, Set<string>>();
         
         try {
-          // 獲取所有講師以進行基本映射
+          // 只獲取講師基本信息，不載入課程關聯
           const allInstructors = await CourseService.getAllInstructors();
           
-          // 為每個講師的所有名稱建立初始映射（將在後台填充課程）
+          // 建立基本的名稱映射
           allInstructors.forEach(instructor => {
-            // 英文名稱
             const englishNameKey = instructor.name.toLowerCase();
             instructorMap.set(englishNameKey, new Set());
             
-            // 中文名稱
             if (instructor.name_tc) {
               const tcNameKey = instructor.name_tc.toLowerCase();
               instructorMap.set(tcNameKey, new Set());
@@ -176,7 +169,7 @@ const Courses = () => {
       }
     };
 
-    initializePerformanceOptimizations();
+    initializeOptimizations();
   }, []);
 
   // 當學期篩選條件改變時，非同步檢查課程是否在該學期開設
