@@ -59,6 +59,26 @@ function checkOptimizedFontsExist() {
   return false;
 }
 
+// Check if fonttools is available
+function checkFonttoolsAvailable() {
+  try {
+    execSync('python -c "import fontTools.subset"', { stdio: 'ignore' });
+    return true;
+  } catch (error) {
+    try {
+      execSync('python3 -c "import fontTools.subset"', { stdio: 'ignore' });
+      return true;
+    } catch (error) {
+      try {
+        execSync('pyftsubset --help', { stdio: 'ignore' });
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+  }
+}
+
 // Main logic
 function shouldOptimizeFonts() {
   if (isForce) {
@@ -78,6 +98,23 @@ function shouldOptimizeFonts() {
     }
   }
 
+  // Production mode - check if fonttools is available
+  const fonttoolsAvailable = checkFonttoolsAvailable();
+  if (!fonttoolsAvailable) {
+    const fontsExist = checkOptimizedFontsExist();
+    if (fontsExist) {
+      console.log('⚠️ Production mode: fonttools not available, using existing optimized fonts');
+      console.log('💡 This is normal for some deployment environments (e.g., Cloudflare Workers)');
+      return false;
+    } else {
+      console.log('❌ Production mode: fonttools not available and no existing fonts found');
+      console.log('📦 Please run font optimization locally first with: bun run fonts:optimize');
+      // Don't fail the build, just warn
+      console.log('⚠️ Continuing build without font optimization...');
+      return false;
+    }
+  }
+
   console.log('🏭 Production mode: Running font optimization');
   return true;
 }
@@ -90,7 +127,15 @@ if (shouldOptimizeFonts()) {
     console.log('✅ Font optimization completed successfully');
   } catch (error) {
     console.error('❌ Font optimization failed:', error.message);
-    process.exit(1);
+    
+    // In production, if fonts already exist, don't fail the build
+    if (isProduction && checkOptimizedFontsExist()) {
+      console.log('⚠️ Using existing optimized fonts instead');
+      console.log('💡 Build will continue...');
+    } else {
+      console.error('💥 No fallback fonts available, build cannot continue');
+      process.exit(1);
+    }
   }
 } else {
   console.log('✅ Font optimization skipped');
