@@ -495,7 +495,7 @@ const MyReviews = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8">
       {/* Header */}
       <div className="space-y-2 mb-6">
         <h1 className="text-3xl font-bold">{t('myReviews.title')}</h1>

@@ -2,6 +2,7 @@ import { databases } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
+import { extractInstructorNameForSorting } from '@/utils/textUtils';
 
 export interface Course {
   $id: string;
@@ -2178,8 +2179,10 @@ export class CourseService {
         teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
         currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
       })).sort((a, b) => {
-        // 首先按名字排序（字母順序）
-        return a.name.localeCompare(b.name);
+        // 首先按名字排序（字母順序），忽略職稱
+        const aNameForSort = extractInstructorNameForSorting(a.name);
+        const bNameForSort = extractInstructorNameForSorting(b.name);
+        return aNameForSort.localeCompare(bNameForSort);
       });
 
       return finalInstructorsWithDetailedStats;

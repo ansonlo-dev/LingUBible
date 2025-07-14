@@ -717,6 +717,34 @@ div[style*="position: fixed"][style*="right: 14px"] {
       0 4px 12px rgba(0, 0, 0, 0.12);
   }
 
+  /* 透明主資訊卡片樣式 - 僅用於課程和講師詳情頁面的主要資訊區域 */
+  .transparent-info-card {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 16px;
+    box-shadow: none !important;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    opacity: 1;
+  }
+
+  .transparent-info-card:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .dark .transparent-info-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .dark .transparent-info-card:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
   /* 優秀課程的光澤效果 */
   @keyframes shine {
     0% {
@@ -762,6 +790,143 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 講師卡片樣式 - 繼承課程卡片樣式 */
   .lecturer-card {
     @apply course-card;
+  }
+
+  /* 附著式標籤設計 - 仿照圖片中的設計 */
+  .attached-tabs-container {
+    position: relative;
+    margin-bottom: -1px; /* Overlap with content below */
+  }
+
+  .attached-tabs-list {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    display: flex !important;
+    gap: 2px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    align-items: flex-end !important;
+    justify-content: flex-start !important; /* Left align the tabs */
+  }
+
+  .attached-tab-trigger {
+    background: rgb(var(--muted)) !important;
+    color: rgb(var(--muted-foreground)) !important;
+    border: 1px solid rgb(var(--border)) !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 12px 20px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  /* Light theme hover */
+  :not(.dark) .attached-tab-trigger:hover {
+    background: rgb(var(--muted)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    z-index: 2 !important;
+  }
+
+  /* Dark theme hover - no color change */
+  .dark .attached-tab-trigger:hover {
+    background: rgb(var(--muted)) !important;
+    color: rgb(var(--muted-foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    z-index: 2 !important;
+  }
+
+  /* Active tab state - ensure same border radius */
+  .attached-tab-trigger[data-state="active"] {
+    background: rgb(var(--background)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+    z-index: 3 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Active tab hover - ensure same border radius */
+  .attached-tab-trigger[data-state="active"]:hover {
+    background: rgb(var(--background)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-radius: 12px 12px 0 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  /* Light theme explicit rules - ensure consistent border radius */
+  :not(.dark) .attached-tab-trigger {
+    background: rgb(var(--muted)) !important;
+    color: rgb(var(--muted-foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  :not(.dark) .attached-tab-trigger[data-state="active"] {
+    background: rgb(var(--background)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
+    background: rgb(var(--background)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  /* Dark theme adjustments */
+  .dark .attached-tab-trigger {
+    background: rgb(var(--muted)) !important;
+    color: rgb(var(--muted-foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .dark .attached-tab-trigger[data-state="active"] {
+    background: rgb(var(--background)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-color: rgb(var(--border)) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .dark .attached-tab-trigger[data-state="active"]:hover {
+    background: rgb(var(--background)) !important;
+    color: rgb(var(--foreground)) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  /* Content area styling to connect with tabs */
+  .attached-tab-content {
+    background: rgb(var(--background)) !important;
+    border: 1px solid rgb(var(--border)) !important;
+    border-radius: 0 12px 12px 12px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    margin-top: 0 !important;
+  }
+
+  .dark .attached-tab-content {
+    background: rgb(var(--background)) !important;
+    border-color: rgb(var(--border)) !important;
   }
   
   /* 漸變樣式 */

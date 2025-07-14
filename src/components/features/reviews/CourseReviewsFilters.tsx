@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { processPluralTranslation, getTeachingLanguageName } from '@/utils/textUtils';
+import { processPluralTranslation, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
 import { isCurrentTerm } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -231,11 +231,17 @@ export function CourseReviewsFilters({
               {t('filter.reviewInstructor')}
             </label>
             <MultiSelectDropdown
-              options={Object.entries(instructorCounts || {}).map(([instructorName, count]) => ({
-                value: instructorName,
-                label: instructorName,
-                count: count
-              }))}
+              options={Object.entries(instructorCounts || {})
+                .sort(([a], [b]) => {
+                  const aNameForSort = extractInstructorNameForSorting(a);
+                  const bNameForSort = extractInstructorNameForSorting(b);
+                  return aNameForSort.localeCompare(bNameForSort);
+                })
+                .map(([instructorName, count]) => ({
+                  value: instructorName,
+                  label: instructorName,
+                  count: count
+                }))}
               selectedValues={filters.selectedInstructors}
               onSelectionChange={handleInstructorChange}
               placeholder={t('common.all')}
@@ -380,11 +386,17 @@ export function CourseReviewsFilters({
             </div>
             <div className="flex-1">
               <MultiSelectDropdown
-                options={Object.entries(instructorCounts || {}).map(([instructorName, count]) => ({
-                  value: instructorName,
-                  label: instructorName,
-                  count: count
-                }))}
+                options={Object.entries(instructorCounts || {})
+                  .sort(([a], [b]) => {
+                    const aNameForSort = extractInstructorNameForSorting(a);
+                    const bNameForSort = extractInstructorNameForSorting(b);
+                    return aNameForSort.localeCompare(bNameForSort);
+                  })
+                  .map(([instructorName, count]) => ({
+                    value: instructorName,
+                    label: instructorName,
+                    count: count
+                  }))}
                 selectedValues={filters.selectedInstructors}
                 onSelectionChange={handleInstructorChange}
                 placeholder={t('common.all')}
@@ -450,18 +462,16 @@ export function CourseReviewsFilters({
               variant="ghost"
               className="flex items-center justify-between w-full h-10 rounded-lg transition-all duration-200 border-0 px-0"
             >
-              <div className="flex items-center gap-2 w-full">
-                <Filter className="h-4 w-4" />
-                <span className={`${language === 'zh-TW' || language === 'zh-CN' ? 'text-sm font-bold' : 'text-sm font-medium'} text-muted-foreground`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <Filter className="h-4 w-4 shrink-0" />
+                <span className={`${language === 'zh-TW' || language === 'zh-CN' ? 'text-sm font-bold' : 'text-sm font-medium'} text-muted-foreground shrink-0`}>
                   {t('sort.sortBy')}
                 </span>
-                <div className="flex-1 flex items-center" style={{ marginLeft: 'calc(96px - 24px - 0.5rem - 4ch)' }}>
-                  <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-                    {getSortFieldDisplayName(filters.sortBy)} {filters.sortOrder === 'desc' ? '↓' : '↑'}
-                  </Badge>
-                </div>
+                <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 ml-2">
+                  {getSortFieldDisplayName(filters.sortBy)} {filters.sortOrder === 'desc' ? '↓' : '↑'}
+                </Badge>
               </div>
-              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 shrink-0 ${isSortOpen ? 'rotate-180' : ''}`} />
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-2">

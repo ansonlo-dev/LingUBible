@@ -457,7 +457,9 @@ export default {
   'pages.courseDetail.filteredReviewsCount': 'Found {count} review|reviews',
   'pages.courseDetail.studentCount': 'Student Count',
   'pages.courseDetail.studentsEnrolled': 'Students Enrolled',
-  'pages.courseDetail.totalReviews': 'Total Reviews',
+  'pages.courseDetail.totalReviews': 'Reviews',
+  'pages.courseDetail.totalStudents': 'Students',
+  'pages.courseDetail.reviewsShort': 'Reviews',
   'pages.courseDetail.studentReviews': 'Student Reviews',
   'pages.courseDetail.averageWorkload': 'Average Workload',
   'pages.courseDetail.averageWorkloadShort': 'Avg. Workload',
@@ -465,6 +467,7 @@ export default {
   'pages.courseDetail.averageDifficultyShort': 'Avg. Difficulty',
   'pages.courseDetail.averageUsefulness': 'Average Usefulness',
   'pages.courseDetail.averageUsefulnessShort': 'Avg. Usefulness',
+  'pages.courseDetail.taughtInstructors': 'Instructors',
   'pages.courseDetail.noRatingData': 'No rating data available',
   'pages.courseDetail.teachingRecords': 'Teaching Records',
   'pages.courseDetail.loadingTeachingRecords': 'Loading teaching records...',
@@ -631,6 +634,7 @@ export default {
   'favorites.noInstructorsDesc': 'Start exploring instructors and add them to your favorites',
   'favorites.addToFavorites': 'Add to favorites',
   'favorites.removeFromFavorites': 'Remove from favorites',
+  'favorites.favorites': 'Favorites',
   'favorites.favorite': 'Favorite',
   'favorites.favorited': 'Favorited',
   'favorites.added': 'Added to favorites',
@@ -674,6 +678,7 @@ export default {
   'instructor.noDataDesc': 'Instructor data is being updated',
   'instructors.found': 'instructors found',
   'instructors.courses': 'Courses',
+  'instructors.taughtCourses': 'Courses',
   'instructors.reviews': 'Reviews',
   'instructors.rating': 'Rating',
   'instructors.noReviewsTitle': 'No Student Reviews',
@@ -687,9 +692,10 @@ export default {
   'instructors.noTeachingDesc': '{name}\'s teaching records have not been updated in the system, or may be using a different name format.',
   'instructors.noRatingData': 'No rating data available',
   'instructors.coursesTeaching': 'Teaching Records',
+  'instructors.teachingCourses': 'Teaching Records',
   'instructors.studentReviews': 'Student Reviews',
   'instructors.notFound': 'Instructor not found',
-  'instructors.backToList': 'Back to Instructor List',
+
   'search.smartSearch': 'Smart Search',
   'search.showingResults': 'Showing {count} results (out of {total} courses)',
   'search.noResults': 'No courses found matching your criteria',
@@ -1201,6 +1207,8 @@ export default {
   'common.info': 'Info',
   'common.teaching': 'Teaching',
   'common.courses': 'Courses',
+  'common.students': 'Students',
+  'common.reviews': 'Reviews',
   'backToTop.label': 'Back to top',
 
   // =============================================================================
@@ -1525,6 +1533,7 @@ export default {
   'instructor.studentReviews': 'Student Reviews',
   'instructor.noReviews': 'No student reviews yet',
   'instructor.coursesTeaching': 'Teaching Records',
+  'instructor.teachingCourses': 'Teaching Courses',
   'instructor.loadingCourses': 'Loading courses...',
   'instructor.noCoursesFound': 'No courses found',
   // My Reviews page
@@ -1593,7 +1602,7 @@ export default {
   'instructors.attendanceRequirement': 'Attendance',
   'instructors.noAttendanceRequirement': 'No Attendance',
   'instructors.loading': 'Loading instructor data...',
-  'instructors.back': 'Back',
+
   // Course grading explanation
   'grading.title': 'Course Grading System Explained',
   'grading.subtitle': 'Learn how we evaluate and grade courses based on student reviews',
@@ -1798,8 +1807,6 @@ export default {
   'chart.saveAsImage': 'Save as Image',
 
   // Common translations
-  'common.students': 'students',
-  'common.reviews': 'reviews',
   'common.grades': 'Grades',
   'review.clickToViewReview': 'Click to view this review in course details',
   'featured.mostReviews': 'most reviews',

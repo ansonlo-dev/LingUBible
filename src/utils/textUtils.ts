@@ -191,6 +191,42 @@ export function getInstructorName(
 }
 
 /**
+ * 從講師全名中提取用於排序的實際姓名，忽略職稱
+ * @param fullName 完整的講師姓名（包含職稱）
+ * @returns 用於排序的實際姓名
+ */
+export function extractInstructorNameForSorting(fullName: string): string {
+  if (!fullName) return '';
+  
+  // 定義常見的職稱前綴
+  const titles = [
+    'Dr.', 'Dr', 'Professor', 'Prof.', 'Prof', 'Ms.', 'Ms', 'Mr.', 'Mr', 
+    'Mrs.', 'Mrs', 'Miss', 'Ir.', 'Ir', 'Rev.', 'Rev', 'Sr.', 'Sr', 'Jr.', 'Jr'
+  ];
+  
+  // 移除多餘的空格並分割成單詞
+  const words = fullName.trim().split(/\s+/);
+  
+  // 找到第一個不是職稱的單詞作為姓名的開始
+  let nameStartIndex = 0;
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const isTitle = titles.some(title => 
+      title.toLowerCase() === word.toLowerCase() || 
+      title.toLowerCase() === word.toLowerCase().replace(/\.$/, '')
+    );
+    
+    if (!isTitle) {
+      nameStartIndex = i;
+      break;
+    }
+  }
+  
+  // 返回去除職稱後的姓名
+  return words.slice(nameStartIndex).join(' ').trim() || fullName;
+}
+
+/**
  * 翻譯部門名稱
  * @param departmentName 原始部門名稱
  * @param t 翻譯函數

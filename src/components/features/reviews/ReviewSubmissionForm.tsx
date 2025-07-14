@@ -60,8 +60,7 @@ import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
-import { getTeachingLanguageName } from '@/utils/textUtils';
-import { getInstructorName } from '@/utils/textUtils';
+import { getTeachingLanguageName, extractInstructorNameForSorting, getInstructorName } from '@/utils/textUtils';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 
 interface ReviewSubmissionFormProps {
@@ -2527,7 +2526,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   const renderInstructorList = (instructors: typeof availableInstructors) => (
                     <div className="space-y-2">
                       {instructors
-                        .sort((a, b) => a.instructor_name.localeCompare(b.instructor_name))
+                        .sort((a, b) => {
+                          const aNameForSort = extractInstructorNameForSorting(a.instructor_name);
+                          const bNameForSort = extractInstructorNameForSorting(b.instructor_name);
+                          return aNameForSort.localeCompare(bNameForSort);
+                        })
                         .map((record) => {
                           const instructorKey = `${record.instructor_name}|${record.session_type}`;
                           const isSelected = selectedInstructors.includes(instructorKey);

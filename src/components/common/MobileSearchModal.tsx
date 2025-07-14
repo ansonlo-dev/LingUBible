@@ -4,7 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
-import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
@@ -362,7 +362,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           departmentSc.includes(query)
         );
       })
-      .sort((a, b) => b.reviewCount - a.reviewCount) // 按評論數降序排序
+      .sort((a, b) => {
+        // 首先按姓名排序（忽略職稱），然後按評論數降序排序
+        const aNameForSort = extractInstructorNameForSorting(a.name);
+        const bNameForSort = extractInstructorNameForSorting(b.name);
+        return aNameForSort.localeCompare(bNameForSort);
+      })
       .slice(0, 20) // 充分利用較大空間的搜索結果數量
     : [];
 
@@ -478,8 +483,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${useRightAlign ? 'ml-auto' : 'mx-auto'}`}
                           style={{
                 maxWidth: useRightAlign ? '100%' : '64rem', // max-w-4xl equivalent
-                // Fixed height to prevent jumping between loading and loaded states
-                height: viewportDimensions.height <= 600 ? 'calc(100vh - 4rem)' : '70vh'
+                // Fixed height to prevent jumping between loading and loaded states - increased slightly to accommodate content
+                height: viewportDimensions.height <= 600 ? 'calc(100vh - 3rem)' : '75vh'
               }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -579,8 +584,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   style={{
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
-                    // Dynamic max height for desktop responsive behavior
-                                        maxHeight: viewportDimensions.height <= 600 ? 'calc(100vh - 8rem)' : '500px'
+                    // Dynamic max height for desktop responsive behavior - more generous to show full content
+                                        maxHeight: viewportDimensions.height <= 600 ? 'calc(100vh - 6rem)' : '60vh'
                   }}
                 >
                   {loading ? (
@@ -589,7 +594,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                       <p className="text-muted-foreground text-center">{t('common.loading')}</p>
                     </div>
                   ) : (
-                    <div className="p-4 pb-8 space-y-6">
+                    <div className="p-4 pb-12 space-y-6">
                     {/* 搜尋結果 */}
                     {searchQuery.trim() && (
                       <div className="space-y-6">
@@ -690,6 +695,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {filteredInstructors.map((instructor, index) => {
                                 const instructorName = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
+                                const facultyKey = getFacultyByDepartment(instructor.department);
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 
                                 return (
@@ -708,6 +714,14 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {departmentName}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
                                               <div className="flex items-center">
@@ -1425,6 +1439,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {filteredInstructors.map((instructor, index) => {
                                 const instructorName = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
+                                const facultyKey = getFacultyByDepartment(instructor.department);
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 
                                 return (
@@ -1443,6 +1458,14 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {departmentName}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
+                                          {facultyKey && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                                              {t(facultyKey)}
+                                            </span>
+                                          )}
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                                            {departmentName}
+                                          </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
                                               <div className="flex items-center">

@@ -19,6 +19,8 @@ import {
   CheckCircle,
   XCircle,
   Users,
+  UserCheck,
+  GraduationCap,
   Info,
   CalendarDays
 } from 'lucide-react';
@@ -27,7 +29,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
-import { getCourseTitle, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
+import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
@@ -170,6 +172,56 @@ const CourseDetail = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+
+  // 根據評分獲取漸變背景色（0-5分，紅色到綠色）
+  const getRatingGradientColor = (value: number) => {
+    // 確保評分在0-5範圍內
+    const clampedValue = Math.max(0, Math.min(5, value));
+    
+    // 將0-5的評分映射到0-1的範圍
+    const ratio = clampedValue / 5;
+    
+    // 使用HSL色彩空間創建從紅色(0°)到綠色(120°)的漸變
+    const hue = ratio * 120; // 0到120度
+    const saturation = 95; // 提高飽和度到95%，讓顏色更鮮艷
+    
+    // 統一使用深色主題的亮度設定，確保白色文字可讀性
+    const lightness = 30; // 統一使用30%亮度，讓顏色更深更突出
+    
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  };
+
+  // 統計框組件 - 評分類型在框外，只有數字在框內
+  const StatBox = ({ value, label, labelShort, hasValidData = true }: { 
+    value: number | string, 
+    label: string,
+    labelShort?: string,
+    hasValidData?: boolean
+  }) => {
+    const numericValue = typeof value === 'number' ? value : parseFloat(value.toString());
+    const isValid = hasValidData && numericValue > 0;
+    
+    const backgroundColor = isValid 
+      ? getRatingGradientColor(numericValue) 
+      : '#4B5563'; // 統一使用深色灰色
+    
+    const displayValue = isValid ? numericValue.toFixed(1).replace(/\.?0+$/, '') : 'N/A';
+    
+    return (
+      <div className="flex flex-col items-center min-w-0">
+        <div className="text-xs sm:text-sm text-muted-foreground text-center leading-tight">
+          <span className="hidden sm:inline">{label}</span>
+          <span className="sm:hidden">{labelShort || label}</span>
+        </div>
+        <div 
+          className="flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-white font-bold text-xs sm:text-sm mt-1"
+          style={{ backgroundColor }}
+        >
+          {displayValue}
+        </div>
+      </div>
+    );
+  };
   
   // Get current term info for offer badge
   const currentTermName = getCurrentTermName();
@@ -431,8 +483,8 @@ const CourseDetail = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-center items-center min-h-[400px]">
+      <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6">
+        <div className="flex justify-center items-center min-h-[calc(100vh-12rem)]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="text-muted-foreground">{t('pages.courseDetail.loadingCourseData')}</p>
@@ -444,8 +496,8 @@ const CourseDetail = () => {
 
   if (error || !course) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-center items-center min-h-[400px]">
+      <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6">
+        <div className="flex justify-center items-center min-h-[calc(100vh-12rem)]">
           <Card className="max-w-md w-full">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
@@ -468,269 +520,300 @@ const CourseDetail = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-20 overflow-hidden">
+    <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6 pb-20 overflow-hidden min-w-0">
       {/* Course Header - Always visible above tabs */}
       <div className="mb-6">
-        <Card className="course-card">
+        <Card className="transparent-info-card">
           <CardContent className="p-6">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="min-w-0 flex-1">
-                <CardTitle className="text-2xl truncate font-mono">{course.course_code}</CardTitle>
-                {/* 英文課程名稱 - 作為副標題 */}
-                <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
-                  {course.course_title}
-                </p>
-                {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
-                {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                  const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
-                  return chineseName && (
-                    <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
-                      {chineseName}
-                    </p>
-                  );
-                })()}
-                {/* 系所徽章 */}
-                {course.department && (
-                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-2" style={{ minHeight: '2rem' }}>
-                    {/* Faculty Badge */}
-                    {(() => {
-                      const faculty = getFacultyByDepartment(course.department);
-                      return faculty && (
-                        <Badge 
-                          variant="outline"
-                          className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
-                        >
-                          {t(faculty)}
-                        </Badge>
-                      );
-                    })()}
-                    {/* Department Badge */}
-                    <Badge 
-                      variant="outline"
-                      className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit max-w-full"
-                    >
-                      <span className="break-words hyphens-auto">
-                        {language === 'en' ? `Department of ${translateDepartmentName(course.department, t)}` : translateDepartmentName(course.department, t)}
-                      </span>
-                    </Badge>
-                    {/* Current Term Offering Badge */}
-                    {isOfferedInCurrentTerm !== null && (
-                      <Badge 
-                        variant={isOfferedInCurrentTerm ? "default" : "outline"}
-                        className={`text-xs cursor-pointer transition-colors ${
-                          isOfferedInCurrentTerm 
-                            ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' 
-                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
-                        }`}
-                        onClick={handleOfferedBadgeClick}
-                      >
-                        <div className="flex items-center gap-1">
-                          {isOfferedInCurrentTerm ? (
-                            <CheckCircle className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          <span>
-                            {isOfferedInCurrentTerm ? t('offered.yes') : t('offered.no')} ({currentTermName})
-                          </span>
-                        </div>
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="shrink-0 -mt-2 sm:mt-0">
-                <FavoriteButton
-                  type="course"
-                  itemId={course.course_code}
-                  size="lg"
-                  showText={true}
-                  variant="outline"
-                />
+            {/* Course info section - full width */}
+            <div className="mb-4">
+              <CardTitle className="text-2xl font-mono flex items-center gap-2">
+                <BookOpen className="h-7 w-7 text-primary" />
+                {course.course_code}
+              </CardTitle>
+              {/* 英文課程名稱 - 作為副標題 */}
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
+                {course.course_title}
+              </p>
+              {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
+              {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
+                return chineseName && (
+                  <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
+                    {chineseName}
+                  </p>
+                );
+              })()}
+            </div>
+            
+            {/* Action buttons - separate row for mobile, right-aligned for desktop */}
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3 mb-4">
+              <div className="flex flex-row gap-2 sm:gap-3">
+                <div className="flex-1 sm:flex-none">
+                  <FavoriteButton
+                    type="course"
+                    itemId={course.course_code}
+                    size="lg"
+                    showText={true}
+                    variant="outline"
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex-1 sm:flex-none">
+                  <Button 
+                    className="h-10 gradient-primary hover:opacity-90 text-white w-full"
+                    onClick={() => navigate(`/write-review/${course.course_code}`)}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {t('review.writeReview')}
+                  </Button>
+                </div>
+                {/* Back button - mobile and desktop */}
+                <div className="flex-1 sm:flex-none">
+                  <button 
+                    onClick={() => navigate('/courses')}
+                    className="h-10 w-full px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">{t('common.back')}</span>
+                  </button>
+                </div>
               </div>
             </div>
             
+            {/* 系所徽章 - 使用全寬度 */}
+            {course.department && (
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-4 min-h-[2rem] overflow-hidden">
+                {/* Faculty Badge */}
+                {(() => {
+                  const faculty = getFacultyByDepartment(course.department);
+                  return faculty && (
+                    <Badge 
+                      variant="outline"
+                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
+                    >
+                      {t(faculty)}
+                    </Badge>
+                  );
+                })()}
+                {/* Department Badge */}
+                <Badge 
+                  variant="outline"
+                  className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit"
+                >
+                  <span className="break-words hyphens-auto">
+                    {translateDepartmentName(course.department, t)}
+                  </span>
+                </Badge>
+                {/* Current Term Offering Badge */}
+                {isOfferedInCurrentTerm !== null && (
+                  <Badge 
+                    variant={isOfferedInCurrentTerm ? "default" : "outline"}
+                    className={`text-xs cursor-pointer transition-colors ${
+                      isOfferedInCurrentTerm 
+                        ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' 
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                    }`}
+                    onClick={handleOfferedBadgeClick}
+                  >
+                    <div className="flex items-center gap-1">
+                      {isOfferedInCurrentTerm ? (
+                        <CheckCircle className="h-3 w-3" />
+                      ) : (
+                        <XCircle className="h-3 w-3" />
+                      )}
+                      <span>
+                        {isOfferedInCurrentTerm ? t('offered.yes') : t('offered.no')} ({currentTermName})
+                      </span>
+                    </div>
+                  </Badge>
+                )}
+              </div>
+            )}
+            
             {/* 課程基本統計信息 - 響應式佈局 */}
-            <div className="pt-4 border-t">
-              {/* Mobile: 三個評分在一行 */}
-              <div className="grid grid-cols-1 gap-4 sm:hidden">
+            <div className="pt-4">
+              {/* Mobile: 統計在兩行 */}
+              <div className="grid grid-cols-1 gap-3 sm:hidden">
                 <div className="grid grid-cols-3 gap-2">
                   {/* 平均工作量 */}
-                  <div className="text-center min-w-0">
-                    <div className="text-lg font-bold text-primary">
-                      {detailedStats.averageWorkload > 0 ? (
-                        detailedStats.averageWorkload.toFixed(2)
-                      ) : (
-                        'N/A'
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{t('pages.courseDetail.averageWorkloadShort')}</div>
-                  </div>
+                  <StatBox
+                    value={detailedStats.averageWorkload}
+                    label={t('pages.courseDetail.averageWorkload')}
+                    labelShort={t('pages.courseDetail.averageWorkloadShort')}
+                    hasValidData={detailedStats.averageWorkload > 0}
+                  />
                   
                   {/* 平均難度 */}
-                  <div className="text-center min-w-0">
-                    <div className="text-lg font-bold text-primary">
-                      {detailedStats.averageDifficulty > 0 ? (
-                        detailedStats.averageDifficulty.toFixed(2)
-                      ) : (
-                        'N/A'
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{t('pages.courseDetail.averageDifficultyShort')}</div>
-                  </div>
+                  <StatBox
+                    value={detailedStats.averageDifficulty}
+                    label={t('pages.courseDetail.averageDifficulty')}
+                    labelShort={t('pages.courseDetail.averageDifficultyShort')}
+                    hasValidData={detailedStats.averageDifficulty > 0}
+                  />
                   
                   {/* 平均實用性 */}
-                  <div className="text-center min-w-0">
-                    <div className="text-lg font-bold text-primary">
-                      {detailedStats.averageUsefulness > 0 ? (
-                        detailedStats.averageUsefulness.toFixed(2)
-                      ) : (
-                        'N/A'
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{t('pages.courseDetail.averageUsefulnessShort')}</div>
-                  </div>
+                  <StatBox
+                    value={detailedStats.averageUsefulness}
+                    label={t('pages.courseDetail.averageUsefulness')}
+                    labelShort={t('pages.courseDetail.averageUsefulnessShort')}
+                    hasValidData={detailedStats.averageUsefulness > 0}
+                  />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-2">
+                  {/* 授課教師數 */}
+                  <div className="flex flex-col items-center min-w-0">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground text-center leading-tight">
+                      <GraduationCap className="h-3 w-3" />
+                      <span>{t('pages.courseDetail.taughtInstructors')}</span>
+                    </div>
+                    <span className="text-xl font-bold text-primary">
+                      {(() => {
+                        if (!teachingInfo || teachingInfo.length === 0) return 0;
+                        const uniqueInstructors = new Set(teachingInfo.map(info => info.instructor.name));
+                        return uniqueInstructors.size;
+                      })()}
+                    </span>
+                  </div>
+                  
                   {/* 評論數量 */}
-                  <div className="text-center min-w-0">
-                    <div className="text-lg font-bold text-primary">
-                      {allReviews?.length || 0}
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  <div className="flex flex-col items-center min-w-0">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground text-center leading-tight">
                       <MessageSquare className="h-3 w-3" />
-                      {t('pages.courseDetail.totalReviews')}
+                      <span>{t('pages.courseDetail.totalReviews')}</span>
                     </div>
+                    <span className="text-xl font-bold text-primary">
+                      {allReviews?.length || 0}
+                    </span>
                   </div>
                   
                   {/* 學生數量 */}
-                  <div className="text-center min-w-0">
-                    <div className="text-lg font-bold text-primary">
+                  <div className="flex flex-col items-center min-w-0">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground text-center leading-tight">
+                      <UserCheck className="h-3 w-3" />
+                      <span>{t('pages.courseDetail.totalStudents')}</span>
+                    </div>
+                    <span className="text-xl font-bold text-primary">
                       {(() => {
                         if (!allReviews || allReviews.length === 0) return 0;
                         const uniqueStudents = new Set(allReviews.map(review => review.review.user_id));
                         return uniqueStudents.size;
                       })()}
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {t('common.students')}
-                    </div>
+                    </span>
                   </div>
                 </div>
               </div>
               
-              {/* Tablet and Desktop: 統一使用 5 列佈局 */}
-              <div className="hidden sm:grid sm:grid-cols-5 gap-4">
+              {/* Tablet and Desktop: 統一使用 6 列佈局 */}
+              <div className="hidden sm:grid sm:grid-cols-6 gap-4">
                 {/* 平均工作量 */}
-                <div className="text-center min-w-0">
-                  <div className="text-xl font-bold text-primary">
-                    {detailedStats.averageWorkload > 0 ? (
-                      detailedStats.averageWorkload.toFixed(2)
-                    ) : (
-                      'N/A'
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageWorkloadShort')}</div>
-                </div>
+                <StatBox
+                  value={detailedStats.averageWorkload}
+                  label={t('pages.courseDetail.averageWorkload')}
+                  labelShort={t('pages.courseDetail.averageWorkloadShort')}
+                  hasValidData={detailedStats.averageWorkload > 0}
+                />
                 
                 {/* 平均難度 */}
-                <div className="text-center min-w-0">
-                  <div className="text-xl font-bold text-primary">
-                    {detailedStats.averageDifficulty > 0 ? (
-                      detailedStats.averageDifficulty.toFixed(2)
-                    ) : (
-                      'N/A'
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageDifficultyShort')}</div>
-                </div>
+                <StatBox
+                  value={detailedStats.averageDifficulty}
+                  label={t('pages.courseDetail.averageDifficulty')}
+                  labelShort={t('pages.courseDetail.averageDifficultyShort')}
+                  hasValidData={detailedStats.averageDifficulty > 0}
+                />
                 
                 {/* 平均實用性 */}
-                <div className="text-center min-w-0">
-                  <div className="text-xl font-bold text-primary">
-                    {detailedStats.averageUsefulness > 0 ? (
-                      detailedStats.averageUsefulness.toFixed(2)
-                    ) : (
-                      'N/A'
-                    )}
+                <StatBox
+                  value={detailedStats.averageUsefulness}
+                  label={t('pages.courseDetail.averageUsefulness')}
+                  labelShort={t('pages.courseDetail.averageUsefulnessShort')}
+                  hasValidData={detailedStats.averageUsefulness > 0}
+                />
+                
+                {/* 授課教師數 */}
+                <div className="flex flex-col items-center min-w-0">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground text-center">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>{t('pages.courseDetail.taughtInstructors')}</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">{t('pages.courseDetail.averageUsefulnessShort')}</div>
+                  <span className="text-xl font-bold text-primary">
+                    {(() => {
+                      if (!teachingInfo || teachingInfo.length === 0) return 0;
+                      const uniqueInstructors = new Set(teachingInfo.map(info => info.instructor.name));
+                      return uniqueInstructors.size;
+                    })()}
+                  </span>
                 </div>
                 
                 {/* 評論數量 */}
-                <div className="text-center min-w-0">
-                  <div className="text-xl font-bold text-primary">
-                    {allReviews?.length || 0}
-                  </div>
-                  <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                <div className="flex flex-col items-center min-w-0">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground text-center">
                     <MessageSquare className="h-4 w-4" />
-                    {t('pages.courseDetail.totalReviews')}
+                    <span>{t('pages.courseDetail.totalReviews')}</span>
                   </div>
+                  <span className="text-xl font-bold text-primary">
+                    {allReviews?.length || 0}
+                  </span>
                 </div>
                 
                 {/* 學生數量 */}
-                <div className="text-center min-w-0">
-                  <div className="text-xl font-bold text-primary">
+                <div className="flex flex-col items-center min-w-0">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground text-center">
+                    <UserCheck className="h-4 w-4" />
+                    <span>{t('pages.courseDetail.totalStudents')}</span>
+                  </div>
+                  <span className="text-xl font-bold text-primary">
                     {(() => {
                       if (!allReviews || allReviews.length === 0) return 0;
                       const uniqueStudents = new Set(allReviews.map(review => review.review.user_id));
                       return uniqueStudents.size;
                     })()}
-                  </div>
-                  <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {t('common.students')}
-                  </div>
+                  </span>
                 </div>
               </div>
             </div>
+
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="reviews" className="w-full">
-        {/* Tab Navigation */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b mb-6 -mx-4 px-4 pb-4">
-          <TabsList className="bg-muted/30 p-1 rounded-lg border shadow-sm w-full md:w-auto">
+        {/* Tab Navigation - Attached Design */}
+        <div className="attached-tabs-container">
+          <TabsList className="attached-tabs-list">
             <TabsTrigger 
               value="reviews" 
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-muted/50"
+              className="attached-tab-trigger"
             >
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">{t('review.studentReviews')}</span>
-              <span className="sm:hidden">{t('common.reviews')}</span>
-              {allReviews && allReviews.length > 0 && (
-                <div className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs font-semibold">
-                  {allReviews.length}
-                </div>
-              )}
+              <span className="sm:hidden text-xs">{t('pages.courseDetail.reviewsShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="teaching" 
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-muted/50"
+              className="attached-tab-trigger"
             >
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t('pages.courseDetail.offerRecords')}</span>
-              <span className="sm:hidden">{t('common.teaching')}</span>
+              <span className="sm:hidden text-xs">{t('common.teaching')}</span>
               {isOfferedInCurrentTerm && (
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="grades" 
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-muted/50"
+              className="attached-tab-trigger"
             >
               <Info className="h-4 w-4" />
               <span className="hidden sm:inline">{t('chart.gradeDistribution')}</span>
-              <span className="sm:hidden">{t('common.grades')}</span>
+              <span className="sm:hidden text-xs">{t('common.grades')}</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
         {/* Student Reviews Tab */}
-        <TabsContent value="reviews" className="mt-0">
+        <TabsContent value="reviews" className="attached-tab-content mt-0">
           <div id="student-reviews">
             <CourseReviewsList 
               reviews={allReviews || []}
@@ -742,8 +825,8 @@ const CourseDetail = () => {
         </TabsContent>
 
         {/* Teaching Records Tab */}
-        <TabsContent value="teaching" className="mt-0">
-          <Card className="course-card">
+        <TabsContent value="teaching" className="attached-tab-content mt-0">
+          <Card className="border-0 bg-transparent shadow-none">
             <CardContent className="p-6">
           {teachingInfoLoading ? (
             <div className="text-center py-8">
@@ -985,7 +1068,11 @@ const CourseDetail = () => {
                           return acc;
                         }, {} as Record<string, { instructor: any; terms: any[] }>)
                     )
-                    .sort(([a], [b]) => a.localeCompare(b)) // Sort by instructor name alphabetically
+                    .sort(([a], [b]) => {
+                      const aNameForSort = extractInstructorNameForSorting(a);
+                      const bNameForSort = extractInstructorNameForSorting(b);
+                      return aNameForSort.localeCompare(bNameForSort);
+                    }) // Sort by instructor name alphabetically, ignoring titles
                     .map(([instructorName, data]) => (
                       <div key={instructorName} className="flex items-center justify-between p-3 rounded-lg ">
                         {/* Left side: Instructor name */}
@@ -1138,7 +1225,11 @@ const CourseDetail = () => {
                           return acc;
                         }, {} as Record<string, { instructor: any; terms: any[] }>)
                     )
-                    .sort(([a], [b]) => a.localeCompare(b)) // Sort by instructor name alphabetically
+                    .sort(([a], [b]) => {
+                      const aNameForSort = extractInstructorNameForSorting(a);
+                      const bNameForSort = extractInstructorNameForSorting(b);
+                      return aNameForSort.localeCompare(bNameForSort);
+                    }) // Sort by instructor name alphabetically, ignoring titles
                     .map(([instructorName, data]) => (
                       <div key={instructorName} className="flex items-center justify-between p-3 rounded-lg ">
                         {/* Left side: Instructor name */}
@@ -1285,7 +1376,7 @@ const CourseDetail = () => {
                     title={t('chart.gradeDistribution')}
                     height={120}
                     showPercentage={true}
-                    className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800"
+                    className="bg-transparent border-transparent"
                     context="course"
                     filterOptions={gradeChartFilterOptions}
                     selectedFilter={selectedGradeChartFilter}
@@ -1330,24 +1421,7 @@ const CourseDetail = () => {
           </Card>
         </TabsContent>
 
-        {/* 操作按鈕 */}
-        <div className="flex gap-3 pb-8 md:pb-0">
-          <Button 
-            className="flex-1 h-12 text-base font-medium gradient-primary hover:opacity-90 text-white"
-            onClick={() => navigate(`/write-review/${course.course_code}`)}
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            {t('review.writeReview')}
-          </Button>
-          <Button 
-            variant="outline" 
-            className="flex-1 h-12 text-base font-medium hover:bg-primary/10 hover:text-primary"
-            onClick={() => navigate('/courses')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('common.back')}
-          </Button>
-        </div>
+
       </Tabs>
     </div>
   );

@@ -95,7 +95,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       case 'sm':
         return 'h-8 w-8';
       case 'lg':
-        return 'h-12 w-12';
+        // If showing text, use consistent height h-10 to match other buttons
+        return showText ? 'h-10 w-10' : 'h-12 w-12';
       default:
         return 'h-10 w-10';
     }
@@ -122,6 +123,9 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         getSizeClasses(),
         // Responsive expansion only when showText is true
         showText && [
+          // Mobile portrait: maintain width from parent, expand height and add padding
+          'h-auto px-3 py-2',
+          // Landscape and desktop: auto width and height with padding
           'landscape:h-auto landscape:w-auto landscape:px-3 landscape:py-2',
           'sm:h-auto sm:w-auto sm:px-3 sm:py-2'
         ],
@@ -144,9 +148,16 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         )}
       />
       {showText && (
-        <span className="text-sm font-medium hidden landscape:inline sm:inline">
-          {isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
-        </span>
+        <>
+          {/* Mobile portrait: short text */}
+          <span className="text-sm font-medium landscape:hidden sm:hidden">
+            {t('favorites.favorites')}
+          </span>
+          {/* Landscape and desktop: full text */}
+          <span className="text-sm font-medium hidden landscape:inline sm:inline">
+            {isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+          </span>
+        </>
       )}
     </Button>
   );

@@ -29,7 +29,7 @@ import { PopularItemCard } from '@/components/features/reviews/PopularItemCard';
 import { AdvancedInstructorFilters, InstructorFilters } from '@/components/features/reviews/AdvancedInstructorFilters';
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import { translateDepartmentName } from '@/utils/textUtils';
+import { translateDepartmentName, extractInstructorNameForSorting } from '@/utils/textUtils';
 import { InstructorGrid } from '@/components/responsive';
 
 const InstructorsList = () => {
@@ -337,7 +337,10 @@ const InstructorsList = () => {
       
       switch (filters.sortBy) {
         case 'name':
-          comparison = a.name.localeCompare(b.name);
+          // 使用提取的姓名進行排序，忽略職稱
+          const aNameForSort = extractInstructorNameForSorting(a.name);
+          const bNameForSort = extractInstructorNameForSorting(b.name);
+          comparison = aNameForSort.localeCompare(bNameForSort);
           break;
         case 'department':
           comparison = a.department.localeCompare(b.department);
@@ -364,7 +367,10 @@ const InstructorsList = () => {
           comparison = aGPA - bGPA;
           break;
         default:
-          comparison = a.name.localeCompare(b.name);
+          // 默認也使用提取的姓名進行排序
+          const aDefaultNameForSort = extractInstructorNameForSorting(a.name);
+          const bDefaultNameForSort = extractInstructorNameForSorting(b.name);
+          comparison = aDefaultNameForSort.localeCompare(bDefaultNameForSort);
           break;
       }
       

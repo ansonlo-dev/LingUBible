@@ -437,8 +437,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     const currentIsDark = document.documentElement.classList.contains('dark');
     
     // Force explicit color values to ensure theme switching works
-    const gridColor = currentIsDark ? '#374151' : '#f3f4f6';
-    const axisLineColor = currentIsDark ? '#4b5563' : '#d1d5db';
+    const gridColor = 'transparent';
+    const axisLineColor = 'transparent';
     const axisLabelColor = currentIsDark ? '#ffffff' : '#000000';
     const textColor = currentIsDark ? '#ffffff' : '#000000';
     
@@ -455,22 +455,22 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#10b981'
       ],
       grid: {
-        borderColor: axisLineColor,
+        borderColor: 'transparent',
         backgroundColor: 'transparent'
       },
       categoryAxis: {
         axisLine: { 
-          show: true,
+          show: false,
           lineStyle: { 
-            color: axisLineColor,
-            width: 1
+            color: 'transparent',
+            width: 0
           } 
         },
         axisTick: { 
-          show: true,
+          show: false,
           lineStyle: { 
-            color: axisLineColor,
-            width: 1
+            color: 'transparent',
+            width: 0
           } 
         },
         axisLabel: { 
@@ -481,27 +481,27 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           fontFamily: 'ui-sans-serif, system-ui, sans-serif'
         },
         splitLine: { 
-          show: true,
+          show: false,
           lineStyle: { 
-            color: gridColor,
-            width: 1,
+            color: 'transparent',
+            width: 0,
             type: 'solid'
           } 
         }
       },
       valueAxis: {
         axisLine: { 
-          show: true,
+          show: false,
           lineStyle: { 
-            color: axisLineColor,
-            width: 1
+            color: 'transparent',
+            width: 0
           } 
         },
         axisTick: { 
-          show: true,
+          show: false,
           lineStyle: { 
-            color: axisLineColor,
-            width: 1
+            color: 'transparent',
+            width: 0
           } 
         },
         axisLabel: { 
@@ -512,10 +512,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           fontFamily: 'ui-sans-serif, system-ui, sans-serif'
         },
         splitLine: { 
-          show: true,
+          show: false,
           lineStyle: { 
-            color: gridColor,
-            width: 1,
+            color: 'transparent',
+            width: 0,
             type: 'solid'
           } 
         }
@@ -949,10 +949,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           interval: 0
         },
         axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         }
       },
       yAxis: {
@@ -967,15 +969,18 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           }
         },
         axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         splitLine: {
+          show: false,
           lineStyle: { 
-            color: currentIsDark ? '#374151' : '#f3f4f6',
-            width: 1,
+            color: 'transparent',
+            width: 0,
             type: 'solid'
           }
         }
@@ -1109,89 +1114,59 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       toolbox: {
         show: false
       },
-      // Add horizontal zoom functionality for x-axis (GPA values) with proper constraints
-      dataZoom: !isMobile ? [
-        {
-          type: 'inside',
-          xAxisIndex: 0,
-          start: 0,
-          end: 100,
-          filterMode: 'filter', // Use 'filter' instead of 'weakFilter' for better containment
-          minValueSpan: 0.5, // Minimum zoom span of 0.5 GPA
-          maxValueSpan: 4, // Maximum span is the full range
-          zoomLock: false,
-          moveOnMouseMove: true,
-          preventDefaultMouseMove: true
-        }
-      ] : [],
       grid: {
-        left: '8%', // Increased left margin to prevent overflow
-        right: '6%', // Increased right margin for safety
-        top: '5%', // Add top margin
-        bottom: '8%', // Increased bottom margin
-        containLabel: true,
-        show: false // Hide grid border to prevent visual conflicts
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
       },
       xAxis: {
         type: 'value',
         min: 0,
-        max: 4,
-        boundaryGap: [0, 0], // Ensure no gap at boundaries
+        max: 4.0,
         axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
+          color: currentIsDark ? '#ffffff' : '#000000',
           fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
-          formatter: (value: number) => value.toFixed(1),
-          margin: 8 // Add margin to prevent label overflow
+          formatter: (value: number) => {
+            return value.toFixed(1);
+          }
         },
         axisLine: {
-          lineStyle: { 
-            color: currentIsDark ? '#4b5563' : '#d1d5db',
-            width: 1
-          },
-          onZero: false // Prevent axis line from moving during zoom
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         axisTick: {
-          lineStyle: { 
-            color: currentIsDark ? '#4b5563' : '#d1d5db',
-            width: 1
-          },
-          alignWithLabel: true // Align ticks with labels
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         splitLine: {
+          show: false,
           lineStyle: { 
-            color: currentIsDark ? '#374151' : '#f3f4f6',
-            width: 1,
+            color: 'transparent',
+            width: 0,
             type: 'solid'
           }
         }
       },
       yAxis: {
         type: 'category',
-        data: boxPlotData.map((item) => item.name),
-        boundaryGap: true, // Add gap between categories and axis boundaries
+        data: boxPlotData.map(item => item.name),
         axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
-          fontSize: isMobile ? 9 : 11,
+          color: currentIsDark ? '#ffffff' : '#000000',
+          fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
-          interval: 0,
-          margin: 8, // Add margin to prevent label overflow
-          overflow: 'truncate' // Truncate long labels instead of overflowing
+          rotate: 0,
+          interval: 0
         },
         axisLine: {
-          lineStyle: { 
-            color: currentIsDark ? '#4b5563' : '#d1d5db',
-            width: 1
-          }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         axisTick: {
-          lineStyle: { 
-            color: currentIsDark ? '#4b5563' : '#d1d5db',
-            width: 1
-          },
-          alignWithLabel: true
-        },
-        inverse: true // Show items from top to bottom in the order they appear
+          show: false,
+          lineStyle: { color: 'transparent' }
+        }
       },
       series: [
         {
@@ -1476,37 +1451,43 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       }
     }));
 
-    return {
+    const stackedOptions = {
       ...theme,
       // Completely disable toolbox
       toolbox: {
         show: false
       },
       grid: {
-        left: '5%', // Further reduced left padding
+        left: '3%',
         right: '4%',
-        bottom: isMobile ? '15%' : '12%', // Add more space for legend
+        bottom: '3%',
         containLabel: true
       },
       xAxis: {
         type: 'value',
+        min: 0,
         max: 100,
         axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
+          color: currentIsDark ? '#ffffff' : '#000000',
           fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
-          formatter: '{value}%'
+          formatter: (value: number) => {
+            return Number.isInteger(value) ? `${value}%` : '';
+          }
         },
         axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         splitLine: {
+          show: false,
           lineStyle: { 
-            color: currentIsDark ? '#374151' : '#f3f4f6',
-            width: 1,
+            color: 'transparent',
+            width: 0,
             type: 'solid'
           }
         }
@@ -1515,17 +1496,19 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         type: 'category',
         data: stackedData.map(item => item.name),
         axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
-          fontSize: isMobile ? 9 : 11,
+          color: currentIsDark ? '#ffffff' : '#000000',
+          fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
-          interval: 0, // Show all labels
-          rotate: 0
+          rotate: 0,
+          interval: 0
         },
         axisLine: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         },
         axisTick: {
-          lineStyle: { color: currentIsDark ? '#4b5563' : '#d1d5db' }
+          show: false,
+          lineStyle: { color: 'transparent' }
         }
       },
       series: series,
@@ -1614,6 +1597,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         }
       }
     };
+
+    return stackedOptions;
   };
 
   // Chart click handler
@@ -1647,13 +1632,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     return (
       <div className={cn("space-y-0", className)}>
         {/* Chart Content - Always visible when hideHeader is true */}
-        <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-muted/20">
+        <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
-              <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 w-full sm:w-auto">
+              <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1905,9 +1890,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   }
 
   return (
-    <div className={cn("space-y-0 bg-[rgb(243,244,246)] dark:bg-[rgb(36,36,40)] rounded-lg", className)}>
+    <div className={cn("space-y-0 bg-transparent border-transparent rounded-lg", className)}>
       {/* Header Toggle */}
-      <div className="w-full bg-[rgb(243,244,246)] hover:bg-[rgb(243,244,246)] dark:bg-[rgb(36,36,40)] dark:hover:bg-[rgb(36,36,40)] transition-all duration-200 rounded-lg">
+      <div className="w-full bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent transition-all duration-200 rounded-lg">
         <Button
           variant="ghost"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -1934,13 +1919,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
 
       {/* Chart Content */}
       {isExpanded && (
-        <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-muted/20">
+        <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
-              <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 w-full sm:w-auto">
+              <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
                 <Button
                   variant="ghost"
                   size="sm"

@@ -796,11 +796,6 @@ export const CourseReviewsList = ({
       <Card className="course-card">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              {t('review.studentReviews')}
-            </CardTitle>
-            
             {/* 語言篩選器 - 載入時也顯示 */}
             {onToggleLanguage && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -852,11 +847,6 @@ export const CourseReviewsList = ({
       <Card className="course-card">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              {t('review.studentReviews')}
-            </CardTitle>
-            
             {/* 語言篩選器 - 無評論時也顯示 */}
             {onToggleLanguage && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -1195,10 +1185,6 @@ export const CourseReviewsList = ({
   return (
     <Card className="course-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          {t('review.studentReviews')}
-        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 overflow-hidden">
         {/* 課程要求篩選器 */}

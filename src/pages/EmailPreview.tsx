@@ -70,7 +70,7 @@ export default function EmailPreview() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="mx-auto px-4 lg:px-8 xl:px-16 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
