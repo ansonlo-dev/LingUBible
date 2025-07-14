@@ -41,7 +41,8 @@ import {
   ChevronDown,
   ChevronUp,
   MoreHorizontal,
-  Grid3X3
+  Grid3X3,
+  BookText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

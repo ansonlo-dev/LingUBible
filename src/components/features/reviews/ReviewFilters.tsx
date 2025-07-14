@@ -6,6 +6,7 @@ import {
   Sparkles,
   Calendar,
   Hash,
+  BookText,
   Tag,
   Brain,
   Target,
@@ -101,7 +102,7 @@ export function ReviewFilters({
       {/* 語言篩選行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         <label className={getLabelClassName()}>
-          <BookOpen className="h-4 w-4" />
+          <BookText className="h-4 w-4" />
           {t('filter.reviewLanguage')}
         </label>
         <div className="flex flex-wrap gap-2">

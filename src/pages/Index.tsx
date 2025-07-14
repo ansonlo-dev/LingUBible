@@ -5,7 +5,7 @@ import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
 
-import { BookOpen, Users, Star, TrendingUp, Loader2, UserCheck } from 'lucide-react';
+import { BookText, Users, Star, TrendingUp, Loader2, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
@@ -325,7 +325,7 @@ const Index = () => {
             isLoading={mainPageStatsLoading}
           />
           <StatsCard
-            icon={BookOpen}
+            icon={BookText}
             title={t('stats.courses')}
             value={mainPageStatsLoading ? "..." : mainPageStats.coursesWithReviewsCount.toString()}
             change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days).text}
@@ -412,13 +412,13 @@ const Index = () => {
                 </div>
               ) : popularError ? (
                 <div className="text-center py-12">
-                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">{t('common.error')}</h3>
                   <p className="text-muted-foreground">{popularError}</p>
                 </div>
               ) : popularCourses.length === 0 ? (
                 <div className="text-center py-12">
-                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">{t('featured.noPopularCourses')}</h3>
                   <p className="text-muted-foreground">{t('featured.noPopularCoursesDesc')}</p>
                 </div>
@@ -509,13 +509,13 @@ const Index = () => {
                 </div>
               ) : popularError ? (
                 <div className="text-center py-12">
-                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">{t('common.error')}</h3>
                   <p className="text-muted-foreground">{popularError}</p>
                 </div>
               ) : topCourses.length === 0 ? (
                 <div className="text-center py-12">
-                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">{t('featured.noPopularCourses')}</h3>
                   <p className="text-muted-foreground">{t('featured.noPopularCoursesDesc')}</p>
                 </div>

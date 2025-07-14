@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Star, Settings, PanelLeft, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, PanelLeft, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail, BookText } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
@@ -220,7 +220,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     {
       label: t('sidebar.browse'),
       items: [
-        { name: t('nav.courses'), href: '/courses', icon: BookOpen, current: location.pathname === '/courses' },
+        { name: t('nav.courses'), href: '/courses', icon: BookText, current: location.pathname === '/courses' },
         { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' }
       ]
     },

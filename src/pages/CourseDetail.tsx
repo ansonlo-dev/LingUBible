@@ -22,7 +22,8 @@ import {
   GraduationCap,
   Info,
   CalendarDays,
-  BookOpen
+  BookOpen,
+  BookText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -539,7 +540,7 @@ const CourseDetail = () => {
               {/* Desktop/Tablet: Course code and buttons in same row */}
               <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-2">
                 <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
-                  <BookOpen className="h-7 w-7 text-primary" />
+                  <BookText className="h-7 w-7 text-primary" />
                   {course.course_code}
                 </CardTitle>
                 {/* Action buttons - desktop/tablet only inline */}
@@ -572,7 +573,7 @@ const CourseDetail = () => {
               <div className="md:hidden mb-3">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
-                    <BookOpen className="h-7 w-7 text-primary" />
+                    <BookText className="h-7 w-7 text-primary" />
                     {course.course_code}
                   </CardTitle>
                   <button 
@@ -955,7 +956,7 @@ const CourseDetail = () => {
                     {/* 教學語言篩選 */}
                     <div className="flex items-center gap-2">
                       <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24">
-                        <BookOpen className="h-4 w-4" />
+                        <BookText className="h-4 w-4" />
                         {t('pages.courseDetail.filterByTeachingLanguage')}
                       </label>
                       <MultiSelectDropdown
@@ -1057,7 +1058,7 @@ const CourseDetail = () => {
                     {/* 教學語言篩選器 */}
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                        <BookOpen className="h-4 w-4" />
+                        <BookText className="h-4 w-4" />
                         {t('pages.courseDetail.filterByTeachingLanguage')}
                       </label>
                       <MultiSelectDropdown

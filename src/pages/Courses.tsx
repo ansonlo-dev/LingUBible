@@ -9,7 +9,7 @@ import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
-import { BookOpen, Loader2 } from 'lucide-react';
+import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { translateDepartmentName } from '@/utils/textUtils';
 
@@ -550,7 +550,7 @@ const Courses = () => {
           <div className="flex justify-center items-center min-h-[400px] mt-4">
             <Card className="max-w-md">
               <CardContent className="p-6 text-center">
-                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <BookText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">{t('pages.courses.loadFailed')}</h3>
                 <p className="text-muted-foreground">
                   {t('pages.courses.loadFailedDesc')}
@@ -605,7 +605,7 @@ const Courses = () => {
             <div className="flex justify-center items-center min-h-[300px]">
               <Card className="max-w-md">
                 <CardContent className="p-6 text-center">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <BookText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">{t('pages.courses.noCoursesFound')}</h3>
                   <p className="text-muted-foreground">
                     {filters.searchTerm.trim() ? t('pages.courses.tryOtherKeywords') : t('pages.courses.noCoursesAvailable')}
