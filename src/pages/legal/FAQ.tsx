@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
-import { HelpCircle, Flag, Bug, Trash2, UserPlus, Shield, Star, BookText, MessageSquare, Search, Settings, Globe, Clock, Award, Lock, Eye, DollarSign, Users, Navigation } from 'lucide-react';
+import { HelpCircle, Flag, Bug, Trash2, UserPlus, Shield, Star, BookOpen, MessageSquare, Search, Settings, Globe, Clock, Award, Lock, Eye, DollarSign, Users, Navigation } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
@@ -174,7 +174,7 @@ export default function FAQ() {
             <Card className="legal-page-card border-gray-400 dark:border-gray-600">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BookText className="h-5 w-5 text-emerald-600" />
+                  <BookOpen className="h-5 w-5 text-emerald-600" />
                   {t('faq.coursesVsInstructorsQuestion')}
                 </CardTitle>
               </CardHeader>

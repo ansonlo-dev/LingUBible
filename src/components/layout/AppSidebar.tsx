@@ -1,11 +1,10 @@
-import { Home, Users, Menu, X, GraduationCap, MessageSquareText, UserCircle, Mail, Heart } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, PanelLeft, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
-import { BookTextIcon } from '@/components/icons/BookTextIcon';
 import { useState, useEffect } from 'react';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 
@@ -221,7 +220,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     {
       label: t('sidebar.browse'),
       items: [
-        { name: t('nav.courses'), href: '/courses', icon: BookTextIcon, current: location.pathname === '/courses' },
+        { name: t('nav.courses'), href: '/courses', icon: BookOpen, current: location.pathname === '/courses' },
         { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' }
       ]
     },
@@ -261,7 +260,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
               className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={handleNavClick(true)}
             >
-              <BookTextIcon className="h-6 w-6 flex-shrink-0" />
+              <BookOpen className="h-6 w-6 flex-shrink-0" />
               <span className="text-xl font-bold">LingUBible</span>
             </Link>
           )}
@@ -271,7 +270,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
               className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={handleNavClick(true)}
             >
-              <BookTextIcon className="h-6 w-6" />
+              <BookOpen className="h-6 w-6" />
             </Link>
           )}
         </div>

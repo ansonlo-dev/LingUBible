@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Mail, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
-import { BookTextIcon } from '@/components/icons/BookTextIcon';
+import { ArrowLeft, Mail, CheckCircle, AlertTriangle, Lock, BookOpen } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptcha } from '@/contexts/RecaptchaContext';
@@ -80,7 +79,7 @@ export default function ForgotPassword() {
           {/* Logo and Title */}
           <div className="text-center mb-4 flex-shrink-0">
             <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl font-bold text-primary hover:opacity-80 transition-opacity">
-              <BookTextIcon className="h-8 w-8 lg:h-10 lg:w-10" />
+              <BookOpen className="h-8 w-8 lg:h-10 lg:w-10" />
               LingUBible
             </Link>
             <p className="text-muted-foreground mt-2">{t('auth.checkYourEmail')}</p>
@@ -154,7 +153,7 @@ export default function ForgotPassword() {
         {/* Logo and Title */}
         <div className="text-center mb-4 landscape:mb-2 flex-shrink-0">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl landscape:text-xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookTextIcon className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
+            <BookOpen className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
             LingUBible
           </Link>
           <p className="text-muted-foreground mt-2 landscape:mt-1 landscape:text-sm">{t('auth.resetPassword')}</p>

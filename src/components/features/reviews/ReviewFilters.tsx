@@ -6,7 +6,6 @@ import {
   Sparkles,
   Calendar,
   Hash,
-  BookText,
   Tag,
   Brain,
   Target,
@@ -18,9 +17,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   GraduationCap,
+  Users,
   Grid3X3,
   School,
-  CheckCircle
+  CheckCircle,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -100,7 +101,7 @@ export function ReviewFilters({
       {/* 語言篩選行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         <label className={getLabelClassName()}>
-          <BookText className="h-4 w-4" />
+          <BookOpen className="h-4 w-4" />
           {t('filter.reviewLanguage')}
         </label>
         <div className="flex flex-wrap gap-2">

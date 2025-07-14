@@ -11,7 +11,7 @@ import {
   Sparkles,
   Calendar,
   Hash,
-  BookText,
+  BookOpen,
   Building2,
   Library,
   Brain,

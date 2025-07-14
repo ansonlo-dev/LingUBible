@@ -1,4 +1,4 @@
-import { Home, BookText, Users, Star, Settings, X } from 'lucide-react';
+import { Home, BookOpen, Users, Star, Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -9,7 +9,7 @@ interface SidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '#', icon: Home, current: true },
-  { name: 'Courses', href: '#', icon: BookText, current: false },
+  { name: 'Courses', href: '#', icon: BookOpen, current: false },
   { name: 'Lecturers', href: '#', icon: Users, current: false },
   { name: 'My Reviews', href: '#', icon: Star, current: false },
   { name: 'Settings', href: '#', icon: Settings, current: false },

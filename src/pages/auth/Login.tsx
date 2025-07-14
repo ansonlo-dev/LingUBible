@@ -11,7 +11,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptcha } from '@/contexts/RecaptchaContext';
 import { useLoginRecaptcha } from '@/hooks/useSmartRecaptcha';
-import { BookText, Lock, AlertTriangle } from 'lucide-react';
+import { BookOpen, Lock, AlertTriangle } from 'lucide-react';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
 // 檢查郵件是否為有效的學生郵件
@@ -131,7 +131,7 @@ export default function Login() {
         {/* Logo and Title */}
         <div className="text-center mb-4 landscape:mb-2 flex-shrink-0">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl landscape:text-xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookText className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
+            <BookOpen className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
             LingUBible
           </Link>
           <p className="text-muted-foreground mt-2 landscape:mt-1 landscape:text-sm">{t('auth.welcomeBack')}</p>
@@ -193,7 +193,7 @@ export default function Login() {
               
               {googleLinkSuccess && (
                 <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-                  <BookText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <AlertDescription className="text-green-600 dark:text-green-400 whitespace-pre-line">
                     {t('oauth.linkSuccessNeedRelogin')}
                   </AlertDescription>
