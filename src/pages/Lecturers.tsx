@@ -6,7 +6,7 @@ import {
   Users, 
   ArrowLeft,
   Mail,
-  BookOpen,
+  BookText,
   Calendar,
   Loader2,
   AlertCircle,
@@ -752,6 +752,21 @@ const Lecturers = () => {
     }
   }, [searchParams, loading]);
 
+  // Auto-switch to available tab when current tab has no records
+  useEffect(() => {
+    if (teachingCourses && teachingCourses.length > 0) {
+      const lectureCount = teachingCourses.filter(course => course.sessionType === 'Lecture').length;
+      const tutorialCount = teachingCourses.filter(course => course.sessionType === 'Tutorial').length;
+      
+      // If current active tab has no records, switch to available tab
+      if (activeTeachingTab === 'lecture' && lectureCount === 0 && tutorialCount > 0) {
+        setActiveTeachingTab('tutorial');
+      } else if (activeTeachingTab === 'tutorial' && tutorialCount === 0 && lectureCount > 0) {
+        setActiveTeachingTab('lecture');
+      }
+    }
+  }, [teachingCourses, activeTeachingTab]);
+
   const handleCourseClick = (courseCode: string, event?: React.MouseEvent) => {
     // This function is now simplified since we're using <a> tags
     // The browser will handle navigation naturally
@@ -1273,7 +1288,7 @@ const Lecturers = () => {
                         <XCircle className="h-3 w-3" />
                       )}
                       <span>
-                        {isTeachingInCurrentTerm ? t('offered.yes') : t('offered.no')} ({currentTermName})
+                        {isTeachingInCurrentTerm ? t('teaching.yes') : t('teaching.no')} ({currentTermName})
                       </span>
                     </div>
                   </Badge>
@@ -1306,7 +1321,7 @@ const Lecturers = () => {
                     {/* 教授課程數 */}
                     <div className="flex flex-col items-center min-w-0">
                       <div className="flex items-center gap-1 mb-1">
-                        <BookOpen className="h-3 w-3" />
+                        <BookText className="h-3 w-3" />
                         <span className="text-xs text-muted-foreground text-center leading-tight">{t('instructors.taughtCourses')}</span>
                       </div>
                       <span className="text-xl font-bold text-primary">
@@ -1363,7 +1378,7 @@ const Lecturers = () => {
                   {/* 教授課程數 */}
                   <div className="flex flex-col items-center min-w-0">
                     <div className="flex items-center gap-1 mb-1">
-                      <BookOpen className="h-4 w-4" />
+                      <BookText className="h-4 w-4" />
                       <span className="text-sm text-muted-foreground text-center">{t('instructors.taughtCourses')}</span>
                     </div>
                     <span className="text-xl font-bold text-primary">
@@ -1422,9 +1437,6 @@ const Lecturers = () => {
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t('instructors.teachingCourses')}</span>
               <span className="sm:hidden text-xs">{t('common.courses')}</span>
-              {isTeachingInCurrentTerm && (
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              )}
             </TabsTrigger>
             <TabsTrigger 
               value="grades" 
@@ -1538,7 +1550,7 @@ const Lecturers = () => {
         </TabsContent>
 
         {/* Teaching Courses Tab */}
-        <TabsContent value="courses" className="mt-0">
+        <TabsContent value="courses" className="attached-tab-content mt-0">
           <Card className="course-card">
             <CardContent className="p-6">
           {teachingCoursesLoading ? (
@@ -1548,7 +1560,7 @@ const Lecturers = () => {
             </div>
           ) : teachingCourses.length === 0 ? (
             <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <BookText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">{t('instructors.noTeachingTitle')}</p>
             </div>
           ) : (
@@ -1557,28 +1569,32 @@ const Lecturers = () => {
               <div className="flex flex-col gap-4 mb-4 md:hidden">
                 {/* Tab switcher row */}
                 <TabsList className="bg-muted/50 backdrop-blur-sm w-full">
-                  <TabsTrigger 
-                    value="lecture" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{t('sessionType.lecture')}</span>
-                      <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
+                  {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length > 0 && (
+                    <TabsTrigger 
+                      value="lecture" 
+                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{t('sessionType.lecture')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                          {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
+                        </div>
                       </div>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="tutorial" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{t('sessionType.tutorial')}</span>
-                      <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                    </TabsTrigger>
+                  )}
+                  {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length > 0 && (
+                    <TabsTrigger 
+                      value="tutorial" 
+                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{t('sessionType.tutorial')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                          {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                        </div>
                       </div>
-                    </div>
-                  </TabsTrigger>
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 {/* Filters row */}
@@ -1620,7 +1636,7 @@ const Lecturers = () => {
                   {/* Teaching language filter */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24">
-                      <BookOpen className="h-4 w-4" />
+                      <BookText className="h-4 w-4" />
                       {t('pages.courseDetail.filterByTeachingLanguage')}
                     </label>
                     <MultiSelectDropdown
@@ -1691,28 +1707,32 @@ const Lecturers = () => {
               {/* Desktop: Tab switcher and filters in the same row */}
               <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-4">
                 <TabsList className="bg-muted/50 backdrop-blur-sm">
-                  <TabsTrigger 
-                    value="lecture" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{t('sessionType.lecture')}</span>
-                      <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
+                  {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length > 0 && (
+                    <TabsTrigger 
+                      value="lecture" 
+                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{t('sessionType.lecture')}</span>
+                        <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                          {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
+                        </div>
                       </div>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="tutorial" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{t('sessionType.tutorial')}</span>
-                      <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                        {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                    </TabsTrigger>
+                  )}
+                  {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length > 0 && (
+                    <TabsTrigger 
+                      value="tutorial" 
+                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{t('sessionType.tutorial')}</span>
+                        <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                          {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                        </div>
                       </div>
-                    </div>
-                  </TabsTrigger>
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 {/* Desktop filters - inline with tab switcher */}
@@ -1754,7 +1774,7 @@ const Lecturers = () => {
                   {/* Teaching language filter */}
                   <div className="flex items-center gap-2 shrink-0">
                     <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                      <BookOpen className="h-4 w-4" />
+                      <BookText className="h-4 w-4" />
                       {t('pages.courseDetail.filterByTeachingLanguage')}
                     </label>
                     <MultiSelectDropdown
@@ -1825,7 +1845,7 @@ const Lecturers = () => {
               <TabsContent value="lecture" className="mt-0">
                 {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length === 0 ? (
                   <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <BookText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">{t('instructors.noLectureRecords')}</p>
                   </div>
                 ) : (
@@ -1988,7 +2008,7 @@ const Lecturers = () => {
               <TabsContent value="tutorial" className="mt-0">
                 {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length === 0 ? (
                   <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <BookText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">{t('instructors.noTutorialRecords')}</p>
                   </div>
                 ) : (
@@ -2205,7 +2225,7 @@ const Lecturers = () => {
                   onClick={() => navigate('/courses')}
                   className="gap-2 h-12 text-base font-medium"
                 >
-                  <BookOpen className="h-4 w-4" />
+                  <BookText className="h-4 w-4" />
                   {t('instructors.browseCoursesToReview')}
                 </Button>
               </div>
@@ -3113,7 +3133,7 @@ const Lecturers = () => {
           </div>
         </TabsContent>
         {/* Grade Distribution Tab */}
-        <TabsContent value="grades" className="mt-0">
+        <TabsContent value="grades" className="attached-tab-content mt-0">
           <Card className="course-card">
             <CardContent className="p-6">
               {/* 成績分佈圖表 */}

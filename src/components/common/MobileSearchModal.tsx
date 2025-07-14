@@ -627,7 +627,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                           {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
                                         </div>
-                                        <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex items-center gap-1 flex-wrap'} mt-1`}>
+                                        <div className="flex items-center gap-1 flex-wrap mt-1">
                                           {facultyKey && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                                               {t(facultyKey)}
@@ -711,7 +711,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {instructorName.primary}
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                          {departmentName}
+                                          {instructorName.secondary || ''}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
                                           {facultyKey && (
@@ -1371,7 +1371,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                           {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
                                         </div>
-                                        <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex items-center gap-1 flex-wrap'} mt-1`}>
+                                        <div className="flex items-center gap-1 flex-wrap mt-1">
                                           {facultyKey && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                                               {t(facultyKey)}
@@ -1455,7 +1455,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {instructorName.primary}
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                          {departmentName}
+                                          {instructorName.secondary || ''}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
                                           {facultyKey && (

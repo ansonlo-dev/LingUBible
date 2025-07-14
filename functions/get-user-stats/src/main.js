@@ -43,10 +43,14 @@ module.exports = async ({ req, res, log, error }) => {
       }
 
       // 計算過去30天的新註冊用戶
-      if (user.registration && user.registration >= thirtyDaysAgoISO) {
+      if (user.$createdAt && user.$createdAt >= thirtyDaysAgoISO) {
         newUsersLast30Days++;
+        log(`計入30天內新用戶: ${user.email || user.$id} (註冊時間: ${user.$createdAt})`);
       }
     }
+
+    log(`30天截止時間: ${thirtyDaysAgoISO}`);
+    log(`30天內新用戶數: ${newUsersLast30Days}, 總驗證用戶數: ${verifiedUsers}`)
 
     // 獲取在線用戶和訪客統計
     log('開始獲取在線用戶統計...');

@@ -1234,6 +1234,7 @@ export default {
   'review.showOtherInstructors': '顯示其他講師',
   'review.hideOtherInstructors': '隱藏其他講師',
   'review.backToCourses': '返回課程列表',
+  'review.backToCourse': '返回 {courseCode} 頁面',
   'review.writeReview': '撰寫評論',
   'review.voteError': '投票失敗，請重試。',
   'review.invalidInstructorSelection': '無效的講師選擇：{{instructor}}（{{session}}）在{{term}}學期未教授此課程。',
@@ -1342,6 +1343,9 @@ export default {
   // Review display
   'review.courseReviews': '課程評論',
   'review.noReviews': '暫無評論',
+  'review.noReviewsTitle': '暫無學生評論',
+  'review.noReviewsDesc': '{courseName} 尚未收到任何學生評論。如果您曾經修讀過此課程，歡迎分享您的學習體驗。',
+  'review.browseCoursesToReview': '瀏覽課程並撰寫評論',
   'review.showInstructorDetails': '顯示教師詳情',
   'review.hideInstructorDetails': '隱藏教師詳情',
   'review.finalGrade': '最終成績',

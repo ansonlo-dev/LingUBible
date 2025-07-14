@@ -73,11 +73,15 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
       className={`pointer-events-none absolute inset-0 w-full h-full select-none transition-opacity duration-300 ${className}`}
       style={{ 
         zIndex, 
-        contain: 'layout style', 
+        contain: 'layout style paint', 
         transform: 'translateZ(0)', 
-        minHeight: '100vh',
-        minWidth: '100vw',
+        height: '100vh',
+        width: '100vw',
+        position: 'fixed',
+        top: 0,
+        left: 0,
         opacity: isVisible ? 1 : 0,
+        isolation: 'isolate',
         ...style 
       }}
       aria-hidden="true"
@@ -92,18 +96,17 @@ export function FloatingCircles({ className = '', style = {}, zIndex = 0 }) {
             key={`circle-${i}-${isVisible}`}
             className="floating-circle"
             style={{
+              position: 'absolute',
               width: c.size,
               height: c.size,
-              top: c.top,
-              left: `calc(${c.left} - ${c.size / 2}px)`,
+              top: `${parseFloat(c.top)}vh`,
+              left: `calc(${parseFloat(c.left)}vw - ${c.size / 2}px)`,
               background: `radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(185,28,28,0.15) 70%, transparent 100%)`,
               animationDuration: `${c.duration}s`,
               animationDelay: `${finalDelay}s`,
               animationFillMode: 'both',
               animationPlayState: 'running',
               transform: 'translateX(0) translateY(0) translateZ(0)',
-              maxWidth: `calc(100% - ${c.size}px)`,
-              maxHeight: `calc(100% - ${c.size}px)`,
               willChange: 'transform, opacity',
               // 在手機版黑暗模式下降低透明度
               opacity: (isMobile && isDark) ? 0.6 : 1,

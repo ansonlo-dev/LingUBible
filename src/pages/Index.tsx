@@ -244,9 +244,9 @@ const Index = () => {
 
       
       {/* 全頁面浮動效果 - 固定定位覆蓋整個視窗，放在最外層 */}
-      <FloatingCircles zIndex={-1} className="fixed inset-0 w-full h-full" style={{ zIndex: -1 }} />
+      <FloatingCircles zIndex={-1} />
       {/* 在桌面版顯示 FloatingGlare，手機版跳過以減少重疊 */}
-      {!isMobile && <FloatingGlare count={4} className="fixed inset-0 w-full h-full" style={{ zIndex: -2 }} />}
+      {!isMobile && <FloatingGlare count={4} style={{ zIndex: -2 }} />}
       
       <div className="bg-background relative overflow-x-hidden min-h-screen">
       <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">

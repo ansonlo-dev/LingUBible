@@ -17,6 +17,7 @@ export default function OAuthLoginCallback() {
   const [message, setMessage] = useState('');
   const toastShownRef = useRef(false); // 防止重複顯示 toast
   const statusLockRef = useRef(false); // 防止狀態重複設置
+  const redirectHandledRef = useRef(false); // 防止重複重定向
 
   // 安全的狀態設置函數，防止重複設置
   const setStatusSafely = (newStatus: 'loading' | 'success' | 'error', newMessage: string) => {
@@ -142,6 +143,33 @@ export default function OAuthLoginCallback() {
              }
             
             setTimeout(() => {
+              if (redirectHandledRef.current) {
+                console.log('🔄 Redirect already handled, skipping...');
+                return;
+              }
+              
+              // Check for stored OAuth redirect context (e.g., from write review page)
+              const storedContext = localStorage.getItem('oauthRedirectContext');
+              if (storedContext) {
+                try {
+                  const { redirectTo, context } = JSON.parse(storedContext);
+                  localStorage.removeItem('oauthRedirectContext'); // Clean up
+                  
+                  if (context === 'writeReview' && redirectTo) {
+                    console.log('🎯 Redirecting to write review page:', redirectTo);
+                    redirectHandledRef.current = true;
+                    navigate(redirectTo, { replace: true });
+                    return;
+                  }
+                } catch (error) {
+                  console.error('Error parsing stored OAuth redirect context:', error);
+                  localStorage.removeItem('oauthRedirectContext'); // Clean up invalid data
+                }
+              }
+              
+              // Default redirect to home page
+              console.log('🏠 Redirecting to home page');
+              redirectHandledRef.current = true;
               navigate('/');
             }, 1500);
             return;
@@ -359,8 +387,36 @@ export default function OAuthLoginCallback() {
           // 延遲重定向，確保狀態同步完成
           // 增加延遲時間，確保狀態更新有足夠時間傳播到所有組件
           setTimeout(() => {
+            if (redirectHandledRef.current) {
+              console.log('🔄 Redirect already handled by earlier timeout, skipping...');
+              return;
+            }
+            
             // 清理短期標記
             sessionStorage.removeItem('oauthLoginComplete');
+            
+            // Check for stored OAuth redirect context (e.g., from write review page)
+            const storedContext = localStorage.getItem('oauthRedirectContext');
+            if (storedContext) {
+              try {
+                const { redirectTo, context } = JSON.parse(storedContext);
+                localStorage.removeItem('oauthRedirectContext'); // Clean up
+                
+                if (context === 'writeReview' && redirectTo) {
+                  console.log('🎯 [2500ms timeout] Redirecting to write review page:', redirectTo);
+                  redirectHandledRef.current = true;
+                  navigate(redirectTo, { replace: true });
+                  return;
+                }
+              } catch (error) {
+                console.error('Error parsing stored OAuth redirect context:', error);
+                localStorage.removeItem('oauthRedirectContext'); // Clean up invalid data
+              }
+            }
+            
+            // Default redirect to home page
+            console.log('🏠 [2500ms timeout] Redirecting to home page');
+            redirectHandledRef.current = true;
             navigate('/');
           }, 2500); // 2.5秒延遲，確保狀態同步和 UI 更新完成
           

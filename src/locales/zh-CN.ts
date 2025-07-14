@@ -1296,6 +1296,7 @@ export default {
   'review.showOtherInstructors': '显示其他讲师',
   'review.hideOtherInstructors': '隐藏其他讲师',
   'review.backToCourses': '返回课程列表',
+  'review.backToCourse': '返回 {courseCode} 页面',
   'review.writeReview': '撰写评论',
   'review.voteError': '投票失败，请重试。',
   'review.invalidInstructorSelection': '无效的讲师选择：{{instructor}}（{{session}}）在{{term}}学期未教授此课程。',
@@ -1404,6 +1405,9 @@ export default {
   // Review display
   'review.courseReviews': '课程评论',
   'review.noReviews': '暂无评论',
+  'review.noReviewsTitle': '暂无学生评论',
+  'review.noReviewsDesc': '{courseName} 尚未收到任何学生评论。如果您曾经修读过此课程，欢迎分享您的学习体验。',
+  'review.browseCoursesToReview': '浏览课程并撰写评论',
   'review.showInstructorDetails': '显示教师详情',
   'review.hideInstructorDetails': '隐藏教师详情',
   'review.finalGrade': '最终成绩',

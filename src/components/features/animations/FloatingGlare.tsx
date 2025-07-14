@@ -43,10 +43,14 @@ export function FloatingGlare({ count = 6, className = '', style = {} }: Floatin
     <div 
       className={`absolute inset-0 pointer-events-none ${className}`} 
       style={{ 
-        contain: 'layout style', 
+        contain: 'layout style paint', 
         transform: 'translateZ(0)', 
-        minHeight: '100vh',
-        minWidth: '100vw',
+        height: '100vh',
+        width: '100vw',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        isolation: 'isolate',
         ...style
       }}
     >
@@ -55,8 +59,8 @@ export function FloatingGlare({ count = 6, className = '', style = {} }: Floatin
           key={glare.id}
           className="absolute rounded-full bg-gradient-to-r from-red-500/20 via-red-400/30 to-red-600/20 blur-xl animate-float floating-glare-enhanced dark:from-red-400/35 dark:via-red-300/50 dark:to-red-500/35"
           style={{
-            left: `${glare.x}%`,
-            top: `${glare.y}%`,
+            left: `${glare.x}vw`,
+            top: `${glare.y}vh`,
             width: `${glare.size}px`,
             height: `${glare.size}px`,
             opacity: glare.opacity,

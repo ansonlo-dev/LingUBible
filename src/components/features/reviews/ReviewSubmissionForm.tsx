@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { 
   BookOpen, 
+  BookText,
   User, 
   Star, 
   MessageSquare, 
@@ -379,6 +380,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   // State variables
@@ -1189,11 +1191,36 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               {t('review.loginRequired')}
             </p>
             <div className="flex flex-col gap-3">
-              <Button onClick={() => navigate('/login')} className="w-full">
-                {t('review.loginToWrite')}
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/courses')} className="w-full">
-                {t('review.backToCourses')}
+                          <Button onClick={() => {
+              const courseCode = preselectedCourseCode || selectedCourse;
+              navigate('/login', { 
+                state: { 
+                  from: location,
+                  redirectTo: courseCode ? `/write-review/${courseCode}` : '/write-review',
+                  context: 'writeReview'
+                } 
+              });
+            }} className="w-full">
+              {t('review.loginToWrite')}
+            </Button>
+              <Button variant="outline" onClick={() => {
+                const courseCode = preselectedCourseCode || selectedCourse;
+                if (courseCode) {
+                  // If we have a specific course, go back to its detail page
+                  navigate(`/courses/${courseCode}`);
+                } else {
+                  // Otherwise, go to courses catalog
+                  navigate('/courses');
+                }
+              }} className="w-full">
+                {(() => {
+                  const courseCode = preselectedCourseCode || selectedCourse;
+                  if (courseCode) {
+                    return t('review.backToCourse', { courseCode });
+                  } else {
+                    return t('review.backToCourses');
+                  }
+                })()}
               </Button>
             </div>
           </CardContent>
@@ -2445,7 +2472,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       {/* Course Selection */}
       <CollapsibleSection
         title={t('review.courseInfo')}
-        icon={<BookOpen className="h-5 w-5" />}
+        icon={<BookText className="h-5 w-5" />}
         defaultExpanded={true}
         className="course-card"
         contentClassName="space-y-3"
@@ -2506,12 +2533,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               </Label>
               <div className="md:flex-1">
                 {instructorsLoading ? (
-                  <div className="flex items-center gap-2 p-3 border rounded-md">
+                  <div className="flex items-center gap-2 h-10 px-3 py-2 border rounded-md">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span className="text-sm text-muted-foreground">{t('review.loadingInstructors')}</span>
                   </div>
                 ) : availableInstructors.length === 0 ? (
-                  <div className="flex items-center justify-center h-10 px-3 border rounded-md text-center text-muted-foreground opacity-50 cursor-not-allowed">
+                  <div className="flex items-center justify-center h-10 px-3 py-2 border rounded-md text-center text-muted-foreground opacity-50 cursor-not-allowed">
                     {t('review.noInstructors')}
                   </div>
                 ) : (() => {
@@ -2564,7 +2591,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   // If both types have instructors, show tabs
                   if (hasLectureInstructors && hasTutorialInstructors) {
                     return (
-                      <div className="border rounded-md p-3">
+                      <div className="border rounded-md px-3 py-2">
                         <Tabs value={activeInstructorTab} onValueChange={setActiveInstructorTab}>
                           <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="Lecture">
@@ -2575,11 +2602,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </TabsTrigger>
                           </TabsList>
                           
-                          <TabsContent value="Lecture" className="space-y-2 mt-3">
+                          <TabsContent value="Lecture" className="space-y-2 mt-2">
                             {renderInstructorList(lectureInstructors)}
                           </TabsContent>
                           
-                          <TabsContent value="Tutorial" className="space-y-2 mt-3">
+                          <TabsContent value="Tutorial" className="space-y-2 mt-2">
                             {renderInstructorList(tutorialInstructors)}
                           </TabsContent>
                         </Tabs>
@@ -2593,8 +2620,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     const sectionTitle = hasLectureInstructors ? t('review.lectureInstructors') : t('review.tutorialInstructors');
                     
                     return (
-                      <div className="border rounded-md p-3">
-                        <div className="mb-3">
+                      <div className="border rounded-md px-3 py-2">
+                        <div className="mb-2">
                           <h4 className="text-sm font-medium text-muted-foreground">{sectionTitle}</h4>
                         </div>
                         {renderInstructorList(instructorsToShow)}
@@ -3153,7 +3180,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <Separator />
 
             {/* Required Fields Notice */}
-            <div className="p-3 bg-muted/30 rounded-lg border">
+            <div className="p-3 bg-muted/30 rounded-lg">
               <div className="flex items-start gap-2">
                 <div className="text-red-500 text-lg font-bold mt-0.5">*</div>
                 <div className="text-sm text-muted-foreground">

@@ -61,9 +61,21 @@ export default function Login() {
       // 登入成功，重置失敗計數
       resetFailures();
       
-      // 重定向到原本要訪問的頁面，如果沒有則導向首頁
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      // Clean up OAuth redirect context since regular login was successful
+      localStorage.removeItem('oauthRedirectContext');
+      
+      // Check for special redirect context (e.g., from write review page)
+      const redirectTo = location.state?.redirectTo;
+      const context = location.state?.context;
+      
+      if (context === 'writeReview' && redirectTo) {
+        // Redirect to the specific review form page
+        navigate(redirectTo, { replace: true });
+      } else {
+        // 重定向到原本要訪問的頁面，如果沒有則導向首頁
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
+      }
     } catch (err: any) {
       console.error('Auth error:', err);
       
@@ -123,7 +135,18 @@ export default function Login() {
       setGoogleLinkSuccess(true);
       setError(''); // 確保不是錯誤狀態
     }
-  }, []);
+    
+    // Store redirect context for OAuth flow if it exists
+    const redirectTo = location.state?.redirectTo;
+    const context = location.state?.context;
+    
+    if (context === 'writeReview' && redirectTo) {
+      localStorage.setItem('oauthRedirectContext', JSON.stringify({
+        redirectTo,
+        context
+      }));
+    }
+  }, [location.state]);
 
   return (
     <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4 landscape:p-2">

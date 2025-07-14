@@ -22,14 +22,24 @@ export const useRegisteredUsers = () => {
   // 將 userStats 轉換為 RegisteredUsersStats 格式
   useEffect(() => {
     if (!userStatsLoading && userStats) {
+      console.log('🔄 useRegisteredUsers: Processing user stats...', {
+        userStats,
+        backendStats,
+        hasBackendStats: !!backendStats,
+        backendNewUsers: backendStats?.newUsersLast30Days,
+        fallbackValue: userStats.thisMonthLogins
+      });
+
       const convertedStats: RegisteredUsersStats = {
         totalRegisteredUsers: userStats.totalUsers || 0,
-        // 優先使用原始後端數據中的 newUsersLast30Days
-        newUsersLast30Days: backendStats?.newUsersLast30Days || userStats.thisMonthLogins || 0,
+        // 優先使用原始後端數據中的 newUsersLast30Days，如果是 undefined 才使用 fallback
+        newUsersLast30Days: backendStats?.newUsersLast30Days !== undefined 
+          ? backendStats.newUsersLast30Days 
+          : (userStats.thisMonthLogins || 0),
         verifiedUsers: backendStats?.verifiedUsers || userStats.totalUsers || 0,
         lastUpdated: userStats.lastUpdated
       };
-      
+
       setStats(convertedStats);
       setLoading(false);
       setError(null);

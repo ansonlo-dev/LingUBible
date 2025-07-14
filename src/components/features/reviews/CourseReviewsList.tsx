@@ -12,11 +12,12 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  FileText
+  FileText,
+  BookOpen
 } from 'lucide-react';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
-import { getInstructorName, getTeachingLanguageName } from '@/utils/textUtils';
+import { getInstructorName, getTeachingLanguageName, getCourseTitle } from '@/utils/textUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { GradeBadge } from '@/components/ui/GradeBadge';
-import { CourseReviewInfo, InstructorDetail, CourseService, Instructor } from '@/services/api/courseService';
+import { CourseReviewInfo, InstructorDetail, CourseService, Instructor, Course } from '@/services/api/courseService';
 import { CourseReviewsFilters, ReviewFilters } from './CourseReviewsFilters';
 import { CourseRequirementsFilter, CourseRequirementsFilters } from './CourseRequirementsFilter';
 import { Pagination } from '@/components/features/reviews/Pagination';
@@ -41,6 +42,7 @@ interface CourseReviewsListProps {
   hideHeader?: boolean; // New prop to hide the card header when wrapped in CollapsibleSection
   externalGradeFilter?: string; // External grade to filter by
   currentInstructorName?: string; // Current instructor name to disable hover effects for same instructor
+  course?: Course; // Course information for no reviews message
 }
 
 interface ExpandedReviews {
@@ -56,7 +58,8 @@ export const CourseReviewsList = ({
   t: tProp,
   hideHeader = false,
   externalGradeFilter,
-  currentInstructorName
+  currentInstructorName,
+  course
 }: CourseReviewsListProps) => {
 
   const { t: tContext, language } = useLanguage();
@@ -890,9 +893,30 @@ export const CourseReviewsList = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{t('review.noReviews')}</p>
+          <div className="text-center py-12 space-y-4">
+            <div className="flex justify-center">
+              <div className="p-4 bg-muted/50 rounded-full">
+                <MessageSquare className="h-12 w-12 text-muted-foreground" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium text-muted-foreground">{t('review.noReviewsTitle')}</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {t('review.noReviewsDesc', { 
+                  courseName: course ? course.course_code : 'This course'
+                })}
+              </p>
+            </div>
+            <div className="pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/courses')}
+                className="gap-2 h-12 text-base font-medium"
+              >
+                <BookOpen className="h-4 w-4" />
+                {t('review.browseCoursesToReview')}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

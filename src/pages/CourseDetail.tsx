@@ -491,6 +491,21 @@ const CourseDetail = () => {
     }
   }, [searchParams, reviewsLoading]);
 
+  // Auto-switch to available tab when current tab has no records
+  useEffect(() => {
+    if (teachingInfo && teachingInfo.length > 0) {
+      const lectureCount = teachingInfo.filter(info => info.sessionType === 'Lecture').length;
+      const tutorialCount = teachingInfo.filter(info => info.sessionType === 'Tutorial').length;
+      
+      // If current active tab has no records, switch to available tab
+      if (activeTeachingTab === 'lecture' && lectureCount === 0 && tutorialCount > 0) {
+        setActiveTeachingTab('tutorial');
+      } else if (activeTeachingTab === 'tutorial' && tutorialCount === 0 && lectureCount > 0) {
+        setActiveTeachingTab('lecture');
+      }
+    }
+  }, [teachingInfo, activeTeachingTab]);
+
   if (loading) {
     return (
       <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6">
@@ -567,6 +582,23 @@ const CourseDetail = () => {
                     <span className="text-sm">{t('common.back')}</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Desktop/Tablet: Course titles */}
+              <div className="hidden md:block mb-3">
+                {/* 英文課程名稱 - 作為副標題 */}
+                <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
+                  {course.course_title}
+                </p>
+                {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
+                {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                  const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
+                  return chineseName && (
+                    <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
+                      {chineseName}
+                    </p>
+                  );
+                })()}
               </div>
 
               {/* Mobile: Course code with back button on same row */}
@@ -845,9 +877,6 @@ const CourseDetail = () => {
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t('pages.courseDetail.offerRecords')}</span>
               <span className="sm:hidden text-xs">{t('common.teaching')}</span>
-              {isOfferedInCurrentTerm && (
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              )}
             </TabsTrigger>
             <TabsTrigger 
               value="grades" 
@@ -868,13 +897,14 @@ const CourseDetail = () => {
               allReviews={allReviews || []}
               loading={reviewsLoading}
               externalGradeFilter={externalGradeFilter}
+              course={course}
             />
           </div>
         </TabsContent>
 
         {/* Teaching Records Tab */}
         <TabsContent value="teaching" className="attached-tab-content mt-0">
-          <Card className="border-0 bg-transparent shadow-none">
+          <Card className="course-card">
             <CardContent className="p-6">
           {teachingInfoLoading ? (
             <div className="text-center py-8">
@@ -892,28 +922,32 @@ const CourseDetail = () => {
                 {/* Mobile: Tab switcher and filters in separate rows */}
                 <div className="md:hidden">
                   <TabsList className="bg-muted/50 backdrop-blur-sm w-full mb-4">
-                    <TabsTrigger 
-                      value="lecture" 
-                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{t('sessionType.lecture')}</span>
-                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                          {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length > 0 && (
+                      <TabsTrigger 
+                        value="lecture" 
+                        className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{t('sessionType.lecture')}</span>
+                          <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length}
+                          </div>
                         </div>
-                      </div>
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="tutorial" 
-                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{t('sessionType.tutorial')}</span>
-                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                          {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length}
+                      </TabsTrigger>
+                    )}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length > 0 && (
+                      <TabsTrigger 
+                        value="tutorial" 
+                        className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{t('sessionType.tutorial')}</span>
+                          <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length}
+                          </div>
                         </div>
-                      </div>
-                    </TabsTrigger>
+                      </TabsTrigger>
+                    )}
                   </TabsList>
 
                   {/* Mobile filters - each filter in its own row */}
@@ -994,28 +1028,32 @@ const CourseDetail = () => {
                 {/* Desktop: Tab switcher and filters in the same row */}
                 <div className="hidden md:flex md:items-center md:justify-between md:gap-4">
                   <TabsList className="bg-muted/50 backdrop-blur-sm">
-                                      <TabsTrigger 
-                    value="lecture" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{t('sessionType.lecture')}</span>
-                      <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                        {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length}
-                      </div>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="tutorial" 
-                    className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{t('sessionType.tutorial')}</span>
-                      <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
-                        {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length}
-                      </div>
-                    </div>
-                  </TabsTrigger>
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length > 0 && (
+                      <TabsTrigger 
+                        value="lecture" 
+                        className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{t('sessionType.lecture')}</span>
+                          <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length}
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    )}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length > 0 && (
+                      <TabsTrigger 
+                        value="tutorial" 
+                        className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{t('sessionType.tutorial')}</span>
+                          <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length}
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    )}
                   </TabsList>
 
                   {/* Desktop filters - inline with tab switcher */}
@@ -1414,7 +1452,7 @@ const CourseDetail = () => {
         </TabsContent>
 
         {/* Grade Distribution Tab */}
-        <TabsContent value="grades" className="mt-0">
+        <TabsContent value="grades" className="attached-tab-content mt-0">
           <Card className="course-card">
             <CardContent className="p-6">
               {/* 成績分佈圖表 */}

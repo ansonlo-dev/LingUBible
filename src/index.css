@@ -814,10 +814,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-trigger {
     background: rgb(var(--muted)) !important;
     color: rgb(var(--muted-foreground)) !important;
-    border: 1px solid rgb(var(--border)) !important;
-    border-bottom: none !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
-    padding: 12px 20px !important;
+    padding: 12px 20px 16px 20px !important;
     font-weight: 500 !important;
     font-size: 14px !important;
     position: relative !important;
@@ -829,26 +828,27 @@ div[style*="position: fixed"][style*="right: 14px"] {
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
+    transform: translateY(2px) !important;
   }
 
   /* Light theme hover */
   :not(.dark) .attached-tab-trigger:hover {
     background: rgb(var(--muted)) !important;
     color: rgb(var(--foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
-    transform: translateY(-2px) !important;
+    transform: translateY(0px) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     z-index: 2 !important;
   }
 
   /* Dark theme hover - no color change */
   .dark .attached-tab-trigger:hover {
-    background: rgb(var(--muted)) !important;
+    background: rgb(36,36,40) !important;
     color: rgb(var(--muted-foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
-    transform: translateY(-2px) !important;
+    transform: translateY(0px) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     z-index: 2 !important;
   }
@@ -857,76 +857,117 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-trigger[data-state="active"] {
     background: rgb(var(--background)) !important;
     color: rgb(var(--foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
     z-index: 3 !important;
     font-weight: 600 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(2px) !important;
   }
 
   /* Active tab hover - ensure same border radius */
   .attached-tab-trigger[data-state="active"]:hover {
     background: rgb(var(--background)) !important;
     color: rgb(var(--foreground)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(2px) !important;
   }
 
   /* Light theme explicit rules - ensure consistent border radius */
   :not(.dark) .attached-tab-trigger {
     background: rgb(var(--muted)) !important;
     color: rgb(var(--muted-foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
+    transform: translateY(2px) !important;
   }
 
   :not(.dark) .attached-tab-trigger[data-state="active"] {
     background: rgb(var(--background)) !important;
     color: rgb(var(--foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
+    transform: translateY(2px) !important;
   }
 
   :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
     background: rgb(var(--background)) !important;
     color: rgb(var(--foreground)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
+    transform: translateY(2px) !important;
   }
 
   /* Dark theme adjustments */
   .dark .attached-tab-trigger {
     background: rgb(var(--muted)) !important;
     color: rgb(var(--muted-foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
+    transform: translateY(2px) !important;
   }
 
   .dark .attached-tab-trigger[data-state="active"] {
-    background: rgb(var(--background)) !important;
+    background: #18181b !important;
     color: rgb(var(--foreground)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
+    transform: translateY(2px) !important;
   }
 
   .dark .attached-tab-trigger[data-state="active"]:hover {
-    background: rgb(var(--background)) !important;
+    background: #18181b !important;
     color: rgb(var(--foreground)) !important;
+    border: none !important;
     border-radius: 12px 12px 0 0 !important;
+    transform: translateY(2px) !important;
   }
 
   /* Content area styling to connect with tabs */
   .attached-tab-content {
     background: rgb(var(--background)) !important;
-    border: 1px solid rgb(var(--border)) !important;
+    border: none !important;
     border-radius: 0 12px 12px 12px !important;
     position: relative !important;
-    z-index: 1 !important;
+    z-index: 10 !important;
     margin-top: 0 !important;
   }
 
   .dark .attached-tab-content {
     background: rgb(var(--background)) !important;
-    border-color: rgb(var(--border)) !important;
+    border: none !important;
+  }
+  
+  /* Remove borders from review cards and components ONLY within attached tab content areas */
+  .attached-tab-content .bg-card.border.border-border,
+  .attached-tab-content .border,
+  .attached-tab-content [class*="border-gray"],
+  .attached-tab-content [class*="border-border"],
+  .attached-tab-content [class*="dark:border"],
+  .attached-tab-content .course-card {
+    border: none !important;
+  }
+  
+  /* Ensure no top-left border-radius on child elements within tab content */
+  .attached-tab-content > *:first-child,
+  .attached-tab-content .course-card:first-child,
+  .attached-tab-content .card:first-child,
+  .attached-tab-content > div:first-child,
+  .attached-tab-content [class*="Card"]:first-child {
+    border-top-left-radius: 0 !important;
+  }
+  
+
+  
+  /* 課程詳情頁面和講師頁面的 attached-tab-trigger 在暗色主題下不使用紅色邊框 */
+  .dark .attached-tab-trigger[data-state="active"] {
+    border-bottom: none !important;
+  }
+  
+  .dark .attached-tab-trigger[data-state="active"]:hover {
+    border-bottom: none !important;
   }
   
   /* 漸變樣式 */
@@ -1675,16 +1716,16 @@ div[style*="position: fixed"][style*="right: 14px"] {
   
 
 
-  /* TabsTrigger 懸停效果 */
-  [data-radix-tabs-trigger]:hover {
+  /* TabsTrigger 懸停效果（排除 attached-tab-trigger） */
+  [data-radix-tabs-trigger]:not(.attached-tab-trigger):hover {
     background-color: rgba(220, 38, 38, 0.1) !important;
     border: 1px solid rgba(220, 38, 38, 0.3);
     border-radius: 8px;
     transition: all 0.2s ease-in-out;
   }
   
-  /* 確保活躍狀態的樣式優先級更高 */
-  [data-radix-tabs-trigger][data-state="active"]:hover {
+  /* 確保活躍狀態的樣式優先級更高（排除 attached-tab-trigger） */
+  [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"]:hover {
     background-color: transparent !important;
     border: none !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
@@ -1705,9 +1746,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
     gap: 0 !important; /* 移除 grid gap 避免影響底部指示器 */
   }
   
-  /* 活躍狀態的底部紅線指示器 - 使用更高優先級和更具體的選擇器 */
-  button[data-state="active"][role="tab"],
-  [data-radix-tabs-trigger][data-state="active"] {
+  /* 活躍狀態的底部紅線指示器 - 使用更高優先級和更具體的選擇器（排除 attached-tab-trigger） */
+  button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
+  [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"] {
     position: relative !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
     border-radius: 6px 6px 0 0 !important;
@@ -1738,33 +1779,34 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 防止狀態切換時出現白色閃爍 */
   [data-radix-tabs-trigger] {
     background-color: transparent !important;
-    transition: border-bottom 0.2s ease-in-out !important;
+    border-bottom: 2px solid transparent !important;
+    transition: border-bottom-color 0.2s ease-in-out, background-color 0.2s ease-in-out, color 0.2s ease-in-out !important;
   }
   
-  /* 暗色主題下的 TabsTrigger 懸停效果 */
-  .dark [data-radix-tabs-trigger]:hover {
+  /* 暗色主題下的 TabsTrigger 懸停效果（排除 attached-tab-trigger） */
+  .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger):hover {
     background-color: rgba(220, 38, 38, 0.15) !important;
     border: 1px solid rgba(220, 38, 38, 0.4);
     border-radius: 8px;
   }
   
-  .dark [data-radix-tabs-trigger][data-state="active"]:hover {
+  .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"]:hover {
     background-color: transparent !important;
     border: none !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
     border-radius: 6px 6px 0 0 !important;
   }
   
-  /* 暗色主題下的活躍狀態 */
-  .dark button[data-state="active"][role="tab"],
-  .dark [data-radix-tabs-trigger][data-state="active"] {
+  /* 暗色主題下的活躍狀態（排除 attached-tab-trigger） */
+  .dark button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
+  .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"] {
     background-color: transparent !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
     box-shadow: none !important;
   }
   
-  /* 針對具體的 TabsTrigger 按鈕進行樣式覆蓋 */
-  button[role="tab"][data-state="active"].flex.items-center.gap-2 {
+  /* 針對具體的 TabsTrigger 按鈕進行樣式覆蓋（排除 attached-tab-trigger） */
+  button[role="tab"][data-state="active"].flex.items-center.gap-2:not(.attached-tab-trigger) {
     background-color: transparent !important;
     border-bottom: 2px solid rgb(220, 38, 38) !important;
     border-radius: 6px 6px 0 0 !important;
@@ -2736,7 +2778,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   /* 增強 Select 下拉選項的懸停效果 */
   [data-radix-select-item]:hover,
-  [data-radix-collection-item]:hover {
+  [data-radix-select-content] [data-radix-collection-item]:hover {
     background-color: #f3f4f6 !important;
     color: inherit !important;
     border-radius: 4px;
@@ -2746,7 +2788,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   .dark [data-radix-select-item]:hover,
-  .dark [data-radix-collection-item]:hover {
+  .dark [data-radix-select-content] [data-radix-collection-item]:hover {
     background-color: rgba(227, 31, 38, 0.2) !important;
     color: white !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);

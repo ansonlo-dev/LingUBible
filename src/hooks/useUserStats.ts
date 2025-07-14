@@ -45,7 +45,7 @@ let lastFetchTime = 0;
 let isCurrentlyFetching = false;
 let globalIntervalId: NodeJS.Timeout | null = null;
 let instanceCount = 0; // 追蹤實例數量
-const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘緩存
+const CACHE_DURATION = 2 * 60 * 1000; // 2分鐘緩存（減少緩存時間確保數據及時更新）
 const UPDATE_INTERVAL = 2 * 60 * 1000; // 2分鐘更新間隔（大幅減少）
 const EVENT_THROTTLE_TIME = 10 * 1000; // 事件節流：10秒內最多處理一次
 
