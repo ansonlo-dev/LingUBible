@@ -1,17 +1,17 @@
 # Font caching optimization
-/fonts/optimized/*
+/fonts/optimized/*:
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 
 # General font caching
-/fonts/*
+/fonts/*:
   Cache-Control: public, max-age=2592000
   Access-Control-Allow-Origin: *
 
 # CSS caching
-*.css
+*.css:
   Cache-Control: public, max-age=31536000
 
 # JavaScript caching  
-*.js
+*.js:
   Cache-Control: public, max-age=31536000 
