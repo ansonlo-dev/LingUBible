@@ -2175,11 +2175,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <MessageSquare className="h-4 w-4 shrink-0" />
                     <span>{t('review.courseComments')}</span>
                   </h5>
-                  <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
+                  <div className="bg-muted/50 p-2 rounded-md break-words text-sm">
                     {hasMarkdownFormatting(courseComments) ? (
-                      <div className="text-xs">{renderCommentMarkdown(courseComments)}</div>
+                      <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {courseComments}
                       </p>
                     )}
@@ -2320,7 +2320,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           <FileText className="h-4 w-4 shrink-0" />
                           <span>{t('review.courseRequirements')}</span>
                         </h5>
-                        <div className="flex flex-wrap gap-2 overflow-hidden">
+                        <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
                           {[
                             { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
                             { key: 'hasQuiz', label: t('review.hasQuiz') },
@@ -2350,6 +2350,25 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         </div>
                       </div>
 
+                      {/* 講師評論 */}
+                      {instructor.comments && (
+                        <div className="min-w-0 mb-4">
+                          <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <User className="h-4 w-4 shrink-0" />
+                            <span>{t('review.instructorComments')}</span>
+                          </h5>
+                          <div className="ml-4 break-words">
+                            {hasMarkdownFormatting(instructor.comments) ? (
+                              <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
+                            ) : (
+                              <p className="text-sm">
+                                {instructor.comments}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* 服務學習 */}
                       {instructor.hasServiceLearning && (
                         <div className="mb-4">
@@ -2357,7 +2376,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             <GraduationCap className="h-4 w-4 shrink-0" />
                             <span>{t('review.serviceLearning')}</span>
                           </h5>
-                          <div className="space-y-2">
+                          <div className="ml-4 space-y-2">
                             <div className="flex items-center gap-2">
                               <span 
                                 className={cn(
@@ -2382,25 +2401,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                   )}
                                 </div>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 講師評論 */}
-                      {instructor.comments && (
-                        <div className="min-w-0">
-                          <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                            <User className="h-4 w-4 shrink-0" />
-                            <span>{t('review.instructorComments')}</span>
-                          </h5>
-                          <div className="break-words">
-                            {hasMarkdownFormatting(instructor.comments) ? (
-                              renderCommentMarkdown(instructor.comments)
-                            ) : (
-                              <p className="text-sm">
-                                {instructor.comments}
-                              </p>
                             )}
                           </div>
                         </div>
@@ -2855,9 +2855,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                    <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
                   <div className="border rounded-lg p-3 bg-muted/20 min-h-[120px]">
                     {hasMarkdownFormatting(courseComments) ? (
-                      <div className="text-xs">{renderCommentMarkdown(courseComments)}</div>
+                      <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
                     ) : (
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                         {courseComments}
                       </p>
                     )}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface BookOpenIconProps {
+interface BookTextIconProps {
   className?: string;
   width?: number | string;
   height?: number | string;
@@ -9,7 +9,7 @@ interface BookOpenIconProps {
   strokeWidth?: number | string;
 }
 
-export const BookOpenIcon: React.FC<BookOpenIconProps> = ({
+export const BookTextIcon: React.FC<BookTextIconProps> = ({
   className = "h-6 w-6 flex-shrink-0",
   width = 24,
   height = 24,
@@ -32,10 +32,13 @@ export const BookOpenIcon: React.FC<BookOpenIconProps> = ({
       className={className}
       {...props}
     >
-      <path d="M12 7v14"></path>
-      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      <path d="M8 7h8"></path>
+      <path d="M8 11h8"></path>
+      <path d="M8 15h6"></path>
     </svg>
   );
 };
 
-export default BookOpenIcon; 
+export default BookTextIcon; 

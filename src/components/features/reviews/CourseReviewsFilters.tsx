@@ -12,7 +12,7 @@ import {
   Languages,
   Grid3X3,
   CalendarDays,
-  BookOpen,
+  BookText,
   School,
   User,
   GraduationCap,
@@ -275,7 +275,7 @@ export function CourseReviewsFilters({
           {/* 教學語言篩選 */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
-              <BookOpen className="h-4 w-4" />
+              <BookText className="h-4 w-4" />
               {t('filter.reviewTeachingLanguage')}
             </label>
             <MultiSelectDropdown
@@ -336,7 +336,7 @@ export function CourseReviewsFilters({
               <span>{t('filter.reviewSessionType')}</span>
             </div>
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
-              <BookOpen className="h-4 w-4" />
+              <BookText className="h-4 w-4" />
               <span>{t('filter.reviewTeachingLanguage')}</span>
             </div>
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">

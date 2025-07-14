@@ -214,8 +214,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
       overflow-x: hidden;
         transform: translateX(-100%);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        /* Half screen width for portrait */
-        width: 50vw;
+        /* Two-thirds screen width for portrait */
+        width: 66.67vw;
         max-width: 300px;
     }
     
@@ -2840,7 +2840,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
       z-index: 50;
       transform: translateX(-100%);
       transition: transform 0.3s ease;
-      width: 50vw;
+      width: 66.67vw;
       max-width: 400px;
     }
 
@@ -2850,7 +2850,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
     /* 移動設備不使用摺疊狀態 */
     .sidebar-container.collapsed {
-      width: 50vw;
+      width: 66.67vw;
       max-width: 400px;
     }
 

@@ -286,6 +286,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               autoComplete="email"
               required
               disabled={loading}
+              className="placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
           </div>
           
@@ -329,7 +330,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 autoComplete="username"
                 required
                 disabled={loading}
-                className={usernameError ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : isUsernameValid && username ? 'border-green-500' : ''}
+                className={`placeholder:text-gray-500 dark:placeholder:text-gray-400 ${usernameError ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : isUsernameValid && username ? 'border-green-500' : ''}`}
               />
               
               {/* 檢查中提示 */}
@@ -390,6 +391,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               autoComplete={isSignUp ? "new-password" : "current-password"}
               required
               disabled={loading}
+              className="placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
           </div>
 
@@ -413,6 +415,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 autoComplete="new-password"
                 required
                 disabled={loading}
+                className="placeholder:text-gray-500 dark:placeholder:text-gray-400"
               />
               {/* 密碼確認檢查 */}
               {confirmPassword && password !== confirmPassword && (

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, CheckCircle, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
-import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
+import { BookTextIcon } from '@/components/icons/BookTextIcon';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -145,24 +145,24 @@ export default function ResetPassword() {
   // 成功頁面
   if (isSuccess) {
     return (
-      <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+      <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4 landscape:p-2">
         <div className="w-full max-w-md flex flex-col max-h-full">
           {/* Logo and Title */}
-          <div className="text-center mb-4 flex-shrink-0">
-            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-              <BookOpenIcon className="h-8 w-8" />
+          <div className="text-center mb-4 landscape:mb-2 flex-shrink-0">
+            <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl landscape:text-xl font-bold text-primary hover:opacity-80 transition-opacity">
+              <BookTextIcon className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
               LingUBible
             </Link>
-            <p className="text-muted-foreground mt-2">{t('auth.passwordResetComplete')}</p>
+            <p className="text-muted-foreground mt-2 landscape:mt-1 landscape:text-sm">{t('auth.passwordResetComplete')}</p>
           </div>
 
           <Card className="glass-card flex flex-col flex-1 min-h-0">
-            <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <CardHeader className="text-center flex-shrink-0 landscape:py-4">
+              <div className="mx-auto mb-4 landscape:mb-2 h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 landscape:h-5 landscape:w-5 text-green-600 dark:text-green-400" />
               </div>
-              <CardTitle className="text-2xl">{t('auth.passwordResetSuccess')}</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl landscape:text-xl">{t('auth.passwordResetSuccess')}</CardTitle>
+              <CardDescription className="landscape:text-sm">
                 {t('auth.passwordResetSuccessDescription')}
               </CardDescription>
             </CardHeader>
@@ -202,24 +202,24 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4 landscape:p-2">
       <div className="w-full max-w-md flex flex-col max-h-full">
         {/* Logo and Title */}
-        <div className="text-center mb-4 flex-shrink-0">
-          <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookOpenIcon className="h-8 w-8" />
+        <div className="text-center mb-4 landscape:mb-2 flex-shrink-0">
+          <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl landscape:text-xl font-bold text-primary hover:opacity-80 transition-opacity">
+            <BookTextIcon className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
             LingUBible
           </Link>
-          <p className="text-muted-foreground mt-2">{t('auth.resetPassword')}</p>
+          <p className="text-muted-foreground mt-2 landscape:mt-1 landscape:text-sm">{t('auth.resetPassword')}</p>
         </div>
 
         <Card className="glass-card flex flex-col flex-1 min-h-0">
-          <CardHeader className="text-center flex-shrink-0">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-              <Lock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <CardHeader className="text-center flex-shrink-0 landscape:py-4">
+            <div className="mx-auto mb-4 landscape:mb-2 h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+              <Lock className="h-6 w-6 landscape:h-5 landscape:w-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <CardTitle className="text-2xl">{t('auth.setNewPassword')}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl landscape:text-xl">{t('auth.setNewPassword')}</CardTitle>
+            <CardDescription className="landscape:text-sm">
               {t('auth.setNewPasswordDescription')}
             </CardDescription>
           </CardHeader>
@@ -267,7 +267,7 @@ export default function ResetPassword() {
                   placeholder={t('auth.newPasswordPlaceholder')}
                   disabled={isLoading}
                   required
-                  className="md:flex-1"
+                  className="md:flex-1 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 />
               </div>
 
@@ -295,6 +295,7 @@ export default function ResetPassword() {
                     placeholder={t('auth.confirmPasswordPlaceholder')}
                     disabled={isLoading}
                     required
+                    className="placeholder:text-gray-500 dark:placeholder:text-gray-400"
                   />
                   
                   {/* 密碼不一致提示 */}

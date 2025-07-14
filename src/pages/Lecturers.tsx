@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useIsMobile } from '@/hooks/use-mobile';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
@@ -193,6 +194,14 @@ const Lecturers = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
+  const isMobile = useIsMobile();
+
+  // Helper function to generate responsive teaching language labels
+  const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
+    const languageName = getTeachingLanguageName(languageCode, t);
+    // Always use dash separator for consistency with catalog pages
+    return `${languageCode} - ${languageName}`;
+  };
   
   const [instructor, setInstructor] = useState<Instructor | null>(null);
   const [instructorLoading, setInstructorLoading] = useState(true);
@@ -390,9 +399,25 @@ const Lecturers = () => {
         <div className="text-xs sm:text-sm text-muted-foreground text-center leading-tight">
           <span className="hidden sm:inline">{label}</span>
           <span className="sm:hidden">
-            {/* Use 2 rows for long labels on mobile landscape */}
+            {/* Use 2 rows for long labels on mobile portrait */}
             {labelShort ? (
-              <span className="break-words whitespace-normal">{labelShort}</span>
+              (() => {
+                const text = labelShort;
+                // Split "Avg. Teaching Quality" into two lines on mobile portrait
+                if (text.startsWith('Avg. ')) {
+                  const parts = text.split('. ');
+                  if (parts.length === 2) {
+                    return (
+                      <span className="break-words whitespace-normal">
+                        <span className="block">Avg.</span>
+                        <span className="block">{parts[1]}</span>
+                      </span>
+                    );
+                  }
+                }
+                // Fallback for other languages or formats
+                return <span className="break-words whitespace-normal">{text}</span>;
+              })()
             ) : (
               <span className="break-words whitespace-normal">{label}</span>
             )}
@@ -757,11 +782,20 @@ const Lecturers = () => {
     return languageMap[language] || language;
   };
 
-  const renderBooleanBadge = (value: boolean, label: string) => {
+  const renderBooleanBadge = (value: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
     return (
       <Badge 
         variant={value ? "default" : "secondary"}
-        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+        className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setRequirementsFilters(prev => ({
+            ...prev,
+            [filterKey]: value ? 'has' : 'no'
+          }));
+        }}
+        title={t('filter.clickToFilterRequirement', { requirement: label })}
       >
         {value ? (
           <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
@@ -1108,14 +1142,13 @@ const Lecturers = () => {
         {instructor && (
           <Card className="transparent-info-card">
             <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              {/* Desktop/Tablet: Instructor name and buttons in same row */}
+              <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-4">
                 <div className="min-w-0 flex-1 overflow-hidden">
-                  <div className="flex items-center gap-4">
-                    <CardTitle className="text-2xl truncate flex items-center gap-2">
-                      <GraduationCap className="h-7 w-7 text-primary" />
-                      {instructor.name}
-                    </CardTitle>
-                  </div>
+                  <CardTitle className="text-2xl truncate flex items-center gap-2">
+                    <GraduationCap className="h-7 w-7 text-primary" />
+                    {instructor.name}
+                  </CardTitle>
                   {/* 中文講師名稱 - 作為副標題（只在中文模式下顯示） */}
                   {(language === 'zh-TW' || language === 'zh-CN') && (() => {
                     const chineseName = language === 'zh-TW' ? instructor.name_tc : instructor.name_sc;
@@ -1125,23 +1158,46 @@ const Lecturers = () => {
                       </p>
                     );
                   })()}
-                  
-                  {/* 電子郵件 */}
-                  {instructor.email && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a 
-                        href={`mailto:${instructor.email}`} 
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {instructor.email}
-                      </a>
-                    </div>
-                  )}
                 </div>
-                {/* Action buttons - positioned on right for desktop, same row on mobile */}
-                <div className="shrink-0 flex flex-row items-stretch sm:items-start gap-2 sm:gap-3 w-full sm:w-auto">
-                  <div className="flex-1 sm:flex-none">
+                {/* Action buttons - desktop/tablet only inline */}
+                <div className="shrink-0 flex items-center gap-2">
+                  <FavoriteButton
+                    type="instructor"
+                    itemId={instructor.name}
+                    size="lg"
+                    showText={true}
+                    variant="outline"
+                  />
+                  <button 
+                    onClick={() => navigate('/instructors')}
+                    className="h-10 px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">{t('common.back')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile: Instructor name separate from buttons */}
+              <div className="md:hidden mb-4">
+                <div className="mb-3">
+                  <CardTitle className="text-2xl truncate flex items-center gap-2">
+                    <GraduationCap className="h-7 w-7 text-primary" />
+                    {instructor.name}
+                  </CardTitle>
+                  {/* 中文講師名稱 - 作為副標題（只在中文模式下顯示） */}
+                  {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                    const chineseName = language === 'zh-TW' ? instructor.name_tc : instructor.name_sc;
+                    return chineseName && (
+                      <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
+                        {chineseName}
+                      </p>
+                    );
+                  })()}
+                </div>
+                {/* Action buttons - mobile only */}
+                <div className="flex flex-row gap-2">
+                  <div className="flex-1">
                     <FavoriteButton
                       type="instructor"
                       itemId={instructor.name}
@@ -1151,8 +1207,7 @@ const Lecturers = () => {
                       className="w-full"
                     />
                   </div>
-                  {/* Back button - mobile landscape only */}
-                  <div className="flex-1 sm:flex-none md:hidden">
+                  <div className="flex-1">
                     <button 
                       onClick={() => navigate('/instructors')}
                       className="h-10 w-full px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
@@ -1163,6 +1218,19 @@ const Lecturers = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Email section - shared for all screen sizes */}
+              {instructor.email && (
+                <div className="flex items-center gap-2 mb-4">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <a 
+                    href={`mailto:${instructor.email}`} 
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {instructor.email}
+                  </a>
+                </div>
+              )}
               
               {/* 系所徽章 - 使用全寬度 */}
               <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-4 min-h-[2rem] overflow-hidden">
@@ -1591,8 +1659,9 @@ const Lecturers = () => {
                           })
                           .map(([language, count]): SelectOption => ({
                             value: language,
-                            label: `${language} - ${getTeachingLanguageName(language, t)}`,
-                            count
+                            label: getResponsiveTeachingLanguageLabel(language),
+                            count,
+                            isTeachingLanguage: true
                           }));
                       })()}
                       selectedValues={(() => {
@@ -1724,8 +1793,9 @@ const Lecturers = () => {
                           })
                           .map(([language, count]): SelectOption => ({
                             value: language,
-                            label: `${language} - ${getTeachingLanguageName(language, t)}`,
-                            count
+                            label: getResponsiveTeachingLanguageLabel(language),
+                            count,
+                            isTeachingLanguage: true
                           }));
                       })()}
                       selectedValues={(() => {
@@ -1778,8 +1848,8 @@ const Lecturers = () => {
                     )
                     .sort(([a], [b]) => a.localeCompare(b)) // Sort by course code alphabetically
                     .map(([courseCode, data]) => (
-                      <div key={courseCode} className="flex items-center justify-between p-3 rounded-lg ">
-                        {/* Left side: Course info */}
+                      <div key={courseCode} className="p-3 rounded-lg space-y-3">
+                        {/* First row: Course info */}
                         <div className="flex-shrink-0">
                           <a
                             href={`/courses/${encodeURIComponent(courseCode)}`}
@@ -1810,8 +1880,8 @@ const Lecturers = () => {
                           </a>
                         </div>
                         
-                        {/* Right side: Combined Term and Teaching Language Badges */}
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Second row: Term and Teaching Language Badges */}
+                        <div className="flex flex-wrap items-center gap-2">
                           {data.terms
                             .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
                             .map((term, termIndex) => {
@@ -1842,7 +1912,7 @@ const Lecturers = () => {
                                             setSelectedTermFilter([...currentValues, term.term_code]);
                                           }
                                         }}
-                                        className={`px-2 py-1 text-xs transition-colors ${
+                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
                                           (() => {
                                             const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
                                             return currentValues.includes(term.term_code)
@@ -1855,19 +1925,19 @@ const Lecturers = () => {
                                         {term.name}
                                       </button>
                                       
-                                      {/* Divider */}
+                                      {/* Separator */}
                                       <div className="w-px bg-border"></div>
                                       
                                       {/* Teaching language part (right side) */}
                                       <button
                                         onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors ${
+                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                           (() => {
                                             const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
                                             const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
                                             return isLanguageSelected
                                               ? 'bg-orange-500 text-orange-50 font-bold'
-                                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50';
+                                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
                                           })()
                                         }`}
                                         title={`${t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}`}
@@ -1899,6 +1969,7 @@ const Lecturers = () => {
                                             : 'bg-background hover:bg-muted border-border hover:border-primary/50';
                                         })()
                                       }`}
+                                      title={`Filter by term: ${term.name}`}
                                     >
                                       {term.name}
                                     </button>
@@ -1940,8 +2011,8 @@ const Lecturers = () => {
                     )
                     .sort(([a], [b]) => a.localeCompare(b)) // Sort by course code alphabetically
                     .map(([courseCode, data]) => (
-                      <div key={courseCode} className="flex items-center justify-between p-3 rounded-lg ">
-                        {/* Left side: Course info */}
+                      <div key={courseCode} className="p-3 rounded-lg space-y-3">
+                        {/* First row: Course info */}
                         <div className="flex-shrink-0">
                           <a
                             href={`/courses/${encodeURIComponent(courseCode)}`}
@@ -1972,8 +2043,8 @@ const Lecturers = () => {
                           </a>
                         </div>
                         
-                        {/* Right side: Combined Term and Teaching Language Badges */}
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Second row: Term and Teaching Language Badges */}
+                        <div className="flex flex-wrap items-center gap-2">
                           {data.terms
                             .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
                             .map((term, termIndex) => {
@@ -2004,7 +2075,7 @@ const Lecturers = () => {
                                             setSelectedTermFilter([...currentValues, term.term_code]);
                                           }
                                         }}
-                                        className={`px-2 py-1 text-xs transition-colors ${
+                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
                                           (() => {
                                             const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
                                             return currentValues.includes(term.term_code)
@@ -2017,19 +2088,19 @@ const Lecturers = () => {
                                         {term.name}
                                       </button>
                                       
-                                      {/* Divider */}
+                                      {/* Separator */}
                                       <div className="w-px bg-border"></div>
                                       
                                       {/* Teaching language part (right side) */}
                                       <button
                                         onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors ${
+                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                           (() => {
                                             const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
                                             const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
                                             return isLanguageSelected
                                               ? 'bg-orange-500 text-orange-50 font-bold'
-                                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50';
+                                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
                                           })()
                                         }`}
                                         title={`${t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}`}
@@ -2061,6 +2132,7 @@ const Lecturers = () => {
                                             : 'bg-background hover:bg-muted border-border hover:border-primary/50';
                                         })()
                                       }`}
+                                      title={`Filter by term: ${term.name}`}
                                     >
                                       {term.name}
                                     </button>
@@ -2359,11 +2431,11 @@ const Lecturers = () => {
                           <MessageSquare className="h-4 w-4 shrink-0" />
                           <span>{t('review.courseComments')}</span>
                         </h5>
-                        <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
+                        <div className="bg-muted/50 p-2 rounded-md break-words text-sm">
                           {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
-                            <div className="text-xs">{renderCommentMarkdown(reviewInfo.review.course_comments)}</div>
+                            <div className="text-sm">{renderCommentMarkdown(reviewInfo.review.course_comments)}</div>
                           ) : (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               {reviewInfo.review.course_comments}
                             </p>
                           )}
@@ -2626,17 +2698,36 @@ const Lecturers = () => {
                                   <FileText className="h-4 w-4 shrink-0" />
                                   <span>{t('review.courseRequirements')}</span>
                                 </h5>
-                                <div className="flex flex-wrap gap-2 overflow-hidden">
-                                  {renderBooleanBadge(currentInstructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_quiz, t('review.requirements.quiz'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_midterm, t('review.requirements.midterm'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_final, t('review.requirements.final'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_group_project, t('review.requirements.groupProject'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_presentation, t('review.requirements.presentation'))}
-                                  {renderBooleanBadge(currentInstructorDetail.has_reading, t('review.requirements.reading'))}
+                                <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                                  {renderBooleanBadge(currentInstructorDetail.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_quiz, t('review.requirements.quiz'), 'quiz')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_midterm, t('review.requirements.midterm'), 'midterm')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_final, t('review.requirements.final'), 'final')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_presentation, t('review.requirements.presentation'), 'presentation')}
+                                  {renderBooleanBadge(currentInstructorDetail.has_reading, t('review.requirements.reading'), 'reading')}
                                 </div>
                               </div>
+
+                              {/* 講師評論 */}
+                              {currentInstructorDetail.comments && (
+                                <div className="min-w-0 mb-4">
+                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                    <User className="h-4 w-4 shrink-0" />
+                                    <span>{t('review.instructorComments')}</span>
+                                  </h5>
+                                  <div className="ml-4 break-words">
+                                    {hasMarkdownFormatting(currentInstructorDetail.comments) ? (
+                                      <div className="text-sm">{renderCommentMarkdown(currentInstructorDetail.comments)}</div>
+                                    ) : (
+                                      <p className="text-sm">
+                                        {currentInstructorDetail.comments}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
 
                               {/* 服務學習 */}
                               {currentInstructorDetail.has_service_learning && (
@@ -2645,7 +2736,7 @@ const Lecturers = () => {
                                     <GraduationCap className="h-4 w-4 shrink-0" />
                                     <span>{t('review.serviceLearning')}</span>
                                   </h5>
-                                  <div className="space-y-2">
+                                  <div className="ml-4 space-y-2">
                                     <div className="flex items-center gap-2">
                                       <span 
                                         className={cn(
@@ -2667,25 +2758,6 @@ const Lecturers = () => {
                                           {currentInstructorDetail.service_learning_description}
                                         </p>
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* 講師評論 */}
-                              {currentInstructorDetail.comments && (
-                                <div className="min-w-0">
-                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                    <User className="h-4 w-4 shrink-0" />
-                                    <span>{t('review.instructorComments')}</span>
-                                  </h5>
-                                  <div className="break-words">
-                                    {hasMarkdownFormatting(currentInstructorDetail.comments) ? (
-                                      renderCommentMarkdown(currentInstructorDetail.comments)
-                                    ) : (
-                                      <p className="text-sm">
-                                        {currentInstructorDetail.comments}
-                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -2925,17 +2997,36 @@ const Lecturers = () => {
                                         <FileText className="h-4 w-4 shrink-0" />
                                         <span>{t('review.courseRequirements')}</span>
                                       </h5>
-                                      <div className="flex flex-wrap gap-2 overflow-hidden">
-                                        {renderBooleanBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
-                                        {renderBooleanBadge(instructor.has_quiz, t('review.requirements.quiz'))}
-                                        {renderBooleanBadge(instructor.has_midterm, t('review.requirements.midterm'))}
-                                        {renderBooleanBadge(instructor.has_final, t('review.requirements.final'))}
-                                        {renderBooleanBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
-                                        {renderBooleanBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
-                                        {renderBooleanBadge(instructor.has_presentation, t('review.requirements.presentation'))}
-                                        {renderBooleanBadge(instructor.has_reading, t('review.requirements.reading'))}
+                                      <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                                        {renderBooleanBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
+                                        {renderBooleanBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz')}
+                                        {renderBooleanBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm')}
+                                        {renderBooleanBadge(instructor.has_final, t('review.requirements.final'), 'final')}
+                                        {renderBooleanBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
+                                        {renderBooleanBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
+                                        {renderBooleanBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation')}
+                                        {renderBooleanBadge(instructor.has_reading, t('review.requirements.reading'), 'reading')}
                                       </div>
                                     </div>
+
+                                    {/* 講師評論 */}
+                                    {instructor.comments && (
+                                      <div className="min-w-0 mb-4">
+                                        <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                          <User className="h-4 w-4 shrink-0" />
+                                          <span>{t('review.instructorComments')}</span>
+                                        </h5>
+                                        <div className="ml-4 break-words">
+                                          {hasMarkdownFormatting(instructor.comments) ? (
+                                            <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
+                                          ) : (
+                                            <p className="text-sm">
+                                              {instructor.comments}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
 
                                     {/* 服務學習 */}
                                     {instructor.has_service_learning && (
@@ -2944,7 +3035,7 @@ const Lecturers = () => {
                                           <GraduationCap className="h-4 w-4 shrink-0" />
                                           <span>{t('review.serviceLearning')}</span>
                                         </h5>
-                                        <div className="space-y-2">
+                                        <div className="ml-4 space-y-2">
                                           <div className="flex items-center gap-2">
                                             <span 
                                               className={cn(
@@ -2966,25 +3057,6 @@ const Lecturers = () => {
                                                 {instructor.service_learning_description}
                                               </p>
                                             </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* 講師評論 */}
-                                    {instructor.comments && (
-                                      <div className="min-w-0">
-                                        <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                          <User className="h-4 w-4 shrink-0" />
-                                          <span>{t('review.instructorComments')}</span>
-                                        </h5>
-                                        <div className="break-words">
-                                          {hasMarkdownFormatting(instructor.comments) ? (
-                                            renderCommentMarkdown(instructor.comments)
-                                          ) : (
-                                            <p className="text-sm">
-                                              {instructor.comments}
-                                            </p>
                                           )}
                                         </div>
                                       </div>

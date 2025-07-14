@@ -5,7 +5,7 @@ import { APP_CONFIG } from '@/utils/constants/config';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
-import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
+import { BookTextIcon } from '@/components/icons/BookTextIcon';
 import { useState, useEffect } from 'react';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 
@@ -221,7 +221,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     {
       label: t('sidebar.browse'),
       items: [
-        { name: t('nav.courses'), href: '/courses', icon: BookOpenIcon, current: location.pathname === '/courses' },
+        { name: t('nav.courses'), href: '/courses', icon: BookTextIcon, current: location.pathname === '/courses' },
         { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' }
       ]
     },
@@ -261,7 +261,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
               className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={handleNavClick(true)}
             >
-              <BookOpenIcon className="h-6 w-6 flex-shrink-0" />
+              <BookTextIcon className="h-6 w-6 flex-shrink-0" />
               <span className="text-xl font-bold">LingUBible</span>
             </Link>
           )}
@@ -271,7 +271,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
               className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
               onClick={handleNavClick(true)}
             >
-              <BookOpenIcon className="h-6 w-6" />
+              <BookTextIcon className="h-6 w-6" />
             </Link>
           )}
         </div>

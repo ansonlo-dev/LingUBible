@@ -170,7 +170,6 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
         className={`
           ${sizeClasses[size]} 
           ${getGradeStyleClasses(displayGrade, displayGpa, isNotApplicable)}
-          font-black 
           text-center
           rounded-full
           transition-all duration-300 ease-in-out
@@ -180,6 +179,11 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
           ${showTooltip ? 'cursor-help' : ''}
           ${onClick ? 'cursor-pointer hover:scale-110' : ''}
         `}
+        style={{
+          fontWeight: '800',
+          textShadow: '0 0 1px currentColor',
+          fontFamily: '"Helvetica Bold", Arial, sans-serif'
+        } as React.CSSProperties}
         title={getTooltipText()}
         onClick={onClick ? (e) => {
           e.preventDefault();

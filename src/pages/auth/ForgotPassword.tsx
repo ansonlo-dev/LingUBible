@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Mail, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
-import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
+import { BookTextIcon } from '@/components/icons/BookTextIcon';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptcha } from '@/contexts/RecaptchaContext';
@@ -79,8 +79,8 @@ export default function ForgotPassword() {
         <div className="w-full max-w-[32rem] flex flex-col max-h-full">
           {/* Logo and Title */}
           <div className="text-center mb-4 flex-shrink-0">
-            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-              <BookOpenIcon className="h-8 w-8" />
+            <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl font-bold text-primary hover:opacity-80 transition-opacity">
+              <BookTextIcon className="h-8 w-8 lg:h-10 lg:w-10" />
               LingUBible
             </Link>
             <p className="text-muted-foreground mt-2">{t('auth.checkYourEmail')}</p>
@@ -149,30 +149,30 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4 landscape:p-2">
       <div className="w-full max-w-[32rem] flex flex-col max-h-full">
         {/* Logo and Title */}
-        <div className="text-center mb-4 flex-shrink-0">
-          <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookOpenIcon className="h-8 w-8" />
+        <div className="text-center mb-4 landscape:mb-2 flex-shrink-0">
+          <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl landscape:text-xl font-bold text-primary hover:opacity-80 transition-opacity">
+            <BookTextIcon className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
             LingUBible
           </Link>
-          <p className="text-muted-foreground mt-2">{t('auth.resetPassword')}</p>
+          <p className="text-muted-foreground mt-2 landscape:mt-1 landscape:text-sm">{t('auth.resetPassword')}</p>
         </div>
 
         <Card className="glass-card flex flex-col flex-1 min-h-0">
-          <CardHeader className="text-center flex-shrink-0">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-              <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <CardHeader className="text-center flex-shrink-0 landscape:py-4">
+            <div className="mx-auto mb-4 landscape:mb-2 h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+              <Mail className="h-6 w-6 landscape:h-5 landscape:w-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <CardTitle className="text-2xl">{t('auth.resetPassword')}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl landscape:text-xl">{t('auth.resetPassword')}</CardTitle>
+            <CardDescription className="landscape:text-sm">
               {t('auth.resetPasswordDescription')}
             </CardDescription>
           </CardHeader>
           
           <CardContent className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="space-y-4 forgot-password-form">
+            <form onSubmit={handleSubmit} className="space-y-4 landscape:space-y-3 forgot-password-form">
               {/* Email field with responsive layout */}
               <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
                 <Label htmlFor="email" className="md:w-32 md:flex-shrink-0 md:text-right">{t('auth.studentEmailAddress')}</Label>
@@ -185,7 +185,7 @@ export default function ForgotPassword() {
                   autoComplete="email"
                   required
                   disabled={isLoading}
-                  className="md:flex-1"
+                  className="md:flex-1 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 />
               </div>
 

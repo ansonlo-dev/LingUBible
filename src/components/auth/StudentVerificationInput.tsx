@@ -308,7 +308,7 @@ export function StudentVerificationInput({
                 setVerificationCode(value);
               }}
               placeholder="123456"
-              className="text-center text-lg font-mono tracking-widest"
+              className="text-center text-lg font-mono tracking-widest placeholder:text-gray-500 dark:placeholder:text-gray-400"
               disabled={disabled || isVerifying}
               maxLength={6}
             />

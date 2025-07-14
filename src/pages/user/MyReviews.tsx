@@ -798,11 +798,11 @@ const MyReviews = () => {
                           <MessageSquare className="h-4 w-4 shrink-0" />
                           <span>{t('review.courseComments')}</span>
                         </h5>
-                        <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
+                        <div className="bg-muted/50 p-2 rounded-md break-words text-sm">
                           {hasMarkdownFormatting(reviewInfo.review.course_comments) ? (
-                            <div className="text-xs">{renderCommentMarkdown(reviewInfo.review.course_comments)}</div>
+                            <div className="text-sm">{renderCommentMarkdown(reviewInfo.review.course_comments)}</div>
                           ) : (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               {reviewInfo.review.course_comments}
                             </p>
                           )}
@@ -831,10 +831,16 @@ const MyReviews = () => {
                                 {/* Instructor name and badges container */}
                                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
                                   <div className="font-semibold text-lg min-w-0 md:flex-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`)}
+                                    <a
+                                      href={`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`}
                                       className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+                                      onClick={(e) => {
+                                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                          return;
+                                        }
+                                        e.preventDefault();
+                                        navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`);
+                                      }}
                                     >
                                       {nameInfo ? (
                                         <div className="text-left">
@@ -848,7 +854,7 @@ const MyReviews = () => {
                                       ) : (
                                         <div className="font-bold text-left">{instructorDetail.instructor_name}</div>
                                       )}
-                                    </button>
+                                    </a>
                                   </div>
                                   
                                   {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
@@ -956,6 +962,40 @@ const MyReviews = () => {
                                 )}
                               </div>
 
+                              {/* 課程要求 */}
+                              <div className="mb-6">
+                                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                  <FileText className="h-4 w-4 shrink-0" />
+                                  <span>{t('review.courseRequirements')}</span>
+                                </h5>
+                                <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                                  {renderBooleanBadge(instructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
+                                  {renderBooleanBadge(instructorDetail.has_quiz, t('review.requirements.quiz'))}
+                                  {renderBooleanBadge(instructorDetail.has_midterm, t('review.requirements.midterm'))}
+                                  {renderBooleanBadge(instructorDetail.has_final, t('review.requirements.final'))}
+                                  {renderBooleanBadge(instructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                                  {renderBooleanBadge(instructorDetail.has_group_project, t('review.requirements.groupProject'))}
+                                  {renderBooleanBadge(instructorDetail.has_presentation, t('review.requirements.presentation'))}
+                                  {renderBooleanBadge(instructorDetail.has_reading, t('review.requirements.reading'))}
+                                </div>
+                              </div>
+
+                              {/* 講師評論 */}
+                              {instructorDetail.comments && (
+                                <div className="mb-6 text-sm text-muted-foreground">
+                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                    <User className="h-4 w-4 shrink-0" />
+                                    <span>{t('review.instructorComments')}</span>
+                                  </h5>
+                                  <div className="ml-4 text-sm">
+                                    {hasMarkdownFormatting(instructorDetail.comments) ? 
+                                      <div className="text-sm">{renderCommentMarkdown(instructorDetail.comments)}</div> : 
+                                      instructorDetail.comments
+                                    }
+                                  </div>
+                                </div>
+                              )}
+
                               {/* 服務學習 - 講師級別 */}
                               {instructorDetail.has_service_learning && (
                                 <div className="mb-6">
@@ -963,7 +1003,7 @@ const MyReviews = () => {
                                     <GraduationCap className="h-4 w-4 shrink-0" />
                                     <span>{t('review.serviceLearning')}</span>
                                   </h5>
-                                  <div className="space-y-2">
+                                  <div className="ml-4 space-y-2">
                                     <span 
                                       className={cn(
                                         "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
@@ -985,40 +1025,6 @@ const MyReviews = () => {
                                         }
                                       </div>
                                     )}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* 課程要求 */}
-                              <div className="mb-6">
-                                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                  <FileText className="h-4 w-4 shrink-0" />
-                                  <span>{t('review.courseRequirements')}</span>
-                                </h5>
-                                <div className="flex flex-wrap gap-2 overflow-hidden">
-                                  {renderBooleanBadge(instructorDetail.has_attendance_requirement, t('review.requirements.attendance'))}
-                                  {renderBooleanBadge(instructorDetail.has_quiz, t('review.requirements.quiz'))}
-                                  {renderBooleanBadge(instructorDetail.has_midterm, t('review.requirements.midterm'))}
-                                  {renderBooleanBadge(instructorDetail.has_final, t('review.requirements.final'))}
-                                  {renderBooleanBadge(instructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'))}
-                                  {renderBooleanBadge(instructorDetail.has_group_project, t('review.requirements.groupProject'))}
-                                  {renderBooleanBadge(instructorDetail.has_presentation, t('review.requirements.presentation'))}
-                                  {renderBooleanBadge(instructorDetail.has_reading, t('review.requirements.reading'))}
-                                </div>
-                              </div>
-
-                              {/* 講師評論 */}
-                              {instructorDetail.comments && (
-                                <div className="mb-6 text-xs text-muted-foreground">
-                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                    <User className="h-4 w-4 shrink-0" />
-                                    <span>{t('review.instructorComments')}</span>
-                                  </h5>
-                                  <div className="text-xs">
-                                    {hasMarkdownFormatting(instructorDetail.comments) ? 
-                                      <div className="text-xs">{renderCommentMarkdown(instructorDetail.comments)}</div> : 
-                                      instructorDetail.comments
-                                    }
                                   </div>
                                 </div>
                               )}

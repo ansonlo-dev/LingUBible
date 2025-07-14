@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { X, BookOpen as BookOpenIcon, GraduationCap, MessageSquare, Loader2, TrendingUp } from 'lucide-react';
+import { X, BookText as BookOpenIcon, GraduationCap, MessageSquare, Loader2, TrendingUp } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';

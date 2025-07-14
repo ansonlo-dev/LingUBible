@@ -12,6 +12,8 @@
     "dev:performance": "vite --mode development --open /performance",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:prod": "NODE_ENV=production bun run prebuild && vite build",
+    "build:fast": "vite build",
     "build:analyze": "vite build --mode production && bun run analyze:bundle",
     "analyze:bundle": "echo '📊 Bundle analysis complete. Check dist/ for output.'",
     "lint": "eslint .",
@@ -24,9 +26,11 @@
     "docs:create-english": "node tools/scripts/docs/create-english-docs.js",
     "docs:check": "echo '🔍 Checking documentation structure...' && find docs -name '*.md' | wc -l && echo 'Total markdown files found'",
     "fonts:optimize": "node scripts/optimize-fonts.cjs",
+    "fonts:optimize:force": "node scripts/optimize-fonts.cjs --force",
     "fonts:clean": "rm -rf public/fonts/optimized temp-fonts",
     "fonts:rebuild": "bun run fonts:clean && bun run fonts:optimize",
-    "prebuild": "bun run fonts:optimize",
+    "fonts:check": "node scripts/conditional-font-optimization.cjs",
+    "prebuild": "node scripts/conditional-font-optimization.cjs",
     "docs:structure": "tree docs/ -I 'node_modules|*.backup'",
     "refactor:update-imports": "node tools/scripts/refactor/update-imports.js",
     "refactor:check": "bun run build && echo '✅ Refactoring check passed!'",
@@ -51,8 +55,7 @@
     "release:check": "echo '🔍 檢查發布狀態...' && git status && echo '' && echo '📋 最近的標籤:' && git tag --sort=-version:refname | head -5",
     "release:create-missing": "node tools/scripts/version/create-missing-release.js",
     "version:test": "node tools/scripts/version/test-version-system.js",
-    "sync:version": "node scripts/sync-version.js",
-    "prebuild": "echo 'Building...'"
+    "sync:version": "node scripts/sync-version.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

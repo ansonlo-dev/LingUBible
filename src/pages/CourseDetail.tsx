@@ -11,7 +11,7 @@ import {
   ArrowLeft, 
   Star, 
   MessageSquare, 
-  BookOpen, 
+  BookText, 
   Calendar, 
   Mail, 
   Loader2, 
@@ -27,6 +27,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
@@ -172,6 +173,14 @@ const CourseDetail = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const isMobile = useIsMobile();
+
+  // Helper function to generate responsive teaching language labels
+  const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
+    const languageName = getTeachingLanguageName(languageCode, t);
+    // Always use dash separator for consistency with catalog pages
+    return `${languageCode} - ${languageName}`;
+  };
 
   // 根據評分獲取漸變背景色（0-5分，紅色到綠色）
   const getRatingGradientColor = (value: number) => {
@@ -205,7 +214,7 @@ const CourseDetail = () => {
       ? getRatingGradientColor(numericValue) 
       : '#4B5563'; // 統一使用深色灰色
     
-    const displayValue = isValid ? numericValue.toFixed(1).replace(/\.?0+$/, '') : 'N/A';
+    const displayValue = isValid ? numericValue.toFixed(2).replace(/\.?0+$/, '') : 'N/A';
     
     return (
       <div className="flex flex-col items-center min-w-0">
@@ -525,31 +534,79 @@ const CourseDetail = () => {
       <div className="mb-6">
         <Card className="transparent-info-card">
           <CardContent className="p-6">
-            {/* Course info section - full width */}
+            {/* Course info section with buttons */}
             <div className="mb-4">
-              <CardTitle className="text-2xl font-mono flex items-center gap-2">
-                <BookOpen className="h-7 w-7 text-primary" />
-                {course.course_code}
-              </CardTitle>
-              {/* 英文課程名稱 - 作為副標題 */}
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
-                {course.course_title}
-              </p>
-              {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
-              {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
-                return chineseName && (
-                  <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
-                    {chineseName}
+              {/* Desktop/Tablet: Course code and buttons in same row */}
+              <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-2">
+                <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
+                  <BookText className="h-7 w-7 text-primary" />
+                  {course.course_code}
+                </CardTitle>
+                {/* Action buttons - desktop/tablet only inline */}
+                <div className="shrink-0 flex items-center gap-2">
+                  <FavoriteButton
+                    type="course"
+                    itemId={course.course_code}
+                    size="lg"
+                    showText={true}
+                    variant="outline"
+                  />
+                  <Button 
+                    className="h-10 gradient-primary hover:opacity-90 text-white"
+                    onClick={() => navigate(`/write-review/${course.course_code}`)}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {t('review.writeReview')}
+                  </Button>
+                  <button 
+                    onClick={() => navigate('/courses')}
+                    className="h-10 px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">{t('common.back')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile: Course code with back button on same row */}
+              <div className="md:hidden mb-3">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
+                    <BookText className="h-7 w-7 text-primary" />
+                    {course.course_code}
+                  </CardTitle>
+                  <button 
+                    onClick={() => navigate('/courses')}
+                    className="h-10 px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 shrink-0"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">{t('common.back')}</span>
+                  </button>
+                </div>
+
+                {/* Course titles */}
+                <div>
+                  {/* 英文課程名稱 - 作為副標題 */}
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
+                    {course.course_title}
                   </p>
-                );
-              })()}
+                  {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
+                  {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                    const chineseName = language === 'zh-TW' ? course.course_title_tc : course.course_title_sc;
+                    return chineseName && (
+                      <p className="text-base text-gray-500 dark:text-gray-500 mt-1 min-h-[1.25rem]">
+                        {chineseName}
+                      </p>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
             
-            {/* Action buttons - separate row for mobile, right-aligned for desktop */}
-            <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3 mb-4">
-              <div className="flex flex-row gap-2 sm:gap-3">
-                <div className="flex-1 sm:flex-none">
+            {/* Action buttons - mobile only, separate row (excluding back button) */}
+            <div className="md:hidden flex flex-col gap-2 mb-4">
+              <div className="flex flex-row gap-2">
+                <div className="flex-1">
                   <FavoriteButton
                     type="course"
                     itemId={course.course_code}
@@ -559,7 +616,7 @@ const CourseDetail = () => {
                     className="w-full"
                   />
                 </div>
-                <div className="flex-1 sm:flex-none">
+                <div className="flex-1">
                   <Button 
                     className="h-10 gradient-primary hover:opacity-90 text-white w-full"
                     onClick={() => navigate(`/write-review/${course.course_code}`)}
@@ -567,16 +624,6 @@ const CourseDetail = () => {
                     <MessageSquare className="h-4 w-4 mr-2" />
                     {t('review.writeReview')}
                   </Button>
-                </div>
-                {/* Back button - mobile and desktop */}
-                <div className="flex-1 sm:flex-none">
-                  <button 
-                    onClick={() => navigate('/courses')}
-                    className="h-10 w-full px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="text-sm">{t('common.back')}</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -908,14 +955,15 @@ const CourseDetail = () => {
                     {/* 教學語言篩選 */}
                     <div className="flex items-center gap-2">
                       <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 shrink-0 w-24">
-                        <BookOpen className="h-4 w-4" />
+                        <BookText className="h-4 w-4" />
                         {t('pages.courseDetail.filterByTeachingLanguage')}
                       </label>
                       <MultiSelectDropdown
                         options={availableTeachingLanguagesWithCounts.map((languageData): SelectOption => ({
                           value: languageData.language,
-                          label: `${languageData.language} - ${getTeachingLanguageName(languageData.language, t)}`,
-                          count: languageData.count
+                          label: getResponsiveTeachingLanguageLabel(languageData.language),
+                          count: languageData.count,
+                          isTeachingLanguage: true
                         }))}
                         selectedValues={(() => {
                           const values = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -1009,14 +1057,15 @@ const CourseDetail = () => {
                     {/* 教學語言篩選器 */}
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                        <BookOpen className="h-4 w-4" />
+                        <BookText className="h-4 w-4" />
                         {t('pages.courseDetail.filterByTeachingLanguage')}
                       </label>
                       <MultiSelectDropdown
                         options={availableTeachingLanguagesWithCounts.map((languageData): SelectOption => ({
                           value: languageData.language,
-                          label: `${languageData.language} - ${getTeachingLanguageName(languageData.language, t)}`,
-                          count: languageData.count
+                          label: getResponsiveTeachingLanguageLabel(languageData.language),
+                          count: languageData.count,
+                          isTeachingLanguage: true
                         }))}
                         selectedValues={(() => {
                           const values = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -1074,8 +1123,8 @@ const CourseDetail = () => {
                       return aNameForSort.localeCompare(bNameForSort);
                     }) // Sort by instructor name alphabetically, ignoring titles
                     .map(([instructorName, data]) => (
-                      <div key={instructorName} className="flex items-center justify-between p-3 rounded-lg ">
-                        {/* Left side: Instructor name */}
+                      <div key={instructorName} className="p-3 rounded-lg space-y-3">
+                        {/* First row: Instructor name */}
                         <div className="flex-shrink-0">
                           <a
                             href={`/instructors/${encodeURIComponent(instructorName)}`}
@@ -1099,8 +1148,8 @@ const CourseDetail = () => {
                           </a>
                         </div>
                         
-                        {/* Right side: Terms and Teaching Languages */}
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Second row: Terms and Teaching Languages Badges */}
+                        <div className="flex flex-wrap items-center gap-2">
                           {data.terms
                             .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
                             .map((term, termIndex) => {
@@ -1149,12 +1198,12 @@ const CourseDetail = () => {
                                       {/* Teaching language part (right side) */}
                                       <button
                                         onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                           (() => {
                                             const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
                                             const isSelected = currentValues.includes(teachingLanguage);
                                             return isSelected
-                                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 font-bold'
+                                              ? 'bg-orange-500 text-orange-50 font-bold'
                                               : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
                                           })()
                                         }`}
@@ -1164,7 +1213,7 @@ const CourseDetail = () => {
                                       </button>
                                     </div>
                                   ) : (
-                                    /* Fallback: Term-only badge when no teaching language */
+                                    // Fallback to term-only badge if no teaching language
                                     <button
                                       onClick={() => {
                                         const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
@@ -1231,8 +1280,8 @@ const CourseDetail = () => {
                       return aNameForSort.localeCompare(bNameForSort);
                     }) // Sort by instructor name alphabetically, ignoring titles
                     .map(([instructorName, data]) => (
-                      <div key={instructorName} className="flex items-center justify-between p-3 rounded-lg ">
-                        {/* Left side: Instructor name */}
+                      <div key={instructorName} className="p-3 rounded-lg space-y-3">
+                        {/* First row: Instructor name */}
                         <div className="flex-shrink-0">
                           <a
                             href={`/instructors/${encodeURIComponent(instructorName)}`}
@@ -1256,8 +1305,8 @@ const CourseDetail = () => {
                           </a>
                         </div>
                         
-                        {/* Right side: Terms and Teaching Languages */}
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Second row: Terms and Teaching Languages Badges */}
+                        <div className="flex flex-wrap items-center gap-2">
                           {data.terms
                             .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
                             .map((term, termIndex) => {
@@ -1306,12 +1355,12 @@ const CourseDetail = () => {
                                       {/* Teaching language part (right side) */}
                                       <button
                                         onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                           (() => {
                                             const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
                                             const isSelected = currentValues.includes(teachingLanguage);
                                             return isSelected
-                                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 font-bold'
+                                              ? 'bg-orange-500 text-orange-50 font-bold'
                                               : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
                                           })()
                                         }`}
@@ -1321,7 +1370,7 @@ const CourseDetail = () => {
                                       </button>
                                     </div>
                                   ) : (
-                                    /* Fallback: Term-only badge when no teaching language */
+                                    // Fallback to term-only badge if no teaching language
                                     <button
                                       onClick={() => {
                                         const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
@@ -1427,4 +1476,4 @@ const CourseDetail = () => {
   );
 };
 
-export default CourseDetail; 
+export default CourseDetail;

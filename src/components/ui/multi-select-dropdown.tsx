@@ -42,6 +42,7 @@ export interface SelectOption {
   count?: number;
   disabled?: boolean; // For group headers
   status?: 'current' | 'past' | 'future'; // For term status indicators
+  isTeachingLanguage?: boolean; // For teaching language options
 }
 
 interface MultiSelectDropdownProps {
@@ -149,6 +150,22 @@ export function MultiSelectDropdown({
       return placeholder; // Show placeholder when nothing is selected
     } else if (safeSelectedValues.length === 1) {
       const option = options.find(opt => opt.value === safeSelectedValues[0]);
+      if (option && option.isTeachingLanguage && isMobile) {
+        // For teaching language options on mobile, format as two lines in the placeholder
+        const parts = option.label.split(/\s*-\s*/);
+        if (parts.length >= 2) {
+          return (
+            <div className="flex flex-col items-start py-0.5">
+              <div className="font-mono font-semibold text-primary text-xs leading-tight">
+                {parts[0].trim()}
+              </div>
+              <div className="text-xs leading-tight truncate">
+                {parts.slice(1).join(' ').trim()}
+              </div>
+            </div>
+          );
+        }
+      }
       return option ? option.label : safeSelectedValues[0];
     } else {
       return t('common.selectedCount', { count: safeSelectedValues.length });
@@ -167,7 +184,7 @@ export function MultiSelectDropdown({
         onOpenChange={setIsOpen}
       >
         <SelectTrigger 
-          className="w-full h-8 min-w-0"
+          className="w-full min-h-8 h-auto min-w-0"
         >
           <SelectValue>
             {getDisplayText()}
@@ -292,6 +309,21 @@ export function MultiSelectDropdown({
                                   </span>
                                 ))}
                               </span>
+                            ) : option.isTeachingLanguage ? (
+                              // For teaching language options, make the language code bold
+                              (() => {
+                                const parts = option.label.split(/\s*-\s*/);
+                                if (parts.length >= 2) {
+                                  return (
+                                    <span className="flex-1 truncate">
+                                      <span className="font-mono font-semibold">{parts[0].trim()}</span>
+                                      <span> - {parts.slice(1).join(' ').trim()}</span>
+                                    </span>
+                                  );
+                                } else {
+                                  return <span className="flex-1 truncate">{option.label}</span>;
+                                }
+                              })()
                             ) : (
                               <span className="flex-1 truncate">{option.label}</span>
                             )}

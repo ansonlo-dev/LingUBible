@@ -460,11 +460,20 @@ export const CourseReviewsList = ({
     return languageMap[language] || language;
   };
 
-  const renderRequirementBadge = (hasRequirement: boolean, label: string) => {
+  const renderRequirementBadge = (hasRequirement: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
     return (
       <Badge 
         variant={hasRequirement ? "default" : "secondary"}
-        className={`text-xs shrink-0 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+        className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setRequirementsFilters(prev => ({
+            ...prev,
+            [filterKey]: hasRequirement ? 'has' : 'no'
+          }));
+        }}
+        title={t('filter.clickToFilterRequirement', { requirement: label })}
       >
         {hasRequirement ? (
           <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
@@ -717,17 +726,36 @@ export const CourseReviewsList = ({
                 <FileText className="h-4 w-4 shrink-0" />
                 <span>{t('review.courseRequirements')}</span>
               </h5>
-              <div className="flex flex-wrap gap-2 overflow-hidden">
-                {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
-                {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'))}
-                {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'))}
-                {renderRequirementBadge(instructor.has_final, t('review.requirements.final'))}
-                {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
-                {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
-                {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'))}
-                {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'))}
+              <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
+                {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz')}
+                {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm')}
+                {renderRequirementBadge(instructor.has_final, t('review.requirements.final'), 'final')}
+                {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
+                {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
+                {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation')}
+                {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'), 'reading')}
               </div>
             </div>
+
+            {/* 講師評論 */}
+            {instructor.comments && (
+              <div className="min-w-0 mb-6">
+                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <User className="h-4 w-4 shrink-0" />
+                  <span>{t('review.instructorComments')}</span>
+                </h5>
+                <div className="ml-4 break-words text-sm">
+                  {hasMarkdownFormatting(instructor.comments) ? (
+                    <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
+                  ) : (
+                    <p className="text-sm">
+                      {instructor.comments}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* 服務學習 */}
             {instructor.has_service_learning && (
@@ -736,7 +764,7 @@ export const CourseReviewsList = ({
                   <GraduationCap className="h-4 w-4 shrink-0" />
                   <span>{t('review.serviceLearning')}</span>
                 </h5>
-                <div className="space-y-2">
+                <div className="ml-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <span 
                       className={cn(
@@ -762,25 +790,6 @@ export const CourseReviewsList = ({
                         </p>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 講師評論 */}
-            {instructor.comments && (
-              <div className="min-w-0 mb-6">
-                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <User className="h-4 w-4 shrink-0" />
-                  <span>{t('review.instructorComments')}</span>
-                </h5>
-                <div className="break-words text-xs">
-                  {hasMarkdownFormatting(instructor.comments) ? (
-                    <div className="text-xs">{renderCommentMarkdown(instructor.comments)}</div>
-                  ) : (
-                    <p className="text-xs">
-                      {instructor.comments}
-                    </p>
                   )}
                 </div>
               </div>
@@ -1097,11 +1106,11 @@ export const CourseReviewsList = ({
                         <MessageSquare className="h-4 w-4 shrink-0" />
                         <span>{t('review.courseComments')}</span>
                       </h5>
-                      <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
+                      <div className="bg-muted/50 p-2 rounded-md break-words text-sm">
                         {hasMarkdownFormatting(review.course_comments) ? (
-                          <div className="text-xs">{renderCommentMarkdown(review.course_comments)}</div>
+                          <div className="text-sm">{renderCommentMarkdown(review.course_comments)}</div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {review.course_comments}
                           </p>
                         )}
@@ -1391,11 +1400,11 @@ export const CourseReviewsList = ({
                         <MessageSquare className="h-4 w-4 shrink-0" />
                         <span>{t('review.courseComments')}</span>
                       </h5>
-                      <div className="bg-muted/50 p-2 rounded-md break-words text-xs">
+                      <div className="bg-muted/50 p-2 rounded-md break-words text-sm">
                         {hasMarkdownFormatting(review.course_comments) ? (
-                          <div className="text-xs">{renderCommentMarkdown(review.course_comments)}</div>
+                          <div className="text-sm">{renderCommentMarkdown(review.course_comments)}</div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {review.course_comments}
                           </p>
                         )}

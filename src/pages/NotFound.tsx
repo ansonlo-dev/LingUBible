@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Home, Search, BookOpen, Users, ArrowLeft, RefreshCw } from "lucide-react";
+import { Home, Search, BookText, Users, ArrowLeft, RefreshCw } from "lucide-react";
 import { MobileSearchModal } from "@/components/common/MobileSearchModal";
 
 const NotFound = () => {
@@ -35,7 +35,7 @@ const NotFound = () => {
       isLink: true
     },
     {
-      icon: BookOpen,
+      icon: BookText,
       label: t('nav.courses'),
       path: '/courses',
       description: t('404.quickLinks.coursesDesc'),

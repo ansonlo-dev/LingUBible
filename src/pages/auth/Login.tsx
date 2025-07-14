@@ -11,7 +11,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptcha } from '@/contexts/RecaptchaContext';
 import { useLoginRecaptcha } from '@/hooks/useSmartRecaptcha';
-import { BookOpen, Lock, AlertTriangle } from 'lucide-react';
+import { BookText, Lock, AlertTriangle } from 'lucide-react';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
 // 檢查郵件是否為有效的學生郵件
@@ -126,24 +126,24 @@ export default function Login() {
   }, []);
 
   return (
-    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
+    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4 landscape:p-2">
       <div className="w-full max-w-[32rem] flex flex-col max-h-full">
         {/* Logo and Title */}
-        <div className="text-center mb-4 flex-shrink-0">
-          <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-            <BookOpen className="h-8 w-8" />
+        <div className="text-center mb-4 landscape:mb-2 flex-shrink-0">
+          <Link to="/" className="inline-flex items-center gap-2 text-2xl lg:text-3xl landscape:text-xl font-bold text-primary hover:opacity-80 transition-opacity">
+            <BookText className="h-8 w-8 lg:h-10 lg:w-10 landscape:h-6 landscape:w-6" />
             LingUBible
           </Link>
-          <p className="text-muted-foreground mt-2">{t('auth.welcomeBack')}</p>
+          <p className="text-muted-foreground mt-2 landscape:mt-1 landscape:text-sm">{t('auth.welcomeBack')}</p>
         </div>
 
         <Card className="glass-card flex flex-col flex-1 min-h-0">
-          <CardHeader className="text-center flex-shrink-0">
-            <CardTitle className="text-2xl">{t('auth.signIn')}</CardTitle>
+          <CardHeader className="text-center flex-shrink-0 landscape:py-4">
+            <CardTitle className="text-2xl landscape:text-xl">{t('auth.signIn')}</CardTitle>
           </CardHeader>
           
           <CardContent className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="space-y-4 login-form">
+            <form onSubmit={handleSubmit} className="space-y-4 landscape:space-y-3 login-form">
               {/* Email field with responsive layout */}
               <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
                 <Label htmlFor="email" className="md:w-24 md:flex-shrink-0 md:text-right">{t('auth.email')}</Label>
@@ -156,7 +156,7 @@ export default function Login() {
                   autoComplete="email"
                   required
                   disabled={loading}
-                  className="md:flex-1"
+                  className="md:flex-1 landscape:h-9 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 />
               </div>
               
@@ -171,7 +171,7 @@ export default function Login() {
                   autoComplete="current-password"
                   required
                   disabled={loading}
-                  className="md:flex-1"
+                  className="md:flex-1 landscape:h-9 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 />
               </div>
 
@@ -193,7 +193,7 @@ export default function Login() {
               
               {googleLinkSuccess && (
                 <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-                  <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <BookText className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <AlertDescription className="text-green-600 dark:text-green-400 whitespace-pre-line">
                     {t('oauth.linkSuccessNeedRelogin')}
                   </AlertDescription>
@@ -211,7 +211,7 @@ export default function Login() {
 
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full landscape:h-9"
                 disabled={loading}
               >
                 {loading ? t('auth.processing') : t('auth.signIn')}
@@ -255,12 +255,12 @@ export default function Login() {
         </Card>
 
         {/* 安全連接頁腳 */}
-        <div className="mt-4 text-center flex-shrink-0">
-          <Link to="/faq#password-safety" className="inline-flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-            <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <div className="mt-4 landscape:mt-2 text-center flex-shrink-0">
+          <Link to="/faq#password-safety" className="inline-flex items-center space-x-2 px-3 py-2 landscape:px-2 landscape:py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-sm text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+            <Lock className="h-4 w-4 landscape:h-3 landscape:w-3 text-green-600 dark:text-green-400" />
             <span>{t('auth.secureConnection')}</span>
           </Link>
-          <div className="mt-4 space-x-4 text-xs text-muted-foreground">
+          <div className="mt-4 landscape:mt-2 space-x-4 landscape:space-x-2 text-xs text-muted-foreground">
             <Link to="/faq" className="hover:underline">{t('footer.faq')}</Link>
             <Link to="/contact" className="hover:underline">{t('auth.contact')}</Link>
             <Link to="/terms" className="hover:underline">{t('auth.terms')}</Link>
