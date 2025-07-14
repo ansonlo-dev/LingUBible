@@ -1,0 +1,81 @@
+{
+  "generated": "2025-07-14T02:00:03.994Z",
+  "source": "public/fonts/LXGWWenKai-Regular.ttf",
+  "variants": [
+    {
+      "name": "latin",
+      "priority": "high",
+      "description": "Latin characters only (English, numbers, punctuation)",
+      "files": {
+        "ttf": "/fonts/optimized/LXGWWenKai-latin.ttf",
+        "woff2": "/fonts/optimized/LXGWWenKai-latin.woff2"
+      },
+      "sizes": {
+        "original": 18635,
+        "ttf": 228,
+        "woff2": 60
+      },
+      "reduction": 100
+    },
+    {
+      "name": "zh-TW",
+      "priority": "high",
+      "description": "Traditional Chinese with Latin support",
+      "files": {
+        "ttf": "/fonts/optimized/LXGWWenKai-zh-TW.ttf",
+        "woff2": "/fonts/optimized/LXGWWenKai-zh-TW.woff2"
+      },
+      "sizes": {
+        "original": 18635,
+        "ttf": 16061,
+        "woff2": 7665
+      },
+      "reduction": 59
+    },
+    {
+      "name": "zh-CN",
+      "priority": "high",
+      "description": "Simplified Chinese with Latin support",
+      "files": {
+        "ttf": "/fonts/optimized/LXGWWenKai-zh-CN.ttf",
+        "woff2": "/fonts/optimized/LXGWWenKai-zh-CN.woff2"
+      },
+      "sizes": {
+        "original": 18635,
+        "ttf": 15988,
+        "woff2": 7643
+      },
+      "reduction": 59
+    },
+    {
+      "name": "critical",
+      "priority": "critical",
+      "description": "Critical subset for fast initial load",
+      "files": {
+        "ttf": "/fonts/optimized/LXGWWenKai-critical.ttf",
+        "woff2": "/fonts/optimized/LXGWWenKai-critical.woff2"
+      },
+      "sizes": {
+        "original": 18635,
+        "ttf": 11743,
+        "woff2": 5402
+      },
+      "reduction": 71
+    },
+    {
+      "name": "full",
+      "priority": "low",
+      "description": "Complete font with all characters",
+      "files": {
+        "ttf": "/fonts/optimized/LXGWWenKai-full.ttf",
+        "woff2": "/fonts/optimized/LXGWWenKai-full.woff2"
+      },
+      "sizes": {
+        "original": 18635,
+        "ttf": 16061,
+        "woff2": 7665
+      },
+      "reduction": 59
+    }
+  ]
+}

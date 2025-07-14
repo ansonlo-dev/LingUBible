@@ -205,13 +205,15 @@ const Courses = () => {
     checkCoursesForTerm();
   }, [filters.offeredTerm]);
 
-  // 提取可用的學科領域
+  // 提取可用的學科領域 - 現在使用主題代碼
   const { availableSubjects } = useMemo(() => {
     const subjects = new Set<string>();
     
     courses.forEach(course => {
-      if (course.department) {
-        subjects.add(course.department);
+      if (course.course_code) {
+        // 從課程代碼中提取主題代碼 (e.g., "BUS1001" -> "BUS")
+        const subjectCode = course.course_code.replace(/\d.*$/, '');
+        subjects.add(subjectCode);
       }
     });
     
@@ -332,11 +334,13 @@ const Courses = () => {
       });
     }
 
-    // 學科領域篩選
+    // 學科領域篩選 - 現在使用主題代碼而不是部門
     if (filters.subjectArea.length > 0) {
-      filtered = filtered.filter(course => 
-        filters.subjectArea.includes(course.department)
-      );
+      filtered = filtered.filter(course => {
+        // 從課程代碼中提取主題代碼 (e.g., "BUS1001" -> "BUS")
+        const subjectCode = course.course_code.replace(/\d.*$/, '');
+        return filters.subjectArea.includes(subjectCode);
+      });
     }
 
     // 教學語言篩選 - 使用教學記錄中的語言代碼

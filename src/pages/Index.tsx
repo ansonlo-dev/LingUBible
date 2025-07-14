@@ -19,6 +19,8 @@ import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/cou
 import { translateDepartmentName } from '@/utils/textUtils';
 import { useFavorites } from '@/hooks/useFavorites';
 
+
+
 const Index = () => {
   const { t, language } = useLanguage();
   const { user, refreshUser } = useAuth();
@@ -239,6 +241,8 @@ const Index = () => {
 
   return (
     <>
+
+      
       {/* 全頁面浮動效果 - 固定定位覆蓋整個視窗，放在最外層 */}
       <FloatingCircles zIndex={-1} className="fixed inset-0 w-full h-full" style={{ zIndex: -1 }} />
       {/* 在桌面版顯示 FloatingGlare，手機版跳過以減少重疊 */}

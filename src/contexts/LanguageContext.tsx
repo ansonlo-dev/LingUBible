@@ -80,6 +80,12 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
 
   // Initialize translations on mount
   useEffect(() => {
+    // Set initial HTML lang attribute
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', language);
+      console.log('🌐 初始化 HTML lang 属性为:', language);
+    }
+    
     loadCurrentTranslations(language);
     
     // Preload other languages in background for better performance
@@ -96,6 +102,12 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     setLanguageState(newLanguage);
     setCookie('language', newLanguage);
     console.log('💾 新语言已保存到 Cookie:', newLanguage);
+    
+    // Update HTML lang attribute for CSS :lang() selectors
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', newLanguage);
+      console.log('🌐 HTML lang 属性已更新为:', newLanguage);
+    }
     
     // Load translations for new language
     await loadCurrentTranslations(newLanguage);

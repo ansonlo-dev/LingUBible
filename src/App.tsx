@@ -14,6 +14,10 @@ import { DocumentHead } from "@/components/common/DocumentHead";
 import { BetaNotice } from "@/components/common/BetaNotice";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import SmartFontLoader from "@/components/common/SmartFontLoader";
+
+// 導入優化字體 CSS
+import "./styles/optimizedFonts.css";
 
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
@@ -722,6 +726,7 @@ const App = () => {
         <LanguageProvider>
           <RecaptchaProvider>
             <AuthProvider>
+              <SmartFontLoader />
               <AppContent />
               <Toaster />
               <CookieConsent />

@@ -1,0 +1,156 @@
+/* Optimized LXGW WenKai Font Loading System */
+/* Uses language-specific subsets for maximum performance */
+
+/* Critical subset - loads first for immediate text display */
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('/fonts/optimized/LXGWWenKai-critical.woff2') format('woff2'),
+       url('/fonts/optimized/LXGWWenKai-critical.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0020-007F, U+4E00-4FFF, U+5000-5FFF, U+6000-6FFF, U+7000-7FFF, U+8000-8FFF, U+9000-9FFF;
+}
+
+/* Latin subset - optimized for English content */
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('/fonts/optimized/LXGWWenKai-latin.woff2') format('woff2'),
+       url('/fonts/optimized/LXGWWenKai-latin.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+0180-024F, U+1E00-1EFF, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-214F, U+2190-21FF;
+}
+
+/* Traditional Chinese subset */
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('/fonts/optimized/LXGWWenKai-zh-TW.woff2') format('woff2'),
+       url('/fonts/optimized/LXGWWenKai-zh-TW.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+F900-FAFF, U+2E80-2EFF, U+31C0-31EF, U+3200-32FF, U+3300-33FF, U+FE30-FE4F, U+FF00-FFEF;
+}
+
+/* Simplified Chinese subset */
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('/fonts/optimized/LXGWWenKai-zh-CN.woff2') format('woff2'),
+       url('/fonts/optimized/LXGWWenKai-zh-CN.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+2E80-2EFF, U+31C0-31EF, U+3200-32FF, U+3300-33FF, U+FF00-FFEF;
+}
+
+/* Full font - fallback for any missing characters */
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('/fonts/optimized/LXGWWenKai-full.woff2') format('woff2'),
+       url('/fonts/optimized/LXGWWenKai-full.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0020-007F, U+4E00-9FFF, U+3400-4DBF, U+F900-FAFF, U+2E80-2EFF, U+31C0-31EF, U+3200-32FF, U+3300-33FF, U+FE30-FE4F, U+FF00-FFEF, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-214F, U+2190-21FF;
+}
+
+/* CSS Custom Properties for font families */
+:root {
+  --font-family-base: 'LXGW WenKai', 
+                      'Noto Sans TC', 'Noto Sans SC', 
+                      'PingFang TC', 'PingFang SC', 
+                      'Microsoft JhengHei', 'Microsoft YaHei',
+                      'Inter', 'Helvetica Neue', Arial, sans-serif;
+  
+  --font-family-latin: 'LXGW WenKai', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-family-chinese: 'LXGW WenKai', 'Noto Sans TC', 'Noto Sans SC', 
+                         'PingFang TC', 'PingFang SC', 
+                         'Microsoft JhengHei', 'Microsoft YaHei', sans-serif;
+}
+
+/* Performance optimizations */
+html, body {
+  font-family: var(--font-family-base);
+  font-feature-settings: 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+}
+
+/* Language-specific optimizations */
+:lang(en) {
+  font-family: var(--font-family-latin);
+}
+
+:lang(zh-TW), :lang(zh-CN) {
+  font-family: var(--font-family-chinese);
+}
+
+/* Global font application for consistent rendering */
+* {
+  font-family: inherit;
+}
+
+/* Critical elements with explicit font family */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Form elements and interactive components */
+input, textarea, select, button {
+  font-family: var(--font-family-base) !important;
+}
+
+p, span, div, a, label {
+  font-family: var(--font-family-base);
+}
+
+/* Ensure Radix UI components use the correct font */
+[data-radix-popper-content-wrapper], 
+[data-radix-select-content],
+[data-radix-dropdown-menu-content],
+[data-radix-toast],
+[data-radix-dialog-content] {
+  font-family: var(--font-family-base) !important;
+}
+
+/* Performance hints for font loading */
+.font-loading {
+  font-display: swap;
+  visibility: hidden;
+}
+
+.font-loaded {
+  visibility: visible;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Optimized font sizes for different languages */
+:lang(zh-TW), :lang(zh-CN) {
+  /* Slightly larger line height for Chinese characters */
+  line-height: 1.6;
+}
+
+:lang(en) {
+  line-height: 1.5;
+}
+
+/* Network-aware loading states */
+@media (prefers-reduced-data: reduce) {
+  /* Use system fonts on data-saving mode */
+  html, body {
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Print optimizations */
+@media print {
+  * {
+    font-family: 'Times New Roman', serif !important;
+  }
+} 

@@ -289,9 +289,9 @@ export function AdvancedCourseFilters({
       }))
       .sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
 
-    // Return formatted options
+    // Return formatted options - use subjectCode as value to ensure uniqueness
     return subjectsWithCodes.map(({ subjectCode, department, count }) => ({
-      value: department, // Use department as value for filtering
+      value: subjectCode, // Use subjectCode as value to avoid duplicate keys
       label: `${subjectCode} - ${t(`subjectArea.${subjectCode}` as any) || subjectCode}`,
       count
     }));
