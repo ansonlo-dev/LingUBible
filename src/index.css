@@ -831,9 +831,13 @@ div[style*="position: fixed"][style*="right: 14px"] {
     transform: translateY(2px) !important;
   }
 
-  /* Light theme hover */
+  :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
+    color: black !important;
+    box-shadow: none !important;
+    transform: translateY(2px) !important;
+  }
+
   :not(.dark) .attached-tab-trigger:hover {
-    background: rgb(var(--muted)) !important;
     color: rgb(var(--foreground)) !important;
     border: none !important;
     border-radius: 12px 12px 0 0 !important;
@@ -854,6 +858,10 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   /* Active tab state - ensure same border radius */
+  :not(.dark) .attached-tab-trigger[data-state="active"] {
+    color: black !important;
+  }
+
   .attached-tab-trigger[data-state="active"] {
     color: rgb(var(--foreground)) !important;
     border: none !important;
@@ -869,26 +877,14 @@ div[style*="position: fixed"][style*="right: 14px"] {
     background: #F9FAFB !important;
   }
 
-  /* Light theme active tab hover - disable hover effects */
-  :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
-    background: #F9FAFB !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    transform: translateY(2px) !important;
-    cursor: default !important;
-  }
-
   /* Dark theme active tab */
   .dark .attached-tab-trigger[data-state="active"] {
     background: #18181b !important;
   }
 
-  /* Active tab hover - ensure same border radius */
-  .attached-tab-trigger[data-state="active"]:hover {
-    color: rgb(var(--foreground)) !important;
-    border: none !important;
-    border-radius: 12px 12px 0 0 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    transform: translateY(2px) !important;
+  /* Hover effects for regular tabs (not attached) - main page and teaching records */
+  [data-radix-tabs-trigger]:not(.attached-tab-trigger):hover {
+    background: rgba(var(--muted-foreground), 0.1) !important;
   }
 
   /* Light theme explicit rules - ensure consistent border radius */
