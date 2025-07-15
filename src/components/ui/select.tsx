@@ -81,6 +81,14 @@ const SelectContent = React.forwardRef<
       const target = e.target as HTMLElement;
       // Check if the touch started inside a select dropdown
       if (target.closest('[data-radix-select-content]')) {
+        console.log('🔍 Select TouchStart:', {
+          target: target.tagName + (target.className ? '.' + target.className : ''),
+          bodyOverflow: document.body.style.overflow,
+          bodyPosition: document.body.style.position,
+          defaultPrevented: e.defaultPrevented,
+          timestamp: Date.now()
+        });
+        
         // Store the initial touch position
         const touch = e.touches[0];
         (window as any).selectTouchStart = {
@@ -99,9 +107,25 @@ const SelectContent = React.forwardRef<
         const touch = e.touches[0];
         const startTouch = (window as any).selectTouchStart;
         
+        console.log('🔍 Select TouchMove:', {
+          target: target.tagName + (target.className ? '.' + target.className : ''),
+          hasStartTouch: !!startTouch,
+          bodyOverflow: document.body.style.overflow,
+          bodyPosition: document.body.style.position,
+          defaultPrevented: e.defaultPrevented,
+          timestamp: Date.now()
+        });
+        
         if (startTouch) {
           const deltaX = Math.abs(touch.clientX - startTouch.x);
           const deltaY = Math.abs(touch.clientY - startTouch.y);
+          
+          console.log('🔍 Select TouchMove Delta:', {
+            deltaX,
+            deltaY,
+            isVerticalScroll: deltaY > deltaX && deltaY > 10,
+            timestamp: Date.now()
+          });
           
           // If it's primarily a vertical scroll gesture
           if (deltaY > deltaX && deltaY > 10) {
@@ -110,8 +134,19 @@ const SelectContent = React.forwardRef<
               const isAtTop = viewport.scrollTop <= 0;
               const isAtBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight;
               
+              console.log('🔍 Select Viewport:', {
+                scrollTop: viewport.scrollTop,
+                scrollHeight: viewport.scrollHeight,
+                clientHeight: viewport.clientHeight,
+                isAtTop,
+                isAtBottom,
+                shouldAllowPageScroll: isAtTop || isAtBottom,
+                timestamp: Date.now()
+              });
+              
               // If we're at the boundaries and trying to scroll beyond, allow page scrolling
               if (isAtTop || isAtBottom) {
+                console.log('✅ Select: Allowing page scroll');
                 // Allow page scrolling by not preventing default
                 return;
               }

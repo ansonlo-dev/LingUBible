@@ -88,6 +88,16 @@ export function MultiSelectDropdown({
     let initialTouchHandled = false;
 
     const handleTouchStart = (e: TouchEvent) => {
+      console.log('🔍 MultiSelect TouchStart:', {
+        touchesLength: e.touches.length,
+        target: e.target,
+        scrollTop: scrollContainer.scrollTop,
+        scrollHeight: scrollContainer.scrollHeight,
+        clientHeight: scrollContainer.clientHeight,
+        defaultPrevented: e.defaultPrevented,
+        timestamp: Date.now()
+      });
+      
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         startY = touch.clientY;
@@ -108,14 +118,29 @@ export function MultiSelectDropdown({
         const isAtTop = scrollContainer.scrollTop <= 0;
         const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight;
         
+        console.log('🔍 MultiSelect TouchMove:', {
+          deltaY,
+          scrollTop: scrollContainer.scrollTop,
+          scrollHeight: scrollContainer.scrollHeight,
+          clientHeight: scrollContainer.clientHeight,
+          isAtTop,
+          isAtBottom,
+          shouldAllowPageScroll: (isAtTop && deltaY < 0) || (isAtBottom && deltaY > 0),
+          defaultPrevented: e.defaultPrevented,
+          target: e.target,
+          timestamp: Date.now()
+        });
+        
         // If we're trying to scroll beyond the dropdown's boundaries, allow page scrolling
         if ((isAtTop && deltaY < 0) || (isAtBottom && deltaY > 0)) {
+          console.log('✅ MultiSelect: Allowing page scroll');
           // Allow the page to scroll by not preventing default
           return;
         }
         
         // If we're scrolling within the dropdown, prevent page scrolling
         if (newScrollTop >= 0 && newScrollTop <= scrollContainer.scrollHeight - scrollContainer.clientHeight) {
+          console.log('🚫 MultiSelect: Preventing page scroll');
           e.preventDefault();
           e.stopPropagation();
           isDragging = true;
@@ -124,6 +149,11 @@ export function MultiSelectDropdown({
     };
 
     const handleTouchEnd = () => {
+      console.log('🔍 MultiSelect TouchEnd:', {
+        isDragging,
+        scrollTop: scrollContainer.scrollTop,
+        timestamp: Date.now()
+      });
       isDragging = false;
       initialTouchHandled = false;
     };
@@ -146,8 +176,20 @@ export function MultiSelectDropdown({
 
     const handleGlobalTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
+      const dropdownElement = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
+      
+      console.log('🌐 Global TouchStart:', {
+        target: target.tagName + (target.className ? '.' + target.className : ''),
+        insideDropdown: !!dropdownElement,
+        dropdownType: dropdownElement ? (dropdownElement.hasAttribute('data-radix-select-content') ? 'select' : 'multi-select') : null,
+        bodyOverflow: document.body.style.overflow,
+        bodyPosition: document.body.style.position,
+        defaultPrevented: e.defaultPrevented,
+        timestamp: Date.now()
+      });
+      
       // Check if the touch started inside a dropdown
-      if (target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown')) {
+      if (dropdownElement) {
         // Store the initial touch position
         const touch = e.touches[0];
         (window as any).dropdownTouchStart = {
@@ -166,14 +208,38 @@ export function MultiSelectDropdown({
         const touch = e.touches[0];
         const startTouch = (window as any).dropdownTouchStart;
         
+        console.log('🌐 Global TouchMove:', {
+          target: target.tagName + (target.className ? '.' + target.className : ''),
+          dropdownType: dropdownContent.hasAttribute('data-radix-select-content') ? 'select' : 'multi-select',
+          hasStartTouch: !!startTouch,
+          bodyOverflow: document.body.style.overflow,
+          bodyPosition: document.body.style.position,
+          defaultPrevented: e.defaultPrevented,
+          timestamp: Date.now()
+        });
+        
         if (startTouch) {
           const deltaX = Math.abs(touch.clientX - startTouch.x);
           const deltaY = Math.abs(touch.clientY - startTouch.y);
           
+          console.log('🌐 Global TouchMove Delta:', {
+            deltaX,
+            deltaY,
+            isVerticalScroll: deltaY > deltaX && deltaY > 10,
+            timestamp: Date.now()
+          });
+          
           // If it's primarily a vertical scroll gesture and we're not in a scrollable area
           if (deltaY > deltaX && deltaY > 10) {
             const scrollableElement = target.closest('[data-overflow-scroll]');
+            console.log('🌐 Scrollable element check:', {
+              hasScrollableElement: !!scrollableElement,
+              allowPageScroll: !scrollableElement,
+              timestamp: Date.now()
+            });
+            
             if (!scrollableElement) {
+              console.log('✅ Global: Allowing page scroll');
               // Allow page scrolling by not preventing default
               return;
             }
@@ -188,6 +254,151 @@ export function MultiSelectDropdown({
     return () => {
       document.removeEventListener('touchstart', handleGlobalTouchStart);
       document.removeEventListener('touchmove', handleGlobalTouchMove);
+    };
+  }, [isMobile]);
+
+  // Monitor body scroll lock and Radix UI behavior
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          const target = mutation.target as HTMLElement;
+          if (target === document.body) {
+            console.log('🔒 Body style changed:', {
+              overflow: document.body.style.overflow,
+              position: document.body.style.position,
+              height: document.body.style.height,
+              touchAction: document.body.style.touchAction,
+              timestamp: Date.now()
+            });
+          }
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+
+    // Check for Radix UI portal elements
+    const checkRadixPortals = () => {
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      console.log('🔍 Radix portals found:', {
+        count: portals.length,
+        elements: Array.from(portals).map(p => ({
+          tagName: p.tagName,
+          className: p.className,
+          dataAttributes: Array.from(p.attributes).filter(attr => attr.name.startsWith('data-')).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+        })),
+        timestamp: Date.now()
+      });
+    };
+
+    // Check portals when dropdown opens
+    const checkInterval = setInterval(checkRadixPortals, 1000);
+
+    return () => {
+      observer.disconnect();
+      clearInterval(checkInterval);
+    };
+  }, [isMobile, isOpen]);
+
+  // Monitor page scroll behavior
+  useEffect(() => {
+    if (!isMobile) return;
+
+    let lastScrollY = window.scrollY;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY;
+      
+      console.log('📄 Page scroll detected:', {
+        scrollY: currentScrollY,
+        delta: scrollDelta,
+        direction: scrollDelta > 0 ? 'down' : 'up',
+        timestamp: Date.now()
+      });
+      
+      lastScrollY = currentScrollY;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      console.log('🖱️ Wheel event:', {
+        deltaY: e.deltaY,
+        defaultPrevented: e.defaultPrevented,
+        target: (e.target as HTMLElement).tagName + ((e.target as HTMLElement).className ? '.' + (e.target as HTMLElement).className : ''),
+        timestamp: Date.now()
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('wheel', handleWheel, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, [isMobile]);
+
+  // Monitor all touch events on the body to detect interference
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleBodyTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      console.log('🔍 Body TouchStart:', {
+        target: target.tagName + (target.className ? '.' + target.className : ''),
+        touchesLength: e.touches.length,
+        defaultPrevented: e.defaultPrevented,
+        bubbles: e.bubbles,
+        cancelable: e.cancelable,
+        timestamp: Date.now()
+      });
+    };
+
+    const handleBodyTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const isInDropdown = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
+      
+      if (isInDropdown) {
+        console.log('🔍 Body TouchMove (in dropdown):', {
+          target: target.tagName + (target.className ? '.' + target.className : ''),
+          touchesLength: e.touches.length,
+          defaultPrevented: e.defaultPrevented,
+          bubbles: e.bubbles,
+          cancelable: e.cancelable,
+          timestamp: Date.now()
+        });
+      }
+    };
+
+    const handleBodyTouchEnd = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const isInDropdown = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
+      
+      if (isInDropdown) {
+        console.log('🔍 Body TouchEnd (in dropdown):', {
+          target: target.tagName + (target.className ? '.' + target.className : ''),
+          changedTouchesLength: e.changedTouches.length,
+          defaultPrevented: e.defaultPrevented,
+          timestamp: Date.now()
+        });
+      }
+    };
+
+    // Add capture phase listeners to see if something else is handling the events first
+    document.body.addEventListener('touchstart', handleBodyTouchStart, { passive: true, capture: true });
+    document.body.addEventListener('touchmove', handleBodyTouchMove, { passive: true, capture: true });
+    document.body.addEventListener('touchend', handleBodyTouchEnd, { passive: true, capture: true });
+
+    return () => {
+      document.body.removeEventListener('touchstart', handleBodyTouchStart, true);
+      document.body.removeEventListener('touchmove', handleBodyTouchMove, true);
+      document.body.removeEventListener('touchend', handleBodyTouchEnd, true);
     };
   }, [isMobile]);
 
