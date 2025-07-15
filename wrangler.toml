@@ -2,7 +2,14 @@ name = "lingubible"
 compatibility_date = "2025-06-30"
 
 [build]
-command = "bun install --frozen-lockfile && VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build"
+command = "npm run build:fast"
+cwd = ""
+watch_dir = "src"
+
+[build.environment_variables]
+SKIP_FONT_PROCESSING = "true"
+NODE_ENV = "production"
+VITE_BUILD_CACHE = "true"
 
 # 環境變數在構建命令中設置
 

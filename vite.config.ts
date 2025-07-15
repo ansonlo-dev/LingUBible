@@ -34,6 +34,14 @@ export default defineConfig(({ command, mode }) => {
       minify: isProduction ? 'esbuild' : false,
       rollupOptions: {
         treeshake: isProduction,
+        // 排除大型字型檔案以加速建置
+        external: id => {
+          // 排除大型字型檔案，讓它們直接複製而不處理
+          if (id.includes('fonts/LXGWWenKai') && id.includes('.ttf')) {
+            return true;
+          }
+          return false;
+        },
         output: {
           // Simplified chunking strategy to avoid React splitting issues
           manualChunks: isProduction ? {
@@ -50,9 +58,12 @@ export default defineConfig(({ command, mode }) => {
         }
       },
       chunkSizeWarningLimit: 1500,
-      reportCompressedSize: false,
+      reportCompressedSize: false, // 關閉壓縮大小報告以加速建置
       cssCodeSplit: true,
       assetsInlineLimit: 4096,
+      // 排除字型資料夾以加速建置
+      assetsDir: 'assets',
+      copyPublicDir: true,
     },
     optimizeDeps: {
       include: [
@@ -67,6 +78,8 @@ export default defineConfig(({ command, mode }) => {
         'appwrite',
       ],
       exclude: ['@vite/client', '@vite/env'],
+      // 啟用快取以加速重建
+      force: false,
     },
     esbuild: {
       target: 'es2020',
@@ -92,5 +105,7 @@ export default defineConfig(({ command, mode }) => {
       stringify: 'auto',
       namedExports: true,
     },
+    // 啟用快取以加速重建
+    cacheDir: '.vite',
   };
 });

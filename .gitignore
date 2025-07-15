@@ -38,3 +38,13 @@ node_modules/
 # Task files
 # tasks.json
 # tasks/ 
+
+# Vite build cache
+.vite/
+dist/
+.turbo/
+
+# Font processing cache
+temp-fonts/
+public/fonts/optimized/*.ttf
+public/fonts/optimized/*.woff2 

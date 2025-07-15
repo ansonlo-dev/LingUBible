@@ -9,7 +9,7 @@ import { BookText, Users, Star, TrendingUp, Loader2, UserCheck } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
-import { AnimatedTabs as Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMainPageStats } from '@/hooks/useMainPageStats';

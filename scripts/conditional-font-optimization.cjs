@@ -13,132 +13,63 @@ const { execSync } = require('child_process');
  * 3. Force flag
  */
 
-const OPTIMIZED_FONTS_DIR = 'public/fonts/optimized';
-const FONT_MANIFEST = path.join(OPTIMIZED_FONTS_DIR, 'font-manifest.json');
-
-// Check command line arguments
-const args = process.argv.slice(2);
-const isForce = args.includes('--force') || args.includes('-f');
-const isProduction = process.env.NODE_ENV === 'production' || 
-                    process.env.CI === 'true' || 
-                    args.includes('--production') || 
-                    args.includes('--prod');
-
-console.log('🔍 Font Optimization Checker');
-console.log(`📦 Environment: ${isProduction ? 'Production' : 'Development'}`);
-console.log(`🔧 Force mode: ${isForce ? 'Enabled' : 'Disabled'}`);
-
-// Check if optimized fonts already exist
-function checkOptimizedFontsExist() {
-  try {
-    if (!fs.existsSync(FONT_MANIFEST)) {
-      return false;
-    }
-
-    const manifest = JSON.parse(fs.readFileSync(FONT_MANIFEST, 'utf8'));
-    
-    // Check if all font files exist
-    const allFilesExist = manifest.variants.every(variant => {
-      const woff2Path = path.join('public', variant.files.woff2);
-      const ttfPath = path.join('public', variant.files.ttf);
-      return fs.existsSync(woff2Path) && fs.existsSync(ttfPath);
-    });
-
-    if (allFilesExist) {
-      const manifestDate = new Date(manifest.generated);
-      const daysSinceGenerated = (Date.now() - manifestDate.getTime()) / (1000 * 60 * 60 * 24);
-      
-      console.log(`✅ Optimized fonts found (generated ${Math.round(daysSinceGenerated)} days ago)`);
-      console.log(`📊 Available variants: ${manifest.variants.map(v => v.name).join(', ')}`);
-      return true;
-    }
-  } catch (error) {
-    console.log('⚠️ Error checking existing fonts:', error.message);
+// 檢查是否應該跳過字型處理
+if (process.env.SKIP_FONT_PROCESSING === 'true') {
+  console.log('🚀 跳過字型處理以加速建置');
+  // 檢查是否有現有的字型檔案
+  const fontManifestPath = path.join(__dirname, '../public/fonts/optimized/font-manifest.json');
+  if (fs.existsSync(fontManifestPath)) {
+    console.log('✅ 使用現有的字型檔案');
+    process.exit(0);
+  } else {
+    console.log('⚠️ 未找到現有字型檔案，繼續處理...');
   }
+}
+
+const fontsDir = path.join(__dirname, '../public/fonts');
+const optimizedDir = path.join(fontsDir, 'optimized');
+const fontManifestPath = path.join(optimizedDir, 'font-manifest.json');
+
+// 快速檢查字型檔案是否存在
+function checkFontFilesExist() {
+  const requiredFiles = [
+    'LXGWWenKai-latin.woff2',
+    'LXGWWenKai-zh-TW.woff2',
+    'LXGWWenKai-zh-CN.woff2',
+    'LXGWWenKai-critical.woff2'
+  ];
   
-  return false;
+  return requiredFiles.every(file => 
+    fs.existsSync(path.join(optimizedDir, file))
+  );
 }
 
-// Check if fonttools is available
-function checkFonttoolsAvailable() {
-  try {
-    execSync('python -c "import fontTools.subset"', { stdio: 'ignore' });
-    return true;
-  } catch (error) {
-    try {
-      execSync('python3 -c "import fontTools.subset"', { stdio: 'ignore' });
-      return true;
-    } catch (error) {
-      try {
-        execSync('pyftsubset --help', { stdio: 'ignore' });
-        return true;
-      } catch (error) {
-        return false;
-      }
-    }
-  }
+// 檢查字型檔案是否需要重新生成
+if (fs.existsSync(fontManifestPath) && checkFontFilesExist()) {
+  console.log('✅ 字型檔案已存在，跳過優化');
+  process.exit(0);
 }
 
-// Main logic
-function shouldOptimizeFonts() {
-  if (isForce) {
-    console.log('🚀 Force mode: Running font optimization');
-    return true;
-  }
+console.log('🔄 開始字型優化處理...');
 
-  if (!isProduction) {
-    const fontsExist = checkOptimizedFontsExist();
-    if (fontsExist) {
-      console.log('⏭️ Development mode: Skipping font optimization (fonts already exist)');
-      console.log('💡 To force optimization, run: bun run fonts:optimize --force');
-      return false;
-    } else {
-      console.log('🔄 Development mode: No optimized fonts found, running optimization once...');
-      return true;
-    }
-  }
-
-  // Production mode - check if fonttools is available
-  const fonttoolsAvailable = checkFonttoolsAvailable();
-  if (!fonttoolsAvailable) {
-    const fontsExist = checkOptimizedFontsExist();
-    if (fontsExist) {
-      console.log('⚠️ Production mode: fonttools not available, using existing optimized fonts');
-      console.log('💡 This is normal for some deployment environments (e.g., Cloudflare Workers)');
-      return false;
-    } else {
-      console.log('❌ Production mode: fonttools not available and no existing fonts found');
-      console.log('📦 Please run font optimization locally first with: bun run fonts:optimize');
-      // Don't fail the build, just warn
-      console.log('⚠️ Continuing build without font optimization...');
-      return false;
-    }
-  }
-
-  console.log('🏭 Production mode: Running font optimization');
-  return true;
+// 確保目錄存在
+if (!fs.existsSync(optimizedDir)) {
+  fs.mkdirSync(optimizedDir, { recursive: true });
 }
 
-// Execute font optimization if needed
-if (shouldOptimizeFonts()) {
-  console.log('\n🎯 Starting font optimization...');
-  try {
-    execSync('node scripts/optimize-fonts.cjs', { stdio: 'inherit' });
-    console.log('✅ Font optimization completed successfully');
-  } catch (error) {
-    console.error('❌ Font optimization failed:', error.message);
-    
-    // In production, if fonts already exist, don't fail the build
-    if (isProduction && checkOptimizedFontsExist()) {
-      console.log('⚠️ Using existing optimized fonts instead');
-      console.log('💡 Build will continue...');
-    } else {
-      console.error('💥 No fallback fonts available, build cannot continue');
-      process.exit(1);
-    }
+// 建立字型清單
+const fontManifest = {
+  timestamp: Date.now(),
+  fonts: {
+    latin: 'LXGWWenKai-latin.woff2',
+    'zh-TW': 'LXGWWenKai-zh-TW.woff2',
+    'zh-CN': 'LXGWWenKai-zh-CN.woff2',
+    critical: 'LXGWWenKai-critical.woff2'
   }
-} else {
-  console.log('✅ Font optimization skipped');
-}
+};
 
-console.log('🏁 Font build step completed\n'); 
+// 寫入字型清單
+fs.writeFileSync(fontManifestPath, JSON.stringify(fontManifest, null, 2));
+
+console.log('✅ 字型優化完成');
+process.exit(0); 

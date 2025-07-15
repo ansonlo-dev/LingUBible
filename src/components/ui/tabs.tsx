@@ -50,88 +50,75 @@ const TabsContent = React.forwardRef<
 ))
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
-// Enhanced Tabs with animated underline following Medium guide approach
+// Enhanced Tabs with sliding indicator
 const AnimatedTabs = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
->(({ className, onValueChange, value, defaultValue, ...props }, ref) => {
-  const [activeTab, setActiveTab] = React.useState<string>(defaultValue || value || '');
-  const [indicatorStyle, setIndicatorStyle] = React.useState<{
-    left: number;
-    width: number;
-    opacity: number;
-  }>({ left: 0, width: 0, opacity: 0 });
+>(({ className, onValueChange, ...props }, ref) => {
+  const [indicatorStyle, setIndicatorStyle] = React.useState<React.CSSProperties>({
+    transform: 'translateX(0px)',
+    width: '0px',
+    opacity: 0
+  });
 
   const tabsListRef = React.useRef<HTMLDivElement>(null);
-  const isInitialMount = React.useRef(true);
 
-  // Update indicator position function
   const updateIndicator = React.useCallback(() => {
     if (!tabsListRef.current) return;
 
-    const activeTabElement = tabsListRef.current.querySelector(
-      `[data-state="active"]`
-    ) as HTMLButtonElement;
+    const activeTab = tabsListRef.current.querySelector(`[data-state="active"]`) as HTMLElement;
+    if (!activeTab) return;
 
-    if (activeTabElement) {
-      const { offsetLeft, offsetWidth } = activeTabElement;
-      
-      // For initial mount, set position immediately without animation
-      if (isInitialMount.current) {
-        setIndicatorStyle({ left: offsetLeft, width: offsetWidth, opacity: 1 });
-        isInitialMount.current = false;
-      } else {
-        // For subsequent updates, animate the transition
-        setIndicatorStyle({ left: offsetLeft, width: offsetWidth, opacity: 1 });
-      }
-    }
+    const tabsListRect = tabsListRef.current.getBoundingClientRect();
+    const activeTabRect = activeTab.getBoundingClientRect();
+
+    // Calculate position relative to the tabs list container
+    const translateX = activeTabRect.left - tabsListRect.left;
+    const width = activeTabRect.width;
+
+    console.log('Tab indicator update:', { translateX, width, tabsListRect, activeTabRect });
+
+    setIndicatorStyle({
+      transform: `translateX(${translateX}px)`,
+      width: `${width}px`,
+      opacity: 1
+    });
   }, []);
 
-  // Handle value change
-  const handleValueChange = React.useCallback((newValue: string) => {
-    setActiveTab(newValue);
-    onValueChange?.(newValue);
-    
-    // Update indicator after a brief delay to ensure DOM is updated
-    setTimeout(() => updateIndicator(), 100);
+  const handleValueChange = React.useCallback((value: string) => {
+    onValueChange?.(value);
+    // Update indicator after value change
+    setTimeout(() => updateIndicator(), 10);
   }, [onValueChange, updateIndicator]);
 
-  // Update indicator when active tab changes
   React.useEffect(() => {
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
-      updateIndicator();
-    });
-  }, [activeTab, updateIndicator]);
-
-  // Update indicator on window resize
-  React.useEffect(() => {
-    const handleResize = () => {
-      // Add a small delay to ensure layout is complete
-      setTimeout(() => updateIndicator(), 50);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [updateIndicator]);
-
-  // Initial setup and mutation observer
-  React.useEffect(() => {
-    // Initial update with delay to ensure DOM is ready
+    // Initial indicator update with fallback
     const timer = setTimeout(() => {
       updateIndicator();
-    }, 200);
-
-    // Observe changes in tab list
-    const observer = new MutationObserver((mutations) => {
-      // Check if data-state attribute changed
-      const hasStateChange = mutations.some(mutation => 
-        mutation.type === 'attributes' && mutation.attributeName === 'data-state'
-      );
-      
-      if (hasStateChange) {
-        setTimeout(() => updateIndicator(), 10);
+      // Fallback: if indicator is still not visible, show a basic one
+      if (indicatorStyle.opacity === 0) {
+        setIndicatorStyle({
+          transform: 'translateX(0px)',
+          width: '60px',
+          opacity: 1
+        });
       }
+    }, 100);
+    
+    // Update indicator on window resize
+    const handleResize = () => updateIndicator();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateIndicator, indicatorStyle.opacity]);
+
+  React.useEffect(() => {
+    // Update indicator whenever tabs change
+    const observer = new MutationObserver(() => {
+      updateIndicator();
     });
 
     if (tabsListRef.current) {
@@ -143,10 +130,7 @@ const AnimatedTabs = React.forwardRef<
       });
     }
 
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [updateIndicator]);
 
   return (
@@ -154,8 +138,6 @@ const AnimatedTabs = React.forwardRef<
       ref={ref}
       className={cn("relative", className)}
       onValueChange={handleValueChange}
-      value={value}
-      defaultValue={defaultValue}
       {...props}
     >
       {React.Children.map(props.children, (child) => {
@@ -169,13 +151,13 @@ const AnimatedTabs = React.forwardRef<
             children: (
               <>
                 {child.props.children}
-                {/* Animated underline with improved dark theme visibility */}
+                {/* Animated indicator */}
                 <div
-                  className="absolute bottom-0 h-0.5 bg-red-600 dark:bg-red-400 transition-all duration-300 ease-out shadow-sm dark:shadow-red-400/50"
+                  className="absolute bottom-0 left-0 h-1 bg-red-600 transition-all duration-300 ease-out z-10"
                   style={{
-                    left: `${indicatorStyle.left}px`,
-                    width: `${indicatorStyle.width}px`,
-                    opacity: indicatorStyle.opacity,
+                    ...indicatorStyle,
+                    opacity: indicatorStyle.opacity || 0,
+                    minWidth: '20px' // Ensure it has some width for debugging
                   }}
                 />
               </>

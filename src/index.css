@@ -938,16 +938,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
     border: none !important;
   }
   
-  /* Remove borders from review cards and components ONLY within attached tab content areas */
-  .attached-tab-content .bg-card.border.border-border,
-  .attached-tab-content .border,
-  .attached-tab-content [class*="border-gray"],
-  .attached-tab-content [class*="border-border"],
-  .attached-tab-content [class*="dark:border"],
-  .attached-tab-content .course-card {
-    border: none !important;
-  }
-
   /* Fix backgrond color for tab content of student reviews in dark theme */
   .dark .attached-tab-content > *:first-child,
   .dark .attached-tab-content .course-card:first-child,
@@ -1733,7 +1723,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 確保活躍狀態的樣式優先級更高（排除 attached-tab-trigger） */
   [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"]:hover {
     background-color: transparent !important;
-    border: none !important;
     border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     border-radius: 6px 6px 0 0 !important;
   }
@@ -1742,31 +1731,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
   [data-radix-tabs-list] {
     position: relative !important;
     overflow: visible !important;
-    padding-bottom: 3px !important; /* 為底部指示器留出空間 */
+    padding-bottom: 0 !important; /* 移除底部內邊距 */
     background: transparent !important; /* 移除背景色避免遮蓋 */
     border-radius: 8px 8px 0 0 !important; /* 只保留頂部圓角 */
-  }
-  
-  /* 為動畫指示器添加陰影效果 */
-  [data-radix-tabs-list] > div:last-child {
-    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.3);
-    border-radius: 1px;
-  }
-  
-  /* Dark theme specific underline styling */
-  .dark [data-radix-tabs-list] > div:last-child {
-    box-shadow: 
-      0 1px 2px rgba(248, 113, 113, 0.4),
-      0 0 8px rgba(248, 113, 113, 0.2);
-    background-color: #f87171 !important;
-  }
-  
-  /* Enhanced visibility for animated underline */
-  [data-radix-tabs-list] > div:last-child {
-    height: 2px !important;
-    z-index: 10;
-    position: absolute;
-    bottom: 0;
   }
   
   /* 針對 grid 佈局的 TabsList 特殊處理 */
@@ -1820,7 +1787,6 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
   
   .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"]:hover {
     background-color: transparent !important;
-    border: none !important;
     border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     border-radius: 6px 6px 0 0 !important;
   }
@@ -1829,7 +1795,7 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
   .dark button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
   .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"] {
     background-color: transparent !important;
-    border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
+    border-bottom: 2px solid #dc2626 !important; /* 移除邊框，由動畫指示器處理 */
     box-shadow: none !important;
   }
   
