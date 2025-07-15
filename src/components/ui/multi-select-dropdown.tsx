@@ -77,33 +77,19 @@ export function MultiSelectDropdown({
   // Ensure selectedValues is always an array
   const safeSelectedValues = Array.isArray(selectedValues) ? selectedValues : [];
 
-  // Fix mobile scrolling issue
+  // Fix mobile scrolling issue for dropdown internal scrolling
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer || !isMobile) return;
 
     let startY = 0;
     let startScrollTop = 0;
-    let isDragging = false;
-    let initialTouchHandled = false;
 
     const handleTouchStart = (e: TouchEvent) => {
-      console.log('🔍 MultiSelect TouchStart:', {
-        touchesLength: e.touches.length,
-        target: e.target,
-        scrollTop: scrollContainer.scrollTop,
-        scrollHeight: scrollContainer.scrollHeight,
-        clientHeight: scrollContainer.clientHeight,
-        defaultPrevented: e.defaultPrevented,
-        timestamp: Date.now()
-      });
-      
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         startY = touch.clientY;
         startScrollTop = scrollContainer.scrollTop;
-        isDragging = false;
-        initialTouchHandled = false;
       }
     };
 
@@ -118,287 +104,87 @@ export function MultiSelectDropdown({
         const isAtTop = scrollContainer.scrollTop <= 0;
         const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight;
         
-        console.log('🔍 MultiSelect TouchMove:', {
-          deltaY,
-          scrollTop: scrollContainer.scrollTop,
-          scrollHeight: scrollContainer.scrollHeight,
-          clientHeight: scrollContainer.clientHeight,
-          isAtTop,
-          isAtBottom,
-          shouldAllowPageScroll: (isAtTop && deltaY < 0) || (isAtBottom && deltaY > 0),
-          defaultPrevented: e.defaultPrevented,
-          target: e.target,
-          timestamp: Date.now()
-        });
-        
         // If we're trying to scroll beyond the dropdown's boundaries, allow page scrolling
         if ((isAtTop && deltaY < 0) || (isAtBottom && deltaY > 0)) {
-          console.log('✅ MultiSelect: Allowing page scroll');
           // Allow the page to scroll by not preventing default
           return;
         }
         
         // If we're scrolling within the dropdown, prevent page scrolling
         if (newScrollTop >= 0 && newScrollTop <= scrollContainer.scrollHeight - scrollContainer.clientHeight) {
-          console.log('🚫 MultiSelect: Preventing page scroll');
           e.preventDefault();
           e.stopPropagation();
-          isDragging = true;
         }
       }
-    };
-
-    const handleTouchEnd = () => {
-      console.log('🔍 MultiSelect TouchEnd:', {
-        isDragging,
-        scrollTop: scrollContainer.scrollTop,
-        timestamp: Date.now()
-      });
-      isDragging = false;
-      initialTouchHandled = false;
     };
 
     // Add touch event listeners with proper passive settings
     scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
     scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
-    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       scrollContainer.removeEventListener('touchstart', handleTouchStart);
       scrollContainer.removeEventListener('touchmove', handleTouchMove);
-      scrollContainer.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isMobile]);
 
-  // Additional mobile touch handling for the entire dropdown
+  // Fix dropdown scroll interference by intercepting at capture phase
   useEffect(() => {
     if (!isMobile) return;
 
-    const handleGlobalTouchStart = (e: TouchEvent) => {
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isInDropdown = false;
+
+    const handleCapturePhase = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
       const dropdownElement = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
       
-      console.log('🌐 Global TouchStart:', {
-        target: target.tagName + (target.className ? '.' + target.className : ''),
-        insideDropdown: !!dropdownElement,
-        dropdownType: dropdownElement ? (dropdownElement.hasAttribute('data-radix-select-content') ? 'select' : 'multi-select') : null,
-        bodyOverflow: document.body.style.overflow,
-        bodyPosition: document.body.style.position,
-        defaultPrevented: e.defaultPrevented,
-        timestamp: Date.now()
-      });
-      
-      // Check if the touch started inside a dropdown
-      if (dropdownElement) {
-        // Store the initial touch position
-        const touch = e.touches[0];
-        (window as any).dropdownTouchStart = {
-          x: touch.clientX,
-          y: touch.clientY,
-          timestamp: Date.now()
-        };
+      if (dropdownElement && e.type === 'touchstart') {
+        isInDropdown = true;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        console.log('📱 Dropdown touch detected - monitoring for page scroll');
       }
-    };
-
-    const handleGlobalTouchMove = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const dropdownContent = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
       
-      if (dropdownContent) {
+      if (isInDropdown && e.type === 'touchmove') {
         const touch = e.touches[0];
-        const startTouch = (window as any).dropdownTouchStart;
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+        const timeDelta = Date.now() - touchStartTime;
         
-        console.log('🌐 Global TouchMove:', {
-          target: target.tagName + (target.className ? '.' + target.className : ''),
-          dropdownType: dropdownContent.hasAttribute('data-radix-select-content') ? 'select' : 'multi-select',
-          hasStartTouch: !!startTouch,
-          bodyOverflow: document.body.style.overflow,
-          bodyPosition: document.body.style.position,
-          defaultPrevented: e.defaultPrevented,
-          timestamp: Date.now()
-        });
-        
-        if (startTouch) {
-          const deltaX = Math.abs(touch.clientX - startTouch.x);
-          const deltaY = Math.abs(touch.clientY - startTouch.y);
+        // If it's a significant vertical movement and not in a scrollable area
+        if (deltaY > 10 && timeDelta > 50) {
+          const scrollableElement = target.closest('[data-overflow-scroll]');
           
-          console.log('🌐 Global TouchMove Delta:', {
-            deltaX,
-            deltaY,
-            isVerticalScroll: deltaY > deltaX && deltaY > 10,
-            timestamp: Date.now()
-          });
-          
-          // If it's primarily a vertical scroll gesture and we're not in a scrollable area
-          if (deltaY > deltaX && deltaY > 10) {
-            const scrollableElement = target.closest('[data-overflow-scroll]');
-            console.log('🌐 Scrollable element check:', {
-              hasScrollableElement: !!scrollableElement,
-              allowPageScroll: !scrollableElement,
-              timestamp: Date.now()
-            });
+          if (!scrollableElement) {
+            // Force allow page scrolling by stopping event propagation
+            e.stopImmediatePropagation();
+            console.log('✅ Forced page scroll - stopped event propagation');
             
-            if (!scrollableElement) {
-              console.log('✅ Global: Allowing page scroll');
-              // Allow page scrolling by not preventing default
-              return;
-            }
+            // Manually trigger page scroll
+            const scrollDelta = (touch.clientY - touchStartY) * -1;
+            window.scrollBy(0, scrollDelta * 0.5);
+            touchStartY = touch.clientY;
           }
         }
       }
-    };
-
-    document.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleGlobalTouchMove, { passive: true });
-
-    return () => {
-      document.removeEventListener('touchstart', handleGlobalTouchStart);
-      document.removeEventListener('touchmove', handleGlobalTouchMove);
-    };
-  }, [isMobile]);
-
-  // Monitor body scroll lock and Radix UI behavior
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-          const target = mutation.target as HTMLElement;
-          if (target === document.body) {
-            console.log('🔒 Body style changed:', {
-              overflow: document.body.style.overflow,
-              position: document.body.style.position,
-              height: document.body.style.height,
-              touchAction: document.body.style.touchAction,
-              timestamp: Date.now()
-            });
-          }
-        }
-      });
-    });
-
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style']
-    });
-
-    // Check for Radix UI portal elements
-    const checkRadixPortals = () => {
-      const portals = document.querySelectorAll('[data-radix-portal]');
-      console.log('🔍 Radix portals found:', {
-        count: portals.length,
-        elements: Array.from(portals).map(p => ({
-          tagName: p.tagName,
-          className: p.className,
-          dataAttributes: Array.from(p.attributes).filter(attr => attr.name.startsWith('data-')).map(attr => `${attr.name}="${attr.value}"`).join(' ')
-        })),
-        timestamp: Date.now()
-      });
-    };
-
-    // Check portals when dropdown opens
-    const checkInterval = setInterval(checkRadixPortals, 1000);
-
-    return () => {
-      observer.disconnect();
-      clearInterval(checkInterval);
-    };
-  }, [isMobile, isOpen]);
-
-  // Monitor page scroll behavior
-  useEffect(() => {
-    if (!isMobile) return;
-
-    let lastScrollY = window.scrollY;
-    
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const scrollDelta = currentScrollY - lastScrollY;
       
-      console.log('📄 Page scroll detected:', {
-        scrollY: currentScrollY,
-        delta: scrollDelta,
-        direction: scrollDelta > 0 ? 'down' : 'up',
-        timestamp: Date.now()
-      });
-      
-      lastScrollY = currentScrollY;
-    };
-
-    const handleWheel = (e: WheelEvent) => {
-      console.log('🖱️ Wheel event:', {
-        deltaY: e.deltaY,
-        defaultPrevented: e.defaultPrevented,
-        target: (e.target as HTMLElement).tagName + ((e.target as HTMLElement).className ? '.' + (e.target as HTMLElement).className : ''),
-        timestamp: Date.now()
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('wheel', handleWheel, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('wheel', handleWheel);
-    };
-  }, [isMobile]);
-
-  // Monitor all touch events on the body to detect interference
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const handleBodyTouchStart = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      console.log('🔍 Body TouchStart:', {
-        target: target.tagName + (target.className ? '.' + target.className : ''),
-        touchesLength: e.touches.length,
-        defaultPrevented: e.defaultPrevented,
-        bubbles: e.bubbles,
-        cancelable: e.cancelable,
-        timestamp: Date.now()
-      });
-    };
-
-    const handleBodyTouchMove = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const isInDropdown = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
-      
-      if (isInDropdown) {
-        console.log('🔍 Body TouchMove (in dropdown):', {
-          target: target.tagName + (target.className ? '.' + target.className : ''),
-          touchesLength: e.touches.length,
-          defaultPrevented: e.defaultPrevented,
-          bubbles: e.bubbles,
-          cancelable: e.cancelable,
-          timestamp: Date.now()
-        });
+      if (e.type === 'touchend') {
+        isInDropdown = false;
+        touchStartY = 0;
+        touchStartTime = 0;
       }
     };
 
-    const handleBodyTouchEnd = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const isInDropdown = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
-      
-      if (isInDropdown) {
-        console.log('🔍 Body TouchEnd (in dropdown):', {
-          target: target.tagName + (target.className ? '.' + target.className : ''),
-          changedTouchesLength: e.changedTouches.length,
-          defaultPrevented: e.defaultPrevented,
-          timestamp: Date.now()
-        });
-      }
-    };
-
-    // Add capture phase listeners to see if something else is handling the events first
-    document.body.addEventListener('touchstart', handleBodyTouchStart, { passive: true, capture: true });
-    document.body.addEventListener('touchmove', handleBodyTouchMove, { passive: true, capture: true });
-    document.body.addEventListener('touchend', handleBodyTouchEnd, { passive: true, capture: true });
+    // Use capture phase with non-passive to intercept before Radix UI
+    document.addEventListener('touchstart', handleCapturePhase, { passive: false, capture: true });
+    document.addEventListener('touchmove', handleCapturePhase, { passive: false, capture: true });
+    document.addEventListener('touchend', handleCapturePhase, { passive: false, capture: true });
 
     return () => {
-      document.body.removeEventListener('touchstart', handleBodyTouchStart, true);
-      document.body.removeEventListener('touchmove', handleBodyTouchMove, true);
-      document.body.removeEventListener('touchend', handleBodyTouchEnd, true);
+      document.removeEventListener('touchstart', handleCapturePhase, true);
+      document.removeEventListener('touchmove', handleCapturePhase, true);
+      document.removeEventListener('touchend', handleCapturePhase, true);
     };
   }, [isMobile]);
 
