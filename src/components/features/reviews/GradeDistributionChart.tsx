@@ -1635,69 +1635,70 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
-              {/* Mobile: Chart type buttons and filters in separate rows */}
-              <div className="flex flex-col gap-2 md:hidden">
-                {/* Chart type buttons row */}
-                <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 min-w-0",
-                      chartType === 'bar' 
-                        ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                        : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
-                    )}
-                    onClick={() => setChartType('bar')}
-                  >
-                    <BarChart3 className="h-3 w-3" />
-                    <span className="truncate">{t('chart.barChart')}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 min-w-0",
-                      chartType === 'stacked' 
-                        ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                        : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
-                    )}
-                    onClick={() => setChartType('stacked')}
-                  >
-                    <BarChart className="h-3 w-3" />
-                    <span className="truncate">{t('chart.stackedNormalized')}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 min-w-0",
-                      chartType === 'boxplot' 
-                        ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                        : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
-                    )}
-                    onClick={() => setChartType('boxplot')}
-                  >
-                    <BoxSelect className="h-3 w-3" />
-                    <span className="truncate">{t('chart.boxPlot')}</span>
-                  </Button>
-                </div>
-                
-                {/* Filter row - only show if filter options exist */}
-                {filterOptions && filterOptions.length > 0 && onFilterChange && (
-                  <div className="flex items-center gap-2">
-                    {filterLabel && (
-                      <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">
-                        {(() => {
-                          // Show plural form for all chart types
-                          // Add (s) for plural in English only
-                          const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
-                                          !filterLabel.includes('课程') && !filterLabel.includes('教师');
-                          return isEnglish ? filterLabel + '(s)' : filterLabel;
-                        })()}:
-                      </span>
-                    )}
-                    {chartType === 'bar' ? (
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
+                <div className="flex flex-col gap-2">
+                  {/* 圖表類型切換按鈕 */}
+              <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    chartType === 'bar' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('bar')}
+                >
+                  <BarChart3 className="h-3 w-3" />
+                  <span className="truncate">{t('chart.barChart')}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    chartType === 'stacked' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('stacked')}
+                >
+                  <BarChart className="h-3 w-3" />
+                  <span className="truncate">{t('chart.stackedNormalized')}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    chartType === 'boxplot' 
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
+                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                  )}
+                  onClick={() => setChartType('boxplot')}
+                >
+                  <BoxSelect className="h-3 w-3" />
+                  <span className="truncate">{t('chart.boxPlot')}</span>
+                </Button>
+              </div>
+            </div>
+            
+            {/* 篩選器下拉選單 - 支援多選 */}
+            {filterOptions && filterOptions.length > 0 && onFilterChange && (
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto min-w-0">
+                {filterLabel && (
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {(() => {
+                      // Show plural form for all chart types
+                      // Add (s) for plural in English only
+                      const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                      !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                      return isEnglish ? filterLabel + '(s)' : filterLabel;
+                    })()}:
+                  </span>
+                )}
+                {chartType === 'bar' ? (
                   // Single selection for bar chart
                   <Select 
                     value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
@@ -1762,156 +1763,15 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-full h-10 text-sm"
+                      className="w-full sm:max-w-[320px] md:max-w-[400px]"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={totalCount}
                     />
                   </div>
                 )}
-                   </div>
-                )}
               </div>
-              
-              {/* Desktop: Chart type buttons and filters in the same row */}
-              <div className="hidden md:flex md:items-center md:justify-between md:gap-2 mb-2">
-                <div className="flex items-center gap-0.5 bg-muted/50 backdrop-blur-sm rounded-lg p-0.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 px-2 text-xs gap-1 min-w-0 hover:shadow-md transition-[transform,box-shadow] duration-200",
-                      chartType === 'bar' 
-                        ? "bg-background text-foreground shadow-sm data-[state=active]:shadow-lg" 
-                        : "bg-transparent hover:bg-background/50 text-muted-foreground"
-                    )}
-                    onClick={() => setChartType('bar')}
-                  >
-                    <BarChart3 className="h-3 w-3" />
-                    <span className="truncate">{t('chart.barChart')}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 px-2 text-xs gap-1 min-w-0 hover:shadow-md transition-[transform,box-shadow] duration-200",
-                      chartType === 'stacked' 
-                        ? "bg-background text-foreground shadow-sm data-[state=active]:shadow-lg" 
-                        : "bg-transparent hover:bg-background/50 text-muted-foreground"
-                    )}
-                    onClick={() => setChartType('stacked')}
-                  >
-                    <BarChart className="h-3 w-3" />
-                    <span className="truncate">{t('chart.stackedNormalized')}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 px-2 text-xs gap-1 min-w-0 hover:shadow-md transition-[transform,box-shadow] duration-200",
-                      chartType === 'boxplot' 
-                        ? "bg-background text-foreground shadow-sm data-[state=active]:shadow-lg" 
-                        : "bg-transparent hover:bg-background/50 text-muted-foreground"
-                    )}
-                    onClick={() => setChartType('boxplot')}
-                  >
-                    <BoxSelect className="h-3 w-3" />
-                    <span className="truncate">{t('chart.boxPlot')}</span>
-                  </Button>
-                </div>
-                
-                {/* Desktop filters - inline with chart type buttons */}
-                {filterOptions && filterOptions.length > 0 && onFilterChange && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 shrink-0">
-                      <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                        {filterLabel && (
-                          <>
-                            {(() => {
-                              // Show plural form for all chart types
-                              // Add (s) for plural in English only
-                              const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
-                                              !filterLabel.includes('课程') && !filterLabel.includes('教师');
-                              return isEnglish ? filterLabel + '(s)' : filterLabel;
-                            })()}:
-                          </>
-                        )}
-                      </label>
-                      {chartType === 'bar' ? (
-                        // Single selection for bar chart
-                        <Select 
-                          value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
-                          onValueChange={(value) => onFilterChange(value)}
-                        >
-                          <SelectTrigger className="w-[150px] h-10 text-sm">
-                            <SelectValue placeholder={t('common.all')}>
-                              {(() => {
-                                const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
-                                if (currentValue === 'all') {
-                                  return t('common.all');
-                                } else {
-                                  const option = filterOptions.find(opt => opt.value === currentValue);
-                                  return option ? option.label : currentValue;
-                                }
-                              })()}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent className="bg-white dark:bg-gray-900 border border-border max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
-                            <SelectItem value="all" textValue={t('common.all')}>
-                              <div className="flex items-center justify-between w-full min-w-0">
-                                <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
-                                <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                                  {totalCount}
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                            {filterOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
-                                <div className="flex items-center justify-between w-full min-w-0">
-                                  <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
-                                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                                    {option.count}
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        // Multiple selection for stacked chart and box plot
-                        <MultiSelectDropdown
-                          options={filterOptions.map((option): SelectOption => ({
-                            value: option.value,
-                            label: option.label,
-                            count: option.count
-                          }))}
-                          selectedValues={(() => {
-                            const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
-                            // If 'all' is selected or no values, return empty array to show placeholder
-                            if (values.length === 0 || values.includes('all')) {
-                              return [];
-                            }
-                            return values;
-                          })()}
-                          onSelectionChange={(values: string[]) => {
-                            if (values.length === 0) {
-                              onFilterChange('all'); // When nothing selected, set to 'all'
-                            } else {
-                              onFilterChange(values);
-                            }
-                          }}
-                          placeholder={t('common.all')}
-                          className="w-[150px] h-10 text-sm"
-                          showCounts={true}
-                          maxHeight="max-h-48"
-                          totalCount={totalCount}
-                        />
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </div>
         
