@@ -855,7 +855,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   /* Active tab state - ensure same border radius */
   .attached-tab-trigger[data-state="active"] {
-    background: rgb(var(--background)) !important;
     color: rgb(var(--foreground)) !important;
     border: none !important;
     border-radius: 12px 12px 0 0 !important;
@@ -865,9 +864,23 @@ div[style*="position: fixed"][style*="right: 14px"] {
     transform: translateY(2px) !important;
   }
 
+  /* Light theme active tab */
+  :not(.dark) .attached-tab-trigger[data-state="active"] {
+    background: #F9FAFB !important;
+  }
+
+  /* Light theme active tab hover */
+  :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
+    background: #F9FAFB !important;
+  }
+
+  /* Dark theme active tab */
+  .dark .attached-tab-trigger[data-state="active"] {
+    background: #18181b !important;
+  }
+
   /* Active tab hover - ensure same border radius */
   .attached-tab-trigger[data-state="active"]:hover {
-    background: rgb(var(--background)) !important;
     color: rgb(var(--foreground)) !important;
     border: none !important;
     border-radius: 12px 12px 0 0 !important;
@@ -884,21 +897,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     transform: translateY(2px) !important;
   }
 
-  :not(.dark) .attached-tab-trigger[data-state="active"] {
-    background: rgb(var(--background)) !important;
-    color: rgb(var(--foreground)) !important;
-    border: none !important;
-    border-radius: 12px 12px 0 0 !important;
-    transform: translateY(2px) !important;
-  }
 
-  :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
-    background: rgb(var(--background)) !important;
-    color: rgb(var(--foreground)) !important;
-    border: none !important;
-    border-radius: 12px 12px 0 0 !important;
-    transform: translateY(2px) !important;
-  }
 
   /* Dark theme adjustments */
   .dark .attached-tab-trigger {
@@ -949,6 +948,15 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-content .course-card {
     border: none !important;
   }
+
+  /* Fix backgrond color for tab content of student reviews in dark theme */
+  .dark .attached-tab-content > *:first-child,
+  .dark .attached-tab-content .course-card:first-child,
+  .dark .attached-tab-content .card:first-child,
+  .dark .attached-tab-content > div:first-child,
+  .dark .attached-tab-content [class*="Card"]:first-child {
+    background: #18181b !important;
+  }
   
   /* Ensure no top-left border-radius on child elements within tab content */
   .attached-tab-content > *:first-child,
@@ -956,10 +964,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-content .card:first-child,
   .attached-tab-content > div:first-child,
   .attached-tab-content [class*="Card"]:first-child {
-    border-top-left-radius: 0 !important;
+    background: #F9FAFB !important;
+    border-radius: 0 12px 12px 12px !important;
   }
-  
-
   
   /* 課程詳情頁面和講師頁面的 attached-tab-trigger 在暗色主題下不使用紅色邊框 */
   .dark .attached-tab-trigger[data-state="active"] {
