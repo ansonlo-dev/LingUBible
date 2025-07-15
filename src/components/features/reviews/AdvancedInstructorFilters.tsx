@@ -545,7 +545,7 @@ export function AdvancedInstructorFilters({
                   variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleSortChange(option.value)}
-                  className="h-8 px-3 text-xs"
+                  className="h-6 px-3 text-xs"
                 >
                   {option.label}
                   {getSortIcon(option.value)}
@@ -568,11 +568,11 @@ export function AdvancedInstructorFilters({
                 variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleSortChange(option.value)}
-                className="h-8 px-3 text-xs"
-              >
-                {option.label}
-                {getSortIcon(option.value)}
-              </Button>
+                                  className="h-6 px-3 text-xs"
+                >
+                  {option.label}
+                  {getSortIcon(option.value)}
+                </Button>
             ))}
           </div>
         </div>
@@ -592,7 +592,7 @@ export function AdvancedInstructorFilters({
                 variant={filters.itemsPerPage === size ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onPageSizeChange(size)}
-                className="h-8 px-3 text-xs border-0"
+                className="h-6 px-3 text-xs border-0"
               >
                 {size}
               </Button>
@@ -611,7 +611,7 @@ export function AdvancedInstructorFilters({
               variant="outline"
               size="sm"
               onClick={onClearAll}
-              className="h-8 px-3 text-xs bg-white dark:bg-transparent hover:bg-red-500 dark:hover:bg-red-500 border-black dark:border-white hover:border-red-500 dark:hover:border-red-500 text-black dark:text-white hover:text-white transition-all duration-200 whitespace-nowrap flex items-center gap-2"
+              className="h-6 px-3 text-xs bg-white dark:bg-transparent hover:bg-red-500 dark:hover:bg-red-500 border-black dark:border-white hover:border-red-500 dark:hover:border-red-500 text-black dark:text-white hover:text-white transition-all duration-200 whitespace-nowrap flex items-center gap-2"
             >
               <X className="h-3 w-3" />
               <span>{t('filter.clearAll')}</span>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger, AnimatedTabs } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { 
@@ -918,7 +918,7 @@ const CourseDetail = () => {
               <p className="text-muted-foreground">{t('pages.courseDetail.noTeachingRecords')}</p>
             </div>
           ) : (
-            <Tabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
+            <AnimatedTabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
               <div className="flex flex-col gap-4 mb-4">
                 {/* Mobile: Tab switcher and filters in separate rows */}
                 <div className="md:hidden">
@@ -1446,7 +1446,7 @@ const CourseDetail = () => {
                   </div>
                 )}
               </TabsContent>
-            </Tabs>
+            </AnimatedTabs>
           )}
             </CardContent>
           </Card>

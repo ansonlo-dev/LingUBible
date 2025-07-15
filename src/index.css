@@ -1734,7 +1734,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"]:hover {
     background-color: transparent !important;
     border: none !important;
-    border-bottom: 2px solid rgb(220, 38, 38) !important;
+    border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     border-radius: 6px 6px 0 0 !important;
   }
   
@@ -1742,9 +1742,31 @@ div[style*="position: fixed"][style*="right: 14px"] {
   [data-radix-tabs-list] {
     position: relative !important;
     overflow: visible !important;
-    padding-bottom: 0 !important; /* 移除底部內邊距 */
+    padding-bottom: 3px !important; /* 為底部指示器留出空間 */
     background: transparent !important; /* 移除背景色避免遮蓋 */
     border-radius: 8px 8px 0 0 !important; /* 只保留頂部圓角 */
+  }
+  
+  /* 為動畫指示器添加陰影效果 */
+  [data-radix-tabs-list] > div:last-child {
+    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.3);
+    border-radius: 1px;
+  }
+  
+  /* Dark theme specific underline styling */
+  .dark [data-radix-tabs-list] > div:last-child {
+    box-shadow: 
+      0 1px 2px rgba(248, 113, 113, 0.4),
+      0 0 8px rgba(248, 113, 113, 0.2);
+    background-color: #f87171 !important;
+  }
+  
+  /* Enhanced visibility for animated underline */
+  [data-radix-tabs-list] > div:last-child {
+    height: 2px !important;
+    z-index: 10;
+    position: absolute;
+    bottom: 0;
   }
   
   /* 針對 grid 佈局的 TabsList 特殊處理 */
@@ -1753,21 +1775,21 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   /* 活躍狀態的底部紅線指示器 - 使用更高優先級和更具體的選擇器（排除 attached-tab-trigger） */
-  button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
-  [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"] {
-    position: relative !important;
-    border-bottom: 2px solid rgb(220, 38, 38) !important;
-    border-radius: 6px 6px 0 0 !important;
-    margin-bottom: -4px !important; /* 讓紅線延伸到 TabsList 外部 */
-    z-index: 10 !important;
-    background-color: transparent !important;
-    box-shadow: none !important; /* 移除可能干擾的陰影 */
-  }
+button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
+[data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"] {
+  position: relative !important;
+  border-bottom: 2px solid #dc2626 !important; /* 紅色底線 */
+  border-radius: 6px 6px 0 0 !important;
+  margin-bottom: 0 !important; /* 重置邊距 */
+  z-index: 10 !important;
+  background-color: transparent !important;
+  box-shadow: none !important; /* 移除可能干擾的陰影 */
+}
   
   /* 覆蓋 Tailwind 的 shadow-sm 類別 */
   .data-\[state\=active\]\:shadow-sm[data-state="active"] {
     box-shadow: none !important;
-    border-bottom: 2px solid rgb(220, 38, 38) !important;
+    border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     border-radius: 6px 6px 0 0 !important;
   }
   
@@ -1777,10 +1799,10 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   /* 確保非活躍狀態的 TabsTrigger 沒有底部邊框和背景 */
-  [data-radix-tabs-trigger]:not([data-state="active"]) {
-    border-bottom: none !important;
-    background-color: transparent !important;
-  }
+[data-radix-tabs-trigger]:not([data-state="active"]) {
+  border-bottom: 2px solid transparent !important;
+  background-color: transparent !important;
+}
   
   /* 防止狀態切換時出現白色閃爍 */
   [data-radix-tabs-trigger] {
@@ -1799,7 +1821,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"]:hover {
     background-color: transparent !important;
     border: none !important;
-    border-bottom: 2px solid rgb(220, 38, 38) !important;
+    border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     border-radius: 6px 6px 0 0 !important;
   }
   
@@ -1807,16 +1829,16 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .dark button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
   .dark [data-radix-tabs-trigger]:not(.attached-tab-trigger)[data-state="active"] {
     background-color: transparent !important;
-    border-bottom: 2px solid rgb(220, 38, 38) !important;
+    border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     box-shadow: none !important;
   }
   
   /* 針對具體的 TabsTrigger 按鈕進行樣式覆蓋（排除 attached-tab-trigger） */
   button[role="tab"][data-state="active"].flex.items-center.gap-2:not(.attached-tab-trigger) {
     background-color: transparent !important;
-    border-bottom: 2px solid rgb(220, 38, 38) !important;
+    border-bottom: none !important; /* 移除邊框，由動畫指示器處理 */
     border-radius: 6px 6px 0 0 !important;
-    margin-bottom: -4px !important;
+    margin-bottom: 0 !important; /* 重置邊距 */
     box-shadow: none !important;
     position: relative !important;
     z-index: 10 !important;

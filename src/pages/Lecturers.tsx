@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger, AnimatedTabs } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { Pagination } from '@/components/features/reviews/Pagination';
@@ -1564,7 +1564,7 @@ const Lecturers = () => {
               <p className="text-muted-foreground">{t('instructors.noTeachingTitle')}</p>
             </div>
           ) : (
-            <Tabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
+            <AnimatedTabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
               {/* Mobile: Tabs and filters in separate rows */}
               <div className="flex flex-col gap-4 mb-4 md:hidden">
                 {/* Tab switcher row */}
@@ -2167,7 +2167,7 @@ const Lecturers = () => {
                   </div>
                 )}
               </TabsContent>
-            </Tabs>
+            </AnimatedTabs>
           )}
             </CardContent>
           </Card>

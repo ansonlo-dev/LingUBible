@@ -7,6 +7,7 @@ export function BackToTop() {
   const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
   const [isBottomVisible, setIsBottomVisible] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 檢測設備類型和方向以決定按鈕位置
@@ -17,25 +18,27 @@ export function BackToTop() {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const aspectRatio = width / height;
     
-    // 判斷是否應該使用"靠近邊緣"的定位
-    // 條件：觸摸設備在橫屏模式，或者寬高比很大的橫屏，或者明確的手機尺寸
-    const shouldUseClosePositioning = 
+    // 判斷是否為手機設備
+    const isMobile = 
       width < 768 || // 明確的手機尺寸
       (isTouchDevice && isLandscape) || // 觸摸設備橫屏
       (isLandscape && aspectRatio > 1.5 && width < 1200); // 明顯的橫屏比例但不是大螢幕
     
-    if (shouldUseClosePositioning) {
+    if (isMobile) {
+      // 手機版：保持原有的靠近邊緣定位
       return {
         right: '8px',
         bottomButton: '8px',
-        topButton: '40px' // 8px + 32px height
+        topButton: '40px', // 8px + 32px height
+        isDesktop: false
       };
     } else {
-      // 桌面或大螢幕 - 增加底部間距避免擋住頁腳
+      // 桌面版：保持相同的水平位置，只在底部時垂直移動
       return {
-        right: '32px',
-        bottomButton: '100px', // 從 64px 增加到 100px
-        topButton: '132px' // 從 96px 增加到 132px (100px + 32px height)
+        right: '16px', // 保持一致的水平位置
+        bottomButton: isAtBottom ? '100px' : '16px',
+        topButton: isAtBottom ? '132px' : '48px', // 16px + 32px height
+        isDesktop: true
       };
     }
   };
@@ -69,7 +72,7 @@ export function BackToTop() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleOrientationChange);
     };
-  }, []);
+  }, [isAtBottom]);
 
   useEffect(() => {
     let mounted = true;
@@ -98,6 +101,12 @@ export function BackToTop() {
         
         const shouldBeVisible = scrollTop > 50;
         const shouldBottomBeVisible = scrollTop + windowHeight < documentHeight - 50;
+        const shouldBeAtBottom = scrollTop + windowHeight >= documentHeight - 100; // 檢測是否接近底部
+        
+        // 更新狀態
+        setIsVisible(shouldBeVisible);
+        setIsBottomVisible(shouldBottomBeVisible);
+        setIsAtBottom(shouldBeAtBottom);
         
         // 強制狀態更新，確保 React 重新渲染
         setIsVisible(prev => {
@@ -113,6 +122,14 @@ export function BackToTop() {
           if (prev !== shouldBottomBeVisible) {
             setTimeout(() => setIsBottomVisible(shouldBottomBeVisible), 0);
             return shouldBottomBeVisible;
+          }
+          return prev;
+        });
+
+        setIsAtBottom(prev => {
+          if (prev !== shouldBeAtBottom) {
+            setTimeout(() => setIsAtBottom(shouldBeAtBottom), 0);
+            return shouldBeAtBottom;
           }
           return prev;
         });
