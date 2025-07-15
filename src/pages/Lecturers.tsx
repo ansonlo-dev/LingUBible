@@ -1704,7 +1704,7 @@ const Lecturers = () => {
               </div>
 
               {/* Desktop: Tab switcher and filters in the same row */}
-              <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-4">
+              <div className="hidden md:flex md:items-center md:justify-between md:gap-2 mb-4">
                 <TabsList className="bg-muted/50 backdrop-blur-sm">
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length > 0 && (
                     <TabsTrigger 
