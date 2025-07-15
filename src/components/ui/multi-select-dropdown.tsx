@@ -191,7 +191,7 @@ export function MultiSelectDropdown({
           </SelectValue>
         </SelectTrigger>
         <SelectContent 
-          className="bg-white dark:bg-gray-900 w-[calc(100vw-3rem)] sm:w-auto max-w-none sm:max-w-[600px] sm:min-w-[400px] overflow-hidden" 
+          className="bg-white dark:bg-gray-900 border border-border w-[calc(100vw-3rem)] sm:w-auto max-w-none sm:max-w-[600px] sm:min-w-[400px] overflow-hidden" 
           position="popper" 
           side="bottom" 
           align="center" 
