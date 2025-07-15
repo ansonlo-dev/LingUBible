@@ -77,6 +77,120 @@ export function MultiSelectDropdown({
   // Ensure selectedValues is always an array
   const safeSelectedValues = Array.isArray(selectedValues) ? selectedValues : [];
 
+  // Fix mobile scrolling issue
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || !isMobile) return;
+
+    let startY = 0;
+    let startScrollTop = 0;
+    let isDragging = false;
+    let initialTouchHandled = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        startY = touch.clientY;
+        startScrollTop = scrollContainer.scrollTop;
+        isDragging = false;
+        initialTouchHandled = false;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const currentY = touch.clientY;
+        const deltaY = startY - currentY;
+        const newScrollTop = startScrollTop + deltaY;
+        
+        // Check if we're at the boundaries of the dropdown scroll
+        const isAtTop = scrollContainer.scrollTop <= 0;
+        const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight;
+        
+        // If we're trying to scroll beyond the dropdown's boundaries, allow page scrolling
+        if ((isAtTop && deltaY < 0) || (isAtBottom && deltaY > 0)) {
+          // Allow the page to scroll by not preventing default
+          return;
+        }
+        
+        // If we're scrolling within the dropdown, prevent page scrolling
+        if (newScrollTop >= 0 && newScrollTop <= scrollContainer.scrollHeight - scrollContainer.clientHeight) {
+          e.preventDefault();
+          e.stopPropagation();
+          isDragging = true;
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isDragging = false;
+      initialTouchHandled = false;
+    };
+
+    // Add touch event listeners with proper passive settings
+    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      scrollContainer.removeEventListener('touchstart', handleTouchStart);
+      scrollContainer.removeEventListener('touchmove', handleTouchMove);
+      scrollContainer.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobile]);
+
+  // Additional mobile touch handling for the entire dropdown
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleGlobalTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if the touch started inside a dropdown
+      if (target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown')) {
+        // Store the initial touch position
+        const touch = e.touches[0];
+        (window as any).dropdownTouchStart = {
+          x: touch.clientX,
+          y: touch.clientY,
+          timestamp: Date.now()
+        };
+      }
+    };
+
+    const handleGlobalTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const dropdownContent = target.closest('[data-radix-select-content]') || target.closest('.multi-select-dropdown');
+      
+      if (dropdownContent) {
+        const touch = e.touches[0];
+        const startTouch = (window as any).dropdownTouchStart;
+        
+        if (startTouch) {
+          const deltaX = Math.abs(touch.clientX - startTouch.x);
+          const deltaY = Math.abs(touch.clientY - startTouch.y);
+          
+          // If it's primarily a vertical scroll gesture and we're not in a scrollable area
+          if (deltaY > deltaX && deltaY > 10) {
+            const scrollableElement = target.closest('[data-overflow-scroll]');
+            if (!scrollableElement) {
+              // Allow page scrolling by not preventing default
+              return;
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleGlobalTouchMove, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleGlobalTouchStart);
+      document.removeEventListener('touchmove', handleGlobalTouchMove);
+    };
+  }, [isMobile]);
+
   // Calculate total count if not provided
   const calculatedTotalCount = totalCount ?? options.reduce((sum, option) => sum + (option.count || 0), 0);
 
@@ -175,7 +289,7 @@ export function MultiSelectDropdown({
 
 
   return (
-    <div className={cn("relative w-full", className)}>
+    <div className={cn("relative w-full multi-select-dropdown", className)}>
       <Select 
         value="multi-select" 
         onValueChange={() => {}} // Controlled by checkbox interactions
@@ -224,6 +338,7 @@ export function MultiSelectDropdown({
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none'
                 }}
+                data-overflow-scroll="true"
               >
                 {options.map((option, index) => {
                   const isGroupHeader = option.value.startsWith('__faculty_');

@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -57,19 +58,84 @@ DropdownMenuSubContent.displayName =
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-background p-1 text-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
-      {...props}
-    />
-  </DropdownMenuPrimitive.Portal>
-))
+>(({ className, sideOffset = 4, ...props }, ref) => {
+  const isMobile = useIsMobile();
+
+  // Fix mobile scrolling issue for dropdown menus
+  React.useEffect(() => {
+    if (!isMobile) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if the touch started inside a dropdown menu
+      if (target.closest('[data-radix-dropdown-content]')) {
+        // Store the initial touch position
+        const touch = e.touches[0];
+        (window as any).dropdownTouchStart = {
+          x: touch.clientX,
+          y: touch.clientY,
+          timestamp: Date.now()
+        };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const dropdownContent = target.closest('[data-radix-dropdown-content]');
+      
+      if (dropdownContent) {
+        const touch = e.touches[0];
+        const startTouch = (window as any).dropdownTouchStart;
+        
+        if (startTouch) {
+          const deltaX = Math.abs(touch.clientX - startTouch.x);
+          const deltaY = Math.abs(touch.clientY - startTouch.y);
+          
+          // If it's primarily a vertical scroll gesture
+          if (deltaY > deltaX && deltaY > 10) {
+            // Check if there's a scrollable element inside
+            const scrollableElement = dropdownContent.querySelector('[data-overflow-scroll]');
+            if (scrollableElement) {
+              const isAtTop = scrollableElement.scrollTop <= 0;
+              const isAtBottom = scrollableElement.scrollTop + scrollableElement.clientHeight >= scrollableElement.scrollHeight;
+              
+              // If we're at the boundaries and trying to scroll beyond, allow page scrolling
+              if (isAtTop || isAtBottom) {
+                // Allow page scrolling by not preventing default
+                return;
+              }
+            } else {
+              // If there's no scrollable content, allow page scrolling
+              return;
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isMobile]);
+
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        ref={ref}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-background p-1 text-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          className
+        )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  );
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 const DropdownMenuItem = React.forwardRef<

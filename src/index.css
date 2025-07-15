@@ -3175,4 +3175,31 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
     background: rgb(var(--primary));
     color: rgb(var(--primary-foreground));
   }
+
+  /* Fix mobile scrolling issues with dropdowns */
+  @media (hover: none) and (pointer: coarse) {
+    /* Allow page scrolling when touching dropdown containers */
+    [data-radix-select-content],
+    [data-radix-dropdown-content],
+    .multi-select-dropdown {
+      touch-action: pan-y !important;
+    }
+    
+    /* Ensure scrollable areas within dropdowns handle touch properly */
+    [data-overflow-scroll] {
+      touch-action: pan-y !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent body scroll lock when dropdown is active */
+    body:has([data-radix-select-content]),
+    body:has([data-radix-dropdown-content]) {
+      touch-action: pan-y !important;
+    }
+    
+    /* Ensure main content can still scroll */
+    body {
+      touch-action: pan-y !important;
+    }
+  }
 }
