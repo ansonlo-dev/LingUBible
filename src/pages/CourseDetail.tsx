@@ -891,13 +891,14 @@ const CourseDetail = () => {
 
         {/* Student Reviews Tab */}
         <TabsContent value="reviews" className="attached-tab-content mt-0">
-          <div id="student-reviews">
+          <div id="student-reviews" className="p-6 space-y-4">
             <CourseReviewsList 
               reviews={allReviews || []}
               allReviews={allReviews || []}
               loading={reviewsLoading}
               externalGradeFilter={externalGradeFilter}
               course={course}
+              hideHeader={true}
             />
           </div>
         </TabsContent>
