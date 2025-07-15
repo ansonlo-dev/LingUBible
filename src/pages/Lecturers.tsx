@@ -1735,7 +1735,7 @@ const Lecturers = () => {
                 </TabsList>
 
                 {/* Desktop filters - inline with tab switcher */}
-                <div className="flex items-center gap-4 ml-auto">
+                <div className="flex items-center gap-3">
                   {/* Term filter */}
                   <div className="flex items-center gap-2 shrink-0">
                     <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
