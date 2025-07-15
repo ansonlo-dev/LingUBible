@@ -2816,19 +2816,216 @@ div[style*="position: fixed"][style*="right: 14px"] {
     color: white !important;
   }
 
+  /* Progress Bar Form Styles */
+  .progress-bar-form {
+    .progress-bar {
+      background-color: rgb(var(--muted));
+      border-radius: 9999px;
+      overflow: hidden;
+      height: 8px;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
 
+    .progress-bar-fill {
+      background: linear-gradient(90deg, rgb(var(--primary)), rgba(var(--primary), 0.8));
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 20px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3));
+        border-radius: 9999px;
+      }
+    }
 
+    .step-indicators {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
 
+    .step-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      max-width: 150px;
+    }
 
+    .step-circle {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      border: 2px solid rgb(var(--muted-foreground));
+      background-color: rgb(var(--background));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+      
+      &.current {
+        border-color: rgb(var(--primary));
+        background-color: rgb(var(--primary));
+        color: rgb(var(--primary-foreground));
+        box-shadow: 0 0 0 4px rgba(var(--primary), 0.1);
+      }
 
+      &.completed {
+        border-color: rgb(var(--primary));
+        background-color: rgb(var(--primary));
+        color: rgb(var(--primary-foreground));
+      }
 
+      &.accessible:hover {
+        border-color: rgb(var(--primary));
+        color: rgb(var(--primary));
+        transform: scale(1.05);
+      }
 
+      &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
 
+    .step-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-align: center;
+      color: rgb(var(--muted-foreground));
+      transition: color 0.2s ease;
+      
+      &.current {
+        color: rgb(var(--primary));
+        font-weight: 600;
+      }
 
+      &.completed {
+        color: rgb(var(--foreground));
+      }
+    }
 
+    .step-content {
+      margin-bottom: 2rem;
+    }
 
+    .navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      
+      .btn-previous {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
 
+      .btn-next {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  /* Dark theme adjustments for progress bar form */
+  .dark .progress-bar-form {
+    .progress-bar {
+      background-color: rgba(var(--muted), 0.8);
+    }
+
+    .step-circle {
+      background-color: rgb(var(--background));
+      border-color: rgba(var(--muted-foreground), 0.5);
+      
+      &.current {
+        box-shadow: 0 0 0 4px rgba(var(--primary), 0.2);
+      }
+    }
+  }
+
+  /* Responsive design for progress bar form */
+  @media (max-width: 640px) {
+    .progress-bar-form {
+      .step-indicators {
+        margin-bottom: 1.5rem;
+      }
+
+      .step-indicator {
+        max-width: 120px;
+      }
+
+      .step-circle {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.75rem;
+        
+        svg {
+          width: 1rem;
+          height: 1rem;
+        }
+      }
+
+      .step-title {
+        font-size: 0.75rem;
+        line-height: 1.2;
+      }
+
+      .navigation-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+        
+        .btn-previous,
+        .btn-next {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+  }
+
+  /* Very small screens - hide step titles */
+  @media (max-width: 480px) {
+    .progress-bar-form {
+      .step-title {
+        display: none;
+      }
+
+      .step-indicators {
+        margin-bottom: 1rem;
+      }
+    }
+  }
 
   /* 移動設備樣式 */
   @media (max-width: 1023px) {

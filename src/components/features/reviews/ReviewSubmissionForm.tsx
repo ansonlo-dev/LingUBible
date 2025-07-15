@@ -63,6 +63,7 @@ import { StarRating as UIStarRating } from '@/components/ui/star-rating';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { getTeachingLanguageName, extractInstructorNameForSorting, getInstructorName } from '@/utils/textUtils';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
+import { ProgressBarForm } from '@/components/ui/progress-bar-form';
 
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
@@ -435,6 +436,39 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   
   // Instructor selection tab state
   const [activeInstructorTab, setActiveInstructorTab] = useState<string>('Lecture');
+  
+  // Progress bar form state
+  const [currentStep, setCurrentStep] = useState<number>(0);
+
+  // Step validation functions
+  const validateCourseSelectionStep = () => {
+    return selectedCourse && selectedTerm && selectedInstructors.length > 0;
+  };
+
+  const validateCourseReviewStep = () => {
+    return workload !== null && 
+           difficulty !== null && 
+           usefulness !== null && 
+           grade.trim() !== '' && 
+           courseComments.trim() !== '';
+  };
+
+  const validateInstructorEvaluationsStep = () => {
+    return instructorEvaluations.every(evaluation => 
+      evaluation.teachingScore !== null && 
+      evaluation.gradingScore !== null && 
+      evaluation.comments.trim() !== '' &&
+      (!evaluation.hasServiceLearning || 
+       evaluation.serviceLearningType !== 'compulsory' || 
+       evaluation.serviceLearningDescription.trim() !== '')
+    );
+  };
+
+  const validateSubmissionStep = () => {
+    return true; // Submission step is always valid
+  };
+
+
 
   // Textarea refs for formatting
   const courseCommentsRef = useRef<HTMLTextAreaElement>(null);
@@ -2469,7 +2503,558 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         </Button>
       </div>
 
-      {/* Course Selection */}
+      {/* Progress Bar Form */}
+      <ProgressBarForm
+        steps={[
+          {
+            id: 'course-selection',
+            title: t('review.courseInfo'),
+            icon: <BookText className="h-5 w-5" />,
+            isValid: validateCourseSelectionStep,
+            content: (
+              <div className="space-y-3">
+                {/* Course Selection - Desktop: inline, Mobile: stacked */}
+                <div className="space-y-2 md:space-y-0">
+                  <div className="md:flex md:items-center md:gap-4">
+                    <Label htmlFor="course" className="md:min-w-[120px] md:flex-shrink-0">
+                      {t('review.selectCourse')} <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={selectedCourse} 
+                      onValueChange={setSelectedCourse} 
+                      disabled={coursesLoading || !!preselectedCourseCode}
+                    >
+                      <SelectTrigger className="md:flex-1">
+                        <SelectValue placeholder={coursesLoading ? t('review.loadingCourses') : t('review.selectCoursePlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courses.map((course) => (
+                          <SelectItem key={course.$id} value={course.course_code}>
+                            <span className="font-medium">{course.course_code} - {course.course_title}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Term Selection - Desktop: inline, Mobile: stacked */}
+                <div className="space-y-2 md:space-y-0">
+                  <div className="md:flex md:items-center md:gap-4">
+                    <Label htmlFor="term" className="md:min-w-[120px] md:flex-shrink-0">
+                      {t('review.selectTerm')} <span className="text-red-500">*</span>
+                    </Label>
+                    <Select value={selectedTerm} onValueChange={setSelectedTerm} disabled={!selectedCourse || termsLoading}>
+                      <SelectTrigger className="md:flex-1">
+                        <SelectValue placeholder={termsLoading ? t('review.loadingTerms') : t('review.selectTermPlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {terms.map((term) => (
+                          <SelectItem key={term.$id} value={term.term_code}>
+                            <span className="font-medium">{term.name}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Instructor Selection - Desktop: inline, Mobile: stacked */}
+                <div className="space-y-2 md:space-y-0">
+                  <div className="md:flex md:items-start md:gap-4">
+                    <Label className="md:min-w-[120px] md:flex-shrink-0 md:pt-2">
+                      {t('review.selectInstructor')} <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="md:flex-1">
+                      {(!selectedCourse || !selectedTerm) ? (
+                        <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md">
+                          {t('review.selectCourseAndTermFirst')}
+                        </div>
+                      ) : instructorsLoading ? (
+                        <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md">
+                          {t('review.loadingInstructors')}
+                        </div>
+                      ) : availableInstructors.length === 0 ? (
+                        <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md">
+                          {t('review.noInstructorsFound')}
+                        </div>
+                      ) : (() => {
+                        const lectureInstructors = availableInstructors.filter(record => record.session_type === 'Lecture');
+                        const tutorialInstructors = availableInstructors.filter(record => record.session_type === 'Tutorial');
+                        const hasLectureInstructors = lectureInstructors.length > 0;
+                        const hasTutorialInstructors = tutorialInstructors.length > 0;
+                        
+                        // If both types have instructors, show tabs
+                        if (hasLectureInstructors && hasTutorialInstructors) {
+                          return (
+                            <div className="border rounded-md px-3 py-2">
+                              <Tabs value={activeInstructorTab} onValueChange={setActiveInstructorTab}>
+                                <TabsList className="grid w-full grid-cols-2">
+                                  <TabsTrigger value="Lecture">
+                                    {t('review.lectureInstructors')}
+                                  </TabsTrigger>
+                                  <TabsTrigger value="Tutorial">
+                                    {t('review.tutorialInstructors')}
+                                  </TabsTrigger>
+                                </TabsList>
+                                
+                                <TabsContent value="Lecture" className="space-y-2 mt-2">
+                                  {renderInstructorList(lectureInstructors)}
+                                </TabsContent>
+                                
+                                <TabsContent value="Tutorial" className="space-y-2 mt-2">
+                                  {renderInstructorList(tutorialInstructors)}
+                                </TabsContent>
+                              </Tabs>
+                            </div>
+                          );
+                        }
+                        
+                        // If only one type has instructors, show without tabs
+                        if (hasLectureInstructors || hasTutorialInstructors) {
+                          const instructorsToShow = hasLectureInstructors ? lectureInstructors : tutorialInstructors;
+                          const sectionTitle = hasLectureInstructors ? t('review.lectureInstructors') : t('review.tutorialInstructors');
+                          
+                          return (
+                            <div className="border rounded-md px-3 py-2">
+                              <div className="mb-2">
+                                <h4 className="text-sm font-medium text-muted-foreground">{sectionTitle}</h4>
+                              </div>
+                              {renderInstructorList(instructorsToShow)}
+                            </div>
+                          );
+                        }
+                        
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Review Eligibility Warning */}
+                {!isEditMode && reviewEligibility && !reviewEligibility.canSubmit && (
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-destructive">
+                          {t('review.submitLimitReached')}
+                        </p>
+                        <p className="text-sm text-destructive/80 mt-1">
+                          {reviewEligibility.reason === 'review.limitExceeded' && t('review.limitExceeded')}
+                          {reviewEligibility.reason === 'review.limitReachedWithPass' && t('review.limitReachedWithPass')}
+                          {!reviewEligibility.reason && t('review.submitLimitReached')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
+            id: 'course-review',
+            title: t('review.courseReview'),
+            icon: <Star className="h-5 w-5" />,
+            isValid: validateCourseReviewStep,
+            content: (
+              <div className="space-y-4">
+                {/* Workload Rating */}
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground md:hidden">{t('review.workloadDescription')}</p>
+                  <FormStarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} required />
+                </div>
+
+                {/* Difficulty Rating */}
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground md:hidden">{t('review.difficultyDescription')}</p>
+                  <FormStarRating rating={difficulty} onRatingChange={setDifficulty} label={t('review.difficulty')} type="difficulty" t={t} required />
+                </div>
+
+                {/* Usefulness Rating */}
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground md:hidden">{t('review.usefulnessDescription')}</p>
+                  <FormStarRating rating={usefulness} onRatingChange={setUsefulness} label={t('review.usefulness')} type="usefulness" t={t} required />
+                </div>
+
+                {/* Grade */}
+                <div className="space-y-2 md:space-y-0">
+                  <div className="md:flex md:items-center md:gap-4">
+                    <Label htmlFor="grade" className="md:min-w-[120px] md:flex-shrink-0">
+                      {t('review.grade')} <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex items-center gap-2 md:flex-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setGrade(grade === '-1' ? '' : '-1')}
+                        className={cn(
+                          "text-xs px-2 py-1 h-6 border transition-colors flex-shrink-0",
+                          grade === '-1'
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                            : "border-border hover:bg-accent hover:text-accent-foreground"
+                        )}
+                      >
+                        {t('review.notApplicable')}
+                      </Button>
+                      <Select value={grade === '-1' ? '' : grade} onValueChange={setGrade} disabled={grade === '-1'}>
+                        <SelectTrigger className={cn("w-[180px]", grade === '-1' && "opacity-50 cursor-not-allowed")}>
+                          <SelectValue placeholder={t('review.gradePlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent className="font-mono min-w-[120px]">
+                          <SelectItem value="A">A (4.00)</SelectItem>
+                          <SelectItem value="A-">A- (3.67)</SelectItem>
+                          <SelectItem value="B+">B+ (3.33)</SelectItem>
+                          <SelectItem value="B">B (3.00)</SelectItem>
+                          <SelectItem value="B-">B- (2.67)</SelectItem>
+                          <SelectItem value="C+">C+ (2.33)</SelectItem>
+                          <SelectItem value="C">C (2.00)</SelectItem>
+                          <SelectItem value="C-">C- (1.67)</SelectItem>
+                          <SelectItem value="D+">D+ (1.33)</SelectItem>
+                          <SelectItem value="D">D (1.00)</SelectItem>
+                          <SelectItem value="F">F (0.00)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Course Comments */}
+                <div className="space-y-3">
+                  <Label htmlFor="courseComments">
+                    {t('review.comments')} <span className="text-red-500">*</span>
+                  </Label>
+                  {renderCommonPhrases('course')}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="relative">
+                      {renderFormattingToolbar(courseCommentsRef, setCourseComments)}
+                      <Textarea
+                        ref={courseCommentsRef}
+                        id="courseComments"
+                        value={courseComments}
+                        onChange={(e) => setCourseComments(e.target.value)}
+                        placeholder={t('review.commentsPlaceholder')}
+                        rows={4}
+                        className="rounded-t-none border-t-0"
+                      />
+                      <WordCounter text={courseComments} minWords={5} maxWords={1000} />
+                    </div>
+                    
+                    {courseComments && (
+                      <div className="relative">
+                        <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
+                        <div className="border rounded-lg p-3 bg-muted/20 min-h-[120px]">
+                          {hasMarkdownFormatting(courseComments) ? (
+                            <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              {courseComments}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          },
+          {
+            id: 'instructor-evaluations',
+            title: t('review.instructorEvaluations'),
+            icon: <Users className="h-5 w-5" />,
+            isValid: validateInstructorEvaluationsStep,
+            content: (
+              <div className="space-y-6">
+                {instructorEvaluations.map((evaluation, index) => (
+                  <div key={`${evaluation.instructorName}-${evaluation.sessionType}`} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="text-lg font-semibold">{evaluation.instructorName}</h3>
+                      <Badge variant="outline">
+                        {evaluation.sessionType === 'Tutorial' ? t('review.tutorial') : 
+                         evaluation.sessionType === 'Lecture' ? t('review.lecture') : 
+                         evaluation.sessionType}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
+                        <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground md:hidden">{t('review.gradingScoreDescription')}</p>
+                        <FormStarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(index, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} required />
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>{t('review.courseRequirements')} <span className="text-red-500">*</span></Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {[
+                            { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
+                            { key: 'hasQuiz', label: t('review.hasQuiz') },
+                            { key: 'hasMidterm', label: t('review.hasMidterm') },
+                            { key: 'hasFinal', label: t('review.hasFinal') },
+                            { key: 'hasIndividualAssignment', label: t('review.hasIndividualAssignment') },
+                            { key: 'hasGroupProject', label: t('review.hasGroupProject') },
+                            { key: 'hasPresentation', label: t('review.hasPresentation') },
+                            { key: 'hasReading', label: t('review.hasReading') },
+                          ].map(({ key, label }) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`${index}-${key}`}
+                                checked={evaluation[key as keyof InstructorEvaluation] as boolean}
+                                onCheckedChange={(checked) => updateInstructorEvaluation(index, key as keyof InstructorEvaluation, checked)}
+                              />
+                              <Label htmlFor={`${index}-${key}`} className="text-sm">{label}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>{t('review.serviceLearningSectionTitle')}</Label>
+                        <div className="flex items-center space-x-6">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`${index}-hasServiceLearning`}
+                              checked={evaluation.hasServiceLearning}
+                              onCheckedChange={(checked) => updateInstructorEvaluation(index, 'hasServiceLearning', checked)}
+                            />
+                            <Label htmlFor={`${index}-hasServiceLearning`} className="text-sm">
+                              {t('review.hasServiceLearning')}
+                            </Label>
+                          </div>
+                          
+                          {evaluation.hasServiceLearning && (
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`${index}-serviceLearningOptional`}
+                                  checked={evaluation.serviceLearningType === 'optional'}
+                                  onCheckedChange={(checked) => updateInstructorEvaluation(index, 'serviceLearningType', checked ? 'optional' : 'compulsory')}
+                                />
+                                <Label htmlFor={`${index}-serviceLearningOptional`} className="text-sm">
+                                  {t('review.serviceLearningOptional')}
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`${index}-serviceLearningCompulsory`}
+                                  checked={evaluation.serviceLearningType === 'compulsory'}
+                                  onCheckedChange={(checked) => updateInstructorEvaluation(index, 'serviceLearningType', checked ? 'compulsory' : 'optional')}
+                                />
+                                <Label htmlFor={`${index}-serviceLearningCompulsory`} className="text-sm">
+                                  {t('review.serviceLearningCompulsory')}
+                                </Label>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {evaluation.hasServiceLearning && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`serviceLearningDescription-${index}`}>
+                              {t('review.serviceLearningDescription')}
+                              {evaluation.serviceLearningType === 'compulsory' && (
+                                <span className="text-destructive ml-1">*</span>
+                              )}
+                            </Label>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                              <div className="relative">
+                                {renderFormattingToolbar(
+                                  { current: null },
+                                  (value: string) => updateInstructorEvaluation(index, 'serviceLearningDescription', value)
+                                )}
+                                <Textarea
+                                  id={`serviceLearningDescription-${index}`}
+                                  value={evaluation.serviceLearningDescription}
+                                  onChange={(e) => updateInstructorEvaluation(index, 'serviceLearningDescription', e.target.value)}
+                                  placeholder={
+                                    evaluation.serviceLearningType === 'optional' 
+                                      ? t('review.serviceLearningOptionalPlaceholder')
+                                      : t('review.serviceLearningPlaceholder')
+                                  }
+                                  rows={3}
+                                  className="rounded-t-none border-t-0"
+                                />
+                                <WordCounter 
+                                  text={evaluation.serviceLearningDescription} 
+                                  minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0} 
+                                  maxWords={1000} 
+                                />
+                              </div>
+                              
+                              {evaluation.serviceLearningDescription && (
+                                <div className="relative">
+                                  <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
+                                  <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
+                                    {hasMarkdownFormatting(evaluation.serviceLearningDescription) ? (
+                                      <div className="text-sm">{renderCommentMarkdown(evaluation.serviceLearningDescription)}</div>
+                                    ) : (
+                                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                        {evaluation.serviceLearningDescription}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label htmlFor={`teachingComments-${index}`}>
+                          {t('review.teachingComments')} <span className="text-red-500">*</span>
+                        </Label>
+                        {renderCommonPhrases('teaching', index)}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="relative">
+                            {renderFormattingToolbar(
+                              { current: teachingCommentsRefs.current[index] || null },
+                              (value: string) => updateInstructorEvaluation(index, 'comments', value)
+                            )}
+                            <Textarea
+                              ref={(el) => {
+                                teachingCommentsRefs.current[index] = el;
+                              }}
+                              id={`teachingComments-${index}`}
+                              value={evaluation.comments}
+                              onChange={(e) => updateInstructorEvaluation(index, 'comments', e.target.value)}
+                              placeholder={t('review.teachingCommentsPlaceholder')}
+                              rows={3}
+                              className="rounded-t-none border-t-0"
+                            />
+                            <WordCounter text={evaluation.comments} minWords={5} maxWords={1000} />
+                          </div>
+                          
+                          {evaluation.comments && (
+                            <div className="relative">
+                              <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
+                              <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px] text-xs">
+                                {hasMarkdownFormatting(evaluation.comments) ? (
+                                  <div className="text-xs">{renderCommentMarkdown(evaluation.comments)}</div>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                    {evaluation.comments}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          },
+          {
+            id: 'submission',
+            title: t('review.submit'),
+            icon: <CheckCircle className="h-5 w-5" />,
+            isValid: validateSubmissionStep,
+            content: (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <Label htmlFor="reviewLanguage" className="min-w-[120px] flex-shrink-0">{t('review.language')}</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'en', label: t('review.languageOptions.en') },
+                        { value: 'zh-TW', label: t('review.languageOptions.zh-TW') },
+                        { value: 'zh-CN', label: t('review.languageOptions.zh-CN') }
+                      ].map((option) => (
+                        <Button
+                          key={option.value}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReviewLanguage(option.value)}
+                          className={cn(
+                            "text-sm border transition-colors",
+                            reviewLanguage === option.value
+                              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                              : "border-border hover:bg-accent hover:text-accent-foreground"
+                          )}
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isAnonymous"
+                      checked={isAnonymous}
+                      onCheckedChange={(checked) => setIsAnonymous(checked === true)}
+                    />
+                    <Label htmlFor="isAnonymous">{t('review.anonymous')}</Label>
+                  </div>
+                  
+                  <div className="text-sm text-muted-foreground ml-6">
+                    {isAnonymous 
+                      ? t('review.anonymousDescription')
+                      : t('review.publicDescription')
+                    }
+                  </div>
+                  
+                  {!isAnonymous && (
+                    <div className="ml-6 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-amber-800 dark:text-amber-200">
+                          <p className="font-medium">{t('review.publicNoticeTitle')}</p>
+                          <p className="mt-1">{t('review.publicNoticeDescription')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <div className="text-red-500 text-lg font-bold mt-0.5">*</div>
+                    <div className="text-sm text-muted-foreground">
+                      {t('review.requiredFieldsNotice')}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1 h-12 text-base font-medium"
+                    onClick={() => setIsPreviewMode(true)}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    {t('review.preview')}
+                  </Button>
+                </div>
+              </div>
+            )
+          }
+        ]}
+        currentStep={currentStep}
+        onStepChange={setCurrentStep}
+        onSubmit={handleSubmit}
+        submitLabel={editReviewId ? t('review.updateReview') : t('review.submitReview')}
+        isSubmitting={submitting}
+      />
+      
+      {/* Legacy CollapsibleSection below - remove everything from here down */}
       <CollapsibleSection
         title={t('review.courseInfo')}
         icon={<BookText className="h-5 w-5" />}
