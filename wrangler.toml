@@ -10,6 +10,8 @@ watch_dir = "src"
 SKIP_FONT_PROCESSING = "true"
 NODE_ENV = "production"
 VITE_BUILD_CACHE = "true"
+VITE_APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"
+VITE_APPWRITE_PROJECT_ID = "lingubible"
 
 # 環境變數在構建命令中設置
 
