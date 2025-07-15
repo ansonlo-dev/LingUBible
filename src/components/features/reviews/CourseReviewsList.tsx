@@ -925,7 +925,7 @@ export const CourseReviewsList = ({
 
   if (hideHeader) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* 課程要求篩選器 */}
         <CourseRequirementsFilter
           filters={requirementsFilters}
@@ -1219,7 +1219,7 @@ export const CourseReviewsList = ({
     <Card className="course-card">
       <CardHeader>
       </CardHeader>
-      <CardContent className="space-y-4 overflow-hidden">
+      <CardContent className="space-y-2 overflow-hidden">
         {/* 課程要求篩選器 */}
         <CourseRequirementsFilter
           filters={requirementsFilters}
