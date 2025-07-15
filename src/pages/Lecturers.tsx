@@ -1763,7 +1763,7 @@ const Lecturers = () => {
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[180px] h-10 text-sm"
+                      className="w-[150px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}
@@ -1832,7 +1832,7 @@ const Lecturers = () => {
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[180px] h-10 text-sm"
+                      className="w-[150px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}
