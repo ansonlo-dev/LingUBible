@@ -1454,60 +1454,58 @@ const CourseDetail = () => {
 
         {/* Grade Distribution Tab */}
         <TabsContent value="grades" className="attached-tab-content mt-0">
-          <Card className="course-card">
-            <CardContent className="p-6">
-              {/* 成績分佈圖表 */}
-              {!reviewsLoading && allReviewsForChart.length > 0 ? (
-                <div>
-                  <GradeDistributionChart
-                    gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
-                    loading={reviewsLoading}
-                    title={t('chart.gradeDistribution')}
-                    height={120}
-                    showPercentage={true}
-                    className="bg-transparent border-transparent"
-                    context="course"
-                    filterOptions={gradeChartFilterOptions}
-                    selectedFilter={selectedGradeChartFilter}
-                    onFilterChange={setSelectedGradeChartFilter}
-                    filterLabel={t('chart.filterByInstructor')}
-                    rawReviewData={allReviewsForChart}
-                    defaultExpanded={true}
-                    hideHeader={true}
-                    onBarClick={(grade) => {
-                      // 設置成績篩選並滾動到學生評論區域
-                      setExternalGradeFilter(grade);
-                      
-                      // 短暫延遲後滾動，讓篩選生效
-                      setTimeout(() => {
-                        const studentReviewsElement = document.getElementById('student-reviews');
-                        if (studentReviewsElement) {
-                          studentReviewsElement.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'start' 
-                          });
-                        }
-                      }, 100);
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="text-center py-12 space-y-4">
-                  <div className="flex justify-center">
-                    <div className="p-4 bg-muted/50 rounded-full">
-                      <Info className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium text-muted-foreground">{t('chart.noGradeData')}</h3>
-                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                      {t('chart.noGradeDataDescription')}
-                    </p>
+          <div className="p-6 space-y-4">
+            {/* 成績分佈圖表 */}
+            {!reviewsLoading && allReviewsForChart.length > 0 ? (
+              <div>
+                <GradeDistributionChart
+                  gradeDistribution={calculateGradeDistributionFromReviews(filteredReviewsForChart.map(review => ({ course_final_grade: review.review.course_final_grade })))}
+                  loading={reviewsLoading}
+                  title={t('chart.gradeDistribution')}
+                  height={120}
+                  showPercentage={true}
+                  className="bg-transparent border-transparent"
+                  context="course"
+                  filterOptions={gradeChartFilterOptions}
+                  selectedFilter={selectedGradeChartFilter}
+                  onFilterChange={setSelectedGradeChartFilter}
+                  filterLabel={t('chart.filterByInstructor')}
+                  rawReviewData={allReviewsForChart}
+                  defaultExpanded={true}
+                  hideHeader={true}
+                  onBarClick={(grade) => {
+                    // 設置成績篩選並滾動到學生評論區域
+                    setExternalGradeFilter(grade);
+                    
+                    // 短暫延遲後滾動，讓篩選生效
+                    setTimeout(() => {
+                      const studentReviewsElement = document.getElementById('student-reviews');
+                      if (studentReviewsElement) {
+                        studentReviewsElement.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'start' 
+                        });
+                      }
+                    }, 100);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12 space-y-4">
+                <div className="flex justify-center">
+                  <div className="p-4 bg-muted/50 rounded-full">
+                    <Info className="h-12 w-12 text-muted-foreground" />
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium text-muted-foreground">{t('chart.noGradeData')}</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {t('chart.noGradeDataDescription')}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
 
