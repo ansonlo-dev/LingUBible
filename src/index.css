@@ -869,9 +869,12 @@ div[style*="position: fixed"][style*="right: 14px"] {
     background: #F9FAFB !important;
   }
 
-  /* Light theme active tab hover */
+  /* Light theme active tab hover - disable hover effects */
   :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
     background: #F9FAFB !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(2px) !important;
+    cursor: default !important;
   }
 
   /* Dark theme active tab */
