@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger, AnimatedTabs } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { Pagination } from '@/components/features/reviews/Pagination';
@@ -1551,8 +1551,7 @@ const Lecturers = () => {
 
         {/* Teaching Courses Tab */}
         <TabsContent value="courses" className="attached-tab-content mt-0">
-          <Card className="course-card">
-            <CardContent className="p-6">
+          <div className="p-6 space-y-4">
           {teachingCoursesLoading ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
@@ -1564,7 +1563,7 @@ const Lecturers = () => {
               <p className="text-muted-foreground">{t('instructors.noTeachingTitle')}</p>
             </div>
           ) : (
-            <AnimatedTabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
+            <Tabs value={activeTeachingTab} onValueChange={setActiveTeachingTab} className="w-full">
               {/* Mobile: Tabs and filters in separate rows */}
               <div className="flex flex-col gap-4 mb-4 md:hidden">
                 {/* Tab switcher row */}
@@ -2167,10 +2166,9 @@ const Lecturers = () => {
                   </div>
                 )}
               </TabsContent>
-            </AnimatedTabs>
+            </Tabs>
           )}
-            </CardContent>
-          </Card>
+          </div>
         </TabsContent>
 
         {/* Student Reviews Tab */}
@@ -3134,8 +3132,7 @@ const Lecturers = () => {
         </TabsContent>
         {/* Grade Distribution Tab */}
         <TabsContent value="grades" className="attached-tab-content mt-0">
-          <Card className="course-card">
-            <CardContent className="p-6">
+          <div className="p-6 space-y-4">
               {/* 成績分佈圖表 */}
               {!reviewsLoading && filteredReviewsForChart.length > 0 ? (
                 <div>
@@ -3185,8 +3182,7 @@ const Lecturers = () => {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
         </TabsContent>
         </Tabs>
 
