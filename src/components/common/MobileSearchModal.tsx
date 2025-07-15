@@ -55,10 +55,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     // Allow some flexibility for browser dev tools UI
     const isIPadMini = width >= 1020 && width <= 1030 && height >= 690 && height <= 820 && width > height;
     
-    // Debug logging
-    if (isOpen) {
-      console.log('Search Modal - Viewport:', { width, height, isIPadMini, isDesktopMode, isSidebarCollapsed });
-    }
+
     
     return isIPadMini;
   }, [viewportDimensions.width, viewportDimensions.height, isOpen, isDesktopMode, isSidebarCollapsed]); // Include all relevant deps
@@ -156,6 +153,23 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     };
   }, [isOpen]); // Re-run when modal opens to ensure fresh dimensions
 
+  // Update viewport dimensions when sidebar state changes (important for iPad Mini landscape)
+  useEffect(() => {
+    if (isOpen && isDesktopMode) {
+      const updateViewportForSidebar = () => {
+        setViewportDimensions(prev => ({
+          ...prev,
+          width: window.innerWidth,
+          height: window.innerHeight
+        }));
+      };
+      
+      // Small delay to ensure sidebar animation completes
+      const timer = setTimeout(updateViewportForSidebar, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isSidebarCollapsed, isOpen, isDesktopMode]);
+
 
 
 
@@ -204,6 +218,20 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   // 載入數據
   useEffect(() => {
     if (isOpen) {
+      // Force update viewport dimensions when modal opens to ensure correct positioning
+      const updateViewport = () => {
+        setViewportDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+          isLandscape: window.innerWidth > window.innerHeight,
+          isTabletSize: window.innerWidth >= 640 && window.innerWidth < 1024
+        });
+      };
+      
+      // Update immediately and after a small delay to ensure proper initialization
+      updateViewport();
+      setTimeout(updateViewport, 50);
+      
       // 立即設置載入狀態，避免建議項目閃現
       setLoading(true);
       setIsInitialized(false);
@@ -463,8 +491,15 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       {isDesktopMode ? (
         <div 
           className="fixed top-16"
+          key={`desktop-modal-${isSidebarCollapsed}`} // Force re-render when sidebar state changes
           style={{
-            ...(useRightAlign ? {
+            ...(isIPadMiniLandscape && !isSidebarCollapsed ? {
+              // iPad Mini landscape with expanded sidebar - center the modal
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '50rem',
+              maxWidth: '90%'
+            } : useRightAlign ? {
               left: `${modalLeftPosition}rem`,
               right: 'auto',
               width: `calc(100% - ${modalLeftPosition}rem - 2rem)`,
@@ -475,14 +510,13 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             }),
             zIndex: 51, // Ensure it's above the backdrop
             pointerEvents: 'auto',
-            transform: 'translateZ(0)', // Force GPU acceleration for smooth transition
-            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Explicit transition on left and width properties
+            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Explicit transition on left, width, and transform properties
           }}
         >
           <div 
-            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${useRightAlign ? 'ml-auto' : 'mx-auto'}`}
+            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal`}
                           style={{
-                maxWidth: useRightAlign ? '100%' : '64rem', // max-w-4xl equivalent
+                maxWidth: (isIPadMiniLandscape && !isSidebarCollapsed) ? '100%' : (useRightAlign ? '100%' : '64rem'), // max-w-4xl equivalent
                 // Fixed height to prevent jumping between loading and loaded states - increased slightly to accommodate content
                 height: viewportDimensions.height <= 600 ? 'calc(100vh - 3rem)' : '75vh'
               }}
@@ -1196,21 +1230,17 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             </div>
           </div>
         </div>
-      ) : (
+                  ) : (
         <div 
-          className="fixed top-16 mx-auto"
+          className="fixed top-16 left-0 right-0 flex justify-center px-4"
           style={{
-            // Mobile: sidebar is hidden when collapsed, so we don't need to account for it
-            left: '1rem',
-            right: '1rem',
-            width: 'calc(100vw - 2rem)',
-            maxWidth: '48rem', // Slightly smaller max-width for mobile
             zIndex: 51 // Ensure it's above the backdrop
           }}
         >
           <div 
-            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
+            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden w-full"
             style={{
+              maxWidth: '48rem', // Slightly smaller max-width for mobile
               // Fixed height to prevent jumping between loading and loaded states
               height: viewportDimensions.height <= 500 
                 ? (viewportDimensions.height <= 450 
@@ -1220,16 +1250,17 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                 : '80vh' // Portrait mode
             }}
             onClick={(e) => e.stopPropagation()}
+
           >
             {/* 搜索輸入框 */}
-            <div className="flex items-center px-4">
+            <div className="flex items-center px-4 min-w-0">
               <input
                 ref={inputRef}
                 type="text"
                 placeholder={t('search.placeholder')}
                 value={searchQuery || ''}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 py-4 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="flex-1 py-4 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 min-w-0"
               />
               <button
                 onClick={handleClose}
