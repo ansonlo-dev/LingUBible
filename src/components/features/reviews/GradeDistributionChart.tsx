@@ -192,6 +192,38 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       EventTarget.prototype.addEventListener = originalAddEventListener;
     };
   }, [isMobile]);
+
+  // Fix dropdown scrolling issue on mobile
+  React.useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      // Allow scrolling to have higher priority over dropdown interactions
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-radix-select-content]') || target.closest('[data-radix-dropdown-content]')) {
+        // Only prevent default if it's a actual dropdown item click, not a scroll gesture
+        return;
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      // Allow scrolling even when starting inside dropdown areas
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-radix-select-content]') || target.closest('[data-radix-dropdown-content]')) {
+        // Don't prevent default for touch moves - allow scrolling
+        return;
+      }
+    };
+    
+    // Add listeners to handle dropdown scrolling
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isMobile]);
   
   // Console warning suppression for ECharts passive event listener warnings
   React.useEffect(() => {
@@ -1460,7 +1492,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        bottom: (isMobile && isPortrait) ? '25%' : '3%', // Much more space for legend on mobile portrait
         containLabel: true
       },
       xAxis: {
@@ -1515,7 +1547,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       legend: {
         show: true,
         orient: 'horizontal',
-        bottom: isMobile ? 5 : 8, // Adjust legend position to avoid overlap
+        bottom: (isMobile && isPortrait) ? 25 : (isMobile ? 15 : 8), // Much more space on mobile portrait
         itemGap: isMobile ? 8 : 15,
         itemWidth: isMobile ? 12 : 18,
         itemHeight: isMobile ? 8 : 12,
@@ -1635,7 +1667,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
@@ -1643,43 +1675,52 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+                    isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
                     chartType === 'bar' 
-                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                      ? "text-black dark:text-white font-bold" 
+                      : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                   onClick={() => setChartType('bar')}
                 >
                   <BarChart3 className="h-3 w-3" />
-                  <span className="truncate">{t('chart.barChart')}</span>
+                  <span className={cn(
+                    isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+                  )}>{t('chart.barChart')}</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+                    isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
                     chartType === 'stacked' 
-                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                      ? "text-black dark:text-white font-bold" 
+                      : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                   onClick={() => setChartType('stacked')}
                 >
                   <BarChart className="h-3 w-3" />
-                  <span className="truncate">{t('chart.stackedNormalized')}</span>
+                  <span className={cn(
+                    isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+                  )}>{t('chart.stackedNormalized')}</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+                    isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
                     chartType === 'boxplot' 
-                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                      ? "text-black dark:text-white font-bold" 
+                      : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                   onClick={() => setChartType('boxplot')}
                 >
                   <BoxSelect className="h-3 w-3" />
-                  <span className="truncate">{t('chart.boxPlot')}</span>
+                  <span className={cn(
+                    isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+                  )}>{t('chart.boxPlot')}</span>
                 </Button>
               </div>
             </div>
@@ -1922,7 +1963,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
@@ -1930,43 +1971,52 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+                    isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
                     chartType === 'bar' 
-                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                      ? "text-black dark:text-white font-bold" 
+                      : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                   onClick={() => setChartType('bar')}
                 >
                   <BarChart3 className="h-3 w-3" />
-                  <span className="truncate">{t('chart.barChart')}</span>
+                  <span className={cn(
+                    isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+                  )}>{t('chart.barChart')}</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+                    isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
                     chartType === 'stacked' 
-                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                      ? "text-black dark:text-white font-bold" 
+                      : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                   onClick={() => setChartType('stacked')}
                 >
                   <BarChart className="h-3 w-3" />
-                  <span className="truncate">{t('chart.stackedNormalized')}</span>
+                  <span className={cn(
+                    isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+                  )}>{t('chart.stackedNormalized')}</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7 px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0",
+                    "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+                    isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
                     chartType === 'boxplot' 
-                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100" 
-                      : "bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                      ? "text-black dark:text-white font-bold" 
+                      : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                   onClick={() => setChartType('boxplot')}
                 >
                   <BoxSelect className="h-3 w-3" />
-                  <span className="truncate">{t('chart.boxPlot')}</span>
+                  <span className={cn(
+                    isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+                  )}>{t('chart.boxPlot')}</span>
                 </Button>
               </div>
             </div>

@@ -1452,7 +1452,7 @@ const CourseDetail = () => {
 
         {/* Grade Distribution Tab */}
         <TabsContent value="grades" className="attached-tab-content mt-0">
-          <div className="p-6 space-y-4">
+          <div className="p-0 space-y-4">
             {/* 成績分佈圖表 */}
             {!reviewsLoading && allReviewsForChart.length > 0 ? (
               <div>
