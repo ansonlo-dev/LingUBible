@@ -1026,7 +1026,7 @@ const CourseDetail = () => {
                 </div>
 
                 {/* Desktop: Tab switcher and filters in the same row */}
-                <div className="hidden md:flex md:items-center md:justify-between md:gap-4">
+                <div className="hidden md:flex md:items-center md:justify-between md:gap-2">
                   <TabsList className="bg-muted/50 backdrop-blur-sm">
                     {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length > 0 && (
                       <TabsTrigger 
@@ -1057,7 +1057,7 @@ const CourseDetail = () => {
                   </TabsList>
 
                   {/* Desktop filters - inline with tab switcher */}
-                  <div className="flex items-center gap-4 ml-auto">
+                  <div className="flex items-center gap-3">
                     {/* 學期篩選器 */}
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
@@ -1086,7 +1086,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[180px] h-10 text-sm"
+                        className="w-[150px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
@@ -1122,7 +1122,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[180px] h-10 text-sm"
+                        className="w-[150px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
