@@ -37,6 +37,7 @@ import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 // Faculty mapping function - copied from Lecturers.tsx
 const getFacultyByDepartment = (department: string): string => {
@@ -175,6 +176,38 @@ const CourseDetail = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
+  const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
+  const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
+
+  // Clear pending states when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setPendingTeachingLanguageFilter(null);
+      setPendingTermFilter(null);
+    };
+
+    // Add a small delay to avoid clearing immediately when clicking the badge itself
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
+  // Clear pending states after timeout
+  useEffect(() => {
+    if (pendingTeachingLanguageFilter || pendingTermFilter) {
+      const timer = setTimeout(() => {
+        setPendingTeachingLanguageFilter(null);
+        setPendingTermFilter(null);
+      }, 3000); // Clear after 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [pendingTeachingLanguageFilter, pendingTermFilter]);
 
   // Helper function to generate responsive teaching language labels
   const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
@@ -419,6 +452,17 @@ const CourseDetail = () => {
 
   // 教學語言徽章點擊處理器
   const handleTeachingLanguageBadgeClick = (languageCode: string) => {
+    if (isMobile && pendingTeachingLanguageFilter !== languageCode) {
+      setPendingTeachingLanguageFilter(languageCode);
+      return; // Only set pending on first tap, do not apply filter
+    }
+    if (isMobile && pendingTeachingLanguageFilter === languageCode) {
+      setPendingTeachingLanguageFilter(null);
+      // Continue to apply filter below
+    } else if (isMobile) {
+      // If pending is null but this is mobile, do not apply filter
+      return;
+    }
     const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
     const isSelected = currentValues.includes(languageCode);
     
@@ -429,6 +473,31 @@ const CourseDetail = () => {
     } else {
       // Add to selection
       setSelectedTeachingLanguageFilter([...currentValues, languageCode]);
+    }
+  };
+
+  const handleTermBadgeClick = (termCode: string) => {
+    if (isMobile && pendingTermFilter !== termCode) {
+      setPendingTermFilter(termCode);
+      return; // Only set pending on first tap, do not apply filter
+    }
+    if (isMobile && pendingTermFilter === termCode) {
+      setPendingTermFilter(null);
+      // Continue to apply filter below
+    } else if (isMobile) {
+      // If pending is null but this is mobile, do not apply filter
+      return;
+    }
+    const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+    const isSelected = currentValues.includes(termCode);
+    
+    if (isSelected) {
+      // Remove from selection
+      const newValues = currentValues.filter(v => v !== termCode);
+      setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
+    } else {
+      // Add to selection
+      setSelectedTermFilter([...currentValues, termCode]);
     }
   };
 
@@ -1205,68 +1274,55 @@ const CourseDetail = () => {
                                   {teachingLanguage ? (
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
-                                      <button
-                                        onClick={() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          const isSelected = currentValues.includes(term.term_code);
-                                          
-                                          if (isSelected) {
-                                            // Remove from selection
-                                            const newValues = currentValues.filter(v => v !== term.term_code);
-                                            setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                          } else {
-                                            // Add to selection
-                                            setSelectedTermFilter([...currentValues, term.term_code]);
-                                          }
-                                        }}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
-                                          (() => {
-                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                            return currentValues.includes(term.term_code)
-                                              ? 'bg-primary text-primary-foreground'
-                                              : 'bg-background hover:bg-muted';
-                                          })()
-                                        }`}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
-                                        {term.name}
-                                      </button>
+                                        <button
+                                          onClick={() => handleTermBadgeClick(term.term_code)}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                              return currentValues.includes(term.term_code)
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-background hover:bg-muted';
+                                            })()
+                                          }`}
+                                        >
+                                          {term.name}
+                                        </button>
+                                      </ResponsiveTooltip>
                                       
                                       {/* Separator */}
                                       <div className="w-px bg-border"></div>
                                       
                                       {/* Teaching language part (right side) */}
-                                      <button
-                                        onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
-                                          (() => {
-                                            const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                            const isSelected = currentValues.includes(teachingLanguage);
-                                            return isSelected
-                                              ? 'bg-orange-500 text-orange-50 font-bold'
-                                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
-                                          })()
-                                        }`}
-                                        title={getTeachingLanguageName(teachingLanguage, t)}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
-                                        {teachingLanguage}
-                                      </button>
+                                        <button
+                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isSelected = currentValues.includes(teachingLanguage);
+                                              return isSelected
+                                                ? 'bg-orange-500 text-orange-50 font-bold'
+                                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
+                                            })()
+                                          }`}
+                                        >
+                                          {teachingLanguage}
+                                        </button>
+                                      </ResponsiveTooltip>
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
                                     <button
-                                      onClick={() => {
-                                        const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                        const isSelected = currentValues.includes(term.term_code);
-                                        
-                                        if (isSelected) {
-                                          // Remove from selection
-                                          const newValues = currentValues.filter(v => v !== term.term_code);
-                                          setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                        } else {
-                                          // Add to selection
-                                          setSelectedTermFilter([...currentValues, term.term_code]);
-                                        }
-                                      }}
+                                      onClick={() => handleTermBadgeClick(term.term_code)}
                                       className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                         (() => {
                                           const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
@@ -1363,19 +1419,7 @@ const CourseDetail = () => {
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
                                       <button
-                                        onClick={() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          const isSelected = currentValues.includes(term.term_code);
-                                          
-                                          if (isSelected) {
-                                            // Remove from selection
-                                            const newValues = currentValues.filter(v => v !== term.term_code);
-                                            setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                          } else {
-                                            // Add to selection
-                                            setSelectedTermFilter([...currentValues, term.term_code]);
-                                          }
-                                        }}
+                                        onClick={() => handleTermBadgeClick(term.term_code)}
                                         className={`px-2 py-1 text-xs transition-colors border-0 ${
                                           (() => {
                                             const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
@@ -1392,38 +1436,31 @@ const CourseDetail = () => {
                                       <div className="w-px bg-border"></div>
                                       
                                       {/* Teaching language part (right side) */}
-                                      <button
-                                        onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
-                                          (() => {
-                                            const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                            const isSelected = currentValues.includes(teachingLanguage);
-                                            return isSelected
-                                              ? 'bg-orange-500 text-orange-50 font-bold'
-                                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
-                                          })()
-                                        }`}
-                                        title={getTeachingLanguageName(teachingLanguage, t)}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
-                                        {teachingLanguage}
-                                      </button>
+                                        <button
+                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isSelected = currentValues.includes(teachingLanguage);
+                                              return isSelected
+                                                ? 'bg-orange-500 text-orange-50 font-bold'
+                                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
+                                            })()
+                                          }`}
+                                        >
+                                          {teachingLanguage}
+                                        </button>
+                                      </ResponsiveTooltip>
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
                                     <button
-                                      onClick={() => {
-                                        const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                        const isSelected = currentValues.includes(term.term_code);
-                                        
-                                        if (isSelected) {
-                                          // Remove from selection
-                                          const newValues = currentValues.filter(v => v !== term.term_code);
-                                          setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                        } else {
-                                          // Add to selection
-                                          setSelectedTermFilter([...currentValues, term.term_code]);
-                                        }
-                                      }}
+                                      onClick={() => handleTermBadgeClick(term.term_code)}
                                       className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                         (() => {
                                           const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);

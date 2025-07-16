@@ -9,6 +9,7 @@ import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { useTheme } from '@/hooks/theme/useTheme';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { formatGPA } from '@/utils/gradeUtils';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 interface PopularCourseCardProps {
   type: 'course';
@@ -332,13 +333,14 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     return (
       <div className="flex flex-col items-center gap-1 flex-1">
         <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide text-center">{label}</span>
-        <div 
-          className="flex items-center justify-center px-3 py-1.5 rounded-lg hover:scale-105 transition-transform cursor-help"
-          style={{ backgroundColor, width: '90%' }}
-          title={getTooltipText()}
-        >
-          <span className="font-bold text-lg text-white drop-shadow-sm">{displayValue}</span>
-        </div>
+        <ResponsiveTooltip content={getTooltipText()}>
+          <div 
+            className="flex items-center justify-center px-3 py-1.5 rounded-lg hover:scale-105 transition-transform cursor-help"
+            style={{ backgroundColor, width: '90%' }}
+          >
+            <span className="font-bold text-lg text-white drop-shadow-sm">{displayValue}</span>
+          </div>
+        </ResponsiveTooltip>
       </div>
     );
   };
@@ -448,34 +450,35 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       </span>
                       {/* Teaching Language Badge */}
                       {props.teachingLanguages && props.teachingLanguages.length > 0 && (
-                        <span 
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
-                          title={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
-                          onClick={handleTeachingLanguageClick}
-                        >
-                          <div className="flex items-center">
-                            {props.teachingLanguages.map((code, index) => (
-                              <span 
-                                key={code}
-                                className={`${
-                                  props.teachingLanguages!.length === 1
-                                    ? 'px-1' // Single item: equal padding on both sides
-                                    : index === 0 
-                                    ? 'pr-1' // First item: only right padding
-                                    : index === props.teachingLanguages!.length - 1 
-                                    ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
-                                    : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
-                                }`}
-                              >
-                                {code === props.currentTermTeachingLanguage ? (
-                                  <strong>{code}</strong>
-                                ) : (
-                                  code
-                                )}
-                              </span>
-                            ))}
-                          </div>
-                        </span>
+                        <ResponsiveTooltip content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}>
+                          <span 
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
+                            onClick={handleTeachingLanguageClick}
+                          >
+                            <div className="flex items-center">
+                              {props.teachingLanguages.map((code, index) => (
+                                <span 
+                                  key={code}
+                                  className={`${
+                                    props.teachingLanguages!.length === 1
+                                      ? 'px-1' // Single item: equal padding on both sides
+                                      : index === 0 
+                                      ? 'pr-1' // First item: only right padding
+                                      : index === props.teachingLanguages!.length - 1 
+                                      ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
+                                      : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
+                                  }`}
+                                >
+                                  {code === props.currentTermTeachingLanguage ? (
+                                    <strong>{code}</strong>
+                                  ) : (
+                                    code
+                                  )}
+                                </span>
+                              ))}
+                            </div>
+                          </span>
+                        </ResponsiveTooltip>
                       )}
                     </div>
                   </div>
@@ -484,28 +487,29 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               
               {/* 開設狀態徽章和平均GPA */}
               <div className="flex flex-col items-end">
-                <Badge 
-                  variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
-                  className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
-                    props.isOfferedInCurrentTerm 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
-                  }`}
-                  title={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
-                  onClick={props.isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
-                >
-                  {props.isOfferedInCurrentTerm ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      {t('offered.yes')}
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-3 w-3 mr-1" />
-                      {t('offered.no')}
-                    </>
-                  )}
-                </Badge>
+                <ResponsiveTooltip content={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}>
+                  <Badge 
+                    variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
+                    className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
+                      props.isOfferedInCurrentTerm 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
+                    }`}
+                    onClick={props.isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
+                  >
+                    {props.isOfferedInCurrentTerm ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        {t('offered.yes')}
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3 mr-1" />
+                        {t('offered.no')}
+                      </>
+                    )}
+                  </Badge>
+                </ResponsiveTooltip>
                 
                 {/* Average GPA below offered badge */}
                 <AverageGPADisplay gpa={props.averageGPA} isLoading={courseStatsLoading} />
@@ -631,45 +635,55 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       </span>
                     )}
                     {/* Department Badge */}
-                    <span 
-                      className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help hover:bg-primary/5 hover:text-primary hover:border-primary hover:shadow-sm transition-all duration-200 shrink-0 max-w-full"
-                      onClick={handleDepartmentBadgeClick}
-                      title={t('filter.clickToFilterDepartment')}
+                    <ResponsiveTooltip 
+                      content={t('filter.clickToFilterDepartment')}
+                      hasClickAction={true}
+                      clickActionText={t('tooltip.clickAgainToFilter')}
                     >
-                      <span className="break-words hyphens-auto">
-                        {translateDepartmentName(props.department, t)}
+                      <span 
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help hover:bg-primary/5 hover:text-primary hover:border-primary hover:shadow-sm transition-all duration-200 shrink-0 max-w-full"
+                        onClick={handleDepartmentBadgeClick}
+                      >
+                        <span className="break-words hyphens-auto">
+                          {translateDepartmentName(props.department, t)}
+                        </span>
                       </span>
-                    </span>
+                    </ResponsiveTooltip>
                     {/* Teaching Language Badge */}
                     {props.teachingLanguages && props.teachingLanguages.length > 0 && (
-                      <span 
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
-                        title={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
-                        onClick={handleTeachingLanguageClick}
+                      <ResponsiveTooltip 
+                        content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
+                        hasClickAction={true}
+                        clickActionText={t('tooltip.clickAgainToFilter')}
                       >
-                        <div className="flex items-center">
-                          {props.teachingLanguages.map((code, index) => (
-                            <span 
-                              key={code}
-                              className={`${
-                                props.teachingLanguages!.length === 1
-                                  ? 'px-1' // Single item: equal padding on both sides
-                                  : index === 0 
-                                  ? 'pr-1' // First item: only right padding
-                                  : index === props.teachingLanguages!.length - 1 
-                                  ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
-                                  : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
-                              }`}
-                            >
-                              {code === props.currentTermTeachingLanguage ? (
-                                <strong>{code}</strong>
-                              ) : (
-                                code
-                              )}
-                            </span>
-                          ))}
-                        </div>
-                      </span>
+                        <span 
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
+                          onClick={handleTeachingLanguageClick}
+                        >
+                          <div className="flex items-center">
+                            {props.teachingLanguages.map((code, index) => (
+                              <span 
+                                key={code}
+                                className={`${
+                                  props.teachingLanguages!.length === 1
+                                    ? 'px-1' // Single item: equal padding on both sides
+                                    : index === 0 
+                                    ? 'pr-1' // First item: only right padding
+                                    : index === props.teachingLanguages!.length - 1 
+                                    ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
+                                    : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
+                                }`}
+                              >
+                                {code === props.currentTermTeachingLanguage ? (
+                                  <strong>{code}</strong>
+                                ) : (
+                                  code
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        </span>
+                      </ResponsiveTooltip>
                     )}
                   </div>
                 </div>
@@ -678,28 +692,33 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
             
             {/* 教學狀態徽章和平均GPA */}
             <div className="flex flex-col items-end">
-              <Badge 
-                variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
-                className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
-                  props.isTeachingInCurrentTerm 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
-                }`}
-                title={props.isTeachingInCurrentTerm ? t('teaching.tooltip.clickable').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}
-                onClick={props.isTeachingInCurrentTerm ? handleTeachingBadgeClick : undefined}
+              <ResponsiveTooltip 
+                content={props.isTeachingInCurrentTerm ? t('teaching.tooltip.clickable').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}
+                hasClickAction={props.isTeachingInCurrentTerm}
+                clickActionText={t('tooltip.clickAgainToFilter')}
               >
-                {props.isTeachingInCurrentTerm ? (
-                  <>
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    {t('teaching.yes')}
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-3 w-3 mr-1" />
-                    {t('teaching.no')}
-                  </>
-                )}
-              </Badge>
+                <Badge 
+                  variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
+                  className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
+                    props.isTeachingInCurrentTerm 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
+                  }`}
+                  onClick={props.isTeachingInCurrentTerm ? handleTeachingBadgeClick : undefined}
+                >
+                  {props.isTeachingInCurrentTerm ? (
+                    <>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {t('teaching.yes')}
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-3 w-3 mr-1" />
+                      {t('teaching.no')}
+                    </>
+                  )}
+                </Badge>
+              </ResponsiveTooltip>
               
               {/* Average GPA below teaching badge */}
               <AverageGPADisplay gpa={props.averageGPA} isLoading={props.isLoading} />

@@ -6,6 +6,7 @@ import { FooterKofiButton } from '@/components/common/KofiWidget';
 import { Link } from 'react-router-dom';
 import { getFormattedVersion, getVersionStatus } from '@/utils/version';
 import { useLatestVersion } from '@/hooks/useVersion';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 export function Footer() {
   const { t, language } = useLanguage();
@@ -43,29 +44,31 @@ export function Footer() {
             {/* Left side - CC-BY-SA License and Social Icons */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <a 
-                  href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title={t('footer.mitTooltip')}
-                >
-                  MIT
-                </a>
+                <ResponsiveTooltip content={t('footer.mitTooltip')}>
+                  <a 
+                    href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    MIT
+                  </a>
+                </ResponsiveTooltip>
                 <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
               </div>
               
               {/* Social Icons */}
               <div className="flex items-center space-x-2">
-                <a 
-                  href="https://github.com/ansonlo-dev/LingUBible" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
-                  title={t('footer.githubTooltip')}
-                >
-                  <Github className="h-4 w-4" />
-                </a>
+                <ResponsiveTooltip content={t('footer.githubTooltip')}>
+                  <a 
+                    href="https://github.com/ansonlo-dev/LingUBible" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Github className="h-4 w-4" />
+                  </a>
+                </ResponsiveTooltip>
               </div>
               
               {/* User Stats */}

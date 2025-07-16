@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getGradeInfo } from '@/utils/gradeUtils';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 interface GradeBadgeProps {
   grade: string;
@@ -166,33 +167,34 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
 
   const badgeElement = (
     <div className="mb-2">
-      <div 
-        className={`
-          ${sizeClasses[size]} 
-          ${getGradeStyleClasses(displayGrade, displayGpa, isNotApplicable)}
-          text-center
-          rounded-full
-          transition-all duration-300 ease-in-out
-          transform
-          flex items-center justify-center
-          backdrop-blur-sm
-          ${showTooltip ? 'cursor-help' : ''}
-          ${onClick ? 'cursor-pointer hover:scale-110' : ''}
-        `}
-        style={{
-          fontWeight: '800',
-          textShadow: '0 0 1px currentColor',
-          fontFamily: '"Helvetica Bold", Arial, sans-serif'
-        } as React.CSSProperties}
-        title={getTooltipText()}
-        onClick={onClick ? (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onClick();
-        } : undefined}
-      >
-        {displayGrade}
-      </div>
+      <ResponsiveTooltip content={getTooltipText() || ''} disabled={!showTooltip}>
+        <div 
+          className={`
+            ${sizeClasses[size]} 
+            ${getGradeStyleClasses(displayGrade, displayGpa, isNotApplicable)}
+            text-center
+            rounded-full
+            transition-all duration-300 ease-in-out
+            transform
+            flex items-center justify-center
+            backdrop-blur-sm
+            ${showTooltip ? 'cursor-help' : ''}
+            ${onClick ? 'cursor-pointer hover:scale-110' : ''}
+          `}
+          style={{
+            fontWeight: '800',
+            textShadow: '0 0 1px currentColor',
+            fontFamily: '"Helvetica Bold", Arial, sans-serif'
+          } as React.CSSProperties}
+          onClick={onClick ? (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClick();
+          } : undefined}
+        >
+          {displayGrade}
+        </div>
+      </ResponsiveTooltip>
     </div>
   );
 

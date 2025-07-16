@@ -45,6 +45,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MyReviewsFilters, MyReviewFilters } from '@/components/features/reviews/MyReviewsFilters';
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 
 interface UserReviewInfo extends CourseReviewInfo {
@@ -256,17 +257,29 @@ const MyReviews = () => {
 
   const renderBooleanBadge = (value: boolean, label: string) => {
     return (
-      <Badge 
-        variant={value ? "default" : "secondary"}
-        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+      <ResponsiveTooltip 
+        content={t('filter.clickToFilterRequirement', { requirement: label })}
+        hasClickAction={true}
+        clickActionText={t('tooltip.clickAgainToFilter')}
       >
-        {value ? (
-          <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
-        ) : (
-          <XCircle className="h-3 w-3 mr-1 shrink-0" />
-        )}
-        <span className="truncate">{label}</span>
-      </Badge>
+        <Badge 
+          variant={value ? "default" : "secondary"}
+          className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // 這裡可以添加篩選邏輯，但目前 MyReviews 頁面沒有課程要求篩選器
+            // 所以只是顯示 tooltip 而不執行篩選
+          }}
+        >
+          {value ? (
+            <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+          ) : (
+            <XCircle className="h-3 w-3 mr-1 shrink-0" />
+          )}
+          <span className="truncate">{label}</span>
+        </Badge>
+      </ResponsiveTooltip>
     );
   };
 
@@ -867,30 +880,44 @@ const MyReviews = () => {
                                       );
                                       if (teachingLanguage) {
                                         return (
-                                          <span 
-                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
-                                            title={getTeachingLanguageName(teachingLanguage, t)}
+                                          <ResponsiveTooltip
+                                            content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                            hasClickAction={true}
+                                            clickActionText={t('tooltip.clickAgainToFilter')}
                                           >
-                                            {getTeachingLanguageName(teachingLanguage, t)}
-                                          </span>
+                                            <span 
+                                              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
+                                              onClick={() => {
+                                                // 這裡可以添加教學語言篩選邏輯
+                                              }}
+                                            >
+                                              {getTeachingLanguageName(teachingLanguage, t)}
+                                            </span>
+                                          </ResponsiveTooltip>
                                         );
                                       }
                                       return null;
                                     })()}
                                     
                                     {/* 課堂類型徽章 */}
-                                    <span 
-                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 ${
-                                        instructorDetail.session_type === 'Lecture' 
-                                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                          : instructorDetail.session_type === 'Tutorial'
-                                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                          : ''
-                                      }`}
-                                      onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
                                     >
-                                      {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
-                                    </span>
+                                      <span 
+                                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                          instructorDetail.session_type === 'Lecture' 
+                                            ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                            : instructorDetail.session_type === 'Tutorial'
+                                            ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                            : ''
+                                        }`}
+                                        onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                      >
+                                        {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
+                                      </span>
+                                    </ResponsiveTooltip>
                                   </div>
                                 </div>
                                 
@@ -904,30 +931,44 @@ const MyReviews = () => {
                                     );
                                     if (teachingLanguage) {
                                       return (
-                                        <span 
-                                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
-                                          title={getTeachingLanguageName(teachingLanguage, t)}
+                                        <ResponsiveTooltip
+                                          content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                          hasClickAction={true}
+                                          clickActionText={t('tooltip.clickAgainToFilter')}
                                         >
-                                          {getTeachingLanguageName(teachingLanguage, t)}
-                                        </span>
+                                          <span 
+                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
+                                            onClick={() => {
+                                              // 這裡可以添加教學語言篩選邏輯
+                                            }}
+                                          >
+                                            {getTeachingLanguageName(teachingLanguage, t)}
+                                          </span>
+                                        </ResponsiveTooltip>
                                       );
                                     }
                                     return null;
                                   })()}
                                   
                                   {/* 課堂類型徽章 */}
-                                  <span 
-                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 ${
-                                      instructorDetail.session_type === 'Lecture' 
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                        : instructorDetail.session_type === 'Tutorial'
-                                        ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                        : ''
-                                    }`}
-                                    onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                  <ResponsiveTooltip
+                                    content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
+                                    hasClickAction={true}
+                                    clickActionText={t('tooltip.clickAgainToFilter')}
                                   >
-                                    {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
-                                  </span>
+                                    <span 
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                        instructorDetail.session_type === 'Lecture' 
+                                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                          : instructorDetail.session_type === 'Tutorial'
+                                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                          : ''
+                                      }`}
+                                      onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                    >
+                                      {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
+                                    </span>
+                                  </ResponsiveTooltip>
                                 </div>
                               </div>
                               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">

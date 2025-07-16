@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LanguageContext } from '@/contexts/LanguageContext';
 import { useFavoriteStatus } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 const useLanguage = () => {
   const context = React.useContext(LanguageContext);
@@ -115,50 +116,51 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   };
 
   return (
-    <Button
-      variant={variant}
-      size={showText ? undefined : "icon"}
-      className={cn(
-        // Base size - always start with icon size
-        getSizeClasses(),
-        // Responsive expansion only when showText is true
-        showText && [
-          // Mobile portrait: maintain width from parent, expand height and add padding
-          'h-auto px-3 py-2',
-          // Landscape and desktop: auto width and height with padding
-          'landscape:h-auto landscape:w-auto landscape:px-3 landscape:py-2',
-          'sm:h-auto sm:w-auto sm:px-3 sm:py-2'
-        ],
-        'transition-all duration-200',
-        'hover:bg-red-500/20 hover:border-red-500/50',
-        className
-      )}
-      onClick={handleFavoriteClick}
-      disabled={isLoading}
-      title={isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
-    >
-      <Heart
+    <ResponsiveTooltip content={isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')} disabled={showText}>
+      <Button
+        variant={variant}
+        size={showText ? undefined : "icon"}
         className={cn(
-          getIconSize(),
+          // Base size - always start with icon size
+          getSizeClasses(),
+          // Responsive expansion only when showText is true
+          showText && [
+            // Mobile portrait: maintain width from parent, expand height and add padding
+            'h-auto px-3 py-2',
+            // Landscape and desktop: auto width and height with padding
+            'landscape:h-auto landscape:w-auto landscape:px-3 landscape:py-2',
+            'sm:h-auto sm:w-auto sm:px-3 sm:py-2'
+          ],
           'transition-all duration-200',
-          showText && 'landscape:mr-2 sm:mr-2',
-          isFavorited 
-            ? 'fill-red-500 text-red-500' 
-            : 'text-muted-foreground hover:fill-red-500 hover:text-red-500'
+          'hover:bg-red-500/20 hover:border-red-500/50',
+          className
         )}
-      />
-      {showText && (
-        <>
-          {/* Mobile portrait: short text */}
-          <span className="text-sm font-medium landscape:hidden sm:hidden">
-            {t('favorites.favorites')}
-          </span>
-          {/* Landscape and desktop: full text */}
-          <span className="text-sm font-medium hidden landscape:inline sm:inline">
-            {isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
-          </span>
-        </>
-      )}
-    </Button>
+        onClick={handleFavoriteClick}
+        disabled={isLoading}
+      >
+        <Heart
+          className={cn(
+            getIconSize(),
+            'transition-all duration-200',
+            showText && 'landscape:mr-2 sm:mr-2',
+            isFavorited 
+              ? 'fill-red-500 text-red-500' 
+              : 'text-muted-foreground hover:fill-red-500 hover:text-red-500'
+          )}
+        />
+        {showText && (
+          <>
+            {/* Mobile portrait: short text */}
+            <span className="text-sm font-medium landscape:hidden sm:hidden">
+              {t('favorites.favorites')}
+            </span>
+            {/* Landscape and desktop: full text */}
+            <span className="text-sm font-medium hidden landscape:inline sm:inline">
+              {isFavorited ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+            </span>
+          </>
+        )}
+      </Button>
+    </ResponsiveTooltip>
   );
 }; 

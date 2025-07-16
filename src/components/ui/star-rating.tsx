@@ -1,5 +1,7 @@
 import { Star } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // 格式化評分，移除尾隨零
 const formatRating = (rating: number): string => {
@@ -30,6 +32,7 @@ export const StarRating = ({
   ratingType = 'teaching'
 }: StarRatingProps) => {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   
   const sizeClasses = {
     sm: 'h-3 w-3',
@@ -124,70 +127,84 @@ export const StarRating = ({
     );
   }
 
-  const containerProps = showTooltip ? {
-    title: getTooltipText(rating),
-    className: `flex items-center gap-1 cursor-help ${className}`
-  } : {
-    className: `flex items-center gap-1 ${className}`
-  };
-
-  return (
-    <div {...containerProps}>
-      <div className="flex items-center">
-        {Array.from({ length: maxRating }, (_, index) => {
-          const starValue = index + 1;
-          const isFilled = starValue <= rating;
-          const isPartial = starValue > rating && starValue - 1 < rating;
-          const partialPercentage = isPartial ? (rating - (starValue - 1)) * 100 : 0;
-          
-          if (isPartial) {
-            // 使用單個 SVG 和 linearGradient 來創建半填充效果
-            const uniqueId = `star-gradient-${index}-${Math.random().toString(36).substr(2, 9)}`;
-            
-            return (
-              <div key={index} className={`${sizeClasses[size]}`}>
-                <svg 
-                  className={`${sizeClasses[size]}`}
-                  viewBox="0 0 24 24" 
-                  fill="currentColor"
-                >
-                  <defs>
-                    <linearGradient id={uniqueId} x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset={`${partialPercentage}%`} stopColor="#facc15" />
-                      <stop offset={`${partialPercentage}%`} stopColor="#e5e7eb" />
-                    </linearGradient>
-                    <linearGradient id={`${uniqueId}-dark`} x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset={`${partialPercentage}%`} stopColor="#facc15" />
-                      <stop offset={`${partialPercentage}%`} stopColor="#374151" />
-                    </linearGradient>
-                  </defs>
-                  <path 
-                    d="m12,2l3.09,6.26L22,9.27l-5,4.87 1.18,6.88L12,17.77l-6.18,3.25L7,14.14 2,9.27l6.91-1.01L12,2Z" 
-                    fill={`url(#${uniqueId})`}
-                    className="dark:hidden"
-                  />
-                  <path 
-                    d="m12,2l3.09,6.26L22,9.27l-5,4.87 1.18,6.88L12,17.77l-6.18,3.25L7,14.14 2,9.27l6.91-1.01L12,2Z" 
-                    fill={`url(#${uniqueId}-dark)`}
-                    className="hidden dark:block"
-                  />
-                </svg>
-              </div>
-            );
-          }
+  const renderStars = () => (
+    <div className="flex items-center">
+      {Array.from({ length: maxRating }, (_, index) => {
+        const starValue = index + 1;
+        const isFilled = starValue <= rating;
+        const isPartial = starValue > rating && starValue - 1 < rating;
+        const partialPercentage = isPartial ? (rating - (starValue - 1)) * 100 : 0;
+        
+        if (isPartial) {
+          // 使用單個 SVG 和 linearGradient 來創建半填充效果
+          const uniqueId = `star-gradient-${index}-${Math.random().toString(36).substr(2, 9)}`;
           
           return (
-            <Star
-              key={index}
-              className={`${sizeClasses[size]} ${
-                isFilled 
-                  ? 'fill-yellow-400 text-yellow-400' 
-                  : 'fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700'
-              }`}
-            />
+            <div key={index} className={`${sizeClasses[size]}`}>
+              <svg 
+                className={`${sizeClasses[size]}`}
+                viewBox="0 0 24 24" 
+                fill="currentColor"
+              >
+                <defs>
+                  <linearGradient id={uniqueId} x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset={`${partialPercentage}%`} stopColor="#facc15" />
+                    <stop offset={`${partialPercentage}%`} stopColor="#e5e7eb" />
+                  </linearGradient>
+                  <linearGradient id={`${uniqueId}-dark`} x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset={`${partialPercentage}%`} stopColor="#facc15" />
+                    <stop offset={`${partialPercentage}%`} stopColor="#374151" />
+                  </linearGradient>
+                </defs>
+                <path 
+                  d="m12,2l3.09,6.26L22,9.27l-5,4.87 1.18,6.88L12,17.77l-6.18,3.25L7,14.14 2,9.27l6.91-1.01L12,2Z" 
+                  fill={`url(#${uniqueId})`}
+                  className="dark:hidden"
+                />
+                <path 
+                  d="m12,2l3.09,6.26L22,9.27l-5,4.87 1.18,6.88L12,17.77l-6.18,3.25L7,14.14 2,9.27l6.91-1.01L12,2Z" 
+                  fill={`url(#${uniqueId}-dark)`}
+                  className="hidden dark:block"
+                />
+              </svg>
+            </div>
           );
-        })}
-      </div>
+        }
+        
+        return (
+          <Star
+            key={index}
+            className={`${sizeClasses[size]} ${
+              isFilled 
+                ? 'fill-yellow-400 text-yellow-400' 
+                : 'fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700'
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+
+  // Wrap with ResponsiveTooltip for mobile
+  if (showTooltip && isMobile) {
+    return (
+      <ResponsiveTooltip content={getTooltipText(rating)} disabled={!showTooltip}>
+        <div className={`flex items-center gap-1 cursor-help ${className}`}>
+          {renderStars()}
+          {showValue && (
+            <span className={`${textSizeClasses[size]} text-muted-foreground ml-1`}>
+              {formatRating(rating)}
+            </span>
+          )}
+        </div>
+      </ResponsiveTooltip>
+    );
+  }
+
+  // Desktop version with title attribute
+  return (
+    <div className={`flex items-center gap-1 ${showTooltip ? 'cursor-help' : ''} ${className}`}>
+      {renderStars()}
       {showValue && (
         <span 
           className={`${textSizeClasses[size]} text-muted-foreground ml-1`}
