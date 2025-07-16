@@ -74,6 +74,44 @@ export const CourseReviewsList = ({
   const [pendingGradeFilter, setPendingGradeFilter] = useState<string | null>(null);
   const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
+  const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
+  const [pendingLanguageFilter, setPendingLanguageFilter] = useState<string | null>(null);
+  
+  // Clear pending states when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setPendingGradeFilter(null);
+      setPendingTeachingLanguageFilter(null);
+      setPendingSessionTypeFilter(null);
+      setPendingTermFilter(null);
+      setPendingLanguageFilter(null);
+    };
+
+    // Add a small delay to avoid clearing immediately when clicking the badge itself
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
+  // Clear pending states after timeout
+  useEffect(() => {
+    if (pendingGradeFilter || pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingLanguageFilter) {
+      const timer = setTimeout(() => {
+        setPendingGradeFilter(null);
+        setPendingTeachingLanguageFilter(null);
+        setPendingSessionTypeFilter(null);
+        setPendingTermFilter(null);
+        setPendingLanguageFilter(null);
+      }, 3000); // Clear after 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [pendingGradeFilter, pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingLanguageFilter]);
   
   // Extract course code and term code for teaching languages hook
   const firstReview = allReviews?.[0];
@@ -1086,6 +1124,16 @@ export const CourseReviewsList = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            if (isMobile && pendingTermFilter !== term.term_code) {
+                              setPendingTermFilter(term.term_code);
+                              return;
+                            }
+                            if (isMobile && pendingTermFilter === term.term_code) {
+                              setPendingTermFilter(null);
+                              // continue to apply filter below
+                            } else if (isMobile) {
+                              return;
+                            }
                             setFilters(prev => ({
                               ...prev,
                               selectedTerms: [term.term_code],
@@ -1107,6 +1155,16 @@ export const CourseReviewsList = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              if (isMobile && pendingLanguageFilter !== review.review_language) {
+                                setPendingLanguageFilter(review.review_language!);
+                                return;
+                              }
+                              if (isMobile && pendingLanguageFilter === review.review_language) {
+                                setPendingLanguageFilter(null);
+                                // continue to apply filter below
+                              } else if (isMobile) {
+                                return;
+                              }
                               setFilters(prev => ({
                                 ...prev,
                                 selectedLanguages: [review.review_language!],
@@ -1366,6 +1424,16 @@ export const CourseReviewsList = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            if (isMobile && pendingTermFilter !== term.term_code) {
+                              setPendingTermFilter(term.term_code);
+                              return;
+                            }
+                            if (isMobile && pendingTermFilter === term.term_code) {
+                              setPendingTermFilter(null);
+                              // continue to apply filter below
+                            } else if (isMobile) {
+                              return;
+                            }
                             setFilters(prev => ({
                               ...prev,
                               selectedTerms: [term.term_code],
@@ -1387,6 +1455,16 @@ export const CourseReviewsList = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              if (isMobile && pendingLanguageFilter !== review.review_language) {
+                                setPendingLanguageFilter(review.review_language!);
+                                return;
+                              }
+                              if (isMobile && pendingLanguageFilter === review.review_language) {
+                                setPendingLanguageFilter(null);
+                                // continue to apply filter below
+                              } else if (isMobile) {
+                                return;
+                              }
                               setFilters(prev => ({
                                 ...prev,
                                 selectedLanguages: [review.review_language!],
