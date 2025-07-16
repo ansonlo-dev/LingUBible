@@ -165,9 +165,21 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
     return `${t('review.finalGrade')}: ${displayGrade} | ${t('grade.gpa')}: ${displayGpa.toFixed(2)} | ${getLocalizedDescription(displayDescription)}`;
   };
 
+  const getFilterTooltipText = () => {
+    if (!onClick) return getTooltipText();
+    
+    const gradeText = isNotApplicable ? t('review.notApplicable') : displayGrade;
+    return t('filter.clickToFilterByGrade', { grade: gradeText });
+  };
+
   const badgeElement = (
     <div className="mb-2">
-      <ResponsiveTooltip content={getTooltipText() || ''} disabled={!showTooltip}>
+      <ResponsiveTooltip 
+        content={getFilterTooltipText() || ''} 
+        disabled={!showTooltip}
+        hasClickAction={!!onClick}
+        clickActionText={onClick ? t('tooltip.clickAgainToFilter') : undefined}
+      >
         <div 
           className={`
             ${sizeClasses[size]} 

@@ -452,16 +452,14 @@ const CourseDetail = () => {
 
   // 教學語言徽章點擊處理器
   const handleTeachingLanguageBadgeClick = (languageCode: string) => {
-    if (isMobile && pendingTeachingLanguageFilter !== languageCode) {
-      setPendingTeachingLanguageFilter(languageCode);
-      return; // Only set pending on first tap, do not apply filter
-    }
-    if (isMobile && pendingTeachingLanguageFilter === languageCode) {
-      setPendingTeachingLanguageFilter(null);
-      // Continue to apply filter below
-    } else if (isMobile) {
-      // If pending is null but this is mobile, do not apply filter
-      return;
+    if (isMobile) {
+      if (pendingTeachingLanguageFilter !== languageCode) {
+        setPendingTeachingLanguageFilter(languageCode);
+        return; // Only set pending on first tap, do not apply filter
+      } else if (pendingTeachingLanguageFilter === languageCode) {
+        setPendingTeachingLanguageFilter(null);
+        // Continue to apply filter below
+      }
     }
     const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
     const isSelected = currentValues.includes(languageCode);
@@ -477,16 +475,14 @@ const CourseDetail = () => {
   };
 
   const handleTermBadgeClick = (termCode: string) => {
-    if (isMobile && pendingTermFilter !== termCode) {
-      setPendingTermFilter(termCode);
-      return; // Only set pending on first tap, do not apply filter
-    }
-    if (isMobile && pendingTermFilter === termCode) {
-      setPendingTermFilter(null);
-      // Continue to apply filter below
-    } else if (isMobile) {
-      // If pending is null but this is mobile, do not apply filter
-      return;
+    if (isMobile) {
+      if (pendingTermFilter !== termCode) {
+        setPendingTermFilter(termCode);
+        return; // Only set pending on first tap, do not apply filter
+      } else if (pendingTermFilter === termCode) {
+        setPendingTermFilter(null);
+        // Continue to apply filter below
+      }
     }
     const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
     const isSelected = currentValues.includes(termCode);
