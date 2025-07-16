@@ -56,7 +56,8 @@
     "release:check": "echo '🔍 檢查發布狀態...' && git status && echo '' && echo '📋 最近的標籤:' && git tag --sort=-version:refname | head -5",
     "release:create-missing": "node tools/scripts/version/create-missing-release.js",
     "version:test": "node tools/scripts/version/test-version-system.js",
-    "sync:version": "node scripts/sync-version.js"
+    "sync:version": "node scripts/sync-version.js",
+    "ensure:bun-only": "bash scripts/ensure-bun-only.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

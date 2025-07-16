@@ -121,7 +121,7 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
 
   // Prepare content with click instruction for mobile
   const mobileContent = useCallback(() => {
-    if (!hasClickAction || !isOpen || !hasBeenTapped) {
+    if (!hasClickAction) {
       return content;
     }
     
@@ -130,12 +130,12 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
     return (
       <div>
         {content}
-        <div className="mt-2 text-xs opacity-75 italic border-t border-border/50 pt-1">
+        <div className="mt-2 text-xs opacity-70 italic border-t border-border/40 pt-2 text-muted-foreground">
           {actionText}
         </div>
       </div>
     );
-  }, [content, hasClickAction, isOpen, hasBeenTapped, clickActionText, t]);
+  }, [content, hasClickAction, clickActionText, t]);
 
   if (disabled || !content) {
     return <>{children}</>;

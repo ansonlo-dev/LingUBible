@@ -2306,7 +2306,9 @@ const Lecturers = () => {
                         <span className="font-medium truncate">
                           {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
                         </span>
-                        {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
+                      </div>
+                      {/* 新增一行，顯示學期和語言徽章，桌面和手機都顯示在用戶名下方 */}
+                      <div className="flex gap-2 mt-1 flex-wrap">
                         <ResponsiveTooltip
                           content={isMobile ? (
                             <div className="flex flex-col items-start">
@@ -2317,7 +2319,7 @@ const Lecturers = () => {
                           ) : t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -2346,130 +2348,49 @@ const Lecturers = () => {
                             <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
                         </ResponsiveTooltip>
-                        {/* 語言徽章 - 桌面版顯示在學期徽章旁邊 */}
-                        <ResponsiveTooltip
-                          content={isMobile ? (
-                            <div className="flex flex-col items-start">
-                              <div>{t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}</div>
-                              <Separator className="my-1 w-full" />
-                              <div>{t('filter.clickAgainToApplyFilter')}</div>
-                            </div>
-                          ) : t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
-                        >
-                          <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const reviewLanguage = reviewInfo.review.review_language || 'en';
-                              if (isMobile) {
-                                if (pendingReviewLanguageFilter === reviewLanguage) {
+                        {reviewInfo.review.review_language && (
+                          <ResponsiveTooltip
+                            content={isMobile ? (
+                              <div className="flex flex-col items-start">
+                                <div>{t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}</div>
+                                <Separator className="my-1 w-full" />
+                                <div>{t('filter.clickAgainToApplyFilter')}</div>
+                              </div>
+                            ) : t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                          >
+                            <button
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer min-w-0 flex items-center justify-center"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const reviewLanguage = reviewInfo.review.review_language || 'en';
+                                if (isMobile) {
+                                  if (pendingReviewLanguageFilter === reviewLanguage) {
+                                    handleFiltersChange({
+                                      ...filters,
+                                      selectedLanguages: [reviewLanguage],
+                                      currentPage: 1
+                                    });
+                                    setPendingReviewLanguageFilter(null);
+                                  } else {
+                                    setPendingReviewLanguageFilter(reviewLanguage);
+                                    return;
+                                  }
+                                } else {
                                   handleFiltersChange({
                                     ...filters,
                                     selectedLanguages: [reviewLanguage],
                                     currentPage: 1
                                   });
-                                  setPendingReviewLanguageFilter(null);
-                                } else {
-                                  setPendingReviewLanguageFilter(reviewLanguage);
-                                  return;
                                 }
-                              } else {
-                                handleFiltersChange({
-                                  ...filters,
-                                  selectedLanguages: [reviewLanguage],
-                                  currentPage: 1
-                                });
-                              }
-                            }}
-                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
-                          >
-                            <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
-                          </button>
-                        </ResponsiveTooltip>
+                              }}
+                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            >
+                              <span className="truncate text-center">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
+                            </button>
+                          </ResponsiveTooltip>
+                        )}
                       </div>
-                                             {/* 學期和語言徽章 - 手機版顯示在下方 */}
-                       <div className="flex gap-2 md:hidden">
-                         <ResponsiveTooltip
-                           content={isMobile ? (
-                             <div className="flex flex-col items-start">
-                               <div>{t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}</div>
-                               <Separator className="my-1 w-full" />
-                               <div>{t('filter.clickAgainToApplyFilter')}</div>
-                             </div>
-                           ) : t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
-                         >
-                           <button
-                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
-                             onClick={(e) => {
-                               e.preventDefault();
-                               e.stopPropagation();
-                               if (isMobile) {
-                                 if (pendingTermFilter === reviewInfo.term.term_code) {
-                                   handleFiltersChange({
-                                     ...filters,
-                                     selectedTerms: [reviewInfo.term.term_code],
-                                     currentPage: 1
-                                   });
-                                   setPendingTermFilter(null);
-                                 } else {
-                                   setPendingTermFilter(reviewInfo.term.term_code);
-                                   return;
-                                 }
-                               } else {
-                                 handleFiltersChange({
-                                   ...filters,
-                                   selectedTerms: [reviewInfo.term.term_code],
-                                   currentPage: 1
-                                 });
-                               }
-                             }}
-                             title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
-                           >
-                             <span className="truncate">{reviewInfo.term.name}</span>
-                           </button>
-                         </ResponsiveTooltip>
-                         <ResponsiveTooltip
-                           content={isMobile ? (
-                             <div className="flex flex-col items-start">
-                               <div>{t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}</div>
-                               <Separator className="my-1 w-full" />
-                               <div>{t('filter.clickAgainToApplyFilter')}</div>
-                             </div>
-                           ) : t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
-                         >
-                           <button
-                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
-                             onClick={(e) => {
-                               e.preventDefault();
-                               e.stopPropagation();
-                               const reviewLanguage = reviewInfo.review.review_language || 'en';
-                               if (isMobile) {
-                                 if (pendingReviewLanguageFilter === reviewLanguage) {
-                                   handleFiltersChange({
-                                     ...filters,
-                                     selectedLanguages: [reviewLanguage],
-                                     currentPage: 1
-                                   });
-                                   setPendingReviewLanguageFilter(null);
-                                 } else {
-                                   setPendingReviewLanguageFilter(reviewLanguage);
-                                   return;
-                                 }
-                               } else {
-                                 handleFiltersChange({
-                                   ...filters,
-                                   selectedLanguages: [reviewLanguage],
-                                   currentPage: 1
-                                 });
-                               }
-                             }}
-                             title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
-                           >
-                             <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
-                           </button>
-                         </ResponsiveTooltip>
-                       </div>
                       {/* 課程標題 - 顯示在學生姓名/匿名行下方 */}
                       <div className="space-y-2">
                         <div className="flex-1 min-w-0">

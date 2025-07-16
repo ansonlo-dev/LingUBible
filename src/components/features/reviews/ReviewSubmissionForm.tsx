@@ -2182,7 +2182,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         <CardContent>
           <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
             {/* 評論基本信息 */}
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-2 min-w-0 flex-1">
                 <div className="flex items-center gap-2 min-w-0">
                   <ReviewAvatar
@@ -2205,18 +2205,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <span className="truncate">{mockTerm.name}</span>
                   </Badge>
                 </div>
-                {/* 學期徽章 - 手機版顯示在下方 */}
+                {/* 學期徽章 - 手機版顯示在下方，確保不與成績圓圈重疊 */}
                 <Badge 
                   variant="outline" 
-                  className="text-xs w-fit md:hidden"
+                  className="text-xs w-fit md:hidden max-w-[calc(100%-3rem)]"
                 >
                   <Calendar className="h-3 w-3 mr-1" />
                   <span className="truncate">{mockTerm.name}</span>
                 </Badge>
               </div>
-              {/* 最終成績 - 右上角大顯示 */}
+              {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
               {grade && grade !== '-1' && (
-                <div className="flex flex-col items-center shrink-0">
+                <div className="flex flex-col items-center shrink-0 ml-2">
                   <GradeBadge 
                     grade={grade}
                     size="md"

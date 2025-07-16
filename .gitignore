@@ -48,3 +48,8 @@ dist/
 temp-fonts/
 public/fonts/optimized/*.ttf
 public/fonts/optimized/*.woff2 
+
+# Package manager lockfiles (using Bun)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml 

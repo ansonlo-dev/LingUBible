@@ -631,7 +631,7 @@ const MyReviews = () => {
                         )}
                       </div>
                       {/* 學期和語言徽章 - 手機版顯示在下方 */}
-                      <div className="flex gap-2 md:hidden">
+                      <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
                         <button
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
                           onClick={(e) => {
@@ -648,10 +648,10 @@ const MyReviews = () => {
                         >
                           <span className="truncate">{reviewInfo.term.name}</span>
                         </button>
-                        {/* 語言徽章 - 手機版顯示在學期旁邊 */}
+                        {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
                         {reviewInfo.review.review_language && (
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();

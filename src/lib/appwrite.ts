@@ -27,4 +27,4 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 
 export { ID };
-export default client; 
+export { client }; 

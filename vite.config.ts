@@ -80,6 +80,10 @@ export default defineConfig(({ command, mode }) => {
       exclude: ['@vite/client', '@vite/env'],
       // 啟用快取以加速重建
       force: false,
+      // 確保 Bun 兼容性
+      esbuildOptions: {
+        target: 'es2020',
+      },
     },
     esbuild: {
       target: 'es2020',

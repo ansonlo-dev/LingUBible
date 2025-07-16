@@ -64,15 +64,13 @@ export const CourseReviewsList = ({
   course
 }: CourseReviewsListProps) => {
 
-  const { t: tContext, language } = useLanguage();
+  const { t: tContext, language: siteLanguage } = useLanguage();
   const t = tProp || tContext;
   const { user } = useAuth();
   const navigate = useNavigate();
   const [expandedReviews, setExpandedReviews] = useState<ExpandedReviews>({});
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
   const isMobile = useIsMobile();
-  const [pendingLanguageFilter, setPendingLanguageFilter] = useState<string | null>(null);
-  const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
   const [pendingGradeFilter, setPendingGradeFilter] = useState<string | null>(null);
   const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
@@ -462,13 +460,14 @@ export const CourseReviewsList = ({
     return languageCounts[language] || 0;
   };
 
-  const getLanguageDisplayName = (language: string) => {
+  const getLanguageDisplayName = (reviewLang: string) => {
     const languageMap: { [key: string]: string } = {
       'en': t('language.english'),
       'zh-TW': t('language.traditionalChinese'),
       'zh-CN': t('language.simplifiedChinese')
     };
-    return languageMap[language] || language;
+    
+    return languageMap[reviewLang] || reviewLang;
   };
 
   const renderRequirementBadge = (hasRequirement: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
@@ -546,7 +545,7 @@ export const CourseReviewsList = ({
                     {(() => {
                       const fullInstructor = instructorsMap.get(instructor.instructor_name);
                       if (fullInstructor) {
-                        const nameInfo = getInstructorName(fullInstructor, language);
+                        const nameInfo = getInstructorName(fullInstructor, siteLanguage);
                         return (
                           <div>
                               <div className="font-bold">{nameInfo.primary}</div>
@@ -570,7 +569,7 @@ export const CourseReviewsList = ({
                       {(() => {
                         const fullInstructor = instructorsMap.get(instructor.instructor_name);
                         if (fullInstructor) {
-                          const nameInfo = getInstructorName(fullInstructor, language);
+                          const nameInfo = getInstructorName(fullInstructor, siteLanguage);
                           return (
                             <div>
                               <div className="font-bold">{nameInfo.primary}</div>
@@ -1060,7 +1059,7 @@ export const CourseReviewsList = ({
               return (
                 <div key={review.$id} data-review-id={review.$id} className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
                 {/* 評論基本信息 */}
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <ReviewAvatar
@@ -1074,80 +1073,19 @@ export const CourseReviewsList = ({
                       <span className="font-medium truncate">
                         {review.is_anon ? t('review.anonymousUser') : review.username}
                       </span>
-                      {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
-                      <ResponsiveTooltip
-                        content={t('filter.clickToFilterByTerm', { term: term.name })}
-                        hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                      >
-                        <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // 設置學期篩選
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedTerms: [term.term_code],
-                              currentPage: 1
-                            }));
-                          }}
-                        >
-                          <span className="truncate">{term.name}</span>
-                        </button>
-                      </ResponsiveTooltip>
-                      {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
-                      {review.review_language && (
-                        <ResponsiveTooltip
-                          content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
-                          hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                        >
-                          <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // 設置語言篩選
-                              setFilters(prev => ({
-                                ...prev,
-                                selectedLanguages: [review.review_language!],
-                                currentPage: 1
-                              }));
-                            }}
-                        >
-                          <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
-                        </button>
-                        </ResponsiveTooltip>
-                      )}
                     </div>
-                    {/* 學期徽章 - 手機版顯示在下方 */}
-                    <div className="flex gap-2 md:hidden">
+                    {/* 學期和語言徽章 - 響應式佈局：桌面版同行，手機版換行 */}
+                    <div className="flex gap-2 mt-1 flex-wrap md:flex-nowrap">
                       <ResponsiveTooltip
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
                         clickActionText={t('tooltip.clickAgainToFilter')}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer shrink-0"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (isMobile) {
-                              if (pendingTermFilter !== term.term_code) {
-                                setPendingTermFilter(term.term_code);
-                                return;
-                              } else {
-                                setPendingTermFilter(null);
-                                setFilters(prev => ({
-                                  ...prev,
-                                  selectedTerms: [term.term_code],
-                                  currentPage: 1
-                                }));
-                                return;
-                              }
-                            }
-                            // Desktop: apply filter immediately
                             setFilters(prev => ({
                               ...prev,
                               selectedTerms: [term.term_code],
@@ -1158,7 +1096,6 @@ export const CourseReviewsList = ({
                           <span className="truncate">{term.name}</span>
                         </button>
                       </ResponsiveTooltip>
-                      {/* 語言徽章 - 手機版顯示在學期旁邊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
@@ -1166,25 +1103,10 @@ export const CourseReviewsList = ({
                           clickActionText={t('tooltip.clickAgainToFilter')}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 cursor-pointer min-w-0 flex items-center justify-center shrink-0"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (isMobile) {
-                                if (pendingLanguageFilter !== review.review_language) {
-                                  setPendingLanguageFilter(review.review_language);
-                                  return;
-                                } else {
-                                  setPendingLanguageFilter(null);
-                                  setFilters(prev => ({
-                                    ...prev,
-                                    selectedLanguages: [review.review_language!],
-                                    currentPage: 1
-                                  }));
-                                  return;
-                                }
-                              }
-                              // Desktop: apply filter immediately
                               setFilters(prev => ({
                                 ...prev,
                                 selectedLanguages: [review.review_language!],
@@ -1192,15 +1114,15 @@ export const CourseReviewsList = ({
                               }));
                             }}
                           >
-                            <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                            <span className="truncate text-center">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
                         </ResponsiveTooltip>
                       )}
                     </div>
                   </div>
-                  {/* 最終成績 - 右上角大顯示 */}
+                  {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
                   {review.course_final_grade && (
-                    <div className="flex flex-col items-center shrink-0">
+                    <div className="flex flex-col items-center shrink-0 ml-2">
                       <GradeBadge 
                         grade={review.course_final_grade}
                         size="md"
@@ -1236,9 +1158,9 @@ export const CourseReviewsList = ({
                 {/* 課程評分 */}
                 <div className="grid grid-cols-3 gap-1 text-xs">
                   <div className="text-center">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
-                      <div className="flex items-center justify-center lg:ml-1">
+                      <div className="flex items-center justify-center">
                         {review.course_workload === null || review.course_workload === -1 ? (
                           <span className="text-muted-foreground">
                             {review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -1251,9 +1173,9 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
-                      <div className="flex items-center justify-center lg:ml-1">
+                      <div className="flex items-center justify-center">
                         {review.course_difficulties === null || review.course_difficulties === -1 ? (
                           <span className="text-muted-foreground">
                             {review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -1266,9 +1188,9 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
-                      <div className="flex items-center justify-center lg:ml-1">
+                      <div className="flex items-center justify-center">
                         {review.course_usefulness === null || review.course_usefulness === -1 ? (
                           <span className="text-muted-foreground">
                             {review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -1417,7 +1339,7 @@ export const CourseReviewsList = ({
               return (
                 <div key={review.$id} data-review-id={review.$id} className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
                 {/* 評論基本信息 */}
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <ReviewAvatar
@@ -1431,80 +1353,19 @@ export const CourseReviewsList = ({
                       <span className="font-medium truncate">
                         {review.is_anon ? t('review.anonymousUser') : review.username}
                       </span>
-                      {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
-                      <ResponsiveTooltip
-                        content={t('filter.clickToFilterByTerm', { term: term.name })}
-                        hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                      >
-                        <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // 設置學期篩選
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedTerms: [term.term_code],
-                              currentPage: 1
-                            }));
-                          }}
-                        >
-                          <span className="truncate">{term.name}</span>
-                        </button>
-                      </ResponsiveTooltip>
-                      {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
-                      {review.review_language && (
-                        <ResponsiveTooltip
-                          content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
-                          hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                        >
-                          <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // 設置語言篩選
-                              setFilters(prev => ({
-                                ...prev,
-                                selectedLanguages: [review.review_language!],
-                                currentPage: 1
-                              }));
-                            }}
-                        >
-                          <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
-                        </button>
-                        </ResponsiveTooltip>
-                      )}
                     </div>
-                    {/* 學期徽章 - 手機版顯示在下方 */}
-                    <div className="flex gap-2 md:hidden">
+                    {/* 學期和語言徽章 - 響應式佈局：桌面版同行，手機版換行 */}
+                    <div className="flex gap-2 mt-1 flex-wrap md:flex-nowrap">
                       <ResponsiveTooltip
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
                         clickActionText={t('tooltip.clickAgainToFilter')}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer shrink-0"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (isMobile) {
-                              if (pendingTermFilter !== term.term_code) {
-                                setPendingTermFilter(term.term_code);
-                                return;
-                              } else {
-                                setPendingTermFilter(null);
-                                setFilters(prev => ({
-                                  ...prev,
-                                  selectedTerms: [term.term_code],
-                                  currentPage: 1
-                                }));
-                                return;
-                              }
-                            }
-                            // Desktop: apply filter immediately
                             setFilters(prev => ({
                               ...prev,
                               selectedTerms: [term.term_code],
@@ -1515,7 +1376,6 @@ export const CourseReviewsList = ({
                           <span className="truncate">{term.name}</span>
                         </button>
                       </ResponsiveTooltip>
-                      {/* 語言徽章 - 手機版顯示在學期旁邊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
@@ -1523,25 +1383,10 @@ export const CourseReviewsList = ({
                           clickActionText={t('tooltip.clickAgainToFilter')}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 cursor-pointer min-w-0 flex items-center justify-center shrink-0"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (isMobile) {
-                                if (pendingLanguageFilter !== review.review_language) {
-                                  setPendingLanguageFilter(review.review_language);
-                                  return;
-                                } else {
-                                  setPendingLanguageFilter(null);
-                                  setFilters(prev => ({
-                                    ...prev,
-                                    selectedLanguages: [review.review_language!],
-                                    currentPage: 1
-                                  }));
-                                  return;
-                                }
-                              }
-                              // Desktop: apply filter immediately
                               setFilters(prev => ({
                                 ...prev,
                                 selectedLanguages: [review.review_language!],
@@ -1549,15 +1394,15 @@ export const CourseReviewsList = ({
                               }));
                             }}
                           >
-                            <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                            <span className="truncate text-center">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
                         </ResponsiveTooltip>
                       )}
                     </div>
                   </div>
-                  {/* 最終成績 - 右上角大顯示 */}
+                  {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
                   {review.course_final_grade && (
-                    <div className="flex flex-col items-center shrink-0">
+                    <div className="flex flex-col items-center shrink-0 ml-2">
                       <GradeBadge 
                         grade={review.course_final_grade}
                         size="md"
@@ -1593,9 +1438,9 @@ export const CourseReviewsList = ({
                 {/* 課程評分 */}
                 <div className="grid grid-cols-3 gap-1 text-xs">
                   <div className="text-center">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
-                      <div className="flex items-center justify-center lg:ml-1">
+                      <div className="flex items-center justify-center">
                         {review.course_workload === null || review.course_workload === -1 ? (
                           <span className="text-muted-foreground">
                             {review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -1608,9 +1453,9 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
-                      <div className="flex items-center justify-center lg:ml-1">
+                      <div className="flex items-center justify-center">
                         {review.course_difficulties === null || review.course_difficulties === -1 ? (
                           <span className="text-muted-foreground">
                             {review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -1623,9 +1468,9 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
-                      <div className="flex items-center justify-center lg:ml-1">
+                      <div className="flex items-center justify-center">
                         {review.course_usefulness === null || review.course_usefulness === -1 ? (
                           <span className="text-muted-foreground">
                             {review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
