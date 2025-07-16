@@ -812,6 +812,17 @@ const Lecturers = () => {
   };
 
   const handleTeachingLanguageBadgeClick = (languageCode: string) => {
+    if (isMobile && pendingTeachingLanguageFilter !== languageCode) {
+      setPendingTeachingLanguageFilter(languageCode);
+      return; // Only set pending on first tap, do not apply filter
+    }
+    if (isMobile && pendingTeachingLanguageFilter === languageCode) {
+      setPendingTeachingLanguageFilter(null);
+      // Continue to apply filter below
+    } else if (isMobile) {
+      // If pending is null but this is mobile, do not apply filter
+      return;
+    }
     const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
     const isSelected = currentValues.includes(languageCode);
     
@@ -1992,21 +2003,26 @@ const Lecturers = () => {
                                       <div className="w-px bg-border"></div>
                                       
                                       {/* Teaching language part (right side) */}
-                                      <button
-                                        onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
-                                          (() => {
-                                            const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                            const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
-                                            return isLanguageSelected
-                                              ? 'bg-orange-500 text-orange-50 font-bold'
-                                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
-                                          })()
-                                        }`}
-                                        title={`${t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}`}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
-                                        {teachingLanguage}
-                                      </button>
+                                        <button
+                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
+                                            (() => {
+                                              const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
+                                              return isLanguageSelected
+                                                ? 'bg-orange-500 text-orange-50 font-bold'
+                                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
+                                            })()
+                                          }`}
+                                        >
+                                          {teachingLanguage}
+                                        </button>
+                                      </ResponsiveTooltip>
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
@@ -2155,21 +2171,26 @@ const Lecturers = () => {
                                       <div className="w-px bg-border"></div>
                                       
                                       {/* Teaching language part (right side) */}
-                                      <button
-                                        onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
-                                          (() => {
-                                            const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                            const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
-                                            return isLanguageSelected
-                                              ? 'bg-orange-500 text-orange-50 font-bold'
-                                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
-                                          })()
-                                        }`}
-                                        title={`${t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}`}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
-                                        {teachingLanguage}
-                                      </button>
+                                        <button
+                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
+                                            (() => {
+                                              const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
+                                              return isLanguageSelected
+                                                ? 'bg-orange-500 text-orange-50 font-bold'
+                                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
+                                            })()
+                                          }`}
+                                        >
+                                          {teachingLanguage}
+                                        </button>
+                                      </ResponsiveTooltip>
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
@@ -2310,13 +2331,9 @@ const Lecturers = () => {
                       {/* 新增一行，顯示學期和語言徽章，桌面和手機都顯示在用戶名下方 */}
                       <div className="flex gap-2 mt-1 flex-wrap">
                         <ResponsiveTooltip
-                          content={isMobile ? (
-                            <div className="flex flex-col items-start">
-                              <div>{t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}</div>
-                              <Separator className="my-1 w-full" />
-                              <div>{t('filter.clickAgainToApplyFilter')}</div>
-                            </div>
-                          ) : t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
@@ -2350,13 +2367,9 @@ const Lecturers = () => {
                         </ResponsiveTooltip>
                         {reviewInfo.review.review_language && (
                           <ResponsiveTooltip
-                            content={isMobile ? (
-                              <div className="flex flex-col items-start">
-                                <div>{t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}</div>
-                                <Separator className="my-1 w-full" />
-                                <div>{t('filter.clickAgainToApplyFilter')}</div>
-                              </div>
-                            ) : t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            hasClickAction={true}
+                            clickActionText={t('tooltip.clickAgainToFilter')}
                           >
                             <button
                               className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer min-w-0 flex items-center justify-center"
@@ -2452,9 +2465,9 @@ const Lecturers = () => {
                   {/* 課程評分 */}
                   <div className="grid grid-cols-3 gap-1 text-xs">
                     <div className="text-center">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1 xl:mb-0">
                         <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
-                        <div className="flex items-center justify-center lg:ml-1">
+                        <div className="flex items-center justify-center xl:ml-1">
                           {reviewInfo.review.course_workload === null || reviewInfo.review.course_workload === -1 ? (
                             <span className="text-muted-foreground">
                               {reviewInfo.review.course_workload === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -2467,9 +2480,9 @@ const Lecturers = () => {
                     </div>
                     
                     <div className="text-center">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1 xl:mb-0">
                         <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
-                        <div className="flex items-center justify-center lg:ml-1">
+                        <div className="flex items-center justify-center xl:ml-1">
                           {reviewInfo.review.course_difficulties === null || reviewInfo.review.course_difficulties === -1 ? (
                             <span className="text-muted-foreground">
                               {reviewInfo.review.course_difficulties === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -2482,9 +2495,9 @@ const Lecturers = () => {
                     </div>
                     
                     <div className="text-center">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1 xl:mb-0">
                         <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
-                        <div className="flex items-center justify-center lg:ml-1">
+                        <div className="flex items-center justify-center xl:ml-1">
                           {reviewInfo.review.course_usefulness === null || reviewInfo.review.course_usefulness === -1 ? (
                             <span className="text-muted-foreground">
                               {reviewInfo.review.course_usefulness === -1 ? t('review.notApplicable') : t('review.rating.notRated')}
@@ -2803,9 +2816,9 @@ const Lecturers = () => {
                               
                               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                                 <div className="text-center">
-                                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 mb-1">
                                     <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
-                                    <div className="flex items-center justify-center lg:ml-1">
+                                    <div className="flex items-center justify-center">
                                       {currentInstructorDetail.teaching === null ? (
                                         <span className="text-muted-foreground">
                                           {t('review.rating.notRated')}
@@ -2823,9 +2836,9 @@ const Lecturers = () => {
                                 
                                 {currentInstructorDetail.grading !== null && currentInstructorDetail.grading !== -1 && (
                                   <div className="text-center">
-                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 mb-1">
                                       <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
-                                      <div className="flex items-center justify-center lg:ml-1">
+                                      <div className="flex items-center justify-center">
                                         <StarRating rating={currentInstructorDetail.grading} showValue size="sm" showTooltip ratingType="grading" />
                                       </div>
                                     </div>

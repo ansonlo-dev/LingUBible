@@ -782,8 +782,8 @@ const CourseDetail = () => {
             
             {/* 課程基本統計信息 - 響應式佈局 */}
             <div className="pt-4">
-              {/* Mobile: 統計在兩行 */}
-              <div className="grid grid-cols-1 gap-3 sm:hidden">
+              {/* Mobile and Tablet Portrait: 統計在兩行 */}
+              <div className="grid grid-cols-1 gap-3 lg:hidden">
                 <div className="grid grid-cols-3 gap-2">
                   {/* 平均工作量 */}
                   <StatBox
@@ -854,8 +854,8 @@ const CourseDetail = () => {
                 </div>
               </div>
               
-              {/* Tablet and Desktop: 統一使用 6 列佈局 */}
-              <div className="hidden sm:grid sm:grid-cols-6 gap-4">
+              {/* Desktop: 統一使用 6 列佈局 */}
+              <div className="hidden lg:grid lg:grid-cols-6 gap-4">
                 {/* 平均工作量 */}
                 <StatBox
                   value={detailedStats.averageWorkload}

@@ -1158,7 +1158,7 @@ export const CourseReviewsList = ({
                 {/* 課程評分 */}
                 <div className="grid grid-cols-3 gap-1 text-xs">
                   <div className="text-center">
-                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                       <div className="flex items-center justify-center">
                         {review.course_workload === null || review.course_workload === -1 ? (
@@ -1173,7 +1173,7 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                       <div className="flex items-center justify-center">
                         {review.course_difficulties === null || review.course_difficulties === -1 ? (
@@ -1188,7 +1188,7 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                       <div className="flex items-center justify-center">
                         {review.course_usefulness === null || review.course_usefulness === -1 ? (
@@ -1438,7 +1438,7 @@ export const CourseReviewsList = ({
                 {/* 課程評分 */}
                 <div className="grid grid-cols-3 gap-1 text-xs">
                   <div className="text-center">
-                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                       <div className="flex items-center justify-center">
                         {review.course_workload === null || review.course_workload === -1 ? (
@@ -1453,7 +1453,7 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                       <div className="flex items-center justify-center">
                         {review.course_difficulties === null || review.course_difficulties === -1 ? (
@@ -1468,7 +1468,7 @@ export const CourseReviewsList = ({
                   </div>
                   
                   <div className="text-center">
-                    <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-center gap-1 mb-1">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                       <div className="flex items-center justify-center">
                         {review.course_usefulness === null || review.course_usefulness === -1 ? (

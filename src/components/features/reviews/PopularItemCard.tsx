@@ -420,7 +420,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
         }}
       >
         <Card 
-          className="course-card group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] overflow-hidden relative"
+          className="course-card group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] relative"
         >
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start mb-2">
@@ -452,7 +452,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       {props.teachingLanguages && props.teachingLanguages.length > 0 && (
                         <ResponsiveTooltip content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}>
                           <span 
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
                             onClick={handleTeachingLanguageClick}
                           >
                             <div className="flex items-center">
@@ -602,7 +602,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       }}
     >
       <Card 
-        className="course-card group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] overflow-hidden relative"
+        className="course-card group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] relative"
       >
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start mb-2">
@@ -657,7 +657,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                         clickActionText={t('tooltip.clickAgainToFilter')}
                       >
                         <span 
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200 overflow-hidden"
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
                           onClick={handleTeachingLanguageClick}
                         >
                           <div className="flex items-center">
