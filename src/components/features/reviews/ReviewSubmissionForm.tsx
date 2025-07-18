@@ -404,6 +404,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [selectedTerm, setSelectedTerm] = useState<string>('');
   const [selectedInstructors, setSelectedInstructors] = useState<string[]>([]);
   const [preSelectedInstructor, setPreSelectedInstructor] = useState<string>('');
+  const [originPage, setOriginPage] = useState<string>('');
   
   // Course evaluation - Use null to represent "not yet rated" state
   const [workload, setWorkload] = useState<number | null>(null);
@@ -1428,8 +1429,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     } | null;
     
     if (locationState?.preSelectedInstructor && locationState?.originPage === 'instructor') {
-      // Store the pre-selected instructor for later use when courses are loaded
+      // Store the pre-selected instructor and origin page for later use when courses are loaded
       setPreSelectedInstructor(locationState.preSelectedInstructor);
+      setOriginPage(locationState.originPage);
     }
   }, [location.state]);
 
@@ -1907,6 +1909,21 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return false;
     }
 
+    // 檢查從講師頁面進入時預選講師必須被選中
+    if (originPage === 'instructor' && preSelectedInstructor) {
+      const preSelectedInstructorIncluded = selectedInstructors.some(instructorKey => 
+        instructorKey.startsWith(preSelectedInstructor + '|')
+      );
+      if (!preSelectedInstructorIncluded) {
+        toast({
+          title: t('common.error'),
+          description: t('review.preSelectedInstructorRequired', { instructor: preSelectedInstructor }),
+          variant: 'destructive',
+        });
+        return false;
+      }
+    }
+
     // Check review eligibility (only for new reviews, not edits)
     if (!isEditMode && reviewEligibility && !reviewEligibility.canSubmit) {
       let errorMessage = t('review.submitLimitReached');
@@ -2227,6 +2244,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const PreviewCard = () => {
     const mockTerm = { name: `${new Date().getFullYear()} Term 1` };
     const mockUsername = user?.name || user?.email?.split('@')[0] || 'User';
+    const selectedCourseData = courses.find(course => course.course_code === selectedCourse);
     
     return (
       <Card className="course-card">
@@ -2257,6 +2275,29 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-2 min-w-0 flex-1">
                 <div className="flex items-center gap-2 min-w-0">
+                  {/* 學期和語言徽章 - 桌面版顯示在圓形圖示左側 */}
+                  <div className="hidden md:flex items-center gap-2 shrink-0">
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs shrink-0"
+                    >
+                      <Calendar className="h-3 w-3 mr-1" />
+                      <span className="truncate">{mockTerm.name}</span>
+                    </Badge>
+                    {reviewLanguage && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs shrink-0"
+                      >
+                        <span className="truncate">{
+                          reviewLanguage === 'en' ? t('language.english') :
+                          reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
+                          reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
+                          reviewLanguage
+                        }</span>
+                      </Badge>
+                    )}
+                  </div>
                   <ReviewAvatar
                     isAnonymous={isAnonymous}
                     userId={user?.$id}
@@ -2268,23 +2309,51 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   <span className="font-medium truncate">
                     {isAnonymous ? t('review.anonymousUser') : mockUsername}
                   </span>
-                  {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
+                </div>
+                {/* 課程信息 - 顯示在用戶名下方 */}
+                {selectedCourseData && (
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-lg">
+                        <div className="font-bold">{selectedCourse}</div>
+                        <div className="text-sm text-muted-foreground font-normal">
+                          {selectedCourseData.course_title}
+                        </div>
+                        {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                          const chineseName = language === 'zh-TW' ? selectedCourseData.course_title_tc : selectedCourseData.course_title_sc;
+                          return chineseName && (
+                            <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                              {chineseName}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* 學期和語言徽章 - 手機版顯示在下方 */}
+                <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
                   <Badge 
                     variant="outline" 
-                    className="text-xs shrink-0 hidden md:inline-flex"
+                    className="text-xs w-fit"
                   >
                     <Calendar className="h-3 w-3 mr-1" />
                     <span className="truncate">{mockTerm.name}</span>
                   </Badge>
+                  {reviewLanguage && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs w-fit"
+                    >
+                      <span className="truncate">{
+                        reviewLanguage === 'en' ? t('language.english') :
+                        reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
+                        reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
+                        reviewLanguage
+                      }</span>
+                    </Badge>
+                  )}
                 </div>
-                {/* 學期徽章 - 手機版顯示在下方，確保不與成績圓圈重疊 */}
-                <Badge 
-                  variant="outline" 
-                  className="text-xs w-fit md:hidden max-w-[calc(100%-3rem)]"
-                >
-                  <Calendar className="h-3 w-3 mr-1" />
-                  <span className="truncate">{mockTerm.name}</span>
-                </Badge>
               </div>
               {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
               {grade && grade !== '-1' && (
@@ -2301,47 +2370,47 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {/* 課程評分 */}
             <div className="grid grid-cols-3 gap-1 text-xs">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                   <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  {workload === null ? (
-                    <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                  ) : workload === -1 ? (
-                    <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                  ) : (
-                    <UIStarRating rating={workload} showValue size="sm" showTooltip ratingType="workload" />
-                  )}
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {workload === null ? (
+                      <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                    ) : workload === -1 ? (
+                      <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                    ) : (
+                      <UIStarRating rating={workload} showValue size="sm" showTooltip ratingType="workload" />
+                    )}
+                  </div>
                 </div>
               </div>
               
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                   <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  {difficulty === null ? (
-                    <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                  ) : difficulty === -1 ? (
-                    <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                  ) : (
-                    <UIStarRating rating={difficulty} showValue size="sm" showTooltip ratingType="difficulty" />
-                  )}
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {difficulty === null ? (
+                      <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                    ) : difficulty === -1 ? (
+                      <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                    ) : (
+                      <UIStarRating rating={difficulty} showValue size="sm" showTooltip ratingType="difficulty" />
+                    )}
+                  </div>
                 </div>
               </div>
               
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                   <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  {usefulness === null ? (
-                    <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                  ) : usefulness === -1 ? (
-                    <span className="text-muted-foreground">{t('review.notApplicable')}</span>
-                  ) : (
-                    <UIStarRating rating={usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
-                  )}
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {usefulness === null ? (
+                      <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                    ) : usefulness === -1 ? (
+                      <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                    ) : (
+                      <UIStarRating rating={usefulness} showValue size="sm" showTooltip ratingType="usefulness" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2380,9 +2449,45 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       key={index} 
                       className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[rgb(26_35_50)]"
                     >
-                      <div className="flex items-start justify-between mb-3 gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-lg">
+                      <div className="space-y-2 mb-3">
+                        {/* Instructor name and badges container */}
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
+                          <div className="font-semibold text-lg min-w-0 md:flex-1 flex md:items-center md:gap-2">
+                            {/* Desktop/Tablet: Badges on the left side of instructor name */}
+                            <div className="hidden md:flex md:items-center md:gap-2 md:shrink-0">
+                              {/* 課堂類型徽章 */}
+                              <span 
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
+                                  instructor.sessionType === 'Lecture' 
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                                    : instructor.sessionType === 'Tutorial'
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
+                                    : ''
+                                }`}
+                              >
+                                {t(`sessionTypeBadge.${instructor.sessionType.toLowerCase()}`)}
+                              </span>
+
+                              {/* 教學語言徽章 */}
+                              {(() => {
+                                const teachingLanguage = getPreviewTeachingLanguageForInstructor(
+                                  instructor.instructorName,
+                                  instructor.sessionType
+                                );
+                                if (teachingLanguage) {
+                                  return (
+                                    <span 
+                                      className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
+                                      title={getTeachingLanguageName(teachingLanguage, t)}
+                                    >
+                                      {getTeachingLanguageName(teachingLanguage, t)}
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                            
                             <button
                               type="button"
                               onClick={(e) => {
@@ -2410,7 +2515,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 if (fullInstructor) {
                                   const nameInfo = getInstructorName(fullInstructor, language);
                                   return (
-                                                                        <div className="text-left">
+                                    <div className="text-left">
                                       <div className="font-bold">{nameInfo.primary}</div>
                                       {nameInfo.secondary && (
                                         <div className="text-sm text-muted-foreground font-normal mt-0.5 text-left">
@@ -2425,9 +2530,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 );
                               })()}
                             </button>
-                          </h4>
+                          </div>
                         </div>
-                                                <div className="shrink-0 flex items-start gap-2 pt-1">
+                        
+                        {/* Mobile: Badges on separate lines below instructor name */}
+                        <div className="flex md:hidden flex-wrap items-center gap-2">
                           {/* 課堂類型徽章 */}
                           <span 
                             className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
@@ -2464,31 +2571,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       
                       <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                         <div className="text-center">
-                          <div className="flex items-center justify-center gap-1 mb-1">
-                            <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
-                          </div>
-                          <div className="flex items-center justify-center">
-                            {instructor.teachingScore === null ? (
-                              <span className="text-muted-foreground">
-                                {t('review.rating.notRated')}
-                              </span>
-                            ) : instructor.teachingScore === -1 ? (
-                              <span className="text-muted-foreground">
-                                {t('review.notApplicable')}
-                              </span>
-                            ) : (
-                              <UIStarRating rating={instructor.teachingScore} showValue size="sm" showTooltip ratingType="teaching" />
-                            )}
+                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                            <span className="font-medium text-sm sm:text-base">{t('review.teachingScore')}</span>
+                            <div className="flex items-center justify-center lg:ml-1">
+                              {instructor.teachingScore === null ? (
+                                <span className="text-muted-foreground">
+                                  {t('review.rating.notRated')}
+                                </span>
+                              ) : instructor.teachingScore === -1 ? (
+                                <span className="text-muted-foreground">
+                                  {t('review.notApplicable')}
+                                </span>
+                              ) : (
+                                <UIStarRating rating={instructor.teachingScore} showValue size="sm" showTooltip ratingType="teaching" />
+                              )}
+                            </div>
                           </div>
                         </div>
                         
                         {instructor.gradingScore !== null && instructor.gradingScore !== -1 && (
                           <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 mb-1">
-                              <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <UIStarRating rating={instructor.gradingScore} showValue size="sm" showTooltip ratingType="grading" />
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                              <span className="font-medium text-sm sm:text-base">{t('review.gradingScore')}</span>
+                              <div className="flex items-center justify-center lg:ml-1">
+                                <UIStarRating rating={instructor.gradingScore} showValue size="sm" showTooltip ratingType="grading" />
+                              </div>
                             </div>
                           </div>
                         )}

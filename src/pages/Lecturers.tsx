@@ -1297,6 +1297,21 @@ const Lecturers = () => {
                     showText={true}
                     variant="outline"
                   />
+                  <Button 
+                    className="h-10 gradient-primary hover:opacity-90 text-white"
+                    onClick={() => {
+                      // Navigate to submit review page with instructor pre-selected
+                      navigate('/write-review', { 
+                        state: { 
+                          preSelectedInstructor: instructor.name,
+                          originPage: 'instructor'
+                        } 
+                      });
+                    }}
+                  >
+                    <PenTool className="h-4 w-4 mr-2" />
+                    {t('instructors.submitReview')}
+                  </Button>
                   <button 
                     onClick={() => navigate('/instructors')}
                     className="h-10 px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
@@ -1358,7 +1373,7 @@ const Lecturers = () => {
                       className="h-10 gradient-primary hover:opacity-90 text-white w-full"
                       onClick={() => {
                         // Navigate to submit review page with instructor pre-selected
-                        navigate('/submit-review', { 
+                        navigate('/write-review', { 
                           state: { 
                             preSelectedInstructor: instructor.name,
                             originPage: 'instructor'

@@ -637,54 +637,6 @@ const MyReviews = () => {
                         <span className="font-medium truncate">
                           {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
                         </span>
-                        {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
-                        <ResponsiveTooltip
-                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
-                          hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                        >
-                          <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // 設置學期篩選
-                              handleFiltersChange({
-                                ...filters,
-                                selectedTerms: [reviewInfo.term.term_code],
-                                currentPage: 1
-                              });
-                            }}
-                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
-                          >
-                            <span className="truncate">{reviewInfo.term.name}</span>
-                          </button>
-                        </ResponsiveTooltip>
-                        {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
-                        {(reviewInfo.review.review_language || 'en') && (
-                          <ResponsiveTooltip
-                            content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
-                            hasClickAction={true}
-                            clickActionText={t('tooltip.clickAgainToFilter')}
-                          >
-                            <button
-                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                // 設置評論語言篩選
-                                handleFiltersChange({
-                                  ...filters,
-                                  selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
-                                  currentPage: 1
-                                });
-                              }}
-                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
-                            >
-                              <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
-                            </button>
-                          </ResponsiveTooltip>
-                        )}
                       </div>
                       {/* 學期和語言徽章 - 手機版顯示在下方 */}
                       <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
@@ -711,7 +663,7 @@ const MyReviews = () => {
                           </button>
                         </ResponsiveTooltip>
                         {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
-                        {(reviewInfo.review.review_language || 'en') && (
+                        {reviewInfo.review.review_language && (
                           <ResponsiveTooltip
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
@@ -758,8 +710,58 @@ const MyReviews = () => {
                         </div>
                       </div>
                     </div>
-                    {/* 右上角：最終成績和編輯按鈕 */}
+                    {/* 右上角：學期和語言徽章、最終成績和編輯按鈕 */}
                     <div className="flex items-start gap-3 shrink-0">
+                      {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
+                      <div className="hidden md:flex items-center gap-2 shrink-0">
+                        <ResponsiveTooltip
+                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
+                        >
+                          <button
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // 設置學期篩選
+                              handleFiltersChange({
+                                ...filters,
+                                selectedTerms: [reviewInfo.term.term_code],
+                                currentPage: 1
+                              });
+                            }}
+                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          >
+                            <span className="truncate">{reviewInfo.term.name}</span>
+                          </button>
+                        </ResponsiveTooltip>
+                        {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                        {reviewInfo.review.review_language && (
+                          <ResponsiveTooltip
+                            content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            hasClickAction={true}
+                            clickActionText={t('tooltip.clickAgainToFilter')}
+                          >
+                            <button
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // 設置評論語言篩選
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
+                                  currentPage: 1
+                                });
+                              }}
+                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            >
+                              <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
+                            </button>
+                          </ResponsiveTooltip>
+                        )}
+                      </div>
                       {/* 最終成績 */}
                       {reviewInfo.review.course_final_grade && (
                         <div className="flex flex-col items-center">

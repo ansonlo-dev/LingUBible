@@ -1281,6 +1281,7 @@ export default {
   'review.notRated': '未評分',
   'review.gradeNotApplicable': '此課程沒有具體的成績可以換算成績點。',
   'review.fillAllFields': '請填寫所有欄位',
+  'review.preSelectedInstructorRequired': '從講師頁面進入時，您必須在評論中包含 {instructor}',
   'review.commonPhrases': '常用短語',
   'review.positivePhrases': '正面',
   'review.negativePhrases': '負面',

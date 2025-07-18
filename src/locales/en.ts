@@ -1339,6 +1339,7 @@ export default {
   'review.cannotEditGradeTitle': 'Cannot Edit Grade',
   'review.cannotEditGradeMessage': 'Please delete your newer review before changing to a non-fail grade for this older review.',
   'review.fillAllFields': 'Please fill in all required fields',
+  'review.preSelectedInstructorRequired': 'You must include {instructor} in your review when entering from instructor page',
   'review.loadingCourses': 'Loading courses...',
   'review.loadingTerms': 'Loading terms...',
   'review.loadingInstructors': 'Loading instructors...',
