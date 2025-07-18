@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -398,6 +398,13 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [availableInstructors, setAvailableInstructors] = useState<TeachingRecord[]>([]);
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
   const [instructorCourses, setInstructorCourses] = useState<Course[]>([]);
+  
+  // Performance optimization: Cache teaching records to avoid redundant API calls
+  const [teachingRecordsCache, setTeachingRecordsCache] = useState<Map<string, TeachingRecord[]>>(new Map());
+  const [termsCache, setTermsCache] = useState<Map<string, Term>>(new Map());
+  const [instructorsCache, setInstructorsCache] = useState<Map<string, Instructor>>(new Map());
+  const [instructorTeachingRecordsCache, setInstructorTeachingRecordsCache] = useState<Map<string, TeachingRecord[]>>(new Map());
+  const [coursesCache, setCoursesCache] = useState<Map<string, Course>>(new Map());
 
   // Form states
   const [selectedCourse, setSelectedCourse] = useState<string>('');
@@ -509,6 +516,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     return instructorCourses.length > 0 ? instructorCourses : courses;
   }, [courses, preSelectedInstructor, instructorCourses]);
 
+  // Memoize available session types to prevent unnecessary re-renders
+  const availableSessionTypes = useMemo(() => {
+    return [...new Set(availableInstructors.map(instructor => instructor.session_type))];
+  }, [availableInstructors]);
+
+  // Memoize filtered instructors for current course and term
+  const filteredInstructors = useMemo(() => {
+    if (!selectedCourse || !selectedTerm) return [];
+    
+    return availableInstructors.filter(instructor => 
+      instructor.course_code === selectedCourse && instructor.term_code === selectedTerm
+    );
+  }, [availableInstructors, selectedCourse, selectedTerm]);
+
+  // Memoize instructors by session type for better performance
+  const instructorsBySessionType = useMemo(() => {
+    return filteredInstructors.reduce((acc, instructor) => {
+      if (!acc[instructor.session_type]) {
+        acc[instructor.session_type] = [];
+      }
+      acc[instructor.session_type].push(instructor);
+      return acc;
+    }, {} as Record<string, TeachingRecord[]>);
+  }, [filteredInstructors]);
+
   // Teaching languages hook for preview (selected instructors)
   const allInstructorDetails = useMemo(() => {
     return instructorEvaluations.map(instructorEval => ({
@@ -574,6 +606,136 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     courseCode: selectedCourse,
     termCode: selectedTerm
   });
+
+  // Performance optimization: Cached teaching records getter
+  const getCachedTeachingRecords = useCallback(async (courseCode: string): Promise<TeachingRecord[]> => {
+    if (teachingRecordsCache.has(courseCode)) {
+      return teachingRecordsCache.get(courseCode)!;
+    }
+    
+    const records = await CourseService.getCourseTeachingRecords(courseCode);
+    setTeachingRecordsCache(prev => new Map(prev.set(courseCode, records)));
+    return records;
+  }, [teachingRecordsCache]);
+
+  // Performance optimization: Batch load terms
+  const batchLoadTerms = useCallback(async (termCodes: string[]): Promise<Map<string, Term>> => {
+    const uncachedTerms = termCodes.filter(code => !termsCache.has(code));
+    
+    if (uncachedTerms.length === 0) {
+      return new Map(termCodes.map(code => [code, termsCache.get(code)!]));
+    }
+
+    // Load uncached terms in parallel
+    const termsData = await Promise.all(
+      uncachedTerms.map(async (termCode) => {
+        try {
+          const term = await CourseService.getTermByCode(termCode);
+          return { termCode, term };
+        } catch (error) {
+          console.error(`Error loading term ${termCode}:`, error);
+          return { termCode, term: null };
+        }
+      })
+    );
+
+    // Update cache with newly loaded terms
+    setTermsCache(prev => {
+      const newCache = new Map(prev);
+      termsData.forEach(({ termCode, term }) => {
+        if (term) {
+          newCache.set(termCode, term);
+        }
+      });
+      return newCache;
+    });
+
+    // Return all requested terms (cached + newly loaded)
+    return new Map(termCodes.map(code => [code, termsCache.get(code) || termsData.find(t => t.termCode === code)?.term]).filter(([_, term]) => term !== null && term !== undefined) as [string, Term][]);
+  }, [termsCache]);
+
+  // Performance optimization: Batch load instructors with caching
+  const batchLoadInstructors = useCallback(async (instructorNames: string[]): Promise<Map<string, Instructor>> => {
+    const uncachedInstructors = instructorNames.filter(name => !instructorsCache.has(name));
+    
+    if (uncachedInstructors.length === 0) {
+      return new Map(instructorNames.map(name => [name, instructorsCache.get(name)!]));
+    }
+
+    // Load uncached instructors in parallel
+    const instructorsData = await Promise.all(
+      uncachedInstructors.map(async (name) => {
+        try {
+          const instructor = await CourseService.getInstructorByName(name);
+          return { name, instructor };
+        } catch (error) {
+          console.warn(`Failed to fetch instructor info for ${name}:`, error);
+          return { name, instructor: null };
+        }
+      })
+    );
+
+    // Update cache with newly loaded instructors
+    setInstructorsCache(prev => {
+      const newCache = new Map(prev);
+      instructorsData.forEach(({ name, instructor }) => {
+        if (instructor) {
+          newCache.set(name, instructor);
+        }
+      });
+      return newCache;
+    });
+
+    // Return all requested instructors (cached + newly loaded)
+    return new Map(instructorNames.map(name => [name, instructorsCache.get(name) || instructorsData.find(i => i.name === name)?.instructor]).filter(([_, instructor]) => instructor !== null && instructor !== undefined) as [string, Instructor][]);
+  }, [instructorsCache]);
+
+  // Performance optimization: Cache instructor teaching records
+  const getCachedInstructorTeachingRecords = useCallback(async (instructorName: string): Promise<TeachingRecord[]> => {
+    if (instructorTeachingRecordsCache.has(instructorName)) {
+      return instructorTeachingRecordsCache.get(instructorName)!;
+    }
+    
+    const records = await CourseService.getInstructorTeachingRecords(instructorName);
+    setInstructorTeachingRecordsCache(prev => new Map(prev.set(instructorName, records)));
+    return records;
+  }, [instructorTeachingRecordsCache]);
+
+  // Performance optimization: Batch load courses with caching
+  const batchLoadCourses = useCallback(async (courseCodes: string[]): Promise<Map<string, Course>> => {
+    const uncachedCourses = courseCodes.filter(code => !coursesCache.has(code));
+    
+    if (uncachedCourses.length === 0) {
+      return new Map(courseCodes.map(code => [code, coursesCache.get(code)!]));
+    }
+
+    // Load uncached courses in parallel
+    const coursesData = await Promise.all(
+      uncachedCourses.map(async (courseCode) => {
+        try {
+          const course = await CourseService.getCourseByCode(courseCode);
+          return { courseCode, course };
+        } catch (error) {
+          console.error(`Error loading course ${courseCode}:`, error);
+          return { courseCode, course: null };
+        }
+      })
+    );
+
+    // Update cache with newly loaded courses
+    setCoursesCache(prev => {
+      const newCache = new Map(prev);
+      coursesData.forEach(({ courseCode, course }) => {
+        if (course) {
+          newCache.set(courseCode, course);
+        }
+      });
+      return newCache;
+    });
+
+    // Return all requested courses (cached + newly loaded)
+    return new Map(courseCodes.map(code => [code, coursesCache.get(code) || coursesData.find(c => c.courseCode === code)?.course]).filter(([_, course]) => course !== null && course !== undefined) as [string, Course][]);
+  }, [coursesCache]);
 
   // Formatting functions
   const applyFormatting = (textareaRef: React.RefObject<HTMLTextAreaElement>, setValue: (value: string) => void, formatType: string) => {
@@ -1444,15 +1606,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       }
 
       try {
-        const teachingRecords = await CourseService.getInstructorTeachingRecords(preSelectedInstructor);
+        const teachingRecords = await getCachedInstructorTeachingRecords(preSelectedInstructor);
         const uniqueCourseCodes = [...new Set(teachingRecords.map(record => record.course_code))];
         
-        // Load full course details for each unique course code
-        const coursePromises = uniqueCourseCodes.map(courseCode => 
-          CourseService.getCourseByCode(courseCode)
-        );
-        const courseDetails = await Promise.all(coursePromises);
-        const validCourses = courseDetails.filter(course => course !== null) as Course[];
+        // Load full course details for each unique course code using batch loading
+        const coursesMap = await batchLoadCourses(uniqueCourseCodes);
+        const validCourses = Array.from(coursesMap.values());
         
         setInstructorCourses(validCourses);
       } catch (error) {
@@ -1462,7 +1621,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     };
 
     loadInstructorCourses();
-  }, [preSelectedInstructor]);
+  }, [preSelectedInstructor, getCachedInstructorTeachingRecords, batchLoadCourses]);
 
   // Load terms when course is selected
   useEffect(() => {
@@ -1478,16 +1637,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       try {
         setTermsLoading(true);
-        const teachingRecords = await CourseService.getCourseTeachingRecords(selectedCourse);
+        // Use cached teaching records to avoid redundant API calls
+        const teachingRecords = await getCachedTeachingRecords(selectedCourse);
         const termCodes = [...new Set(teachingRecords.map(record => record.term_code))];
         
-        const termsData = await Promise.all(
-          termCodes.map(async (termCode) => {
-            return await CourseService.getTermByCode(termCode);
-          })
-        );
+        // Batch load terms using cache
+        const termsMap = await batchLoadTerms(termCodes);
         
-        const validTerms = termsData.filter((term): term is Term => term !== null);
+        const validTerms = Array.from(termsMap.values());
         const sortedTerms = validTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
         setTerms(sortedTerms);
         
@@ -1539,7 +1696,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       try {
         setInstructorsLoading(true);
-        const teachingRecords = await CourseService.getCourseTeachingRecords(selectedCourse);
+        // Use cached teaching records to avoid redundant API calls
+        const teachingRecords = await getCachedTeachingRecords(selectedCourse);
         const filteredRecords = teachingRecords.filter(record => record.term_code === selectedTerm);
         setAvailableInstructors(filteredRecords);
         
@@ -1842,33 +2000,23 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const fetchInstructorsInfo = async () => {
       if (instructorEvaluations.length === 0) return;
       
-      const instructorNames = new Set<string>();
-      instructorEvaluations.forEach(evaluation => {
-        instructorNames.add(evaluation.instructorName);
-      });
+      const instructorNames = Array.from(new Set(
+        instructorEvaluations.map(evaluation => evaluation.instructorName)
+      ));
 
-      const newInstructorsMap = new Map<string, Instructor>();
-      
-      // 並行獲取所有講師信息
-      const promises = Array.from(instructorNames).map(async (name) => {
-        try {
-          const instructor = await CourseService.getInstructorByName(name);
-          if (instructor) {
-            newInstructorsMap.set(name, instructor);
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch instructor info for ${name}:`, error);
-        }
-      });
-
-      await Promise.all(promises);
-      setInstructorsMap(newInstructorsMap);
+      try {
+        // Use batch loading for better performance
+        const instructorsMap = await batchLoadInstructors(instructorNames);
+        setInstructorsMap(instructorsMap);
+      } catch (error) {
+        console.warn('Failed to batch load instructors:', error);
+      }
     };
 
     fetchInstructorsInfo();
-  }, [instructorEvaluations]);
+  }, [instructorEvaluations, batchLoadInstructors]);
 
-  const handleInstructorToggle = (instructorKey: string) => {
+  const handleInstructorToggle = useCallback((instructorKey: string) => {
     const [instructorName, sessionType] = instructorKey.split('|');
     
     setSelectedInstructors(prev => {
@@ -1911,9 +2059,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         return [...prev, instructorKey];
       }
     });
-  };
+  }, [originPage, preSelectedInstructor, toast, t]);
 
-  const validateForm = async (): Promise<boolean> => {
+  const validateForm = useCallback(async (): Promise<boolean> => {
     // 檢查基本選擇
     if (!selectedCourse || !selectedTerm || selectedInstructors.length === 0) {
       toast({
@@ -2093,7 +2241,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
     // Validate that selected instructors actually taught the course in the selected term
     try {
-      const teachingRecords = await CourseService.getCourseTeachingRecords(selectedCourse);
+      // Use cached teaching records to avoid redundant API calls
+      const teachingRecords = await getCachedTeachingRecords(selectedCourse);
       const validRecords = teachingRecords.filter(record => record.term_code === selectedTerm);
       
       for (const instructorKey of selectedInstructors) {
@@ -2126,9 +2275,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }
 
     return true;
-  };
+  }, [selectedCourse, selectedTerm, selectedInstructors, originPage, preSelectedInstructor, isEditMode, reviewEligibility, workload, difficulty, usefulness, grade, courseComments, instructorEvaluations, toast, t]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     console.log('🚀 handleSubmit called');
     
     if (!(await validateForm())) {
@@ -2251,7 +2400,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       console.log('🏁 Setting submitting to false');
       setSubmitting(false);
     }
-  };
+  }, [validateForm, user, isAnonymous, selectedCourse, selectedTerm, workload, difficulty, usefulness, grade, courseComments, instructorEvaluations, reviewLanguage, isEditMode, editReviewId, toast, t, navigate]);
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
