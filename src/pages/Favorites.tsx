@@ -243,8 +243,8 @@ const Favorites = () => {
                 <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">{t('favorites.noCourses')}</h3>
                 <p className="text-muted-foreground mb-4">{t('favorites.noCoursesDescription')}</p>
-                <Button onClick={() => navigate('/courses')}>
-                  {t('favorites.browseCourses')}
+                <Button onClick={() => navigate('/courses')} className="w-full sm:w-auto h-auto py-3 text-sm sm:text-base">
+                  <span className="text-center leading-tight">{t('favorites.browseCourses')}</span>
                 </Button>
               </div>
             ) : (

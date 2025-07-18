@@ -1747,15 +1747,19 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   >
                     <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
                       <SelectValue placeholder={t('common.all')}>
-                        {(() => {
-                          const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
-                          if (currentValue === 'all') {
-                            return t('common.all');
-                          } else {
-                            const option = filterOptions.find(opt => opt.value === currentValue);
-                            return option ? option.label : currentValue;
-                          }
-                        })()}
+                        <div className="w-full overflow-hidden">
+                          <div className="truncate">
+                            {(() => {
+                              const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                              if (currentValue === 'all') {
+                                return t('common.all');
+                              } else {
+                                const option = filterOptions.find(opt => opt.value === currentValue);
+                                return option ? option.label : currentValue;
+                              }
+                            })()}
+                          </div>
+                        </div>
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
@@ -2043,15 +2047,19 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   >
                     <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
                       <SelectValue placeholder={t('common.all')}>
-                        {(() => {
-                          const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
-                          if (currentValue === 'all') {
-                            return t('common.all');
-                          } else {
-                            const option = filterOptions.find(opt => opt.value === currentValue);
-                            return option ? option.label : currentValue;
-                          }
-                        })()}
+                        <div className="w-full overflow-hidden">
+                          <div className="truncate">
+                            {(() => {
+                              const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                              if (currentValue === 'all') {
+                                return t('common.all');
+                              } else {
+                                const option = filterOptions.find(opt => opt.value === currentValue);
+                                return option ? option.label : currentValue;
+                              }
+                            })()}
+                          </div>
+                        </div>
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>

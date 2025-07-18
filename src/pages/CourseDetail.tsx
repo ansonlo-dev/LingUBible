@@ -599,8 +599,8 @@ const CourseDetail = () => {
               <p className="text-muted-foreground">
                 {error || t('pages.courseDetail.courseNotFound')}
               </p>
-              <Button onClick={() => navigate('/courses')} className="h-12 text-base font-medium">
-                {t('pages.courseDetail.backToCourseList')}
+              <Button onClick={() => navigate('/courses')} className="h-auto py-3 text-sm font-medium w-full sm:w-auto sm:text-base">
+                <span className="text-center leading-tight">{t('pages.courseDetail.backToCourseList')}</span>
               </Button>
             </CardContent>
           </Card>
@@ -1151,7 +1151,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[150px] h-10 text-sm"
+                        className="w-[180px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
@@ -1187,7 +1187,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[150px] h-10 text-sm"
+                        className="w-[180px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
@@ -1274,9 +1274,20 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTermFilter(term.term_code);
+                                        }}
+                                        onSecondTap={() => {
+                                          setPendingTermFilter(null);
+                                          handleTermBadgeClick(term.term_code);
+                                        }}
                                       >
                                         <button
-                                          onClick={() => handleTermBadgeClick(term.term_code)}
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              handleTermBadgeClick(term.term_code);
+                                            }
+                                          }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
                                               const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
@@ -1298,9 +1309,20 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTeachingLanguageFilter(teachingLanguage);
+                                        }}
+                                        onSecondTap={() => {
+                                          setPendingTeachingLanguageFilter(null);
+                                          handleTeachingLanguageBadgeClick(teachingLanguage);
+                                        }}
                                       >
                                         <button
-                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              handleTeachingLanguageBadgeClick(teachingLanguage);
+                                            }
+                                          }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
                                               const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -1317,19 +1339,25 @@ const CourseDetail = () => {
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
-                                    <button
-                                      onClick={() => handleTermBadgeClick(term.term_code)}
-                                      className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                        (() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          return currentValues.includes(term.term_code)
-                                            ? 'bg-primary text-primary-foreground border-primary'
-                                            : 'bg-background hover:bg-muted border-border hover:border-primary/50';
-                                        })()
-                                      }`}
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
                                     >
-                                      {term.name}
-                                    </button>
+                                      <button
+                                        onClick={() => handleTermBadgeClick(term.term_code)}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground border-primary'
+                                              : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                          })()
+                                        }`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                    </ResponsiveTooltip>
                                   )}
                                 </div>
                               );
@@ -1414,19 +1442,36 @@ const CourseDetail = () => {
                                   {teachingLanguage ? (
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
-                                      <button
-                                        onClick={() => handleTermBadgeClick(term.term_code)}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
-                                          (() => {
-                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                            return currentValues.includes(term.term_code)
-                                              ? 'bg-primary text-primary-foreground'
-                                              : 'bg-background hover:bg-muted';
-                                          })()
-                                        }`}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTermFilter(term.term_code);
+                                        }}
+                                        onSecondTap={() => {
+                                          setPendingTermFilter(null);
+                                          handleTermBadgeClick(term.term_code);
+                                        }}
                                       >
-                                        {term.name}
-                                      </button>
+                                        <button
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              handleTermBadgeClick(term.term_code);
+                                            }
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                              return currentValues.includes(term.term_code)
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-background hover:bg-muted';
+                                            })()
+                                          }`}
+                                        >
+                                          {term.name}
+                                        </button>
+                                      </ResponsiveTooltip>
                                       
                                       {/* Separator */}
                                       <div className="w-px bg-border"></div>
@@ -1436,9 +1481,20 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTeachingLanguageFilter(teachingLanguage);
+                                        }}
+                                        onSecondTap={() => {
+                                          setPendingTeachingLanguageFilter(null);
+                                          handleTeachingLanguageBadgeClick(teachingLanguage);
+                                        }}
                                       >
                                         <button
-                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              handleTeachingLanguageBadgeClick(teachingLanguage);
+                                            }
+                                          }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
                                               const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -1455,19 +1511,36 @@ const CourseDetail = () => {
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
-                                    <button
-                                      onClick={() => handleTermBadgeClick(term.term_code)}
-                                      className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                        (() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          return currentValues.includes(term.term_code)
-                                            ? 'bg-primary text-primary-foreground border-primary'
-                                            : 'bg-background hover:bg-muted border-border hover:border-primary/50';
-                                        })()
-                                      }`}
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      onFirstTap={() => {
+                                        setPendingTermFilter(term.term_code);
+                                      }}
+                                      onSecondTap={() => {
+                                        setPendingTermFilter(null);
+                                        handleTermBadgeClick(term.term_code);
+                                      }}
                                     >
-                                      {term.name}
-                                    </button>
+                                      <button
+                                        onClick={() => {
+                                          if (!isMobile) {
+                                            handleTermBadgeClick(term.term_code);
+                                          }
+                                        }}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground border-primary'
+                                              : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                          })()
+                                        }`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                    </ResponsiveTooltip>
                                   )}
                                 </div>
                               );

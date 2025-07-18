@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/hooks/useLanguage';
+import { X } from 'lucide-react';
 
 interface ResponsiveTooltipProps {
   content: string | React.ReactNode;
@@ -16,6 +17,10 @@ interface ResponsiveTooltipProps {
   asChild?: boolean;
   hasClickAction?: boolean;
   clickActionText?: string;
+  isPending?: boolean;
+  onFirstTap?: () => void;
+  onSecondTap?: () => void;
+  showCloseButton?: boolean; // New prop to control close button visibility
 }
 
 export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
@@ -30,6 +35,10 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
   asChild = true,
   hasClickAction = false,
   clickActionText,
+  isPending = false,
+  onFirstTap,
+  onSecondTap,
+  showCloseButton = false,
 }) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
@@ -38,6 +47,10 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
   const timeoutRef = useRef<NodeJS.Timeout>();
   const triggerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Memoize the content to prevent unnecessary re-renders
+  const memoizedContent = useMemo(() => content, [content]);
+  const memoizedClickActionText = useMemo(() => clickActionText, [clickActionText]);
 
   // Handle mobile tap behavior
   const handleMobileTap = useCallback((e: React.TouchEvent | React.MouseEvent) => {
@@ -77,6 +90,21 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
     }
   }, [isMobile, disabled, isOpen, hasBeenTapped, hasClickAction]);
 
+  // Add/remove body class to prevent card hover effects when tooltip is open
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    if (isOpen) {
+      document.body.classList.add('tooltip-active');
+    } else {
+      document.body.classList.remove('tooltip-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('tooltip-active');
+    };
+  }, [isMobile, isOpen]);
+
   // Handle click outside for mobile
   useEffect(() => {
     if (!isMobile || !isOpen) return;
@@ -85,6 +113,7 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
       const target = e.target as Node;
       
       // Check if click is outside both trigger and content
+      // This will close the tooltip even if clicking inside another card
       if (
         triggerRef.current && !triggerRef.current.contains(target) &&
         contentRef.current && !contentRef.current.contains(target)
@@ -97,16 +126,28 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
       }
     };
     
+    // Create scroll handler function to properly remove it later
+    const handleScroll = () => {
+      setIsOpen(false);
+      setHasBeenTapped(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+
     // Add listener with slight delay to avoid immediate trigger
     const timer = setTimeout(() => {
       document.addEventListener('click', handleClickOutside, true);
       document.addEventListener('touchstart', handleClickOutside, true);
+      // Also listen for scroll events to close tooltip
+      document.addEventListener('scroll', handleScroll, true);
     }, 100);
     
     return () => {
       clearTimeout(timer);
       document.removeEventListener('click', handleClickOutside, true);
       document.removeEventListener('touchstart', handleClickOutside, true);
+      document.removeEventListener('scroll', handleScroll, true);
     };
   }, [isMobile, isOpen]);
 
@@ -119,23 +160,53 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
     };
   }, []);
 
-  // Prepare content with click instruction for mobile
-  const mobileContent = useCallback(() => {
-    if (!hasClickAction) {
-      return content;
+
+
+  // Handle close button click
+  const handleCloseClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(false);
+    setHasBeenTapped(false);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
-    
-    const actionText = clickActionText || t('tooltip.clickAgainToActivate');
-    
-    return (
+  }, []);
+
+  // Prepare content with close button for mobile
+  const mobileContent = useMemo(() => {
+    const baseContent = !hasClickAction || !memoizedClickActionText ? memoizedContent : (
       <div>
-        {content}
+        {memoizedContent}
         <div className="mt-2 text-xs opacity-70 italic border-t border-border/40 pt-2 text-muted-foreground">
-          {actionText}
+          {memoizedClickActionText || t('tooltip.clickAgainToActivate')}
         </div>
       </div>
     );
-  }, [content, hasClickAction, clickActionText, t]);
+
+    // For mobile, wrap content with close button if enabled
+    if (isMobile && showCloseButton) {
+      return (
+        <div className="relative">
+          {/* Close button */}
+          <button
+            onClick={handleCloseClick}
+            className="absolute -top-1 -right-1 w-6 h-6 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full flex items-center justify-center text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors z-10 border border-gray-300 dark:border-gray-600 shadow-sm"
+            aria-label="Close tooltip"
+            type="button"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          {/* Content */}
+          <div className="pr-6">
+            {baseContent}
+          </div>
+        </div>
+      );
+    }
+
+    return baseContent;
+  }, [memoizedContent, hasClickAction, memoizedClickActionText, t, isMobile, showCloseButton, handleCloseClick]);
 
   if (disabled || !content) {
     return <>{children}</>;
@@ -145,22 +216,80 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
   if (isMobile) {
     return (
       <TooltipProvider>
-        <Tooltip open={isOpen} onOpenChange={setIsOpen}>
+        <Tooltip 
+          open={isOpen} 
+          onOpenChange={setIsOpen}
+          key={`mobile-tooltip-${String(memoizedContent)}-${hasClickAction}`}
+        >
           <TooltipTrigger asChild={asChild} className={className}>
-            <div 
-              ref={triggerRef}
-              onClick={(e) => {
-                if (hasClickAction && (!isOpen || !hasBeenTapped)) {
-                  // First click - prevent action, show tooltip
-                  e.preventDefault();
-                  e.stopPropagation();
+            {React.cloneElement(children as React.ReactElement, {
+              ref: triggerRef,
+              onClick: (e: React.MouseEvent) => {
+                // Get the original onClick handler
+                const originalOnClick = (children as React.ReactElement).props?.onClick;
+                
+                console.log('🎯 ResponsiveTooltip Mobile Click Debug:', {
+                  hasClickAction,
+                  isOpen,
+                  hasBeenTapped,
+                  isMobile,
+                  hasOriginalOnClick: !!originalOnClick,
+                  isPending,
+                  tapNumber: !hasBeenTapped ? 'FIRST_TAP' : 'SECOND_TAP'
+                });
+                
+                if (hasClickAction) {
+                  if (!hasBeenTapped) {
+                    // First tap - show tooltip, call first tap callback
+                    console.log('🔄 ResponsiveTooltip: First tap - showing tooltip, calling onFirstTap');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOpen(true);
+                    setHasBeenTapped(true);
+                    // Clear any existing timeout
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+                    // Call first tap callback if provided
+                    if (onFirstTap) {
+                      onFirstTap();
+                    }
+                    return;
+                  } else {
+                    // Second tap - hide tooltip, call second tap callback, then original action
+                    console.log('✅ ResponsiveTooltip: Second tap - hiding tooltip, calling onSecondTap and originalOnClick');
+                    setIsOpen(false);
+                    setHasBeenTapped(false);
+                    // Call second tap callback if provided
+                    if (onSecondTap) {
+                      onSecondTap();
+                    }
+                    // Don't prevent default, let the original action happen
+                    if (originalOnClick) {
+                      console.log('🚀 ResponsiveTooltip: Calling originalOnClick');
+                      originalOnClick(e);
+                    } else {
+                      console.log('⚠️ ResponsiveTooltip: No originalOnClick found');
+                    }
+                    return;
+                  }
+                } else {
+                  // No click action, just handle regular tooltip behavior
+                  // Toggle tooltip on tap for informational tooltips
+                  if (isOpen) {
+                    setIsOpen(false);
+                    setHasBeenTapped(false);
+                  } else {
+                    setIsOpen(true);
+                    setHasBeenTapped(true);
+                  }
+                  
+                  if (originalOnClick) {
+                    originalOnClick(e);
+                  }
                 }
-                handleMobileTap(e);
-              }}
-              className="cursor-pointer"
-            >
-              {children}
-            </div>
+              }
+            })}
           </TooltipTrigger>
           <TooltipContent
             ref={contentRef}
@@ -172,7 +301,7 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
             )}
             sideOffset={5}
           >
-            {mobileContent()}
+            {mobileContent}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -437,6 +437,7 @@ export default {
   'filter.allSessionTypes': '所有课堂类型',
   'filter.allCourses': '所有课程',
   'filter.allGrades': '所有成绩',
+  'filter.grade': '成绩',
   'sort.currentSort': '当前排序',
 
   // Languages
@@ -724,6 +725,7 @@ export default {
   'filter.allStatuses': '所有状态',
   'filter.checkingTerm': '正在检查选定学期的课程...',
   'filter.clickToFilterDepartment': '点击以按此学系筛选讲师',
+  'filter.clickToFilterFaculty': '点击以按此学院筛选',
   'filter.clickToFilterByTerm': '点击以依{term}筛选',
   'filter.clickToFilterByLanguage': '点击以依{language}筛选',
   'filter.clickToFilterByTeachingLanguage': '点击以依教学语言筛选：{language}',
@@ -1084,7 +1086,7 @@ export default {
   'faq.privacyQuestion': '我的隐私如何受到保护？',
   'faq.privacyAnswer': '我们致力于保护您的隐私。所有用户身份都会严格保密，我们不会与第三方分享个人信息。',
   'faq.reviewQuestion': '如何提交课程评论？',
-  'faq.reviewAnswer': '登录后，前往您想评论的课程页面，点击「撰写评论」按钮。您可以使用我们的5星评分系统（支持半星评分精度）对课程工作量、难度、实用性、教学质量和评分满意度进行详细评分。对于不适用的评分项目，您也可以选择「不适用」。所有栏位包括评论都是必填的。系统支持匿名提交（默认选项）、多位讲师评价、Markdown格式化，并包含实时预览功能。',
+  'faq.reviewAnswer': '登录后，您可以通过两种方式提交评论：1) 前往课程页面点击「撰写评论」按钮，或 2) 前往讲师页面点击「提交评论」按钮（会预先选择该讲师并只显示他们教授的课程）。您可以使用我们的5星评分系统（支持半星评分精度）对课程工作量、难度、实用性、教学质量和评分满意度进行详细评分。对于不适用的评分项目，您也可以选择「不适用」。所有栏位包括评论都是必填的。系统支持匿名提交（默认选项）、多位讲师评价、Markdown格式化，并包含实时预览功能。',
   'faq.searchQuestion': '如何搜索课程和讲师？',
   'faq.searchAnswer': '使用顶部的搜索栏输入课程代码、课程名称或讲师姓名。您也可以使用筛选功能按学系、难度等条件缩小搜索范围。',
   'faq.ratingQuestion': '评分系统是如何运作的？',
@@ -1542,7 +1544,7 @@ export default {
   'instructors.rating': '评分',
   'instructors.noReviewsTitle': '暂无学生评论',
   'instructors.noReviewsDesc': '{name} 尚未收到任何学生评论。如果您曾经修读过这位教师的课程，欢迎分享您的学习体验。',
-  'instructors.browseCoursesToReview': '浏览课程并撰写评论',
+  'instructors.submitReview': '提交评论',
   'instructors.noTeachingTitle': '暂无教学记录',
   'instructors.noLectureRecords': '没有找到讲课记录',
   'instructors.noTutorialRecords': '没有找到导修记录',

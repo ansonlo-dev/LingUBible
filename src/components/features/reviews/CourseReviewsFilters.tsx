@@ -18,7 +18,11 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronUp,
-  BookOpen
+  BookOpen,
+  Users,
+  Award,
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -176,7 +180,73 @@ export function CourseReviewsFilters({
       <div className="grid grid-cols-1 gap-2 md:gap-0 md:w-full">
         {/* Mobile: Traditional layout */}
         <div className="grid grid-cols-1 gap-2 md:hidden">
-          {/* 語言篩選 */}
+          {/* 講師篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <Users className="h-4 w-4" />
+              {t('filter.reviewInstructor')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(instructorCounts || {}).map(([instructor, count]) => ({
+                value: instructor,
+                label: instructor,
+                count: count
+              }))}
+              selectedValues={filters.selectedInstructors}
+              onSelectionChange={handleInstructorChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* 成績篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <Award className="h-4 w-4" />
+              {t('filter.grade')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(gradeCounts || {}).map(([grade, count]) => ({
+                value: grade,
+                label: grade === 'N/A' ? t('grade.notApplicable') : grade,
+                count: count
+              }))}
+              selectedValues={filters.selectedGrades}
+              onSelectionChange={handleGradeChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* 學期篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <Calendar className="h-4 w-4" />
+              {t('filter.reviewTerm')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(termCounts || {}).map(([termCode, termData]) => ({
+                value: termCode,
+                label: termData.name,
+                count: termData.count
+              }))}
+              selectedValues={filters.selectedTerms}
+              onSelectionChange={handleTermChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* 評論語言篩選 */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
               <Languages className="h-4 w-4" />
@@ -194,74 +264,20 @@ export function CourseReviewsFilters({
               totalCount={totalReviews}
               className="flex-1 h-10 text-sm"
               showCounts={true}
+              maxHeight="max-h-48"
             />
           </div>
 
-          {/* 學期篩選 */}
+          {/* 課程類型篩選 */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
-              <CalendarDays className="h-4 w-4" />
-              {t('filter.reviewTerm')}
-            </label>
-            <MultiSelectDropdown
-              options={Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
-                if (!termInfo || typeof termInfo !== 'object') {
-                  return null;
-                }
-                return {
-                  value: termCode,
-                  label: (termInfo && termInfo.name) ? termInfo.name : termCode,
-                  count: (termInfo && termInfo.count) ? termInfo.count : 0,
-                  status: isCurrentTerm(termCode) ? 'current' : 
-                         'past' // Since we don't have end_date here, we'll default to past for non-current terms
-                };
-              }).filter(Boolean) as SelectOption[]}
-              selectedValues={filters.selectedTerms}
-              onSelectionChange={handleTermChange}
-              placeholder={t('common.all')}
-              totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
-              showCounts={true}
-            />
-          </div>
-
-          {/* 講師篩選 */}
-          <div className="flex items-center gap-2">
-            <label className={getLabelClassName()}>
-              <User className="h-4 w-4" />
-              {t('filter.reviewInstructor')}
-            </label>
-            <MultiSelectDropdown
-              options={Object.entries(instructorCounts || {})
-                .sort(([a], [b]) => {
-                  const aNameForSort = extractInstructorNameForSorting(a);
-                  const bNameForSort = extractInstructorNameForSorting(b);
-                  return aNameForSort.localeCompare(bNameForSort);
-                })
-                .map(([instructorName, count]) => ({
-                  value: instructorName,
-                  label: instructorName,
-                  count: count
-                }))}
-              selectedValues={filters.selectedInstructors}
-              onSelectionChange={handleInstructorChange}
-              placeholder={t('common.all')}
-              totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
-              showCounts={true}
-            />
-          </div>
-
-          {/* 課堂類型篩選 */}
-          <div className="flex items-center gap-2">
-            <label className={getLabelClassName()}>
-              <School className="h-4 w-4" />
+              <BookOpen className="h-4 w-4" />
               {t('filter.reviewSessionType')}
             </label>
             <MultiSelectDropdown
               options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
                 value: sessionType,
-                label: t(`sessionType.${sessionType.toLowerCase()}`),
+                label: sessionType,
                 count: count
               }))}
               selectedValues={filters.selectedSessionTypes}
@@ -270,13 +286,14 @@ export function CourseReviewsFilters({
               totalCount={totalReviews}
               className="flex-1 h-10 text-sm"
               showCounts={true}
+              maxHeight="max-h-48"
             />
           </div>
 
           {/* 教學語言篩選 */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
-              <BookText className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
               {t('filter.reviewTeachingLanguage')}
             </label>
             <MultiSelectDropdown
@@ -291,27 +308,7 @@ export function CourseReviewsFilters({
               totalCount={totalReviews}
               className="flex-1 h-10 text-sm"
               showCounts={true}
-            />
-          </div>
-
-          {/* 成績篩選 */}
-          <div className="flex items-center gap-2">
-            <label className={getLabelClassName()}>
-              <GraduationCap className="h-4 w-4" />
-              {t('sort.grade')}
-            </label>
-            <MultiSelectDropdown
-              options={sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => ({
-                value: grade,
-                label: grade === 'N/A' ? t('review.notApplicable') : grade,
-                count: gradeCounts[grade] || 0
-              }))}
-              selectedValues={filters.selectedGrades}
-              onSelectionChange={handleGradeChange}
-              placeholder={t('common.all')}
-              totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
-              showCounts={true}
+              maxHeight="max-h-48"
             />
           </div>
         </div>
@@ -321,16 +318,20 @@ export function CourseReviewsFilters({
           {/* Labels row */}
           <div className="flex gap-2 mb-2">
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
-              <Languages className="h-4 w-4" />
-              <span>{t('filter.reviewLanguage')}</span>
+              <User className="h-4 w-4" />
+              <span>{t('filter.reviewInstructor')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <GraduationCap className="h-4 w-4" />
+              <span>{t('sort.grade')}</span>
             </div>
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
               <CalendarDays className="h-4 w-4" />
               <span>{t('filter.reviewTerm')}</span>
             </div>
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
-              <User className="h-4 w-4" />
-              <span>{t('filter.reviewInstructor')}</span>
+              <Languages className="h-4 w-4" />
+              <span>{t('filter.reviewLanguage')}</span>
             </div>
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
               <School className="h-4 w-4" />
@@ -340,14 +341,55 @@ export function CourseReviewsFilters({
               <BookText className="h-4 w-4" />
               <span>{t('filter.reviewTeachingLanguage')}</span>
             </div>
-            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
-              <GraduationCap className="h-4 w-4" />
-              <span>{t('sort.grade')}</span>
-            </div>
           </div>
 
           {/* Dropdowns row */}
           <div className="flex gap-2">
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(instructorCounts || {}).map(([instructor, count]) => ({
+                  value: instructor,
+                  label: instructor,
+                  count: count
+                }))}
+                selectedValues={filters.selectedInstructors}
+                onSelectionChange={handleInstructorChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(gradeCounts || {}).map(([grade, count]) => ({
+                  value: grade,
+                  label: grade === 'N/A' ? t('grade.notApplicable') : grade,
+                  count: count
+                }))}
+                selectedValues={filters.selectedGrades}
+                onSelectionChange={handleGradeChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(termCounts || {}).map(([termCode, termData]) => ({
+                  value: termCode,
+                  label: termData.name,
+                  count: termData.count
+                }))}
+                selectedValues={filters.selectedTerms}
+                onSelectionChange={handleTermChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
             <div className="flex-1">
               <MultiSelectDropdown
                 options={Object.entries(languageCounts || {}).map(([language, count]) => ({
@@ -365,52 +407,9 @@ export function CourseReviewsFilters({
             </div>
             <div className="flex-1">
               <MultiSelectDropdown
-                options={Object.entries(termCounts || {}).map(([termCode, termInfo]) => {
-                  if (!termInfo || typeof termInfo !== 'object') {
-                    return null;
-                  }
-                  return {
-                    value: termCode,
-                    label: (termInfo && termInfo.name) ? termInfo.name : termCode,
-                    count: (termInfo && termInfo.count) ? termInfo.count : 0,
-                    status: isCurrentTerm(termCode) ? 'current' : 
-                           'past' // Since we don't have end_date here, we'll default to past for non-current terms
-                  };
-                }).filter(Boolean) as SelectOption[]}
-                selectedValues={filters.selectedTerms}
-                onSelectionChange={handleTermChange}
-                placeholder={t('common.all')}
-                totalCount={totalReviews}
-                className="w-full h-10 text-sm"
-                showCounts={true}
-              />
-            </div>
-            <div className="flex-1">
-              <MultiSelectDropdown
-                options={Object.entries(instructorCounts || {})
-                  .sort(([a], [b]) => {
-                    const aNameForSort = extractInstructorNameForSorting(a);
-                    const bNameForSort = extractInstructorNameForSorting(b);
-                    return aNameForSort.localeCompare(bNameForSort);
-                  })
-                  .map(([instructorName, count]) => ({
-                    value: instructorName,
-                    label: instructorName,
-                    count: count
-                  }))}
-                selectedValues={filters.selectedInstructors}
-                onSelectionChange={handleInstructorChange}
-                placeholder={t('common.all')}
-                totalCount={totalReviews}
-                className="w-full h-10 text-sm"
-                showCounts={true}
-              />
-            </div>
-            <div className="flex-1">
-              <MultiSelectDropdown
                 options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
                   value: sessionType,
-                  label: t(`sessionType.${sessionType.toLowerCase()}`),
+                  label: sessionType,
                   count: count
                 }))}
                 selectedValues={filters.selectedSessionTypes}
@@ -430,21 +429,6 @@ export function CourseReviewsFilters({
                 }))}
                 selectedValues={filters.selectedTeachingLanguages}
                 onSelectionChange={handleTeachingLanguageChange}
-                placeholder={t('common.all')}
-                totalCount={totalReviews}
-                className="w-full h-10 text-sm"
-                showCounts={true}
-              />
-            </div>
-            <div className="flex-1">
-              <MultiSelectDropdown
-                options={sortGradesDescending(Object.keys(gradeCounts || {})).map((grade) => ({
-                  value: grade,
-                  label: grade === 'N/A' ? t('review.notApplicable') : grade,
-                  count: gradeCounts[grade] || 0
-                }))}
-                selectedValues={filters.selectedGrades}
-                onSelectionChange={handleGradeChange}
                 placeholder={t('common.all')}
                 totalCount={totalReviews}
                 className="w-full h-10 text-sm"

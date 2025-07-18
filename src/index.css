@@ -185,13 +185,12 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
     /* Desktop hover effects */
     .sidebar-container nav a:hover {
-      transform: translateX(4px);
+      transform: translateX(6px) scale(1.02);
       background-color: rgba(var(--sidebar-accent), 0.1);
       transition: all 0.2s ease;
     }
 
     .sidebar-container nav a:hover svg {
-      transform: scale(1.1);
       transition: transform 0.2s ease;
     }
   }
@@ -303,11 +302,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   /* Active state styling */
   .sidebar-container nav a[class*="bg-sidebar-accent"]:hover {
-    transform: translateX(6px);
-  }
-
-  .sidebar-container nav a[class*="bg-sidebar-accent"]:hover svg {
-    transform: scale(1.15);
+    transform: translateX(6px) scale(1.02);
   }
 
   .main-container {
@@ -703,6 +698,19 @@ div[style*="position: fixed"][style*="right: 14px"] {
       0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
+  /* Disable card hover effects when tooltip is active on mobile */
+  .tooltip-active .course-card:hover {
+    transform: none !important;
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.08),
+      0 1px 4px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  /* Prevent title color change when tooltip is active */
+  .tooltip-active .course-card .group-hover\:text-primary {
+    color: inherit !important;
+  }
+
   .dark .course-card {
     background: rgb(var(--card)) !important;
     box-shadow: 
@@ -715,6 +723,20 @@ div[style*="position: fixed"][style*="right: 14px"] {
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.25),
       0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Disable dark mode card hover effects when tooltip is active on mobile */
+  .tooltip-active .dark .course-card:hover {
+    transform: none !important;
+    background: rgb(var(--card)) !important;
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 1px 4px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Prevent title color change in dark mode when tooltip is active */
+  .tooltip-active .dark .course-card .group-hover\:text-primary {
+    color: inherit !important;
   }
 
   /* 透明主資訊卡片樣式 - 僅用於課程和講師詳情頁面的主要資訊區域 */

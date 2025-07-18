@@ -9,13 +9,21 @@ interface GradeBadgeProps {
   size?: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
   onClick?: () => void;
+  hasClickAction?: boolean;
+  isPending?: boolean;
+  onFirstTap?: () => void;
+  onSecondTap?: () => void;
 }
 
 export const GradeBadge: React.FC<GradeBadgeProps> = ({ 
   grade, 
   size = 'md', 
   showTooltip = true,
-  onClick 
+  onClick,
+  hasClickAction = false,
+  isPending = false,
+  onFirstTap,
+  onSecondTap
 }) => {
   const { t } = useLanguage();
   
@@ -177,8 +185,11 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
       <ResponsiveTooltip 
         content={getFilterTooltipText() || ''} 
         disabled={!showTooltip}
-        hasClickAction={!!onClick}
-        clickActionText={onClick ? t('tooltip.clickAgainToFilter') : undefined}
+        hasClickAction={hasClickAction}
+        clickActionText={hasClickAction ? t('tooltip.clickAgainToFilter') : undefined}
+        isPending={isPending}
+        onFirstTap={onFirstTap}
+        onSecondTap={onSecondTap}
       >
         <div 
           className={`

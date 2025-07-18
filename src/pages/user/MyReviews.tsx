@@ -129,7 +129,9 @@ const MyReviews = () => {
   const [filters, setFilters] = useState<MyReviewFilters>({
     searchTerm: '',
     selectedSubjectAreas: [],
+    selectedReviewLanguages: [],
     selectedTerms: [],
+    selectedTeachingLanguages: [],
     selectedGrades: [],
     selectedSessionTypes: [],
     sortBy: 'postDate',
@@ -257,29 +259,17 @@ const MyReviews = () => {
 
   const renderBooleanBadge = (value: boolean, label: string) => {
     return (
-      <ResponsiveTooltip 
-        content={t('filter.clickToFilterRequirement', { requirement: label })}
-        hasClickAction={true}
-        clickActionText={t('tooltip.clickAgainToFilter')}
+      <Badge 
+        variant={value ? "default" : "secondary"}
+        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
       >
-        <Badge 
-          variant={value ? "default" : "secondary"}
-          className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // 這裡可以添加篩選邏輯，但目前 MyReviews 頁面沒有課程要求篩選器
-            // 所以只是顯示 tooltip 而不執行篩選
-          }}
-        >
-          {value ? (
-            <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
-          ) : (
-            <XCircle className="h-3 w-3 mr-1 shrink-0" />
-          )}
-          <span className="truncate">{label}</span>
-        </Badge>
-      </ResponsiveTooltip>
+        {value ? (
+          <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+        ) : (
+          <XCircle className="h-3 w-3 mr-1 shrink-0" />
+        )}
+        <span className="truncate">{label}</span>
+      </Badge>
     );
   };
 
@@ -307,6 +297,31 @@ const MyReviews = () => {
     });
     return counts;
   }, [reviews]);
+
+  const reviewLanguageCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    reviews.forEach(reviewInfo => {
+      const language = reviewInfo.review.review_language || 'en'; // Default to English if not set
+      counts[language] = (counts[language] || 0) + 1;
+    });
+    return counts;
+  }, [reviews]);
+
+  const teachingLanguageCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    reviews.forEach(reviewInfo => {
+      reviewInfo.instructorDetails.forEach(instructorDetail => {
+        const teachingLanguage = getTeachingLanguageForInstructor(
+          instructorDetail.instructor_name,
+          instructorDetail.session_type
+        );
+        if (teachingLanguage) {
+          counts[teachingLanguage] = (counts[teachingLanguage] || 0) + 1;
+        }
+      });
+    });
+    return counts;
+  }, [reviews, getTeachingLanguageForInstructor]);
 
   const gradeCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
@@ -390,10 +405,31 @@ const MyReviews = () => {
       });
     }
 
+    // 評論語言篩選
+    if (filters.selectedReviewLanguages.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => 
+        reviewInfo.review.review_language && 
+        filters.selectedReviewLanguages.includes(reviewInfo.review.review_language)
+      );
+    }
+
     // 學期篩選
     if (filters.selectedTerms.length > 0) {
       filteredReviews = filteredReviews.filter(reviewInfo => 
         filters.selectedTerms.includes(reviewInfo.term.term_code)
+      );
+    }
+
+    // 教學語言篩選
+    if (filters.selectedTeachingLanguages.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => 
+        reviewInfo.instructorDetails.some(detail => {
+          const teachingLanguage = getTeachingLanguageForInstructor(
+            detail.instructor_name,
+            detail.session_type
+          );
+          return teachingLanguage && filters.selectedTeachingLanguages.includes(teachingLanguage);
+        })
       );
     }
 
@@ -495,7 +531,9 @@ const MyReviews = () => {
     setFilters({
       searchTerm: '',
       selectedSubjectAreas: [],
+      selectedReviewLanguages: [],
       selectedTerms: [],
+      selectedTeachingLanguages: [],
       selectedGrades: [],
       selectedSessionTypes: [],
       sortBy: 'postDate',
@@ -543,6 +581,8 @@ const MyReviews = () => {
           onFiltersChange={handleFiltersChange}
           courseCounts={courseCounts}
           termCounts={termCounts}
+          reviewLanguageCounts={reviewLanguageCounts}
+          teachingLanguageCounts={teachingLanguageCounts}
           gradeCounts={gradeCounts}
           sessionTypeCounts={sessionTypeCounts}
           totalReviews={reviews.length}
@@ -560,8 +600,8 @@ const MyReviews = () => {
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
                 <h3 className="text-lg font-medium">{t('myReviews.noReviews')}</h3>
                 <p className="text-muted-foreground">{t('myReviews.noReviewsDescription')}</p>
-                <Button onClick={() => navigate('/courses')} className="mt-4">
-                  {t('myReviews.browseCoursesToReview')}
+                <Button onClick={() => navigate('/courses')} className="mt-4 w-full sm:w-auto h-auto py-3 text-sm sm:text-base">
+                  <span className="text-center leading-tight">{t('myReviews.browseCoursesToReview')}</span>
                 </Button>
               </div>
             </div>
@@ -598,70 +638,102 @@ const MyReviews = () => {
                           {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
                         </span>
                         {/* 學期徽章 - 桌面版顯示在用戶名旁邊 */}
-                        <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // 設置學期篩選
-                            handleFiltersChange({
-                              ...filters,
-                              selectedTerms: [reviewInfo.term.term_code],
-                              currentPage: 1
-                            });
-                          }}
-                          title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                        <ResponsiveTooltip
+                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
                         >
-                          <span className="truncate">{reviewInfo.term.name}</span>
-                        </button>
-                        {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
-                        {reviewInfo.review.review_language && (
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              // 語言篩選在MyReviews中不需要實現，因為用戶只能看自己的評論
-                              // 但我們仍然顯示語言信息
+                              // 設置學期篩選
+                              handleFiltersChange({
+                                ...filters,
+                                selectedTerms: [reviewInfo.term.term_code],
+                                currentPage: 1
+                              });
                             }}
-                            title={getLanguageDisplayName(reviewInfo.review.review_language)}
+                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           >
-                            <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language)}</span>
+                            <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
+                        </ResponsiveTooltip>
+                        {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                        {(reviewInfo.review.review_language || 'en') && (
+                          <ResponsiveTooltip
+                            content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            hasClickAction={true}
+                            clickActionText={t('tooltip.clickAgainToFilter')}
+                          >
+                            <button
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 hidden md:inline-flex cursor-pointer"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // 設置評論語言篩選
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
+                                  currentPage: 1
+                                });
+                              }}
+                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            >
+                              <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
+                            </button>
+                          </ResponsiveTooltip>
                         )}
                       </div>
                       {/* 學期和語言徽章 - 手機版顯示在下方 */}
                       <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
-                        <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // 設置學期篩選
-                            handleFiltersChange({
-                              ...filters,
-                              selectedTerms: [reviewInfo.term.term_code],
-                              currentPage: 1
-                            });
-                          }}
-                          title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                        <ResponsiveTooltip
+                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
                         >
-                          <span className="truncate">{reviewInfo.term.name}</span>
-                        </button>
-                        {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
-                        {reviewInfo.review.review_language && (
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              // 語言篩選在MyReviews中不需要實現，因為用戶只能看自己的評論
-                              // 但我們仍然顯示語言信息
+                              // 設置學期篩選
+                              handleFiltersChange({
+                                ...filters,
+                                selectedTerms: [reviewInfo.term.term_code],
+                                currentPage: 1
+                              });
                             }}
-                            title={getLanguageDisplayName(reviewInfo.review.review_language)}
+                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           >
-                            <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language)}</span>
+                            <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
+                        </ResponsiveTooltip>
+                        {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
+                        {(reviewInfo.review.review_language || 'en') && (
+                          <ResponsiveTooltip
+                            content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            hasClickAction={true}
+                            clickActionText={t('tooltip.clickAgainToFilter')}
+                          >
+                            <button
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // 設置評論語言篩選
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
+                                  currentPage: 1
+                                });
+                              }}
+                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            >
+                              <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
+                            </button>
+                          </ResponsiveTooltip>
                         )}
                       </div>
                       {/* 課程標題 - 顯示在學生姓名/匿名行下方 */}
@@ -695,6 +767,15 @@ const MyReviews = () => {
                             grade={reviewInfo.review.course_final_grade}
                             size="md"
                             showTooltip={true}
+                            hasClickAction={true}
+                            onClick={() => {
+                              const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
+                              handleFiltersChange({
+                                ...filters,
+                                selectedGrades: [normalizedGrade],
+                                currentPage: 1
+                              });
+                            }}
                           />
                         </div>
                       )}
@@ -872,33 +953,6 @@ const MyReviews = () => {
                                   
                                   {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
                                   <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
-                                    {/* 教學語言徽章 */}
-                                    {(() => {
-                                      const teachingLanguage = getTeachingLanguageForInstructor(
-                                        instructorDetail.instructor_name,
-                                        instructorDetail.session_type
-                                      );
-                                      if (teachingLanguage) {
-                                        return (
-                                          <ResponsiveTooltip
-                                            content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
-                                            hasClickAction={true}
-                                            clickActionText={t('tooltip.clickAgainToFilter')}
-                                          >
-                                            <span 
-                                              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
-                                              onClick={() => {
-                                                // 這裡可以添加教學語言篩選邏輯
-                                              }}
-                                            >
-                                              {getTeachingLanguageName(teachingLanguage, t)}
-                                            </span>
-                                          </ResponsiveTooltip>
-                                        );
-                                      }
-                                      return null;
-                                    })()}
-                                    
                                     {/* 課堂類型徽章 */}
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
@@ -918,38 +972,49 @@ const MyReviews = () => {
                                         {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
                                       </span>
                                     </ResponsiveTooltip>
+
+                                    {/* 教學語言徽章 */}
+                                    {(() => {
+                                      const teachingLanguage = getTeachingLanguageForInstructor(
+                                        instructorDetail.instructor_name,
+                                        instructorDetail.session_type
+                                      );
+                                      if (teachingLanguage) {
+                                        return (
+                                          <ResponsiveTooltip
+                                            content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                            hasClickAction={true}
+                                            clickActionText={t('tooltip.clickAgainToFilter')}
+                                          >
+                                            <span 
+                                              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
+                                              onClick={() => {
+                                                // 設置教學語言篩選
+                                                const teachingLanguage = getTeachingLanguageForInstructor(
+                                                  instructorDetail.instructor_name,
+                                                  instructorDetail.session_type
+                                                );
+                                                if (teachingLanguage) {
+                                                  handleFiltersChange({
+                                                    ...filters,
+                                                    selectedTeachingLanguages: [teachingLanguage],
+                                                    currentPage: 1
+                                                  });
+                                                }
+                                              }}
+                                            >
+                                              {getTeachingLanguageName(teachingLanguage, t)}
+                                            </span>
+                                          </ResponsiveTooltip>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
                                   </div>
                                 </div>
                                 
                                 {/* Mobile: Badges on separate lines below instructor name */}
                                 <div className="flex md:hidden flex-wrap items-center gap-2">
-                                  {/* 教學語言徽章 */}
-                                  {(() => {
-                                    const teachingLanguage = getTeachingLanguageForInstructor(
-                                      instructorDetail.instructor_name,
-                                      instructorDetail.session_type
-                                    );
-                                    if (teachingLanguage) {
-                                      return (
-                                        <ResponsiveTooltip
-                                          content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
-                                          hasClickAction={true}
-                                          clickActionText={t('tooltip.clickAgainToFilter')}
-                                        >
-                                          <span 
-                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
-                                            onClick={() => {
-                                              // 這裡可以添加教學語言篩選邏輯
-                                            }}
-                                          >
-                                            {getTeachingLanguageName(teachingLanguage, t)}
-                                          </span>
-                                        </ResponsiveTooltip>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
-                                  
                                   {/* 課堂類型徽章 */}
                                   <ResponsiveTooltip
                                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
@@ -969,6 +1034,44 @@ const MyReviews = () => {
                                       {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
                                     </span>
                                   </ResponsiveTooltip>
+
+                                  {/* 教學語言徽章 */}
+                                  {(() => {
+                                    const teachingLanguage = getTeachingLanguageForInstructor(
+                                      instructorDetail.instructor_name,
+                                      instructorDetail.session_type
+                                    );
+                                    if (teachingLanguage) {
+                                      return (
+                                        <ResponsiveTooltip
+                                          content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                          hasClickAction={true}
+                                          clickActionText={t('tooltip.clickAgainToFilter')}
+                                        >
+                                          <span 
+                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
+                                            onClick={() => {
+                                              // 設置教學語言篩選
+                                              const teachingLanguage = getTeachingLanguageForInstructor(
+                                                instructorDetail.instructor_name,
+                                                instructorDetail.session_type
+                                              );
+                                              if (teachingLanguage) {
+                                                handleFiltersChange({
+                                                  ...filters,
+                                                  selectedTeachingLanguages: [teachingLanguage],
+                                                  currentPage: 1
+                                                });
+                                              }
+                                            }}
+                                          >
+                                            {getTeachingLanguageName(teachingLanguage, t)}
+                                          </span>
+                                        </ResponsiveTooltip>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               </div>
                               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">

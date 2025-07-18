@@ -1626,7 +1626,7 @@ export class CourseService {
                        'course_workload', 'course_difficulties', 'course_usefulness',
                        'course_final_grade', 'course_comments', 'has_service_learning',
                        'service_learning_description', 'service_learning_type', 'instructor_details',
-                       'submitted_at', '$createdAt']) // 只選擇必要的欄位
+                       'review_language', 'submitted_at', '$createdAt']) // 只選擇必要的欄位
         ]
       );
 

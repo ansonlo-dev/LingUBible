@@ -329,14 +329,32 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       }
       return `${label}: ${displayValue}/5`;
     };
+
+    // Handle navigation on click
+    const handleStatBoxClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click
+      e.preventDefault(); // Prevent link navigation
+      
+      if (props.type === 'course') {
+        navigate(`/courses/${props.code}`);
+      } else {
+        navigate(`/instructors/${encodeURIComponent(props.name)}`);
+      }
+    };
     
     return (
       <div className="flex flex-col items-center gap-1 flex-1">
         <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide text-center">{label}</span>
-        <ResponsiveTooltip content={getTooltipText()}>
+        <ResponsiveTooltip 
+          content={getTooltipText()}
+          hasClickAction={true}
+          clickActionText=""
+          showCloseButton={true}
+        >
           <div 
-            className="flex items-center justify-center px-3 py-1.5 rounded-lg hover:scale-105 transition-transform cursor-help"
+            className="flex items-center justify-center px-3 py-1.5 rounded-lg hover:scale-105 transition-transform cursor-pointer"
             style={{ backgroundColor, width: '90%' }}
+            onClick={handleStatBoxClick}
           >
             <span className="font-bold text-lg text-white drop-shadow-sm">{displayValue}</span>
           </div>
@@ -450,23 +468,22 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       </span>
                       {/* Teaching Language Badge */}
                       {props.teachingLanguages && props.teachingLanguages.length > 0 && (
-                        <ResponsiveTooltip content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}>
+                        <ResponsiveTooltip 
+                          content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          showCloseButton={true}
+                        >
                           <span 
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
                             onClick={handleTeachingLanguageClick}
                           >
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-1">
                               {props.teachingLanguages.map((code, index) => (
                                 <span 
                                   key={code}
                                   className={`${
-                                    props.teachingLanguages!.length === 1
-                                      ? 'px-1' // Single item: equal padding on both sides
-                                      : index === 0 
-                                      ? 'pr-1' // First item: only right padding
-                                      : index === props.teachingLanguages!.length - 1 
-                                      ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
-                                      : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
+                                    index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                   }`}
                                 >
                                   {code === props.currentTermTeachingLanguage ? (
@@ -639,9 +656,10 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       content={t('filter.clickToFilterDepartment')}
                       hasClickAction={true}
                       clickActionText={t('tooltip.clickAgainToFilter')}
+                      showCloseButton={true}
                     >
                       <span 
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help hover:bg-primary/5 hover:text-primary hover:border-primary hover:shadow-sm transition-all duration-200 shrink-0 max-w-full"
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
                         onClick={handleDepartmentBadgeClick}
                       >
                         <span className="break-words hyphens-auto">
@@ -655,23 +673,18 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                         content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
                         hasClickAction={true}
                         clickActionText={t('tooltip.clickAgainToFilter')}
+                        showCloseButton={true}
                       >
                         <span 
                           className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
                           onClick={handleTeachingLanguageClick}
                         >
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-1">
                             {props.teachingLanguages.map((code, index) => (
                               <span 
                                 key={code}
                                 className={`${
-                                  props.teachingLanguages!.length === 1
-                                    ? 'px-1' // Single item: equal padding on both sides
-                                    : index === 0 
-                                    ? 'pr-1' // First item: only right padding
-                                    : index === props.teachingLanguages!.length - 1 
-                                    ? 'pl-1 border-l border-orange-300 dark:border-orange-700' // Last item: only left padding
-                                    : 'px-1 border-l border-orange-300 dark:border-orange-700' // Middle items: both paddings
+                                  index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                 }`}
                               >
                                 {code === props.currentTermTeachingLanguage ? (

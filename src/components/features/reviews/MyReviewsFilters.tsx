@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { processPluralTranslation } from '@/utils/textUtils';
+import { processPluralTranslation, getTeachingLanguageName } from '@/utils/textUtils';
 import { isCurrentTerm } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -23,7 +23,9 @@ import {
   ThumbsDown,
   Users,
   ChevronDown,
-  Filter
+  Filter,
+  MessageSquare,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +37,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 export interface MyReviewFilters {
   searchTerm: string;
   selectedSubjectAreas: string[];
+  selectedReviewLanguages: string[];
   selectedTerms: string[];
+  selectedTeachingLanguages: string[];
   selectedGrades: string[];
   selectedSessionTypes: string[];
   sortBy: string;
@@ -49,6 +53,8 @@ interface MyReviewsFiltersProps {
   onFiltersChange: (filters: MyReviewFilters) => void;
   courseCounts: { [key: string]: { title: string; count: number } };
   termCounts: { [key: string]: { name: string; count: number } };
+  reviewLanguageCounts: { [key: string]: number };
+  teachingLanguageCounts: { [key: string]: number };
   gradeCounts: { [key: string]: number };
   sessionTypeCounts: { [key: string]: number };
   totalReviews: number;
@@ -61,6 +67,8 @@ export function MyReviewsFilters({
   onFiltersChange,
   courseCounts,
   termCounts,
+  reviewLanguageCounts,
+  teachingLanguageCounts,
   gradeCounts,
   sessionTypeCounts,
   totalReviews,
@@ -91,8 +99,16 @@ export function MyReviewsFilters({
     updateFilters({ selectedSubjectAreas: values, currentPage: 1 });
   };
 
+  const handleReviewLanguageChange = (values: string[]) => {
+    updateFilters({ selectedReviewLanguages: values, currentPage: 1 });
+  };
+
   const handleTermChange = (values: string[]) => {
     updateFilters({ selectedTerms: values, currentPage: 1 });
+  };
+
+  const handleTeachingLanguageChange = (values: string[]) => {
+    updateFilters({ selectedTeachingLanguages: values, currentPage: 1 });
   };
 
   const handleGradeChange = (values: string[]) => {
@@ -111,7 +127,9 @@ export function MyReviewsFilters({
     return (
       filters.searchTerm.trim() !== '' ||
       (filters.selectedSubjectAreas || []).length > 0 ||
+      (filters.selectedReviewLanguages || []).length > 0 ||
       (filters.selectedTerms || []).length > 0 ||
+      (filters.selectedTeachingLanguages || []).length > 0 ||
       (filters.selectedGrades || []).length > 0 ||
       (filters.selectedSessionTypes || []).length > 0
     );
@@ -121,7 +139,9 @@ export function MyReviewsFilters({
     let count = 0;
     if (filters.searchTerm.trim()) count++;
     if ((filters.selectedSubjectAreas || []).length > 0) count++;
+    if ((filters.selectedReviewLanguages || []).length > 0) count++;
     if ((filters.selectedTerms || []).length > 0) count++;
+    if ((filters.selectedTeachingLanguages || []).length > 0) count++;
     if ((filters.selectedGrades || []).length > 0) count++;
     if ((filters.selectedSessionTypes || []).length > 0) count++;
     return count;
@@ -222,6 +242,43 @@ export function MyReviewsFilters({
     }));
   };
 
+  // Helper function to create review language options
+  const getReviewLanguageOptions = () => {
+    return Object.entries(reviewLanguageCounts).map(([language, count]) => ({
+      value: language,
+      label: getLanguageDisplayName(language),
+      count
+    }));
+  };
+
+  // Helper function to create teaching language options
+  const getTeachingLanguageOptions = () => {
+    return Object.entries(teachingLanguageCounts).map(([language, count]) => ({
+      value: language,
+      label: getTeachingLanguageName(language, t),
+      count
+    }));
+  };
+
+  // Helper function to get language display name
+  const getLanguageDisplayName = (language: string) => {
+    switch (language) {
+      case 'zh-TW':
+        return t('language.traditionalChinese');
+      case 'zh-CN':
+        return t('language.simplifiedChinese');
+      case 'en':
+        return t('language.english');
+      default:
+        return language;
+    }
+  };
+
+  // Helper function to get term label - "Term" for English, keep original for other languages
+  const getTermLabel = () => {
+    return language === 'en' ? t('filter.reviewTerm') : t('filter.offeredTerms');
+  };
+
   return (
     <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 flex flex-col gap-2">
       {/* 智能搜索行 */}
@@ -271,24 +328,6 @@ export function MyReviewsFilters({
             />
           </div>
 
-          {/* Term */}
-          <div className="flex items-center gap-2">
-            <label className={getLabelClassName()}>
-              <Calendar className="h-4 w-4" />
-              {t('filter.offeredTerms')}
-            </label>
-            <MultiSelectDropdown
-              options={getTermOptions()}
-              selectedValues={filters.selectedTerms || []}
-              onSelectionChange={handleTermChange}
-              placeholder={t('common.all')}
-              totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
-              showCounts={true}
-              maxHeight="max-h-48"
-            />
-          </div>
-
           {/* Grade */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
@@ -307,6 +346,42 @@ export function MyReviewsFilters({
             />
           </div>
 
+          {/* Term */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <Calendar className="h-4 w-4" />
+              {getTermLabel()}
+            </label>
+            <MultiSelectDropdown
+              options={getTermOptions()}
+              selectedValues={filters.selectedTerms || []}
+              onSelectionChange={handleTermChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* Review Language */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <MessageSquare className="h-4 w-4" />
+              {t('filter.reviewLanguage')}
+            </label>
+            <MultiSelectDropdown
+              options={getReviewLanguageOptions()}
+              selectedValues={filters.selectedReviewLanguages || []}
+              onSelectionChange={handleReviewLanguageChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
           {/* Session Type */}
           <div className="flex items-center gap-2">
             <label className={getLabelClassName()}>
@@ -317,6 +392,24 @@ export function MyReviewsFilters({
               options={getSessionTypeOptions()}
               selectedValues={filters.selectedSessionTypes || []}
               onSelectionChange={handleSessionTypeChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* Teaching Language */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <Globe className="h-4 w-4" />
+              {t('filter.reviewTeachingLanguage')}
+            </label>
+            <MultiSelectDropdown
+              options={getTeachingLanguageOptions()}
+              selectedValues={filters.selectedTeachingLanguages || []}
+              onSelectionChange={handleTeachingLanguageChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
               className="flex-1 h-10 text-sm"
@@ -340,25 +433,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleSubjectAreaChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-8 text-sm"
-              showCounts={true}
-              maxHeight="max-h-48"
-            />
-          </div>
-
-          {/* Term */}
-          <div className="flex items-center gap-2 lg:flex-1">
-            <label className={getLabelClassName()}>
-              <Calendar className="h-4 w-4" />
-              {t('filter.offeredTerms')}
-            </label>
-            <MultiSelectDropdown
-              options={getTermOptions()}
-              selectedValues={filters.selectedTerms || []}
-              onSelectionChange={handleTermChange}
-              placeholder={t('common.all')}
-              totalCount={totalReviews}
-              className="flex-1 h-8 text-sm"
+              className="flex-1 h-10 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -376,7 +451,43 @@ export function MyReviewsFilters({
               onSelectionChange={handleGradeChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-8 text-sm"
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* Term */}
+          <div className="flex items-center gap-2 lg:flex-1">
+            <label className={getLabelClassName()}>
+              <Calendar className="h-4 w-4" />
+              {getTermLabel()}
+            </label>
+            <MultiSelectDropdown
+              options={getTermOptions()}
+              selectedValues={filters.selectedTerms || []}
+              onSelectionChange={handleTermChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* Review Language */}
+          <div className="flex items-center gap-2 lg:flex-1">
+            <label className={getLabelClassName()}>
+              <MessageSquare className="h-4 w-4" />
+              {t('filter.reviewLanguage')}
+            </label>
+            <MultiSelectDropdown
+              options={getReviewLanguageOptions()}
+              selectedValues={filters.selectedReviewLanguages || []}
+              onSelectionChange={handleReviewLanguageChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -394,7 +505,25 @@ export function MyReviewsFilters({
               onSelectionChange={handleSessionTypeChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-8 text-sm"
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
+
+          {/* Teaching Language */}
+          <div className="flex items-center gap-2 lg:flex-1">
+            <label className={getLabelClassName()}>
+              <Globe className="h-4 w-4" />
+              {t('filter.reviewTeachingLanguage')}
+            </label>
+            <MultiSelectDropdown
+              options={getTeachingLanguageOptions()}
+              selectedValues={filters.selectedTeachingLanguages || []}
+              onSelectionChange={handleTeachingLanguageChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -433,10 +562,10 @@ export function MyReviewsFilters({
                     variant={getSortButtonVariant(value)}
                     size="sm"
                     onClick={() => handleSort(value)}
-                    className="flex items-center justify-center gap-1 py-2 px-1 text-xs sm:text-sm sm:gap-1.5 sm:px-2 rounded-lg transition-all duration-200 min-h-0"
+                    className="h-6 px-3 text-xs w-full"
                   >
-                    <span className="text-center flex-1 min-w-0 leading-tight">{label}</span>
-                    <span className="shrink-0">{getSortIcon(value)}</span>
+                    {label}
+                    {getSortIcon(value)}
                   </Button>
                 ))}
               </div>

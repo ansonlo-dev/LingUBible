@@ -435,11 +435,13 @@ export default {
   'filter.allSessionTypes': '所有課堂類型',
   'filter.allCourses': '所有課程',
   'filter.allGrades': '所有成績',
+  'filter.grade': '成績',
   'sort.currentSort': '目前排序',
 
   // Languages
   'language.traditionalChinese': '繁體中文',
   'language.simplifiedChinese': '簡體中文',
+  'language.english': '英文',
   // Reviews
   'review.studentReviews': '學生評論',
   'pages.courseDetail.invalidCourseCode': '課程代碼無效',
@@ -651,7 +653,6 @@ export default {
   'filter.subjectArea': '學科領域',
   'filter.teachingLanguage': '教學語言',
   // Teaching Languages
-  'language.english': '英語',
   'language.mandarinChinese': '普通話',
   'filter.offeredTerms': '開設學期',
   'filter.applied': '已套用篩選條件',
@@ -662,6 +663,7 @@ export default {
   'filter.allStatuses': '所有狀態',
   'filter.checkingTerm': '正在檢查選定學期的課程...',
   'filter.clickToFilterDepartment': '點擊以按此學系篩選講師',
+  'filter.clickToFilterFaculty': '點擊以按此學院篩選',
   'filter.clickToFilterByTerm': '點擊以依{term}篩選',
   'filter.clickToFilterByLanguage': '點擊以依{language}篩選',
   'filter.clickToFilterByTeachingLanguage': '點擊以依教學語言篩選：{language}',
@@ -1035,7 +1037,7 @@ export default {
   'faq.privacyQuestion': '我的隱私如何受到保護？',
   'faq.privacyAnswer': '我們致力於保護您的隱私。所有用戶身份都會嚴格保密，我們不會與第三方分享個人資訊。',
   'faq.reviewQuestion': '如何提交課程評論？',
-  'faq.reviewAnswer': '登入後，前往您想評論的課程頁面，點擊「撰寫評論」按鈕。您可以使用我們的5星評分系統（支援半星評分精度）對課程工作量、難度、實用性、教學品質和評分滿意度進行詳細評分。對於不適用的評分項目，您也可以選擇「不適用」。所有欄位包括評論都是必填的。系統支援匿名提交（預設選項）、多位講師評價、Markdown格式化，並包含即時預覽功能。',
+  'faq.reviewAnswer': '登入後，您可以透過兩種方式提交評論：1) 前往課程頁面點擊「撰寫評論」按鈕，或 2) 前往講師頁面點擊「提交評論」按鈕（會預先選擇該講師並只顯示他們教授的課程）。您可以使用我們的5星評分系統（支援半星評分精度）對課程工作量、難度、實用性、教學品質和評分滿意度進行詳細評分。對於不適用的評分項目，您也可以選擇「不適用」。所有欄位包括評論都是必填的。系統支援匿名提交（預設選項）、多位講師評價、Markdown格式化，並包含即時預覽功能。',
   'faq.searchQuestion': '如何搜尋課程和講師？',
   'faq.searchAnswer': '使用頂部的搜尋欄輸入課程代碼、課程名稱或講師姓名。您也可以使用篩選功能按學系、難度等條件縮小搜尋範圍。',
   'faq.ratingQuestion': '評分系統是如何運作的？',
@@ -1480,7 +1482,7 @@ export default {
   'instructors.rating': '評分',
   'instructors.noReviewsTitle': '暫無學生評論',
   'instructors.noReviewsDesc': '{name} 尚未收到任何學生評論。如果您曾經修讀過這位講師的課程，歡迎分享您的學習體驗。',
-  'instructors.browseCoursesToReview': '瀏覽課程並撰寫評論',
+  'instructors.submitReview': '提交評論',
   'instructors.noTeachingTitle': '暫無教學記錄',
   'instructors.noLectureRecords': '沒有找到講課記錄',
   'instructors.noTutorialRecords': '沒有找到導修記錄',

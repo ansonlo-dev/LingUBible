@@ -397,11 +397,13 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [terms, setTerms] = useState<Term[]>([]);
   const [availableInstructors, setAvailableInstructors] = useState<TeachingRecord[]>([]);
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
+  const [instructorCourses, setInstructorCourses] = useState<Course[]>([]);
 
   // Form states
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [selectedTerm, setSelectedTerm] = useState<string>('');
   const [selectedInstructors, setSelectedInstructors] = useState<string[]>([]);
+  const [preSelectedInstructor, setPreSelectedInstructor] = useState<string>('');
   
   // Course evaluation - Use null to represent "not yet rated" state
   const [workload, setWorkload] = useState<number | null>(null);
@@ -494,6 +496,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const courseCommentsRef = useRef<HTMLTextAreaElement>(null);
   const teachingCommentsRefs = useRef<{[key: number]: HTMLTextAreaElement | null}>({});
   const serviceLearningRef = useRef<HTMLTextAreaElement>(null);
+
+  // Filter courses based on pre-selected instructor
+  const filteredCourses = useMemo(() => {
+    if (!preSelectedInstructor) {
+      return courses;
+    }
+    
+    // If instructor is pre-selected, only show courses taught by that instructor
+    // This will be populated when we load instructor's teaching records
+    return instructorCourses.length > 0 ? instructorCourses : courses;
+  }, [courses, preSelectedInstructor, instructorCourses]);
 
   // Teaching languages hook for preview (selected instructors)
   const allInstructorDetails = useMemo(() => {
@@ -1407,6 +1420,48 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     loadCourses();
   }, [preselectedCourseCode, t, toast]);
 
+  // Handle instructor pre-selection from location state
+  useEffect(() => {
+    const locationState = location.state as { 
+      preSelectedInstructor?: string; 
+      originPage?: string; 
+    } | null;
+    
+    if (locationState?.preSelectedInstructor && locationState?.originPage === 'instructor') {
+      // Store the pre-selected instructor for later use when courses are loaded
+      setPreSelectedInstructor(locationState.preSelectedInstructor);
+    }
+  }, [location.state]);
+
+  // Load instructor's courses when pre-selected instructor is set
+  useEffect(() => {
+    const loadInstructorCourses = async () => {
+      if (!preSelectedInstructor) {
+        setInstructorCourses([]);
+        return;
+      }
+
+      try {
+        const teachingRecords = await CourseService.getInstructorTeachingRecords(preSelectedInstructor);
+        const uniqueCourseCodes = [...new Set(teachingRecords.map(record => record.course_code))];
+        
+        // Load full course details for each unique course code
+        const coursePromises = uniqueCourseCodes.map(courseCode => 
+          CourseService.getCourseByCode(courseCode)
+        );
+        const courseDetails = await Promise.all(coursePromises);
+        const validCourses = courseDetails.filter(course => course !== null) as Course[];
+        
+        setInstructorCourses(validCourses);
+      } catch (error) {
+        console.error('Error loading instructor courses:', error);
+        setInstructorCourses([]);
+      }
+    };
+
+    loadInstructorCourses();
+  }, [preSelectedInstructor]);
+
   // Load terms when course is selected
   useEffect(() => {
     const loadTerms = async () => {
@@ -1486,6 +1541,23 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         if (!isPopulatingEditData) {
           const validInstructorKeys = filteredRecords.map(record => `${record.instructor_name}|${record.session_type}`);
           setSelectedInstructors(prev => prev.filter(instructorKey => validInstructorKeys.includes(instructorKey)));
+          
+          // Auto-select pre-selected instructor if available
+          if (preSelectedInstructor) {
+            const preSelectedInstructorRecords = filteredRecords.filter(record => 
+              record.instructor_name === preSelectedInstructor
+            );
+            if (preSelectedInstructorRecords.length > 0) {
+              // Select all session types for the pre-selected instructor
+              const preSelectedKeys = preSelectedInstructorRecords.map(record => 
+                `${record.instructor_name}|${record.session_type}`
+              );
+              setSelectedInstructors(prev => {
+                const newSelected = [...new Set([...prev, ...preSelectedKeys])];
+                return newSelected;
+              });
+            }
+          }
         } else {
           // In edit mode, validate that instructors are available
           // Don't turn off the flag here - let it be handled after evaluations are set
@@ -2355,26 +2427,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </button>
                           </h4>
                         </div>
-                        <div className="shrink-0 flex items-start gap-2 pt-1">
-                                    {/* 教學語言徽章 */}
-          {(() => {
-            const teachingLanguage = getPreviewTeachingLanguageForInstructor(
-              instructor.instructorName,
-              instructor.sessionType
-            );
-                            if (teachingLanguage) {
-                              return (
-                                <span 
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
-                                  title={getTeachingLanguageName(teachingLanguage, t)}
-                                >
-                                  {getTeachingLanguageName(teachingLanguage, t)}
-                                </span>
-                              );
-                            }
-                            return null;
-                          })()}
-                          
+                                                <div className="shrink-0 flex items-start gap-2 pt-1">
                           {/* 課堂類型徽章 */}
                           <span 
                             className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
@@ -2387,6 +2440,25 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           >
                             {t(`sessionTypeBadge.${instructor.sessionType.toLowerCase()}`)}
                           </span>
+
+                          {/* 教學語言徽章 */}
+                          {(() => {
+                            const teachingLanguage = getPreviewTeachingLanguageForInstructor(
+                              instructor.instructorName,
+                              instructor.sessionType
+                            );
+                            if (teachingLanguage) {
+                              return (
+                                <span 
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
+                                  title={getTeachingLanguageName(teachingLanguage, t)}
+                                >
+                                  {getTeachingLanguageName(teachingLanguage, t)}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
                       
@@ -2572,10 +2644,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       disabled={coursesLoading || !!preselectedCourseCode}
                     >
                       <SelectTrigger className="md:flex-1">
-                        <SelectValue placeholder={coursesLoading ? t('review.loadingCourses') : t('review.selectCoursePlaceholder')} />
+                        <SelectValue placeholder={coursesLoading ? t('review.loadingCourses') : t('review.selectCoursePlaceholder')}><div className="w-full overflow-hidden"><div className="truncate">{selectedCourse ? courses?.find(c => c.course_code === selectedCourse)?.course_code + " - " + courses?.find(c => c.course_code === selectedCourse)?.course_title : (coursesLoading ? t("review.loadingCourses") : t("review.selectCoursePlaceholder"))}</div></div></SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {(courses || []).map((course) => (
+                        {(filteredCourses || []).map((course) => (
                           <SelectItem key={course.$id} value={course.course_code}>
                             <span className="font-medium">{course.course_code} - {course.course_title}</span>
                           </SelectItem>

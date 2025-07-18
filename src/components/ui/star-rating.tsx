@@ -185,10 +185,12 @@ export const StarRating = ({
     </div>
   );
 
-  // Wrap with ResponsiveTooltip for mobile
-  if (showTooltip && isMobile) {
+  // Always use ResponsiveTooltip when showTooltip is true
+  if (showTooltip) {
     return (
-      <ResponsiveTooltip content={getTooltipText(rating)} disabled={!showTooltip}>
+      <ResponsiveTooltip 
+        content={getTooltipText(rating)}
+      >
         <div className={`flex items-center gap-1 cursor-help ${className}`}>
           {renderStars()}
           {showValue && (
@@ -201,15 +203,12 @@ export const StarRating = ({
     );
   }
 
-  // Desktop version with title attribute
+  // No tooltip version
   return (
-    <div className={`flex items-center gap-1 ${showTooltip ? 'cursor-help' : ''} ${className}`}>
+    <div className={`flex items-center gap-1 ${className}`}>
       {renderStars()}
       {showValue && (
-        <span 
-          className={`${textSizeClasses[size]} text-muted-foreground ml-1`}
-          {...(showTooltip ? { title: getTooltipText(rating) } : {})}
-        >
+        <span className={`${textSizeClasses[size]} text-muted-foreground ml-1`}>
           {formatRating(rating)}
         </span>
       )}

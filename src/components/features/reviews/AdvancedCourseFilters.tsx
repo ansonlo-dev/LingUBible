@@ -354,23 +354,7 @@ export function AdvancedCourseFilters({
             onSelectionChange={(values) => updateFilters({ subjectArea: values })}
             placeholder={t('filter.allSubjects')}
             totalCount={totalCourses}
-            className="flex-1 h-8 text-sm"
-          />
-        </div>
-
-        {/* 授課語言 */}
-        <div className="flex items-center gap-2 lg:flex-1">
-          <label className={getLabelClassName()}>
-            <Globe className="h-4 w-4" />
-            {t('filter.teachingLanguage')}
-          </label>
-          <MultiSelectDropdown
-            options={getOrderedLanguageOptions()}
-            selectedValues={filters.teachingLanguage}
-            onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
-            placeholder={t('filter.allLanguages')}
-            totalCount={totalCourses}
-            className="flex-1 h-8 text-sm"
+            className="flex-1 h-10 text-sm"
           />
         </div>
 
@@ -392,7 +376,23 @@ export function AdvancedCourseFilters({
             onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
             placeholder={t('filter.allTerms')}
             totalCount={totalCourses}
-            className="flex-1 h-8 text-sm"
+            className="flex-1 h-10 text-sm"
+          />
+        </div>
+
+        {/* 授課語言 */}
+        <div className="flex items-center gap-2 lg:flex-1">
+          <label className={getLabelClassName()}>
+            <Globe className="h-4 w-4" />
+            {t('filter.teachingLanguage')}
+          </label>
+          <MultiSelectDropdown
+            options={getOrderedLanguageOptions()}
+            selectedValues={filters.teachingLanguage}
+            onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
+            placeholder={t('filter.allLanguages')}
+            totalCount={totalCourses}
+            className="flex-1 h-10 text-sm"
           />
         </div>
       </div>
@@ -421,7 +421,7 @@ export function AdvancedCourseFilters({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2 pt-2 w-full max-w-md mx-auto">
               {[
                 { value: 'code', label: t('sort.courseCode') },
                 { value: 'title', label: t('sort.courseName') },
@@ -438,7 +438,7 @@ export function AdvancedCourseFilters({
                   variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleSort(option.value)}
-                  className="h-6 px-3 text-xs"
+                  className="h-6 px-3 text-xs w-full"
                 >
                   {option.label}
                   {getSortIcon(option.value)}
@@ -449,12 +449,12 @@ export function AdvancedCourseFilters({
         </Collapsible>
       ) : (
         /* Desktop: Always visible sort buttons */
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 items-center">
           <label className={getLabelClassName()}>
             <Hash className="h-4 w-4" />
             {t('sort.by')}
           </label>
-          <div className="flex flex-wrap gap-2 flex-1">
+          <div className="grid grid-cols-2 gap-2 w-full max-w-md">
             {[
               { value: 'code', label: t('sort.courseCode') },
               { value: 'title', label: t('sort.courseName') },
@@ -471,11 +471,11 @@ export function AdvancedCourseFilters({
                 variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleSort(option.value)}
-                                  className="h-6 px-3 text-xs"
-                >
-                  {option.label}
-                  {getSortIcon(option.value)}
-                </Button>
+                className="h-6 px-3 text-xs w-full"
+              >
+                {option.label}
+                {getSortIcon(option.value)}
+              </Button>
             ))}
           </div>
         </div>

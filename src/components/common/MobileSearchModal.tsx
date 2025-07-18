@@ -46,35 +46,60 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   // Use a stable value for desktop mode detection based on viewport state
   const isDesktopMode = !isMobile && viewportDimensions.width >= 1024;
   
-  // Detect iPad Mini landscape specifically
+  // Detect iPad devices specifically (different from large desktop screens)
+  const isIPadDevice = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const width = viewportDimensions.width;
+    const height = viewportDimensions.height;
+    // iPad devices: Mini (1024x768), Air (1180x820), Pro (1366x1024)
+    // Check for iPad-like aspect ratios and sizes
+    const maxDimension = Math.max(width, height);
+    const minDimension = Math.min(width, height);
+    const isIPadSize = (
+      (maxDimension >= 1024 && maxDimension <= 1400) && 
+      (minDimension >= 768 && minDimension <= 1100)
+    );
+    return isIPadSize && isDesktopMode;
+  }, [viewportDimensions.width, viewportDimensions.height, isDesktopMode]);
+  
+  // Special handling for iPad Mini landscape (1024x768) breakpoint edge case
   const isIPadMiniLandscape = useMemo(() => {
     if (typeof window === 'undefined') return false;
     const width = viewportDimensions.width;
     const height = viewportDimensions.height;
-    // iPad Mini landscape is 1024x768 (or close to it)
-    // Allow some flexibility for browser dev tools UI
-    const isIPadMini = width >= 1020 && width <= 1030 && height >= 690 && height <= 820 && width > height;
+    // Exact iPad Mini landscape dimensions with some tolerance for dev tools
+    const detected = width >= 1020 && width <= 1030 && height >= 760 && height <= 775 && width > height;
     
-
+    // Debug log for iPad Mini landscape detection
+    if (detected && isOpen) {
+      console.log('🍎 iPad Mini Landscape detected:', { width, height, isSidebarCollapsed, modalLeftPosition: isSidebarCollapsed ? 4 : 12 });
+    }
     
-    return isIPadMini;
-  }, [viewportDimensions.width, viewportDimensions.height, isOpen, isDesktopMode, isSidebarCollapsed]); // Include all relevant deps
+    return detected;
+  }, [viewportDimensions.width, viewportDimensions.height, isOpen, isSidebarCollapsed]);
   
-  // Memoize sidebar positions to prevent recalculation
+  // For true desktop (larger than iPad Pro), use simple centering
+  const isLargeDesktop = isDesktopMode && !isIPadDevice;
+  
+  // Memoize sidebar positions for iPad positioning
   const sidebarPositions = useMemo(() => ({
-    collapsed: 4,
-    expanded: 11
+    collapsed: 4,    // 4rem when collapsed
+    expanded: 11     // 11rem when expanded
   }), []);
   
+  // Calculate modal positioning for iPad devices
   const modalLeftPosition = useMemo(() => {
-    if (!isDesktopMode) return 0;
+    if (!isIPadDevice) return 0;
+    
+    // Special handling for iPad Mini landscape at 1024px breakpoint
+    if (isIPadMiniLandscape) {
+      // On iPad Mini landscape, we need extra space when sidebar is expanded
+      // to prevent the modal from being covered by the sidebar
+      return isSidebarCollapsed ? sidebarPositions.collapsed : sidebarPositions.expanded + 1; // Add 1rem extra
+    }
+    
     return isSidebarCollapsed ? sidebarPositions.collapsed : sidebarPositions.expanded;
-  }, [isDesktopMode, isSidebarCollapsed, sidebarPositions]);
-  
-  // Determine if we should use right-aligned positioning
-  const useRightAlign = useMemo(() => {
-    return isIPadMiniLandscape && !isSidebarCollapsed;
-  }, [isIPadMiniLandscape, isSidebarCollapsed]);
+  }, [isIPadDevice, isIPadMiniLandscape, isSidebarCollapsed, sidebarPositions]);
   
   const { addToHistory } = useSearchHistory();
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,9 +178,9 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     };
   }, [isOpen]); // Re-run when modal opens to ensure fresh dimensions
 
-  // Update viewport dimensions when sidebar state changes (important for iPad Mini landscape)
+  // Update viewport dimensions when sidebar state changes (important for iPad positioning)
   useEffect(() => {
-    if (isOpen && isDesktopMode) {
+    if (isOpen && (isIPadDevice || isIPadMiniLandscape)) {
       const updateViewportForSidebar = () => {
         setViewportDimensions(prev => ({
           ...prev,
@@ -168,7 +193,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       const timer = setTimeout(updateViewportForSidebar, 100);
       return () => clearTimeout(timer);
     }
-  }, [isSidebarCollapsed, isOpen, isDesktopMode]);
+  }, [isSidebarCollapsed, isOpen, isIPadDevice, isIPadMiniLandscape]);
 
 
 
@@ -471,16 +496,15 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     <div className="fixed inset-0 z-50" style={{ pointerEvents: 'auto' }}>
       {/* Backdrop */}
       <div 
-        className="fixed bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out"
+        className={isLargeDesktop ? "fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out" : "fixed bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out"}
         style={{
-          top: 0,
-          bottom: 0,
-          ...(useRightAlign ? {
-            left: 0,
-            right: 0
-          } : {
+          ...(isLargeDesktop ? {} : {
+            // iPad: backdrop adapts to sidebar positioning
+            top: 0,
+            bottom: 0,
             left: `${modalLeftPosition}rem`,
-            right: 0
+            // Backdrop right edge should align with modal for iPad Mini landscape
+            right: isIPadMiniLandscape && !isSidebarCollapsed ? '2rem' : 0
           }),
           transform: 'translateZ(0)' // Force GPU acceleration
         }}
@@ -490,36 +514,35 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       {/* Search Modal Content */}
       {isDesktopMode ? (
         <div 
-          className="fixed top-16"
-          key={`desktop-modal-${isSidebarCollapsed}`} // Force re-render when sidebar state changes
+          className={isLargeDesktop ? "fixed inset-0 flex items-center justify-center p-4" : "fixed top-16"}
+          key={`desktop-modal-${isSidebarCollapsed}-${isIPadDevice}-${isIPadMiniLandscape}`} // Force re-render when sidebar or device type changes
           style={{
-            ...(isIPadMiniLandscape && !isSidebarCollapsed ? {
-              // iPad Mini landscape with expanded sidebar - center the modal
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '50rem',
-              maxWidth: '90%'
-            } : useRightAlign ? {
+            ...(isLargeDesktop ? {} : {
+              // iPad-specific positioning that adapts to sidebar
               left: `${modalLeftPosition}rem`,
-              right: 'auto',
-              width: `calc(100% - ${modalLeftPosition}rem - 2rem)`,
-              maxWidth: '50rem'
-            } : {
-              left: `${modalLeftPosition}rem`,
-              right: '1rem'
+              // On iPad Mini landscape, use more conservative right margin when sidebar is expanded
+              right: isIPadMiniLandscape && !isSidebarCollapsed ? '2rem' : '1rem',
+              transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
             }),
             zIndex: 51, // Ensure it's above the backdrop
-            pointerEvents: 'auto',
-            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Explicit transition on left, width, and transform properties
+            pointerEvents: 'auto'
           }}
         >
           <div 
-            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal`}
-                          style={{
-                maxWidth: (isIPadMiniLandscape && !isSidebarCollapsed) ? '100%' : (useRightAlign ? '100%' : '64rem'), // max-w-4xl equivalent
-                // Fixed height to prevent jumping between loading and loaded states - increased slightly to accommodate content
+            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${isLargeDesktop ? 'w-full' : ''}`}
+            style={{
+              ...(isLargeDesktop ? {
+                // Large desktop: centered with consistent max width
+                maxWidth: '64rem',
+                width: '100%',
+                height: viewportDimensions.height <= 600 ? 'calc(100vh - 8rem)' : '75vh'
+              } : {
+                // iPad: adaptive width that considers sidebar space
+                width: '100%',
+                maxWidth: '64rem',
                 height: viewportDimensions.height <= 600 ? 'calc(100vh - 3rem)' : '75vh'
-              }}
+              })
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索輸入框 */}
@@ -615,12 +638,14 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               <div 
                 ref={scrollContainerRef}
                 className="h-full overflow-y-auto scrollbar-hide"
-                                  style={{
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                    // Dynamic max height for desktop responsive behavior - more generous to show full content
-                                        maxHeight: viewportDimensions.height <= 600 ? 'calc(100vh - 6rem)' : '60vh'
-                  }}
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  // Dynamic max height that adapts to device type and viewport
+                  maxHeight: isLargeDesktop 
+                    ? (viewportDimensions.height <= 600 ? 'calc(100vh - 12rem)' : '60vh')
+                    : (viewportDimensions.height <= 600 ? 'calc(100vh - 6rem)' : '60vh')
+                }}
                 >
                   {loading ? (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-0">
@@ -672,16 +697,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === course.currentTermTeachingLanguage ? (
@@ -758,16 +779,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === instructor.currentTermTeachingLanguage ? (
@@ -873,16 +890,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === course.currentTermTeachingLanguage ? (
@@ -973,16 +986,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === instructor.currentTermTeachingLanguage ? (
@@ -1076,16 +1085,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === course.currentTermTeachingLanguage ? (
@@ -1176,16 +1181,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === instructor.currentTermTeachingLanguage ? (
@@ -1413,16 +1414,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === course.currentTermTeachingLanguage ? (
@@ -1499,16 +1496,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === instructor.currentTermTeachingLanguage ? (
@@ -1614,16 +1607,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === course.currentTermTeachingLanguage ? (
@@ -1714,16 +1703,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === instructor.currentTermTeachingLanguage ? (
@@ -1817,16 +1802,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === course.currentTermTeachingLanguage ? (
@@ -1917,16 +1898,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center">
+                                              <div className="flex items-center gap-1">
                                                 {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                   <span 
                                                     key={code}
                                                     className={`${
-                                                      index === 0 
-                                                        ? 'pr-1' 
-                                                        : index === (instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).length - 1 
-                                                        ? 'pl-1 border-l border-orange-300 dark:border-orange-700' 
-                                                        : 'px-1 border-l border-orange-300 dark:border-orange-700'
+                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                                     }`}
                                                   >
                                                     {code === instructor.currentTermTeachingLanguage ? (

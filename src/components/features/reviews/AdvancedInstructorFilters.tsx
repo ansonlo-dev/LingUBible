@@ -471,7 +471,7 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ department: values })}
             placeholder={t('filter.allDepartments')}
             totalCount={totalInstructors}
-            className="flex-1 h-8 text-sm"
+            className="flex-1 h-10 text-sm"
           />
         </div>
 
@@ -493,7 +493,7 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
             placeholder={t('filter.allTerms')}
             totalCount={totalInstructors}
-            className="flex-1 h-8 text-sm"
+            className="flex-1 h-10 text-sm"
           />
         </div>
 
@@ -509,7 +509,7 @@ export function AdvancedInstructorFilters({
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}
             totalCount={totalInstructors}
-            className="flex-1 h-8 text-sm"
+            className="flex-1 h-10 text-sm"
           />
         </div>
       </div>
@@ -538,14 +538,14 @@ export function AdvancedInstructorFilters({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2 pt-2 w-full max-w-md mx-auto">
               {sortOptions.map((option) => (
                 <Button
                   key={option.value}
                   variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleSortChange(option.value)}
-                  className="h-6 px-3 text-xs"
+                  className="h-6 px-3 text-xs w-full"
                 >
                   {option.label}
                   {getSortIcon(option.value)}
@@ -556,23 +556,23 @@ export function AdvancedInstructorFilters({
         </Collapsible>
       ) : (
         /* Desktop: Always visible sort buttons */
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 items-center">
           <label className={getLabelClassName()}>
             <Hash className="h-4 w-4" />
             {t('sort.sortBy')}
           </label>
-          <div className="flex flex-wrap gap-2 flex-1">
+          <div className="grid grid-cols-2 gap-2 w-full max-w-md">
             {sortOptions.map((option) => (
               <Button
                 key={option.value}
                 variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleSortChange(option.value)}
-                                  className="h-6 px-3 text-xs"
-                >
-                  {option.label}
-                  {getSortIcon(option.value)}
-                </Button>
+                className="h-6 px-3 text-xs w-full"
+              >
+                {option.label}
+                {getSortIcon(option.value)}
+              </Button>
             ))}
           </div>
         </div>

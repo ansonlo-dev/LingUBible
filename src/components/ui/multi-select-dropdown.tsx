@@ -258,13 +258,21 @@ export function MultiSelectDropdown({
 
   const getDisplayText = () => {
     if (safeSelectedValues.length === 0) {
+      console.log('🔍 MultiSelectDropdown: Showing placeholder:', placeholder);
       return placeholder; // Show placeholder when nothing is selected
     } else if (safeSelectedValues.length === 1) {
       const option = options.find(opt => opt.value === safeSelectedValues[0]);
+      console.log('🔍 MultiSelectDropdown: Single selection:', { 
+        value: safeSelectedValues[0], 
+        option: option?.label, 
+        isTeachingLanguage: option?.isTeachingLanguage,
+        isMobile 
+      });
       if (option && option.isTeachingLanguage && isMobile) {
         // For teaching language options on mobile, format as two lines in the placeholder
         const parts = option.label.split(/\s*-\s*/);
         if (parts.length >= 2) {
+          console.log('🔍 MultiSelectDropdown: Returning JSX for teaching language mobile');
           return (
             <div className="flex flex-col items-start py-0.5">
               <div className="font-mono font-semibold text-primary text-xs leading-tight">
@@ -277,9 +285,12 @@ export function MultiSelectDropdown({
           );
         }
       }
+      console.log('🔍 MultiSelectDropdown: Returning raw label:', option?.label);
       return option ? option.label : safeSelectedValues[0];
     } else {
-      return t('common.selectedCount', { count: safeSelectedValues.length });
+      const countText = t('common.selectedCount', { count: safeSelectedValues.length });
+      console.log('🔍 MultiSelectDropdown: Multiple selection count:', countText);
+      return countText;
     }
   };
 
@@ -298,11 +309,19 @@ export function MultiSelectDropdown({
           className="w-full h-8 min-w-0"
         >
           <SelectValue>
-            {getDisplayText()}
+            <div className="w-full overflow-hidden">
+              <div className="truncate">
+                {(() => {
+                  const displayText = getDisplayText();
+                  console.log('🔍 SelectValue: Rendering display text type:', typeof displayText, displayText);
+                  return displayText;
+                })()}
+              </div>
+            </div>
           </SelectValue>
         </SelectTrigger>
         <SelectContent 
-          className="bg-white dark:bg-gray-900 border border-border w-[calc(100vw-3rem)] sm:w-auto max-w-none sm:max-w-[600px] sm:min-w-[400px] overflow-hidden" 
+          className="bg-white dark:bg-gray-900 border border-border w-[calc(100vw-3rem)] sm:w-auto max-w-none sm:max-w-[320px] overflow-hidden" 
           position="popper" 
           side="bottom" 
           align="center" 

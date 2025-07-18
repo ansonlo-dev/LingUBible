@@ -23,7 +23,8 @@ import {
   Clock,
   Building,
   Info,
-  UserCheck
+  UserCheck,
+  PenTool
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -196,10 +197,15 @@ const Lecturers = () => {
   const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
+  
   const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
   const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
   const [pendingReviewLanguageFilter, setPendingReviewLanguageFilter] = useState<string | null>(null);
+  const [pendingGradeFilter, setPendingGradeFilter] = useState<string | null>(null);
+  const [pendingRequirementFilter, setPendingRequirementFilter] = useState<{ filterKey: string; value: boolean } | null>(null);
+  
+
 
   // Clear pending states when clicking outside
   useEffect(() => {
@@ -208,6 +214,8 @@ const Lecturers = () => {
       setPendingSessionTypeFilter(null);
       setPendingTermFilter(null);
       setPendingReviewLanguageFilter(null);
+      setPendingGradeFilter(null);
+      setPendingRequirementFilter(null);
     };
 
     // Add a small delay to avoid clearing immediately when clicking the badge itself
@@ -223,17 +231,19 @@ const Lecturers = () => {
 
   // Clear pending states after timeout
   useEffect(() => {
-    if (pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingReviewLanguageFilter) {
+    if (pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingReviewLanguageFilter || pendingGradeFilter || pendingRequirementFilter) {
       const timer = setTimeout(() => {
         setPendingTeachingLanguageFilter(null);
         setPendingSessionTypeFilter(null);
         setPendingTermFilter(null);
         setPendingReviewLanguageFilter(null);
+        setPendingGradeFilter(null);
+        setPendingRequirementFilter(null);
       }, 3000); // Clear after 3 seconds
 
       return () => clearTimeout(timer);
     }
-  }, [pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingReviewLanguageFilter]);
+  }, [pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingReviewLanguageFilter, pendingGradeFilter, pendingRequirementFilter]);
 
   // Helper function to generate responsive teaching language labels
   const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
@@ -480,6 +490,44 @@ const Lecturers = () => {
     // Navigate to instructors list with current term filter applied
     const searchParams = new URLSearchParams();
     searchParams.set('teachingTerm', currentTermCode);
+    
+    navigate(`/instructors?${searchParams.toString()}`);
+  };
+
+  // Term badge click handler for teaching records
+  const handleTermBadgeClick = (termCode: string) => {
+    if (isMobile) {
+      if (pendingTermFilter !== termCode) {
+        setPendingTermFilter(termCode);
+        return; // Only set pending on first tap, do not apply filter
+      } else if (pendingTermFilter === termCode) {
+        setPendingTermFilter(null);
+        // Continue to apply filter below
+      }
+    }
+    
+    const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+    const isSelected = currentValues.includes(termCode);
+    
+    if (isSelected) {
+      // Remove from selection
+      const newValues = currentValues.filter(v => v !== termCode);
+      setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
+    } else {
+      // Add to selection
+      setSelectedTermFilter([...currentValues, termCode]);
+    }
+  };
+
+  // Department badge click handler
+  const handleDepartmentBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Navigate to instructors catalog with department filter applied
+    const searchParams = new URLSearchParams();
+    const rawDepartmentName = extractRawDepartmentName(instructor?.department || '');
+    searchParams.set('department', rawDepartmentName);
     
     navigate(`/instructors?${searchParams.toString()}`);
   };
@@ -811,30 +859,7 @@ const Lecturers = () => {
     // The browser will handle navigation naturally
   };
 
-  const handleTeachingLanguageBadgeClick = (languageCode: string) => {
-    if (isMobile && pendingTeachingLanguageFilter !== languageCode) {
-      setPendingTeachingLanguageFilter(languageCode);
-      return; // Only set pending on first tap, do not apply filter
-    }
-    if (isMobile && pendingTeachingLanguageFilter === languageCode) {
-      setPendingTeachingLanguageFilter(null);
-      // Continue to apply filter below
-    } else if (isMobile) {
-      // If pending is null but this is mobile, do not apply filter
-      return;
-    }
-    const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-    const isSelected = currentValues.includes(languageCode);
-    
-    if (isSelected) {
-      // Remove from selection
-      const newValues = currentValues.filter(v => v !== languageCode);
-      setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
-    } else {
-      // Add to selection
-      setSelectedTeachingLanguageFilter([...currentValues, languageCode]);
-    }
-  };
+  // Removed handleTeachingLanguageBadgeClick - now using callback approach inline
 
 
 
@@ -853,6 +878,19 @@ const Lecturers = () => {
         content={t('filter.clickToFilterRequirement', { requirement: label })}
         hasClickAction={true}
         clickActionText={t('tooltip.clickAgainToFilter')}
+        onFirstTap={() => {
+          console.log('📋 Course Requirement Badge: First tap - setting pending filter');
+          setPendingRequirementFilter({ filterKey, value });
+        }}
+        onSecondTap={() => {
+          console.log('✅ Course Requirement Badge: Second tap - applying filter');
+          setPendingRequirementFilter(null);
+          const filterValue = value ? 'has' : 'no';
+          setRequirementsFilters(prev => ({
+            ...prev,
+            [filterKey]: filterValue
+          }));
+        }}
       >
         <Badge 
           variant={value ? "default" : "secondary"}
@@ -860,10 +898,14 @@ const Lecturers = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setRequirementsFilters(prev => ({
-              ...prev,
-              [filterKey]: value ? 'has' : 'no'
-            }));
+            if (!isMobile) {
+              // Desktop: apply filter immediately
+              const filterValue = value ? 'has' : 'no';
+              setRequirementsFilters(prev => ({
+                ...prev,
+                [filterKey]: filterValue
+              }));
+            }
           }}
         >
           {value ? (
@@ -1265,28 +1307,7 @@ const Lecturers = () => {
                     );
                   })()}
                 </div>
-                {/* Action buttons - mobile only */}
-                <div className="flex flex-row gap-2">
-                  <div className="flex-1">
-                    <FavoriteButton
-                      type="instructor"
-                      itemId={instructor.name}
-                      size="lg"
-                      showText={true}
-                      variant="outline"
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <button 
-                      onClick={() => navigate('/instructors')}
-                      className="h-10 w-full px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      <span className="text-sm">{t('common.back')}</span>
-                    </button>
-                  </div>
-                </div>
+
               </div>
 
               {/* Email section - shared for all screen sizes */}
@@ -1301,6 +1322,48 @@ const Lecturers = () => {
                   </a>
                 </div>
               )}
+
+              {/* Action buttons - mobile only */}
+              <div className="md:hidden flex flex-col gap-2 mb-4">
+                <div className="flex flex-row gap-2">
+                  <div className="flex-1">
+                    <FavoriteButton
+                      type="instructor"
+                      itemId={instructor.name}
+                      size="lg"
+                      showText={true}
+                      variant="outline"
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Button 
+                      className="h-10 gradient-primary hover:opacity-90 text-white w-full"
+                      onClick={() => {
+                        // Navigate to submit review page with instructor pre-selected
+                        navigate('/submit-review', { 
+                          state: { 
+                            preSelectedInstructor: instructor.name,
+                            originPage: 'instructor'
+                          } 
+                        });
+                      }}
+                    >
+                      <PenTool className="h-4 w-4 mr-2" />
+                      {t('instructors.submitReview')}
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-center">
+                  <button 
+                    onClick={() => navigate('/instructors')}
+                    className="h-10 px-4 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">{t('common.back')}</span>
+                  </button>
+                </div>
+              </div>
               
               {/* 系所徽章 - 使用全寬度 */}
               <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-4 min-h-[2rem] overflow-hidden">
@@ -1308,23 +1371,36 @@ const Lecturers = () => {
                 {(() => {
                   const faculty = getFacultyByDepartment(instructor.department);
                   return faculty && (
-                    <Badge 
-                      variant="outline"
-                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
+                    <ResponsiveTooltip 
+                      content={t('filter.clickToFilterFaculty')}
+                      hasClickAction={true}
+                      clickActionText={t('tooltip.clickAgainToFilter')}
                     >
-                      {t(faculty)}
-                    </Badge>
+                      <Badge 
+                        variant="outline"
+                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/40"
+                      >
+                        {t(faculty)}
+                      </Badge>
+                    </ResponsiveTooltip>
                   );
                 })()}
                 {/* Department Badge */}
-                <Badge 
-                  variant="outline"
-                  className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 w-fit"
+                <ResponsiveTooltip 
+                  content={t('filter.clickToFilterDepartment')}
+                  hasClickAction={true}
+                  clickActionText={t('tooltip.clickAgainToFilter')}
                 >
-                  <span className="break-words hyphens-auto">
-                    {translateDepartmentName(instructor.department, t)}
-                  </span>
-                </Badge>
+                  <Badge 
+                    variant="outline"
+                    className="text-xs bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 w-fit"
+                    onClick={handleDepartmentBadgeClick}
+                  >
+                    <span className="break-words hyphens-auto">
+                      {translateDepartmentName(instructor.department, t)}
+                    </span>
+                  </Badge>
+                </ResponsiveTooltip>
                 {/* Current Term Teaching Badge */}
                 {isTeachingInCurrentTerm !== null && (
                   <Badge 
@@ -1599,6 +1675,7 @@ const Lecturers = () => {
                     </div>
                   )}
                 </div>
+
               </CardContent>
             </Card>
           )}
@@ -1818,7 +1895,7 @@ const Lecturers = () => {
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[150px] h-10 text-sm"
+                      className="w-[180px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}
@@ -1887,7 +1964,7 @@ const Lecturers = () => {
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[150px] h-10 text-sm"
+                      className="w-[180px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}
@@ -1972,32 +2049,36 @@ const Lecturers = () => {
                                   {teachingLanguage ? (
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
-                                      <button
-                                        onClick={() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          const isSelected = currentValues.includes(term.term_code);
-                                          
-                                          if (isSelected) {
-                                            // Remove from selection
-                                            const newValues = currentValues.filter(v => v !== term.term_code);
-                                            setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                          } else {
-                                            // Add to selection
-                                            setSelectedTermFilter([...currentValues, term.term_code]);
-                                          }
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTermFilter(term.term_code);
                                         }}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
-                                          (() => {
-                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                            return currentValues.includes(term.term_code)
-                                              ? 'bg-primary text-primary-foreground'
-                                              : 'bg-background hover:bg-muted';
-                                          })()
-                                        }`}
-                                        title={`Filter by term: ${term.name}`}
+                                        onSecondTap={() => {
+                                          setPendingTermFilter(null);
+                                          handleTermBadgeClick(term.term_code);
+                                        }}
                                       >
-                                        {term.name}
-                                      </button>
+                                        <button
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              handleTermBadgeClick(term.term_code);
+                                            }
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                              return currentValues.includes(term.term_code)
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-background hover:bg-muted';
+                                            })()
+                                          }`}
+                                        >
+                                          {term.name}
+                                        </button>
+                                      </ResponsiveTooltip>
                                       
                                       {/* Separator */}
                                       <div className="w-px bg-border"></div>
@@ -2007,9 +2088,42 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTeachingLanguageFilter(teachingLanguage);
+                                        }}
+                                        onSecondTap={() => {
+                                          setPendingTeachingLanguageFilter(null);
+                                          // Apply the teaching language filter
+                                          const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                          const isSelected = currentValues.includes(teachingLanguage);
+                                          
+                                          if (isSelected) {
+                                            // Remove from selection
+                                            const newValues = currentValues.filter(v => v !== teachingLanguage);
+                                            setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
+                                          } else {
+                                            // Add to selection
+                                            setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
+                                          }
+                                        }}
                                       >
                                         <button
-                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              // Desktop: apply filter immediately
+                                              const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isSelected = currentValues.includes(teachingLanguage);
+                                              
+                                              if (isSelected) {
+                                                // Remove from selection
+                                                const newValues = currentValues.filter(v => v !== teachingLanguage);
+                                                setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
+                                              } else {
+                                                // Add to selection
+                                                setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
+                                              }
+                                            }
+                                          }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
                                               const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -2026,32 +2140,36 @@ const Lecturers = () => {
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
-                                    <button
-                                      onClick={() => {
-                                        const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                        const isSelected = currentValues.includes(term.term_code);
-                                        
-                                        if (isSelected) {
-                                          // Remove from selection
-                                          const newValues = currentValues.filter(v => v !== term.term_code);
-                                          setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                        } else {
-                                          // Add to selection
-                                          setSelectedTermFilter([...currentValues, term.term_code]);
-                                        }
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      onFirstTap={() => {
+                                        setPendingTermFilter(term.term_code);
                                       }}
-                                      className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                        (() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          return currentValues.includes(term.term_code)
-                                            ? 'bg-primary text-primary-foreground border-primary'
-                                            : 'bg-background hover:bg-muted border-border hover:border-primary/50';
-                                        })()
-                                      }`}
-                                      title={`Filter by term: ${term.name}`}
+                                      onSecondTap={() => {
+                                        setPendingTermFilter(null);
+                                        handleTermBadgeClick(term.term_code);
+                                      }}
                                     >
-                                      {term.name}
-                                    </button>
+                                      <button
+                                        onClick={() => {
+                                          if (!isMobile) {
+                                            handleTermBadgeClick(term.term_code);
+                                          }
+                                        }}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground border-primary'
+                                              : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                          })()
+                                        }`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                    </ResponsiveTooltip>
                                   )}
                                 </div>
                               );
@@ -2140,32 +2258,36 @@ const Lecturers = () => {
                                   {teachingLanguage ? (
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
-                                      <button
-                                        onClick={() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          const isSelected = currentValues.includes(term.term_code);
-                                          
-                                          if (isSelected) {
-                                            // Remove from selection
-                                            const newValues = currentValues.filter(v => v !== term.term_code);
-                                            setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                          } else {
-                                            // Add to selection
-                                            setSelectedTermFilter([...currentValues, term.term_code]);
-                                          }
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTermFilter(term.term_code);
                                         }}
-                                        className={`px-2 py-1 text-xs transition-colors border-0 ${
-                                          (() => {
-                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                            return currentValues.includes(term.term_code)
-                                              ? 'bg-primary text-primary-foreground'
-                                              : 'bg-background hover:bg-muted';
-                                          })()
-                                        }`}
-                                        title={`Filter by term: ${term.name}`}
+                                        onSecondTap={() => {
+                                          setPendingTermFilter(null);
+                                          handleTermBadgeClick(term.term_code);
+                                        }}
                                       >
-                                        {term.name}
-                                      </button>
+                                        <button
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              handleTermBadgeClick(term.term_code);
+                                            }
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                              return currentValues.includes(term.term_code)
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-background hover:bg-muted';
+                                            })()
+                                          }`}
+                                        >
+                                          {term.name}
+                                        </button>
+                                      </ResponsiveTooltip>
                                       
                                       {/* Separator */}
                                       <div className="w-px bg-border"></div>
@@ -2175,9 +2297,42 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          setPendingTeachingLanguageFilter(teachingLanguage);
+                                        }}
+                                        onSecondTap={() => {
+                                          setPendingTeachingLanguageFilter(null);
+                                          // Apply the teaching language filter
+                                          const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                          const isSelected = currentValues.includes(teachingLanguage);
+                                          
+                                          if (isSelected) {
+                                            // Remove from selection
+                                            const newValues = currentValues.filter(v => v !== teachingLanguage);
+                                            setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
+                                          } else {
+                                            // Add to selection
+                                            setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
+                                          }
+                                        }}
                                       >
                                         <button
-                                          onClick={() => handleTeachingLanguageBadgeClick(teachingLanguage)}
+                                          onClick={() => {
+                                            if (!isMobile) {
+                                              // Desktop: apply filter immediately
+                                              const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isSelected = currentValues.includes(teachingLanguage);
+                                              
+                                              if (isSelected) {
+                                                // Remove from selection
+                                                const newValues = currentValues.filter(v => v !== teachingLanguage);
+                                                setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
+                                              } else {
+                                                // Add to selection
+                                                setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
+                                              }
+                                            }
+                                          }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
                                               const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -2194,32 +2349,36 @@ const Lecturers = () => {
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
-                                    <button
-                                      onClick={() => {
-                                        const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                        const isSelected = currentValues.includes(term.term_code);
-                                        
-                                        if (isSelected) {
-                                          // Remove from selection
-                                          const newValues = currentValues.filter(v => v !== term.term_code);
-                                          setSelectedTermFilter(newValues.length === 0 ? 'all' : newValues);
-                                        } else {
-                                          // Add to selection
-                                          setSelectedTermFilter([...currentValues, term.term_code]);
-                                        }
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      onFirstTap={() => {
+                                        setPendingTermFilter(term.term_code);
                                       }}
-                                      className={`px-2 py-1 text-xs rounded-md transition-colors border ${
-                                        (() => {
-                                          const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
-                                          return currentValues.includes(term.term_code)
-                                            ? 'bg-primary text-primary-foreground border-primary'
-                                            : 'bg-background hover:bg-muted border-border hover:border-primary/50';
-                                        })()
-                                      }`}
-                                      title={`Filter by term: ${term.name}`}
+                                      onSecondTap={() => {
+                                        setPendingTermFilter(null);
+                                        handleTermBadgeClick(term.term_code);
+                                      }}
                                     >
-                                      {term.name}
-                                    </button>
+                                      <button
+                                        onClick={() => {
+                                          if (!isMobile) {
+                                            handleTermBadgeClick(term.term_code);
+                                          }
+                                        }}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground border-primary'
+                                              : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                          })()
+                                        }`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                    </ResponsiveTooltip>
                                   )}
                                 </div>
                               );
@@ -2282,16 +2441,7 @@ const Lecturers = () => {
                   {t('instructors.noReviewsDesc', { name: instructor?.name || '' })}
                 </p>
               </div>
-              <div className="pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/courses')}
-                  className="gap-2 h-12 text-base font-medium"
-                >
-                  <BookText className="h-4 w-4" />
-                  {t('instructors.browseCoursesToReview')}
-                </Button>
-              </div>
+
             </div>
           ) : paginatedReviews.length === 0 ? (
             <div className="text-center py-12 space-y-4">
@@ -2334,25 +2484,27 @@ const Lecturers = () => {
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
                           clickActionText={t('tooltip.clickAgainToFilter')}
+                          onFirstTap={() => {
+                            console.log('📅 Term Badge (Lecturers): First tap - setting pending filter');
+                            setPendingTermFilter(reviewInfo.term.term_code);
+                          }}
+                          onSecondTap={() => {
+                            console.log('✅ Term Badge (Lecturers): Second tap - applying filter');
+                            setPendingTermFilter(null);
+                            handleFiltersChange({
+                              ...filters,
+                              selectedTerms: [reviewInfo.term.term_code],
+                              currentPage: 1
+                            });
+                          }}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (isMobile) {
-                                if (pendingTermFilter === reviewInfo.term.term_code) {
-                                  handleFiltersChange({
-                                    ...filters,
-                                    selectedTerms: [reviewInfo.term.term_code],
-                                    currentPage: 1
-                                  });
-                                  setPendingTermFilter(null);
-                                } else {
-                                  setPendingTermFilter(reviewInfo.term.term_code);
-                                  return;
-                                }
-                              } else {
+                              if (!isMobile) {
+                                // Desktop: apply filter immediately
                                 handleFiltersChange({
                                   ...filters,
                                   selectedTerms: [reviewInfo.term.term_code],
@@ -2370,26 +2522,28 @@ const Lecturers = () => {
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
                             clickActionText={t('tooltip.clickAgainToFilter')}
+                            onFirstTap={() => {
+                              console.log('🌐 Review Language Badge (Lecturers): First tap - setting pending filter');
+                              setPendingReviewLanguageFilter(reviewInfo.review.review_language!);
+                            }}
+                            onSecondTap={() => {
+                              console.log('✅ Review Language Badge (Lecturers): Second tap - applying filter');
+                              setPendingReviewLanguageFilter(null);
+                              handleFiltersChange({
+                                ...filters,
+                                selectedLanguages: [reviewInfo.review.review_language!],
+                                currentPage: 1
+                              });
+                            }}
                           >
                             <button
                               className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer min-w-0 flex items-center justify-center"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                const reviewLanguage = reviewInfo.review.review_language || 'en';
-                                if (isMobile) {
-                                  if (pendingReviewLanguageFilter === reviewLanguage) {
-                                    handleFiltersChange({
-                                      ...filters,
-                                      selectedLanguages: [reviewLanguage],
-                                      currentPage: 1
-                                    });
-                                    setPendingReviewLanguageFilter(null);
-                                  } else {
-                                    setPendingReviewLanguageFilter(reviewLanguage);
-                                    return;
-                                  }
-                                } else {
+                                if (!isMobile) {
+                                  // Desktop: apply filter immediately
+                                  const reviewLanguage = reviewInfo.review.review_language || 'en';
                                   handleFiltersChange({
                                     ...filters,
                                     selectedLanguages: [reviewLanguage],
@@ -2449,8 +2603,20 @@ const Lecturers = () => {
                           grade={reviewInfo.review.course_final_grade}
                           size="md"
                           showTooltip={true}
+                          hasClickAction={true}
+                          isPending={pendingGradeFilter === (reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade)}
+                          onFirstTap={() => {
+                            const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
+                            console.log('🔄 Lecturers.tsx: First tap - setting pending filter');
+                            setPendingGradeFilter(normalizedGrade);
+                          }}
+                          onSecondTap={() => {
+                            console.log('✅ Lecturers.tsx: Second tap - clearing pending filter');
+                            setPendingGradeFilter(null);
+                          }}
                           onClick={() => {
                             const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
+                            console.log('🚀 Lecturers.tsx: Applying grade filter');
                             setFilters(prev => ({
                               ...prev,
                               selectedGrades: [normalizedGrade],
@@ -2616,6 +2782,66 @@ const Lecturers = () => {
                                   
                                   {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
                                   <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
+                                    {/* 課堂類型徽章 */}
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      onFirstTap={() => {
+                                        console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
+                                        setPendingSessionTypeFilter(currentInstructorDetail.session_type);
+                                      }}
+                                      onSecondTap={() => {
+                                        console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
+                                        setPendingSessionTypeFilter(null);
+                                        const newFilters = { ...filters };
+                                        const sessionType = currentInstructorDetail.session_type;
+                                        
+                                        // 切換篩選器
+                                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                        } else {
+                                          newFilters.selectedSessionTypes = [sessionType];
+                                        }
+                                        
+                                        // 重置頁面到第一頁
+                                        newFilters.currentPage = 1;
+                                        
+                                        handleFiltersChange(newFilters);
+                                      }}
+                                    >
+                                      <span 
+                                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                          currentInstructorDetail.session_type === 'Lecture' 
+                                            ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                            : currentInstructorDetail.session_type === 'Tutorial'
+                                            ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                            : ''
+                                        }`}
+                                        onClick={() => {
+                                          if (!isMobile) {
+                                            // Desktop: apply filter immediately
+                                            const newFilters = { ...filters };
+                                            const sessionType = currentInstructorDetail.session_type;
+                                            
+                                            // 切換篩選器
+                                            if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                              newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                            } else {
+                                              newFilters.selectedSessionTypes = [sessionType];
+                                            }
+                                            
+                                            // 重置頁面到第一頁
+                                            newFilters.currentPage = 1;
+                                            
+                                            handleFiltersChange(newFilters);
+                                          }
+                                        }}
+                                      >
+                                        {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
+                                      </span>
+                                    </ResponsiveTooltip>
+
                                     {/* 教學語言徽章 */}
                                     {(() => {
                                       const teachingLanguage = getTeachingLanguageForInstructor(
@@ -2628,34 +2854,47 @@ const Lecturers = () => {
                                             content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                             hasClickAction={true}
                                             clickActionText={t('tooltip.clickAgainToFilter')}
+                                            onFirstTap={() => {
+                                              console.log('🗣️ Teaching Language Badge (Lecturers): First tap - setting pending filter');
+                                              setPendingTeachingLanguageFilter(teachingLanguage);
+                                            }}
+                                            onSecondTap={() => {
+                                              console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
+                                              setPendingTeachingLanguageFilter(null);
+                                              const newFilters = { ...filters };
+                                              
+                                              // 切換教學語言篩選器
+                                              if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                                                newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                                              } else {
+                                                newFilters.selectedTeachingLanguages = [teachingLanguage];
+                                              }
+                                              
+                                              // 重置頁面到第一頁
+                                              newFilters.currentPage = 1;
+                                              
+                                              handleFiltersChange(newFilters);
+                                            }}
                                           >
                                             <span 
-                                              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
+                                              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                                               onClick={() => {
-                                                if (isMobile && pendingTeachingLanguageFilter !== teachingLanguage) {
-                                                  // First tap on mobile - set pending filter
-                                                  setPendingTeachingLanguageFilter(teachingLanguage);
-                                                  return;
+                                                if (!isMobile) {
+                                                  // Desktop: apply filter immediately
+                                                  const newFilters = { ...filters };
+                                                  
+                                                  // 切換教學語言篩選器
+                                                  if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                                                    newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                                                  } else {
+                                                    newFilters.selectedTeachingLanguages = [teachingLanguage];
+                                                  }
+                                                  
+                                                  // 重置頁面到第一頁
+                                                  newFilters.currentPage = 1;
+                                                  
+                                                  handleFiltersChange(newFilters);
                                                 }
-                                                
-                                                if (isMobile && pendingTeachingLanguageFilter === teachingLanguage) {
-                                                  // Second tap on mobile - apply filter and clear pending
-                                                  setPendingTeachingLanguageFilter(null);
-                                                }
-                                                
-                                                const newFilters = { ...filters };
-                                                
-                                                // 切換教學語言篩選器
-                                                if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                                  newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                                } else {
-                                                  newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                                }
-                                                
-                                                // 重置頁面到第一頁
-                                                newFilters.currentPage = 1;
-                                                
-                                                handleFiltersChange(newFilters);
                                               }}
                                             >
                                               <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
@@ -2665,57 +2904,57 @@ const Lecturers = () => {
                                       }
                                       return null;
                                     })()}
-                                    
-                                    {/* 課堂類型徽章 */}
-                                    <ResponsiveTooltip
-                                      content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
-                                      hasClickAction={true}
-                                      clickActionText={t('tooltip.clickAgainToFilter')}
-                                    >
-                                      <span 
-                                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
-                                          currentInstructorDetail.session_type === 'Lecture' 
-                                            ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                            : currentInstructorDetail.session_type === 'Tutorial'
-                                            ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                            : ''
-                                        }`}
-                                        onClick={() => {
-                                          if (isMobile && pendingSessionTypeFilter !== currentInstructorDetail.session_type) {
-                                            // First tap on mobile - set pending filter
-                                            setPendingSessionTypeFilter(currentInstructorDetail.session_type);
-                                            return;
-                                          }
-                                          
-                                          if (isMobile && pendingSessionTypeFilter === currentInstructorDetail.session_type) {
-                                            // Second tap on mobile - apply filter and clear pending
-                                            setPendingSessionTypeFilter(null);
-                                          }
-                                          
-                                          const newFilters = { ...filters };
-                                          const sessionType = currentInstructorDetail.session_type;
-                                          
-                                          // 切換篩選器
-                                          if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                            newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                          } else {
-                                            newFilters.selectedSessionTypes = [sessionType];
-                                          }
-                                          
-                                          // 重置頁面到第一頁
-                                          newFilters.currentPage = 1;
-                                          
-                                          handleFiltersChange(newFilters);
-                                        }}
-                                      >
-                                        {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
-                                      </span>
-                                    </ResponsiveTooltip>
                                   </div>
                                 </div>
                                 
                                 {/* Mobile: Badges on separate lines below instructor name */}
                                 <div className="flex md:hidden flex-wrap items-center gap-2">
+                                  {/* 課堂類型徽章 */}
+                                  <ResponsiveTooltip
+                                    content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
+                                    hasClickAction={true}
+                                    clickActionText={t('tooltip.clickAgainToFilter')}
+                                  >
+                                    <span 
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                        currentInstructorDetail.session_type === 'Lecture' 
+                                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                          : currentInstructorDetail.session_type === 'Tutorial'
+                                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                          : ''
+                                      }`}
+                                      onClick={() => {
+                                        if (isMobile && pendingSessionTypeFilter !== currentInstructorDetail.session_type) {
+                                          // First tap on mobile - set pending filter
+                                          setPendingSessionTypeFilter(currentInstructorDetail.session_type);
+                                          return;
+                                        }
+                                        
+                                        if (isMobile && pendingSessionTypeFilter === currentInstructorDetail.session_type) {
+                                          // Second tap on mobile - apply filter and clear pending
+                                          setPendingSessionTypeFilter(null);
+                                        }
+                                        
+                                        const newFilters = { ...filters };
+                                        const sessionType = currentInstructorDetail.session_type;
+                                        
+                                        // 切換篩選器
+                                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                        } else {
+                                          newFilters.selectedSessionTypes = [sessionType];
+                                        }
+                                        
+                                        // 重置頁面到第一頁
+                                        newFilters.currentPage = 1;
+                                        
+                                        handleFiltersChange(newFilters);
+                                      }}
+                                    >
+                                      {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
+                                    </span>
+                                  </ResponsiveTooltip>
+                                  
                                   {/* 教學語言徽章 */}
                                   {(() => {
                                     const teachingLanguage = getTeachingLanguageForInstructor(
@@ -2765,52 +3004,6 @@ const Lecturers = () => {
                                     }
                                     return null;
                                   })()}
-                                  
-                                  {/* 課堂類型徽章 */}
-                                  <ResponsiveTooltip
-                                    content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
-                                    hasClickAction={true}
-                                    clickActionText={t('tooltip.clickAgainToFilter')}
-                                  >
-                                    <span 
-                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
-                                        currentInstructorDetail.session_type === 'Lecture' 
-                                          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                          : currentInstructorDetail.session_type === 'Tutorial'
-                                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                          : ''
-                                      }`}
-                                      onClick={() => {
-                                        if (isMobile && pendingSessionTypeFilter !== currentInstructorDetail.session_type) {
-                                          // First tap on mobile - set pending filter
-                                          setPendingSessionTypeFilter(currentInstructorDetail.session_type);
-                                          return;
-                                        }
-                                        
-                                        if (isMobile && pendingSessionTypeFilter === currentInstructorDetail.session_type) {
-                                          // Second tap on mobile - apply filter and clear pending
-                                          setPendingSessionTypeFilter(null);
-                                        }
-                                        
-                                        const newFilters = { ...filters };
-                                        const sessionType = currentInstructorDetail.session_type;
-                                        
-                                        // 切換篩選器
-                                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                        } else {
-                                          newFilters.selectedSessionTypes = [sessionType];
-                                        }
-                                        
-                                        // 重置頁面到第一頁
-                                        newFilters.currentPage = 1;
-                                        
-                                        handleFiltersChange(newFilters);
-                                      }}
-                                    >
-                                      {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
-                                    </span>
-                                  </ResponsiveTooltip>
                                 </div>
                               </div>
                               
@@ -3080,6 +3273,35 @@ const Lecturers = () => {
                                       
                                       {/* Mobile: Badges on separate lines below instructor name */}
                                       <div className="flex md:hidden flex-wrap items-center gap-2">
+                                        {/* 課堂類型徽章 */}
+                                        <span 
+                                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                            instructor.session_type === 'Lecture' 
+                                              ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                              : instructor.session_type === 'Tutorial'
+                                              ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                              : ''
+                                          }`}
+                                          onClick={() => {
+                                            const newFilters = { ...filters };
+                                            const sessionType = instructor.session_type;
+                                            
+                                            // 切換篩選器
+                                            if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                              newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                            } else {
+                                              newFilters.selectedSessionTypes = [sessionType];
+                                            }
+                                            
+                                            // 重置頁面到第一頁
+                                            newFilters.currentPage = 1;
+                                            
+                                            handleFiltersChange(newFilters);
+                                          }}
+                                        >
+                                          {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                                        </span>
+                                        
                                         {/* 教學語言徽章 */}
                                         {(() => {
                                           const teachingLanguage = getTeachingLanguageForInstructor(
@@ -3114,35 +3336,6 @@ const Lecturers = () => {
                                           }
                                           return null;
                                         })()}
-                                        
-                                        {/* 課堂類型徽章 */}
-                                        <span 
-                                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
-                                            instructor.session_type === 'Lecture' 
-                                              ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                              : instructor.session_type === 'Tutorial'
-                                              ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                              : ''
-                                          }`}
-                                          onClick={() => {
-                                            const newFilters = { ...filters };
-                                            const sessionType = instructor.session_type;
-                                            
-                                            // 切換篩選器
-                                            if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                              newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                            } else {
-                                              newFilters.selectedSessionTypes = [sessionType];
-                                            }
-                                            
-                                            // 重置頁面到第一頁
-                                            newFilters.currentPage = 1;
-                                            
-                                            handleFiltersChange(newFilters);
-                                          }}
-                                        >
-                                          {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
-                                        </span>
                                       </div>
                                     </div>
                                     

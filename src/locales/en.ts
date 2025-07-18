@@ -435,11 +435,13 @@ export default {
   'filter.allSessionTypes': 'All Session Types',
   'filter.allCourses': 'All Courses',
   'filter.allGrades': 'All Grades',
+  'filter.grade': 'Grade',
   'sort.currentSort': 'Current Sort',
 
   // Languages
   'language.traditionalChinese': 'Traditional Chinese',
   'language.simplifiedChinese': 'Simplified Chinese',
+  'language.english': 'English',
   // Reviews
   'review.studentReviews': 'Student Reviews',
   'pages.courseDetail.invalidCourseCode': 'Invalid course code',
@@ -689,7 +691,7 @@ export default {
   'instructors.rating': 'Rating',
   'instructors.noReviewsTitle': 'No Student Reviews',
   'instructors.noReviewsDesc': '{name} has not received any student reviews yet. If you have taken courses with this instructor, feel free to share your learning experience.',
-  'instructors.browseCoursesToReview': 'Browse Courses and Write Reviews',
+  'instructors.submitReview': 'Submit Review',
   'instructors.noTeachingTitle': 'No Teaching Records',
   'instructors.noLectureRecords': 'No lecture records found',
   'instructors.noTutorialRecords': 'No tutorial records found',
@@ -730,7 +732,6 @@ export default {
   'filter.teachingTerm': 'Teaching Term',
   'filter.allStatuses': 'All Statuses',
   // Teaching Languages
-  'language.english': 'English',
   'language.mandarinChinese': 'Mandarin Chinese',
   'filter.offeredTerms': 'Offered Term',
   'filter.applied': 'Filters applied',
@@ -738,6 +739,7 @@ export default {
   'filter.clear': 'Clear filters',
   'filter.checkingTerm': 'Checking courses for selected term...',
   'filter.clickToFilterDepartment': 'Click to filter instructors by this department',
+  'filter.clickToFilterFaculty': 'Click to filter by this faculty',
   'filter.clickToFilterByTerm': 'Click to filter by term: {term}',
   'filter.clickToFilterByLanguage': 'Click to filter by language: {language}',
   'filter.clickToFilterByTeachingLanguage': 'Click to filter by teaching language: {language}',
@@ -1098,7 +1100,7 @@ export default {
   'faq.privacyQuestion': 'How is my privacy protected?',
   'faq.privacyAnswer': 'We are committed to protecting your privacy. All user identities are kept strictly confidential and we do not share personal information with third parties.',
   'faq.reviewQuestion': 'How to submit course reviews?',
-  'faq.reviewAnswer': 'After logging in, navigate to the course you want to review and click the "Write Review" button. You can provide detailed ratings on workload, difficulty, usefulness, teaching quality, and grading satisfaction using our 5-star system with half-star precision. You can also select "N/A" for ratings that don\'t apply. All fields including comments are required. The system supports anonymous submissions (default), multiple instructor evaluations, markdown formatting, and includes a live preview feature.',
+  'faq.reviewAnswer': 'After logging in, you can submit reviews in two ways: 1) Navigate to the course page and click the "Write Review" button, or 2) Visit an instructor\'s page and click the "Submit Review" button (which will pre-select that instructor and show only courses they teach). You can provide detailed ratings on workload, difficulty, usefulness, teaching quality, and grading satisfaction using our 5-star system with half-star precision. You can also select "N/A" for ratings that don\'t apply. All fields including comments are required. The system supports anonymous submissions (default), multiple instructor evaluations, markdown formatting, and includes a live preview feature.',
   'faq.searchQuestion': 'How to search for courses and instructors?',
   'faq.searchAnswer': 'Use the search bar at the top to enter course codes, course names, or lecturer names. You can also use filter functions to narrow your search by department, difficulty, and other criteria.',
   'faq.ratingQuestion': 'How does the rating system work?',
