@@ -1494,7 +1494,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Clear selected term and instructors when course changes (but not during edit data population)
         // Also don't clear if we're in edit mode and already have selections
         if (!isPopulatingEditData && (!editReviewId || (!selectedTerm && selectedInstructors.length === 0))) {
-          setSelectedTerm('');
+          // Auto-select term if there's only one option available
+          if (sortedTerms.length === 1) {
+            setSelectedTerm(sortedTerms[0].term_code);
+          } else {
+            setSelectedTerm('');
+          }
           setSelectedInstructors([]);
         }
       } catch (error) {
