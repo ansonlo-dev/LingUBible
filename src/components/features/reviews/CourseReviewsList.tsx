@@ -1157,8 +1157,8 @@ export const CourseReviewsList = ({
                         {review.is_anon ? t('review.anonymousUser') : review.username}
                       </span>
                     </div>
-                    {/* 學期和語言徽章 - 響應式佈局：桌面版同行，手機版換行 */}
-                    <div className="flex gap-2 mt-1 flex-wrap md:flex-nowrap">
+                    {/* 學期和語言徽章 - 手機版單獨行 */}
+                    <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                       <ResponsiveTooltip
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
@@ -1178,7 +1178,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer shrink-0"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1191,10 +1191,12 @@ export const CourseReviewsList = ({
                               }));
                             }
                           }}
+                          title={t('filter.clickToFilterByTerm', { term: term.name })}
                         >
                           <span className="truncate">{term.name}</span>
                         </button>
                       </ResponsiveTooltip>
+                      {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
@@ -1215,7 +1217,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 cursor-pointer min-w-0 flex items-center justify-center shrink-0"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1228,43 +1230,127 @@ export const CourseReviewsList = ({
                                 }));
                               }
                             }}
+                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           >
-                            <span className="truncate text-center">{getLanguageDisplayName(review.review_language)}</span>
+                            <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
                         </ResponsiveTooltip>
                       )}
                     </div>
                   </div>
-                  {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
-                  {review.course_final_grade && (
-                    <div className="flex flex-col items-center shrink-0 ml-2">
-                      <GradeBadge 
-                        grade={review.course_final_grade}
-                        size="md"
-                        showTooltip={true}
+                  {/* 右上角：學期和語言徽章、最終成績 */}
+                  <div className="flex items-start gap-3 shrink-0">
+                    {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
+                    <div className="hidden md:flex items-center gap-2 shrink-0">
+                      <ResponsiveTooltip
+                        content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
-                        isPending={pendingGradeFilter === (review.course_final_grade === "-1" ? "N/A" : review.course_final_grade)}
+                        clickActionText={t('tooltip.clickAgainToFilter')}
                         onFirstTap={() => {
-                          const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
-                          console.log('🔄 CourseReviewsList.tsx: First tap - setting pending filter');
-                          setPendingGradeFilter(normalizedGrade);
+                          console.log('📅 Term Badge (hideHeader): First tap - setting pending filter');
+                          setPendingTermFilter(term.term_code);
                         }}
                         onSecondTap={() => {
-                          console.log('✅ CourseReviewsList.tsx: Second tap - clearing pending filter');
-                          setPendingGradeFilter(null);
-                        }}
-                        onClick={() => {
-                          const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
-                          console.log('🚀 CourseReviewsList.tsx: Applying grade filter');
+                          console.log('✅ Term Badge (hideHeader): Second tap - applying filter');
+                          setPendingTermFilter(null);
                           setFilters(prev => ({
                             ...prev,
-                            selectedGrades: [normalizedGrade],
+                            selectedTerms: [term.term_code],
                             currentPage: 1
                           }));
                         }}
-                      />
+                      >
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isMobile) {
+                              // Desktop: apply filter immediately
+                              setFilters(prev => ({
+                                ...prev,
+                                selectedTerms: [term.term_code],
+                                currentPage: 1
+                              }));
+                            }
+                          }}
+                          title={t('filter.clickToFilterByTerm', { term: term.name })}
+                        >
+                          <span className="truncate">{term.name}</span>
+                        </button>
+                      </ResponsiveTooltip>
+                      {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                      {review.review_language && (
+                        <ResponsiveTooltip
+                          content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          onFirstTap={() => {
+                            console.log('🌐 Review Language Badge (hideHeader): First tap - setting pending filter');
+                            setPendingLanguageFilter(review.review_language!);
+                          }}
+                          onSecondTap={() => {
+                            console.log('✅ Review Language Badge (hideHeader): Second tap - applying filter');
+                            setPendingLanguageFilter(null);
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedLanguages: [review.review_language!],
+                              currentPage: 1
+                            }));
+                          }}
+                        >
+                          <button
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!isMobile) {
+                                // Desktop: apply filter immediately
+                                setFilters(prev => ({
+                                  ...prev,
+                                  selectedLanguages: [review.review_language!],
+                                  currentPage: 1
+                                }));
+                              }
+                            }}
+                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                          >
+                            <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                          </button>
+                        </ResponsiveTooltip>
+                      )}
                     </div>
-                  )}
+                    {/* 最終成績 */}
+                    {review.course_final_grade && (
+                      <div className="flex flex-col items-center">
+                        <GradeBadge 
+                          grade={review.course_final_grade}
+                          size="md"
+                          showTooltip={true}
+                          hasClickAction={true}
+                          isPending={pendingGradeFilter === (review.course_final_grade === "-1" ? "N/A" : review.course_final_grade)}
+                          onFirstTap={() => {
+                            const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
+                            console.log('🔄 CourseReviewsList.tsx: First tap - setting pending filter');
+                            setPendingGradeFilter(normalizedGrade);
+                          }}
+                          onSecondTap={() => {
+                            console.log('✅ CourseReviewsList.tsx: Second tap - clearing pending filter');
+                            setPendingGradeFilter(null);
+                          }}
+                          onClick={() => {
+                            const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
+                            console.log('🚀 CourseReviewsList.tsx: Applying grade filter');
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedGrades: [normalizedGrade],
+                              currentPage: 1
+                            }));
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 課程評分 */}
@@ -1466,8 +1552,8 @@ export const CourseReviewsList = ({
                         {review.is_anon ? t('review.anonymousUser') : review.username}
                       </span>
                     </div>
-                    {/* 學期和語言徽章 - 響應式佈局：桌面版同行，手機版換行 */}
-                    <div className="flex gap-2 mt-1 flex-wrap md:flex-nowrap">
+                    {/* 學期和語言徽章 - 手機版單獨行 */}
+                    <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                       <ResponsiveTooltip
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
@@ -1487,7 +1573,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer shrink-0"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1500,10 +1586,12 @@ export const CourseReviewsList = ({
                               }));
                             }
                           }}
+                          title={t('filter.clickToFilterByTerm', { term: term.name })}
                         >
                           <span className="truncate">{term.name}</span>
                         </button>
                       </ResponsiveTooltip>
+                      {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
@@ -1524,7 +1612,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 cursor-pointer min-w-0 flex items-center justify-center shrink-0"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1537,48 +1625,132 @@ export const CourseReviewsList = ({
                                 }));
                               }
                             }}
+                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           >
-                            <span className="truncate text-center">{getLanguageDisplayName(review.review_language)}</span>
+                            <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
                         </ResponsiveTooltip>
                       )}
                     </div>
                   </div>
-                  {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
-                  {review.course_final_grade && (
-                    <div className="flex flex-col items-center shrink-0 ml-2">
-                      <GradeBadge 
-                        grade={review.course_final_grade}
-                        size="md"
-                        showTooltip={true}
+                  {/* 右上角：學期和語言徽章、最終成績 */}
+                  <div className="flex items-start gap-3 shrink-0">
+                    {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
+                    <div className="hidden md:flex items-center gap-2 shrink-0">
+                      <ResponsiveTooltip
+                        content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
-                        isPending={pendingGradeFilter === (review.course_final_grade === "-1" ? "N/A" : review.course_final_grade)}
-                        onClick={() => {
-                          const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
-                          if (isMobile) {
-                            if (pendingGradeFilter !== normalizedGrade) {
-                              setPendingGradeFilter(normalizedGrade);
-                              return;
-                            } else {
-                              setPendingGradeFilter(null);
-                              setFilters(prev => ({
-                                ...prev,
-                                selectedGrades: [normalizedGrade],
-                                currentPage: 1
-                              }));
-                              return;
-                            }
-                          }
-                          // Desktop: apply filter immediately
+                        clickActionText={t('tooltip.clickAgainToFilter')}
+                        onFirstTap={() => {
+                          console.log('📅 Term Badge (Card): First tap - setting pending filter');
+                          setPendingTermFilter(term.term_code);
+                        }}
+                        onSecondTap={() => {
+                          console.log('✅ Term Badge (Card): Second tap - applying filter');
+                          setPendingTermFilter(null);
                           setFilters(prev => ({
                             ...prev,
-                            selectedGrades: [normalizedGrade],
+                            selectedTerms: [term.term_code],
                             currentPage: 1
                           }));
                         }}
-                      />
+                      >
+                        <button
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isMobile) {
+                              // Desktop: apply filter immediately
+                              setFilters(prev => ({
+                                ...prev,
+                                selectedTerms: [term.term_code],
+                                currentPage: 1
+                              }));
+                            }
+                          }}
+                          title={t('filter.clickToFilterByTerm', { term: term.name })}
+                        >
+                          <span className="truncate">{term.name}</span>
+                        </button>
+                      </ResponsiveTooltip>
+                      {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
+                      {review.review_language && (
+                        <ResponsiveTooltip
+                          content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          onFirstTap={() => {
+                            console.log('🌐 Review Language Badge (Card): First tap - setting pending filter');
+                            setPendingLanguageFilter(review.review_language!);
+                          }}
+                          onSecondTap={() => {
+                            console.log('✅ Review Language Badge (Card): Second tap - applying filter');
+                            setPendingLanguageFilter(null);
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedLanguages: [review.review_language!],
+                              currentPage: 1
+                            }));
+                          }}
+                        >
+                          <button
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!isMobile) {
+                                // Desktop: apply filter immediately
+                                setFilters(prev => ({
+                                  ...prev,
+                                  selectedLanguages: [review.review_language!],
+                                  currentPage: 1
+                                }));
+                              }
+                            }}
+                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
+                          >
+                            <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
+                          </button>
+                        </ResponsiveTooltip>
+                      )}
                     </div>
-                  )}
+                    {/* 最終成績 */}
+                    {review.course_final_grade && (
+                      <div className="flex flex-col items-center">
+                        <GradeBadge 
+                          grade={review.course_final_grade}
+                          size="md"
+                          showTooltip={true}
+                          hasClickAction={true}
+                          isPending={pendingGradeFilter === (review.course_final_grade === "-1" ? "N/A" : review.course_final_grade)}
+                          onClick={() => {
+                            const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
+                            if (isMobile) {
+                              if (pendingGradeFilter !== normalizedGrade) {
+                                setPendingGradeFilter(normalizedGrade);
+                                return;
+                              } else {
+                                setPendingGradeFilter(null);
+                                setFilters(prev => ({
+                                  ...prev,
+                                  selectedGrades: [normalizedGrade],
+                                  currentPage: 1
+                                }));
+                                return;
+                              }
+                            }
+                            // Desktop: apply filter immediately
+                            setFilters(prev => ({
+                              ...prev,
+                              selectedGrades: [normalizedGrade],
+                              currentPage: 1
+                            }));
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 課程評分 */}

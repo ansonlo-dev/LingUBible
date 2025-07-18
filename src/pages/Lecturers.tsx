@@ -2478,8 +2478,8 @@ const Lecturers = () => {
                           {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
                         </span>
                       </div>
-                      {/* 新增一行，顯示學期和語言徽章，桌面和手機都顯示在用戶名下方 */}
-                      <div className="flex gap-2 mt-1 flex-wrap">
+                      {/* 學期和語言徽章 - 手機版單獨行 */}
+                      <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
@@ -2596,10 +2596,91 @@ const Lecturers = () => {
                         </div>
                       </div>
                     </div>
-                    {/* 最終成績 - 右上角大顯示 */}
-                    {reviewInfo.review.course_final_grade && (
-                      <div className="flex flex-col items-center shrink-0">
-                        <GradeBadge 
+                    {/* 右上角：學期和語言徽章、最終成績 */}
+                    <div className="flex items-start gap-3 shrink-0">
+                      {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
+                      <div className="hidden md:flex items-center gap-2 shrink-0">
+                        <ResponsiveTooltip
+                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          onFirstTap={() => {
+                            console.log('📅 Term Badge (Lecturers): First tap - setting pending filter');
+                            setPendingTermFilter(reviewInfo.term.term_code);
+                          }}
+                          onSecondTap={() => {
+                            console.log('✅ Term Badge (Lecturers): Second tap - applying filter');
+                            setPendingTermFilter(null);
+                            handleFiltersChange({
+                              ...filters,
+                              selectedTerms: [reviewInfo.term.term_code],
+                              currentPage: 1
+                            });
+                          }}
+                        >
+                          <button
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!isMobile) {
+                                // Desktop: apply filter immediately
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedTerms: [reviewInfo.term.term_code],
+                                  currentPage: 1
+                                });
+                              }
+                            }}
+                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          >
+                            <span className="truncate">{reviewInfo.term.name}</span>
+                          </button>
+                        </ResponsiveTooltip>
+                        {reviewInfo.review.review_language && (
+                          <ResponsiveTooltip
+                            content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            hasClickAction={true}
+                            clickActionText={t('tooltip.clickAgainToFilter')}
+                            onFirstTap={() => {
+                              console.log('📅 Language Badge (Lecturers): First tap - setting pending filter');
+                              setPendingReviewLanguageFilter(reviewInfo.review.review_language || 'en');
+                            }}
+                            onSecondTap={() => {
+                              console.log('✅ Language Badge (Lecturers): Second tap - applying filter');
+                              setPendingReviewLanguageFilter(null);
+                              handleFiltersChange({
+                                ...filters,
+                                selectedLanguages: [reviewInfo.review.review_language || 'en'],
+                                currentPage: 1
+                              });
+                            }}
+                          >
+                            <button
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (!isMobile) {
+                                  // Desktop: apply filter immediately
+                                  handleFiltersChange({
+                                    ...filters,
+                                    selectedLanguages: [reviewInfo.review.review_language || 'en'],
+                                    currentPage: 1
+                                  });
+                                }
+                              }}
+                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
+                            >
+                              <span className="truncate text-center">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
+                            </button>
+                          </ResponsiveTooltip>
+                        )}
+                      </div>
+                      {/* 最終成績徽章 */}
+                      {reviewInfo.review.course_final_grade && (
+                        <div className="flex flex-col items-center shrink-0">
+                          <GradeBadge 
                           grade={reviewInfo.review.course_final_grade}
                           size="md"
                           showTooltip={true}
@@ -2623,9 +2704,10 @@ const Lecturers = () => {
                               currentPage: 1
                             }));
                           }}
-                        />
-                      </div>
-                    )}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* 課程評分 */}
@@ -2793,7 +2875,6 @@ const Lecturers = () => {
                                       }}
                                       onSecondTap={() => {
                                         console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
-                                        setPendingSessionTypeFilter(null);
                                         const newFilters = { ...filters };
                                         const sessionType = currentInstructorDetail.session_type;
                                         
@@ -2808,6 +2889,7 @@ const Lecturers = () => {
                                         newFilters.currentPage = 1;
                                         
                                         handleFiltersChange(newFilters);
+                                        setPendingSessionTypeFilter(null);
                                       }}
                                     >
                                       <span 
@@ -2860,7 +2942,6 @@ const Lecturers = () => {
                                             }}
                                             onSecondTap={() => {
                                               console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
-                                              setPendingTeachingLanguageFilter(null);
                                               const newFilters = { ...filters };
                                               
                                               // 切換教學語言篩選器
@@ -2874,6 +2955,7 @@ const Lecturers = () => {
                                               newFilters.currentPage = 1;
                                               
                                               handleFiltersChange(newFilters);
+                                              setPendingTeachingLanguageFilter(null);
                                             }}
                                           >
                                             <span 
@@ -2914,6 +2996,28 @@ const Lecturers = () => {
                                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
                                     hasClickAction={true}
                                     clickActionText={t('tooltip.clickAgainToFilter')}
+                                    onFirstTap={() => {
+                                      console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
+                                      setPendingSessionTypeFilter(currentInstructorDetail.session_type);
+                                    }}
+                                    onSecondTap={() => {
+                                      console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
+                                      const newFilters = { ...filters };
+                                      const sessionType = currentInstructorDetail.session_type;
+                                      
+                                      // 切換篩選器
+                                      if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                        newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                      } else {
+                                        newFilters.selectedSessionTypes = [sessionType];
+                                      }
+                                      
+                                      // 重置頁面到第一頁
+                                      newFilters.currentPage = 1;
+                                      
+                                      handleFiltersChange(newFilters);
+                                      setPendingSessionTypeFilter(null);
+                                    }}
                                   >
                                     <span 
                                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
@@ -2924,31 +3028,23 @@ const Lecturers = () => {
                                           : ''
                                       }`}
                                       onClick={() => {
-                                        if (isMobile && pendingSessionTypeFilter !== currentInstructorDetail.session_type) {
-                                          // First tap on mobile - set pending filter
-                                          setPendingSessionTypeFilter(currentInstructorDetail.session_type);
-                                          return;
+                                        if (!isMobile) {
+                                          // Desktop: apply filter immediately
+                                          const newFilters = { ...filters };
+                                          const sessionType = currentInstructorDetail.session_type;
+                                          
+                                          // 切換篩選器
+                                          if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                            newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                          } else {
+                                            newFilters.selectedSessionTypes = [sessionType];
+                                          }
+                                          
+                                          // 重置頁面到第一頁
+                                          newFilters.currentPage = 1;
+                                          
+                                          handleFiltersChange(newFilters);
                                         }
-                                        
-                                        if (isMobile && pendingSessionTypeFilter === currentInstructorDetail.session_type) {
-                                          // Second tap on mobile - apply filter and clear pending
-                                          setPendingSessionTypeFilter(null);
-                                        }
-                                        
-                                        const newFilters = { ...filters };
-                                        const sessionType = currentInstructorDetail.session_type;
-                                        
-                                        // 切換篩選器
-                                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                        } else {
-                                          newFilters.selectedSessionTypes = [sessionType];
-                                        }
-                                        
-                                        // 重置頁面到第一頁
-                                        newFilters.currentPage = 1;
-                                        
-                                        handleFiltersChange(newFilters);
                                       }}
                                     >
                                       {t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`)}
@@ -2967,34 +3063,47 @@ const Lecturers = () => {
                                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                           hasClickAction={true}
                                           clickActionText={t('tooltip.clickAgainToFilter')}
+                                          onFirstTap={() => {
+                                            console.log('🗣️ Teaching Language Badge (Lecturers): First tap - setting pending filter');
+                                            setPendingTeachingLanguageFilter(teachingLanguage);
+                                          }}
+                                          onSecondTap={() => {
+                                            console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
+                                            const newFilters = { ...filters };
+                                            
+                                            // 切換教學語言篩選器
+                                            if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                                              newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                                            } else {
+                                              newFilters.selectedTeachingLanguages = [teachingLanguage];
+                                            }
+                                            
+                                            // 重置頁面到第一頁
+                                            newFilters.currentPage = 1;
+                                            
+                                            handleFiltersChange(newFilters);
+                                            setPendingTeachingLanguageFilter(null);
+                                          }}
                                         >
                                           <span 
                                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
                                             onClick={() => {
-                                              if (isMobile && pendingTeachingLanguageFilter !== teachingLanguage) {
-                                                // First tap on mobile - set pending filter
-                                                setPendingTeachingLanguageFilter(teachingLanguage);
-                                                return;
+                                              if (!isMobile) {
+                                                // Desktop: apply filter immediately
+                                                const newFilters = { ...filters };
+                                                
+                                                // 切換教學語言篩選器
+                                                if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+                                                  newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+                                                } else {
+                                                  newFilters.selectedTeachingLanguages = [teachingLanguage];
+                                                }
+                                                
+                                                // 重置頁面到第一頁
+                                                newFilters.currentPage = 1;
+                                                
+                                                handleFiltersChange(newFilters);
                                               }
-                                              
-                                              if (isMobile && pendingTeachingLanguageFilter === teachingLanguage) {
-                                                // Second tap on mobile - apply filter and clear pending
-                                                setPendingTeachingLanguageFilter(null);
-                                              }
-                                              
-                                              const newFilters = { ...filters };
-                                              
-                                              // 切換教學語言篩選器
-                                              if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                                newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                              } else {
-                                                newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                              }
-                                              
-                                              // 重置頁面到第一頁
-                                              newFilters.currentPage = 1;
-                                              
-                                              handleFiltersChange(newFilters);
                                             }}
                                           >
                                             <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
@@ -3180,25 +3289,16 @@ const Lecturers = () => {
                                             );
                                             if (teachingLanguage) {
                                               return (
-                                                                                                  <ResponsiveTooltip
+                                                <ResponsiveTooltip
                                                     content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                                     hasClickAction={true}
                                                     clickActionText={t('tooltip.clickAgainToFilter')}
-                                                  >
-                                                  <span 
-                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
-                                                    onClick={() => {
-                                                      if (isMobile && pendingTeachingLanguageFilter !== teachingLanguage) {
-                                                        // First tap on mobile - set pending filter
-                                                        setPendingTeachingLanguageFilter(teachingLanguage);
-                                                        return;
-                                                      }
-                                                      
-                                                      if (isMobile && pendingTeachingLanguageFilter === teachingLanguage) {
-                                                        // Second tap on mobile - apply filter and clear pending
-                                                        setPendingTeachingLanguageFilter(null);
-                                                      }
-                                                      
+                                                    onFirstTap={() => {
+                                                      console.log('🗣️ Teaching Language Badge (Lecturers): First tap - setting pending filter');
+                                                      setPendingTeachingLanguageFilter(teachingLanguage);
+                                                    }}
+                                                    onSecondTap={() => {
+                                                      console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
                                                       const newFilters = { ...filters };
                                                       const language = teachingLanguage;
                                                       
@@ -3213,6 +3313,29 @@ const Lecturers = () => {
                                                       newFilters.currentPage = 1;
                                                       
                                                       handleFiltersChange(newFilters);
+                                                      setPendingTeachingLanguageFilter(null);
+                                                    }}
+                                                  >
+                                                  <span 
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
+                                                    onClick={() => {
+                                                      if (!isMobile) {
+                                                        // Desktop: apply filter immediately
+                                                        const newFilters = { ...filters };
+                                                        const language = teachingLanguage;
+                                                        
+                                                        // 切換篩選器
+                                                        if (newFilters.selectedTeachingLanguages.includes(language)) {
+                                                          newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== language);
+                                                        } else {
+                                                          newFilters.selectedTeachingLanguages = [language];
+                                                        }
+                                                        
+                                                        // 重置頁面到第一頁
+                                                        newFilters.currentPage = 1;
+                                                        
+                                                        handleFiltersChange(newFilters);
+                                                      }
                                                     }}
                                                   >
                                                     {getTeachingLanguageName(teachingLanguage, t)}
@@ -3228,6 +3351,28 @@ const Lecturers = () => {
                                             content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                                             hasClickAction={true}
                                             clickActionText={t('tooltip.clickAgainToFilter')}
+                                            onFirstTap={() => {
+                                              console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
+                                              setPendingSessionTypeFilter(instructor.session_type);
+                                            }}
+                                            onSecondTap={() => {
+                                              console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
+                                              const newFilters = { ...filters };
+                                              const sessionType = instructor.session_type;
+                                              
+                                              // 切換篩選器
+                                              if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                                newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                              } else {
+                                                newFilters.selectedSessionTypes = [sessionType];
+                                              }
+                                              
+                                              // 重置頁面到第一頁
+                                              newFilters.currentPage = 1;
+                                              
+                                              handleFiltersChange(newFilters);
+                                              setPendingSessionTypeFilter(null);
+                                            }}
                                           >
                                             <span 
                                               className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
@@ -3238,31 +3383,23 @@ const Lecturers = () => {
                                                   : ''
                                               }`}
                                               onClick={() => {
-                                                if (isMobile && pendingSessionTypeFilter !== instructor.session_type) {
-                                                  // First tap on mobile - set pending filter
-                                                  setPendingSessionTypeFilter(instructor.session_type);
-                                                  return;
+                                                if (!isMobile) {
+                                                  // Desktop: apply filter immediately
+                                                  const newFilters = { ...filters };
+                                                  const sessionType = instructor.session_type;
+                                                  
+                                                  // 切換篩選器
+                                                  if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                                    newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                                  } else {
+                                                    newFilters.selectedSessionTypes = [sessionType];
+                                                  }
+                                                  
+                                                  // 重置頁面到第一頁
+                                                  newFilters.currentPage = 1;
+                                                  
+                                                  handleFiltersChange(newFilters);
                                                 }
-                                                
-                                                if (isMobile && pendingSessionTypeFilter === instructor.session_type) {
-                                                  // Second tap on mobile - apply filter and clear pending
-                                                  setPendingSessionTypeFilter(null);
-                                                }
-                                                
-                                                const newFilters = { ...filters };
-                                                const sessionType = instructor.session_type;
-                                                
-                                                // 切換篩選器
-                                                if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                                  newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                                } else {
-                                                  newFilters.selectedSessionTypes = [sessionType];
-                                                }
-                                                
-                                                // 重置頁面到第一頁
-                                                newFilters.currentPage = 1;
-                                                
-                                                handleFiltersChange(newFilters);
                                               }}
                                             >
                                               {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
@@ -3274,15 +3411,16 @@ const Lecturers = () => {
                                       {/* Mobile: Badges on separate lines below instructor name */}
                                       <div className="flex md:hidden flex-wrap items-center gap-2">
                                         {/* 課堂類型徽章 */}
-                                        <span 
-                                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
-                                            instructor.session_type === 'Lecture' 
-                                              ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                              : instructor.session_type === 'Tutorial'
-                                              ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                              : ''
-                                          }`}
-                                          onClick={() => {
+                                        <ResponsiveTooltip
+                                          content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
+                                          hasClickAction={true}
+                                          clickActionText={t('tooltip.clickAgainToFilter')}
+                                          onFirstTap={() => {
+                                            console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
+                                            setPendingSessionTypeFilter(instructor.session_type);
+                                          }}
+                                          onSecondTap={() => {
+                                            console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
                                             const newFilters = { ...filters };
                                             const sessionType = instructor.session_type;
                                             
@@ -3297,10 +3435,40 @@ const Lecturers = () => {
                                             newFilters.currentPage = 1;
                                             
                                             handleFiltersChange(newFilters);
+                                            setPendingSessionTypeFilter(null);
                                           }}
                                         >
-                                          {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
-                                        </span>
+                                          <span 
+                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                                              instructor.session_type === 'Lecture' 
+                                                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                                                : instructor.session_type === 'Tutorial'
+                                                ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                                                : ''
+                                            }`}
+                                            onClick={() => {
+                                              if (!isMobile) {
+                                                // Desktop: apply filter immediately
+                                                const newFilters = { ...filters };
+                                                const sessionType = instructor.session_type;
+                                                
+                                                // 切換篩選器
+                                                if (newFilters.selectedSessionTypes.includes(sessionType)) {
+                                                  newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
+                                                } else {
+                                                  newFilters.selectedSessionTypes = [sessionType];
+                                                }
+                                                
+                                                // 重置頁面到第一頁
+                                                newFilters.currentPage = 1;
+                                                
+                                                handleFiltersChange(newFilters);
+                                              }
+                                            }}
+                                          >
+                                            {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                                          </span>
+                                        </ResponsiveTooltip>
                                         
                                         {/* 教學語言徽章 */}
                                         {(() => {
