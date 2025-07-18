@@ -919,6 +919,23 @@ const Lecturers = () => {
     );
   };
 
+  // 為其他講師提供不帶篩選功能的徽章渲染器
+  const renderBooleanBadgeWithoutFilter = (value: boolean, label: string) => {
+    return (
+      <Badge 
+        variant={value ? "default" : "secondary"}
+        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+      >
+        {value ? (
+          <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+        ) : (
+          <XCircle className="h-3 w-3 mr-1 shrink-0" />
+        )}
+        <span className="truncate">{label}</span>
+      </Badge>
+    );
+  };
+
   const toggleOtherInstructors = (reviewId: string) => {
     setExpandedOtherInstructors(prev => ({
       ...prev,
@@ -3289,186 +3306,45 @@ const Lecturers = () => {
                                             );
                                             if (teachingLanguage) {
                                               return (
-                                                <ResponsiveTooltip
-                                                    content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
-                                                    hasClickAction={true}
-                                                    clickActionText={t('tooltip.clickAgainToFilter')}
-                                                    onFirstTap={() => {
-                                                      console.log('🗣️ Teaching Language Badge (Lecturers): First tap - setting pending filter');
-                                                      setPendingTeachingLanguageFilter(teachingLanguage);
-                                                    }}
-                                                    onSecondTap={() => {
-                                                      console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
-                                                      const newFilters = { ...filters };
-                                                      const language = teachingLanguage;
-                                                      
-                                                      // 切換篩選器
-                                                      if (newFilters.selectedTeachingLanguages.includes(language)) {
-                                                        newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== language);
-                                                      } else {
-                                                        newFilters.selectedTeachingLanguages = [language];
-                                                      }
-                                                      
-                                                      // 重置頁面到第一頁
-                                                      newFilters.currentPage = 1;
-                                                      
-                                                      handleFiltersChange(newFilters);
-                                                      setPendingTeachingLanguageFilter(null);
-                                                    }}
-                                                  >
-                                                  <span 
-                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
-                                                    onClick={() => {
-                                                      if (!isMobile) {
-                                                        // Desktop: apply filter immediately
-                                                        const newFilters = { ...filters };
-                                                        const language = teachingLanguage;
-                                                        
-                                                        // 切換篩選器
-                                                        if (newFilters.selectedTeachingLanguages.includes(language)) {
-                                                          newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== language);
-                                                        } else {
-                                                          newFilters.selectedTeachingLanguages = [language];
-                                                        }
-                                                        
-                                                        // 重置頁面到第一頁
-                                                        newFilters.currentPage = 1;
-                                                        
-                                                        handleFiltersChange(newFilters);
-                                                      }
-                                                    }}
-                                                  >
-                                                    {getTeachingLanguageName(teachingLanguage, t)}
-                                                  </span>
-                                                </ResponsiveTooltip>
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 max-w-full truncate"
+                                                >
+                                                  {getTeachingLanguageName(teachingLanguage, t)}
+                                                </span>
                                               );
                                             }
                                             return null;
                                           })()}
                                           
                                           {/* 課堂類型徽章 */}
-                                          <ResponsiveTooltip
-                                            content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
-                                            hasClickAction={true}
-                                            clickActionText={t('tooltip.clickAgainToFilter')}
-                                            onFirstTap={() => {
-                                              console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
-                                              setPendingSessionTypeFilter(instructor.session_type);
-                                            }}
-                                            onSecondTap={() => {
-                                              console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
-                                              const newFilters = { ...filters };
-                                              const sessionType = instructor.session_type;
-                                              
-                                              // 切換篩選器
-                                              if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                                newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                              } else {
-                                                newFilters.selectedSessionTypes = [sessionType];
-                                              }
-                                              
-                                              // 重置頁面到第一頁
-                                              newFilters.currentPage = 1;
-                                              
-                                              handleFiltersChange(newFilters);
-                                              setPendingSessionTypeFilter(null);
-                                            }}
+                                          <span 
+                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs shrink-0 ${
+                                              instructor.session_type === 'Lecture' 
+                                                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                                                : instructor.session_type === 'Tutorial'
+                                                ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
+                                                : ''
+                                            }`}
                                           >
-                                            <span 
-                                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
-                                                instructor.session_type === 'Lecture' 
-                                                  ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                                  : instructor.session_type === 'Tutorial'
-                                                  ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                                  : ''
-                                              }`}
-                                              onClick={() => {
-                                                if (!isMobile) {
-                                                  // Desktop: apply filter immediately
-                                                  const newFilters = { ...filters };
-                                                  const sessionType = instructor.session_type;
-                                                  
-                                                  // 切換篩選器
-                                                  if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                                    newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                                  } else {
-                                                    newFilters.selectedSessionTypes = [sessionType];
-                                                  }
-                                                  
-                                                  // 重置頁面到第一頁
-                                                  newFilters.currentPage = 1;
-                                                  
-                                                  handleFiltersChange(newFilters);
-                                                }
-                                              }}
-                                            >
-                                              {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
-                                            </span>
-                                          </ResponsiveTooltip>
+                                            {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                                          </span>
                                         </div>
                                       </div>
                                       
                                       {/* Mobile: Badges on separate lines below instructor name */}
                                       <div className="flex md:hidden flex-wrap items-center gap-2">
                                         {/* 課堂類型徽章 */}
-                                        <ResponsiveTooltip
-                                          content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
-                                          hasClickAction={true}
-                                          clickActionText={t('tooltip.clickAgainToFilter')}
-                                          onFirstTap={() => {
-                                            console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
-                                            setPendingSessionTypeFilter(instructor.session_type);
-                                          }}
-                                          onSecondTap={() => {
-                                            console.log('✅ Session Type Badge (Lecturers): Second tap - applying filter');
-                                            const newFilters = { ...filters };
-                                            const sessionType = instructor.session_type;
-                                            
-                                            // 切換篩選器
-                                            if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                              newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                            } else {
-                                              newFilters.selectedSessionTypes = [sessionType];
-                                            }
-                                            
-                                            // 重置頁面到第一頁
-                                            newFilters.currentPage = 1;
-                                            
-                                            handleFiltersChange(newFilters);
-                                            setPendingSessionTypeFilter(null);
-                                          }}
+                                        <span 
+                                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs shrink-0 ${
+                                            instructor.session_type === 'Lecture' 
+                                              ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                                              : instructor.session_type === 'Tutorial'
+                                              ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
+                                              : ''
+                                          }`}
                                         >
-                                          <span 
-                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
-                                              instructor.session_type === 'Lecture' 
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-                                                : instructor.session_type === 'Tutorial'
-                                                ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                                                : ''
-                                            }`}
-                                            onClick={() => {
-                                              if (!isMobile) {
-                                                // Desktop: apply filter immediately
-                                                const newFilters = { ...filters };
-                                                const sessionType = instructor.session_type;
-                                                
-                                                // 切換篩選器
-                                                if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                                  newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                                } else {
-                                                  newFilters.selectedSessionTypes = [sessionType];
-                                                }
-                                                
-                                                // 重置頁面到第一頁
-                                                newFilters.currentPage = 1;
-                                                
-                                                handleFiltersChange(newFilters);
-                                              }
-                                            }}
-                                          >
-                                            {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
-                                          </span>
-                                        </ResponsiveTooltip>
+                                          {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
+                                        </span>
                                         
                                         {/* 教學語言徽章 */}
                                         {(() => {
@@ -3479,23 +3355,7 @@ const Lecturers = () => {
                                           if (teachingLanguage) {
                                             return (
                                               <span 
-                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
-                                                onClick={() => {
-                                                  const newFilters = { ...filters };
-                                                  const language = teachingLanguage;
-                                                  
-                                                  // 切換篩選器
-                                                  if (newFilters.selectedTeachingLanguages.includes(language)) {
-                                                    newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== language);
-                                                  } else {
-                                                    newFilters.selectedTeachingLanguages = [language];
-                                                  }
-                                                  
-                                                  // 重置頁面到第一頁
-                                                  newFilters.currentPage = 1;
-                                                  
-                                                  handleFiltersChange(newFilters);
-                                                }}
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 max-w-full truncate"
                                                 title={getTeachingLanguageName(teachingLanguage, t)}
                                               >
                                                 {getTeachingLanguageName(teachingLanguage, t)}
@@ -3546,14 +3406,14 @@ const Lecturers = () => {
                                         <span>{t('review.courseRequirements')}</span>
                                       </h5>
                                       <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                                        {renderBooleanBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
-                                        {renderBooleanBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz')}
-                                        {renderBooleanBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm')}
-                                        {renderBooleanBadge(instructor.has_final, t('review.requirements.final'), 'final')}
-                                        {renderBooleanBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
-                                        {renderBooleanBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
-                                        {renderBooleanBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation')}
-                                        {renderBooleanBadge(instructor.has_reading, t('review.requirements.reading'), 'reading')}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_quiz, t('review.requirements.quiz'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_midterm, t('review.requirements.midterm'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_final, t('review.requirements.final'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_group_project, t('review.requirements.groupProject'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_presentation, t('review.requirements.presentation'))}
+                                        {renderBooleanBadgeWithoutFilter(instructor.has_reading, t('review.requirements.reading'))}
                                       </div>
                                     </div>
 
