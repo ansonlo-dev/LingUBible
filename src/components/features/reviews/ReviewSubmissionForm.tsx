@@ -1868,6 +1868,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     
     setSelectedInstructors(prev => {
       if (prev.includes(instructorKey)) {
+        // Check if this instructor is pre-selected from instructor page
+        if (originPage === 'instructor' && preSelectedInstructor && 
+            instructorKey.startsWith(preSelectedInstructor + '|')) {
+          toast({
+            title: t('common.error'),
+            description: t('review.cannotDeselectPreSelectedInstructor', { instructor: preSelectedInstructor }),
+            variant: 'destructive',
+          });
+          return prev; // Don't allow deselection
+        }
         // Removing instructor
         return prev.filter(key => key !== instructorKey);
       } else {
@@ -2832,6 +2842,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                       checked={isSelected}
                                       onCheckedChange={() => handleInstructorToggle(instructorKey)}
                                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                      disabled={originPage === 'instructor' && preSelectedInstructor && 
+                                               instructorKey.startsWith(preSelectedInstructor + '|') && isSelected}
                                     />
                                     <div className="flex-1">
                                       <div className="font-medium">
