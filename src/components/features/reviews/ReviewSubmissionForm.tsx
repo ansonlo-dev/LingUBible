@@ -11,6 +11,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   BookOpen, 
@@ -2255,9 +2266,28 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   // Preview component
   const PreviewCard = () => {
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
     const mockTerm = { name: `${new Date().getFullYear()} Term 1` };
     const mockUsername = user?.name || user?.email?.split('@')[0] || 'User';
     const selectedCourseData = courses.find(course => course.course_code === selectedCourse);
+    
+    const handleExit = () => {
+      setShowExitConfirm(true);
+    };
+    
+    const handleConfirmExit = () => {
+      // Navigate to origin page based on originPage state
+      if (originPage === 'instructor' && preSelectedInstructor) {
+        // Go back to instructor page
+        navigate(`/instructors/${encodeURIComponent(preSelectedInstructor)}`);
+      } else if (selectedCourse) {
+        // Go back to course page
+        navigate(`/courses/${selectedCourse}`);
+      } else {
+        // Fallback to courses list
+        navigate('/courses');
+      }
+    };
     
     return (
       <div className="w-full">
@@ -2270,11 +2300,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             </h2>
             <Button 
               variant="outline" 
-              onClick={() => setIsPreviewMode(false)}
+              onClick={handleExit}
               className="shrink-0"
             >
-              <ArrowLeft className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('review.backToEdit')}</span>
+              <X className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('review.exit')}</span>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
@@ -2659,6 +2689,24 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               </>
             )}
           </div>
+          
+          {/* Exit Confirmation Dialog */}
+          <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('review.exitConfirm')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('review.exitConfirmDescription')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmExit}>
+                  {t('common.confirm')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
       </div>
     );
   };

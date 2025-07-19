@@ -1615,6 +1615,9 @@ export default {
   'review.editMode': '编辑模式',
   'review.previewDescription': '这是您的评论将会向其他用户显示的样子',
   'review.backToEdit': '返回编辑',
+  'review.exit': '退出',
+  'review.exitConfirm': '确定要退出吗？',
+  'review.exitConfirmDescription': '您的评论进度将会保存为草稿。',
   // 格式化工具列
   'review.formatting.bold': '粗体',
   'review.formatting.italic': '斜体',

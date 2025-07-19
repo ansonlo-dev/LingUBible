@@ -1551,6 +1551,9 @@ export default {
   'review.editMode': '編輯模式',
   'review.previewDescription': '這是您的評論將會向其他用戶顯示的樣子',
   'review.backToEdit': '返回編輯',
+  'review.exit': '退出',
+  'review.exitConfirm': '確定要退出嗎？',
+  'review.exitConfirmDescription': '您的評論進度將會儲存為草稿。',
   // 格式化工具列
   'review.formatting.bold': '粗體',
   'review.formatting.italic': '斜體',

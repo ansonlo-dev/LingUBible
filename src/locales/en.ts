@@ -1403,6 +1403,9 @@ export default {
   'review.editMode': 'Edit Mode',
   'review.previewDescription': 'This is how your review will appear',
   'review.backToEdit': 'Back to Edit',
+  'review.exit': 'Exit',
+  'review.exitConfirm': 'Are you sure you want to exit?',
+  'review.exitConfirmDescription': 'Your review progress will be saved as draft.',
   // Formatting toolbar
   'review.formatting.bold': 'Bold',
   'review.formatting.italic': 'Italic',
