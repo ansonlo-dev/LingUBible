@@ -1191,7 +1191,7 @@ export default {
   'review.lectureReviewDescription': '請評估此課程的講課部分和講師。',
   'review.tutorialReviewDescription': '請評估此課程的導修部分和講師。',
   'review.yourPastReviews': '您的過往評論',
-  'review.courseInfo': '課程資訊',
+  'review.courseInfo': '選擇',
   'review.courseReview': '課程評論',
   'review.workload': '課程工作量',
   'review.workloadDescription': '課程的整體工作量如何？',

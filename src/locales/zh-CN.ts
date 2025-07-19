@@ -1239,7 +1239,7 @@ export default {
   'review.lectureReviewDescription': '请评估此课程的讲课部分和讲师。',
   'review.tutorialReviewDescription': '请评估此课程的导修部分和讲师。',
   'review.yourPastReviews': '您的过往评论',
-  'review.courseInfo': '课程信息',
+  'review.courseInfo': '选择',
   'review.courseReview': '课程评论',
   'review.workload': '课程工作量',
   'review.workloadDescription': '课程的整体工作量如何？',

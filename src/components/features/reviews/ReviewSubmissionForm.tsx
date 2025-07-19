@@ -46,6 +46,7 @@ import {
   CheckCircle,
   XCircle,
   X,
+  Send,
   ChevronDown,
   ChevronUp,
   ChevronRight,
@@ -3787,7 +3788,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {
               id: 'submission',
               title: t('review.submit'),
-              icon: <CheckCircle className="h-5 w-5" />,
+              icon: <Send className="h-5 w-5" />,
               isValid: validateSubmissionStep,
               content: (
               <div className="space-y-6">

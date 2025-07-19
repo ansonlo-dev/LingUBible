@@ -1261,7 +1261,7 @@ export default {
   'review.lectureReviewDescription': 'Please evaluate the lecture sessions and instructors for this course.',
   'review.tutorialReviewDescription': 'Please evaluate the tutorial sessions and instructors for this course.',
   'review.yourPastReviews': 'Your past reviews',
-  'review.courseInfo': 'Course Information',
+  'review.courseInfo': 'Select',
   'review.courseReview': 'Course Review',
   'review.workload': 'Workload',
   'review.workloadDescription': 'How heavy was the workload?',
