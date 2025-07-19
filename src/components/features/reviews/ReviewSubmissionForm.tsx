@@ -1333,8 +1333,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               ))}
             </div>
 
-            {/* Phrases content - two columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Phrases content - two columns with gap on mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-3">
               {/* Positive phrases - Left side */}
               <div className="space-y-2">
                 <Label className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
@@ -2873,23 +2873,38 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 space-y-2">
-          <h1 className="text-3xl font-bold">
-            {isEditMode ? t('review.editTitle') : t('review.title')}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
-          </p>
+      <div className="space-y-4">
+        {/* Back button - positioned above on mobile, inline on desktop */}
+        <div className="flex justify-start md:hidden">
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="shrink-0 hover:bg-primary/10 hover:text-primary w-10 h-10 p-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="shrink-0 hover:bg-primary/10 hover:text-primary"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
+        
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <h1 className="text-3xl font-bold">
+              {isEditMode ? t('review.editTitle') : t('review.title')}
+            </h1>
+            <p className="text-muted-foreground">
+              {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
+            </p>
+          </div>
+          
+          {/* Back button - hidden on mobile, shown on desktop */}
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="hidden md:flex shrink-0 hover:bg-primary/10 hover:text-primary items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t('common.back')}
+          </Button>
+        </div>
       </div>
 
       {/* Progress Bar Form */}
@@ -3125,19 +3140,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               <div className="space-y-4">
                 {/* Workload Rating */}
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground md:hidden">{t('review.workloadDescription')}</p>
                   <FormStarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} required />
                 </div>
 
                 {/* Difficulty Rating */}
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground md:hidden">{t('review.difficultyDescription')}</p>
                   <FormStarRating rating={difficulty} onRatingChange={setDifficulty} label={t('review.difficulty')} type="difficulty" t={t} required />
                 </div>
 
                 {/* Usefulness Rating */}
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground md:hidden">{t('review.usefulnessDescription')}</p>
                   <FormStarRating rating={usefulness} onRatingChange={setUsefulness} label={t('review.usefulness')} type="usefulness" t={t} required />
                 </div>
 
@@ -3270,12 +3282,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           
                           <div className="space-y-4">
                             <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
                               <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
                             </div>
 
                             <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground md:hidden">{t('review.gradingScoreDescription')}</p>
                               <FormStarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} required />
                             </div>
 
@@ -3485,12 +3495,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           
                           <div className="space-y-4">
                             <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
                               <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
                             </div>
 
                             <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground md:hidden">{t('review.gradingScoreDescription')}</p>
                               <FormStarRating rating={evaluation.gradingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'gradingScore', rating)} label={t('review.gradingScore')} type="grading" t={t} required />
                             </div>
 

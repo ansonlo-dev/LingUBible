@@ -88,8 +88,8 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
     <div className={cn('space-y-6', className)}>
       {/* Progress Bar */}
       <div className="space-y-4">
-        {/* Progress info */}
-        <div className="flex items-center justify-between text-sm">
+        {/* Progress info - Hidden on mobile */}
+        <div className="hidden md:flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
             步驟 {currentStep + 1} / {steps.length}
           </span>
@@ -98,9 +98,9 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
           </span>
         </div>
 
-        {/* Modern pill-based progress bar - Center aligned */}
-        <div className="flex justify-center">
-          <div className="flex items-center justify-center max-w-4xl">
+        {/* Modern pill-based progress bar - Responsive design */}
+        <div className="flex justify-center overflow-x-auto pb-2">
+          <div className="flex items-center justify-center max-w-4xl min-w-full md:min-w-0">
             {steps.map((step, index) => {
               const isCompleted = completedSteps.has(index);
               const isCurrent = index === currentStep;
@@ -109,13 +109,17 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                                  (index === currentStep + 1 && isCurrentStepValid());
 
               return (
-                <div key={step.id} className="flex items-center">
+                <div key={step.id} className="flex items-center flex-shrink-0">
                   {/* Step pill */}
                   <button
                     onClick={() => handleStepClick(index)}
                     disabled={!isAccessible}
                     className={cn(
-                      "relative flex items-center justify-center px-4 py-2 rounded-full border-2 transition-all duration-300 transform hover:scale-105 group z-10 min-w-[120px] font-medium text-sm",
+                      "relative flex items-center justify-center rounded-full border-2 transition-all duration-300 transform hover:scale-105 group z-10 font-medium",
+                      // Mobile: smaller padding and size
+                      "px-2 py-1.5 text-xs min-w-[80px]",
+                      // Desktop: larger padding and size  
+                      "md:px-4 md:py-2 md:text-sm md:min-w-[120px]",
                       {
                         // Completed step - changed to red
                         "bg-red-500 border-red-500 text-white shadow-md hover:bg-red-600": isCompleted && !isCurrent,
@@ -128,17 +132,17 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                       }
                     )}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 md:gap-2">
                       {isCompleted ? (
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4" />
                       ) : step.icon ? (
-                        <span className="w-4 h-4 flex items-center justify-center">
+                        <span className="w-3 h-3 md:w-4 md:h-4 flex items-center justify-center">
                           {React.cloneElement(step.icon as React.ReactElement, { 
-                            className: "w-4 h-4" 
+                            className: "w-3 h-3 md:w-4 md:h-4" 
                           })}
                         </span>
                       ) : (
-                        <span className="text-sm font-semibold">{index + 1}</span>
+                        <span className="text-xs md:text-sm font-semibold">{index + 1}</span>
                       )}
                       <span className="hidden sm:inline truncate">{step.title}</span>
                       <span className="sm:hidden truncate">{step.title.split(' ')[0]}</span>
@@ -147,7 +151,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
 
                   {/* Connection line between boxes - Made more prominent */}
                   {index < steps.length - 1 && (
-                    <div className="flex-1 h-1 mx-4 relative">
+                    <div className="flex-1 h-1 mx-2 md:mx-4 relative">
                       <div 
                         className={cn(
                           "h-full rounded-full transition-all duration-500 ease-out",
@@ -184,7 +188,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
           className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          {previousLabel}
+          <span className="hidden md:inline">{previousLabel}</span>
         </Button>
 
         <div className="flex items-center gap-2">
