@@ -45,6 +45,7 @@ import {
   CheckCircle2,
   CheckCircle,
   XCircle,
+  X,
   ChevronDown,
   ChevronUp,
   ChevronRight,
@@ -511,6 +512,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const courseCommentsRef = useRef<HTMLTextAreaElement>(null);
   const teachingCommentsRefs = useRef<{[key: number]: HTMLTextAreaElement | null}>({});
   const serviceLearningRef = useRef<HTMLTextAreaElement>(null);
+  const serviceLearningDescriptionRefs = useRef<{[key: number]: HTMLTextAreaElement | null}>({});
 
   // Filter courses based on pre-selected instructor
   const filteredCourses = useMemo(() => {
@@ -2880,25 +2882,26 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 space-y-2">
-          <h1 className="text-3xl font-bold">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold flex-1">
             {isEditMode ? t('review.editTitle') : t('review.title')}
           </h1>
-          <p className="text-muted-foreground">
-            {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
-          </p>
+          
+          {/* Back button */}
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="shrink-0 hover:bg-primary/10 hover:text-primary flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden md:inline">{t('common.back')}</span>
+          </Button>
         </div>
         
-        {/* Back button */}
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="shrink-0 hover:bg-primary/10 hover:text-primary flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="hidden md:inline">{t('common.back')}</span>
-        </Button>
+        <p className="text-muted-foreground">
+          {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
+        </p>
       </div>
 
       {/* Progress Bar Form */}
@@ -3309,40 +3312,37 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </div>
 
                             <div className="space-y-3">
-                              <Label>{t('review.serviceLearningSectionTitle')}</Label>
-                              <div className="flex items-center space-x-6">
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`${idx}-hasServiceLearning`}
-                                    checked={evaluation.hasServiceLearning}
-                                    onCheckedChange={(checked) => updateInstructorEvaluation(idx, 'hasServiceLearning', checked)}
-                                  />
-                                  <Label htmlFor={`${idx}-hasServiceLearning`} className="text-sm">
-                                    {t('review.hasServiceLearning')}
-                                  </Label>
-                                </div>
-                                
-                                {evaluation.hasServiceLearning && (
-                                  <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id={`${idx}-serviceLearningOptional`}
-                                        checked={evaluation.serviceLearningType === 'optional'}
-                                        onCheckedChange={(checked) => updateInstructorEvaluation(idx, 'serviceLearningType', checked ? 'optional' : 'compulsory')}
-                                      />
-                                      <Label htmlFor={`${idx}-serviceLearningOptional`} className="text-sm">
-                                        {t('review.serviceLearningOptional')}
-                                      </Label>
+                              <Label className="font-bold">{t('review.serviceLearningSectionTitle')}</Label>
+                              <div className="space-y-2">
+                                {evaluation.hasServiceLearning ? (
+                                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800/30">
+                                    <div className="flex items-center gap-2">
+                                      <Award className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                      <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                        {t('review.hasServiceLearning')}
+                                      </span>
+                                      <Badge 
+                                        variant={evaluation.serviceLearningType === 'compulsory' ? "destructive" : "default"}
+                                        className={`text-xs ${
+                                          evaluation.serviceLearningType === 'compulsory' 
+                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' 
+                                            : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                        }`}
+                                      >
+                                        {evaluation.serviceLearningType === 'compulsory' ? t('review.serviceLearningCompulsory') : t('review.serviceLearningOptional')}
+                                      </Badge>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id={`${idx}-serviceLearningCompulsory`}
-                                        checked={evaluation.serviceLearningType === 'compulsory'}
-                                        onCheckedChange={(checked) => updateInstructorEvaluation(idx, 'serviceLearningType', checked ? 'compulsory' : 'optional')}
-                                      />
-                                      <Label htmlFor={`${idx}-serviceLearningCompulsory`} className="text-sm">
-                                        {t('review.serviceLearningCompulsory')}
-                                      </Label>
+                                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                      {t('review.serviceLearningAutoFilled')}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-900/20 rounded-md border border-gray-200 dark:border-gray-800/30">
+                                    <div className="flex items-center gap-2">
+                                      <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                                        {t('review.noServiceLearning')}
+                                      </span>
                                     </div>
                                   </div>
                                 )}
@@ -3639,39 +3639,45 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
                       <div className="space-y-3">
                         <Label>{t('review.serviceLearningSectionTitle')}</Label>
-                        <div className="flex items-center space-x-6">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`${idx}-hasServiceLearning`}
-                              checked={evaluation.hasServiceLearning}
-                              onCheckedChange={(checked) => updateInstructorEvaluation(idx, 'hasServiceLearning', checked)}
-                            />
-                            <Label htmlFor={`${idx}-hasServiceLearning`} className="text-sm">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-sm font-bold min-w-[120px] flex-shrink-0">
                               {t('review.hasServiceLearning')}
                             </Label>
+                            <div className="flex items-center gap-2">
+                              {evaluation.hasServiceLearning ? (
+                                <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">
+                                  {t('review.yes')}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-gray-500 hover:bg-gray-600 text-white">
+                                  {t('review.no')}
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground ml-2">
+                                ({t('review.serviceLearning.autoFilled')})
+                              </span>
+                            </div>
                           </div>
                           
                           {evaluation.hasServiceLearning && (
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`${idx}-serviceLearningOptional`}
-                                  checked={evaluation.serviceLearningType === 'optional'}
-                                  onCheckedChange={(checked) => updateInstructorEvaluation(idx, 'serviceLearningType', checked ? 'optional' : 'compulsory')}
-                                />
-                                <Label htmlFor={`${idx}-serviceLearningOptional`} className="text-sm">
-                                  {t('review.serviceLearningOptional')}
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`${idx}-serviceLearningCompulsory`}
-                                  checked={evaluation.serviceLearningType === 'compulsory'}
-                                  onCheckedChange={(checked) => updateInstructorEvaluation(idx, 'serviceLearningType', checked ? 'compulsory' : 'optional')}
-                                />
-                                <Label htmlFor={`${idx}-serviceLearningCompulsory`} className="text-sm">
-                                  {t('review.serviceLearningCompulsory')}
-                                </Label>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-sm font-bold min-w-[120px] flex-shrink-0">
+                                {t('review.serviceLearningType')}
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                {evaluation.serviceLearningType === 'optional' ? (
+                                  <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400">
+                                    {t('review.serviceLearningOptional')}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="border-orange-500 text-orange-600 dark:text-orange-400">
+                                    {t('review.serviceLearningCompulsory')}
+                                  </Badge>
+                                )}
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  ({t('review.serviceLearning.autoFilled')})
+                                </span>
                               </div>
                             </div>
                           )}
@@ -3688,10 +3694,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                               <div className="relative">
                                 {renderFormattingToolbar(
-                                  { current: null },
+                                  serviceLearningDescriptionRefs[idx] || { current: null },
                                   (value: string) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)
                                 )}
                                 <Textarea
+                                  ref={(el) => {
+                                    if (serviceLearningDescriptionRefs.current) {
+                                      serviceLearningDescriptionRefs.current[idx] = el;
+                                    }
+                                  }}
                                   id={`serviceLearningDescription-${idx}`}
                                   value={evaluation.serviceLearningDescription}
                                   onChange={(e) => updateInstructorEvaluation(idx, 'serviceLearningDescription', e.target.value)}

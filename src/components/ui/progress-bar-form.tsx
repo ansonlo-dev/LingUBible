@@ -103,7 +103,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
           <div 
             className="flex items-center transition-transform duration-300 ease-in-out"
             style={{
-              transform: `translateX(-${Math.max(0, (currentStep - 0) * 90)}px)` // Animate based on current step
+              transform: `translateX(-${Math.max(0, currentStep * 45)}px)` // Move one step at a time
             }}
           >
             {steps
