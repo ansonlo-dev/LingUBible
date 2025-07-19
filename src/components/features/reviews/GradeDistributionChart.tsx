@@ -96,6 +96,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // Chart type state
   const [chartType, setChartType] = React.useState<ChartType>('bar');
   
+  // Cumulative line visibility state
+  const [showCumulativeLine, setShowCumulativeLine] = React.useState(true);
+  
   // Expand/collapse state
   const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
   
@@ -958,6 +961,72 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     const theme = getChartTheme();
     const currentIsDark = document.documentElement.classList.contains('dark');
     
+    // Calculate cumulative percentage data
+    const counts = sortedGrades.map(grade => completeDistribution[grade] || 0);
+    const cumulativeCounts = counts.reduce((acc, count, index) => {
+      acc.push((acc[index - 1] || 0) + count);
+      return acc;
+    }, [] as number[]);
+    const cumulativePercentages = cumulativeCounts.map(cumCount => 
+      totalCount > 0 ? (cumCount / totalCount) * 100 : 0
+    );
+    
+    // Prepare series array
+    const series: any[] = [
+      // Bar series for student counts
+      {
+        name: t('chart.students'),
+        data: sortedGrades.map((grade, index) => ({
+          value: counts[index],
+          itemStyle: {
+            color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
+            borderRadius: [4, 4, 0, 0]
+          },
+          emphasis: {
+            itemStyle: {
+              color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowOffsetY: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          },
+          grade: grade
+        })),
+        type: 'bar',
+        yAxisIndex: 0,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
+      }
+    ];
+    
+    // Add cumulative line series if enabled
+    if (showCumulativeLine) {
+      series.push({
+        name: t('chart.cumulativePercentage'),
+        data: cumulativePercentages.map((percentage, index) => ({
+          value: percentage,
+          grade: sortedGrades[index]
+        })),
+        type: 'line',
+        yAxisIndex: 1,
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: {
+          color: currentIsDark ? '#60a5fa' : '#3b82f6',
+          width: 3
+        },
+        itemStyle: {
+          color: currentIsDark ? '#60a5fa' : '#3b82f6',
+          borderColor: currentIsDark ? '#1e40af' : '#1d4ed8',
+          borderWidth: 2
+        },
+        animationDuration: 1200,
+        animationEasing: 'cubicOut'
+      });
+    }
+    
     return {
       ...theme,
       // Completely disable toolbox
@@ -965,8 +1034,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         show: false
       },
       grid: {
-        left: '3%',
-        right: '4%',
+        left: showCumulativeLine ? '8%' : '5%',
+        right: showCumulativeLine ? '15%' : '4%',
         bottom: '3%',
         containLabel: true
       },
@@ -974,7 +1043,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         type: 'category',
         data: sortedGrades,
         axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
+          color: currentIsDark ? '#ffffff' : '#000000',
           fontSize: isMobile ? 10 : 12,
           fontWeight: 'bold',
           rotate: isMobile ? 45 : 0,
@@ -989,83 +1058,109 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           lineStyle: { color: 'transparent' }
         }
       },
-      yAxis: {
-        type: 'value',
-        axisLabel: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix axis label colors
-          fontSize: isMobile ? 10 : 12,
-          fontWeight: 'bold',
-          formatter: (value: number) => {
-            // Only show integer labels for student count
-            return Number.isInteger(value) ? value.toString() : '';
-          }
-        },
-        axisLine: {
-          show: false,
-          lineStyle: { color: 'transparent' }
-        },
-        axisTick: {
-          show: false,
-          lineStyle: { color: 'transparent' }
-        },
-        splitLine: {
-          show: false,
-          lineStyle: { 
-            color: 'transparent',
-            width: 0,
-            type: 'solid'
-          }
-        }
-      },
-      series: [
+      yAxis: [
+        // Left y-axis for student count
         {
-          data: sortedGrades.map((grade) => ({
-            value: completeDistribution[grade] || 0,
-            itemStyle: {
-              color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
-              borderRadius: [4, 4, 0, 0]
-            },
-            emphasis: {
-              itemStyle: {
-                color: gradeColors[grade as keyof typeof gradeColors] || gradeColors['N/A'],
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowOffsetY: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            },
-            grade: grade
-          })),
-          type: 'bar',
-          animationDuration: 1000,
-          animationEasing: 'cubicOut'
-        }
+          type: 'value',
+          name: t('chart.students'),
+          nameLocation: 'middle',
+          nameGap: isMobile ? 35 : 45,
+          nameTextStyle: {
+            color: currentIsDark ? '#ffffff' : '#000000',
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: 'bold'
+          },
+          position: 'left',
+          axisLabel: {
+            color: currentIsDark ? '#ffffff' : '#000000',
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: 'bold',
+            formatter: (value: number) => {
+              return Number.isInteger(value) ? value.toString() : '';
+            }
+          },
+          axisLine: {
+            show: false,
+            lineStyle: { color: 'transparent' }
+          },
+          axisTick: {
+            show: false,
+            lineStyle: { color: 'transparent' }
+          },
+          splitLine: {
+            show: false,
+            lineStyle: { 
+              color: 'transparent',
+              width: 0,
+              type: 'solid'
+            }
+          }
+        },
+        // Right y-axis for cumulative percentage
+        ...(showCumulativeLine ? [{
+          type: 'value',
+          name: t('chart.cumulativePercentage'),
+          nameLocation: 'middle',
+          nameGap: isMobile ? 35 : 45,
+          nameTextStyle: {
+            color: currentIsDark ? '#ffffff' : '#000000',
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: 'bold'
+          },
+          position: 'right',
+          max: 100,
+          axisLabel: {
+            color: currentIsDark ? '#ffffff' : '#000000',
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: 'bold',
+            formatter: (value: number) => `${value}%`
+          },
+          axisLine: {
+            show: false,
+            lineStyle: { color: 'transparent' }
+          },
+          axisTick: {
+            show: false,
+            lineStyle: { color: 'transparent' }
+          },
+          splitLine: {
+            show: false,
+            lineStyle: { 
+              color: 'transparent',
+              width: 0,
+              type: 'solid'
+            }
+          }
+        }] : [])
       ],
+      series: series,
       tooltip: {
-        trigger: isMobile ? 'item' : 'axis',
-        triggerOn: isMobile ? 'click' : 'mousemove', // Click to show tooltip on mobile
+        trigger: 'axis',
+        triggerOn: isMobile ? 'click' : 'mousemove',
         backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
-        hideDelay: isMobile ? 86400000 : 100, // 24 hours on mobile (effectively never auto-hide)
-        alwaysShowContent: false, // Let manual control work
-        enterable: true, // Allow interaction
-        transitionDuration: 0, // No animation
-        confine: true, // Keep tooltip within chart bounds
+        hideDelay: isMobile ? 86400000 : 100,
+        alwaysShowContent: false,
+        enterable: true,
+        transitionDuration: 0,
+        confine: true,
         textStyle: {
-          color: currentIsDark ? '#ffffff' : '#000000', // Fix tooltip text color
+          color: currentIsDark ? '#ffffff' : '#000000',
           fontSize: 12
         },
         formatter: (params: any) => {
-          if (!params) return '';
+          if (!params || !Array.isArray(params) || params.length === 0) return '';
           
-          // Handle both array (axis trigger) and single object (item trigger)
-          const data = Array.isArray(params) ? params[0] : params;
-          if (!data) return '';
+          const grade = params[0].name;
+          const barData = params.find(p => p.seriesType === 'bar');
+          const lineData = params.find(p => p.seriesType === 'line');
           
-          const grade = data.name; // This is the grade (e.g., "A", "B+", etc.)
-          const count = data.value; // This is the student count
+          if (!barData) return '';
+          
+          const count = barData.value;
           const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
+          const cumulativePercentage = lineData ? lineData.value.toFixed(1) : null;
           
           // Use the getGPA function from gradeUtils for accurate grade points
           const gpaValue = getGPA(grade);
@@ -1074,13 +1169,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           // Use proper translation for grade
           const gradeLabel = context === 'course' ? t('chart.grade') : t('chart.rating');
           
-          // Aligned layout for bar chart tooltip
-          return `
+          let tooltipContent = `
             <div style="font-weight: 500; margin-bottom: 4px;">${gradeLabel}: ${grade}</div>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
-                  ${t('chart.studentCount', { count }).split(':')[0]}
+                  ${t('chart.students')}
                 </td>
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${count}
@@ -1093,7 +1187,21 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 <td style="color: ${currentIsDark ? '#ffffff' : '#000000'}; padding: 2px 0; text-align: right; font-weight: 500;">
                   ${percentage}%
                 </td>
-              </tr>
+              </tr>`;
+          
+          if (cumulativePercentage !== null) {
+            tooltipContent += `
+              <tr>
+                <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
+                  ${t('chart.cumulativePercentage')}
+                </td>
+                <td style="color: ${currentIsDark ? '#60a5fa' : '#3b82f6'}; padding: 2px 0; text-align: right; font-weight: 500;">
+                  ${cumulativePercentage}%
+                </td>
+              </tr>`;
+          }
+          
+          tooltipContent += `
               <tr>
                 <td style="color: ${currentIsDark ? '#9ca3af' : '#6b7280'}; padding: 2px 0; padding-right: 16px;">
                   ${t('chart.gradePoint')}
@@ -1104,6 +1212,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               </tr>
             </table>
           `;
+          
+          return tooltipContent;
         },
         axisPointer: {
           type: 'shadow',
@@ -1636,7 +1746,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // Chart click handler
   const handleChartClick = (params: any) => {
     // Handle bar chart clicks for grade filtering
-    if (onBarClick && chartType === 'bar' && params.data && params.data.grade) {
+    if (onBarClick && chartType === 'pareto' && params.data && params.data.grade) {
       onBarClick(params.data.grade);
     }
   };
@@ -1879,6 +1989,26 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           </div>
         )}
       </div>
+      
+      {/* Cumulative line toggle above chart */}
+      {chartType === 'bar' && (
+        <div className="flex justify-center mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "px-3 text-xs gap-2 h-8 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md",
+              showCumulativeLine
+                ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600"
+                : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            )}
+            onClick={() => setShowCumulativeLine(!showCumulativeLine)}
+          >
+            <TrendingUp className="h-3 w-3" />
+            <span className="whitespace-nowrap">{t('chart.cumulativeLine')}</span>
+          </Button>
+        </div>
+      )}
       
       {/* ECharts 圖表 */}
       <div className="relative w-full px-2 sm:px-0" style={{ height: `${responsiveHeight + 64}px` }}>
@@ -2179,6 +2309,26 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           </div>
         )}
       </div>
+      
+      {/* Cumulative line toggle above chart */}
+      {chartType === 'bar' && (
+        <div className="flex justify-center mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "px-3 text-xs gap-2 h-8 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md",
+              showCumulativeLine
+                ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600"
+                : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            )}
+            onClick={() => setShowCumulativeLine(!showCumulativeLine)}
+          >
+            <TrendingUp className="h-3 w-3" />
+            <span className="whitespace-nowrap">{t('chart.cumulativeLine')}</span>
+          </Button>
+        </div>
+      )}
       
       {/* ECharts 圖表 */}
       <div className="relative w-full px-2 sm:px-0" style={{ height: `${responsiveHeight + 64}px` }}>
