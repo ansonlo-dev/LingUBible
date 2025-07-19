@@ -1127,6 +1127,8 @@ export default {
   'common.back': '返回',
   'common.next': '下一步',
   'common.previous': '上一步',
+  'common.min': '最少',
+  'common.max': '最多',
   'common.submit': '提交',
   'common.reset': '重設',
   'common.search': '搜尋',
@@ -1415,6 +1417,8 @@ export default {
   'review.requirements.attendance': '出席',
   // Word count validation
   'review.wordCount.words': '字',
+  'review.wordCount.wordsOverLimit': '字超過限制',
+  'review.wordCount.moreWordsNeeded': '字需要更多',
   'review.wordCount.tooFew': '至少需要 {min} 個字 ({current}/{min})',
   'review.wordCount.tooMany': '字數過多 ({current}/{max})',
   'review.wordCount.valid': '{count} 字',

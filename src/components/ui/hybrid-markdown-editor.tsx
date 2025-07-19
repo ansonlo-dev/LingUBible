@@ -24,6 +24,7 @@ interface HybridMarkdownEditorProps {
   minWords?: number;
   maxWords?: number;
   disabled?: boolean;
+  t?: (key: string) => string;
 }
 
 export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
@@ -36,6 +37,7 @@ export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
   minWords = 0,
   maxWords,
   disabled = false,
+  t = (key: string) => key, // Default fallback function
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -132,12 +134,12 @@ export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
             {isPreviewMode ? (
               <>
                 <Edit3 className="h-3 w-3 mr-1" />
-                Edit
+                {t('review.edit')}
               </>
             ) : (
               <>
                 <Eye className="h-3 w-3 mr-1" />
-                Preview
+                {t('review.preview')}
               </>
             )}
           </Button>
@@ -193,18 +195,18 @@ export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
           isUnderMinWords && "text-orange-500"
         )}>
           <span>
-            {wordCount} {wordCount === 1 ? 'word' : 'words'}
-            {minWords > 0 && ` (min: ${minWords})`}
-            {maxWords && ` (max: ${maxWords})`}
+            {wordCount} {t('review.wordCount.words')}
+            {minWords > 0 && ` (${t('common.min')}: ${minWords})`}
+            {maxWords && ` (${t('common.max')}: ${maxWords})`}
           </span>
           {isOverMaxWords && (
             <span className="text-destructive font-medium">
-              {wordCount - maxWords} words over limit
+              {wordCount - maxWords} {t('review.wordCount.wordsOverLimit')}
             </span>
           )}
           {isUnderMinWords && (
             <span className="text-orange-500 font-medium">
-              {minWords - wordCount} more words needed
+              {minWords - wordCount} {t('review.wordCount.moreWordsNeeded')}
             </span>
           )}
         </div>

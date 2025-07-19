@@ -1189,6 +1189,8 @@ export default {
   'common.back': 'Back',
   'common.next': 'Next',
   'common.previous': 'Previous',
+  'common.min': 'min',
+  'common.max': 'max',
   'common.submit': 'Submit',
   'common.reset': 'Reset',
   'common.search': 'Search',
@@ -1466,6 +1468,8 @@ export default {
   'review.requirements.attendance': 'Attendance',
   // Word count validation
   'review.wordCount.words': 'words',
+  'review.wordCount.wordsOverLimit': 'words over limit',
+  'review.wordCount.moreWordsNeeded': 'more words needed',
   'review.wordCount.tooFew': 'At least {min} words required ({current}/{min})',
   'review.wordCount.tooMany': 'Too many words ({current}/{max})',
   'review.wordCount.valid': '{count} words',
