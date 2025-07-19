@@ -2289,23 +2289,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {/* 評論基本信息 */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-2 min-w-0 flex-1">
+                {/* 用戶信息 */}
                 <div className="flex items-center gap-2 min-w-0">
-                  {/* 學期和語言徽章 - 桌面版顯示在圓形圖示左側 */}
-                  <div className="hidden md:flex items-center gap-2 shrink-0">
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
-                      {mockTerm.name}
-                    </span>
-                    {reviewLanguage && (
-                      <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
-                        {
-                          reviewLanguage === 'en' ? t('language.english') :
-                          reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
-                          reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
-                          reviewLanguage
-                        }
-                      </span>
-                    )}
-                  </div>
                   <ReviewAvatar
                     isAnonymous={isAnonymous}
                     userId={user?.$id}
@@ -2318,7 +2303,25 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     {isAnonymous ? t('review.anonymousUser') : mockUsername}
                   </span>
                 </div>
-                {/* 課程信息 - 顯示在用戶名下方 */}
+                
+                {/* 學期和語言徽章 - 全寬度顯示 */}
+                <div className="flex gap-2 w-full">
+                  <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                    {mockTerm.name}
+                  </span>
+                  {reviewLanguage && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                      {
+                        reviewLanguage === 'en' ? t('language.english') :
+                        reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
+                        reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
+                        reviewLanguage
+                      }
+                    </span>
+                  )}
+                </div>
+                
+                {/* 課程信息 - 顯示在徽章下方 */}
                 {selectedCourseData && (
                   <div className="flex items-start gap-2">
                     <div className="flex-1 min-w-0">
@@ -2339,22 +2342,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     </div>
                   </div>
                 )}
-                {/* 學期和語言徽章 - 手機版顯示在下方 */}
-                <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
-                  <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background w-fit">
-                    {mockTerm.name}
-                  </span>
-                  {reviewLanguage && (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background w-fit">
-                      {
-                        reviewLanguage === 'en' ? t('language.english') :
-                        reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
-                        reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
-                        reviewLanguage
-                      }
-                    </span>
-                  )}
-                </div>
               </div>
               {/* 最終成績 - 右上角大顯示，確保有足夠空間 */}
               {grade && grade !== '-1' && (

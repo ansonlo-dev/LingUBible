@@ -1401,7 +1401,7 @@ export default {
   'review.preview': 'Preview Review',
   'review.previewMode': 'Preview Mode',
   'review.editMode': 'Edit Mode',
-  'review.previewDescription': 'This is how your review will appear to other users',
+  'review.previewDescription': 'This is how your review will appear',
   'review.backToEdit': 'Back to Edit',
   // Formatting toolbar
   'review.formatting.bold': 'Bold',
