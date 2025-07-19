@@ -153,7 +153,9 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     if (params && typeof translation === 'string') {
       Object.keys(params).forEach(paramKey => {
         const placeholder = `{${paramKey}}`;
-        translation = translation.replace(new RegExp(placeholder, 'g'), params[paramKey]);
+        // Escape special regex characters in the placeholder
+        const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        translation = translation.replace(new RegExp(escapedPlaceholder, 'g'), params[paramKey]);
       });
       
       // Debug parameter replacement results
