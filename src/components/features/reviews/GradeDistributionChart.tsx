@@ -1034,7 +1034,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         show: false
       },
       grid: {
-        left: showCumulativeLine ? '8%' : '5%',
+        left: isMobile && isPortrait ? (showCumulativeLine ? '15%' : '12%') : (showCumulativeLine ? '8%' : '5%'),
         right: showCumulativeLine ? '15%' : '4%',
         bottom: '3%',
         containLabel: true
@@ -1257,7 +1257,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         show: false
       },
       grid: {
-        left: '3%',
+        left: isMobile && isPortrait ? '12%' : '5%',
         right: '4%',
         bottom: '3%',
         containLabel: true
