@@ -2450,25 +2450,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 <div className="flex items-center gap-2 min-w-0">
                   {/* 學期和語言徽章 - 桌面版顯示在圓形圖示左側 */}
                   <div className="hidden md:flex items-center gap-2 shrink-0">
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs shrink-0"
-                    >
-                      <Calendar className="h-3 w-3 mr-1" />
+                    <div className="flex items-center gap-1 px-2 py-1 text-xs transition-colors border-0 bg-background hover:bg-muted rounded-md">
+                      <Calendar className="h-3 w-3" />
                       <span className="truncate">{mockTerm.name}</span>
-                    </Badge>
+                    </div>
                     {reviewLanguage && (
-                      <Badge 
-                        variant="outline" 
-                        className="text-xs shrink-0"
-                      >
+                      <div className="px-2 py-1 text-xs transition-colors border-0 font-mono bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20 rounded-md">
                         <span className="truncate">{
                           reviewLanguage === 'en' ? t('language.english') :
                           reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
                           reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
                           reviewLanguage
                         }</span>
-                      </Badge>
+                      </div>
                     )}
                   </div>
                   <ReviewAvatar
@@ -2506,25 +2500,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 )}
                 {/* 學期和語言徽章 - 手機版顯示在下方 */}
                 <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs w-fit"
-                  >
-                    <Calendar className="h-3 w-3 mr-1" />
+                  <div className="flex items-center gap-1 px-2 py-1 text-xs transition-colors border-0 bg-background hover:bg-muted rounded-md w-fit">
+                    <Calendar className="h-3 w-3" />
                     <span className="truncate">{mockTerm.name}</span>
-                  </Badge>
+                  </div>
                   {reviewLanguage && (
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs w-fit"
-                    >
+                    <div className="px-2 py-1 text-xs transition-colors border-0 font-mono bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20 rounded-md w-fit">
                       <span className="truncate">{
                         reviewLanguage === 'en' ? t('language.english') :
                         reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
                         reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
                         reviewLanguage
                       }</span>
-                    </Badge>
+                    </div>
                   )}
                 </div>
               </div>
@@ -3359,10 +3347,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <div className="relative">
                                       {renderFormattingToolbar(
-                                        { current: null },
+                                        { current: serviceLearningDescriptionRefs.current[idx] || null },
                                         (value: string) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)
                                       )}
                                       <Textarea
+                                        ref={(el) => {
+                                          if (serviceLearningDescriptionRefs.current) {
+                                            serviceLearningDescriptionRefs.current[idx] = el;
+                                          }
+                                        }}
                                         id={`serviceLearningDescription-${idx}`}
                                         value={evaluation.serviceLearningDescription}
                                         onChange={(e) => updateInstructorEvaluation(idx, 'serviceLearningDescription', e.target.value)}
@@ -3694,7 +3687,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                               <div className="relative">
                                 {renderFormattingToolbar(
-                                  serviceLearningDescriptionRefs[idx] || { current: null },
+                                  { current: serviceLearningDescriptionRefs.current[idx] || null },
                                   (value: string) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)
                                 )}
                                 <Textarea
