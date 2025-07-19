@@ -81,22 +81,11 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
     }
   };
 
-  // Calculate progress percentage
-  const progressPercentage = ((currentStep + 1) / steps.length) * 100;
 
   return (
     <div className={cn('space-y-6', className)}>
       {/* Progress Bar */}
       <div className="space-y-4">
-        {/* Progress info - Hidden */}
-        <div className="hidden">
-          <span className="text-muted-foreground">
-            步驟 {currentStep + 1} / {steps.length}
-          </span>
-          <span className="text-muted-foreground">
-            {Math.round(progressPercentage)}% 完成
-          </span>
-        </div>
 
         {/* Modern pill-based progress bar - Mobile optimized with animation */}
         <div className="flex justify-start overflow-x-auto pb-2">
