@@ -2262,24 +2262,26 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     return (
       <Card className="course-card">
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                {t('review.previewMode')}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  {t('review.previewMode')}
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsPreviewMode(false)}
+                  className="shrink-0"
+                >
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('review.backToEdit')}</span>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
                 {t('review.previewDescription')}
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsPreviewMode(false)}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('review.backToEdit')}
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -2290,19 +2292,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 <div className="flex items-center gap-2 min-w-0">
                   {/* 學期和語言徽章 - 桌面版顯示在圓形圖示左側 */}
                   <div className="hidden md:flex items-center gap-2 shrink-0">
-                    <div className="flex items-center gap-1 px-2 py-1 text-xs transition-colors border-0 bg-background hover:bg-muted rounded-md">
-                      <Calendar className="h-3 w-3" />
-                      <span className="truncate">{mockTerm.name}</span>
-                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                      {mockTerm.name}
+                    </span>
                     {reviewLanguage && (
-                      <div className="px-2 py-1 text-xs transition-colors border-0 font-mono bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20 rounded-md">
-                        <span className="truncate">{
+                      <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                        {
                           reviewLanguage === 'en' ? t('language.english') :
                           reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
                           reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
                           reviewLanguage
-                        }</span>
-                      </div>
+                        }
+                      </span>
                     )}
                   </div>
                   <ReviewAvatar
@@ -2340,19 +2341,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 )}
                 {/* 學期和語言徽章 - 手機版顯示在下方 */}
                 <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
-                  <div className="flex items-center gap-1 px-2 py-1 text-xs transition-colors border-0 bg-background hover:bg-muted rounded-md w-fit">
-                    <Calendar className="h-3 w-3" />
-                    <span className="truncate">{mockTerm.name}</span>
-                  </div>
+                  <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background w-fit">
+                    {mockTerm.name}
+                  </span>
                   {reviewLanguage && (
-                    <div className="px-2 py-1 text-xs transition-colors border-0 font-mono bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20 rounded-md w-fit">
-                      <span className="truncate">{
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background w-fit">
+                      {
                         reviewLanguage === 'en' ? t('language.english') :
                         reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
                         reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
                         reviewLanguage
-                      }</span>
-                    </div>
+                      }
+                    </span>
                   )}
                 </div>
               </div>
@@ -2659,34 +2659,33 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
                       {/* 服務學習 */}
                       {instructor.hasServiceLearning && (
-                        <div className="mb-4">
+                        <div className="mb-6">
                           <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                            <Award className="h-4 w-4 shrink-0" />
+                            <GraduationCap className="h-4 w-4 shrink-0" />
                             <span>{t('review.serviceLearning')}</span>
                           </h5>
                           <div className="ml-4 space-y-2">
-                            <Badge 
-                              variant={instructor.serviceLearningType === 'compulsory' ? "destructive" : "default"}
-                              className={`text-xs ${
-                                instructor.serviceLearningType === 'compulsory' 
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
-                                  : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20'
-                              }`}
-                            >
-                              <Sparkles className="h-3 w-3 mr-1" />
-                              {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <span 
+                                className={cn(
+                                  "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
+                                  instructor.serviceLearningType === 'compulsory'
+                                    ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                    : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
+                                )}
+                              >
+                                {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                              </span>
+                            </div>
                             {instructor.serviceLearningDescription && (
-                              <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800/30">
-                                <div className="break-words">
-                                  {hasMarkdownFormatting(instructor.serviceLearningDescription) ? (
-                                    renderCommentMarkdown(instructor.serviceLearningDescription)
-                                  ) : (
-                                    <p className="text-sm text-blue-900 dark:text-blue-100">
-                                      {instructor.serviceLearningDescription}
-                                    </p>
-                                  )}
-                                </div>
+                              <div className="text-xs break-words">
+                                {hasMarkdownFormatting(instructor.serviceLearningDescription) ? (
+                                  <div className="text-xs">{renderCommentMarkdown(instructor.serviceLearningDescription)}</div>
+                                ) : (
+                                  <p className="text-xs">
+                                    {instructor.serviceLearningDescription}
+                                  </p>
+                                )}
                               </div>
                             )}
                           </div>
