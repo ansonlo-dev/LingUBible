@@ -1194,7 +1194,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             </div>
 
             {/* Phrases content - two columns with gap on mobile */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Positive phrases - Left side */}
               <div className="space-y-2">
                 <Label className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
@@ -2263,6 +2263,26 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   }, [validateForm, user, isAnonymous, selectedCourse, selectedTerm, workload, difficulty, usefulness, grade, courseComments, instructorEvaluations, reviewLanguage, isEditMode, editReviewId, toast, t, navigate]);
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [showMainExitConfirm, setShowMainExitConfirm] = useState(false);
+
+  // Handle exit for main review form
+  const handleMainExit = () => {
+    setShowMainExitConfirm(true);
+  };
+
+  const handleConfirmMainExit = () => {
+    // Navigate to origin page based on originPage state
+    if (originPage === 'instructor' && preSelectedInstructor) {
+      // Go back to instructor page
+      navigate(`/instructors/${encodeURIComponent(preSelectedInstructor)}`);
+    } else if (selectedCourse) {
+      // Go back to course page
+      navigate(`/courses/${selectedCourse}`);
+    } else {
+      // Fallback to courses list
+      navigate('/courses');
+    }
+  };
 
   // Preview component
   const PreviewCard = () => {
@@ -2724,14 +2744,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             {isEditMode ? t('review.editTitle') : t('review.title')}
           </h1>
           
-          {/* Back button */}
+          {/* Exit button */}
           <Button
             variant="outline"
-            onClick={() => navigate(-1)}
+            onClick={handleMainExit}
             className="shrink-0 hover:bg-primary/10 hover:text-primary flex items-center gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden md:inline">{t('common.back')}</span>
+            <X className="h-4 w-4" />
+            <span className="hidden md:inline">{t('review.exit')}</span>
           </Button>
         </div>
         
@@ -3565,6 +3585,24 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         nextLabel={t('common.next') || '下一步'}
         submittingLabel={t('common.submitting') || '提交中...'}
       />
+
+      {/* Main Exit Confirmation Dialog */}
+      <AlertDialog open={showMainExitConfirm} onOpenChange={setShowMainExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('review.exitConfirm')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('review.exitConfirmDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMainExit}>
+              {t('common.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

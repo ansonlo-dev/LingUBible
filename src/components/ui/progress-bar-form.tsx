@@ -88,8 +88,8 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
     <div className={cn('space-y-6', className)}>
       {/* Progress Bar */}
       <div className="space-y-4">
-        {/* Progress info - Hidden on mobile */}
-        <div className="hidden md:flex items-center justify-between text-sm">
+        {/* Progress info - Hidden */}
+        <div className="hidden">
           <span className="text-muted-foreground">
             步驟 {currentStep + 1} / {steps.length}
           </span>
