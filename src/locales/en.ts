@@ -1227,7 +1227,7 @@ export default {
   // =============================================================================
   // 9. REVIEW SUBMISSION - Review Submission
   // =============================================================================
-  'review.title': 'Submit Course Review',
+  'review.title': 'Write Review',
   'review.subtitle': 'Share your experience to help fellow students',
   'review.editTitle': 'Edit Course Review',
   'review.editSubtitle': 'Update your course review',

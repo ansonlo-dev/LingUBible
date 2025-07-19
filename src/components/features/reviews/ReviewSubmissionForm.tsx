@@ -140,9 +140,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
 
   return (
     <div className="space-y-1">
-      {/* Desktop: Label, N/A, Stars, and Description on same line */}
+      {/* Desktop: Label, N/A, and Stars on first line */}
       <div className="hidden md:flex md:items-center md:gap-4">
-        <Label className="text-sm font-medium min-w-[120px] flex-shrink-0">
+        <Label className="text-sm font-bold min-w-[120px] flex-shrink-0">
           {label} {required && <span className="text-red-500">*</span>}
         </Label>
         
@@ -244,17 +244,22 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
             </div>
           ))}
         </div>
-        
-        <span className="text-sm text-muted-foreground flex-1">
-          {isNotRated ? t('review.rating.notRated') : 
-           isNotApplicable ? '' : 
-           `${displayRating}/5 - ${getDescription(displayRating)}`}
-        </span>
+      </div>
+      
+      {/* Desktop: Description on second line */}
+      <div className="hidden md:block">
+        <div className="ml-[140px]"> {/* Align with content above */}
+          <span className="text-sm text-muted-foreground">
+            {isNotRated ? t('review.rating.notRated') : 
+             isNotApplicable ? '' : 
+             `${displayRating}/5 - ${getDescription(displayRating)}`}
+          </span>
+        </div>
       </div>
 
       {/* Mobile: Traditional stacked layout */}
       <div className="md:hidden space-y-2">
-        <Label className="text-sm font-medium">
+        <Label className="text-sm font-bold">
           {label} {required && <span className="text-red-500">*</span>}
         </Label>
         <div className="flex items-center gap-2">
@@ -357,11 +362,13 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
             ))}
           </div>
           
-          <span className="text-sm text-muted-foreground ml-2">
-            {isNotRated ? t('review.rating.notRated') : 
-             isNotApplicable ? '' : 
-             `${displayRating}/5 - ${getDescription(displayRating)}`}
-          </span>
+        </div>
+        
+        {/* Mobile: Description on new line */}
+        <div className="text-sm text-muted-foreground">
+          {isNotRated ? t('review.rating.notRated') : 
+           isNotApplicable ? '' : 
+           `${displayRating}/5 - ${getDescription(displayRating)}`}
         </div>
       </div>
       
@@ -2873,38 +2880,25 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="space-y-4">
-        {/* Back button - positioned above on mobile, inline on desktop */}
-        <div className="flex justify-start md:hidden">
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="shrink-0 hover:bg-primary/10 hover:text-primary w-10 h-10 p-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 space-y-2">
+          <h1 className="text-3xl font-bold">
+            {isEditMode ? t('review.editTitle') : t('review.title')}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
+          </p>
         </div>
         
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 space-y-2">
-            <h1 className="text-3xl font-bold">
-              {isEditMode ? t('review.editTitle') : t('review.title')}
-            </h1>
-            <p className="text-muted-foreground">
-              {isEditMode ? t('review.editSubtitle') : t('review.subtitle')}
-            </p>
-          </div>
-          
-          {/* Back button - hidden on mobile, shown on desktop */}
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="hidden md:flex shrink-0 hover:bg-primary/10 hover:text-primary items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t('common.back')}
-          </Button>
-        </div>
+        {/* Back button */}
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="shrink-0 hover:bg-primary/10 hover:text-primary flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden md:inline">{t('common.back')}</span>
+        </Button>
       </div>
 
       {/* Progress Bar Form */}
@@ -3156,7 +3150,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {/* Grade */}
                 <div className="space-y-2 md:space-y-0">
                   <div className="md:flex md:items-center md:gap-4">
-                    <Label htmlFor="grade" className="md:min-w-[120px] md:flex-shrink-0">
+                    <Label htmlFor="grade" className="md:min-w-[120px] md:flex-shrink-0 font-bold">
                       {t('review.grade')} <span className="text-red-500">*</span>
                     </Label>
                     <div className="flex items-center gap-2 md:flex-1">
@@ -3198,7 +3192,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
                 {/* Course Comments */}
                 <div className="space-y-3">
-                  <Label htmlFor="courseComments">
+                  <Label htmlFor="courseComments" className="font-bold">
                     {t('review.comments')} <span className="text-red-500">*</span>
                   </Label>
                   {renderCommonPhrases('course')}
@@ -3290,7 +3284,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </div>
 
                             <div className="space-y-3">
-                              <Label>{t('review.courseRequirements')} <span className="text-red-500">*</span></Label>
+                              <Label className="font-bold">{t('review.courseRequirements')} <span className="text-red-500">*</span></Label>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {[
                                   { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
@@ -3407,7 +3401,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </div>
 
                             <div className="space-y-3">
-                              <Label htmlFor={`teachingComments-${idx}`}>
+                              <Label htmlFor={`teachingComments-${idx}`} className="font-bold">
                                 {t('review.teachingComments')} <span className="text-red-500">*</span>
                               </Label>
                               {renderCommonPhrases('teaching', idx)}
@@ -3503,7 +3497,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </div>
 
                             <div className="space-y-3">
-                              <Label>{t('review.courseRequirements')} <span className="text-red-500">*</span></Label>
+                              <Label className="font-bold">{t('review.courseRequirements')} <span className="text-red-500">*</span></Label>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {[
                                   { key: 'hasAttendanceRequirement', label: t('review.hasAttendanceRequirement') },
@@ -3528,7 +3522,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </div>
 
                             <div className="space-y-3">
-                              <Label htmlFor={`teachingComments-${idx}`}>
+                              <Label htmlFor={`teachingComments-${idx}`} className="font-bold">
                                 {t('review.teachingComments')} <span className="text-red-500">*</span>
                               </Label>
                               {renderCommonPhrases('teaching', idx)}
