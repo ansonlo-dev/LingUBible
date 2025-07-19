@@ -448,13 +448,13 @@ export function AdvancedCourseFilters({
           </CollapsibleContent>
         </Collapsible>
       ) : (
-        /* Desktop: Always visible sort buttons */
-        <div className="flex flex-col gap-2 items-center">
+        /* Desktop: Always visible sort buttons in rows */
+        <div className="flex items-center gap-2">
           <label className={getLabelClassName()}>
             <Hash className="h-4 w-4" />
             {t('sort.by')}
           </label>
-          <div className="grid grid-cols-2 gap-2 w-full max-w-md">
+          <div className="flex flex-wrap gap-2 flex-1">
             {[
               { value: 'code', label: t('sort.courseCode') },
               { value: 'title', label: t('sort.courseName') },
@@ -471,7 +471,7 @@ export function AdvancedCourseFilters({
                 variant={filters.sortBy === option.value ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleSort(option.value)}
-                className="h-6 px-3 text-xs w-full"
+                className="h-6 px-3 text-xs"
               >
                 {option.label}
                 {getSortIcon(option.value)}
