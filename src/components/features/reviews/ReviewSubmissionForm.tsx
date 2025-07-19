@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -24,12 +23,6 @@ import {
   Loader2, 
   AlertCircle, 
   AlertTriangle,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  List,
-  ListOrdered,
   RotateCcw,
   TrendingUp,
   TrendingDown,
@@ -57,7 +50,7 @@ import {
 import { cn } from '@/lib/utils';
 import { CourseService, Course, Term, Review, TeachingRecord, InstructorDetail, Instructor } from '@/services/api/courseService';
 import { GradeBadge } from '@/components/ui/GradeBadge';
-import { WordCounter } from '@/components/ui/word-counter';
+import { HybridMarkdownEditor } from '@/components/ui/hybrid-markdown-editor';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { validateWordCount } from '@/utils/textUtils';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
@@ -509,11 +502,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
 
 
-  // Textarea refs for formatting
-  const courseCommentsRef = useRef<HTMLTextAreaElement>(null);
-  const teachingCommentsRefs = useRef<{[key: number]: HTMLTextAreaElement | null}>({});
-  const serviceLearningRef = useRef<HTMLTextAreaElement>(null);
-  const serviceLearningDescriptionRefs = useRef<{[key: number]: HTMLTextAreaElement | null}>({});
 
   // Filter courses based on pre-selected instructor
   const filteredCourses = useMemo(() => {
@@ -747,156 +735,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     return new Map(courseCodes.map(code => [code, coursesCache.get(code) || coursesData.find(c => c.courseCode === code)?.course]).filter(([_, course]) => course !== null && course !== undefined) as [string, Course][]);
   }, [coursesCache]);
 
-  // Formatting functions
-  const applyFormatting = (textareaRef: React.RefObject<HTMLTextAreaElement>, setValue: (value: string) => void, formatType: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    let formattedText = '';
-    let newCursorPos = start;
-
-    switch (formatType) {
-      case 'bold':
-        if (selectedText) {
-          formattedText = `**${selectedText}**`;
-          newCursorPos = start + formattedText.length;
-        } else {
-          formattedText = `**${t('review.formatting.boldText')}**`;
-          newCursorPos = start + 2; // Position cursor between **
-        }
-        break;
-      case 'italic':
-        if (selectedText) {
-          formattedText = `*${selectedText}*`;
-          newCursorPos = start + formattedText.length;
-        } else {
-          formattedText = `*${t('review.formatting.italicText')}*`;
-          newCursorPos = start + 1; // Position cursor between *
-        }
-        break;
-      case 'underline':
-        if (selectedText) {
-          formattedText = `__${selectedText}__`;
-          newCursorPos = start + formattedText.length;
-        } else {
-          formattedText = `__${t('review.formatting.underlineText')}__`;
-          newCursorPos = start + 2; // Position cursor between __
-        }
-        break;
-      case 'strikethrough':
-        if (selectedText) {
-          formattedText = `~~${selectedText}~~`;
-          newCursorPos = start + formattedText.length;
-        } else {
-          formattedText = `~~${t('review.formatting.strikethroughText')}~~`;
-          newCursorPos = start + 2; // Position cursor between ~~
-        }
-        break;
-      case 'unorderedList':
-        const unorderedLines = selectedText ? selectedText.split('\n') : [
-          t('review.formatting.listItem1'), 
-          t('review.formatting.listItem2'), 
-          t('review.formatting.listItem3')
-        ];
-        formattedText = unorderedLines.map(line => `- ${line.trim()}`).join('\n');
-        newCursorPos = start + formattedText.length;
-        break;
-      case 'orderedList':
-        const orderedLines = selectedText ? selectedText.split('\n') : [
-          t('review.formatting.listItem1'), 
-          t('review.formatting.listItem2'), 
-          t('review.formatting.listItem3')
-        ];
-        formattedText = orderedLines.map((line, index) => `${index + 1}. ${line.trim()}`).join('\n');
-        newCursorPos = start + formattedText.length;
-        break;
-    }
-
-    const newValue = beforeText + formattedText + afterText;
-    setValue(newValue);
-
-    // Set cursor position after state update
-    setTimeout(() => {
-      if (textarea) {
-        textarea.focus();
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-      }
-    }, 0);
-  };
-
-  const renderFormattingToolbar = (textareaRef: React.RefObject<HTMLTextAreaElement>, setValue: (value: string) => void) => {
-    return (
-      <div className="flex flex-wrap gap-1 p-2 bg-muted/20 dark:bg-muted/10 border border-border rounded-t-lg">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => applyFormatting(textareaRef, setValue, 'bold')}
-          title={t('review.formatting.bold')}
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => applyFormatting(textareaRef, setValue, 'italic')}
-          title={t('review.formatting.italic')}
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => applyFormatting(textareaRef, setValue, 'underline')}
-          title={t('review.formatting.underline')}
-        >
-          <Underline className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => applyFormatting(textareaRef, setValue, 'strikethrough')}
-          title={t('review.formatting.strikethrough')}
-        >
-          <Strikethrough className="h-4 w-4" />
-        </Button>
-        <div className="w-px bg-border mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => applyFormatting(textareaRef, setValue, 'unorderedList')}
-          title={t('review.formatting.unorderedList')}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => applyFormatting(textareaRef, setValue, 'orderedList')}
-          title={t('review.formatting.orderedList')}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
 
   // Common phrases for comments
   const getCommonPhrases = (type: 'course' | 'teaching') => {
@@ -3188,36 +3027,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     {t('review.comments')} <span className="text-red-500">*</span>
                   </Label>
                   {renderCommonPhrases('course')}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="relative">
-                      {renderFormattingToolbar(courseCommentsRef, setCourseComments)}
-                      <Textarea
-                        ref={courseCommentsRef}
-                        id="courseComments"
-                        value={courseComments}
-                        onChange={(e) => setCourseComments(e.target.value)}
-                        placeholder={t('review.commentsPlaceholder')}
-                        rows={4}
-                        className="rounded-t-none border-t-0"
-                      />
-                      <WordCounter text={courseComments} minWords={5} maxWords={1000} />
-                    </div>
-                    
-                    {courseComments && (
-                      <div className="relative">
-                        <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                        <div className="border rounded-lg p-3 bg-muted/20 min-h-[120px]">
-                          {hasMarkdownFormatting(courseComments) ? (
-                            <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                              {courseComments}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <HybridMarkdownEditor
+                    id="courseComments"
+                    value={courseComments}
+                    onChange={setCourseComments}
+                    placeholder={t('review.commentsPlaceholder')}
+                    rows={4}
+                    minWords={5}
+                    maxWords={1000}
+                  />
                 </div>
               </div>
             )
@@ -3340,51 +3158,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                       <span className="text-destructive ml-1">*</span>
                                     )}
                                   </Label>
-                                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    <div className="relative">
-                                      {renderFormattingToolbar(
-                                        { current: serviceLearningDescriptionRefs.current[idx] || null },
-                                        (value: string) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)
-                                      )}
-                                      <Textarea
-                                        ref={(el) => {
-                                          if (serviceLearningDescriptionRefs.current) {
-                                            serviceLearningDescriptionRefs.current[idx] = el;
-                                          }
-                                        }}
-                                        id={`serviceLearningDescription-${idx}`}
-                                        value={evaluation.serviceLearningDescription}
-                                        onChange={(e) => updateInstructorEvaluation(idx, 'serviceLearningDescription', e.target.value)}
-                                        placeholder={
-                                          evaluation.serviceLearningType === 'optional' 
-                                            ? t('review.serviceLearningOptionalPlaceholder')
-                                            : t('review.serviceLearningPlaceholder')
-                                        }
-                                        rows={3}
-                                        className="rounded-t-none border-t-0"
-                                      />
-                                      <WordCounter 
-                                        text={evaluation.serviceLearningDescription} 
-                                        minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0} 
-                                        maxWords={1000} 
-                                      />
-                                    </div>
-                                    
-                                    {evaluation.serviceLearningDescription && (
-                                      <div className="relative">
-                                        <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                                        <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
-                                          {hasMarkdownFormatting(evaluation.serviceLearningDescription) ? (
-                                            <div className="text-sm">{renderCommentMarkdown(evaluation.serviceLearningDescription)}</div>
-                                          ) : (
-                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                                              {evaluation.serviceLearningDescription}
-                                            </p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
+                                  <HybridMarkdownEditor
+                                    id={`serviceLearningDescription-${idx}`}
+                                    value={evaluation.serviceLearningDescription}
+                                    onChange={(value) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)}
+                                    placeholder={
+                                      evaluation.serviceLearningType === 'optional' 
+                                        ? t('review.serviceLearningOptionalPlaceholder')
+                                        : t('review.serviceLearningPlaceholder')
+                                    }
+                                    rows={3}
+                                    minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0}
+                                    maxWords={1000}
+                                  />
                                 </div>
                               )}
                             </div>
@@ -3394,41 +3180,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 {t('review.teachingComments')} <span className="text-red-500">*</span>
                               </Label>
                               {renderCommonPhrases('teaching', idx)}
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div className="relative">
-                                  {renderFormattingToolbar(
-                                    { current: teachingCommentsRefs.current[idx] || null },
-                                    (value: string) => updateInstructorEvaluation(idx, 'comments', value)
-                                  )}
-                                  <Textarea
-                                    ref={(el) => {
-                                      teachingCommentsRefs.current[idx] = el;
-                                    }}
-                                    id={`teachingComments-${idx}`}
-                                    value={evaluation.comments}
-                                    onChange={(e) => updateInstructorEvaluation(idx, 'comments', e.target.value)}
-                                    placeholder={t('review.teachingCommentsPlaceholder')}
-                                    rows={3}
-                                    className="rounded-t-none border-t-0"
-                                  />
-                                  <WordCounter text={evaluation.comments} minWords={5} maxWords={1000} />
-                                </div>
-                                
-                                {evaluation.comments && (
-                                  <div className="relative">
-                                    <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                                    <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px] text-xs">
-                                      {hasMarkdownFormatting(evaluation.comments) ? (
-                                        <div className="text-xs">{renderCommentMarkdown(evaluation.comments)}</div>
-                                      ) : (
-                                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                          {evaluation.comments}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                              <HybridMarkdownEditor
+                                id={`teachingComments-${idx}`}
+                                value={evaluation.comments}
+                                onChange={(value) => updateInstructorEvaluation(idx, 'comments', value)}
+                                placeholder={t('review.teachingCommentsPlaceholder')}
+                                rows={3}
+                                minWords={5}
+                                maxWords={1000}
+                              />
                             </div>
                           </div>
                         </div>
@@ -3510,41 +3270,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 {t('review.teachingComments')} <span className="text-red-500">*</span>
                               </Label>
                               {renderCommonPhrases('teaching', idx)}
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div className="relative">
-                                  {renderFormattingToolbar(
-                                    { current: teachingCommentsRefs.current[idx] || null },
-                                    (value: string) => updateInstructorEvaluation(idx, 'comments', value)
-                                  )}
-                                  <Textarea
-                                    ref={(el) => {
-                                      teachingCommentsRefs.current[idx] = el;
-                                    }}
-                                    id={`teachingComments-${idx}`}
-                                    value={evaluation.comments}
-                                    onChange={(e) => updateInstructorEvaluation(idx, 'comments', e.target.value)}
-                                    placeholder={t('review.teachingCommentsPlaceholder')}
-                                    rows={3}
-                                    className="rounded-t-none border-t-0"
-                                  />
-                                  <WordCounter text={evaluation.comments} minWords={5} maxWords={1000} />
-                                </div>
-                                
-                                {evaluation.comments && (
-                                  <div className="relative">
-                                    <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                                    <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px] text-xs">
-                                      {hasMarkdownFormatting(evaluation.comments) ? (
-                                        <div className="text-xs">{renderCommentMarkdown(evaluation.comments)}</div>
-                                      ) : (
-                                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                          {evaluation.comments}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                              <HybridMarkdownEditor
+                                id={`teachingComments-${idx}`}
+                                value={evaluation.comments}
+                                onChange={(value) => updateInstructorEvaluation(idx, 'comments', value)}
+                                placeholder={t('review.teachingCommentsPlaceholder')}
+                                rows={3}
+                                minWords={5}
+                                maxWords={1000}
+                              />
                             </div>
                           </div>
                         </div>
@@ -3675,51 +3409,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="text-destructive ml-1">*</span>
                               )}
                             </Label>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                              <div className="relative">
-                                {renderFormattingToolbar(
-                                  { current: serviceLearningDescriptionRefs.current[idx] || null },
-                                  (value: string) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)
-                                )}
-                                <Textarea
-                                  ref={(el) => {
-                                    if (serviceLearningDescriptionRefs.current) {
-                                      serviceLearningDescriptionRefs.current[idx] = el;
-                                    }
-                                  }}
-                                  id={`serviceLearningDescription-${idx}`}
-                                  value={evaluation.serviceLearningDescription}
-                                  onChange={(e) => updateInstructorEvaluation(idx, 'serviceLearningDescription', e.target.value)}
-                                  placeholder={
-                                    evaluation.serviceLearningType === 'optional' 
-                                      ? t('review.serviceLearningOptionalPlaceholder')
-                                      : t('review.serviceLearningPlaceholder')
-                                  }
-                                  rows={3}
-                                  className="rounded-t-none border-t-0"
-                                />
-                                <WordCounter 
-                                  text={evaluation.serviceLearningDescription} 
-                                  minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0} 
-                                  maxWords={1000} 
-                                />
-                              </div>
-                              
-                              {evaluation.serviceLearningDescription && (
-                                <div className="relative">
-                                  <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                                  <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px]">
-                                    {hasMarkdownFormatting(evaluation.serviceLearningDescription) ? (
-                                      <div className="text-sm">{renderCommentMarkdown(evaluation.serviceLearningDescription)}</div>
-                                    ) : (
-                                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                                        {evaluation.serviceLearningDescription}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                            <HybridMarkdownEditor
+                              id={`serviceLearningDescription-${idx}`}
+                              value={evaluation.serviceLearningDescription}
+                              onChange={(value) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)}
+                              placeholder={
+                                evaluation.serviceLearningType === 'optional' 
+                                  ? t('review.serviceLearningOptionalPlaceholder')
+                                  : t('review.serviceLearningPlaceholder')
+                              }
+                              rows={3}
+                              minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0}
+                              maxWords={1000}
+                            />
                           </div>
                         )}
                       </div>
@@ -3729,41 +3431,15 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           {t('review.teachingComments')} <span className="text-red-500">*</span>
                         </Label>
                         {renderCommonPhrases('teaching', idx)}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          <div className="relative">
-                            {renderFormattingToolbar(
-                              { current: teachingCommentsRefs.current[idx] || null },
-                              (value: string) => updateInstructorEvaluation(idx, 'comments', value)
-                            )}
-                            <Textarea
-                              ref={(el) => {
-                                teachingCommentsRefs.current[idx] = el;
-                              }}
-                              id={`teachingComments-${idx}`}
-                              value={evaluation.comments}
-                              onChange={(e) => updateInstructorEvaluation(idx, 'comments', e.target.value)}
-                              placeholder={t('review.teachingCommentsPlaceholder')}
-                              rows={3}
-                              className="rounded-t-none border-t-0"
-                            />
-                            <WordCounter text={evaluation.comments} minWords={5} maxWords={1000} />
-                          </div>
-                          
-                          {evaluation.comments && (
-                            <div className="relative">
-                              <div className="text-sm text-muted-foreground mb-2 font-medium">{t('review.formatting.livePreview')}</div>
-                              <div className="border rounded-lg p-3 bg-muted/20 min-h-[100px] text-xs">
-                                {hasMarkdownFormatting(evaluation.comments) ? (
-                                  <div className="text-xs">{renderCommentMarkdown(evaluation.comments)}</div>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                    {evaluation.comments}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        <HybridMarkdownEditor
+                          id={`teachingComments-${idx}`}
+                          value={evaluation.comments}
+                          onChange={(value) => updateInstructorEvaluation(idx, 'comments', value)}
+                          placeholder={t('review.teachingCommentsPlaceholder')}
+                          rows={3}
+                          minWords={5}
+                          maxWords={1000}
+                        />
                       </div>
                     </div>
                   </>
