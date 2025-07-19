@@ -3269,7 +3269,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <StarRating rating={workload || 0} readonly size="sm" />
+                        <UIStarRating rating={workload || 0} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -3277,7 +3277,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <StarRating rating={difficulty || 0} readonly size="sm" />
+                        <UIStarRating rating={difficulty || 0} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -3285,7 +3285,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <StarRating rating={usefulness || 0} readonly size="sm" />
+                        <UIStarRating rating={usefulness || 0} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -3410,11 +3410,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div className="text-center">
                             <div className="font-medium text-sm mb-1">{t('review.teaching')}</div>
-                            <StarRating rating={instructor.teachingScore || 0} readonly size="sm" />
+                            <UIStarRating rating={instructor.teachingScore || 0} readonly size="sm" />
                           </div>
                           <div className="text-center">
                             <div className="font-medium text-sm mb-1">{t('review.grading')}</div>
-                            <StarRating rating={instructor.gradingScore || 0} readonly size="sm" />
+                            <UIStarRating rating={instructor.gradingScore || 0} readonly size="sm" />
                           </div>
                         </div>
 
