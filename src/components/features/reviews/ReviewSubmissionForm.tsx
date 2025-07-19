@@ -3246,11 +3246,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               },
               content: (
                 <div className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold mb-2">{t('review.lectureReview')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('review.lectureReviewDescription')}</p>
-                  </div>
-                  
                   {selectedInstructors
                     .map((instructorKey, idx) => {
                       const [instructorName, sessionType] = instructorKey.split('|');
@@ -3260,7 +3255,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       if (!evaluation) return null;
                       
                       return (
-                        <div key={idx} className="border rounded-lg p-4 space-y-4">
+                        <div key={idx} className="space-y-4">
                           <div className="flex items-center gap-2 mb-4">
                             <h4 className="text-md font-semibold">{evaluation.instructorName}</h4>
                             <Badge variant="outline">{t('review.lecture')}</Badge>
@@ -3461,11 +3456,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               },
               content: (
                 <div className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold mb-2">{t('review.tutorialReview')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('review.tutorialReviewDescription')}</p>
-                  </div>
-                  
                   {selectedInstructors
                     .map((instructorKey, idx) => {
                       const [instructorName, sessionType] = instructorKey.split('|');
@@ -3475,7 +3465,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       if (!evaluation) return null;
                       
                       return (
-                        <div key={idx} className="border rounded-lg p-4 space-y-4">
+                        <div key={idx} className="space-y-4">
                           <div className="flex items-center gap-2 mb-4">
                             <h4 className="text-md font-semibold">{evaluation.instructorName}</h4>
                             <Badge variant="outline">{t('review.tutorial')}</Badge>
