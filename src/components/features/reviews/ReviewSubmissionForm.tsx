@@ -2260,31 +2260,27 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const selectedCourseData = courses.find(course => course.course_code === selectedCourse);
     
     return (
-      <Card className="course-card">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  {t('review.previewMode')}
-                </CardTitle>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsPreviewMode(false)}
-                  className="shrink-0"
-                >
-                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">{t('review.backToEdit')}</span>
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t('review.previewDescription')}
-              </p>
-            </div>
+      <div className="w-full">
+        {/* 預覽模式標題 */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              {t('review.previewMode')}
+            </h2>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsPreviewMode(false)}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('review.backToEdit')}</span>
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t('review.previewDescription')}
+          </p>
+        </div>
           <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
             {/* 評論基本信息 */}
             <div className="flex items-start justify-between gap-3">
@@ -2323,17 +2319,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 
                 {/* 課程信息 - 顯示在徽章下方 */}
                 {selectedCourseData && (
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 ml-4 mt-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-lg">
-                        <div className="font-bold">{selectedCourse}</div>
-                        <div className="text-sm text-muted-foreground font-normal">
+                        <div className="font-bold text-primary">{selectedCourse}</div>
+                        <div className="text-sm text-primary font-normal">
                           {selectedCourseData.course_title}
                         </div>
                         {(language === 'zh-TW' || language === 'zh-CN') && (() => {
                           const chineseName = language === 'zh-TW' ? selectedCourseData.course_title_tc : selectedCourseData.course_title_sc;
                           return chineseName && (
-                            <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                            <div className="text-sm text-primary font-normal mt-0.5">
                               {chineseName}
                             </div>
                           );
@@ -2476,28 +2472,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               })()}
                             </div>
                             
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                const url = `/instructors/${encodeURIComponent(instructor.instructorName)}`;
-                                if (e.button === 1 || e.ctrlKey || e.metaKey) {
-                                  // Middle click, Ctrl+click, or Cmd+click - open in new tab
-                                  window.open(url, '_blank');
-                                } else {
-                                  // Regular click - navigate in same tab
-                                  navigate(url);
-                                }
-                              }}
-                              onMouseDown={(e) => {
-                                if (e.button === 1) {
-                                  // Middle click
-                                  e.preventDefault();
-                                  const url = `/instructors/${encodeURIComponent(instructor.instructorName)}`;
-                                  window.open(url, '_blank');
-                                }
-                              }}
-                              className="text-primary px-2 py-1 rounded-md inline-block hover:bg-primary/10 hover:text-primary transition-colors no-underline focus:outline-none focus:bg-primary/10"
-                            >
+                            <div className="text-primary px-2 py-1 rounded-md inline-block">
                               {(() => {
                                 const fullInstructor = instructorsMap.get(instructor.instructorName);
                                 if (fullInstructor) {
@@ -2517,7 +2492,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                   <div className="font-bold text-left">{instructor.instructorName}</div>
                                 );
                               })()}
-                            </button>
+                            </div>
                           </div>
                         </div>
                         
@@ -2684,8 +2659,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               </>
             )}
           </div>
-        </CardContent>
-      </Card>
+      </div>
     );
   };
 
