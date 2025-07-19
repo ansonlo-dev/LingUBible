@@ -1034,8 +1034,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         show: false
       },
       grid: {
-        left: isMobile && isPortrait ? (showCumulativeLine ? '15%' : '12%') : (showCumulativeLine ? '8%' : '5%'),
-        right: showCumulativeLine ? '15%' : '4%',
+        left: isMobile && isPortrait ? (showCumulativeLine ? '15%' : '12%') : (showCumulativeLine ? '12%' : '5%'),
+        right: showCumulativeLine ? '12%' : '4%',
         bottom: '3%',
         containLabel: true
       },
@@ -1137,7 +1137,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       tooltip: {
         trigger: 'axis',
         triggerOn: isMobile ? 'click' : 'mousemove',
-        backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: currentIsDark ? '#1f2937' : '#ffffff',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
         hideDelay: isMobile ? 86400000 : 100,
@@ -1369,7 +1369,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       tooltip: {
         trigger: 'item',
         triggerOn: isMobile ? 'click' : 'mousemove', // Click to show tooltip on mobile
-        backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: currentIsDark ? '#1f2937' : '#ffffff',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
         hideDelay: isMobile ? 86400000 : 100, // 24 hours on mobile (effectively never auto-hide)
@@ -1676,7 +1676,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         axisPointer: {
           type: 'shadow'
         },
-        backgroundColor: currentIsDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: currentIsDark ? '#1f2937' : '#ffffff',
         borderColor: currentIsDark ? '#4b5563' : '#d1d5db',
         borderWidth: 1,
         hideDelay: isMobile ? 86400000 : 100, // 24 hours on mobile (effectively never auto-hide)
