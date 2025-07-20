@@ -71,7 +71,7 @@ import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetai
 import { getTeachingLanguageName, extractInstructorNameForSorting, getInstructorName } from '@/utils/textUtils';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 import { ProgressBarForm } from '@/components/ui/progress-bar-form';
-import { VotingButtons } from '@/components/features/reviews/VotingButtons';
+import { VotingButtons } from '@/components/ui/voting-buttons';
 
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
