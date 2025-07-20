@@ -3307,7 +3307,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={workload === null ? -1 : workload} readonly size="sm" />
+                        <UIStarRating rating={workload === null ? -1 : workload} size="sm" showTooltip={true} ratingType="workload" />
                       </div>
                     </div>
                   </div>
@@ -3315,7 +3315,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={difficulty === null ? -1 : difficulty} readonly size="sm" />
+                        <UIStarRating rating={difficulty === null ? -1 : difficulty} size="sm" showTooltip={true} ratingType="difficulty" />
                       </div>
                     </div>
                   </div>
@@ -3323,7 +3323,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={usefulness === null ? -1 : usefulness} readonly size="sm" />
+                        <UIStarRating rating={usefulness === null ? -1 : usefulness} size="sm" showTooltip={true} ratingType="usefulness" />
                       </div>
                     </div>
                   </div>
@@ -3332,60 +3332,23 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {/* 課程評論 */}
                 {courseComments && (
                   <div className="pt-2">
-                    <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
-                  </div>
-                )}
-
-                {/* 課程要求 */}
-                {instructorEvaluations && instructorEvaluations.length > 0 && (
-                  <div className="space-y-3">
                     <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0" />
-                      <span>{t('review.courseRequirements')}</span>
+                      <MessageSquare className="h-4 w-4 shrink-0" />
+                      <span>{t('review.courseComments')}</span>
                     </h5>
-                    <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                      {(() => {
-                        const renderBooleanBadge = (value: boolean, label: string) => {
-                          return (
-                            <Badge 
-                              key={label}
-                              variant={value ? "default" : "secondary"}
-                              className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
-                            >
-                              {value ? (
-                                <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
-                              ) : (
-                                <XCircle className="h-3 w-3 mr-1 shrink-0" />
-                              )}
-                              {label}
-                            </Badge>
-                          );
-                        };
-
-                        // Get requirements from first instructor evaluation (they should be the same for all)
-                        const firstInstructor = instructorEvaluations[0];
-                        if (!firstInstructor) return null;
-
-                        return (
-                          <>
-                            {renderBooleanBadge(firstInstructor.hasAttendanceRequirement, t('review.requirements.attendance'))}
-                            {renderBooleanBadge(firstInstructor.hasQuiz, t('review.requirements.quiz'))}
-                            {renderBooleanBadge(firstInstructor.hasMidterm, t('review.requirements.midterm'))}
-                            {renderBooleanBadge(firstInstructor.hasFinal, t('review.requirements.final'))}
-                            {renderBooleanBadge(firstInstructor.hasIndividualAssignment, t('review.requirements.individualAssignment'))}
-                            {renderBooleanBadge(firstInstructor.hasGroupProject, t('review.requirements.groupProject'))}
-                            {renderBooleanBadge(firstInstructor.hasPresentation, t('review.requirements.presentation'))}
-                            {renderBooleanBadge(firstInstructor.hasReading, t('review.requirements.reading'))}
-                          </>
-                        );
-                      })()}
+                    <div className="bg-muted/50 p-2 rounded-md break-words text-sm">
+                      <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
                     </div>
                   </div>
                 )}
 
-                {/* 講師評論 */}
+                {/* 講師評估 */}
                 {instructorEvaluations && instructorEvaluations.length > 0 && (
                   <div className="space-y-4">
+                    <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Users className="h-4 w-4 shrink-0" />
+                      <span>{t('review.instructorEvaluation')}</span>
+                    </h5>
                     {instructorEvaluations.map((instructor, index) => (
                       <div 
                         key={index} 
@@ -3444,7 +3407,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                   return (
                                     <span 
                                       className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
-                                      title={getTeachingLanguageName(teachingLanguage, t)}
                                     >
                                       {getTeachingLanguageName(teachingLanguage, t)}
                                     </span>
@@ -3480,7 +3442,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 return (
                                   <span 
                                     className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
-                                    title={getTeachingLanguageName(teachingLanguage, t)}
                                   >
                                     {getTeachingLanguageName(teachingLanguage, t)}
                                   </span>
@@ -3500,7 +3461,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.teachingQuality')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                <UIStarRating rating={instructor.teachingScore === null ? -1 : instructor.teachingScore} readonly size="sm" />
+                                <UIStarRating rating={instructor.teachingScore === null ? -1 : instructor.teachingScore} size="sm" showTooltip={true} ratingType="teaching" />
                               </div>
                             </div>
                           </div>
@@ -3511,32 +3472,62 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.gradingSatisfaction')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                <UIStarRating rating={instructor.gradingScore === null ? -1 : instructor.gradingScore} readonly size="sm" />
+                                <UIStarRating rating={instructor.gradingScore === null ? -1 : instructor.gradingScore} size="sm" showTooltip={true} ratingType="grading" />
                               </div>
                             </div>
                           </div>
                         </div>
 
+                        {/* 課程要求 */}
+                        <div className="mb-6">
+                          <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <FileText className="h-4 w-4 shrink-0" />
+                            <span>{t('review.courseRequirements')}</span>
+                          </h5>
+                          <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                            {/* Note: Course requirements would need to be added to instructor evaluation data */}
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                              {t('review.requirements.dataNotAvailable')}
+                            </span>
+                          </div>
+                        </div>
+
                         {/* 講師評論 */}
                         {instructor.comments && (
-                          <div className="space-y-2">
-                            <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
+                          <div className="min-w-0 mb-6">
+                            <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                              <User className="h-4 w-4 shrink-0" />
+                              <span>{t('review.instructorComments')}</span>
+                            </h5>
+                            <div className="ml-4 break-words text-sm">
+                              <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
+                            </div>
                           </div>
                         )}
 
                         {/* 服務學習 */}
                         {instructor.serviceLearningDescription && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            <div className="flex items-center gap-2 mb-2">
-                              <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm font-medium">{t('review.serviceLearning')}</span>
+                          <div className="mb-6">
+                            <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                              <GraduationCap className="h-4 w-4 shrink-0" />
+                              <span>{t('review.serviceLearning')}</span>
+                            </h5>
+                            <div className="ml-4 space-y-2">
                               {instructor.serviceLearningType && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                  {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
+                                    instructor.serviceLearningType === 'compulsory'
+                                      ? 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+                                      : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                                  }`}>
+                                    {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                                  </span>
+                                </div>
                               )}
+                              <div className="text-xs break-words">
+                                <div className="text-xs">{renderCommentMarkdown(instructor.serviceLearningDescription)}</div>
+                              </div>
                             </div>
-                            <div className="text-xs">{renderCommentMarkdown(instructor.serviceLearningDescription)}</div>
                           </div>
                         )}
                       </div>

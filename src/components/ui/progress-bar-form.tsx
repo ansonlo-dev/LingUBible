@@ -39,6 +39,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
   submittingLabel = '提交中...'
 }) => {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [unlockedSteps, setUnlockedSteps] = useState<Set<number>>(new Set([0])); // Initially unlock the first step
 
   // Check if current step is valid
   const isCurrentStepValid = () => {
@@ -51,6 +52,8 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
     if (isCurrentStepValid()) {
       setCompletedSteps(prev => new Set([...prev, currentStep]));
       if (currentStep < steps.length - 1) {
+        // Unlock the next step
+        setUnlockedSteps(prev => new Set([...prev, currentStep + 1]));
         onStepChange(currentStep + 1);
       }
     }
@@ -65,14 +68,16 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
 
   // Handle step click (only if step is accessible)
   const handleStepClick = (stepIndex: number) => {
-    // Can only access current step, completed steps, or next step if current is valid
+    // Can only access current step, completed steps, or unlocked steps
     if (stepIndex === currentStep || 
         completedSteps.has(stepIndex) || 
-        (stepIndex === currentStep + 1 && isCurrentStepValid())) {
+        unlockedSteps.has(stepIndex)) {
       
       // Mark current step as completed when moving forward to next step
       if (stepIndex > currentStep && isCurrentStepValid()) {
         setCompletedSteps(prev => new Set([...prev, currentStep]));
+        // Unlock the target step if moving forward
+        setUnlockedSteps(prev => new Set([...prev, stepIndex]));
       }
       
       onStepChange(stepIndex);
@@ -104,7 +109,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                 const isCurrent = originalIndex === currentStep;
                 const isAccessible = originalIndex === currentStep || 
                                    completedSteps.has(originalIndex) || 
-                                   (originalIndex === currentStep + 1 && isCurrentStepValid());
+                                   unlockedSteps.has(originalIndex);
 
                 return (
                   <div key={step.id} className="flex items-center flex-shrink-0">
@@ -183,7 +188,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
           variant="outline"
           onClick={handlePrevious}
           disabled={currentStep === 0}
-          className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-red-400 hover:text-red-500 dark:hover:border-red-400 dark:hover:text-red-400 transition-all duration-200 transform hover:scale-105"
+          className="flex items-center gap-2 hover:bg-transparent hover:border-red-400 hover:text-red-500 dark:hover:border-red-400 dark:hover:text-red-400 transition-all duration-200 transform hover:scale-105"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>{previousLabel}</span>
