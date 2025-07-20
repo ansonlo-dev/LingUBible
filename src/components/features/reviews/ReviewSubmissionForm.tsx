@@ -3233,13 +3233,13 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       </span>
                     </div>
                     
-                    {/* Mobile: 學期和語言徽章 - 全寬度顯示 */}
-                    <div className="flex md:hidden flex-col gap-2 w-full">
-                      <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                    {/* Mobile: 學期和語言徽章 - 自適應寬度顯示 */}
+                    <div className="flex md:hidden flex-wrap gap-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background w-fit">
                         {new Date().getFullYear()} Term 1
                       </span>
                       {reviewLanguage && (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background w-fit">
                           {
                             reviewLanguage === 'en' ? t('language.english') :
                             reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
@@ -3637,16 +3637,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Main Exit Confirmation Dialog */}
       <AlertDialog open={showMainExitConfirm} onOpenChange={setShowMainExitConfirm}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl mx-4 sm:mx-0 max-w-md sm:max-w-lg">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('review.exitConfirm')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('review.exitConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmMainExit}>
+          <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
+            <AlertDialogCancel className="flex-1">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMainExit} className="flex-1">
               {t('common.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -3655,7 +3655,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl mx-4 sm:mx-0 max-w-md sm:max-w-lg">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{isEditMode ? t('review.confirmUpdate') : t('review.confirmSubmit')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -3667,12 +3667,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               {t('review.confirmContent')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={submitting}>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
+            <AlertDialogCancel disabled={submitting} className="flex-1">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmSubmit}
               disabled={submitting}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex-1"
             >
               {submitting ? (
                 <>
@@ -3689,7 +3689,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Celebration Dialog */}
       <AlertDialog open={showCelebration} onOpenChange={setShowCelebration}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 text-center sm:rounded-lg rounded-xl mx-4 sm:mx-0 max-w-md sm:max-w-lg">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 text-center sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader className="items-center">
             <div className="relative mb-4">
               {/* Animated sparkles background */}
