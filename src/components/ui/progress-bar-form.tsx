@@ -129,16 +129,14 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                           // Current step
                           "bg-red-500 border-red-500 text-white shadow-lg ring-4 ring-red-500/20 dark:ring-red-500/30": isCurrent,
                           // Accessible but not current/completed
-                          "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-muted-foreground hover:border-red-400 hover:text-red-500": isAccessible && !isCurrent && !isCompleted,
+                          "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-muted-foreground hover:border-red-400 hover:font-bold": isAccessible && !isCurrent && !isCompleted,
                           // Not accessible
                           "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60": !isAccessible,
                         }
                       )}
                     >
                       <div className="flex items-center gap-1 md:gap-2">
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4" />
-                        ) : step.icon ? (
+                        {step.icon ? (
                           <span className="w-3 h-3 md:w-4 md:h-4 flex items-center justify-center">
                             {React.cloneElement(step.icon as React.ReactElement, { 
                               className: "w-3 h-3 md:w-4 md:h-4" 

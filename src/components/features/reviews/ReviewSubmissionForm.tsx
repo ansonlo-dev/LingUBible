@@ -3214,12 +3214,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full">
-              <div className="mb-6">
-                <p className="text-sm text-muted-foreground">
-                  {t('review.previewDescription')}
-                </p>
-              </div>
-              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
+              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -3239,7 +3234,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     </div>
                     
                     {/* Mobile: 學期和語言徽章 - 全寬度顯示 */}
-                    <div className="flex md:hidden gap-2 w-full">
+                    <div className="flex md:hidden flex-col gap-2 w-full">
                       <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
                         {new Date().getFullYear()} Term 1
                       </span>
@@ -3526,16 +3521,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
                             {(() => {
                               const renderRequirementBadge = (value: boolean, label: string) => (
-                                <span 
+                                <Badge 
                                   key={label}
-                                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
-                                    value 
-                                      ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
-                                      : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                                  }`}
+                                  variant={value ? "default" : "secondary"}
+                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
                                 >
-                                  {value ? '✓' : '✗'} {label}
-                                </span>
+                                  {value ? (
+                                    <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+                                  ) : (
+                                    <XCircle className="h-3 w-3 mr-1 shrink-0" />
+                                  )}
+                                  <span className="truncate">{label}</span>
+                                </Badge>
                               );
                               
                               return (
@@ -3640,7 +3637,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Main Exit Confirmation Dialog */}
       <AlertDialog open={showMainExitConfirm} onOpenChange={setShowMainExitConfirm}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl mx-4 sm:mx-0 max-w-md sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('review.exitConfirm')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -3658,7 +3655,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl mx-4 sm:mx-0 max-w-md sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{isEditMode ? t('review.confirmUpdate') : t('review.confirmSubmit')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -3666,6 +3663,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 ? t('review.confirmUpdateDescription') 
                 : t('review.confirmSubmitDescription')
               }
+              <br className="hidden sm:block" />
+              {t('review.confirmContent')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -3690,7 +3689,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Celebration Dialog */}
       <AlertDialog open={showCelebration} onOpenChange={setShowCelebration}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 text-center">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 text-center sm:rounded-lg rounded-xl mx-4 sm:mx-0 max-w-md sm:max-w-lg">
           <AlertDialogHeader className="items-center">
             <div className="relative mb-4">
               {/* Animated sparkles background */}
