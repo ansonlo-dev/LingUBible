@@ -67,6 +67,7 @@ import { validateWordCount } from '@/utils/textUtils';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { getTeachingLanguageName, extractInstructorNameForSorting, getInstructorName } from '@/utils/textUtils';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
@@ -3133,7 +3134,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <Label htmlFor="reviewLanguage" className="min-w-[120px] flex-shrink-0">{t('review.language')}</Label>
+                  <Label htmlFor="reviewLanguage" className="min-w-[120px] flex-shrink-0 font-bold">{t('review.language')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { value: 'en', label: t('review.languageOptions.en') },
@@ -3326,7 +3327,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={workload === null ? -1 : workload} size="sm" showValue={true} showTooltip={true} ratingType="workload" />
+                        {workload === null ? (
+                          <span className="text-muted-foreground text-sm">{t('review.notApplicable')}</span>
+                        ) : (
+                          <UIStarRating rating={workload} size="sm" showValue={true} showTooltip={true} ratingType="workload" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3334,7 +3339,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={difficulty === null ? -1 : difficulty} size="sm" showValue={true} showTooltip={true} ratingType="difficulty" />
+                        {difficulty === null ? (
+                          <span className="text-muted-foreground text-sm">{t('review.notApplicable')}</span>
+                        ) : (
+                          <UIStarRating rating={difficulty} size="sm" showValue={true} showTooltip={true} ratingType="difficulty" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3342,7 +3351,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={usefulness === null ? -1 : usefulness} size="sm" showValue={true} showTooltip={true} ratingType="usefulness" />
+                        {usefulness === null ? (
+                          <span className="text-muted-foreground text-sm">{t('review.notApplicable')}</span>
+                        ) : (
+                          <UIStarRating rating={usefulness} size="sm" showValue={true} showTooltip={true} ratingType="usefulness" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3364,8 +3377,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {/* 講師評估 */}
                 {instructorEvaluations && instructorEvaluations.length > 0 && (
                   <div className="space-y-4">
-                    <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <Users className="h-4 w-4 shrink-0" />
+                    <h5 className="text-sm font-medium mb-2">
                       <span>{t('review.instructorEvaluation')}</span>
                     </h5>
                     {instructorEvaluations.map((instructor, index) => (
@@ -3480,7 +3492,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.teachingQuality')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                <UIStarRating rating={instructor.teachingScore === null ? -1 : instructor.teachingScore} size="sm" showValue={true} showTooltip={true} ratingType="teaching" />
+                                {instructor.teachingScore === null ? (
+                                  <span className="text-muted-foreground text-sm">{t('review.notApplicable')}</span>
+                                ) : (
+                                  <UIStarRating rating={instructor.teachingScore} size="sm" showValue={true} showTooltip={true} ratingType="teaching" />
+                                )}
                               </div>
                             </div>
                           </div>
@@ -3491,7 +3507,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.gradingSatisfaction')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                <UIStarRating rating={instructor.gradingScore === null ? -1 : instructor.gradingScore} size="sm" showValue={true} showTooltip={true} ratingType="grading" />
+                                {instructor.gradingScore === null ? (
+                                  <span className="text-muted-foreground text-sm">{t('review.notApplicable')}</span>
+                                ) : (
+                                  <UIStarRating rating={instructor.gradingScore} size="sm" showValue={true} showTooltip={true} ratingType="grading" />
+                                )}
                               </div>
                             </div>
                           </div>
@@ -3504,17 +3524,41 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             <span>{t('review.courseRequirements')}</span>
                           </h5>
                           <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                            {/* Note: Course requirements would need to be added to instructor evaluation data */}
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
-                              Data not available in preview
-                            </span>
+                            {(() => {
+                              const renderRequirementBadge = (value: boolean, label: string) => (
+                                <span 
+                                  key={label}
+                                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
+                                    value 
+                                      ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                                      : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                                  }`}
+                                >
+                                  {value ? '✓' : '✗'} {label}
+                                </span>
+                              );
+                              
+                              return (
+                                <>
+                                  {renderRequirementBadge(instructor.hasAttendanceRequirement, t('review.requirements.attendance'))}
+                                  {renderRequirementBadge(instructor.hasQuiz, t('review.requirements.quiz'))}
+                                  {renderRequirementBadge(instructor.hasMidterm, t('review.requirements.midterm'))}
+                                  {renderRequirementBadge(instructor.hasFinal, t('review.requirements.final'))}
+                                  {renderRequirementBadge(instructor.hasIndividualAssignment, t('review.requirements.individualAssignment'))}
+                                  {renderRequirementBadge(instructor.hasGroupProject, t('review.requirements.groupProject'))}
+                                  {renderRequirementBadge(instructor.hasPresentation, t('review.requirements.presentation'))}
+                                  {renderRequirementBadge(instructor.hasReading, t('review.requirements.reading'))}
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
 
                         {/* 講師評論 */}
                         {instructor.comments && (
                           <div className="min-w-0 mb-6">
-                            <h5 className="text-sm font-medium mb-2">
+                            <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                              <User className="h-4 w-4 shrink-0" />
                               <span>{t('review.instructorComments')}</span>
                             </h5>
                             <div className="ml-4 break-words text-sm">
@@ -3569,12 +3613,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     />
                   </div>
                   <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-                    <span 
-                      className="truncate cursor-help" 
-                      title={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}
-                    >
-                      {previewTimestamp ? formatDateTimeUTC8(previewTimestamp) : formatDateTimeUTC8(new Date().toISOString())}
-                    </span>
+                    <ResponsiveTooltip content={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}>
+                      <span className="truncate cursor-help">
+                        {previewTimestamp ? formatDateTimeUTC8(previewTimestamp) : formatDateTimeUTC8(new Date().toISOString())}
+                      </span>
+                    </ResponsiveTooltip>
                   </div>
                 </div>
               </div>
