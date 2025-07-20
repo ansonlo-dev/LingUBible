@@ -1585,6 +1585,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 return newSelected;
               });
             }
+          } else {
+            // Auto-select instructor if there's only one available and no pre-selection
+            if (filteredRecords.length === 1) {
+              const autoSelectKey = `${filteredRecords[0].instructor_name}|${filteredRecords[0].session_type}`;
+              setSelectedInstructors([autoSelectKey]);
+            }
           }
         } else {
           // In edit mode, validate that instructors are available
@@ -3301,7 +3307,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.workload')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={workload || 0} readonly size="sm" />
+                        <UIStarRating rating={workload === null ? -1 : workload} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -3309,7 +3315,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.difficulty')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={difficulty || 0} readonly size="sm" />
+                        <UIStarRating rating={difficulty === null ? -1 : difficulty} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -3317,7 +3323,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                       <span className="font-medium text-sm sm:text-base">{t('review.usefulness')}</span>
                       <div className="flex items-center justify-center lg:ml-1">
-                        <UIStarRating rating={usefulness || 0} readonly size="sm" />
+                        <UIStarRating rating={usefulness === null ? -1 : usefulness} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -3327,6 +3333,53 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 {courseComments && (
                   <div className="pt-2">
                     <div className="text-sm">{renderCommentMarkdown(courseComments)}</div>
+                  </div>
+                )}
+
+                {/* 課程要求 */}
+                {instructorEvaluations && instructorEvaluations.length > 0 && (
+                  <div className="space-y-3">
+                    <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4 shrink-0" />
+                      <span>{t('review.courseRequirements')}</span>
+                    </h5>
+                    <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                      {(() => {
+                        const renderBooleanBadge = (value: boolean, label: string) => {
+                          return (
+                            <Badge 
+                              key={label}
+                              variant={value ? "default" : "secondary"}
+                              className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+                            >
+                              {value ? (
+                                <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+                              ) : (
+                                <XCircle className="h-3 w-3 mr-1 shrink-0" />
+                              )}
+                              {label}
+                            </Badge>
+                          );
+                        };
+
+                        // Get requirements from first instructor evaluation (they should be the same for all)
+                        const firstInstructor = instructorEvaluations[0];
+                        if (!firstInstructor) return null;
+
+                        return (
+                          <>
+                            {renderBooleanBadge(firstInstructor.hasAttendanceRequirement, t('review.requirements.attendance'))}
+                            {renderBooleanBadge(firstInstructor.hasQuiz, t('review.requirements.quiz'))}
+                            {renderBooleanBadge(firstInstructor.hasMidterm, t('review.requirements.midterm'))}
+                            {renderBooleanBadge(firstInstructor.hasFinal, t('review.requirements.final'))}
+                            {renderBooleanBadge(firstInstructor.hasIndividualAssignment, t('review.requirements.individualAssignment'))}
+                            {renderBooleanBadge(firstInstructor.hasGroupProject, t('review.requirements.groupProject'))}
+                            {renderBooleanBadge(firstInstructor.hasPresentation, t('review.requirements.presentation'))}
+                            {renderBooleanBadge(firstInstructor.hasReading, t('review.requirements.reading'))}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
 
@@ -3447,7 +3500,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.teachingQuality')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                <UIStarRating rating={instructor.teachingScore || 0} readonly size="sm" />
+                                <UIStarRating rating={instructor.teachingScore === null ? -1 : instructor.teachingScore} readonly size="sm" />
                               </div>
                             </div>
                           </div>
@@ -3458,7 +3511,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.gradingSatisfaction')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                <UIStarRating rating={instructor.gradingScore || 0} readonly size="sm" />
+                                <UIStarRating rating={instructor.gradingScore === null ? -1 : instructor.gradingScore} readonly size="sm" />
                               </div>
                             </div>
                           </div>

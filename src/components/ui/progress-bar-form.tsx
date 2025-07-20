@@ -69,6 +69,12 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
     if (stepIndex === currentStep || 
         completedSteps.has(stepIndex) || 
         (stepIndex === currentStep + 1 && isCurrentStepValid())) {
+      
+      // Mark current step as completed when moving forward to next step
+      if (stepIndex > currentStep && isCurrentStepValid()) {
+        setCompletedSteps(prev => new Set([...prev, currentStep]));
+      }
+      
       onStepChange(stepIndex);
     }
   };
@@ -88,7 +94,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
       <div className="space-y-4">
 
         {/* Modern pill-based progress bar - Mobile optimized with animation */}
-        <div className="flex justify-start overflow-x-auto pb-2">
+        <div className="flex justify-start md:justify-center overflow-x-auto pb-2">
           <div className="flex items-center">
             {steps
               .map((step, index) => ({ ...step, originalIndex: index }))
@@ -177,7 +183,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
           variant="outline"
           onClick={handlePrevious}
           disabled={currentStep === 0}
-          className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-red-400 hover:text-red-500 dark:hover:border-red-400 dark:hover:text-red-400 transition-all duration-200 transform hover:scale-105"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>{previousLabel}</span>
