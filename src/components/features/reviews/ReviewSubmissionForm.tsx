@@ -464,7 +464,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   // Step validation functions
   const validateCourseSelectionStep = () => {
-    return selectedCourse && selectedTerm && selectedInstructors.length > 0;
+    const basicValid = selectedCourse && selectedTerm && selectedInstructors.length > 0;
+    // For new reviews, also check if user can submit reviews
+    if (!isEditMode && reviewEligibility && !reviewEligibility.canSubmit) {
+      return false;
+    }
+    return basicValid;
   };
 
   const validateCourseReviewStep = () => {
@@ -481,8 +486,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       evaluation.gradingScore !== null && 
       evaluation.comments.trim() !== '' &&
       (!evaluation.hasServiceLearning || 
-       evaluation.serviceLearningType !== 'compulsory' || 
-       evaluation.serviceLearningDescription.trim() !== '')
+       (evaluation.serviceLearningType !== 'compulsory' || 
+        evaluation.serviceLearningDescription.trim() !== ''))
     );
   };
   
@@ -501,8 +506,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       evaluation.comments.trim() !== '' &&
       hasAtLeastOneRequirement &&
       (!evaluation.hasServiceLearning || 
-       evaluation.serviceLearningType !== 'compulsory' || 
-       evaluation.serviceLearningDescription.trim() !== '');
+       (evaluation.serviceLearningType !== 'compulsory' || 
+        evaluation.serviceLearningDescription.trim() !== ''));
   };
 
   const validateSubmissionStep = () => {
@@ -2261,10 +2266,33 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   }, [validateForm, user, isAnonymous, selectedCourse, selectedTerm, workload, difficulty, usefulness, grade, courseComments, instructorEvaluations, reviewLanguage, isEditMode, editReviewId, toast, t, navigate]);
 
   const [showMainExitConfirm, setShowMainExitConfirm] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Handle exit for main review form
   const handleMainExit = () => {
     setShowMainExitConfirm(true);
+  };
+
+  // Handle submit confirmation
+  const handleSubmitClick = () => {
+    setShowSubmitConfirm(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    try {
+      await handleSubmit();
+      // Show celebration effect after successful submission
+      setShowSubmitConfirm(false);
+      setShowCelebration(true);
+      // Hide celebration after 2.5 seconds
+      setTimeout(() => {
+        setShowCelebration(false);
+      }, 2500);
+    } catch (error) {
+      // If submission fails, just close the dialog
+      setShowSubmitConfirm(false);
+    }
   };
 
   const handleConfirmMainExit = () => {
@@ -2514,9 +2542,13 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               onClick={() => navigate(`/courses/${selectedCourse}#review-${review.$id}`)}
                               className="inline-flex items-center gap-2 px-3 py-1.5 bg-background/80 border border-destructive/30 rounded-md text-sm hover:bg-background hover:border-destructive/50 transition-colors"
                             >
-                              <Badge variant="outline" className="text-xs">
-                                {review.course_final_grade || 'N/A'}
-                              </Badge>
+                              <div className="flex-shrink-0">
+                                <GradeBadge 
+                                  grade={review.course_final_grade || 'N/A'} 
+                                  size="sm" 
+                                  showTooltip={false}
+                                />
+                              </div>
                               <span className="text-xs text-muted-foreground">
                                 {formatDateTimeUTC8(review.$createdAt)}
                               </span>
@@ -3151,7 +3183,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
         const previewStep = {
           id: 'preview',
-          title: t('review.previewMode'),
+          title: t('review.preview'),
           icon: <Eye className="h-5 w-5" />,
           isValid: () => true,
           content: (
@@ -3409,12 +3441,26 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         {/* 講師評分 */}
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div className="text-center">
-                            <div className="font-medium text-sm mb-1">{t('review.teaching')}</div>
-                            <UIStarRating rating={instructor.teachingScore || 0} readonly size="sm" />
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-1 mb-1 md:mb-0">
+                              <span className="font-medium text-sm">
+                                <span className="md:hidden">{t('review.teaching')}</span>
+                                <span className="hidden md:inline">{t('review.teachingQuality')}</span>
+                              </span>
+                              <div className="flex items-center justify-center md:ml-1">
+                                <UIStarRating rating={instructor.teachingScore || 0} readonly size="sm" />
+                              </div>
+                            </div>
                           </div>
                           <div className="text-center">
-                            <div className="font-medium text-sm mb-1">{t('review.grading')}</div>
-                            <UIStarRating rating={instructor.gradingScore || 0} readonly size="sm" />
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-1 mb-1 md:mb-0">
+                              <span className="font-medium text-sm">
+                                <span className="md:hidden">{t('review.grading')}</span>
+                                <span className="hidden md:inline">{t('review.gradingSatisfaction')}</span>
+                              </span>
+                              <div className="flex items-center justify-center md:ml-1">
+                                <UIStarRating rating={instructor.gradingScore || 0} readonly size="sm" />
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -3449,29 +3495,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           )
         };
 
-        const finalStep = {
-          id: 'submission',
-          title: t('review.submit'),
-          icon: <Send className="h-5 w-5" />,
-          isValid: () => true,
-          content: (
-            <div className="space-y-6 text-center">
-              <div className="space-y-3">
-                <div className="text-lg font-semibold">{t('review.readyToSubmit', '準備提交評論')}</div>
-                <div className="text-sm text-muted-foreground">
-                  {t('review.submitConfirmation', '請確認您的評論內容無誤後點擊提交。')}
-                </div>
-              </div>
-            </div>
-          )
-        };
-          
           // Combine all steps
-          return [...baseSteps, ...instructorSteps, ...remainingInstructorSteps.filter(Boolean), settingsStep, previewStep, finalStep];
+          return [...baseSteps, ...instructorSteps, ...remainingInstructorSteps.filter(Boolean), settingsStep, previewStep];
         })()}
         currentStep={currentStep}
         onStepChange={setCurrentStep}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmitClick}
         submitLabel={editReviewId ? t('review.updateReview') : t('review.submitReview')}
         isSubmitting={submitting}
         previousLabel={t('common.previous') || '上一步'}
@@ -3481,7 +3510,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Main Exit Confirmation Dialog */}
       <AlertDialog open={showMainExitConfirm} onOpenChange={setShowMainExitConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('review.exitConfirm')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -3494,6 +3523,66 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               {t('common.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Submit Confirmation Dialog */}
+      <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+        <AlertDialogContent className="bg-white dark:bg-gray-900">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isEditMode ? t('review.confirmUpdate') : t('review.confirmSubmit')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isEditMode 
+                ? t('review.confirmUpdateDescription') 
+                : t('review.confirmSubmitDescription')
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmSubmit}
+              disabled={submitting}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {t('review.submitting')}
+                </>
+              ) : (
+                isEditMode ? t('review.updateReview') : t('review.submitReview')
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Celebration Dialog */}
+      <AlertDialog open={showCelebration} onOpenChange={setShowCelebration}>
+        <AlertDialogContent className="bg-white dark:bg-gray-900 text-center">
+          <AlertDialogHeader className="items-center">
+            <div className="relative mb-4">
+              {/* Animated sparkles background */}
+              <div className="absolute inset-0 flex justify-center items-center">
+                <Sparkles className="h-16 w-16 text-yellow-400 animate-pulse" />
+              </div>
+              {/* Main success icon */}
+              <div className="relative z-10 flex justify-center">
+                <CheckCircle2 className="h-20 w-20 text-green-500 animate-bounce" />
+              </div>
+            </div>
+            <AlertDialogTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {isEditMode ? t('review.updateSuccess') : t('review.submitSuccess')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-lg">
+              {isEditMode 
+                ? t('review.updateSuccessMessage') 
+                : t('review.submitSuccessMessage')
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="text-4xl animate-bounce mt-2">🎉</div>
         </AlertDialogContent>
       </AlertDialog>
     </div>
