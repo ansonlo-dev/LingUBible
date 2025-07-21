@@ -64,21 +64,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     return isIPadSize && isDesktopMode;
   }, [viewportDimensions.width, viewportDimensions.height, isDesktopMode]);
   
-  // Special handling for iPad Mini landscape (1024x768) breakpoint edge case
-  const isIPadMiniLandscape = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    const width = viewportDimensions.width;
-    const height = viewportDimensions.height;
-    // Exact iPad Mini landscape dimensions with some tolerance for dev tools
-    const detected = width >= 1020 && width <= 1030 && height >= 760 && height <= 775 && width > height;
-    
-    // Debug log for iPad Mini landscape detection
-    if (detected && isOpen) {
-      console.log('🍎 iPad Mini Landscape detected:', { width, height, isSidebarCollapsed, modalLeftPosition: isSidebarCollapsed ? 4 : 12 });
-    }
-    
-    return detected;
-  }, [viewportDimensions.width, viewportDimensions.height, isOpen, isSidebarCollapsed]);
   
   // For true desktop (larger than iPad Pro), use simple centering
   const isLargeDesktop = isDesktopMode && !isIPadDevice;
@@ -93,15 +78,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const modalLeftPosition = useMemo(() => {
     if (!isIPadDevice) return 0;
     
-    // Special handling for iPad Mini landscape at 1024px breakpoint
-    if (isIPadMiniLandscape) {
-      // On iPad Mini landscape, we need extra space when sidebar is expanded
-      // to prevent the modal from being covered by the sidebar
-      return isSidebarCollapsed ? sidebarPositions.collapsed : sidebarPositions.expanded + 1; // Add 1rem extra
-    }
-    
     return isSidebarCollapsed ? sidebarPositions.collapsed : sidebarPositions.expanded;
-  }, [isIPadDevice, isIPadMiniLandscape, isSidebarCollapsed, sidebarPositions]);
+  }, [isIPadDevice, isSidebarCollapsed, sidebarPositions]);
   
   const { addToHistory } = useSearchHistory();
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,7 +160,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
   // Update viewport dimensions when sidebar state changes (important for iPad positioning)
   useEffect(() => {
-    if (isOpen && (isIPadDevice || isIPadMiniLandscape)) {
+    if (isOpen && isIPadDevice) {
       const updateViewportForSidebar = () => {
         setViewportDimensions(prev => ({
           ...prev,
@@ -195,7 +173,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       const timer = setTimeout(updateViewportForSidebar, 100);
       return () => clearTimeout(timer);
     }
-  }, [isSidebarCollapsed, isOpen, isIPadDevice, isIPadMiniLandscape]);
+  }, [isSidebarCollapsed, isOpen, isIPadDevice]);
 
 
 
@@ -518,13 +496,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       {isDesktopMode ? (
         <div 
           className={isLargeDesktop ? "fixed inset-0 flex items-center justify-center p-4" : "fixed top-16"}
-          key={`desktop-modal-${isSidebarCollapsed}-${isIPadDevice}-${isIPadMiniLandscape}`} // Force re-render when sidebar or device type changes
+          key={`desktop-modal-${isSidebarCollapsed}-${isIPadDevice}`} // Force re-render when sidebar or device type changes
           style={{
             ...(isLargeDesktop ? {} : {
               // iPad-specific positioning that adapts to sidebar
               left: `${modalLeftPosition}rem`,
-              // On iPad Mini landscape, use more conservative right margin when sidebar is expanded
-              right: isIPadMiniLandscape && !isSidebarCollapsed ? '2rem' : '1rem',
+              right: '1rem',
               transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
             }),
             zIndex: 200, // Standard z-index

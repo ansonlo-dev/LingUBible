@@ -1250,30 +1250,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
-  /* iPad Mini landscape (1024x768) - avoid sidebar overlap by positioning right of sidebar */
-  @media (width: 1024px) and (height: 768px) and (orientation: landscape) {
-    /* Default positioning - assume expanded sidebar (11rem) */
-    [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
-      position: fixed !important;
-      left: var(--sidebar-width) !important; /* 11rem - start after expanded sidebar */
-      top: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      transform: none !important;
-      width: calc(100vw - var(--sidebar-width)) !important; /* Screen width minus sidebar */
-      height: 100vh !important;
-      max-width: none !important;
-      max-height: none !important;
-      border-radius: 0 !important;
-      z-index: 200 !important;
-    }
-
-    /* When sidebar is collapsed - adjust positioning for collapsed width (4rem) */
-    body:has(.sidebar-container.collapsed) [data-radix-dialog-content][role="dialog"]:has([cmdk-root]) {
-      left: var(--sidebar-collapsed-width) !important; /* 4rem - start after collapsed sidebar */
-      width: calc(100vw - var(--sidebar-collapsed-width)) !important; /* Screen width minus collapsed sidebar */
-    }
-  }
 
   /* 滾動條樣式 - 桌面版 */
   ::-webkit-scrollbar {
