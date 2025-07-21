@@ -187,7 +187,7 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
               "h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none flex items-center justify-center text-xs font-bold mr-1",
               rating === 0
                 ? "bg-red-500 border-red-500 text-white"
-                : "border-gray-300 text-gray-400 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
+                : "border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
             )}
             disabled={isNotApplicable}
           >
@@ -208,10 +208,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                 <Star
                   className={`h-6 w-6 transition-colors ${
                     isNotApplicable
-                      ? 'text-gray-300 dark:text-gray-600'
+                      ? 'text-gray-500 dark:text-gray-600'
                       : starValue - 0.5 <= displayRating
                       ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300'
+                      : 'text-gray-800 dark:text-gray-600'
                   }`}
                   style={{
                     clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
@@ -231,12 +231,12 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                 <Star
                   className={`h-6 w-6 transition-colors ${
                     isNotApplicable
-                      ? 'text-gray-300 dark:text-gray-600'
+                      ? 'text-gray-500 dark:text-gray-600'
                       : starValue <= displayRating
                       ? 'fill-yellow-400 text-yellow-400'
                       : starValue - 0.5 <= displayRating
                       ? 'text-yellow-400'
-                      : 'text-gray-300'
+                      : 'text-gray-800 dark:text-gray-600'
                   }`}
                   style={{
                     fill: isNotApplicable 
@@ -302,7 +302,7 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                 "h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none flex items-center justify-center text-xs font-bold mr-1",
                 rating === 0
                   ? "bg-red-500 border-red-500 text-white"
-                  : "border-gray-300 text-gray-400 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
+                  : "border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
               )}
               disabled={isNotApplicable}
             >
@@ -323,10 +323,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                   <Star
                     className={`h-6 w-6 transition-colors ${
                       isNotApplicable
-                        ? 'text-gray-300 dark:text-gray-600'
+                        ? 'text-gray-500 dark:text-gray-600'
                         : starValue - 0.5 <= displayRating
                         ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
+                        : 'text-gray-800 dark:text-gray-600'
                     }`}
                     style={{
                       clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
@@ -346,12 +346,12 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                   <Star
                     className={`h-6 w-6 transition-colors ${
                       isNotApplicable
-                        ? 'text-gray-300 dark:text-gray-600'
+                        ? 'text-gray-500 dark:text-gray-600'
                         : starValue <= displayRating
                         ? 'fill-yellow-400 text-yellow-400'
                         : starValue - 0.5 <= displayRating
                         ? 'text-yellow-400'
-                        : 'text-gray-300'
+                        : 'text-gray-800 dark:text-gray-600'
                     }`}
                     style={{
                       fill: isNotApplicable 
@@ -1222,7 +1222,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           "w-full text-left justify-start text-xs h-auto py-1.5 px-2.5 whitespace-normal transition-all",
                           isSelected 
                             ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200 hover:border-green-400 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/40" 
-                            : "text-green-600 border-green-200 hover:bg-green-50 hover:text-green-600 hover:border-green-300 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/20 dark:hover:border-green-700"
+                            : "text-green-700 border-green-400 hover:bg-green-50 hover:text-green-700 hover:border-green-500 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/20 dark:hover:border-green-700"
                         )}
                         onClick={() => addPhraseToComment(phrase, type, instructorIndex)}
                       >
@@ -2499,7 +2499,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         // If both types have instructors, show tabs
                         if (hasLectureInstructors && hasTutorialInstructors) {
                           return (
-                            <div className="border rounded-md px-3 py-2">
+                            <div className="border border-black dark:border-border rounded-md px-3 py-2">
                               <Tabs value={activeInstructorTab} onValueChange={setActiveInstructorTab}>
                                 <TabsList className="grid w-full grid-cols-2">
                                   <TabsTrigger value="Lecture">
@@ -2528,7 +2528,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           const sectionTitle = hasLectureInstructors ? t('review.lectureInstructors') : t('review.tutorialInstructors');
                           
                           return (
-                            <div className="border rounded-md px-3 py-2">
+                            <div className="border border-black dark:border-border rounded-md px-3 py-2">
                               <div className="mb-2">
                                 <h4 className="text-sm font-medium text-muted-foreground">{sectionTitle}</h4>
                               </div>
@@ -3301,7 +3301,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full -mx-6">
-              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-white dark:bg-gray-900 w-full mx-6">
+              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-gray-100 dark:bg-gray-900 w-full mx-6">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -3611,7 +3611,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <Badge 
                                   key={label}
                                   variant={value ? "default" : "secondary"}
-                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+                                  className={`text-xs shrink-0 hover:bg-transparent ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
                                 >
                                   {value ? (
                                     <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
