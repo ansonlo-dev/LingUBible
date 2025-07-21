@@ -261,8 +261,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                 className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
                 onClick={handleNavClick(true)}
               >
-                <BookOpen className="h-6 w-6 flex-shrink-0" />
-                <span className="text-xl font-bold">LingUBible</span>
+                <BookOpen className="h-9 w-9 flex-shrink-0" />
+                <span className="text-3xl font-bold">LingUBible</span>
               </Link>
             )}
             {!shouldShowText && (
@@ -271,7 +271,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                 className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
                 onClick={handleNavClick(true)}
               >
-                <BookOpen className="h-6 w-6" />
+                <BookOpen className="h-9 w-9" />
               </Link>
             )}
           </div>

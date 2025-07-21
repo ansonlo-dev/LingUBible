@@ -570,18 +570,8 @@ const RouterContent = ({
               {/* 手機版遮罩 */}
               {isMobileSidebarOpen && isMobile && (
                 <div 
-                  className="fixed z-[45] bg-black/50 backdrop-blur-sm"
+                  className="fixed inset-0 z-[35] bg-black/50 backdrop-blur-sm"
                   onClick={() => setIsMobileSidebarOpen(false)}
-                  style={{
-                    position: 'fixed',
-                    // Start after the sidebar
-                    left: window.innerWidth < window.innerHeight 
-                      ? 'min(66.67vw, 300px)' // Portrait
-                      : 'min(33.33vw, 400px)', // Landscape
-                    right: 0,
-                    top: 0,
-                    bottom: 0
-                  }}
                 />
               )}
               
