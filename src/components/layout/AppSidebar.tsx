@@ -38,7 +38,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
   const location = useLocation();
   const { t, language, setLanguage } = useLanguage(); // Add back language and setLanguage
   const { user, loading } = useAuth(); // Add back loading
-  const { isMobile } = useResponsive(); // Use enhanced detection
+  const { isMobile, isMobilePortrait } = useResponsive(); // Use enhanced detection
   const [forceRender, setForceRender] = useState(0);
   const [dynamicHeight, setDynamicHeight] = useState('100vh');
 
@@ -252,28 +252,30 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
           minHeight: isMobile ? dynamicHeight : undefined
         }}
       >
-        {/* Logo 區域 - 所有設備都顯示 */}
-        <div className="p-4 md:p-2 md:h-16 md:flex md:items-center mt-2">
-          {shouldShowText && (
-            <Link 
-              to="/" 
-              className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={handleNavClick(true)}
-            >
-              <BookOpen className="h-6 w-6 flex-shrink-0" />
-              <span className="text-xl font-bold">LingUBible</span>
-            </Link>
-          )}
-          {!shouldShowText && (
-            <Link 
-              to="/" 
-              className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={handleNavClick(true)}
-            >
-              <BookOpen className="h-6 w-6" />
-            </Link>
-          )}
-        </div>
+        {/* Logo 區域 - 在手機直向模式下隱藏 (因為顯示在 Header 中) */}
+        {!isMobilePortrait && (
+          <div className="p-4 md:p-2 md:h-16 md:flex md:items-center mt-2">
+            {shouldShowText && (
+              <Link 
+                to="/" 
+                className="flex items-center gap-3 px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
+                onClick={handleNavClick(true)}
+              >
+                <BookOpen className="h-6 w-6 flex-shrink-0" />
+                <span className="text-xl font-bold">LingUBible</span>
+              </Link>
+            )}
+            {!shouldShowText && (
+              <Link 
+                to="/" 
+                className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
+                onClick={handleNavClick(true)}
+              >
+                <BookOpen className="h-6 w-6" />
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* 導航選單 */}
         <nav className="flex-1 p-4 md:py-4 md:px-2">
