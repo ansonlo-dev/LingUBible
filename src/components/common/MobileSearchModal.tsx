@@ -495,7 +495,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[120]" style={{ pointerEvents: 'auto' }}>
+    <div className="fixed inset-0 z-[200]" style={{ pointerEvents: 'auto' }}>
       {/* Backdrop - 現在覆蓋整個螢幕包括側邊欄 */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-md transition-all duration-300 ease-in-out"
@@ -527,7 +527,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               right: isIPadMiniLandscape && !isSidebarCollapsed ? '2rem' : '1rem',
               transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
             }),
-            zIndex: 110, // Ensure it's above the backdrop, header, and sidebar
+            zIndex: 200, // Ensure it's above the backdrop, header, and sidebar
             pointerEvents: 'auto'
           }}
         >
@@ -1236,22 +1236,17 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         </div>
                   ) : (
         <div 
-          className={`fixed left-0 right-0 flex justify-center px-4 ${isMobileLandscape ? 'top-0 pt-2' : 'top-16'}`}
+          className={`fixed left-0 right-0 flex justify-center px-0 top-0`}
           style={{
-            zIndex: 110 // Ensure it's above the backdrop, header, and sidebar
+            zIndex: 200 // Ensure it's above the backdrop, header, and sidebar
           }}
         >
           <div 
-            className="bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden w-full"
+            className={`bg-white dark:bg-card shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden w-full rounded-none`}
             style={{
-              maxWidth: '48rem', // Slightly smaller max-width for mobile
+              maxWidth: 'none', // Always full width for mobile
               // Fixed height to prevent jumping between loading and loaded states
-              height: viewportDimensions.height <= 500 
-                ? (viewportDimensions.height <= 450 
-                    ? (isMobileLandscape ? 'calc(100vh - 1rem)' : 'calc(100vh - 4rem)') // Mobile phones in landscape (utilize more space when header is covered)
-                    : (isMobileLandscape ? 'calc(100vh - 1rem)' : 'calc(100vh - 2rem)') // Tablets in landscape
-                  )
-                : '80vh' // Portrait mode
+              height: '100vh' // Always use full viewport height
             }}
             onClick={(e) => e.stopPropagation()}
 
