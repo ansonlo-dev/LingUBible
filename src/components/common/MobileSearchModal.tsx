@@ -1236,7 +1236,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         </div>
                   ) : (
         <div 
-          className={`fixed left-0 right-0 flex justify-center px-4 ${isMobileLandscape ? 'top-0' : 'top-16'}`}
+          className={`fixed left-0 right-0 flex justify-center px-4 ${isMobileLandscape ? 'top-0 pt-2' : 'top-16'}`}
           style={{
             zIndex: 110 // Ensure it's above the backdrop, header, and sidebar
           }}
