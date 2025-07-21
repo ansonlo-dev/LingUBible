@@ -144,9 +144,9 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                       onClick={() => handleStepClick(originalIndex)}
                       disabled={!isAccessible}
                       className={cn(
-                        "relative flex items-center justify-center rounded-full border-2 transition-all duration-300 transform hover:scale-105 group z-10 font-medium",
-                        // Mobile: smaller padding and size
-                        "px-2 py-1.5 text-xs min-w-[80px]",
+                        "relative flex items-center justify-center rounded-full border-2 transition-all duration-300 transform hover:scale-105 group z-10 font-bold",
+                        // Mobile: larger padding and size for better touch targets
+                        "px-3 py-2 text-xs min-w-[90px]",
                         // Desktop: larger padding and size  
                         "md:px-4 md:py-2 md:text-sm md:min-w-[120px]",
                         {
@@ -165,7 +165,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                         {step.icon ? (
                           <span className="w-3 h-3 md:w-4 md:h-4 flex items-center justify-center">
                             {React.cloneElement(step.icon as React.ReactElement, { 
-                              className: "w-3 h-3 md:w-4 md:h-4" 
+                              className: "w-3 h-3 md:w-4 md:h-4 stroke-2" 
                             })}
                           </span>
                         ) : (
