@@ -133,12 +133,12 @@ export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
           >
             {isPreviewMode ? (
               <>
-                <Edit3 className="h-3 w-3 mr-1" />
+                <Edit3 className="h-3 w-3 mr-0.5" />
                 {t('review.edit')}
               </>
             ) : (
               <>
-                <Eye className="h-3 w-3 mr-1" />
+                <Eye className="h-3 w-3 mr-0.5" />
                 {t('review.preview')}
               </>
             )}
