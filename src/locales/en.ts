@@ -1272,7 +1272,7 @@ export default {
   'review.usefulness': 'Usefulness',
   'review.usefulnessDescription': 'How useful was this course for your studies/career?',
   'review.grade': 'Final Grade',
-  'review.gradePlaceholder': 'Select your grade...',
+  'review.gradePlaceholder': 'Select your grade',
   'review.comments': 'Course Comments',
   'review.commentsPlaceholder': 'Share your thoughts about the course...',
   'review.hasServiceLearning': 'Service Learning',

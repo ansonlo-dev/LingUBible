@@ -73,7 +73,7 @@ export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
   const formatActions = [
     { icon: Bold, action: () => insertMarkdown('**', '**'), title: 'Bold' },
     { icon: Italic, action: () => insertMarkdown('*', '*'), title: 'Italic' },
-    { icon: Underline, action: () => insertMarkdown('<u>', '</u>'), title: 'Underline' },
+    { icon: Underline, action: () => insertMarkdown('__', '__'), title: 'Underline' },
     { icon: Strikethrough, action: () => insertMarkdown('~~', '~~'), title: 'Strikethrough' },
     { icon: List, action: () => insertMarkdown('\n- ', ''), title: 'Bullet List' },
     { icon: ListOrdered, action: () => insertMarkdown('\n1. ', ''), title: 'Numbered List' },
@@ -179,7 +179,7 @@ export const HybridMarkdownEditor: React.FC<HybridMarkdownEditorProps> = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             rows={rows}
-            className="rounded-t-none border-t-0 resize-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="rounded-t-none border-t-0 resize-y focus:ring-2 focus:ring-ring focus:ring-offset-2"
             onFocus={handleFocus}
             onBlur={handleBlur}
             disabled={disabled}

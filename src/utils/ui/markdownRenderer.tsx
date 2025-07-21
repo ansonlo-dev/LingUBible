@@ -92,25 +92,25 @@ const renderFormattedText = (text: string): React.ReactNode => {
     // Bold text (**text**)
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
       const content = part.slice(2, -2);
-      return <strong key={index} className="font-semibold">{renderFormattedText(content)}</strong>;
+      return <strong key={index} className="font-semibold">{content}</strong>;
     }
     
     // Italic text (*text*) - but not if it's part of **text**
     if (part.startsWith('*') && part.endsWith('*') && part.length > 2 && !part.startsWith('**')) {
       const content = part.slice(1, -1);
-      return <em key={index} className="italic">{renderFormattedText(content)}</em>;
+      return <em key={index} className="italic">{content}</em>;
     }
     
     // Underline text (__text__)
     if (part.startsWith('__') && part.endsWith('__') && part.length > 4) {
       const content = part.slice(2, -2);
-      return <u key={index} className="underline">{renderFormattedText(content)}</u>;
+      return <u key={index} className="underline">{content}</u>;
     }
     
     // Strikethrough text (~~text~~)
     if (part.startsWith('~~') && part.endsWith('~~') && part.length > 4) {
       const content = part.slice(2, -2);
-      return <s key={index} className="line-through">{renderFormattedText(content)}</s>;
+      return <s key={index} className="line-through">{content}</s>;
     }
     
     return part;
