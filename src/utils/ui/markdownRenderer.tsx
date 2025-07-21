@@ -46,8 +46,8 @@ export const renderCommentMarkdown = (text: string): React.ReactNode => {
     if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
       const content = trimmedLine.slice(2, -2);
       elements.push(
-        <div key={key++} className="font-medium text-foreground mt-2 mb-1">
-          {content}
+        <div key={key++} className="text-foreground mt-2 mb-1">
+          <b>{content}</b>
         </div>
       );
       continue;
@@ -92,7 +92,7 @@ const renderFormattedText = (text: string): React.ReactNode => {
     // Bold text (**text**)
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
       const content = part.slice(2, -2);
-      return <strong key={index} className="font-semibold">{content}</strong>;
+      return <b key={index}>{content}</b>;
     }
     
     // Italic text (*text*) - but not if it's part of **text**
