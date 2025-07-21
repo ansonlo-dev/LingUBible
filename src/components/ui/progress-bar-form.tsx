@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,31 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
 }) => {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [unlockedSteps, setUnlockedSteps] = useState<Set<number>>(new Set([0])); // Initially unlock the first step
+  const progressContainerRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Scroll current step into view
+  useEffect(() => {
+    if (progressContainerRef.current && stepRefs.current[currentStep]) {
+      const container = progressContainerRef.current;
+      const currentStepElement = stepRefs.current[currentStep];
+      
+      if (currentStepElement) {
+        const containerRect = container.getBoundingClientRect();
+        const stepRect = currentStepElement.getBoundingClientRect();
+        
+        // Check if step is outside the visible area
+        if (stepRect.left < containerRect.left || stepRect.right > containerRect.right) {
+          // Scroll to make current step visible on the left side
+          const scrollLeft = currentStepElement.offsetLeft - container.offsetLeft - 20; // 20px padding
+          container.scrollTo({
+            left: Math.max(0, scrollLeft),
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+  }, [currentStep]);
 
   // Check if current step is valid
   const isCurrentStepValid = () => {
@@ -99,7 +124,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
       <div className="space-y-4">
 
         {/* Modern pill-based progress bar - Mobile optimized with animation */}
-        <div className="flex justify-start md:justify-center overflow-x-auto pb-2">
+        <div ref={progressContainerRef} className="flex justify-start md:justify-center overflow-x-auto pb-2">
           <div className="flex items-center">
             {steps
               .map((step, index) => ({ ...step, originalIndex: index }))
@@ -115,6 +140,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
                   <div key={step.id} className="flex items-center flex-shrink-0">
                     {/* Step pill */}
                     <button
+                      ref={(el) => { stepRefs.current[originalIndex] = el; }}
                       onClick={() => handleStepClick(originalIndex)}
                       disabled={!isAccessible}
                       className={cn(

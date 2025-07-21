@@ -2596,6 +2596,27 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             isValid: validateCourseReviewStep,
             content: (
               <div className="space-y-4">
+                {/* Course Information */}
+                {selectedCourse && (
+                  <div className="bg-muted/20 rounded-lg p-4 border border-border">
+                    <div className="text-center">
+                      <div className="font-bold text-lg text-primary">{selectedCourse}</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {courses?.find(c => c.course_code === selectedCourse)?.course_title}
+                      </div>
+                      {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                        const selectedCourseData = courses?.find(c => c.course_code === selectedCourse);
+                        const chineseName = language === 'zh-TW' ? selectedCourseData?.course_title_tc : selectedCourseData?.course_title_sc;
+                        return chineseName && (
+                          <div className="text-sm text-muted-foreground mt-0.5">
+                            {chineseName}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Workload Rating */}
                 <div className="space-y-1">
                   <FormStarRating rating={workload} onRatingChange={setWorkload} label={t('review.workload')} type="workload" t={t} required />
@@ -3214,7 +3235,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full">
-              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full">
+              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full -mx-3">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -3644,9 +3665,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               {t('review.exitConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
-            <AlertDialogCancel className="flex-1">{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmMainExit} className="flex-1">
+          <AlertDialogFooter className="flex flex-row gap-3 justify-center pt-2">
+            <AlertDialogCancel className="flex-1 min-w-0">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMainExit} className="flex-1 min-w-0">
               {t('common.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -3667,12 +3688,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               {t('review.confirmContent')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
-            <AlertDialogCancel disabled={submitting} className="flex-1">{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="flex flex-row gap-3 justify-center pt-2">
+            <AlertDialogCancel disabled={submitting} className="flex-1 min-w-0">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmSubmit}
               disabled={submitting}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex-1"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex-1 min-w-0"
             >
               {submitting ? (
                 <>
