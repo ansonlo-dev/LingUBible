@@ -2,7 +2,7 @@ name = "lingubible"
 compatibility_date = "2025-06-30"
 
 [build]
-command = "SKIP_FONT_PROCESSING=true NODE_ENV=production VITE_BUILD_CACHE=true VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:fast"
+command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:workers-optimized"
 cwd = ""
 watch_dir = "src"
 

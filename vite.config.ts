@@ -43,14 +43,20 @@ export default defineConfig(({ command, mode }) => {
           return false;
         },
         output: {
-          // Simplified chunking strategy to avoid React splitting issues
-          manualChunks: isProduction ? {
-            'react-vendor': ['react', 'react-dom'],
-            'router': ['react-router-dom'],
-            'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-toast', 'lucide-react'],
-            'query-vendor': ['@tanstack/react-query', 'appwrite'],
-            'chart-vendor': ['echarts', 'echarts-for-react'],
-            'utils': ['clsx', 'tailwind-merge', 'date-fns']
+          // Enhanced chunking strategy for better build performance
+          manualChunks: isProduction ? (id) => {
+            // 語言文件單獨分塊以加速構建
+            if (id.includes('src/locales/en.ts')) return 'en';
+            if (id.includes('src/locales/zh-CN.ts')) return 'zh-CN';
+            if (id.includes('src/locales/zh-TW.ts')) return 'zh-TW';
+            
+            // 其他 vendor 分塊
+            if (id.includes('react') || id.includes('react-dom')) return 'react-vendor';
+            if (id.includes('react-router-dom')) return 'router';
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui-vendor';
+            if (id.includes('@tanstack/react-query') || id.includes('appwrite')) return 'query-vendor';
+            if (id.includes('echarts')) return 'chart-vendor';
+            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('date-fns')) return 'utils';
           } : undefined,
           chunkFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
           entryFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
@@ -77,12 +83,23 @@ export default defineConfig(({ command, mode }) => {
         'date-fns',
         'appwrite',
       ],
-      exclude: ['@vite/client', '@vite/env'],
+      exclude: [
+        '@vite/client', 
+        '@vite/env',
+        // 排除語言文件以加速構建
+        'src/locales/en.ts',
+        'src/locales/zh-CN.ts', 
+        'src/locales/zh-TW.ts'
+      ],
       // 啟用快取以加速重建
       force: false,
-      // 確保 Bun 兼容性
+      // 確保 Bun 兼容性和性能優化
       esbuildOptions: {
         target: 'es2020',
+        keepNames: false,
+        minifyIdentifiers: isProduction,
+        minifySyntax: isProduction,
+        minifyWhitespace: isProduction,
       },
     },
     esbuild: {

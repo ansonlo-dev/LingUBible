@@ -1309,9 +1309,7 @@ export default {
   'review.reviewLimitExceededInfo': '您已达到此课程的最大评论限制 2 次。',
   'review.reviewNumber': '评论 #{number}',
 
-  'review.submitSuccess': '评论提交成功！感谢您的分享。',
   'review.submitError': '提交失败，请稍后再试。',
-  'review.updateSuccess': '评论更新成功！',
   'review.fillRequired': '请填写所有必填栏位',
   'review.selectAtLeastOneInstructor': '请至少选择一位教师',
   'review.loadingCourses': '加载课程中...',
@@ -1614,7 +1612,7 @@ export default {
   'review.publicDescription': '您的用户名将与此评论一起显示。您可以稍后更改可见性。',
   'review.publicNoticeTitle': '公开评论提醒',
   'review.publicNoticeDescription': '您的用户名将与此评论一起显示。您可以稍后在个人设置中更改评论可见性。',
-  'review.preview': '预览评论',
+  'review.previewReview': '预览评论',
   'review.previewMode': '预览模式',
   'review.settings': '设置',
   'review.confirmSubmit': '确认提交评论',

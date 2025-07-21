@@ -1319,14 +1319,12 @@ export default {
   'review.submitReview': 'Submit Review',
   'review.submit': 'Submit',
   'review.submitting': 'Submitting...',
-  'review.submitSuccess': 'Review submitted successfully!',
   'review.submitError': 'Failed to submit review. Please try again.',
   'review.submitLimitReached': 'You have reached the review limit for this course',
   'review.limitExceeded': 'You have exceeded the maximum number of reviews for this course',
   'review.limitReachedWithPass': 'You cannot submit another review because you already passed this course',
   'review.updateReview': 'Update Review',
   'review.updating': 'Updating...',
-  'review.updateSuccess': 'Review updated successfully!',
 
   // Review eligibility warning
   'review.checkingEligibility': 'Checking review eligibility...',
@@ -1400,7 +1398,7 @@ export default {
   'review.usefulness.moderatelyUseful': 'Moderately Useful',
   'review.usefulness.veryUseful': 'Very Useful',
   'review.usefulness.extremelyUseful': 'Extremely Useful',
-  'review.preview': 'Preview Review',
+  'review.previewReview': 'Preview Review',
   'review.previewMode': 'Preview Mode',
   'review.settings': 'Settings',
   'review.confirmSubmit': 'Confirm Submit Review',
