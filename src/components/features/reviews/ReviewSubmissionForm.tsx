@@ -211,9 +211,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                       ? 'text-gray-500 dark:text-gray-600'
                       : starValue - 0.5 <= displayRating
                       ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-800 dark:text-gray-600'
+                      : 'dark:text-gray-600'
                   }`}
                   style={{
+                    color: starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
                     clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
                   }}
                 />
@@ -236,9 +237,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                       ? 'fill-yellow-400 text-yellow-400'
                       : starValue - 0.5 <= displayRating
                       ? 'text-yellow-400'
-                      : 'text-gray-800 dark:text-gray-600'
+                      : 'dark:text-gray-600'
                   }`}
                   style={{
+                    color: starValue <= displayRating || starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
                     fill: isNotApplicable 
                       ? 'none'
                       : starValue <= displayRating 
@@ -326,9 +328,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                         ? 'text-gray-500 dark:text-gray-600'
                         : starValue - 0.5 <= displayRating
                         ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-800 dark:text-gray-600'
+                        : 'dark:text-gray-600'
                     }`}
                     style={{
+                      color: starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
                       clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
                     }}
                   />
@@ -351,9 +354,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                         ? 'fill-yellow-400 text-yellow-400'
                         : starValue - 0.5 <= displayRating
                         ? 'text-yellow-400'
-                        : 'text-gray-800 dark:text-gray-600'
+                        : 'dark:text-gray-600'
                     }`}
                     style={{
+                      color: starValue <= displayRating || starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
                       fill: isNotApplicable 
                         ? 'none'
                         : starValue <= displayRating 
@@ -3611,7 +3615,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <Badge 
                                   key={label}
                                   variant={value ? "default" : "secondary"}
-                                  className={`text-xs shrink-0 hover:bg-transparent ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
                                 >
                                   {value ? (
                                     <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
