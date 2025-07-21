@@ -322,7 +322,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleSubjectAreaChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -340,7 +340,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleGradeChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -358,7 +358,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleTermChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -376,7 +376,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleReviewLanguageChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -394,7 +394,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleSessionTypeChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -412,7 +412,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleTeachingLanguageChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -433,7 +433,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleSubjectAreaChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -451,7 +451,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleGradeChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -469,7 +469,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleTermChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -487,7 +487,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleReviewLanguageChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -505,7 +505,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleSessionTypeChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />
@@ -523,7 +523,7 @@ export function MyReviewsFilters({
               onSelectionChange={handleTeachingLanguageChange}
               placeholder={t('common.all')}
               totalCount={totalReviews}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 text-sm"
               showCounts={true}
               maxHeight="max-h-48"
             />

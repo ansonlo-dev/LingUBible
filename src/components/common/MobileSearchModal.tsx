@@ -493,19 +493,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50" style={{ pointerEvents: 'auto' }}>
+    <div className="fixed inset-0 z-[120]" style={{ pointerEvents: 'auto' }}>
       {/* Backdrop */}
       <div 
-        className={isLargeDesktop ? "fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out" : "fixed bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out"}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out"
         style={{
-          ...(isLargeDesktop ? {} : {
-            // iPad: backdrop adapts to sidebar positioning
-            top: 0,
-            bottom: 0,
-            left: `${modalLeftPosition}rem`,
-            // Backdrop right edge should align with modal for iPad Mini landscape
-            right: isIPadMiniLandscape && !isSidebarCollapsed ? '2rem' : 0
-          }),
           transform: 'translateZ(0)' // Force GPU acceleration
         }}
         onClick={handleClose}
@@ -524,7 +516,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               right: isIPadMiniLandscape && !isSidebarCollapsed ? '2rem' : '1rem',
               transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
             }),
-            zIndex: 51, // Ensure it's above the backdrop
+            zIndex: 110, // Ensure it's above the backdrop, header, and sidebar
             pointerEvents: 'auto'
           }}
         >
@@ -1235,7 +1227,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         <div 
           className="fixed top-16 left-0 right-0 flex justify-center px-4"
           style={{
-            zIndex: 51 // Ensure it's above the backdrop
+            zIndex: 110 // Ensure it's above the backdrop, header, and sidebar
           }}
         >
           <div 
