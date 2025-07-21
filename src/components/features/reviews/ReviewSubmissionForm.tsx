@@ -2745,50 +2745,52 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       
                       return (
                         <div key={idx} className="space-y-4">
-                          <div className="flex items-start justify-between gap-3 mb-4">
-                            <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
-                              {(() => {
-                                const fullInstructor = instructorsMap.get(evaluation.instructorName);
-                                if (fullInstructor) {
-                                  const nameInfo = getInstructorName(fullInstructor, language);
-                                  return (
-                                    <div>
-                                      <div>{nameInfo.primary}</div>
-                                      {nameInfo.secondary && (
-                                        <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                          {nameInfo.secondary}
-                                        </div>
-                                      )}
-                                    </div>
+                          <div className="mb-4">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                              <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
+                                {(() => {
+                                  const fullInstructor = instructorsMap.get(evaluation.instructorName);
+                                  if (fullInstructor) {
+                                    const nameInfo = getInstructorName(fullInstructor, language);
+                                    return (
+                                      <div>
+                                        <div>{nameInfo.primary}</div>
+                                        {nameInfo.secondary && (
+                                          <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                                            {nameInfo.secondary}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+                                  return evaluation.instructorName;
+                                })()}
+                              </div>
+                              
+                              {/* Badges on the right for desktop, below name for mobile */}
+                              <div className="flex items-center gap-2 shrink-0 md:self-start">
+                                {/* Session Type Badge */}
+                                <span 
+                                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'}`}
+                                >
+                                  {t('sessionTypeBadge.lecture')}
+                                </span>
+                                {/* Teaching Language Badge */}
+                                {(() => {
+                                  const teachingLanguage = getAvailableTeachingLanguageForInstructor(
+                                    evaluation.instructorName,
+                                    evaluation.sessionType
                                   );
-                                }
-                                return evaluation.instructorName;
-                              })()}
-                            </div>
-                            
-                            {/* Badges on the right */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              {/* Session Type Badge */}
-                              <span 
-                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'}`}
-                              >
-                                {t('sessionTypeBadge.lecture')}
-                              </span>
-                              {/* Teaching Language Badge */}
-                              {(() => {
-                                const teachingLanguage = getAvailableTeachingLanguageForInstructor(
-                                  evaluation.instructorName,
-                                  evaluation.sessionType
-                                );
-                                if (teachingLanguage) {
-                                  return (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800">
-                                      {getTeachingLanguageName(teachingLanguage, t)}
-                                    </span>
-                                  );
-                                }
-                                return null;
-                              })()}
+                                  if (teachingLanguage) {
+                                    return (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800">
+                                        {getTeachingLanguageName(teachingLanguage, t)}
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
                             </div>
                           </div>
                           
@@ -2941,7 +2943,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       
                       return (
                         <div key={idx} className="space-y-4">
-                          <div className="flex items-start justify-between gap-3 mb-4">
+                          <div className="mb-4">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                             <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
                               {(() => {
                                 const fullInstructor = instructorsMap.get(evaluation.instructorName);
@@ -2962,8 +2965,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               })()}
                             </div>
                             
-                            {/* Badges on the right */}
-                            <div className="flex items-center gap-2 shrink-0">
+                            {/* Badges on the right for desktop, below name for mobile */}
+                            <div className="flex items-center gap-2 shrink-0 md:self-start">
                               {/* Session Type Badge */}
                               <span 
                                 className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'}`}
@@ -2987,6 +2990,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               })()}
                             </div>
                           </div>
+                        </div>
                           
                           <div className="space-y-4">
                             <div className="space-y-1">
