@@ -1215,7 +1215,7 @@ export default {
   // 9. REVIEW SUBMISSION - 评论提交
   // =============================================================================
   'review.title': '撰写评论',
-  'review.subtitle': '分享您的课程体验，帮助其他同学做出更好的选择',
+  'review.subtitle': '分享您的课程体验，帮助同学们做出更好的选择',
   'review.editTitle': '编辑评论',
   'review.editSubtitle': '更新您的课程评论',
   'review.selectCourse': '选择课程',

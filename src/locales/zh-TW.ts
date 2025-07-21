@@ -1167,7 +1167,7 @@ export default {
   // 9. REVIEW SUBMISSION - 評論提交
   // =============================================================================
   'review.title': '撰寫評論',
-  'review.subtitle': '分享您的課程體驗，幫助其他同學做出更好的選擇',
+  'review.subtitle': '分享您的課程體驗，幫助同學們做出更好的選擇',
   'review.editTitle': '編輯評論',
   'review.editSubtitle': '更新您的課程評論',
   'review.selectCourse': '選擇課程',

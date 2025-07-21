@@ -2799,8 +2799,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 );
                                 if (teachingLanguage) {
                                   return (
-                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
-                                      {teachingLanguage}
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800">
+                                      {getTeachingLanguageName(teachingLanguage, t)}
                                     </span>
                                   );
                                 }
@@ -2995,8 +2995,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 );
                                 if (teachingLanguage) {
                                   return (
-                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
-                                      {teachingLanguage}
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800">
+                                      {getTeachingLanguageName(teachingLanguage, t)}
                                     </span>
                                   );
                                 }
@@ -3314,7 +3314,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full -mx-6">
-              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full mx-6">
+              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full mx-6">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">

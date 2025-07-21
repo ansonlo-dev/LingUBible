@@ -124,7 +124,7 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
       <div className="space-y-4">
 
         {/* Modern pill-based progress bar - Mobile optimized with animation */}
-        <div ref={progressContainerRef} className="flex justify-start md:justify-center overflow-x-auto pb-2">
+        <div ref={progressContainerRef} className="flex justify-start md:justify-center overflow-x-auto py-3 px-1">
           <div className="flex items-center">
             {steps
               .map((step, index) => ({ ...step, originalIndex: index }))
