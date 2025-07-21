@@ -3314,7 +3314,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full -mx-6">
-              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-white border border-border dark:bg-gray-900/50 dark:border-[#2a3441] w-full mx-6">
+              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-white dark:bg-gray-900 w-full mx-6">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
