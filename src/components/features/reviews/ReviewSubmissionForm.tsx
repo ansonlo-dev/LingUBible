@@ -2787,7 +2787,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             <div className="flex items-center gap-2 shrink-0">
                               {/* Session Type Badge */}
                               <span 
-                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'}`}
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'}`}
                               >
                                 {t('sessionTypeBadge.lecture')}
                               </span>
@@ -2983,7 +2983,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             <div className="flex items-center gap-2 shrink-0">
                               {/* Session Type Badge */}
                               <span 
-                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'}`}
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'}`}
                               >
                                 {t('sessionTypeBadge.tutorial')}
                               </span>
@@ -3314,7 +3314,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full -mx-6">
-              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full mx-6">
+              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-white border border-border dark:bg-gray-900/50 dark:border-[#2a3441] w-full mx-6">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
