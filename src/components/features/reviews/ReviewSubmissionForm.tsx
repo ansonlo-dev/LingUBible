@@ -2636,18 +2636,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         <SelectTrigger className={cn("w-[180px]", grade === '-1' && "opacity-50 cursor-not-allowed")}>
                           <SelectValue placeholder={t('review.gradePlaceholder')} />
                         </SelectTrigger>
-                        <SelectContent className="font-mono min-w-[120px]">
-                          <SelectItem value="A">A (4.00)</SelectItem>
-                          <SelectItem value="A-">A- (3.67)</SelectItem>
-                          <SelectItem value="B+">B+ (3.33)</SelectItem>
-                          <SelectItem value="B">B (3.00)</SelectItem>
-                          <SelectItem value="B-">B- (2.67)</SelectItem>
-                          <SelectItem value="C+">C+ (2.33)</SelectItem>
-                          <SelectItem value="C">C (2.00)</SelectItem>
-                          <SelectItem value="C-">C- (1.67)</SelectItem>
-                          <SelectItem value="D+">D+ (1.33)</SelectItem>
-                          <SelectItem value="D">D (1.00)</SelectItem>
-                          <SelectItem value="F">F (0.00)</SelectItem>
+                        <SelectContent className="min-w-[120px]">
+                          <SelectItem value="A"><span className="font-mono">A</span> (4.00)</SelectItem>
+                          <SelectItem value="A-"><span className="font-mono">A-</span> (3.67)</SelectItem>
+                          <SelectItem value="B+"><span className="font-mono">B+</span> (3.33)</SelectItem>
+                          <SelectItem value="B"><span className="font-mono">B</span> (3.00)</SelectItem>
+                          <SelectItem value="B-"><span className="font-mono">B-</span> (2.67)</SelectItem>
+                          <SelectItem value="C+"><span className="font-mono">C+</span> (2.33)</SelectItem>
+                          <SelectItem value="C"><span className="font-mono">C</span> (2.00)</SelectItem>
+                          <SelectItem value="C-"><span className="font-mono">C-</span> (1.67)</SelectItem>
+                          <SelectItem value="D+"><span className="font-mono">D+</span> (1.33)</SelectItem>
+                          <SelectItem value="D"><span className="font-mono">D</span> (1.00)</SelectItem>
+                          <SelectItem value="F"><span className="font-mono">F</span> (0.00)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
