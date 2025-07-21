@@ -494,11 +494,20 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
   return (
     <div className="fixed inset-0 z-[120]" style={{ pointerEvents: 'auto' }}>
-      {/* Backdrop */}
+      {/* Backdrop - 現在覆蓋整個螢幕包括側邊欄 */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out"
+        className="fixed inset-0 bg-black/50 backdrop-blur-md transition-all duration-300 ease-in-out"
         style={{
-          transform: 'translateZ(0)' // Force GPU acceleration
+          transform: 'translateZ(0)', // Force GPU acceleration
+          WebkitBackdropFilter: 'blur(12px)', // Safari support
+          backdropFilter: 'blur(12px)', // Modern browsers
+          // 確保遮罩覆蓋包括側邊欄在內的整個螢幕
+          left: '0',
+          right: '0',
+          top: '0',
+          bottom: '0',
+          zIndex: 50, // 高於側邊欄(40)但低於模態框內容(110)
+          isolation: 'isolate' // Create new stacking context
         }}
         onClick={handleClose}
       />

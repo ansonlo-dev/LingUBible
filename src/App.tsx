@@ -548,11 +548,17 @@ const RouterContent = ({
           element={
             <div className="app-layout">
               {/* 左側邊欄 - 固定定位 */}
-              <aside className={`
-                sidebar-container 
-                ${isSidebarCollapsed ? 'collapsed' : ''} 
-                ${isMobileSidebarOpen ? 'mobile-open' : ''}
-              `}>
+              <aside 
+                className={`
+                  sidebar-container 
+                  ${isSidebarCollapsed ? 'collapsed' : ''} 
+                  ${isMobileSidebarOpen ? 'mobile-open' : ''}
+                `}
+                style={{
+                  position: 'fixed',
+                  zIndex: 40
+                }}
+              >
                 <AppSidebar 
                   isCollapsed={isSidebarCollapsed}
                   onToggle={handleSidebarToggle}
