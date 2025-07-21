@@ -2598,21 +2598,23 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               <div className="space-y-4">
                 {/* Course Information */}
                 {selectedCourse && (
-                  <div className="bg-muted/20 rounded-lg p-4 border border-border">
-                    <div className="text-center">
-                      <div className="font-bold text-lg text-primary">{selectedCourse}</div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {courses?.find(c => c.course_code === selectedCourse)?.course_title}
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-lg">
+                        <div className="font-bold text-primary">{selectedCourse}</div>
+                        <div className="text-sm text-primary font-normal">
+                          {courses?.find(c => c.course_code === selectedCourse)?.course_title}
+                        </div>
+                        {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                          const selectedCourseData = courses?.find(c => c.course_code === selectedCourse);
+                          const chineseName = language === 'zh-TW' ? selectedCourseData?.course_title_tc : selectedCourseData?.course_title_sc;
+                          return chineseName && (
+                            <div className="text-sm text-primary font-normal mt-0.5">
+                              {chineseName}
+                            </div>
+                          );
+                        })()}
                       </div>
-                      {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                        const selectedCourseData = courses?.find(c => c.course_code === selectedCourse);
-                        const chineseName = language === 'zh-TW' ? selectedCourseData?.course_title_tc : selectedCourseData?.course_title_sc;
-                        return chineseName && (
-                          <div className="text-sm text-muted-foreground mt-0.5">
-                            {chineseName}
-                          </div>
-                        );
-                      })()}
                     </div>
                   </div>
                 )}
@@ -3154,8 +3156,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             content: (
             <div className="space-y-6">
               <div className="space-y-3">
-                <div className="flex items-center gap-4">
-                  <Label htmlFor="reviewLanguage" className="min-w-[120px] flex-shrink-0 font-bold">{t('review.language')}</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="reviewLanguage" className="font-bold">{t('review.language')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { value: 'en', label: t('review.languageOptions.en') },
@@ -3214,8 +3216,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 )}
               </div>
 
-              <Separator />
-
               <div className="p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-start gap-2">
                   <div className="text-red-500 text-lg font-bold mt-0.5">*</div>
@@ -3235,7 +3235,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full">
-              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full -mx-3">
+              <div className="rounded-lg space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full preview-review-box" style={{left: '12px', position: 'relative', padding: '0'}}>
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -3658,7 +3658,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Main Exit Confirmation Dialog */}
       <AlertDialog open={showMainExitConfirm} onOpenChange={setShowMainExitConfirm}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('review.exitConfirm')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -3676,7 +3676,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 sm:rounded-lg rounded-xl mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>{isEditMode ? t('review.confirmUpdate') : t('review.confirmSubmit')}</AlertDialogTitle>
             <AlertDialogDescription>
