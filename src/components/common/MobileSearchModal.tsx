@@ -8,6 +8,7 @@ import { getCourseTitle, getInstructorName, translateDepartmentName, getTeaching
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
+import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const { t, language: currentLanguage } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { isMobileLandscape } = useEnhancedResponsive();
   
   // Track viewport dimensions for responsive positioning
   const [viewportDimensions, setViewportDimensions] = useState({
@@ -1234,7 +1236,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         </div>
                   ) : (
         <div 
-          className="fixed top-16 left-0 right-0 flex justify-center px-4"
+          className={`fixed left-0 right-0 flex justify-center px-4 ${isMobileLandscape ? 'top-0' : 'top-16'}`}
           style={{
             zIndex: 110 // Ensure it's above the backdrop, header, and sidebar
           }}
@@ -1246,8 +1248,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               // Fixed height to prevent jumping between loading and loaded states
               height: viewportDimensions.height <= 500 
                 ? (viewportDimensions.height <= 450 
-                    ? 'calc(100vh - 4rem)' // Mobile phones in landscape (more conservative)
-                    : 'calc(100vh - 2rem)' // Tablets in landscape
+                    ? (isMobileLandscape ? 'calc(100vh - 1rem)' : 'calc(100vh - 4rem)') // Mobile phones in landscape (utilize more space when header is covered)
+                    : (isMobileLandscape ? 'calc(100vh - 1rem)' : 'calc(100vh - 2rem)') // Tablets in landscape
                   )
                 : '80vh' // Portrait mode
             }}

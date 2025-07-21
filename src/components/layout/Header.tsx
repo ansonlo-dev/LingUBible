@@ -81,8 +81,8 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
                 to="/" 
                 className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity"
               >
-                <BookOpen className="h-5 w-5" />
-                <span className="text-lg font-bold">LingUBible</span>
+                <BookOpen className="h-7 w-7" />
+                <span className="text-xl font-bold">LingUBible</span>
               </Link>
             </div>
 
