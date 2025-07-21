@@ -80,9 +80,10 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               <Link 
                 to="/" 
                 className="flex items-center gap-3 text-primary hover:opacity-80 transition-opacity"
+                style={{ transform: 'scale(1.3)' }}
               >
-                <BookOpen className="h-[60px] w-[60px]" />
-                <span className="text-[36px] font-bold">LingUBible</span>
+                <BookOpen className="h-10 w-10" />
+                <span className="text-2xl font-bold">LingUBible</span>
               </Link>
             </div>
 
