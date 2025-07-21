@@ -3339,7 +3339,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     
                     {/* 課程信息 - 顯示在徽章下方 */}
                     {selectedCourse && (
-                      <div className="flex items-start gap-2 ml-4 mt-3">
+                      <div className="flex items-start gap-2 ml-2 mt-2">
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-lg">
                             <div className="font-bold text-primary">{selectedCourse}</div>
