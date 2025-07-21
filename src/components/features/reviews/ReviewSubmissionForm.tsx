@@ -2619,23 +2619,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     
                     {/* Badges on the right */}
                     <div className="flex items-center gap-3 shrink-0">
-                      {/* Term and Language badges */}
-                      <div className="flex gap-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
-                          {new Date().getFullYear()} Term 1
-                        </span>
-                        {reviewLanguage && (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
-                            {
-                              reviewLanguage === 'en' ? t('language.english') :
-                              reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
-                              reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
-                              reviewLanguage
-                            }
-                          </span>
-                        )}
-                      </div>
-                      
                       {/* Grade Badge */}
                       {grade && grade !== '-1' && (
                         <div className="flex items-center">
