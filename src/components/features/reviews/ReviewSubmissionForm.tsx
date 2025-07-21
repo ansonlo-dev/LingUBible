@@ -2598,7 +2598,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               <div className="space-y-4">
                 {/* Course Information */}
                 {selectedCourse && (
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-lg">
                         <div className="font-bold text-primary">{selectedCourse}</div>
@@ -2615,6 +2615,37 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           );
                         })()}
                       </div>
+                    </div>
+                    
+                    {/* Badges on the right */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {/* Term and Language badges */}
+                      <div className="flex gap-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                          {new Date().getFullYear()} Term 1
+                        </span>
+                        {reviewLanguage && (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                            {
+                              reviewLanguage === 'en' ? t('language.english') :
+                              reviewLanguage === 'zh-TW' ? t('language.traditionalChinese') :
+                              reviewLanguage === 'zh-CN' ? t('language.simplifiedChinese') :
+                              reviewLanguage
+                            }
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Grade Badge */}
+                      {grade && grade !== '-1' && (
+                        <div className="flex items-center">
+                          <GradeBadge 
+                            grade={grade}
+                            size="md"
+                            showTooltip={true}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2731,8 +2762,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       
                       return (
                         <div key={idx} className="space-y-4">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="text-md font-semibold">
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
                               {(() => {
                                 const fullInstructor = instructorsMap.get(evaluation.instructorName);
                                 if (fullInstructor) {
@@ -2751,7 +2782,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 return evaluation.instructorName;
                               })()}
                             </div>
-                            <Badge variant="outline">{t('review.lecture')}</Badge>
+                            
+                            {/* Badges on the right */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              {/* Session Type Badge */}
+                              <span 
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'}`}
+                              >
+                                {t('sessionTypeBadge.lecture')}
+                              </span>
+                              {/* Teaching Language Badge */}
+                              {(() => {
+                                const teachingLanguage = getAvailableTeachingLanguageForInstructor(
+                                  evaluation.instructorName,
+                                  evaluation.sessionType
+                                );
+                                if (teachingLanguage) {
+                                  return (
+                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                                      {teachingLanguage}
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </div>
                           
                           <div className="space-y-4">
@@ -2903,8 +2958,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       
                       return (
                         <div key={idx} className="space-y-4">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="text-md font-semibold">
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
                               {(() => {
                                 const fullInstructor = instructorsMap.get(evaluation.instructorName);
                                 if (fullInstructor) {
@@ -2923,7 +2978,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 return evaluation.instructorName;
                               })()}
                             </div>
-                            <Badge variant="outline">{t('review.tutorial')}</Badge>
+                            
+                            {/* Badges on the right */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              {/* Session Type Badge */}
+                              <span 
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'}`}
+                              >
+                                {t('sessionTypeBadge.tutorial')}
+                              </span>
+                              {/* Teaching Language Badge */}
+                              {(() => {
+                                const teachingLanguage = getAvailableTeachingLanguageForInstructor(
+                                  evaluation.instructorName,
+                                  evaluation.sessionType
+                                );
+                                if (teachingLanguage) {
+                                  return (
+                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs border border-border bg-background">
+                                      {teachingLanguage}
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </div>
                           
                           <div className="space-y-4">
@@ -3234,8 +3313,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           icon: <Eye className="h-5 w-5" />,
           isValid: () => true,
           content: (
-            <div className="w-full">
-              <div className="rounded-lg space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full preview-review-box" style={{left: '12px', position: 'relative', padding: '0'}}>
+            <div className="w-full -mx-6">
+              <div className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] w-full mx-6">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
