@@ -59,6 +59,10 @@ div[style*="position: fixed"][style*="right: 14px"] {
     /* 動態視窗高度變數 */
     --dynamic-vh: 100vh;
     --vh: 1vh;
+    
+    /* 星星輪廓變數 - 僅亮主題顯示 */
+    --star-stroke: #000000;
+    --star-stroke-width: 1px;
   }
 
   .dark {
@@ -89,6 +93,10 @@ div[style*="position: fixed"][style*="right: 14px"] {
     --sidebar-accent-foreground: 255, 255, 255;
     --sidebar-border: 63, 63, 70;
     --sidebar-ring: 220, 38, 38;
+    
+    /* 星星輪廓變數 - 暗主題隱藏 */
+    --star-stroke: transparent;
+    --star-stroke-width: 0px;
   }
 
   html {

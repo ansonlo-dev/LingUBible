@@ -215,7 +215,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                   }`}
                   style={{
                     color: starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
-                    clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
+                    clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
+                    stroke: 'var(--star-stroke, #000000)',
+                    strokeWidth: 'var(--star-stroke-width, 1px)'
                   }}
                 />
               </button>
@@ -247,7 +249,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                       ? 'currentColor' 
                       : starValue - 0.5 <= displayRating 
                       ? 'url(#half-fill)' 
-                      : 'none'
+                      : 'none',
+                    stroke: 'var(--star-stroke, #000000)',
+                    strokeWidth: 'var(--star-stroke-width, 1px)'
                   }}
                 />
               </button>
@@ -332,7 +336,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                     }`}
                     style={{
                       color: starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
-                      clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
+                      clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
+                      stroke: 'var(--star-stroke, #000000)',
+                      strokeWidth: 'var(--star-stroke-width, 1px)'
                     }}
                   />
                 </button>
@@ -364,7 +370,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                         ? 'currentColor' 
                         : starValue - 0.5 <= displayRating 
                         ? 'url(#half-fill)' 
-                        : 'none'
+                        : 'none',
+                      stroke: 'var(--star-stroke, #000000)',
+                      strokeWidth: 'var(--star-stroke-width, 1px)'
                     }}
                   />
                 </button>
@@ -3615,7 +3623,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <Badge 
                                   key={label}
                                   variant={value ? "default" : "secondary"}
-                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 hover:!bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 hover:!bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
                                 >
                                   {value ? (
                                     <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
