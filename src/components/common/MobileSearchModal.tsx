@@ -1367,8 +1367,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <BookOpenIcon className="h-4 w-4 text-red-600" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.courses')}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.courses')} <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span></span>
                       </div>
                     </>
                   )}
@@ -1376,8 +1375,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <GraduationCap className="h-4 w-4 text-red-600" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.instructors')} <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span></span>
                       </div>
                     </>
                   )}
@@ -1385,8 +1383,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <BookOpenIcon className="h-4 w-4 text-gray-500" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topCourses')}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span></span>
                       </div>
                     </>
                   )}
@@ -1394,8 +1391,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <GraduationCap className="h-4 w-4 text-gray-500" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span></span>
                       </div>
                     </>
                   )}
@@ -1616,10 +1612,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         {/* 熱門課程 - Only show when courses tab is active */}
                         {activeTab === 'courses' && (
                           <div>
-                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
-                              <BookOpenIcon className="h-5 w-5 text-red-600" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.courses')} ({t('featured.mostReviews')})</h3>
-                            </div>
                             <div className="space-y-2">
                               {popularCourses.map((course) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
@@ -1715,10 +1707,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         {/* 熱門講師 - Only show when instructors tab is active */}
                         {activeTab === 'instructors' && (
                           <div>
-                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
-                              <GraduationCap className="h-5 w-5 text-red-600" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.instructors')} ({t('featured.mostReviews')})</h3>
-                            </div>
                             <div className="space-y-2">
                               {popularInstructors.map((instructor) => {
                                 const nameInfo = getInstructorName(instructor, currentLanguage);
@@ -1747,7 +1735,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：英文名稱 */}
-                                        <div className="font-medium text-gray-900 dark:text-white">
+                                        <div className="font-bold text-gray-900 dark:text-white">
                                           {nameInfo.primary}
                                         </div>
                                         {/* 第2行：中文名稱（保留空間以維持高度一致） */}
@@ -1811,10 +1799,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         {/* 最佳課程 - Only show when topCourses tab is active */}
                         {activeTab === 'topCourses' && (
                           <div>
-                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
-                              <BookOpenIcon className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topCourses')} ({t('featured.highestAvgGPA')})</h3>
-                            </div>
                             <div className="space-y-2">
                               {topCourses.map((course) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
@@ -1910,10 +1894,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         {/* 最佳教師 - Only show when topInstructors tab is active */}
                         {activeTab === 'topInstructors' && (
                           <div>
-                            <div className="block sm:hidden flex items-center gap-2 mb-3 px-2">
-                              <GraduationCap className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')} ({t('featured.highestAvgGPA')})</h3>
-                            </div>
                             <div className="space-y-2">
                               {topInstructors.map((instructor) => {
                                 const nameInfo = getInstructorName(instructor, currentLanguage);
@@ -1942,7 +1922,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：英文名稱 */}
-                                        <div className="font-medium text-gray-900 dark:text-white">
+                                        <div className="font-bold text-gray-900 dark:text-white">
                                           {nameInfo.primary}
                                         </div>
                                         {/* 第2行：中文名稱（保留空間以維持高度一致） */}

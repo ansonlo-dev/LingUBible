@@ -1151,7 +1151,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[180px] h-10 text-sm"
+                        className="w-[100px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
@@ -1187,7 +1187,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[180px] h-10 text-sm"
+                        className="w-[100px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
