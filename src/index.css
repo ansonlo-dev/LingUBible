@@ -969,20 +969,20 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
   
   /* Fix backgrond color for tab content of student reviews in dark theme */
-  .dark .attached-tab-content > *:first-child:not(.no-tab-styling),
-  .dark .attached-tab-content .course-card:first-child:not(.no-tab-styling),
-  .dark .attached-tab-content .card:first-child:not(.no-tab-styling),
-  .dark .attached-tab-content > div:first-child:not(.no-tab-styling),
-  .dark .attached-tab-content [class*="Card"]:first-child:not(.no-tab-styling) {
+  .dark .attached-tab-content > *:first-child,
+  .dark .attached-tab-content .course-card:first-child,
+  .dark .attached-tab-content .card:first-child,
+  .dark .attached-tab-content > div:first-child,
+  .dark .attached-tab-content [class*="Card"]:first-child {
     background: #18181b !important;
   }
   
   /* Ensure no top-left border-radius on child elements within tab content */
-  .attached-tab-content > *:first-child:not(.no-tab-styling),
-  .attached-tab-content .course-card:first-child:not(.no-tab-styling),
-  .attached-tab-content .card:first-child:not(.no-tab-styling),
-  .attached-tab-content > div:first-child:not(.no-tab-styling),
-  .attached-tab-content [class*="Card"]:first-child:not(.no-tab-styling) {
+  .attached-tab-content > *:first-child,
+  .attached-tab-content .course-card:first-child,
+  .attached-tab-content .card:first-child,
+  .attached-tab-content > div:first-child,
+  .attached-tab-content [class*="Card"]:first-child {
     background: #F9FAFB !important;
     border-radius: 0 12px 12px 12px !important;
     border: none !important;

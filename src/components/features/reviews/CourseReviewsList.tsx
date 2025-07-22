@@ -1043,6 +1043,26 @@ export const CourseReviewsList = ({
   }
 
   if (totalReviews === 0) {
+    if (hideHeader) {
+      return (
+        <div className="text-center py-12 space-y-4">
+          <div className="flex justify-center">
+            <div className="p-4 bg-muted/50 rounded-full">
+              <MessageSquare className="h-12 w-12 text-muted-foreground" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium text-muted-foreground">{t('review.noReviewsTitle')}</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              {t('review.noReviewsDesc', { 
+                courseName: course ? course.course_code : 'This course'
+              })}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <Card className="course-card">
         <CardHeader>
@@ -1104,7 +1124,7 @@ export const CourseReviewsList = ({
 
   if (hideHeader) {
     return (
-      <div className="space-y-2 no-tab-styling">
+      <div className="space-y-2">
         {/* 課程要求篩選器 */}
         <CourseRequirementsFilter
           filters={requirementsFilters}
