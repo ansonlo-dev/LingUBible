@@ -38,7 +38,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
   const location = useLocation();
   const { t, language, setLanguage } = useLanguage(); // Add back language and setLanguage
   const { user, loading } = useAuth(); // Add back loading
-  const { isMobile, isMobilePortrait } = useResponsive(); // Use enhanced detection
+  const { isMobile, isMobilePortrait, isTouchDevice } = useResponsive(); // Use enhanced detection
   const [forceRender, setForceRender] = useState(0);
   const [dynamicHeight, setDynamicHeight] = useState('100vh');
 
@@ -136,16 +136,18 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
   const isLandscapePhone = isMobile && window.innerWidth > window.innerHeight && window.innerHeight <= 450;
   const shouldShowText = !isCollapsed || isMobile || (isLandscapePhone && isMobileOpen);
 
-  // 修復手機版懸停狀態持續的問題
+  // 修復觸控設備懸停狀態持續的問題（包括平板和手機）
   useEffect(() => {
-    if (isMobile) {
+    if (isTouchDevice || isMobile) {
       // 當路由變化時，移除所有懸停狀態
       const removeHoverStates = () => {
         // 移除所有可能的懸停狀態
-        const hoveredElements = document.querySelectorAll('.sidebar-container nav a:hover');
+        const hoveredElements = document.querySelectorAll('nav a:hover, .sidebar-container nav a:hover');
         hoveredElements.forEach(element => {
           // 強制觸發重新渲染來移除懸停狀態
           (element as HTMLElement).blur();
+          // 移除任何可能的focus狀態
+          (element as HTMLElement).style.transform = '';
         });
         
         // 觸摸其他地方來移除懸停狀態
@@ -172,15 +174,18 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       
       return () => clearTimeout(timeoutId);
     }
-  }, [location.pathname, isMobile]);
+  }, [location.pathname, isMobile, isTouchDevice]);
 
-  // 處理導航項目點擊，移除手機版懸停狀態但不關閉側邊欄
+  // 處理導航項目點擊，移除觸控設備懸停狀態但不關閉側邊欄
   const handleNavClick = (shouldCloseSidebar: boolean = false) => {
     return (e: React.MouseEvent<HTMLAnchorElement>) => {
-      // 手機版點擊後立即移除懸停狀態
-      if (isMobile) {
+      // 觸控設備點擊後立即移除懸停狀態
+      if (isTouchDevice || isMobile) {
         const target = e.currentTarget;
         target.blur();
+        // 立即移除任何 transform 樣式（hover 效果）
+        target.style.transform = '';
+        
         // 觸發一個觸摸事件來移除懸停狀態
         setTimeout(() => {
           try {

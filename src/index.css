@@ -997,6 +997,21 @@ div[style*="position: fixed"][style*="right: 14px"] {
     border-bottom: none !important;
   }
   
+  /* 修復觸控設備側邊欄 hover 狀態持續問題 */
+  @media (hover: none) and (pointer: coarse) {
+    /* 在觸控設備上移除側邊欄項目的 hover 效果 */
+    nav a:hover {
+      transform: none !important;
+      background-color: transparent !important;
+    }
+    
+    /* 為側邊欄項目添加 active 狀態來替代 hover */
+    nav a:active {
+      transform: translateX(4px) !important;
+      transition: transform 0.1s ease !important;
+    }
+  }
+  
   /* 漸變樣式 */
   .gradient-text {
     @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
