@@ -93,6 +93,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const [topCourses, setTopCourses] = useState<CourseWithStats[]>([]);
   const [topInstructors, setTopInstructors] = useState<InstructorWithDetailedStats[]>([]);
   const [activeTab, setActiveTab] = useState<'courses' | 'instructors' | 'topCourses' | 'topInstructors'>('courses'); // Updated tab state
+  const [searchActiveTab, setSearchActiveTab] = useState<'courses' | 'instructors'>('courses'); // Tab for search results
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasAddedHistoryEntry = useRef(false);
@@ -681,8 +682,48 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     {/* 搜尋結果 */}
                     {searchQuery.trim() && (
                       <div className="space-y-6">
+                        {/* Search Tab Switcher */}
+                        {(filteredCourses.length > 0 || filteredInstructors.length > 0) && (
+                          <div className="px-4 py-3">
+                            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                              <button
+                                onClick={() => setSearchActiveTab('courses')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                                  searchActiveTab === 'courses'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                              >
+                                <BookOpenIcon className="h-4 w-4 text-red-600" />
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                                  <span>{t('search.courses')}</span>
+                                  {filteredCourses.length > 0 && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">({filteredCourses.length})</span>
+                                  )}
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => setSearchActiveTab('instructors')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                                  searchActiveTab === 'instructors'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                              >
+                                <GraduationCap className="h-4 w-4 text-red-600" />
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                                  <span>{t('search.instructors')}</span>
+                                  {filteredInstructors.length > 0 && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">({filteredInstructors.length})</span>
+                                  )}
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* 課程結果 */}
-                        {filteredCourses.length > 0 && (
+                        {searchActiveTab === 'courses' && filteredCourses.length > 0 && (
                           <div>
                             <div className="flex items-center gap-2 mb-3 px-2">
                               <BookOpenIcon className="h-5 w-5 text-red-600" />
@@ -764,7 +805,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         )}
 
                         {/* 講師結果 */}
-                        {filteredInstructors.length > 0 && (
+                        {searchActiveTab === 'instructors' && filteredInstructors.length > 0 && (
                           <div>
                             <div className="flex items-center gap-2 mb-3 px-2">
                               <GraduationCap className="h-5 w-5 text-red-600" />
@@ -846,7 +887,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         )}
 
                         {/* 無搜索結果 */}
-                        {filteredCourses.length === 0 && filteredInstructors.length === 0 && (
+                        {((searchActiveTab === 'courses' && filteredCourses.length === 0) || 
+                          (searchActiveTab === 'instructors' && filteredInstructors.length === 0)) && (
                           <div className="text-center py-8">
                             <p className="text-gray-500 dark:text-gray-400">{t('search.noResults')}</p>
                           </div>
@@ -1433,8 +1475,48 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     {/* 搜尋結果 */}
                     {searchQuery.trim() && (
                       <div className="space-y-6">
+                        {/* Search Tab Switcher */}
+                        {(filteredCourses.length > 0 || filteredInstructors.length > 0) && (
+                          <div className="px-4 py-3">
+                            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                              <button
+                                onClick={() => setSearchActiveTab('courses')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                                  searchActiveTab === 'courses'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                              >
+                                <BookOpenIcon className="h-4 w-4 text-red-600" />
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                                  <span>{t('search.courses')}</span>
+                                  {filteredCourses.length > 0 && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">({filteredCourses.length})</span>
+                                  )}
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => setSearchActiveTab('instructors')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                                  searchActiveTab === 'instructors'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                              >
+                                <GraduationCap className="h-4 w-4 text-red-600" />
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                                  <span>{t('search.instructors')}</span>
+                                  {filteredInstructors.length > 0 && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">({filteredInstructors.length})</span>
+                                  )}
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* 課程結果 */}
-                        {filteredCourses.length > 0 && (
+                        {searchActiveTab === 'courses' && filteredCourses.length > 0 && (
                           <div>
                             <div className="flex items-center gap-2 mb-3 px-2">
                               <BookOpenIcon className="h-5 w-5 text-red-600" />
@@ -1516,7 +1598,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         )}
 
                         {/* 講師結果 */}
-                        {filteredInstructors.length > 0 && (
+                        {searchActiveTab === 'instructors' && filteredInstructors.length > 0 && (
                           <div>
                             <div className="flex items-center gap-2 mb-3 px-2">
                               <GraduationCap className="h-5 w-5 text-red-600" />
@@ -1598,7 +1680,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         )}
 
                         {/* 無搜索結果 */}
-                        {filteredCourses.length === 0 && filteredInstructors.length === 0 && (
+                        {((searchActiveTab === 'courses' && filteredCourses.length === 0) || 
+                          (searchActiveTab === 'instructors' && filteredInstructors.length === 0)) && (
                           <div className="text-center py-8">
                             <p className="text-gray-500 dark:text-gray-400">{t('search.noResults')}</p>
                           </div>
