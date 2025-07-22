@@ -616,7 +616,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
             {/* Sticky Tab Title - Only show on small screens when no search query */}
             {!searchQuery.trim() && (
-              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden">
+              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden">
                 <div className="flex items-center gap-2">
                   {activeTab === 'courses' && (
                     <>
@@ -687,7 +687,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         {(filteredCourses.length > 0 || filteredInstructors.length > 0) && (
                           <div className="space-y-2">
                             {/* Sticky Tab Title */}
-                            <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 px-4 py-2 border-gray-200 dark:border-gray-700">
                               <div className="flex items-center gap-2">
                                 {searchActiveTab === 'courses' ? (
                                   <>
@@ -770,7 +770,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
-                                        <div className="font-medium text-gray-900 dark:text-white font-mono truncate">
+                                        <div className="font-bold text-gray-900 dark:text-white font-mono truncate">
                                           {course.course_code}
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -848,7 +848,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
-                                        <div className="font-medium text-gray-900 dark:text-white truncate">
+                                        <div className="font-bold text-gray-900 dark:text-white truncate">
                                           {instructorName.primary}
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -955,7 +955,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：課程代碼 */}
-                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                        <div className="font-bold text-gray-900 dark:text-white font-mono">
                                           {course.course_code}
                                         </div>
                                         {/* 第2行：課程名稱 */}
@@ -1054,7 +1054,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：英文名稱 */}
-                                        <div className="font-medium text-gray-900 dark:text-white">
+                                        <div className="font-bold text-gray-900 dark:text-white">
                                           {nameInfo.primary}
                                         </div>
                                         {/* 第2行：中文名稱（保留空間以維持高度一致） */}
@@ -1150,7 +1150,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：課程代碼 */}
-                                        <div className="font-medium text-gray-900 dark:text-white font-mono">
+                                        <div className="font-bold text-gray-900 dark:text-white font-mono">
                                           {course.course_code}
                                         </div>
                                         {/* 第2行：課程名稱 */}
@@ -1249,7 +1249,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                     <div className="flex items-start justify-between">
                                       <div className="min-w-0 flex-1 space-y-1">
                                         {/* 第1行：英文名稱 */}
-                                        <div className="font-medium text-gray-900 dark:text-white">
+                                        <div className="font-bold text-gray-900 dark:text-white">
                                           {nameInfo.primary}
                                         </div>
                                         {/* 第2行：中文名稱（保留空間以維持高度一致） */}
@@ -1336,7 +1336,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
           >
             {/* 搜索輸入框 */}
-            <div className="flex items-center px-4 min-w-0">
+            <div
+              className="flex items-center px-4 min-w-0 border-b border-gray-200 dark:border-gray-700"
+              style={{
+                borderBottom: '1px solid rgb(var(--border))'
+              }}
+            >
               <input
                 ref={inputRef}
                 type="text"
@@ -1424,7 +1429,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
             {/* Sticky Tab Title - Only show on small screens when no search query */}
             {!searchQuery.trim() && (
-              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden">
+              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden"
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingLeft: '25px'
+                }}
+              >
                 <div className="flex items-center gap-2">
                   {activeTab === 'courses' && (
                     <>
@@ -1490,6 +1500,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     className="p-4 space-y-6"
                     style={{
                       // Extra bottom padding to simulate additional items
+                      paddingTop: '0px',
                       paddingBottom: viewportDimensions.height <= 450 ? '6rem' : '8rem'
                     }}
                   >
@@ -1499,8 +1510,49 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                         {/* Search Tab Switcher */}
                         {(filteredCourses.length > 0 || filteredInstructors.length > 0) && (
                           <div className="space-y-2">
+                            {/* Tab Buttons */}
+                            {/* <div className="px-4"> */}
+                              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1"
+                                style={{
+                                  marginTop: '0.75rem'
+                                }}
+                              >
+                                <button
+                                  onClick={() => setSearchActiveTab('courses')}
+                                  className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                                    searchActiveTab === 'courses'
+                                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                  }`}
+                                >
+                                  <BookOpenIcon className="h-4 w-4 text-white-600" />
+                                  {(!isMobile || isMobileLandscape) && (
+                                    <span className="ml-2">{t('search.courses')}</span>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => setSearchActiveTab('instructors')}
+                                  className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                                    searchActiveTab === 'instructors'
+                                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                  }`}
+                                >
+                                  <GraduationCap className="h-4 w-4 text-white-600" />
+                                  {(!isMobile || isMobileLandscape) && (
+                                    <span className="ml-2">{t('search.instructors')}</span>
+                                  )}
+                                </button>
+                              </div>
                             {/* Sticky Tab Title */}
-                            <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden"
+                              style={{
+                                backgroundColor: 'transparent',
+                                position: 'relative',
+                                right: '26px',
+                                scale: '0.9'
+                              }}
+                            >
                               <div className="flex items-center gap-2">
                                 {searchActiveTab === 'courses' ? (
                                   <>
@@ -1529,44 +1581,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                 )}
                               </div>
                             </div>
-                            
-                            {/* Tab Buttons */}
-                            <div className="px-4">
-                              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-                                <button
-                                  onClick={() => setSearchActiveTab('courses')}
-                                  className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                                    searchActiveTab === 'courses'
-                                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                  }`}
-                                >
-                                  <BookOpenIcon className="h-4 w-4 text-red-600" />
-                                  {(!isMobile || isMobileLandscape) && (
-                                    <span className="ml-2">{t('search.courses')}</span>
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => setSearchActiveTab('instructors')}
-                                  className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                                    searchActiveTab === 'instructors'
-                                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                  }`}
-                                >
-                                  <GraduationCap className="h-4 w-4 text-red-600" />
-                                  {(!isMobile || isMobileLandscape) && (
-                                    <span className="ml-2">{t('search.instructors')}</span>
-                                  )}
-                                </button>
-                              </div>
-                            </div>
                           </div>
                         )}
                         
                         {/* 課程結果 */}
                         {searchActiveTab === 'courses' && filteredCourses.length > 0 && (
-                          <div>
+                          <div style={{ marginTop: '0' }}>
                             <div className="space-y-2">
                               {filteredCourses.map((course, index) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
@@ -1583,7 +1603,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
-                                        <div className="font-medium text-gray-900 dark:text-white font-mono truncate">
+                                        <div className="font-bold text-gray-900 dark:text-white font-mono truncate">
                                           {course.course_code}
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -1644,7 +1664,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
                         {/* 講師結果 */}
                         {searchActiveTab === 'instructors' && filteredInstructors.length > 0 && (
-                          <div>
+                          <div style={{ marginTop: '0' }}>
                             <div className="space-y-2">
                               {filteredInstructors.map((instructor, index) => {
                                 const instructorName = getInstructorName(instructor, currentLanguage);
@@ -1661,7 +1681,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 flex-1">
-                                        <div className="font-medium text-gray-900 dark:text-white truncate">
+                                        <div className="font-bold text-gray-900 dark:text-white truncate">
                                           {instructorName.primary}
                                         </div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
