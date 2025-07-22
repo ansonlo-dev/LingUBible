@@ -3238,4 +3238,8 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
       touch-action: pan-y !important;
     }
   }
+
+  .main-container.sidebar-collapsed {
+    z-index: 40;
+  }
 }
