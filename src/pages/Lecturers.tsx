@@ -1342,16 +1342,26 @@ const Lecturers = () => {
 
               </div>
 
-              {/* Email section - shared for all screen sizes */}
+              {/* Email and back button section - mobile: same row, desktop: separate */}
               {instructor.email && (
-                <div className="flex items-center gap-2 mb-4">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <a 
-                    href={`mailto:${instructor.email}`} 
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <a 
+                      href={`mailto:${instructor.email}`} 
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {instructor.email}
+                    </a>
+                  </div>
+                  {/* Back button - mobile only, right aligned */}
+                  <button 
+                    onClick={() => navigate('/instructors')}
+                    className="md:hidden h-8 px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
                   >
-                    {instructor.email}
-                  </a>
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">{t('common.back')}</span>
+                  </button>
                 </div>
               )}
 
@@ -1385,15 +1395,6 @@ const Lecturers = () => {
                       {t('instructors.submitReview')}
                     </Button>
                   </div>
-                </div>
-                <div className="flex justify-center">
-                  <button 
-                    onClick={() => navigate('/instructors')}
-                    className="h-10 px-4 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="text-sm">{t('common.back')}</span>
-                  </button>
                 </div>
               </div>
               
