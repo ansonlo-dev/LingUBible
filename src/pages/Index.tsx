@@ -4,6 +4,7 @@ import { PopularItemCard } from "@/components/features/reviews/PopularItemCard";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
+import { TechnologyNetworkAnimation } from "@/components/features/animations/TechnologyNetworkAnimation";
 
 import { BookText, Users, Star, TrendingUp, Loader2, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -256,6 +257,15 @@ const Index = () => {
             <span className="neon-glow-text">{t('hero.title')}</span>{' '}
             <span className="red-neon-glow-text">LingUBible</span>
           </h1>
+          
+          {/* Technology Network Animation */}
+          <div className="mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <TechnologyNetworkAnimation 
+              size="lg" 
+              className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
+            />
+          </div>
+          
           <h2 className="text-xl md:text-2xl font-bold text-muted-foreground mb-3">
             {t('hero.regBible')}
           </h2>

@@ -75,7 +75,7 @@ export const CourseRequirementsFilter: React.FC<CourseRequirementsFilterProps> =
         >
           <div className="flex items-center gap-3">
             <Filter className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
-            <span className="font-semibold text-base">{t('filter.courseRequirements')}</span>
+            <span className="font-semibold">{t('filter.courseRequirements')}</span>
             {hasActiveFilters && (
               <Badge variant="secondary" className="h-6 px-2 text-sm ml-1 bg-primary text-white font-medium shadow-sm hidden sm:inline-flex">
                 {Object.values(filters).filter(f => f !== 'all').length}
@@ -131,7 +131,7 @@ export const CourseRequirementsFilter: React.FC<CourseRequirementsFilterProps> =
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {requirements.map(({ key, label }) => (
               <div key={key} className="flex items-center justify-between p-2 rounded-lg bg-background/60 hover:bg-background/80 transition-all duration-200 min-h-[2.5rem]">
-                <div className="text-sm font-semibold text-foreground truncate flex-1 pr-3" title={label}>
+                <div className="text-sm font-medium text-foreground truncate flex-1 pr-3" title={label}>
                   {label}
                 </div>
                 <div className="flex gap-1 shrink-0">

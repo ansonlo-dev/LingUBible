@@ -3297,4 +3297,8 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
   {
     height: 100%;
   }
+
+  button {
+    min-width: fit-content;
+  }
 }
