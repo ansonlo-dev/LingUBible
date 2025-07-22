@@ -1411,10 +1411,10 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     // Dynamic max height based on device type and orientation
                     maxHeight: viewportDimensions.height <= 500 
                       ? (viewportDimensions.height <= 450 
-                          ? 'calc(100vh - 10rem)' // Mobile phones in landscape (more conservative)
-                          : 'calc(100vh - 7rem)'  // Tablets in landscape  
+                          ? 'calc(100vh)' // Mobile phones in landscape (more conservative)
+                          : 'calc(100vh)'  // Tablets in landscape  
                         )
-                      : '78vh' // Portrait mode
+                      : '90vh' // Portrait mode
                   }}
               >
                 {loading ? (
