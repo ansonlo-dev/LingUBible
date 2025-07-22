@@ -985,6 +985,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-content [class*="Card"]:first-child:not(.no-tab-styling) {
     background: #F9FAFB !important;
     border-radius: 0 12px 12px 12px !important;
+    border: none !important;
   }
   
   /* 課程詳情頁面和講師頁面的 attached-tab-trigger 在暗色主題下不使用紅色邊框 */
