@@ -1,4 +1,4 @@
-import { PanelLeft, Search, BookOpen } from 'lucide-react';
+import { PanelRightClose, PanelRightOpen, Search, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
@@ -65,12 +65,19 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               {/* 側邊欄摺疊按鈕 */}
               {onToggleSidebar && (
                 <Button
+                  style={{
+                    transform: 'scale(1.5)'
+                  }}
                   variant="ghost"
                   size="icon"
                   onClick={onToggleSidebar}
                   className="flex"
                 >
-                  <PanelLeft className="h-4 w-4" />
+                  {isSidebarCollapsed ? (
+                    <PanelRightOpen className="h-6 w-6" />
+                  ) : (
+                    <PanelRightClose className="h-6 w-6" />
+                  )}
                 </Button>
               )}
             </div>
@@ -123,6 +130,9 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
               {/* 側邊欄摺疊按鈕 - 桌面版和手機版都顯示 */}
               {onToggleSidebar && (
                 <Button
+                  style={{
+                    transform: 'scale(1.5)'
+                  }}
                   variant="ghost"
                   size="icon"
                   onClick={onToggleSidebar}
@@ -131,7 +141,11 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
                     shortcut: isMac ? 'Alt+L or ⌘+Shift+L' : 'Alt+L or Ctrl+Shift+L' 
                   })}
                 >
-                  <PanelLeft className="h-4 w-4" />
+                  {isSidebarCollapsed ? (
+                    <PanelRightClose className="h-6 w-6" />
+                  ) : (
+                    <PanelRightOpen className="h-6 w-6" />
+                  )}
                 </Button>
               )}
             </div>

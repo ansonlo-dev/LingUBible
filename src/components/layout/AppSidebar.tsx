@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Star, Settings, PanelLeft, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail, BookText } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail, BookText } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
