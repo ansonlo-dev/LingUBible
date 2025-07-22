@@ -916,6 +916,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
     background: #F9FAFB !important;
     border: 1px solid rgb(var(--border)) !important;
     border-bottom: none !important;
+    z-index: 11 !important;
+    margin-bottom: 2px;
   }
 
   /* Dark theme active tab */
@@ -976,7 +978,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* Light theme content area with border */
   :not(.dark) .attached-tab-content {
     border: 1px solid rgb(var(--border)) !important;
-    border-top: none !important;
+    /* border-top: none !important; */
   }
 
   .dark .attached-tab-content {
