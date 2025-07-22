@@ -612,6 +612,50 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               </div>
             )}
 
+            {/* Sticky Tab Title - Only show on small screens when no search query */}
+            {!searchQuery.trim() && (
+              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden">
+                <div className="flex items-center gap-2">
+                  {activeTab === 'courses' && (
+                    <>
+                      <BookOpenIcon className="h-4 w-4 text-red-600" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.courses')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === 'instructors' && (
+                    <>
+                      <GraduationCap className="h-4 w-4 text-red-600" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === 'topCourses' && (
+                    <>
+                      <BookOpenIcon className="h-4 w-4 text-gray-500" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topCourses')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === 'topInstructors' && (
+                    <>
+                      <GraduationCap className="h-4 w-4 text-gray-500" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* 搜索結果容器 */}
             <div className="flex-1 relative overflow-hidden">
               {/* 滾動內容 */}
@@ -1311,6 +1355,50 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Sticky Tab Title - Only show on small screens when no search query */}
+            {!searchQuery.trim() && (
+              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 sm:hidden">
+                <div className="flex items-center gap-2">
+                  {activeTab === 'courses' && (
+                    <>
+                      <BookOpenIcon className="h-4 w-4 text-red-600" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.courses')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === 'instructors' && (
+                    <>
+                      <GraduationCap className="h-4 w-4 text-red-600" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === 'topCourses' && (
+                    <>
+                      <BookOpenIcon className="h-4 w-4 text-gray-500" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topCourses')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === 'topInstructors' && (
+                    <>
+                      <GraduationCap className="h-4 w-4 text-gray-500" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
