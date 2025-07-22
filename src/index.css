@@ -3239,7 +3239,19 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
     }
   }
 
-  .main-container.sidebar-collapsed {
-    z-index: 40;
+  @media (min-width: 1024px) and (orientation: landscape) {
+    .main-container.sidebar-collapsed .bg-white.dark\:bg-card.shadow-2xl.border.border-gray-200.dark\:border-gray-700.flex.flex-col.overflow-hidden.w-full.rounded-none
+    {
+      position: relative;
+      left: var(--sidebar-collapsed-width);
+      padding-right: var(--sidebar-collapsed-width);
+    }
+
+    .bg-white.dark\:bg-card.shadow-2xl.border.border-gray-200.dark\:border-gray-700.flex.flex-col.overflow-hidden.w-full.rounded-none
+    {
+      position: relative;
+      left: var(--sidebar-width);
+      padding-right: var(--sidebar-width);
+    }
   }
 }
