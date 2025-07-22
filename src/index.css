@@ -861,15 +861,24 @@ div[style*="position: fixed"][style*="right: 14px"] {
     transform: translateY(2px) !important;
   }
 
+  /* Light theme tab triggers get borders */
+  :not(.dark) .attached-tab-trigger {
+    border: 1px solid rgb(var(--border)) !important;
+    border-bottom: none !important;
+  }
+
   :not(.dark) .attached-tab-trigger[data-state="active"]:hover {
     color: black !important;
+    border: 1px solid rgb(var(--border)) !important;
+    border-bottom: none !important;
     box-shadow: none !important;
     transform: translateY(2px) !important;
   }
 
   :not(.dark) .attached-tab-trigger:hover {
     color: rgb(var(--foreground)) !important;
-    border: none !important;
+    border: 1px solid rgb(var(--border)) !important;
+    border-bottom: none !important;
     border-radius: 12px 12px 0 0 !important;
     transform: translateY(0px) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
@@ -905,6 +914,8 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* Light theme active tab */
   :not(.dark) .attached-tab-trigger[data-state="active"] {
     background: #F9FAFB !important;
+    border: 1px solid rgb(var(--border)) !important;
+    border-bottom: none !important;
   }
 
   /* Dark theme active tab */
@@ -921,7 +932,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
   :not(.dark) .attached-tab-trigger {
     background: rgb(var(--muted)) !important;
     color: rgb(var(--muted-foreground)) !important;
-    border: none !important;
     border-radius: 12px 12px 0 0 !important;
     transform: translateY(2px) !important;
   }
@@ -961,6 +971,12 @@ div[style*="position: fixed"][style*="right: 14px"] {
     position: relative !important;
     z-index: 10 !important;
     margin-top: 0 !important;
+  }
+
+  /* Light theme content area with border */
+  :not(.dark) .attached-tab-content {
+    border: 1px solid rgb(var(--border)) !important;
+    border-top: none !important;
   }
 
   .dark .attached-tab-content {
