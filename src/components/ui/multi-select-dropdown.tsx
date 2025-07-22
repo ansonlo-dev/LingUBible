@@ -440,6 +440,21 @@ export function MultiSelectDropdown({
                                   </span>
                                 ))}
                               </span>
+                            ) : /^[A-F][+-]?\s*\([\d.]+\)$/.test(option.label) ? (
+                              // For grade options, apply monospace font to the grade part
+                              (() => {
+                                const match = option.label.match(/^([A-F][+-]?)\s*(\([\d.]+\))$/);
+                                if (match) {
+                                  return (
+                                    <span className="flex-1 truncate">
+                                      <span className="font-mono font-semibold">{match[1]}</span>
+                                      <span> {match[2]}</span>
+                                    </span>
+                                  );
+                                } else {
+                                  return <span className="flex-1 truncate">{option.label}</span>;
+                                }
+                              })()
                             ) : option.isTeachingLanguage ? (
                               // For teaching language options, make the language code bold
                               (() => {
