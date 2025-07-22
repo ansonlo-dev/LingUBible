@@ -213,7 +213,23 @@ export function InstructorReviewsFilters({
             <MultiSelectDropdown
               options={Object.entries(gradeCounts || {}).map(([grade, count]) => ({
                 value: grade,
-                label: grade === 'N/A' ? t('grade.notApplicable') : grade,
+                label: grade === 'N/A' ? t('grade.notApplicable') : 
+                  `${grade.length === 1 ? grade + ' ' : grade}${(() => {
+                    switch (grade) {
+                      case 'A': return ' (4.00)';
+                      case 'A-': return ' (3.67)';
+                      case 'B+': return ' (3.33)';
+                      case 'B': return ' (3.00)';
+                      case 'B-': return ' (2.67)';
+                      case 'C+': return ' (2.33)';
+                      case 'C': return ' (2.00)';
+                      case 'C-': return ' (1.67)';
+                      case 'D+': return ' (1.33)';
+                      case 'D': return ' (1.00)';
+                      case 'F': return ' (0.00)';
+                      default: return '';
+                    }
+                  })()}`,
                 count: count
               }))}
               selectedValues={filters.selectedGrades}
@@ -366,7 +382,23 @@ export function InstructorReviewsFilters({
               <MultiSelectDropdown
                 options={Object.entries(gradeCounts || {}).map(([grade, count]) => ({
                   value: grade,
-                  label: grade === 'N/A' ? t('grade.notApplicable') : grade,
+                  label: grade === 'N/A' ? t('grade.notApplicable') : 
+                    `${grade.length === 1 ? grade + ' ' : grade}${(() => {
+                      switch (grade) {
+                        case 'A': return ' (4.00)';
+                        case 'A-': return ' (3.67)';
+                        case 'B+': return ' (3.33)';
+                        case 'B': return ' (3.00)';
+                        case 'B-': return ' (2.67)';
+                        case 'C+': return ' (2.33)';
+                        case 'C': return ' (2.00)';
+                        case 'C-': return ' (1.67)';
+                        case 'D+': return ' (1.33)';
+                        case 'D': return ' (1.00)';
+                        case 'F': return ' (0.00)';
+                        default: return '';
+                      }
+                    })()}`,
                   count: count
                 }))}
                 selectedValues={filters.selectedGrades}
