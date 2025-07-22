@@ -1330,7 +1330,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           ? 'calc(100vh - 10rem)' // Mobile phones in landscape (more conservative)
                           : 'calc(100vh - 7rem)'  // Tablets in landscape  
                         )
-                      : '65vh' // Portrait mode
+                      : '78vh' // Portrait mode
                   }}
               >
                 {loading ? (
@@ -1343,7 +1343,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     className="p-4 space-y-6"
                     style={{
                       // Extra bottom padding to simulate additional items
-                      paddingBottom: viewportDimensions.height <= 450 ? '12rem' : '16rem'
+                      paddingBottom: viewportDimensions.height <= 450 ? '6rem' : '8rem'
                     }}
                   >
                     {/* 搜尋結果 */}
