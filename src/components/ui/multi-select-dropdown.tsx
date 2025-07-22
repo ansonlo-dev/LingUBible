@@ -285,6 +285,22 @@ export function MultiSelectDropdown({
           );
         }
       }
+      
+      // Check if this is a grade option for special formatting
+      if (option && /^[A-F][+-]?\s*\([\d.]+\)$/.test(option.label)) {
+        const match = option.label.match(/^([A-F][+-]?)(\s*)(\([\d.]+\))$/);
+        if (match) {
+          console.log('🔍 MultiSelectDropdown: Returning JSX for grade option');
+          return (
+            <span className="flex items-center">
+              <span className="font-mono font-semibold">{match[1]}</span>
+              <span className="font-mono">{match[2]}</span>
+              <span>{match[3]}</span>
+            </span>
+          );
+        }
+      }
+      
       console.log('🔍 MultiSelectDropdown: Returning raw label:', option?.label);
       return option ? option.label : safeSelectedValues[0];
     } else {
@@ -443,12 +459,13 @@ export function MultiSelectDropdown({
                             ) : /^[A-F][+-]?\s*\([\d.]+\)$/.test(option.label) ? (
                               // For grade options, apply monospace font to the grade part
                               (() => {
-                                const match = option.label.match(/^([A-F][+-]?)\s*(\([\d.]+\))$/);
+                                const match = option.label.match(/^([A-F][+-]?)(\s*)(\([\d.]+\))$/);
                                 if (match) {
                                   return (
                                     <span className="flex-1 truncate">
                                       <span className="font-mono font-semibold">{match[1]}</span>
-                                      <span> {match[2]}</span>
+                                      <span className="font-mono">{match[2]}</span>
+                                      <span>{match[3]}</span>
                                     </span>
                                   );
                                 } else {
