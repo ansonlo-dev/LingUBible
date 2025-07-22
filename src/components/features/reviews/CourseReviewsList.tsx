@@ -1104,7 +1104,7 @@ export const CourseReviewsList = ({
 
   if (hideHeader) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 no-tab-styling">
         {/* 課程要求篩選器 */}
         <CourseRequirementsFilter
           filters={requirementsFilters}
