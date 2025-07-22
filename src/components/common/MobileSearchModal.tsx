@@ -9,6 +9,7 @@ import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
+import { BookLoadingAnimation } from '@/components/ui/BookLoadingAnimation';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -674,7 +675,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                 >
                   {loading ? (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-0">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                      <BookLoadingAnimation size="lg" className="mb-4" />
                       <p className="text-muted-foreground text-center">{t('common.loading')}</p>
                     </div>
                   ) : (
@@ -1461,7 +1462,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               >
                 {loading ? (
                   <div className="h-full flex flex-col items-center justify-center min-h-0">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <BookLoadingAnimation size="lg" className="mb-4" />
                     <p className="text-gray-500 dark:text-gray-400 text-center">{t('common.loading')}</p>
                   </div>
                 ) : (
