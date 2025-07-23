@@ -27,7 +27,7 @@ const Index = () => {
   const { t, language } = useLanguage();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const { isMobileLandscape } = useEnhancedResponsive();
+  const { isMobileLandscape, isTabletPortrait } = useEnhancedResponsive();
 
   // 格式化統計變化的輔助函數
   const formatStatsChange = (count: number) => {
@@ -256,17 +256,21 @@ const Index = () => {
         {/* Hero Section - Cloudflare style layout */}
         <div className="animate-fade-in relative overflow-visible z-30">
           <div className={`grid gap-8 items-center max-w-6xl mx-auto ${
-            isMobileLandscape 
+            isMobileLandscape || isTabletPortrait
               ? 'grid-cols-3' 
               : 'grid-cols-1 lg:grid-cols-3'
           }`} style={{padding: '0 30px'}}>
             {/* Left Column - Text Content (spans 2 columns for more space) */}
             <div className={`${
-              isMobileLandscape 
+              isMobileLandscape || isTabletPortrait
                 ? 'text-left order-1 col-span-2' 
                 : 'text-center lg:text-left lg:order-1 lg:col-span-2'
             }`}>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 lg:mb-3 leading-tight">
+              <h1 className={`font-bold mb-2 lg:mb-3 leading-tight ${
+                isMobileLandscape || isTabletPortrait
+                  ? 'text-3xl' 
+                  : 'text-4xl md:text-5xl lg:text-6xl'
+              }`}>
                 <span className="neon-glow-text">{t('hero.title')}</span>{' '}
                 <span className="red-neon-glow-text">LingUBible</span>
               </h1>
@@ -295,7 +299,7 @@ const Index = () => {
               
               {/* Rolling Text Animation */}
               <div className={`text-lg mb-6 lg:mb-7 lg:max-w-none flex items-center ${
-                isMobileLandscape ? 'justify-start' : 'justify-center lg:justify-start'
+                isMobileLandscape || isTabletPortrait ? 'justify-start' : 'justify-center lg:justify-start'
               }`}>
                 <span className="text-foreground">{t('hero.comeHereTo')}</span>
                 <span>&nbsp;</span>
@@ -317,9 +321,9 @@ const Index = () => {
                 </WingedButton>
               </div>
 
-              {/* Mobile Animation - Below Button (hide on mobile landscape) */}
+              {/* Mobile Animation - Below Button (hide on mobile landscape and tablet portrait) */}
               <div className={`flex justify-center animate-fade-in ${
-                isMobileLandscape ? 'hidden' : 'lg:hidden'
+                isMobileLandscape || isTabletPortrait ? 'hidden' : 'lg:hidden'
               }`} style={{ animationDelay: '0.3s' }}>
                 <TechnologyNetworkAnimation 
                   size="xl" 
@@ -328,10 +332,12 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Column - Large Animation (Desktop and Mobile Landscape) */}
+            {/* Right Column - Large Animation (Desktop, Tablet Portrait, and Mobile Landscape) */}
             <div className={`flex justify-center lg:justify-end animate-fade-in ${
               isMobileLandscape 
                 ? 'order-2 col-span-1 -translate-y-8' 
+                : isTabletPortrait
+                ? 'order-2 col-span-1'
                 : 'hidden lg:flex lg:order-2 lg:col-span-1'
             }`} style={{ animationDelay: '0.3s' }}>
               <TechnologyNetworkAnimation 
