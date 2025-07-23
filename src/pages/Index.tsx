@@ -331,7 +331,7 @@ const Index = () => {
             {/* Right Column - Large Animation (Desktop and Mobile Landscape) */}
             <div className={`flex justify-center lg:justify-end animate-fade-in ${
               isMobileLandscape 
-                ? 'order-2 col-span-1' 
+                ? 'order-2 col-span-1 -translate-y-8' 
                 : 'hidden lg:flex lg:order-2 lg:col-span-1'
             }`} style={{ animationDelay: '0.3s' }}>
               <TechnologyNetworkAnimation 
