@@ -254,7 +254,7 @@ const Index = () => {
       <div className="bg-background relative overflow-x-hidden min-h-screen">
       <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">
         {/* Hero Section - Cloudflare style layout */}
-        <div className="md:py-12 animate-fade-in relative overflow-visible z-30">
+        <div className="animate-fade-in relative overflow-visible z-30">
           <div className={`grid gap-8 items-center max-w-6xl mx-auto ${
             isMobileLandscape 
               ? 'grid-cols-3' 
