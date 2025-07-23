@@ -111,7 +111,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-none max-h-none w-screen h-screen sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl bg-white dark:bg-gray-900 shadow-xl sm:rounded-2xl border-0 sm:border p-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+      <DialogContent className={`max-w-none max-h-none w-screen h-screen ${!isLandscape ? 'sm:w-[95vw] sm:h-[95vh]' : ''} sm:max-w-4xl bg-white dark:bg-gray-900 shadow-xl ${!isLandscape ? 'sm:rounded-2xl' : ''} border-0 ${!isLandscape ? 'sm:border' : ''} p-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
           <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'}`}>
             <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground">
@@ -168,7 +168,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
               {/* 右半部：選項卡和選擇區域 */}
               <div className="w-1/2 flex flex-col">
                 {/* 選項卡 - 移到右半部頂部 */}
-                <div className="flex-shrink-0 p-4 pb-2">
+                <div className="flex-shrink-0 p-2 pb-2">
                   <div className="flex space-x-1 bg-muted/50 p-1 rounded-lg">
                     <button
                       onClick={() => setActiveTab('animals')}
