@@ -99,7 +99,7 @@ export function Footer() {
             {/* Right side - Navigation Links and OpenStatus Badge */}
             <div className="flex items-center space-x-6 text-sm">
               <FooterKofiButton />
-              <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
+              <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
               {releaseUrl ? (
                 <a
                   href={releaseUrl}
@@ -181,7 +181,7 @@ export function Footer() {
               <div className="flex items-center space-x-4">
                 <UserStatsDisplay variant="compact" />
                 <FooterKofiButton />
-                <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
+                <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
                 {releaseUrl ? (
                   <a
                     href={releaseUrl}
@@ -260,7 +260,7 @@ export function Footer() {
             <UserStatsDisplay variant="compact" />
             <div className="flex items-center space-x-2">
               <FooterKofiButton />
-              <OpenStatusWidget slug="lingubible" href="https://lingubible.openstatus.dev/" />
+              <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
             </div>
           </div>
           
