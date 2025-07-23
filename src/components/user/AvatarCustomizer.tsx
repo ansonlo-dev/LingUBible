@@ -222,7 +222,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                             key={index}
                             onClick={() => setSelectedAnimal(animal)}
                             className={`
-                              aspect-square rounded-md transition-all duration-200 hover:scale-110
+                              aspect-square rounded-md transition-[transform,background-color,box-shadow] duration-200 hover:scale-110
                               flex items-center justify-center text-lg
                               ${selectedAnimal === animal 
                                 ? 'bg-primary/20 ring-2 ring-primary scale-105' 
@@ -236,13 +236,13 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-6 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-6" style={{ gap: '10px' }}>
                         {backgrounds.map((bg, index) => (
                           <button
                             key={index}
                             onClick={() => setSelectedBackgroundIndex(index)}
                             className={`
-                              aspect-square rounded-lg transition-all duration-200 hover:scale-105 relative overflow-hidden
+                              aspect-square rounded-lg transition-[transform,box-shadow,opacity] duration-200 hover:scale-105 relative overflow-hidden
                               ${selectedBackgroundIndex === index 
                                 ? 'ring-2 ring-primary scale-105' 
                                 : 'hover:ring-1 hover:ring-primary/50'
@@ -356,7 +356,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                           key={index}
                           onClick={() => setSelectedAnimal(animal)}
                           className={`
-                            aspect-square rounded-lg transition-all duration-200 hover:scale-110
+                            aspect-square rounded-lg transition-[transform,background-color,box-shadow] duration-200 hover:scale-110
                             flex items-center justify-center text-base sm:text-xl md:text-2xl
                             ${selectedAnimal === animal 
                               ? 'bg-primary/20 ring-2 ring-primary scale-105' 
@@ -370,13 +370,13 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-6 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 lg:gap-4">
+                    <div className="grid grid-cols-6 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 xl:grid-cols-10" style={{ gap: '16px' }}>
                       {backgrounds.map((bg, index) => (
                         <button
                           key={index}
                           onClick={() => setSelectedBackgroundIndex(index)}
                           className={`
-                            aspect-square rounded-lg transition-all duration-200 hover:scale-105 relative overflow-hidden
+                            aspect-square rounded-lg transition-[transform,box-shadow,opacity] duration-200 hover:scale-105 relative overflow-hidden
                             ${selectedBackgroundIndex === index 
                               ? 'ring-2 ring-primary scale-105' 
                               : 'hover:ring-1 hover:ring-primary/50'
