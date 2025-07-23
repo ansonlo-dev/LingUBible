@@ -251,50 +251,76 @@ const Index = () => {
       
       <div className="bg-background relative overflow-x-hidden min-h-screen">
       <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">
-        {/* Hero Section */}
-        <div className="text-center py-8 md:py-12 animate-fade-in relative overflow-visible z-30">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            <span className="neon-glow-text">{t('hero.title')}</span>{' '}
-            <span className="red-neon-glow-text">LingUBible</span>
-          </h1>
-          
-          {/* Technology Network Animation */}
-          <div className="mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <TechnologyNetworkAnimation 
-              size="lg" 
-              className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
-            />
-          </div>
-          
-          <h2 className="text-xl md:text-2xl font-bold text-muted-foreground mb-3">
-            {t('hero.regBible')}
-          </h2>
-          <p className="text-xl text-muted-foreground mb-4 max-w-2xl mx-auto">
-            {/* 桌面版：一行顯示 */}
-            <span className="hidden md:block">
-              {t('hero.subtitleDesktop')}
-            </span>
-            {/* 手機版：英文兩行，中文一行 */}
-            <span className="block md:hidden">
-              {language === 'en' ? (
-                <>
-                  <span className="block">{t('hero.subtitleMobileLine1')}</span>
-                  <span className="block">{t('hero.subtitleMobileLine2')}</span>
-                </>
-              ) : (
-                <span className="block">{t('hero.subtitleMobileLine1')}</span>
-              )}
-            </span>
-          </p>
-          
-          {/* Rolling Text Animation */}
-          <div className="text-lg mb-6 max-w-2xl mx-auto flex items-center justify-center">
-            <span className="text-foreground">{t('hero.comeHereTo')}</span>
-            <span>&nbsp;</span>
-            <RollingText 
-              texts={actionTexts} 
-              interval={2000}
-            />
+        {/* Hero Section - Cloudflare style layout */}
+        <div className="md:py-12 animate-fade-in relative overflow-visible z-30">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
+            {/* Left Column - Text Content */}
+            <div className="text-center lg:text-left lg:order-1">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 lg:mb-3 leading-tight">
+                <span className="neon-glow-text">{t('hero.title')}</span>{' '}
+                <span className="red-neon-glow-text">LingUBible</span>
+              </h1>
+              
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-muted-foreground mb-2 lg:mb-3">
+                {t('hero.regBible')}
+              </h2>
+              
+              <p className="text-lg md:text-xl text-muted-foreground mb-4 lg:mb-5 max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
+                {/* 桌面版：一行顯示 */}
+                <span className="hidden md:block">
+                  {t('hero.subtitleDesktop')}
+                </span>
+                {/* 手機版：英文兩行，中文一行 */}
+                <span className="block md:hidden">
+                  {language === 'en' ? (
+                    <>
+                      <span className="block">{t('hero.subtitleMobileLine1')}</span>
+                      <span className="block">{t('hero.subtitleMobileLine2')}</span>
+                    </>
+                  ) : (
+                    <span className="block">{t('hero.subtitleMobileLine1')}</span>
+                  )}
+                </span>
+              </p>
+              
+              {/* Rolling Text Animation */}
+              <div className="text-lg mb-6 lg:mb-7 lg:max-w-none flex items-center justify-center lg:justify-start">
+                <span className="text-foreground">{t('hero.comeHereTo')}</span>
+                <span>&nbsp;</span>
+                <RollingText 
+                  texts={actionTexts} 
+                  interval={2000}
+                />
+              </div>
+              
+              {/* CTA Button */}
+              <div className="relative z-50 mb-8 lg:mb-0" style={{ zIndex: 9999 }}>
+                <WingedButton 
+                  size="lg" 
+                  className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8 relative z-50"
+                  onClick={handleGetStartedClick}
+                  style={{ zIndex: 9999 }}
+                >
+                  {user ? t('hero.explore') : t('hero.getStarted')}
+                </WingedButton>
+              </div>
+
+              {/* Mobile Animation - Below Button */}
+              <div className="flex justify-center lg:hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <TechnologyNetworkAnimation 
+                  size="xl" 
+                  className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
+                />
+              </div>
+            </div>
+
+            {/* Right Column - Large Animation (Desktop only) */}
+            <div className="hidden lg:flex justify-center lg:justify-end lg:order-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <TechnologyNetworkAnimation 
+                size="3xl" 
+                className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
+              />
+            </div>
           </div>
           
           {/* SEO 增強：添加隱藏的關鍵字內容 */}
@@ -302,17 +328,6 @@ const Index = () => {
             <h2>嶺南大學課程評價平台 - Reg科聖經</h2>
             <p>LingUBible 是專為嶺南大學學生設計的課程和講師評價平台。在這裡你可以查看真實的課程評價、講師評分，找到最適合的選修課和必修課。我們的平台幫助嶺大學生做出明智的選課決定，是你的選課神器和學習夥伴。</p>
             <p>功能包括：課程評論、教授評價、學生心得分享、選課指南、課程推薦等。無論你是新生還是高年級學生，Reg科聖經都能為你的學習之路提供寶貴的參考。</p>
-          </div>
-          
-          <div className="relative z-50" style={{ zIndex: 9999 }}>
-            <WingedButton 
-              size="lg" 
-              className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8 relative z-50"
-              onClick={handleGetStartedClick}
-              style={{ zIndex: 9999 }}
-            >
-              {user ? t('hero.explore') : t('hero.getStarted')}
-            </WingedButton>
           </div>
         </div>
 
