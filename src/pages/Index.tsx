@@ -27,7 +27,34 @@ const Index = () => {
   const { t, language } = useLanguage();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const { isMobileLandscape, isTabletPortrait } = useEnhancedResponsive();
+  const { isMobileLandscape, isTabletPortrait, isPortrait } = useEnhancedResponsive();
+
+  // 檢測中等尺寸的平板設備（iPad Mini 和 iPad Air）
+  const [isMediumTabletPortrait, setIsMediumTabletPortrait] = useState(false);
+
+  useEffect(() => {
+    const checkMediumTabletPortrait = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      // 檢測 iPad Mini (768x1024) 和 iPad Air (820x1180) 的豎屏模式
+      const isMediumTablet = width >= 768 && width < 1024 && height >= 1024 && isPortrait;
+      setIsMediumTabletPortrait(isMediumTablet);
+    };
+
+    checkMediumTabletPortrait();
+    window.addEventListener('resize', checkMediumTabletPortrait);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkMediumTabletPortrait, 100);
+    });
+
+    return () => {
+      window.removeEventListener('resize', checkMediumTabletPortrait);
+      window.removeEventListener('orientationchange', checkMediumTabletPortrait);
+    };
+  }, [isPortrait]);
+
+  // 統一的平板桌面版佈局檢測
+  const shouldUseDesktopLayout = isTabletPortrait || isMediumTabletPortrait;
 
   // 格式化統計變化的輔助函數
   const formatStatsChange = (count: number) => {
@@ -256,18 +283,18 @@ const Index = () => {
         {/* Hero Section - Cloudflare style layout */}
         <div className="animate-fade-in relative overflow-visible z-30">
           <div className={`grid gap-8 items-center max-w-6xl mx-auto ${
-            isMobileLandscape || isTabletPortrait
+            isMobileLandscape || shouldUseDesktopLayout
               ? 'grid-cols-3' 
               : 'grid-cols-1 lg:grid-cols-3'
           }`} style={{padding: '0 30px'}}>
             {/* Left Column - Text Content (spans 2 columns for more space) */}
             <div className={`${
-              isMobileLandscape || isTabletPortrait
+              isMobileLandscape || shouldUseDesktopLayout
                 ? 'text-left order-1 col-span-2' 
                 : 'text-center lg:text-left lg:order-1 lg:col-span-2'
             }`}>
               <h1 className={`font-bold mb-2 lg:mb-3 leading-tight ${
-                isMobileLandscape || isTabletPortrait
+                isMobileLandscape || shouldUseDesktopLayout
                   ? 'text-3xl' 
                   : 'text-4xl md:text-5xl lg:text-6xl'
               }`}>
@@ -299,7 +326,7 @@ const Index = () => {
               
               {/* Rolling Text Animation */}
               <div className={`text-lg mb-6 lg:mb-7 lg:max-w-none flex items-center ${
-                isMobileLandscape || isTabletPortrait ? 'justify-start' : 'justify-center lg:justify-start'
+                isMobileLandscape || shouldUseDesktopLayout ? 'justify-start' : 'justify-center lg:justify-start'
               }`}>
                 <span className="text-foreground">{t('hero.comeHereTo')}</span>
                 <span>&nbsp;</span>
@@ -323,7 +350,7 @@ const Index = () => {
 
               {/* Mobile Animation - Below Button (hide on mobile landscape and tablet portrait) */}
               <div className={`flex justify-center animate-fade-in ${
-                isMobileLandscape || isTabletPortrait ? 'hidden' : 'lg:hidden'
+                isMobileLandscape || shouldUseDesktopLayout ? 'hidden' : 'lg:hidden'
               }`} style={{ animationDelay: '0.3s' }}>
                 <TechnologyNetworkAnimation 
                   size="xl" 
@@ -336,7 +363,7 @@ const Index = () => {
             <div className={`flex justify-center lg:justify-end animate-fade-in ${
               isMobileLandscape 
                 ? 'order-2 col-span-1 -translate-y-8' 
-                : isTabletPortrait
+                : shouldUseDesktopLayout
                 ? 'order-2 col-span-1'
                 : 'hidden lg:flex lg:order-2 lg:col-span-1'
             }`} style={{ animationDelay: '0.3s' }}>
