@@ -180,28 +180,34 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
               <div className="w-3/5 flex flex-col">
                 {/* 選項卡 - 移到右半部頂部 */}
                 <div className="flex-shrink-0">
-                  <div className="flex space-x-1 bg-muted/50 p-1">
+                  <div className="flex bg-transparent relative">
                     <button
                       onClick={() => setActiveTab('animals')}
-                      className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all duration-200 ${
+                      className={`flex-1 py-2 px-3 text-xs font-medium transition-all duration-200 relative ${
                         activeTab === 'animals'
-                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
+                          ? 'text-foreground font-bold'
+                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 inline mr-1" />
                       {t('avatar.animals')} ({animals.length})
+                      {activeTab === 'animals' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />
+                      )}
                     </button>
                     <button
                       onClick={() => setActiveTab('backgrounds')}
-                      className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all duration-200 ${
+                      className={`flex-1 py-2 px-3 text-xs font-medium transition-all duration-200 relative ${
                         activeTab === 'backgrounds'
-                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
+                          ? 'text-foreground font-bold'
+                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Palette className="h-3 w-3 inline mr-1" />
                       {t('avatar.backgrounds')} ({backgrounds.length})
+                      {activeTab === 'backgrounds' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -230,7 +236,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-6 gap-2">
+                      <div className="grid grid-cols-6 gap-2 sm:gap-3">
                         {backgrounds.map((bg, index) => (
                           <button
                             key={index}
@@ -306,28 +312,34 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                   </div>
 
                   {/* 選項卡 */}
-                  <div className="flex space-x-1 bg-muted/50 p-1 rounded-lg">
+                  <div className="flex bg-transparent relative">
                     <button
                       onClick={() => setActiveTab('animals')}
-                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
+                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-all duration-200 relative ${
                         activeTab === 'animals'
-                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
+                          ? 'text-foreground font-bold'
+                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
                       {t('avatar.animals')} ({animals.length})
+                      {activeTab === 'animals' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />
+                      )}
                     </button>
                     <button
                       onClick={() => setActiveTab('backgrounds')}
-                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
+                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-all duration-200 relative ${
                         activeTab === 'backgrounds'
-                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
+                          ? 'text-foreground font-bold'
+                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Palette className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
                       {t('avatar.backgrounds')} ({backgrounds.length})
+                      {activeTab === 'backgrounds' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -358,7 +370,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-6 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-6 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 lg:gap-4">
                       {backgrounds.map((bg, index) => (
                         <button
                           key={index}
