@@ -8,7 +8,7 @@ import { useCustomAvatar } from '@/hooks/useCustomAvatar';
 import { getAllAnimals, getAllBackgrounds, getTotalCombinations } from "@/utils/ui/avatarUtils";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Palette, Shuffle, Save, Trash2, Sparkles } from 'lucide-react';
+import { Palette, Shuffle, Save, Trash2, Sparkles, Radius } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface AvatarCustomizerProps {
@@ -111,7 +111,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className={`max-w-none max-h-none w-screen h-screen ${!isLandscape ? 'sm:w-[95vw] sm:h-[95vh]' : ''} sm:max-w-4xl bg-white dark:bg-gray-900 shadow-xl ${!isLandscape ? 'sm:rounded-2xl' : ''} border-0 ${!isLandscape ? 'sm:border' : ''} p-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`}>
+      <DialogContent className={`max-w-none max-h-none w-screen h-screen ${!isLandscape ? 'sm:w-[95vw] sm:h-[95vh]' : ''} sm:max-w-4xl bg-white dark:bg-gray-900 shadow-xl ${!isLandscape ? 'sm:rounded-2xl' : ''} border-0 ${!isLandscape ? 'sm:border' : ''} p-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`} style={{ borderRadius: '0' }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
           <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'}`}>
             <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground">
@@ -124,7 +124,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
             // 橫屏模式：左右分割佈局
             <div className="flex-1 flex min-h-0">
               {/* 左半部：預覽和控制 */}
-              <div className="w-1/2 flex flex-col p-4">
+              <div className="w-2/5 flex flex-col p-4">
                 {/* 預覽區域 */}
                 <div className="flex items-center justify-center p-6 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl mb-6">
                   <div className="text-center space-y-3">
@@ -141,7 +141,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                         size: 'lg',
                         context: 'profile'
                       }}
-                      className="mx-auto w-24 h-24"
+                      className="mx-auto w-24 h-24 [&_span[role='img']]:text-6xl"
                     />
                     <div>
                       <p className="font-semibold text-foreground text-base">{t('avatar.preview')}</p>
@@ -166,7 +166,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
               </div>
 
               {/* 右半部：選項卡和選擇區域 */}
-              <div className="w-1/2 flex flex-col">
+              <div className="w-3/5 flex flex-col">
                 {/* 選項卡 - 移到右半部頂部 */}
                 <div className="flex-shrink-0">
                   <div className="flex space-x-1 bg-muted/50 p-1">
@@ -174,8 +174,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       onClick={() => setActiveTab('animals')}
                       className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all duration-200 ${
                         activeTab === 'animals'
-                          ? 'bg-white dark:bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-background/50'
+                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 inline mr-1" />
@@ -185,8 +185,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       onClick={() => setActiveTab('backgrounds')}
                       className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all duration-200 ${
                         activeTab === 'backgrounds'
-                          ? 'bg-white dark:bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-background/50'
+                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
                       }`}
                     >
                       <Palette className="h-3 w-3 inline mr-1" />
@@ -199,14 +199,14 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                 <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
                   <div className="bg-muted/20 p-3">
                     {activeTab === 'animals' ? (
-                      <div className="grid grid-cols-8 gap-2">
+                      <div className="grid grid-cols-10 gap-1.5">
                         {animals.map((animal, index) => (
                           <button
                             key={index}
                             onClick={() => setSelectedAnimal(animal)}
                             className={`
-                              aspect-square rounded-lg transition-all duration-200 hover:scale-110
-                              flex items-center justify-center text-base
+                              aspect-square rounded-md transition-all duration-200 hover:scale-110
+                              flex items-center justify-center text-sm
                               ${selectedAnimal === animal 
                                 ? 'bg-primary/20 ring-2 ring-primary scale-105' 
                                 : 'bg-white/80 dark:bg-background/80 hover:bg-white dark:hover:bg-background'
@@ -271,7 +271,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                           size: 'lg',
                           context: 'profile'
                         }}
-                        className="mx-auto w-16 h-16 sm:w-24 sm:h-24"
+                        className="mx-auto w-16 h-16 sm:w-24 sm:h-24 [&_span[role='img']]:text-4xl sm:[&_span[role='img']]:text-6xl"
                       />
                       <div>
                         <p className="font-semibold text-foreground text-sm sm:text-base">{t('avatar.preview')}</p>
@@ -300,8 +300,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       onClick={() => setActiveTab('animals')}
                       className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
                         activeTab === 'animals'
-                          ? 'bg-white dark:bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-background/50'
+                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
@@ -311,8 +311,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       onClick={() => setActiveTab('backgrounds')}
                       className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
                         activeTab === 'backgrounds'
-                          ? 'bg-white dark:bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-background/50'
+                          ? 'bg-white dark:bg-background text-foreground shadow-md border border-primary/20'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/70 dark:hover:bg-background/70 hover:shadow-sm'
                       }`}
                     >
                       <Palette className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />

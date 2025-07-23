@@ -474,10 +474,10 @@ If you find **LingUBible** helpful for your academic journey, consider supportin
 - 📱 **Improve Performance** - Optimize for better user experience
 - 🎨 **Enhance UI/UX** - Create a more beautiful interface
 
-### ☕ Buy Us a Coffee
+### ☕ Support LingUBible
 
 <a href="https://ko-fi.com/lingubible" target="_blank">
-  <img src="https://cdn.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me A Coffee" height="50" width="210">
+  <img src="public/support-lingubible.jpg" alt="Support LingUBible" width="600">
 </a>
 
 **Every contribution, no matter how small, makes a difference! 🙏**
