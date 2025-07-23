@@ -122,7 +122,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
 
           {isLandscape ? (
             // 橫屏模式：左右分割佈局
-            <div className="flex-1 flex min-h-0 relative">
+            <div className="flex-1 flex min-h-0">
               {/* 左半部：預覽和控制 */}
               <div className="w-1/2 flex flex-col p-4">
                 {/* 預覽區域 */}
@@ -165,14 +165,11 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                 </div>
               </div>
 
-              {/* 垂直分割線 */}
-              <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-px h-[90%] bg-border/50"></div>
-
               {/* 右半部：選項卡和選擇區域 */}
               <div className="w-1/2 flex flex-col">
                 {/* 選項卡 - 移到右半部頂部 */}
                 <div className="flex-shrink-0">
-                  <div className="flex space-x-1 bg-muted/50 p-1 rounded-lg">
+                  <div className="flex space-x-1 bg-muted/50 p-1">
                     <button
                       onClick={() => setActiveTab('animals')}
                       className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all duration-200 ${
@@ -199,8 +196,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                 </div>
 
                 {/* 選擇區域 */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <div className="bg-muted/20 rounded-xl p-3">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <div className="bg-muted/20 p-3">
                     {activeTab === 'animals' ? (
                       <div className="grid grid-cols-8 gap-2">
                         {animals.map((animal, index) => (
