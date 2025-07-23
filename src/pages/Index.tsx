@@ -19,6 +19,7 @@ import { CourseService } from '@/services/api/courseService';
 import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
 import { translateDepartmentName } from '@/utils/textUtils';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
 
 
 
@@ -26,6 +27,7 @@ const Index = () => {
   const { t, language } = useLanguage();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const { isMobileLandscape } = useEnhancedResponsive();
 
   // 格式化統計變化的輔助函數
   const formatStatsChange = (count: number) => {
@@ -253,9 +255,17 @@ const Index = () => {
       <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">
         {/* Hero Section - Cloudflare style layout */}
         <div className="md:py-12 animate-fade-in relative overflow-visible z-30">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+          <div className={`grid gap-8 items-center max-w-6xl mx-auto ${
+            isMobileLandscape 
+              ? 'grid-cols-3' 
+              : 'grid-cols-1 lg:grid-cols-3'
+          }`}>
             {/* Left Column - Text Content (spans 2 columns for more space) */}
-            <div className="text-center lg:text-left lg:order-1 lg:col-span-2">
+            <div className={`${
+              isMobileLandscape 
+                ? 'text-left order-1 col-span-2' 
+                : 'text-center lg:text-left lg:order-1 lg:col-span-2'
+            }`}>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 lg:mb-3 leading-tight">
                 <span className="neon-glow-text">{t('hero.title')}</span>{' '}
                 <span className="red-neon-glow-text">LingUBible</span>
@@ -284,7 +294,9 @@ const Index = () => {
               </p>
               
               {/* Rolling Text Animation */}
-              <div className="text-lg mb-6 lg:mb-7 lg:max-w-none flex items-center justify-center lg:justify-start">
+              <div className={`text-lg mb-6 lg:mb-7 lg:max-w-none flex items-center ${
+                isMobileLandscape ? 'justify-start' : 'justify-center lg:justify-start'
+              }`}>
                 <span className="text-foreground">{t('hero.comeHereTo')}</span>
                 <span>&nbsp;</span>
                 <RollingText 
@@ -305,8 +317,10 @@ const Index = () => {
                 </WingedButton>
               </div>
 
-              {/* Mobile Animation - Below Button */}
-              <div className="flex justify-center lg:hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              {/* Mobile Animation - Below Button (hide on mobile landscape) */}
+              <div className={`flex justify-center animate-fade-in ${
+                isMobileLandscape ? 'hidden' : 'lg:hidden'
+              }`} style={{ animationDelay: '0.3s' }}>
                 <TechnologyNetworkAnimation 
                   size="xl" 
                   className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
@@ -314,11 +328,15 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Column - Large Animation (Desktop only, 1 column with scaling) */}
-            <div className="hidden lg:flex justify-center lg:justify-end lg:order-2 lg:col-span-1 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            {/* Right Column - Large Animation (Desktop and Mobile Landscape) */}
+            <div className={`flex justify-center lg:justify-end animate-fade-in ${
+              isMobileLandscape 
+                ? 'order-2 col-span-1' 
+                : 'hidden lg:flex lg:order-2 lg:col-span-1'
+            }`} style={{ animationDelay: '0.3s' }}>
               <TechnologyNetworkAnimation 
                 size="3xl" 
-                className="opacity-80 hover:opacity-100 transition-opacity duration-300 scale-150" 
+                className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
               />
             </div>
           </div>

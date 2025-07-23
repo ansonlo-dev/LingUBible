@@ -563,7 +563,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <BookOpenIcon className="h-4 w-4 text-red-600" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.courses')}</span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
@@ -577,7 +577,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <GraduationCap className="h-4 w-4 text-red-600" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.instructors')}</span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
@@ -591,7 +591,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <BookOpenIcon className="h-4 w-4 text-gray-500" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.topCourses')}</span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
@@ -605,7 +605,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <GraduationCap className="h-4 w-4 text-gray-500" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.topInstructors')}</span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
@@ -729,7 +729,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   }`}
                                 >
                                   <BookOpenIcon className="h-4 w-4 text-red-600" />
-                                  {(!isMobile || isMobileLandscape) && (
+                                  {isMobileLandscape && (
                                     <span className="ml-2">{t('search.courses')}</span>
                                   )}
                                 </button>
@@ -742,7 +742,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                   }`}
                                 >
                                   <GraduationCap className="h-4 w-4 text-red-600" />
-                                  {(!isMobile || isMobileLandscape) && (
+                                  {isMobileLandscape && (
                                     <span className="ml-2">{t('search.instructors')}</span>
                                   )}
                                 </button>
@@ -1376,7 +1376,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <BookOpenIcon className="h-4 w-4 text-red-600" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.courses')}</span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
@@ -1390,7 +1390,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <GraduationCap className="h-4 w-4 text-red-600" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.instructors')}</span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
@@ -1404,7 +1404,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <BookOpenIcon className="h-4 w-4 text-gray-500" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.topCourses')}</span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
@@ -1418,7 +1418,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     }`}
                   >
                     <GraduationCap className="h-4 w-4 text-gray-500" />
-                    <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-0">
+                    <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
                       <span>{t('featured.topInstructors')}</span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>

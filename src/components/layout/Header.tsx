@@ -22,7 +22,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { user } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [forceRender, setForceRender] = useState(0);
-  const { isMobilePortrait } = useEnhancedResponsive();
+  const { isMobilePortrait, isMobileLandscape } = useEnhancedResponsive();
 
   // 檢測操作系統
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -141,10 +141,19 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
                     shortcut: isMac ? 'Alt+L or ⌘+Shift+L' : 'Alt+L or Ctrl+Shift+L' 
                   })}
                 >
-                  {isSidebarCollapsed ? (
-                    <PanelRightClose className="h-6 w-6" />
+                  {/* Fix icon logic for mobile landscape */}
+                  {isMobileLandscape ? (
+                    isSidebarCollapsed ? (
+                      <PanelRightOpen className="h-6 w-6" />
+                    ) : (
+                      <PanelRightClose className="h-6 w-6" />
+                    )
                   ) : (
-                    <PanelRightOpen className="h-6 w-6" />
+                    isSidebarCollapsed ? (
+                      <PanelRightClose className="h-6 w-6" />
+                    ) : (
+                      <PanelRightOpen className="h-6 w-6" />
+                    )
                   )}
                 </Button>
               )}
