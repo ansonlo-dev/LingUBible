@@ -112,6 +112,28 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       addToHistory(query.trim());
     }
   };
+
+  // 處理 X 按鈕點擊：如果有文字則清空，沒有文字則關閉
+  const handleCloseButtonClick = () => {
+    if (searchQuery.trim()) {
+      // 如果有搜索文字，清空文字並重新聚焦輸入框
+      setSearchQuery('');
+      setSelectedIndex(-1);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    } else {
+      // 如果沒有文字，關閉模態框
+      handleClose();
+    }
+  };
+
+  // 處理背景點擊：只在桌面版生效
+  const handleBackdropClick = () => {
+    if (isDesktopMode) {
+      handleClose();
+    }
+  };
   
   // Track viewport changes for responsive positioning
   useEffect(() => {
@@ -491,7 +513,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           zIndex: 50, // 高於側邊欄(40)但低於模態框內容(110)
           isolation: 'isolate' // Create new stacking context
         }}
-        onClick={handleClose}
+        onClick={handleBackdropClick}
       />
       
       {/* Search Modal Content */}
@@ -538,7 +560,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                 className="flex-1 py-4 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               <button
-                onClick={handleClose}
+                onClick={handleCloseButtonClick}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="h-5 w-5" />
@@ -1351,7 +1373,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                 className="flex-1 py-4 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 min-w-0"
               />
               <button
-                onClick={handleClose}
+                onClick={handleCloseButtonClick}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="h-5 w-5" />
