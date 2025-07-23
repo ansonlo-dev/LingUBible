@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, Search, BookText, Users, ArrowLeft, RefreshCw } from "lucide-react";
 import { MobileSearchModal } from "@/components/common/MobileSearchModal";
+import { Error404Animation } from "@/components/features/animations/Error404Animation";
 
 const NotFound = () => {
   const location = useLocation();
@@ -63,12 +64,20 @@ const NotFound = () => {
       <div className="max-w-4xl w-full">
         {/* 主要 404 內容 */}
         <div className="text-center mb-12">
+          {/* 404 動畫 */}
+          <div className="mb-6">
+            <Error404Animation 
+              size="xl" 
+              className="opacity-90 hover:opacity-100 transition-opacity duration-300" 
+            />
+          </div>
+          
           {/* 404 數字 */}
           <div className="relative mb-8">
-            <h1 className="text-8xl md:text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary/60 select-none">
+            <h1 className="text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary/60 select-none">
               404
             </h1>
-            <div className="absolute inset-0 text-8xl md:text-9xl font-bold text-primary/10 blur-sm select-none">
+            <div className="absolute inset-0 text-6xl md:text-7xl font-bold text-primary/10 blur-sm select-none">
               404
             </div>
           </div>
