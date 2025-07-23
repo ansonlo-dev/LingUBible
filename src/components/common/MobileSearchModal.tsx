@@ -36,7 +36,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const { t, language: currentLanguage } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { isMobileLandscape } = useEnhancedResponsive();
+  const { isMobileLandscape, isMobilePortrait } = useEnhancedResponsive();
   
   // Track viewport dimensions for responsive positioning
   const [viewportDimensions, setViewportDimensions] = useState({
@@ -128,9 +128,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     }
   };
 
-  // 處理背景點擊：只在桌面版生效
+  // 處理背景點擊：除了手機直立模式外都可以點擊關閉
   const handleBackdropClick = () => {
-    if (isDesktopMode) {
+    // 允許所有非手機直立模式的設備點擊背景關閉
+    // 這包括桌面、平板和手機橫屏模式
+    if (!isMobilePortrait) {
       handleClose();
     }
   };
@@ -531,6 +533,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
             zIndex: 200, // Standard z-index
             pointerEvents: 'auto'
           }}
+          onClick={isLargeDesktop ? handleBackdropClick : undefined}
         >
           <div 
             className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${isLargeDesktop ? 'w-full' : ''}`}
