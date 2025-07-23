@@ -259,7 +259,7 @@ const Index = () => {
             isMobileLandscape 
               ? 'grid-cols-3' 
               : 'grid-cols-1 lg:grid-cols-3'
-          }`}>
+          }`} style={{padding: '0 30px'}}>
             {/* Left Column - Text Content (spans 2 columns for more space) */}
             <div className={`${
               isMobileLandscape 
