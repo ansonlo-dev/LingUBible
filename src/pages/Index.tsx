@@ -253,9 +253,9 @@ const Index = () => {
       <div className="container mx-auto px-4 py-6 pb-4 space-y-6 relative z-10">
         {/* Hero Section - Cloudflare style layout */}
         <div className="md:py-12 animate-fade-in relative overflow-visible z-30">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
-            {/* Left Column - Text Content */}
-            <div className="text-center lg:text-left lg:order-1">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center max-w-7xl mx-auto">
+            {/* Left Column - Text Content (spans 3 columns on desktop) */}
+            <div className="text-center lg:text-left lg:order-1 lg:col-span-3">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 lg:mb-3 leading-tight">
                 <span className="neon-glow-text">{t('hero.title')}</span>{' '}
                 <span className="red-neon-glow-text">LingUBible</span>
@@ -314,8 +314,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Column - Large Animation (Desktop only) */}
-            <div className="hidden lg:flex justify-center lg:justify-end lg:order-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            {/* Right Column - Large Animation (Desktop only, spans 2 columns) */}
+            <div className="hidden lg:flex justify-center lg:justify-end lg:order-2 lg:col-span-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <TechnologyNetworkAnimation 
                 size="3xl" 
                 className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
