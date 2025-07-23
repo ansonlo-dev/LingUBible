@@ -3298,7 +3298,30 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
     height: 100%;
   }
 
-  button {
+  /* Badge buttons in cards - scoped to avoid sidebar overflow issues */
+  .course-card button,
+  .lecturer-card button,
+  .card button,
+  .review-card button,
+  [class*="Card"] button,
+  [class*="badge"] button,
+  .inline-flex.items-center.px-2.py-1.rounded,
+  .inline-flex.items-center.px-1.py-0,
+  .inline-flex.items-center.px-1\.5.py-0\.5,
+  .bg-blue-50 button,
+  .bg-gray-50 button,
+  .bg-orange-50 button,
+  .bg-green-50 button,
+  .bg-yellow-50 button,
+  .bg-purple-50 button,
+  .bg-pink-50 button {
     min-width: fit-content;
   }
+
+  @media (min-width: 1024px) {
+    .text-6xl {
+        font-size: 3rem !important;
+        line-height: 1;
+    }
+}
 }
