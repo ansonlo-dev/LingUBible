@@ -1128,7 +1128,6 @@ export default {
   'error.missingParameters': '缺少必要参数',
   'error.loadingCourses': '加载课程数据时发生错误',
   'loading.courses': '加载课程数据中...',
-  '404.title': '糟糕！找不到页面',
   '404.description': '您要寻找的页面可能已被移除、更名或暂时无法使用。',
   '404.path': '请求路径',
   '404.backToHome': '返回首页',

@@ -1080,7 +1080,6 @@ export default {
   'error.missingParameters': '缺少必要參數',
   'error.loadingCourses': '載入課程資料時發生錯誤',
   'loading.courses': '載入課程資料中...',
-  '404.title': '糟糕！找不到頁面',
   '404.description': '您尋找的頁面可能已被移除、更名或暫時無法使用。',
   '404.path': '請求的路徑',
   '404.backToHome': '返回首頁',

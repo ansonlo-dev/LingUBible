@@ -65,28 +65,17 @@ const NotFound = () => {
         {/* 主要 404 內容 */}
         <div className="text-center mb-12">
           {/* 404 動畫 */}
-          <div className="mb-6">
-            <Error404Animation 
-              size="xl" 
-              className="opacity-90 hover:opacity-100 transition-opacity duration-300" 
-            />
-          </div>
-          
-          {/* 404 數字 */}
-          <div className="relative mb-8">
-            <h1 className="text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary/60 select-none">
-              404
-            </h1>
-            <div className="absolute inset-0 text-6xl md:text-7xl font-bold text-primary/10 blur-sm select-none">
-              404
+          <div className="mb-8 w-full flex justify-center">
+            <div className="w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-2xl">
+              <Error404Animation 
+                size="3xl"
+                className="opacity-90 hover:opacity-100 transition-opacity duration-300 w-full h-auto" 
+              />
             </div>
           </div>
 
           {/* 錯誤信息 */}
           <div className="space-y-4 mb-8">
-            <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
-              {t('404.title')}
-            </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {t('404.description')}
             </p>

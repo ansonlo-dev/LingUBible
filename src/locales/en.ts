@@ -1142,7 +1142,6 @@ export default {
   'error.missingParameters': 'Missing required parameters',
   'error.loadingCourses': 'Error loading course data',
   'loading.courses': 'Loading courses...',
-  '404.title': 'Oops! Page Not Found',
   '404.description': 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.',
   '404.path': 'Requested path',
   '404.backToHome': 'Back to Home',

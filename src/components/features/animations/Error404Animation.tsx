@@ -15,7 +15,7 @@ const sizeClasses = {
   lg: 'h-32 w-32',
   xl: 'h-48 w-48',
   '2xl': 'h-64 w-64',
-  '3xl': 'h-80 w-80'
+  '3xl': 'h-96 w-96 max-w-full max-h-full'
 };
 
 export const Error404Animation: React.FC<Error404AnimationProps> = ({
