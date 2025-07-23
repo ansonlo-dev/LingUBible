@@ -125,7 +125,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       `} style={{ borderRadius: isLandscape ? '0' : undefined }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
           <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'}`}>
-            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground">
+            <DialogTitle className={`flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1' : ''}`}>
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               {t('avatar.customize')}
             </DialogTitle>
@@ -357,7 +357,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                           onClick={() => setSelectedAnimal(animal)}
                           className={`
                             aspect-square rounded-lg transition-[transform,background-color,box-shadow] duration-200 hover:scale-110
-                            flex items-center justify-center text-base sm:text-xl md:text-2xl
+                            flex items-center justify-center text-base sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl
                             ${selectedAnimal === animal 
                               ? 'bg-primary/20 ring-2 ring-primary scale-105' 
                               : 'bg-white/80 dark:bg-background/80 hover:bg-white dark:hover:bg-background'
