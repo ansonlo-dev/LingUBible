@@ -266,19 +266,43 @@ export function BackToTop() {
 
   const scrollToBottom = () => {
     try {
+      console.log('=== ScrollToBottom Debug Start ===');
+      
       // 立即隱藏按鈕（預防性）
       setIsBottomVisible(false);
       
       // 尋找頁腳元素並滾動至其開始位置
       const footer = document.querySelector('footer');
+      console.log('Footer element found:', !!footer);
       
       if (footer) {
+        // 記錄當前滾動位置
+        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+        console.log('Current scroll position before scrollIntoView:', currentScrollY);
+        
+        // 記錄頁腳位置信息
+        const footerRect = footer.getBoundingClientRect();
+        const footerTop = footerRect.top + window.pageYOffset;
+        console.log('Footer position info:', {
+          rect: footerRect,
+          absoluteTop: footerTop,
+          height: footerRect.height
+        });
+        
         // 使用 scrollIntoView 滾動到頁腳開始位置，block: 'start' 確保頁腳頂部對齊視窗頂部
         footer.scrollIntoView({
           behavior: 'smooth',
           block: 'start'
         });
+        
+        // 檢查滾動後的位置
+        setTimeout(() => {
+          const newScrollY = window.pageYOffset || document.documentElement.scrollTop;
+          console.log('Scroll position immediately after scrollIntoView:', newScrollY);
+        }, 100);
+        
       } else {
+        console.log('Footer not found, using fallback behavior');
         // 如果找不到頁腳元素，回退到原來的行為（滾動到頁面底部）
         const documentHeight = Math.max(
           document.body.scrollHeight,
@@ -287,6 +311,8 @@ export function BackToTop() {
           document.documentElement.scrollHeight,
           document.documentElement.offsetHeight
         );
+        
+        console.log('Document height for fallback:', documentHeight);
         
         window.scrollTo({
           top: documentHeight,
@@ -318,6 +344,15 @@ export function BackToTop() {
           document.documentElement.offsetHeight
         );
         const windowHeight = window.innerHeight;
+        
+        console.log(`ForceCheck (isLast: ${isLastCheck}):`, {
+          scrollTop,
+          documentHeight,
+          windowHeight,
+          shouldBeVisible: scrollTop > 50,
+          shouldBottomBeVisible: scrollTop + windowHeight < documentHeight - 50
+        });
+        
         setIsVisible(scrollTop > 50);
         setIsBottomVisible(scrollTop + windowHeight < documentHeight - 50);
         
@@ -327,6 +362,7 @@ export function BackToTop() {
           if (scrollToBottomButton) {
             scrollToBottomButton.style.opacity = '0.5';
           }
+          console.log('=== ScrollToBottom Debug End ===');
         }
       };
 
