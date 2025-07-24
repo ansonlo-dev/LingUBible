@@ -1,16 +1,14 @@
 import { useLocation, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Home, Search, BookText, Users, ArrowLeft, RefreshCw } from "lucide-react";
-import { MobileSearchModal } from "@/components/common/MobileSearchModal";
+import { Home, BookText, Users, ArrowLeft, RefreshCw } from "lucide-react";
 import { Error404Animation } from "@/components/features/animations/Error404Animation";
 
 const NotFound = () => {
   const location = useLocation();
   const { t } = useLanguage();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     console.error(
@@ -21,10 +19,6 @@ const NotFound = () => {
 
   const handleRefresh = () => {
     window.location.reload();
-  };
-
-  const handleSearchClick = () => {
-    setIsSearchOpen(true);
   };
 
   const quickLinks = [
@@ -48,14 +42,6 @@ const NotFound = () => {
       path: '/instructors',
       description: t('404.quickLinks.instructorsDesc'),
       isLink: true
-    },
-    {
-      icon: Search,
-      label: t('search.search'),
-      path: '/',
-      description: t('404.quickLinks.searchDesc'),
-      isLink: false,
-      onClick: handleSearchClick
     }
   ];
 
@@ -124,55 +110,31 @@ const NotFound = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {quickLinks.map((link, index) => {
               const IconComponent = link.icon;
               
-              if (link.isLink) {
-                return (
-                  <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105">
-                    <CardContent className="p-6">
-                      <Link to={link.path} className="block">
-                        <div className="flex flex-col items-center text-center space-y-3">
-                          <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <IconComponent className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {link.label}
-                            </h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {link.description}
-                            </p>
-                          </div>
+              return (
+                <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <CardContent className="p-6">
+                    <Link to={link.path} className="block">
+                      <div className="flex flex-col items-center text-center space-y-3">
+                        <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                          <IconComponent className="h-6 w-6 text-primary" />
                         </div>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              } else {
-                return (
-                  <Card key={index} className="course-card group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer">
-                    <CardContent className="p-6">
-                      <div onClick={link.onClick} className="block">
-                        <div className="flex flex-col items-center text-center space-y-3">
-                          <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <IconComponent className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {link.label}
-                            </h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {link.description}
-                            </p>
-                          </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {link.label}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {link.description}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              }
+                    </Link>
+                  </CardContent>
+                </Card>
+              );
             })}
           </div>
         </div>
@@ -200,12 +162,6 @@ const NotFound = () => {
           </Card>
         </div>
       </div>
-      
-      {/* 搜索模態 */}
-      <MobileSearchModal 
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
     </div>
   );
 };
