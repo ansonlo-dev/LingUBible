@@ -422,12 +422,20 @@ const Index = () => {
         <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Mobile: Stack vertically, Desktop: Align with course cards edges */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 max-w-6xl mx-auto">
+            <div className={`flex gap-4 mb-6 max-w-6xl mx-auto ${
+              isMobileLandscape 
+                ? 'flex-col' 
+                : 'flex-col md:flex-row md:items-center md:justify-between'
+            }`}>
               {/* Add a scrollable container wrapper for mobile with visual indicators */}
-              <div className="relative w-full sm:w-auto">
+              <div className={`relative ${isMobileLandscape ? 'w-full' : 'w-full md:w-auto'}`}>
                 {/* Gradient fade indicators for mobile to show scrollable content */}
-                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 sm:hidden" />
-                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 sm:hidden" />
+                <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 ${
+                  isMobileLandscape ? 'block' : 'md:hidden'
+                }`} />
+                <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 ${
+                  isMobileLandscape ? 'block' : 'md:hidden'
+                }`} />
                 
                 <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent snap-x snap-mandatory">
                   <TabsList className="bg-muted/50 backdrop-blur-sm inline-flex min-w-max">
@@ -472,7 +480,9 @@ const Index = () => {
                   e.preventDefault();
                   navigate(activeTab === 'courses' || activeTab === 'topCourses' ? '/courses' : '/instructors');
                 }}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-primary/10 hover:text-primary h-10 px-4 py-2 w-full sm:w-auto no-underline"
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-primary/10 hover:text-primary h-10 px-4 py-2 no-underline ${
+                  isMobileLandscape ? 'w-full' : 'w-full md:w-auto'
+                }`}
               >
                 {activeTab === 'courses' || activeTab === 'topCourses' ? t('featured.viewAllCourses') : t('featured.viewAllInstructors')}
               </a>
