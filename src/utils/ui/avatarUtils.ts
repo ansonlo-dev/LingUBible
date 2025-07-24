@@ -24,7 +24,7 @@ const CUTE_AVATARS = [
 const BACKGROUND_COLORS = [
   // 溫暖色調
   { name: 'background.sunset', light: 'from-orange-100 to-pink-100', dark: 'from-orange-900/30 to-pink-900/30' },
-  { name: 'background.peach', light: 'from-peach-100 to-orange-100', dark: 'from-orange-900/30 to-red-900/30' },
+  { name: 'background.peach', light: 'from-orange-200 to-orange-100', dark: 'from-orange-900/30 to-red-900/30' },
   { name: 'background.coral', light: 'from-red-100 to-pink-100', dark: 'from-red-900/30 to-pink-900/30' },
   { name: 'background.rose', light: 'from-pink-100 to-rose-100', dark: 'from-pink-900/30 to-rose-900/30' },
   
