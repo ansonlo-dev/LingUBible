@@ -54,7 +54,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         {/* Right aligned: Number and Change */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {/* Number */}
-          <div className="text-lg font-bold text-foreground tabular-nums">
+          <div className="text-lg font-bold text-foreground font-mono tabular-nums">
             {isLoading ? (
               <div className="h-5 w-8 bg-muted animate-pulse rounded" />
             ) : (
@@ -64,7 +64,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
           
           {/* Change (last 30 days) */}
           {displayTrendValue && !isLoading && (
-            <span className={`text-xs font-medium ${getTrendColor()}`}>
+            <span className={`text-xs font-medium font-mono ${getTrendColor()}`}>
               {displayTrendValue}
             </span>
           )}

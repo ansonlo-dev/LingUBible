@@ -404,8 +404,8 @@ const Index = () => {
         </div>
 
         {/* Stats Section */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in max-w-6xl mx-auto ${
-          isMobilePortrait ? 'mt-8' : ''
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 animate-fade-in max-w-6xl mx-auto ${
+          isMobilePortrait ? 'gap-3 mt-8' : 'gap-6'
         }`} style={{ animationDelay: '0.2s' }}>
           <div className={isMobilePortrait ? 'mt-4' : ''}>
             <StatsCard
@@ -433,21 +433,19 @@ const Index = () => {
             trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days, isMobilePortrait).trend}
             isLoading={mainPageStatsLoading}
           />
-          <div className={isMobilePortrait ? 'mb-4' : ''}>
-            <StatsCard
-              icon={UserCheck}
-              title={t('stats.instructorsWithReviews')}
-              value={mainPageStatsLoading ? "..." : mainPageStats.instructorsWithReviewsCount.toString()}
-              change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days, isMobilePortrait).text}
-              trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days, isMobilePortrait).trend}
-              isLoading={mainPageStatsLoading}
-            />
-          </div>
+          <StatsCard
+            icon={UserCheck}
+            title={t('stats.instructorsWithReviews')}
+            value={mainPageStatsLoading ? "..." : mainPageStats.instructorsWithReviewsCount.toString()}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days, isMobilePortrait).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days, isMobilePortrait).trend}
+            isLoading={mainPageStatsLoading}
+          />
         </div>
 
         {/* Mobile note for stats changes */}
         {isMobilePortrait && (
-          <div className="text-center max-w-6xl mx-auto mt-2 mb-8">
+          <div className="text-center max-w-6xl mx-auto mt-1 mb-8" style={{ marginTop: '0.25rem' }}>
             <p className="text-xs text-muted-foreground">
               {t('stats.changesInLast30Days')}
             </p>
