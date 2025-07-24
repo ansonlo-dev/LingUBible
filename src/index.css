@@ -3352,4 +3352,73 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
         line-height: 1;
     }
 }
+
+/* 收藏頁面標籤切換器樣式 - 使用高特異性選擇器 */
+.favorites-tabs-list {
+  gap: 0 !important; /* 移除 grid gap 避免影響底部指示器 */
+}
+
+/* 一般狀態 - 移除背景色和邊框 */
+button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2 {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+/* 懸停狀態 - 移除背景色和邊框 */
+button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2:hover {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+/* 活躍狀態 - 只保留紅色底線 */
+button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2[data-state="active"] {
+  position: relative !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #dc2626 !important; /* 紅色底線 */
+  border-radius: 6px 6px 0 0 !important;
+  margin-bottom: 0 !important;
+  z-index: 10 !important;
+  box-shadow: none !important;
+}
+
+/* 活躍狀態懸停 - 只保留紅色底線 */
+button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2[data-state="active"]:hover {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #dc2626 !important;
+  border-radius: 6px 6px 0 0 !important;
+  box-shadow: none !important;
+}
+
+/* 暗色主題下的樣式 */
+.dark button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2 {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.dark button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2:hover {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.dark button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2[data-state="active"] {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #dc2626 !important;
+  box-shadow: none !important;
+}
+
+.dark button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2[data-state="active"]:hover {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #dc2626 !important;
+  box-shadow: none !important;
+}
 }

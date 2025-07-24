@@ -215,15 +215,15 @@ const Favorites = () => {
       {/* Content */}
       {!isLoading && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="courses" className="flex items-center gap-2">
+          <TabsList className="favorites-tabs-list grid w-full grid-cols-2">
+            <TabsTrigger value="courses" className="favorites-tab-trigger flex items-center gap-2 font-bold hover:scale-105 transition-transform duration-200">
               <BookOpen className="h-4 w-4" />
               {t('favorites.courses')}
               <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold ml-1">
                 {favoriteCourses.length}
               </div>
             </TabsTrigger>
-            <TabsTrigger value="instructors" className="flex items-center gap-2">
+            <TabsTrigger value="instructors" className="favorites-tab-trigger flex items-center gap-2 font-bold hover:scale-105 transition-transform duration-200">
               <User className="h-4 w-4" />
               {t('favorites.instructors')}
               <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold ml-1">
