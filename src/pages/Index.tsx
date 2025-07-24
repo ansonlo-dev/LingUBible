@@ -360,7 +360,7 @@ const Index = () => {
             </div>
 
             {/* Right Column - Large Animation (Desktop, Tablet Portrait, and Mobile Landscape) */}
-            <div className={`flex justify-center lg:justify-end animate-fade-in ${
+            <div className={`flex justify-center lg:justify-end animate-fade-in transition-transform duration-300 ${
               isMobileLandscape 
                 ? 'order-2 col-span-1 -translate-y-8' 
                 : shouldUseDesktopLayout
