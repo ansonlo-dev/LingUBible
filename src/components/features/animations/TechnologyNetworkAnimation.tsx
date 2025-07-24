@@ -76,7 +76,7 @@ export const TechnologyNetworkAnimation: React.FC<TechnologyNetworkAnimationProp
 
   return (
     <div className={`inline-flex justify-center items-center ${className}`}>
-      <div className={`${sizeClasses[size]} relative`} style={{ aspectRatio: '1/1' }}>
+      <div className={`${sizeClasses[size]} relative portrait:scale-150 portrait:sm:scale-100`} style={{ aspectRatio: '1/1' }}>
         <DotLottieReact
           key={key}
           ref={animationRef}
