@@ -436,14 +436,14 @@ export function MyReviewsFilters({
         </div>
 
         {/* Desktop: Flex layout matching catalog page style */}
-        <div className="hidden md:flex flex-col xl:flex-row xl:items-center gap-2 overflow-hidden">
+        <div className="hidden md:flex flex-col lg:flex-row lg:items-center gap-2 overflow-hidden">
           {/* Subject Area */}
-          <div className="flex items-center gap-2 xl:flex-1 min-w-0">
+          <div className="flex items-center gap-2 lg:flex-1 min-w-0">
             <label className={getLabelClassName()}>
               <Library className="h-4 w-4" />
               {t('sort.subjectArea')}
             </label>
-            <div className="flex-1 min-w-0 max-w-xs xl:max-w-none">
+            <div className="flex-1 min-w-0 max-w-sm lg:max-w-none">
               <MultiSelectDropdown
                 options={getSubjectOptions()}
                 selectedValues={filters.selectedSubjectAreas || []}
@@ -458,12 +458,12 @@ export function MyReviewsFilters({
           </div>
 
           {/* Grade */}
-          <div className="flex items-center gap-2 xl:flex-1 min-w-0">
+          <div className="flex items-center gap-2 lg:flex-1 min-w-0">
             <label className={getLabelClassName()}>
               <GraduationCap className="h-4 w-4" />
               {t('sort.grade')}
             </label>
-            <div className="flex-1 min-w-0 max-w-xs xl:max-w-none">
+            <div className="flex-1 min-w-0 max-w-sm lg:max-w-none">
               <MultiSelectDropdown
                 options={getGradeOptions()}
                 selectedValues={filters.selectedGrades || []}
@@ -478,12 +478,12 @@ export function MyReviewsFilters({
           </div>
 
           {/* Term */}
-          <div className="flex items-center gap-2 xl:flex-1 min-w-0">
+          <div className="flex items-center gap-2 lg:flex-1 min-w-0">
             <label className={getLabelClassName()}>
               <Calendar className="h-4 w-4" />
               {getTermLabel()}
             </label>
-            <div className="flex-1 min-w-0 max-w-xs xl:max-w-none">
+            <div className="flex-1 min-w-0 max-w-sm lg:max-w-none">
               <MultiSelectDropdown
                 options={getTermOptions()}
                 selectedValues={filters.selectedTerms || []}
@@ -498,12 +498,12 @@ export function MyReviewsFilters({
           </div>
 
           {/* Review Language */}
-          <div className="flex items-center gap-2 xl:flex-1 min-w-0">
+          <div className="flex items-center gap-2 lg:flex-1 min-w-0">
             <label className={getLabelClassName()}>
               <MessageSquare className="h-4 w-4" />
               {t('filter.reviewLanguage')}
             </label>
-            <div className="flex-1 min-w-0 max-w-xs xl:max-w-none">
+            <div className="flex-1 min-w-0 max-w-sm lg:max-w-none">
               <MultiSelectDropdown
                 options={getReviewLanguageOptions()}
                 selectedValues={filters.selectedReviewLanguages || []}
@@ -518,12 +518,12 @@ export function MyReviewsFilters({
           </div>
 
           {/* Session Type */}
-          <div className="flex items-center gap-2 xl:flex-1 min-w-0">
+          <div className="flex items-center gap-2 lg:flex-1 min-w-0">
             <label className={getLabelClassName()}>
               <Clock className="h-4 w-4" />
               {t('filter.reviewSessionType')}
             </label>
-            <div className="flex-1 min-w-0 max-w-xs xl:max-w-none">
+            <div className="flex-1 min-w-0 max-w-sm lg:max-w-none">
               <MultiSelectDropdown
                 options={getSessionTypeOptions()}
                 selectedValues={filters.selectedSessionTypes || []}
@@ -538,12 +538,12 @@ export function MyReviewsFilters({
           </div>
 
           {/* Teaching Language */}
-          <div className="flex items-center gap-2 xl:flex-1 min-w-0">
+          <div className="flex items-center gap-2 lg:flex-1 min-w-0">
             <label className={getLabelClassName()}>
               <Globe className="h-4 w-4" />
               {t('filter.reviewTeachingLanguage')}
             </label>
-            <div className="flex-1 min-w-0 max-w-xs xl:max-w-none">
+            <div className="flex-1 min-w-0 max-w-sm lg:max-w-none">
               <MultiSelectDropdown
                 options={getTeachingLanguageOptions()}
                 selectedValues={filters.selectedTeachingLanguages || []}
