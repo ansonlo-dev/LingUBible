@@ -1736,10 +1736,10 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length > 0 && (
                     <TabsTrigger 
                       value="lecture" 
-                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
                     >
                       <div className="flex items-center gap-2">
-                        <span>{t('sessionType.lecture')}</span>
+                        <span className="font-bold">{t('sessionType.lecture')}</span>
                         <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
                         </div>
@@ -1749,10 +1749,10 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length > 0 && (
                     <TabsTrigger 
                       value="tutorial" 
-                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg flex-1"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
                     >
                       <div className="flex items-center gap-2">
-                        <span>{t('sessionType.tutorial')}</span>
+                        <span className="font-bold">{t('sessionType.tutorial')}</span>
                         <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
                         </div>
@@ -1874,10 +1874,10 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length > 0 && (
                     <TabsTrigger 
                       value="lecture" 
-                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
                     >
                       <div className="flex items-center gap-2">
-                        <span>{t('sessionType.lecture')}</span>
+                        <span className="font-bold">{t('sessionType.lecture')}</span>
                         <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
                         </div>
@@ -1887,10 +1887,10 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length > 0 && (
                     <TabsTrigger 
                       value="tutorial" 
-                      className="hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
                     >
                       <div className="flex items-center gap-2">
-                        <span>{t('sessionType.tutorial')}</span>
+                        <span className="font-bold">{t('sessionType.tutorial')}</span>
                         <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
                         </div>
