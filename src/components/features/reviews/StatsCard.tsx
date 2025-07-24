@@ -37,16 +37,16 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 
   return (
     <Card className="stats-card p-0 relative overflow-hidden">
-      {/* Mobile Portrait: Single row layout [icon][title][number][change] */}
-      <div className="flex items-center p-4 sm:hidden">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      {/* Universal single row layout for all devices [icon][title][number][change] */}
+      <div className="flex items-start p-4">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
           {/* Icon */}
           <div className="bg-primary/10 p-2 rounded-full flex-shrink-0">
             <Icon className="h-4 w-4 text-primary" />
           </div>
           
           {/* Title */}
-          <h3 className="text-sm font-semibold text-muted-foreground truncate flex-1">
+          <h3 className="text-sm font-semibold text-muted-foreground flex-1 leading-tight">
             {title}
           </h3>
         </div>
@@ -73,48 +73,6 @@ export const StatsCard: React.FC<StatsCardProps> = ({
           {isLoading && (
             <div className="h-3 w-8 bg-muted animate-pulse rounded" />
           )}
-        </div>
-      </div>
-
-      {/* Desktop/Tablet: Original layout */}
-      <div className="hidden sm:block">
-        {/* Header section with icon and title */}
-        <div className="flex items-center justify-between p-6 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Icon className="h-6 w-6 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold text-muted-foreground line-clamp-2 leading-tight">
-              {title}
-            </h3>
-          </div>
-        </div>
-
-        {/* Main value section */}
-        <div className="px-6 pb-6">
-          <div className="space-y-3">
-            <div className="text-3xl font-bold text-foreground tabular-nums leading-none">
-              {isLoading ? (
-                <div className="h-9 w-16 bg-muted animate-pulse rounded" />
-              ) : (
-                value
-              )}
-            </div>
-            
-            {/* Trend section */}
-            {displayTrendValue && !isLoading && (
-              <div className="flex items-center gap-1">
-                <span className={`text-xs font-medium ${getTrendColor()}`}>
-                  {displayTrendValue}
-                </span>
-              </div>
-            )}
-
-            {/* Loading state for trend */}
-            {isLoading && (
-              <div className="h-4 w-12 bg-muted animate-pulse rounded" />
-            )}
-          </div>
         </div>
       </div>
 
