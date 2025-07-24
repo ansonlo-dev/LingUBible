@@ -366,7 +366,7 @@ const Index = () => {
                 : shouldUseDesktopLayout
                 ? 'order-2 col-span-1'
                 : 'hidden lg:flex lg:order-2 lg:col-span-1'
-            }`} style={{ animationDelay: '0.3s' }}>
+            }`} style={{ animationDelay: '0s' }}>
               <TechnologyNetworkAnimation 
                 size="3xl" 
                 className="opacity-80 hover:opacity-100 transition-opacity duration-300" 
