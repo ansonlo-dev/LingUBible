@@ -38,8 +38,8 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   return (
     <Card className="stats-card p-0 relative overflow-hidden">
       {/* Universal single row layout for all devices [icon][title][number][change] */}
-      <div className="flex items-start p-4">
-        <div className="flex items-start gap-2 flex-1 min-w-0">
+      <div className="flex items-center p-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           {/* Icon */}
           <div className="bg-primary/10 p-2 rounded-full flex-shrink-0">
             <Icon className="h-4 w-4 text-primary" />
