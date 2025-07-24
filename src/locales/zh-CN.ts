@@ -797,6 +797,7 @@ export default {
   'stats.increaseInLast30Days': '+{count} 过去30天',
   'stats.decreaseInLast30Days': '{count} 过去30天',
   'stats.noChangeInLast30Days': '过去30天无变化',
+  'stats.changesInLast30Days': '变化为过去30天数据',
   'stats.activeStudents': '活跃学生',
   'stats.registeredStudents': '已注册学生',
   'stats.verified': '已验证',

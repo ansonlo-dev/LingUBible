@@ -733,6 +733,7 @@ export default {
   'stats.increaseInLast30Days': '+{count} 過去30天',
   'stats.decreaseInLast30Days': '{count} 過去30天',
   'stats.noChangeInLast30Days': '過去30天無變化',
+  'stats.changesInLast30Days': '變化為過去30天數據',
   'stats.registeredStudents': '註冊學生',
   'stats.activeStudents': '活躍學生',
   'stats.verified': '已驗證',

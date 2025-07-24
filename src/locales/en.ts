@@ -811,6 +811,7 @@ export default {
   'stats.increaseInLast30Days': '+{count} in last 30 days',
   'stats.decreaseInLast30Days': '{count} in last 30 days',
   'stats.noChangeInLast30Days': 'No change in last 30 days',
+  'stats.changesInLast30Days': 'Changes are based on last 30 days data',
   'stats.activeStudents': 'Active Students',
   'stats.registeredStudents': 'Registered Students',
   'stats.verified': 'verified',

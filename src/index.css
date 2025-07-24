@@ -642,6 +642,18 @@ div[style*="position: fixed"][style*="right: 14px"] {
       0 4px 8px rgba(0, 0, 0, 0.08);
   }
 
+  /* 手機直向模式統計卡片調整 */
+  @media (max-width: 639px) {
+    .stats-card {
+      border-radius: 12px;
+      min-height: 60px;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-2px) scale(1.01);
+    }
+  }
+
   /* 統計卡片圖標容器樣式 - 現代簡約風格 */
   .stats-card .bg-primary\/10 {
     background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05)) !important;

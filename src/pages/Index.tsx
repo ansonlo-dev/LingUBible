@@ -27,7 +27,7 @@ const Index = () => {
   const { t, language } = useLanguage();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const { isMobileLandscape, isTabletPortrait, isPortrait } = useEnhancedResponsive();
+  const { isMobileLandscape, isTabletPortrait, isPortrait, isMobilePortrait } = useEnhancedResponsive();
 
   // 檢測中等尺寸的平板設備（iPad Mini 和 iPad Air）
   const [isMediumTabletPortrait, setIsMediumTabletPortrait] = useState(false);
@@ -57,22 +57,43 @@ const Index = () => {
   const shouldUseDesktopLayout = isTabletPortrait || isMediumTabletPortrait;
 
   // 格式化統計變化的輔助函數
-  const formatStatsChange = (count: number) => {
-    if (count > 0) {
-      return {
-        text: t('stats.increaseInLast30Days', { count }),
-        trend: 'up' as const
-      };
-    } else if (count < 0) {
-      return {
-        text: t('stats.decreaseInLast30Days', { count: Math.abs(count) }),
-        trend: 'down' as const
-      };
+  const formatStatsChange = (count: number, mobile = false) => {
+    if (mobile) {
+      // 手機版簡化格式
+      if (count > 0) {
+        return {
+          text: `+${count}`,
+          trend: 'up' as const
+        };
+      } else if (count < 0) {
+        return {
+          text: `${count}`,
+          trend: 'down' as const
+        };
+      } else {
+        return {
+          text: '--',
+          trend: 'neutral' as const
+        };
+      }
     } else {
-      return {
-        text: t('stats.noChangeInLast30Days'),
-        trend: 'neutral' as const
-      };
+      // 桌面版完整格式
+      if (count > 0) {
+        return {
+          text: t('stats.increaseInLast30Days', { count }),
+          trend: 'up' as const
+        };
+      } else if (count < 0) {
+        return {
+          text: t('stats.decreaseInLast30Days', { count: Math.abs(count) }),
+          trend: 'down' as const
+        };
+      } else {
+        return {
+          text: t('stats.noChangeInLast30Days'),
+          trend: 'neutral' as const
+        };
+      }
     }
   };
 
@@ -383,40 +404,55 @@ const Index = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in max-w-6xl mx-auto" style={{ animationDelay: '0.2s' }}>
-          <StatsCard
-            icon={Users}
-            title={t('stats.verifiedStudents')}
-            value={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? "..." : mainPageStats.verifiedStudentsCount.toString()}
-            change={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).text}
-            trend={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days).trend}
-            isLoading={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0}
-          />
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in max-w-6xl mx-auto ${
+          isMobilePortrait ? 'mt-8' : ''
+        }`} style={{ animationDelay: '0.2s' }}>
+          <div className={isMobilePortrait ? 'mt-4' : ''}>
+            <StatsCard
+              icon={Users}
+              title={t('stats.verifiedStudents')}
+              value={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? "..." : mainPageStats.verifiedStudentsCount.toString()}
+              change={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days, isMobilePortrait).text}
+              trend={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0 ? undefined : formatStatsChange(mainPageStats.verifiedStudentsLast30Days, isMobilePortrait).trend}
+              isLoading={mainPageStatsLoading || mainPageStats.verifiedStudentsCount === 0}
+            />
+          </div>
           <StatsCard
             icon={Star}
             title={t('stats.reviews')}
             value={mainPageStatsLoading ? "..." : mainPageStats.reviewsCount.toString()}
-            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.reviewsLast30Days).text}
-            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.reviewsLast30Days).trend}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.reviewsLast30Days, isMobilePortrait).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.reviewsLast30Days, isMobilePortrait).trend}
             isLoading={mainPageStatsLoading}
           />
           <StatsCard
             icon={BookText}
             title={t('stats.courses')}
             value={mainPageStatsLoading ? "..." : mainPageStats.coursesWithReviewsCount.toString()}
-            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days).text}
-            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days).trend}
+            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days, isMobilePortrait).text}
+            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.coursesWithReviewsLast30Days, isMobilePortrait).trend}
             isLoading={mainPageStatsLoading}
           />
-          <StatsCard
-            icon={UserCheck}
-            title={t('stats.instructorsWithReviews')}
-            value={mainPageStatsLoading ? "..." : mainPageStats.instructorsWithReviewsCount.toString()}
-            change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days).text}
-            trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days).trend}
-            isLoading={mainPageStatsLoading}
-          />
+          <div className={isMobilePortrait ? 'mb-4' : ''}>
+            <StatsCard
+              icon={UserCheck}
+              title={t('stats.instructorsWithReviews')}
+              value={mainPageStatsLoading ? "..." : mainPageStats.instructorsWithReviewsCount.toString()}
+              change={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days, isMobilePortrait).text}
+              trend={mainPageStatsLoading ? undefined : formatStatsChange(mainPageStats.instructorsWithReviewsLast30Days, isMobilePortrait).trend}
+              isLoading={mainPageStatsLoading}
+            />
+          </div>
         </div>
+
+        {/* Mobile note for stats changes */}
+        {isMobilePortrait && (
+          <div className="text-center max-w-6xl mx-auto mt-2 mb-8">
+            <p className="text-xs text-muted-foreground">
+              {t('stats.changesInLast30Days')}
+            </p>
+          </div>
+        )}
 
         {/* Featured Content Section - without main heading */}
         <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
