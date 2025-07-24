@@ -394,7 +394,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
     background: rgb(var(--background)) !important;
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgb(var(--border));
-    transition: all 0.2s ease;
     overflow: hidden;
     /* Header現在在main-container內部，使用正常寬度 */
     width: 100% !important;
@@ -423,10 +422,11 @@ div[style*="position: fixed"][style*="right: 14px"] {
   @media (max-width: 1023px) {
     .header-sticky {
       /* 手機版使用正常padding */
-      padding: 0 0.75rem !important;
+      padding: 5px 0.75rem !important;
       overflow: hidden;
       width: 100% !important;
       max-width: 100% !important;
+      height: fit-content;
     }
     
     /* 確保 logo 在手機版上有足夠的空間 */
@@ -1251,7 +1251,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     border: 1px solid rgb(var(--border));
     border-radius: 16px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    z-index: 200;
+    z-index: 9999;
   }
 
   @media (max-width: 767px) {
@@ -1280,7 +1280,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
       max-width: none !important;
       max-height: none !important;
       border-radius: 0 !important;
-      z-index: 200 !important;
+      z-index: 9999 !important;
     }
   }
 
@@ -2070,7 +2070,12 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
       bottom: 0 !important;
       transform: none !important;
       width: 100vw !important;
-      height: 100vh !important;
+      /* 使用動態視窗高度，在瀏覽器中排除地址欄，在PWA中使用全螢幕 */
+      height: 100dvh !important;
+      /* 備用方案：如果不支援dvh，使用小視窗高度單位 */
+      height: 100svh !important;
+      /* 再次備用：對於支援dvh的瀏覽器，覆蓋svh */
+      height: 100dvh !important;
       max-width: none !important;
       max-height: none !important;
       border-radius: 0 !important;
@@ -2088,7 +2093,12 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
       bottom: 0 !important;
       transform: none !important;
       width: 100vw !important;
-      height: 100vh !important;
+      /* 使用動態視窗高度，在瀏覽器中排除地址欄，在PWA中使用全螢幕 */
+      height: 100dvh !important;
+      /* 備用方案：如果不支援dvh，使用小視窗高度單位 */
+      height: 100svh !important;
+      /* 再次備用：對於支援dvh的瀏覽器，覆蓋svh */
+      height: 100dvh !important;
       max-width: none !important;
       max-height: none !important;
       border-radius: 0 !important;

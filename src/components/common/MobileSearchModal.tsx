@@ -499,7 +499,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-[200]`} style={{ pointerEvents: 'auto' }}>
+    <div className={`fixed inset-0 z-[9999]`} style={{ pointerEvents: 'auto' }}>
       {/* Backdrop - 現在覆蓋整個螢幕包括側邊欄 */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-md transition-all duration-300 ease-in-out"
@@ -530,7 +530,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
               right: '1rem',
               transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
             }),
-            zIndex: 200, // Standard z-index
+            zIndex: 9999, // Standard z-index
             pointerEvents: 'auto'
           }}
           onClick={isLargeDesktop ? handleBackdropClick : undefined}
@@ -1347,7 +1347,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         <div 
           className={`fixed left-0 right-0 flex justify-center px-0 top-0`}
           style={{
-            zIndex: 200 // Standard z-index
+            zIndex: 9999 // Standard z-index
           }}
         >
           <div 
