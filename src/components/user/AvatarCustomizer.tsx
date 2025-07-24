@@ -122,6 +122,10 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         p-0 overflow-hidden 
         data-[state=open]:animate-in data-[state=closed]:animate-out 
         data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
+        ${isLandscape 
+          ? 'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95' 
+          : 'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]'
+        }
       `} style={{ borderRadius: isLandscape ? '0' : undefined }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
           <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'}`}>
