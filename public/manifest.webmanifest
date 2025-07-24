@@ -1,0 +1,105 @@
+                    
+{
+    "name": "LingUBible",
+    "short_name": "LingUBible",
+    "description": "嶺南大學課程與講師評價平台 - Reg科聖經",
+    "theme_color": "#dc2626",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/",
+    "lang": "zh-TW",
+    "dir": "ltr",
+    "categories": ["education", "productivity", "social"],
+    "shortcuts": [
+        {
+            "name": "課程",
+            "short_name": "課程",
+            "description": "瀏覽課程評價",
+            "url": "/courses",
+            "icons": [
+                {
+                    "src": "/icon-search.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "講師",
+            "short_name": "講師",
+            "description": "查看講師評分",
+            "url": "/instructors",
+            "icons": [
+                {
+                    "src": "/icon-reviews.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ],
+    "icons": [
+        {
+            "src": "assets/icons/icon-36X36.png",
+            "sizes": "36x36",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-48X48.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-72X72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-96X96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-128X128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-144X144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "maskable any"  
+        },
+        {
+            "src": "assets/icons/icon-152X152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-192X192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-384X384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/icons/icon-512X512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ]
+}          
+	
