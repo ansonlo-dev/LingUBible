@@ -296,7 +296,7 @@ const Index = () => {
               <h1 className={`font-bold mb-2 lg:mb-3 leading-tight ${
                 isMobileLandscape || shouldUseDesktopLayout
                   ? 'text-3xl' 
-                  : 'text-4xl md:text-5xl lg:text-6xl'
+                  : 'text-3xl portrait:text-2xl sm:text-4xl md:text-5xl lg:text-6xl'
               }`}>
                 <span className="neon-glow-text">{t('hero.title')}</span>{' '}
                 <span className="red-neon-glow-text">LingUBible</span>
