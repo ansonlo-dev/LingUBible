@@ -443,25 +443,25 @@ const Index = () => {
                     value="courses" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    {t('featured.courses')}
+                    <span className="font-bold">{t('featured.courses')}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="instructors" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    {t('featured.instructors')}
+                    <span className="font-bold">{t('featured.instructors')}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="topCourses" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    {t('featured.topCourses')}
+                    <span className="font-bold">{t('featured.topCourses')}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="topInstructors" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    {t('featured.topInstructors')}
+                    <span className="font-bold">{t('featured.topInstructors')}</span>
                   </TabsTrigger>
                 </TabsList>
                 </div>
