@@ -311,17 +311,54 @@ export function BackToTop() {
           finalScrollTop
         });
         
-        // 滾動到計算出的位置
-        window.scrollTo({
-          top: finalScrollTop,
-          behavior: 'smooth'
-        });
+        // 嘗試多種滾動方法
+        console.log('Attempting to scroll to:', finalScrollTop);
         
-        // 檢查滾動後的位置
+        // 方法1: window.scrollTo with smooth
+        try {
+          window.scrollTo({
+            top: finalScrollTop,
+            behavior: 'smooth'
+          });
+          console.log('Method 1 (window.scrollTo smooth) attempted');
+        } catch (e) {
+          console.log('Method 1 failed:', e);
+        }
+        
+        // 檢查是否成功，如果沒有則嘗試其他方法
+        setTimeout(() => {
+          const checkScrollY = window.pageYOffset || document.documentElement.scrollTop;
+          console.log('Scroll position after method 1:', checkScrollY);
+          
+          if (Math.abs(checkScrollY - finalScrollTop) > 10) {
+            console.log('Method 1 failed, trying alternatives...');
+            
+            // 方法2: 直接設置滾動位置
+            try {
+              document.documentElement.scrollTop = finalScrollTop;
+              document.body.scrollTop = finalScrollTop;
+              console.log('Method 2 (direct scroll) attempted');
+            } catch (e) {
+              console.log('Method 2 failed:', e);
+            }
+            
+            // 方法3: window.scrollTo without smooth
+            setTimeout(() => {
+              try {
+                window.scrollTo(0, finalScrollTop);
+                console.log('Method 3 (window.scrollTo instant) attempted');
+              } catch (e) {
+                console.log('Method 3 failed:', e);
+              }
+            }, 50);
+          }
+        }, 100);
+        
+        // 檢查最終結果
         setTimeout(() => {
           const newScrollY = window.pageYOffset || document.documentElement.scrollTop;
-          console.log('Scroll position immediately after scroll:', newScrollY);
-        }, 100);
+          console.log('Final scroll position after all attempts:', newScrollY);
+        }, 200);
         
       } else {
         console.log('Footer not found, using fallback behavior');
