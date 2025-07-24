@@ -219,16 +219,16 @@ const Favorites = () => {
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               {t('favorites.courses')}
-              <Badge variant="destructive" className="ml-1 text-xs">
+              <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold ml-1">
                 {favoriteCourses.length}
-              </Badge>
+              </div>
             </TabsTrigger>
             <TabsTrigger value="instructors" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               {t('favorites.instructors')}
-              <Badge variant="destructive" className="ml-1 text-xs">
+              <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold ml-1">
                 {favoriteInstructors.length}
-              </Badge>
+              </div>
             </TabsTrigger>
           </TabsList>
 
