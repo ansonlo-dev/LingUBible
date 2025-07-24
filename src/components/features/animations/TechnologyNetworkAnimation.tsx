@@ -21,7 +21,7 @@ const sizeClasses = {
 export const TechnologyNetworkAnimation: React.FC<TechnologyNetworkAnimationProps> = ({
   className = '',
   size = 'xl',
-  speed = 0.5,
+  speed = 0.25,
   autoplay = true,
   loop = true
 }) => {
@@ -76,7 +76,7 @@ export const TechnologyNetworkAnimation: React.FC<TechnologyNetworkAnimationProp
 
   return (
     <div className={`inline-flex justify-center items-center ${className}`}>
-      <div className={`${sizeClasses[size]} relative portrait:scale-[1.35] portrait:sm:scale-100 portrait:my-5 portrait:sm:my-0`} style={{ aspectRatio: '1/1' }}>
+      <div className={`${sizeClasses[size]} relative portrait:scale-[1.35] portrait:sm:scale-100 portrait:my-5 portrait:sm:my-0 transition-all duration-300`} style={{ aspectRatio: '1/1' }}>
         <DotLottieReact
           key={key}
           ref={animationRef}
