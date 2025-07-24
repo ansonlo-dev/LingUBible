@@ -187,10 +187,10 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                   <div className="flex bg-transparent relative">
                     <button
                       onClick={() => setActiveTab('animals')}
-                      className={`flex-1 py-2 px-3 text-xs font-medium transition-all duration-200 relative ${
+                      className={`flex-1 py-2 px-3 text-xs transition-all duration-200 relative ${
                         activeTab === 'animals'
                           ? 'text-foreground font-bold'
-                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
+                          : 'text-muted-foreground font-medium hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 inline mr-1" />
@@ -201,10 +201,10 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                     </button>
                     <button
                       onClick={() => setActiveTab('backgrounds')}
-                      className={`flex-1 py-2 px-3 text-xs font-medium transition-all duration-200 relative ${
+                      className={`flex-1 py-2 px-3 text-xs transition-all duration-200 relative ${
                         activeTab === 'backgrounds'
                           ? 'text-foreground font-bold'
-                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
+                          : 'text-muted-foreground font-medium hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Palette className="h-3 w-3 inline mr-1" />
@@ -319,10 +319,10 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                   <div className="flex bg-transparent relative">
                     <button
                       onClick={() => setActiveTab('animals')}
-                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-all duration-200 relative ${
+                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 text-xs sm:text-sm transition-all duration-200 relative ${
                         activeTab === 'animals'
                           ? 'text-foreground font-bold'
-                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
+                          : 'text-muted-foreground font-medium hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
@@ -333,10 +333,10 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                     </button>
                     <button
                       onClick={() => setActiveTab('backgrounds')}
-                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-all duration-200 relative ${
+                      className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 text-xs sm:text-sm transition-all duration-200 relative ${
                         activeTab === 'backgrounds'
                           ? 'text-foreground font-bold'
-                          : 'text-muted-foreground hover:text-foreground hover:scale-105'
+                          : 'text-muted-foreground font-medium hover:text-foreground hover:scale-105'
                       }`}
                     >
                       <Palette className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
