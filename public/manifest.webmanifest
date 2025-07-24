@@ -41,64 +41,30 @@
     ],
     "icons": [
         {
-            "src": "assets/icons/icon-36X36.png",
-            "sizes": "36x36",
-            "type": "image/png",
-            "purpose": "maskable any"
+            "src": "favicon-google-32.png",
+            "sizes": "32x32",
+            "type": "image/png"
         },
         {
-            "src": "assets/icons/icon-48X48.png",
-            "sizes": "48x48",
-            "type": "image/png",
-            "purpose": "maskable any"
-        },
-        {
-            "src": "assets/icons/icon-72X72.png",
-            "sizes": "72x72",
-            "type": "image/png",
-            "purpose": "maskable any"
-        },
-        {
-            "src": "assets/icons/icon-96X96.png",
+            "src": "favicon-96x96.png",
             "sizes": "96x96",
-            "type": "image/png",
-            "purpose": "maskable any"
+            "type": "image/png"
         },
         {
-            "src": "assets/icons/icon-128X128.png",
-            "sizes": "128x128",
-            "type": "image/png",
-            "purpose": "maskable any"
-        },
-        {
-            "src": "assets/icons/icon-144X144.png",
-            "sizes": "144x144",
-            "type": "image/png",
-            "purpose": "maskable any"  
-        },
-        {
-            "src": "assets/icons/icon-152X152.png",
-            "sizes": "152x152",
-            "type": "image/png",
-            "purpose": "maskable any"
-        },
-        {
-            "src": "assets/icons/icon-192X192.png",
+            "src": "icon-192.png",
             "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "maskable any"
+            "type": "image/png"
         },
         {
-            "src": "assets/icons/icon-384X384.png",
-            "sizes": "384x384",
-            "type": "image/png",
-            "purpose": "maskable any"
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
         },
         {
             "src": "assets/icons/icon-512X512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "maskable any"
+            "purpose": "maskable"
         }
     ]
 }          
