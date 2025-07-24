@@ -261,7 +261,7 @@ const MyReviews = () => {
     return (
       <Badge 
         variant={value ? "default" : "secondary"}
-        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+        className={`text-xs shrink-0 ${value ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:!bg-green-100 dark:hover:!bg-green-900/20' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:!bg-gray-100 dark:hover:!bg-gray-800'}`}
       >
         {value ? (
           <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
@@ -621,7 +621,7 @@ const MyReviews = () => {
               {/* 2 Column Grid Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {paginatedReviews.map((reviewInfo) => (
-                <div key={reviewInfo.review.$id} className="rounded-lg p-4 space-y-3 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
+                <div key={reviewInfo.review.$id} className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
                   {/* 評論基本信息 */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-col gap-2 min-w-0 flex-1">

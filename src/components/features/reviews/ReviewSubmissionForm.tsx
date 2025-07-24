@@ -2469,7 +2469,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                     className={cn(
                                       "flex items-center space-x-3 p-3 rounded-md cursor-pointer transition-colors",
                                       isSelected 
-                                        ? "bg-primary/10 border border-primary/20" 
+                                        ? "bg-primary/10 border-primary/20" 
                                         : "hover:bg-accent"
                                     )}
                                   >
@@ -3228,7 +3228,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           // Add final submission step
           const settingsStep = {
             id: 'settings',
-            title: t('review.settings', '設定'),
+            title: t('review.settings'),
             icon: <Send className="h-5 w-5" />,
             isValid: validateSubmissionStep,
             content: (
@@ -3313,7 +3313,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           isValid: () => true,
           content: (
             <div className="w-full -mx-6">
-              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-gray-100 dark:bg-gray-900 w-full mx-6">
+              <div className="rounded-lg p-0 space-y-2 overflow-hidden bg-gray-100 dark:bg-gray-900 w-full mx-6 dark:bg-[#212936]">
                 {/* 評論基本信息 */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -3477,7 +3477,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     {instructorEvaluations.map((instructor, index) => (
                       <div 
                         key={index} 
-                        className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[rgb(26_35_50)]"
+                        className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[#1B2331] border-border dark:border-[#2a3441]"
                       >
                         <div className="space-y-2 mb-3">
                           {/* Instructor name and badges container */}

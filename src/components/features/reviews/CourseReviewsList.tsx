@@ -517,7 +517,7 @@ export const CourseReviewsList = ({
       >
         <Badge
           variant={hasRequirement ? "default" : "secondary"}
-          className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

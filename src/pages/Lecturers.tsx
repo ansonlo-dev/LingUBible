@@ -2494,7 +2494,7 @@ const Lecturers = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {paginatedReviews.map((reviewInfo, index) => (
-                <div key={index} data-review-id={reviewInfo.review.$id} className="rounded-lg p-4 space-y-4 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
+                <div key={index} data-review-id={reviewInfo.review.$id} className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
                   {/* 評論基本信息 */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-2 min-w-0 flex-1">
@@ -2865,7 +2865,7 @@ const Lecturers = () => {
                         {currentInstructorDetail && (
                           <>
                             <Separator />
-                            <div className="rounded-lg p-4 overflow-hidden bg-[#e8e9ea] dark:bg-[#1a2332]">
+                            <div className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[#1a2332]">
                               <div className="space-y-2 mb-3">
                                 {/* Instructor name and badges container */}
                                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">

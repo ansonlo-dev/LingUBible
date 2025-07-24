@@ -198,9 +198,11 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
       </div>
 
       {/* Current Step Content */}
-      <Card className="course-card shadow-lg border-gray-200 dark:border-gray-700">
-        <CardContent className="p-6 bg-gray-100 dark:bg-gray-900">
-          <div className="animate-in fade-in-50 duration-300">
+      <Card>
+        <CardContent
+          className={"rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]"}
+        >
+          <div className="animate-in fade-in-50 duration-300" style={{ padding: 10 }}>
             {steps[currentStep]?.content}
           </div>
         </CardContent>
