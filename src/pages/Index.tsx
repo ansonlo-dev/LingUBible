@@ -445,7 +445,7 @@ const Index = () => {
 
         {/* Mobile note for stats changes */}
         {isMobilePortrait && (
-          <div className="text-center max-w-6xl mx-auto mt-1 mb-8" style={{ marginTop: '0.25rem' }}>
+          <div className="text-center max-w-6xl mx-auto mt-1 mb-8" style={{ marginTop: '0.5rem' }}>
             <p className="text-xs text-muted-foreground">
               {t('stats.changesInLast30Days')}
             </p>
