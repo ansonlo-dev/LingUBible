@@ -269,27 +269,25 @@ export function BackToTop() {
       // 立即隱藏按鈕（預防性）
       setIsBottomVisible(false);
       
-      // 計算頁面總高度
-      const documentHeight = Math.max(
-        document.body.scrollHeight,
-        document.body.offsetHeight,
-        document.documentElement.clientHeight,
-        document.documentElement.scrollHeight,
-        document.documentElement.offsetHeight
-      );
+      // 尋找頁腳元素並滾動至其開始位置
+      const footer = document.querySelector('footer');
       
-      // 嘗試多種滾動方法
-      if (document.body.scrollTo) {
-        document.body.scrollTo({
-          top: documentHeight,
-          behavior: 'smooth'
+      if (footer) {
+        // 使用 scrollIntoView 滾動到頁腳開始位置，block: 'start' 確保頁腳頂部對齊視窗頂部
+        footer.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
         });
-      } else if (document.documentElement.scrollTo) {
-        document.documentElement.scrollTo({
-          top: documentHeight,
-          behavior: 'smooth'
-        });
-      } else if (window.scrollTo) {
+      } else {
+        // 如果找不到頁腳元素，回退到原來的行為（滾動到頁面底部）
+        const documentHeight = Math.max(
+          document.body.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.clientHeight,
+          document.documentElement.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        
         window.scrollTo({
           top: documentHeight,
           behavior: 'smooth'
