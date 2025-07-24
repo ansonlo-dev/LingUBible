@@ -37,20 +37,20 @@ const BACKGROUND_COLORS = [
   // 紫色系
   { name: 'background.lavender', light: 'from-purple-100 to-pink-100', dark: 'from-purple-900/30 to-pink-900/30' },
   { name: 'background.grape', light: 'from-violet-100 to-purple-100', dark: 'from-violet-900/30 to-purple-900/30' },
-  { name: 'background.plum', light: 'from-indigo-100 to-purple-100', dark: 'from-indigo-900/30 to-purple-900/30' },
+  { name: 'background.plum', light: 'from-indigo-800 to-purple-800', dark: 'from-indigo-900/30 to-purple-900/30' },
   
   // 中性色調
-  { name: 'background.cloud', light: 'from-gray-100 to-slate-100', dark: 'from-gray-900/30 to-slate-900/30' },
-  { name: 'background.stone', light: 'from-stone-100 to-gray-100', dark: 'from-stone-900/30 to-gray-900/30' },
-  { name: 'background.warm', light: 'from-amber-100 to-yellow-100', dark: 'from-amber-900/30 to-yellow-900/30' },
+  { name: 'background.cloud', light: 'from-gray-700 to-slate-800', dark: 'from-gray-900/30 to-slate-900/30' },
+  { name: 'background.stone', light: 'from-stone-700 to-gray-800', dark: 'from-stone-900/30 to-gray-900/30' },
+  { name: 'background.warm', light: 'from-amber-700 to-yellow-700', dark: 'from-amber-900/30 to-yellow-900/30' },
   
   // 特殊漸變
-  { name: 'background.rainbow', light: 'from-red-100 via-yellow-100 to-blue-100', dark: 'from-red-900/30 via-yellow-900/30 to-blue-900/30' },
-  { name: 'background.aurora', light: 'from-green-100 via-blue-100 to-purple-100', dark: 'from-green-900/30 via-blue-900/30 to-purple-900/30' },
-  { name: 'background.cosmic', light: 'from-indigo-100 via-purple-100 to-pink-100', dark: 'from-indigo-900/30 via-purple-900/30 to-pink-900/30' },
-  { name: 'background.tropical', light: 'from-cyan-100 via-teal-100 to-green-100', dark: 'from-cyan-900/30 via-teal-900/30 to-green-900/30' },
-  { name: 'background.fire', light: 'from-red-100 via-orange-100 to-yellow-100', dark: 'from-red-900/30 via-orange-900/30 to-yellow-900/30' },
-  { name: 'background.ice', light: 'from-blue-100 via-cyan-100 to-white', dark: 'from-blue-900/30 via-cyan-900/30 to-slate-900/30' }
+  { name: 'background.rainbow', light: 'from-red-700 via-yellow-600 to-blue-800', dark: 'from-red-900/30 via-yellow-900/30 to-blue-900/30' },
+  { name: 'background.aurora', light: 'from-green-700 via-blue-800 to-purple-800', dark: 'from-green-900/30 via-blue-900/30 to-purple-900/30' },
+  { name: 'background.cosmic', light: 'from-indigo-800 via-purple-800 to-pink-700', dark: 'from-indigo-900/30 via-purple-900/30 to-pink-900/30' },
+  { name: 'background.tropical', light: 'from-cyan-700 via-teal-800 to-green-800', dark: 'from-cyan-900/30 via-teal-900/30 to-green-900/30' },
+  { name: 'background.fire', light: 'from-red-700 via-orange-700 to-yellow-600', dark: 'from-red-900/30 via-orange-900/30 to-yellow-900/30' },
+  { name: 'background.ice', light: 'from-blue-800 via-cyan-800 to-slate-700', dark: 'from-blue-900/30 via-cyan-900/30 to-slate-900/30' }
 ];
 
 // 用戶自定義頭像接口
