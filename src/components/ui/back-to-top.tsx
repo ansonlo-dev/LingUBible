@@ -273,9 +273,8 @@ export function BackToTop() {
       const footer = document.querySelector('footer');
       
       if (footer) {
-        // 計算頁腳位置信息
-        const footerRect = footer.getBoundingClientRect();
-        const footerTop = footerRect.top + window.pageYOffset;
+        // 使用 offsetTop 獲取頁腳的絕對位置，不受當前滾動位置影響
+        const footerTop = footer.offsetTop;
         const windowHeight = window.innerHeight;
         const documentHeight = Math.max(
           document.body.scrollHeight,
