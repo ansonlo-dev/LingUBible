@@ -283,22 +283,44 @@ export function BackToTop() {
         // 記錄頁腳位置信息
         const footerRect = footer.getBoundingClientRect();
         const footerTop = footerRect.top + window.pageYOffset;
+        const windowHeight = window.innerHeight;
+        const documentHeight = Math.max(
+          document.body.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.clientHeight,
+          document.documentElement.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        
         console.log('Footer position info:', {
           rect: footerRect,
           absoluteTop: footerTop,
-          height: footerRect.height
+          height: footerRect.height,
+          windowHeight,
+          documentHeight
         });
         
-        // 使用 scrollIntoView 滾動到頁腳開始位置，block: 'start' 確保頁腳頂部對齊視窗頂部
-        footer.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
+        // 計算滾動目標：footer 頂部減去視窗高度，確保 footer 剛好在視窗外
+        const targetScrollTop = Math.max(0, footerTop - windowHeight);
+        const maxScrollTop = documentHeight - windowHeight;
+        const finalScrollTop = Math.min(targetScrollTop, maxScrollTop);
+        
+        console.log('Scroll calculation:', {
+          targetScrollTop,
+          maxScrollTop,
+          finalScrollTop
+        });
+        
+        // 滾動到計算出的位置
+        window.scrollTo({
+          top: finalScrollTop,
+          behavior: 'smooth'
         });
         
         // 檢查滾動後的位置
         setTimeout(() => {
           const newScrollY = window.pageYOffset || document.documentElement.scrollTop;
-          console.log('Scroll position immediately after scrollIntoView:', newScrollY);
+          console.log('Scroll position immediately after scroll:', newScrollY);
         }, 100);
         
       } else {
