@@ -266,21 +266,14 @@ export function BackToTop() {
 
   const scrollToBottom = () => {
     try {
-      console.log('=== ScrollToBottom Debug Start ===');
-      
       // 立即隱藏按鈕（預防性）
       setIsBottomVisible(false);
       
       // 尋找頁腳元素並滾動至其開始位置
       const footer = document.querySelector('footer');
-      console.log('Footer element found:', !!footer);
       
       if (footer) {
-        // 記錄當前滾動位置
-        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
-        console.log('Current scroll position before scrollIntoView:', currentScrollY);
-        
-        // 記錄頁腳位置信息
+        // 計算頁腳位置信息
         const footerRect = footer.getBoundingClientRect();
         const footerTop = footerRect.top + window.pageYOffset;
         const windowHeight = window.innerHeight;
@@ -292,76 +285,30 @@ export function BackToTop() {
           document.documentElement.offsetHeight
         );
         
-        console.log('Footer position info:', {
-          rect: footerRect,
-          absoluteTop: footerTop,
-          height: footerRect.height,
-          windowHeight,
-          documentHeight
-        });
-        
         // 計算滾動目標：footer 頂部減去視窗高度，確保 footer 剛好在視窗外
         const targetScrollTop = Math.max(0, footerTop - windowHeight);
         const maxScrollTop = documentHeight - windowHeight;
         const finalScrollTop = Math.min(targetScrollTop, maxScrollTop);
         
-        console.log('Scroll calculation:', {
-          targetScrollTop,
-          maxScrollTop,
-          finalScrollTop
-        });
-        
-        // 嘗試多種滾動方法
-        console.log('Attempting to scroll to:', finalScrollTop);
-        
-        // 方法1: window.scrollTo with smooth
-        try {
+        // 使用與 scrollToTop 相同的滾動方法順序以確保 smooth 動畫效果
+        if (document.body.scrollTo) {
+          document.body.scrollTo({
+            top: finalScrollTop,
+            behavior: 'smooth'
+          });
+        } else if (document.documentElement.scrollTo) {
+          document.documentElement.scrollTo({
+            top: finalScrollTop,
+            behavior: 'smooth'
+          });
+        } else if (window.scrollTo) {
           window.scrollTo({
             top: finalScrollTop,
             behavior: 'smooth'
           });
-          console.log('Method 1 (window.scrollTo smooth) attempted');
-        } catch (e) {
-          console.log('Method 1 failed:', e);
         }
         
-        // 檢查是否成功，如果沒有則嘗試其他方法
-        setTimeout(() => {
-          const checkScrollY = window.pageYOffset || document.documentElement.scrollTop;
-          console.log('Scroll position after method 1:', checkScrollY);
-          
-          if (Math.abs(checkScrollY - finalScrollTop) > 10) {
-            console.log('Method 1 failed, trying alternatives...');
-            
-            // 方法2: 直接設置滾動位置
-            try {
-              document.documentElement.scrollTop = finalScrollTop;
-              document.body.scrollTop = finalScrollTop;
-              console.log('Method 2 (direct scroll) attempted');
-            } catch (e) {
-              console.log('Method 2 failed:', e);
-            }
-            
-            // 方法3: window.scrollTo without smooth
-            setTimeout(() => {
-              try {
-                window.scrollTo(0, finalScrollTop);
-                console.log('Method 3 (window.scrollTo instant) attempted');
-              } catch (e) {
-                console.log('Method 3 failed:', e);
-              }
-            }, 50);
-          }
-        }, 100);
-        
-        // 檢查最終結果
-        setTimeout(() => {
-          const newScrollY = window.pageYOffset || document.documentElement.scrollTop;
-          console.log('Final scroll position after all attempts:', newScrollY);
-        }, 200);
-        
       } else {
-        console.log('Footer not found, using fallback behavior');
         // 如果找不到頁腳元素，回退到原來的行為（滾動到頁面底部）
         const documentHeight = Math.max(
           document.body.scrollHeight,
@@ -371,12 +318,23 @@ export function BackToTop() {
           document.documentElement.offsetHeight
         );
         
-        console.log('Document height for fallback:', documentHeight);
-        
-        window.scrollTo({
-          top: documentHeight,
-          behavior: 'smooth'
-        });
+        // 使用與 scrollToTop 相同的滾動方法順序
+        if (document.body.scrollTo) {
+          document.body.scrollTo({
+            top: documentHeight,
+            behavior: 'smooth'
+          });
+        } else if (document.documentElement.scrollTo) {
+          document.documentElement.scrollTo({
+            top: documentHeight,
+            behavior: 'smooth'
+          });
+        } else if (window.scrollTo) {
+          window.scrollTo({
+            top: documentHeight,
+            behavior: 'smooth'
+          });
+        }
       }
       
       // Keep button fully opaque on mobile during scroll, then reset after scroll completes
@@ -403,15 +361,6 @@ export function BackToTop() {
           document.documentElement.offsetHeight
         );
         const windowHeight = window.innerHeight;
-        
-        console.log(`ForceCheck (isLast: ${isLastCheck}):`, {
-          scrollTop,
-          documentHeight,
-          windowHeight,
-          shouldBeVisible: scrollTop > 50,
-          shouldBottomBeVisible: scrollTop + windowHeight < documentHeight - 50
-        });
-        
         setIsVisible(scrollTop > 50);
         setIsBottomVisible(scrollTop + windowHeight < documentHeight - 50);
         
@@ -421,7 +370,6 @@ export function BackToTop() {
           if (scrollToBottomButton) {
             scrollToBottomButton.style.opacity = '0.5';
           }
-          console.log('=== ScrollToBottom Debug End ===');
         }
       };
 
