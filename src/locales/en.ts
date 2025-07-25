@@ -574,6 +574,7 @@ export default {
   'teaching.tooltip.yes': 'This instructor is currently teaching courses in this term ({term})',
   'teaching.tooltip.no': 'This instructor is not teaching any courses in this term ({term})',
   'teaching.tooltip.clickable': 'This instructor is currently teaching courses in this term ({term}). Click to view all instructors teaching this term.',
+  'teaching.current': 'current',
   // Advanced Filters
   'filters.advanced': 'Advanced Filters',
   'filters.professional': 'Professional Filters',
