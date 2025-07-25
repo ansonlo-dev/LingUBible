@@ -406,7 +406,7 @@ export function AdvancedInstructorFilters({
   };
 
   return (
-    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 flex flex-col gap-2">
+    <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 max-sm:py-0 flex flex-col gap-2">
       {/* 智能搜索行 */}
       <div className="flex items-center gap-2">
         <label className={getLabelClassName()}>
