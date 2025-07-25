@@ -409,314 +409,317 @@ export default function UserSettings() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8 max-w-4xl">
         {/* 頁面標題 */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
         </div>
 
-        {/* 個人資料設定 */}
-        <Card className="legal-page-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              {t('settings.profile')}
-            </CardTitle>
-            <CardDescription>
-              {t('settings.profileDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* 頭像 */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label className="flex items-center gap-2 text-base font-medium">
-                    <UserCircle className="h-4 w-4" />
-                    {t('settings.avatar')}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t('settings.avatarDescription')}
-                  </p>
+        {/* 主要設定區域 - 桌面版並排佈局 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 個人資料設定 */}
+          <Card className="legal-page-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                {t('settings.profile')}
+              </CardTitle>
+              <CardDescription>
+                {t('settings.profileDescription')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* 頭像 */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="flex items-center gap-2 text-base font-medium">
+                      <UserCircle className="h-4 w-4" />
+                      {t('settings.avatar')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('settings.avatarDescription')}
+                    </p>
+                  </div>
+                  <AvatarCustomizer>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      {t('avatar.customize')}
+                    </Button>
+                  </AvatarCustomizer>
                 </div>
-                <AvatarCustomizer>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Palette className="h-4 w-4" />
-                    {t('avatar.customize')}
-                  </Button>
-                </AvatarCustomizer>
+                
+                {/* 頭像預覽 */}
+                <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
+                  <SmartAvatar
+                    userId={user.$id}
+                    name={user.name}
+                    email={user.email}
+                    customAvatar={customAvatar}
+                    isLoading={isInitialLoading}
+                    config={{
+                      showPersonalAvatar: true,
+                      showAnonymousAvatar: false,
+                      size: 'lg',
+                      context: 'profile'
+                    }}
+                    className="border-2 border-primary/20"
+                  />
+                  <div className="space-y-1">
+                    <p className="font-medium">{t('settings.currentAvatar')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customAvatar ? t('settings.customAvatar') : t('settings.defaultAvatar')}
+                    </p>
+                  </div>
+                </div>
               </div>
-              
-              {/* 頭像預覽 */}
-              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-                <SmartAvatar
-                  userId={user.$id}
-                  name={user.name}
-                  email={user.email}
-                  customAvatar={customAvatar}
-                  isLoading={isInitialLoading}
-                  config={{
-                    showPersonalAvatar: true,
-                    showAnonymousAvatar: false,
-                    size: 'lg',
-                    context: 'profile'
-                  }}
-                  className="border-2 border-primary/20"
+
+              {/* 電子郵件 */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  {t('settings.email')}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={user.email}
+                  disabled
+                  className="bg-muted"
                 />
-                <div className="space-y-1">
-                  <p className="font-medium">{t('settings.currentAvatar')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {customAvatar ? t('settings.customAvatar') : t('settings.defaultAvatar')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 電子郵件 */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                {t('settings.email')}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={user.email}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('settings.emailReadOnly')}
-              </p>
-            </div>
-
-            {/* 用戶名 */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2 text-base font-medium">
-                  <AtSign className="h-4 w-4" />
-                  {t('settings.username')}
-                </Label>
-                {!isEditingUsername && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditUsername}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    {t('settings.changeUsername')}
-                  </Button>
-                )}
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.emailReadOnly')}
+                </p>
               </div>
 
-              {!isEditingUsername ? (
-                // 顯示模式
-                <div className="p-3 bg-muted rounded-md my-0">
-                  <p className="text-sm my-0">
-                    {username.trim() || t('settings.noUsername')}
-                  </p>
-                </div>
-              ) : (
-                // 編輯模式
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Input
-                      id="username"
-                      type="text"
-                      value={username}
-                      onChange={handleUsernameChange}
-                      placeholder={t('settings.usernamePlaceholder')}
-                      disabled={loading}
-                      className={!isUsernameValid ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : ''}
-                    />
-                    
-                    {/* 用戶名驗證錯誤 */}
-                    {!isUsernameValid && usernameError && (
-                      <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-                        <AlertDescription className="text-red-600 dark:text-red-400">
-                          {usernameError}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {/* 檢查中提示 */}
-                    {isCheckingUsername && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        {t('settings.usernameChecking')}
-                      </p>
-                    )}
-                    
-                    {/* 用戶名可用提示 */}
-                    {!isCheckingUsername && isUsernameValid && username.trim() && username.trim() !== originalUsername && (
-                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        {t('settings.usernameAvailable')}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 用戶名規則說明 */}
-                  <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/50 rounded-md">
-                    <p className="font-medium">{t('settings.usernameRules')}</p>
-                    <p>{t('settings.usernameLength')}</p>
-                    <p>{t('settings.usernameSupported')}</p>
-                    <p>{t('settings.usernameEmpty')}</p>
-                    <p>{t('settings.usernameDisplay')}</p>
-                  </div>
-
-                  {/* 用戶名編輯按鈕 */}
-                  <div className="flex gap-2 justify-center">
-                    <Button
-                      onClick={handleSaveUsername}
-                      disabled={
-                        loading || 
-                        !hasChanges || 
-                        isCheckingUsername || 
-                        (username.trim() && !isUsernameValid)
-                      }
-                      className="flex items-center gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      {loading ? t('settings.saving') : t('settings.saveUsername')}
-                    </Button>
-                    
+              {/* 用戶名 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2 text-base font-medium">
+                    <AtSign className="h-4 w-4" />
+                    {t('settings.username')}
+                  </Label>
+                  {!isEditingUsername && (
                     <Button
                       variant="outline"
-                      onClick={handleCancelUsernameEdit}
-                      disabled={loading}
+                      size="sm"
+                      onClick={handleEditUsername}
+                      className="flex items-center gap-2"
                     >
-                      {t('common.cancel')}
+                      <Edit className="h-4 w-4" />
+                      {t('settings.changeUsername')}
                     </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 密碼 */}
-            <div className="space-y-2 pt-4">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2 text-base font-medium">
-                  <Lock className="h-4 w-4" />
-                  {t('settings.password')}
-                </Label>
-                {!isEditingPassword && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditPassword}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    {t('settings.changePassword')}
-                  </Button>
-                )}
-              </div>
-
-              {!isEditingPassword ? (
-                // 顯示模式 - 不顯示任何內容
-                null
-              ) : (
-                // 編輯模式
-                <div className="space-y-4">
-                  {/* 目前密碼 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">
-                      {t('settings.currentPassword')}
-                    </Label>
-                    <PasswordInput
-                      id="current-password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder={t('settings.currentPasswordPlaceholder')}
-                      disabled={passwordLoading}
-                    />
-                  </div>
-
-                  {/* 新密碼 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">
-                      {t('settings.newPassword')}
-                    </Label>
-                    <PasswordInput
-                      id="new-password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder={t('settings.newPasswordPlaceholder')}
-                      disabled={passwordLoading}
-                    />
-                  </div>
-
-                  {/* 密碼強度檢查器 */}
-                  {newPassword && (
-                    <PasswordStrengthChecker
-                      password={newPassword}
-                      email={user.email}
-                      onValidationChange={setIsNewPasswordValid}
-                    />
                   )}
+                </div>
 
-                  {/* 確認新密碼 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">
-                      {t('settings.confirmPassword')}
-                    </Label>
-                    <PasswordInput
-                      id="confirm-password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder={t('settings.confirmPasswordPlaceholder')}
-                      disabled={passwordLoading}
-                    />
-                    
-                    {/* 密碼不一致提示 */}
-                    {confirmPassword && newPassword !== confirmPassword && (
-                      <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-                        <AlertDescription className="text-red-600 dark:text-red-400">
-                          {t('settings.passwordMismatch')}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                {!isEditingUsername ? (
+                  // 顯示模式
+                  <div className="p-3 bg-muted rounded-md my-0">
+                    <p className="text-sm my-0">
+                      {username.trim() || t('settings.noUsername')}
+                    </p>
                   </div>
+                ) : (
+                  // 編輯模式
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Input
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={handleUsernameChange}
+                        placeholder={t('settings.usernamePlaceholder')}
+                        disabled={loading}
+                        className={!isUsernameValid ? 'border-red-500' : isCheckingUsername ? 'border-blue-500' : ''}
+                      />
+                      
+                      {/* 用戶名驗證錯誤 */}
+                      {!isUsernameValid && usernameError && (
+                        <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                          <AlertDescription className="text-red-600 dark:text-red-400">
+                            {usernameError}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {/* 檢查中提示 */}
+                      {isCheckingUsername && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          {t('settings.usernameChecking')}
+                        </p>
+                      )}
+                      
+                      {/* 用戶名可用提示 */}
+                      {!isCheckingUsername && isUsernameValid && username.trim() && username.trim() !== originalUsername && (
+                        <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          {t('settings.usernameAvailable')}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* 密碼編輯按鈕 */}
-                  <div className="flex gap-2 justify-center">
-                    <Button
-                      onClick={handleSavePassword}
-                      disabled={
-                        passwordLoading ||
-                        !currentPassword.trim() || 
-                        !newPassword.trim() || 
-                        !confirmPassword.trim() ||
-                        !isNewPasswordValid ||
-                        newPassword !== confirmPassword
-                      }
-                      className="flex items-center gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      {passwordLoading ? t('settings.saving') : t('settings.savePassword')}
-                    </Button>
-                    
+                    {/* 用戶名規則說明 */}
+                    <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/50 rounded-md">
+                      <p className="font-medium">{t('settings.usernameRules')}</p>
+                      <p>{t('settings.usernameLength')}</p>
+                      <p>{t('settings.usernameSupported')}</p>
+                      <p>{t('settings.usernameEmpty')}</p>
+                      <p>{t('settings.usernameDisplay')}</p>
+                    </div>
+
+                    {/* 用戶名編輯按鈕 */}
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        onClick={handleSaveUsername}
+                        disabled={
+                          loading || 
+                          !hasChanges || 
+                          isCheckingUsername || 
+                          (username.trim() && !isUsernameValid)
+                        }
+                        className="flex items-center gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {loading ? t('settings.saving') : t('settings.saveUsername')}
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={handleCancelUsernameEdit}
+                        disabled={loading}
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 密碼 */}
+              <div className="space-y-2 pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2 text-base font-medium">
+                    <Lock className="h-4 w-4" />
+                    {t('settings.password')}
+                  </Label>
+                  {!isEditingPassword && (
                     <Button
                       variant="outline"
-                      onClick={handleCancelPasswordEdit}
-                      disabled={passwordLoading}
+                      size="sm"
+                      onClick={handleEditPassword}
+                      className="flex items-center gap-2"
                     >
-                      {t('common.cancel')}
+                      <Edit className="h-4 w-4" />
+                      {t('settings.changePassword')}
                     </Button>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {!isEditingPassword ? (
+                  // 顯示模式 - 不顯示任何內容
+                  null
+                ) : (
+                  // 編輯模式
+                  <div className="space-y-4">
+                    {/* 目前密碼 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="current-password">
+                        {t('settings.currentPassword')}
+                      </Label>
+                      <PasswordInput
+                        id="current-password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder={t('settings.currentPasswordPlaceholder')}
+                        disabled={passwordLoading}
+                      />
+                    </div>
+
+                    {/* 新密碼 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">
+                        {t('settings.newPassword')}
+                      </Label>
+                      <PasswordInput
+                        id="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder={t('settings.newPasswordPlaceholder')}
+                        disabled={passwordLoading}
+                      />
+                    </div>
+
+                    {/* 密碼強度檢查器 */}
+                    {newPassword && (
+                      <PasswordStrengthChecker
+                        password={newPassword}
+                        email={user.email}
+                        onValidationChange={setIsNewPasswordValid}
+                      />
+                    )}
+
+                    {/* 確認新密碼 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">
+                        {t('settings.confirmPassword')}
+                      </Label>
+                      <PasswordInput
+                        id="confirm-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder={t('settings.confirmPasswordPlaceholder')}
+                        disabled={passwordLoading}
+                      />
+                      
+                      {/* 密碼不一致提示 */}
+                      {confirmPassword && newPassword !== confirmPassword && (
+                        <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                          <AlertDescription className="text-red-600 dark:text-red-400">
+                            {t('settings.passwordMismatch')}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+
+                    {/* 密碼編輯按鈕 */}
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        onClick={handleSavePassword}
+                        disabled={
+                          passwordLoading ||
+                          !currentPassword.trim() || 
+                          !newPassword.trim() || 
+                          !confirmPassword.trim() ||
+                          !isNewPasswordValid ||
+                          newPassword !== confirmPassword
+                        }
+                        className="flex items-center gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {passwordLoading ? t('settings.saving') : t('settings.savePassword')}
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={handleCancelPasswordEdit}
+                        disabled={passwordLoading}
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
 
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Google 帳戶連結 */}
-        <div className="mt-8">
-          <GoogleAccountLink />
+          {/* Google 帳戶連結 */}
+          <div className="lg:mt-0">
+            <GoogleAccountLink />
+          </div>
         </div>
       </div>
     </div>
