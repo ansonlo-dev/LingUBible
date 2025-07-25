@@ -1879,7 +1879,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
       setCheckingEligibility(true);
       try {
-        const eligibility = await CourseService.canUserSubmitReview(user.$id, selectedCourse);
+        const eligibility = await CourseService.canUserSubmitReview(user.$id, selectedCourse, selectedTerm);
         setReviewEligibility(eligibility);
       } catch (error) {
         console.error('Error checking review eligibility:', error);
@@ -1993,6 +1993,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       let errorMessage = t('review.submitLimitReached');
       
       switch (reviewEligibility.reason) {
+        case 'review.termLimitExceeded':
+          errorMessage = t('review.termLimitExceeded');
+          break;
         case 'review.limitExceeded':
           errorMessage = t('review.limitExceeded');
           break;
@@ -2242,7 +2245,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           if (originalGrade === 'F' && newGrade && newGrade !== 'F') {
             try {
               // Get all user's reviews for this course to check if they have 2 reviews
-              const allUserReviews = await CourseService.canUserSubmitReview(user.$id, selectedCourse);
+              const allUserReviews = await CourseService.canUserSubmitReview(user.$id, selectedCourse, selectedTerm);
               
               if (allUserReviews.existingReviews.length >= 2) {
                 // Sort reviews by creation date to identify the first review
@@ -2562,7 +2565,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-destructive">
-                          {reviewEligibility.reason === 'review.limitExceeded' ? t('review.limitExceeded') : 
+                          {reviewEligibility.reason === 'review.termLimitExceeded' ? t('review.termLimitExceeded') :
+                           reviewEligibility.reason === 'review.limitExceeded' ? t('review.limitExceeded') : 
                            reviewEligibility.reason === 'review.limitReachedWithPass' ? t('review.limitReachedWithPass') : 
                            t('review.submitLimitReached')}
                         </p>

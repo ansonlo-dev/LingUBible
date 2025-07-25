@@ -1321,6 +1321,7 @@ export default {
   'review.submitting': 'Submitting...',
   'review.submitError': 'Failed to submit review. Please try again.',
   'review.submitLimitReached': 'You have reached the review limit for this course',
+  'review.termLimitExceeded': 'You have already submitted the maximum number of reviews (7) for this term. Students can only register for a maximum of 7 courses per term.',
   'review.limitExceeded': 'You have exceeded the maximum number of reviews for this course',
   'review.limitReachedWithPass': 'You cannot submit another review because you already passed this course',
   'review.updateReview': 'Update Review',

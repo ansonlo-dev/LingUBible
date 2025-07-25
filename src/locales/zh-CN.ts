@@ -1861,6 +1861,7 @@ export default {
 
   // Review submission limits
   'review.submitLimitReached': '您已达到此课程的评论提交限制。',
+  'review.termLimitExceeded': '您已经提交了此学期的最大评论数量（7个）。学生每学期最多只能注册7门课程。',
   'review.limitExceeded': '您已达到此课程的最大评论数量（2个）。',
   'review.limitReachedWithPass': '您已经为此课程提交过评论。只有在您的第一次评论成绩为不及格时，才能提交额外的评论。',
   'review.clickToViewReview': '点击查看该评论详情',

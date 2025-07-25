@@ -1173,12 +1173,15 @@ export class CourseService {
   static async createReview(reviewData: Omit<Review, '$id' | '$createdAt' | '$updatedAt'>): Promise<Review> {
     try {
       // Check if user can submit a review for this course
-      const eligibilityCheck = await this.canUserSubmitReview(reviewData.user_id, reviewData.course_code);
+      const eligibilityCheck = await this.canUserSubmitReview(reviewData.user_id, reviewData.course_code, reviewData.term_code);
       
       if (!eligibilityCheck.canSubmit) {
         let errorMessage = 'You have reached the review limit for this course.';
         
         switch (eligibilityCheck.reason) {
+          case 'review.termLimitExceeded':
+            errorMessage = 'You have already submitted the maximum number of reviews (7) for this term. Students can only register for a maximum of 7 courses per term.';
+            break;
           case 'review.limitExceeded':
             errorMessage = 'You have already submitted the maximum number of reviews (2) for this course.';
             break;
@@ -3865,18 +3868,45 @@ export class CourseService {
   /**
    * Check if a user can submit a review for a specific course
    * Rules:
+   * - Maximum 7 reviews per user per term (because students can only register max 7 courses per term)
    * - Normal case: 1 review per user per course
    * - Exception: If first review has fail grade, user can submit 1 more review
    * - Maximum 2 reviews total per user per course
    */
-  static async canUserSubmitReview(userId: string, courseCode: string): Promise<{
+  static async canUserSubmitReview(userId: string, courseCode: string, termCode: string): Promise<{
     canSubmit: boolean;
     reason?: string;
     existingReviews: Review[];
+    termReviewCount?: number;
   }> {
     try {
-      // Get all reviews by this user for this course
-      const response = await databases.listDocuments(
+      // First check: Maximum 7 reviews per term limit
+      const termReviewsResponse = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        [
+          Query.equal('user_id', userId),
+          Query.equal('term_code', termCode),
+          Query.select(['$id', 'user_id', 'term_code', 'course_code']),
+          Query.limit(10) // Should never exceed 7, but set reasonable limit
+        ]
+      );
+
+      const termReviews = termReviewsResponse.documents as unknown as Review[];
+      
+      // If user already has 7 reviews in this term, they cannot submit more
+      if (termReviews.length >= 7) {
+        return {
+          canSubmit: false,
+          reason: 'review.termLimitExceeded',
+          existingReviews: [],
+          termReviewCount: termReviews.length
+        };
+      }
+
+      // Second check: Per-course limit (existing logic)
+      // Get all reviews by this user for this specific course
+      const courseReviewsResponse = await databases.listDocuments(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -3888,26 +3918,28 @@ export class CourseService {
         ]
       );
 
-      const existingReviews = response.documents as unknown as Review[];
+      const existingReviews = courseReviewsResponse.documents as unknown as Review[];
       
-      // If no existing reviews, user can submit
+      // If no existing reviews for this course, user can submit
       if (existingReviews.length === 0) {
         return {
           canSubmit: true,
-          existingReviews: []
+          existingReviews: [],
+          termReviewCount: termReviews.length
         };
       }
 
-      // If user has 2 or more reviews already, they cannot submit more
+      // If user has 2 or more reviews already for this course, they cannot submit more
       if (existingReviews.length >= 2) {
         return {
           canSubmit: false,
           reason: 'review.limitExceeded',
-          existingReviews
+          existingReviews,
+          termReviewCount: termReviews.length
         };
       }
 
-      // If user has exactly 1 review
+      // If user has exactly 1 review for this course
       if (existingReviews.length === 1) {
         const firstReview = existingReviews[0];
         const firstGrade = firstReview.course_final_grade;
@@ -3920,13 +3952,15 @@ export class CourseService {
         if (isFirstReviewFail) {
           return {
             canSubmit: true,
-            existingReviews
+            existingReviews,
+            termReviewCount: termReviews.length
           };
         } else {
           return {
             canSubmit: false,
             reason: 'review.limitReachedWithPass',
-            existingReviews
+            existingReviews,
+            termReviewCount: termReviews.length
           };
         }
       }
@@ -3935,7 +3969,8 @@ export class CourseService {
       return {
         canSubmit: false,
         reason: 'review.unknownError',
-        existingReviews
+        existingReviews,
+        termReviewCount: termReviews.length
       };
 
     } catch (error) {
@@ -3943,7 +3978,8 @@ export class CourseService {
       // In case of error, allow submission (fail safe)
       return {
         canSubmit: true,
-        existingReviews: []
+        existingReviews: [],
+        termReviewCount: 0
       };
     }
   }

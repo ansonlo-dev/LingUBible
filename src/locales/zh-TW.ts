@@ -1797,6 +1797,7 @@ export default {
 
   // Review submission limits
   'review.submitLimitReached': '您已達到此課程的評論提交限制。',
+  'review.termLimitExceeded': '您已經提交了此學期的最大評論數量（7個）。學生每學期最多只能註冊7門課程。',
   'review.limitExceeded': '您已達到此課程的最大評論數量（2個）。',
   'review.limitReachedWithPass': '您已經為此課程提交過評論。只有在您的第一次評論成績為不及格時，才能提交額外的評論。',
 
