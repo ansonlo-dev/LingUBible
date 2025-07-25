@@ -575,7 +575,7 @@ export default {
   'teaching.tooltip.yes': '该讲师本学期正在授课（{term}）',
   'teaching.tooltip.no': '该讲师本学期未授课（{term}）',
   'teaching.tooltip.clickable': '该讲师本学期正在授课（{term}）。点击查看本学期所有授课的讲师。',
-  'teaching.current': '当前',
+  'teaching.current': '本学期',
   // 进阶筛选
   'filters.advanced': '进阶筛选',
   'filters.professional': '专业筛选',

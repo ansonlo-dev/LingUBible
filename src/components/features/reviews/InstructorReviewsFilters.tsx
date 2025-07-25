@@ -1,6 +1,6 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { processPluralTranslation, getTeachingLanguageName } from '@/utils/textUtils';
-import { isCurrentTerm } from '@/utils/dateUtils';
+import { isCurrentTerm, getCurrentTermCode } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -252,7 +252,13 @@ export function InstructorReviewsFilters({
               options={Object.entries(termCounts || {}).map(([termCode, termData]) => ({
                 value: termCode,
                 label: termData.name,
-                count: termData.count
+                count: termData.count,
+                status: isCurrentTerm(termCode) ? 'current' : 
+                       (() => {
+                         // Parse term code to determine if it's past or future
+                         const currentTermCode = getCurrentTermCode();
+                         return termCode < currentTermCode ? 'past' : 'future';
+                       })()
               }))}
               selectedValues={filters.selectedTerms}
               onSelectionChange={handleTermChange}
@@ -414,7 +420,13 @@ export function InstructorReviewsFilters({
                 options={Object.entries(termCounts || {}).map(([termCode, termData]) => ({
                   value: termCode,
                   label: termData.name,
-                  count: termData.count
+                  count: termData.count,
+                  status: isCurrentTerm(termCode) ? 'current' : 
+                         (() => {
+                           // Parse term code to determine if it's past or future
+                           const currentTermCode = getCurrentTermCode();
+                           return termCode < currentTermCode ? 'past' : 'future';
+                         })()
                 }))}
                 selectedValues={filters.selectedTerms}
                 onSelectionChange={handleTermChange}

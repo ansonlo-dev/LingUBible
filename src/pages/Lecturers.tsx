@@ -47,7 +47,7 @@ import { CourseService } from '@/services/api/courseService';
 import { useInstructorDetailOptimized } from '@/hooks/useInstructorDetailOptimized';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
-import { getCurrentTermCode, getCurrentTermName } from '@/utils/dateUtils';
+import { getCurrentTermCode, getCurrentTermName, getTermStatus, isCurrentTerm } from '@/utils/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
@@ -60,6 +60,33 @@ import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsi
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+
+// Status indicator component for terms (copied from multi-select-dropdown)
+const StatusDot = ({ status }: { status: 'current' | 'past' | 'future' }) => {
+  const getStatusStyles = () => {
+    switch (status) {
+      case 'current':
+        return 'bg-green-500 shadow-green-500/50';
+      case 'past':
+        return 'bg-gray-400 shadow-gray-400/50';
+      case 'future':
+        return 'bg-blue-500 shadow-blue-500/50';
+      default:
+        return 'bg-gray-400 shadow-gray-400/50';
+    }
+  };
+
+  return (
+    <div 
+      className={`w-2 h-2 rounded-full shadow-sm shrink-0 ${getStatusStyles()}`}
+      title={
+        status === 'current' ? 'Current Term' : 
+        status === 'past' ? 'Past Term' : 
+        'Future Term'
+      }
+    />
+  );
+};
 
 // Faculty mapping function - copied from PopularItemCard
 const getFacultyByDepartment = (department: string): string => {
@@ -1773,7 +1800,9 @@ const Lecturers = () => {
                       options={availableTerms.map((term): SelectOption => ({
                         value: term.term_code,
                         label: term.name,
-                        count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0
+                        count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0,
+                        status: isCurrentTerm(term.term_code) ? 'current' : 
+                               new Date(term.end_date) < new Date() ? 'past' : 'future'
                       }))}
                       selectedValues={(() => {
                         const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
@@ -1911,7 +1940,9 @@ const Lecturers = () => {
                       options={availableTerms.map((term): SelectOption => ({
                         value: term.term_code,
                         label: term.name,
-                        count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0
+                        count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0,
+                        status: isCurrentTerm(term.term_code) ? 'current' : 
+                               new Date(term.end_date) < new Date() ? 'past' : 'future'
                       }))}
                       selectedValues={(() => {
                         const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);

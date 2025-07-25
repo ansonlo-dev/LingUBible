@@ -61,4 +61,54 @@ export function getTermDisplayName(termCode: string): string {
     default:
       return termCode;
   }
+}
+
+/**
+ * 確定學期狀態（當前、過去或未來）
+ */
+export function getTermStatus(termCode: string): 'current' | 'past' | 'future' {
+  const currentTermCode = getCurrentTermCode();
+  
+  if (termCode === currentTermCode) {
+    return 'current';
+  }
+  
+  // Parse term codes to compare chronologically
+  const parseTermCode = (code: string): { year: number; termOrder: number } => {
+    const parts = code.split('-');
+    if (parts.length !== 2) {
+      return { year: 0, termOrder: 0 };
+    }
+    
+    const year = parseInt(parts[0]);
+    const term = parts[1];
+    
+    // Define term order within an academic year
+    let termOrder = 0;
+    switch (term) {
+      case 'T1':
+        termOrder = 1;
+        break;
+      case 'T2':
+        termOrder = 2;
+        break;
+      case 'Summer':
+        termOrder = 3;
+        break;
+    }
+    
+    return { year, termOrder };
+  };
+  
+  const current = parseTermCode(currentTermCode);
+  const target = parseTermCode(termCode);
+  
+  // Compare by year first, then by term order
+  if (target.year < current.year || (target.year === current.year && target.termOrder < current.termOrder)) {
+    return 'past';
+  } else if (target.year > current.year || (target.year === current.year && target.termOrder > current.termOrder)) {
+    return 'future';
+  }
+  
+  return 'current'; // fallback
 } 

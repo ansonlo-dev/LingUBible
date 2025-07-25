@@ -32,7 +32,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
-import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
+import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
@@ -1027,7 +1027,9 @@ const CourseDetail = () => {
                         options={availableTermsWithCounts.map((termData): SelectOption => ({
                           value: termData.term.term_code,
                           label: termData.term.name,
-                          count: termData.count
+                          count: termData.count,
+                          status: isCurrentTerm(termData.term.term_code) ? 'current' : 
+                                 new Date(termData.term.end_date) < new Date() ? 'past' : 'future'
                         }))}
                         selectedValues={(() => {
                           const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
@@ -1133,7 +1135,9 @@ const CourseDetail = () => {
                         options={availableTermsWithCounts.map((termData): SelectOption => ({
                           value: termData.term.term_code,
                           label: termData.term.name,
-                          count: termData.count
+                          count: termData.count,
+                          status: isCurrentTerm(termData.term.term_code) ? 'current' : 
+                                 new Date(termData.term.end_date) < new Date() ? 'past' : 'future'
                         }))}
                         selectedValues={(() => {
                           const values = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter ? [selectedTermFilter] : []);
