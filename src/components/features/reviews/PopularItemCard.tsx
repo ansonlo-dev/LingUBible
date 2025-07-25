@@ -687,11 +687,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                   index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
                                 }`}
                               >
-                                {code === props.currentTermTeachingLanguage ? (
-                                  <strong>{code}</strong>
-                                ) : (
-                                  code
-                                )}
+                                <span className={code === props.currentTermTeachingLanguage ? 'underline' : ''}>
+                                  {code}
+                                </span>
                               </span>
                             ))}
                           </div>
