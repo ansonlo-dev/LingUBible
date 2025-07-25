@@ -113,7 +113,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       </DialogTrigger>
       <DialogContent className={`
         ${isLandscape 
-          ? 'fixed inset-0 max-w-none max-h-none w-screen h-screen translate-x-0 translate-y-0 left-0 top-0' 
+          ? 'fixed top-0 left-0 right-0 max-w-none translate-x-0 translate-y-0' 
           : 'max-w-none max-h-none w-screen h-screen sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl'
         } 
         bg-white dark:bg-gray-900 shadow-xl 
@@ -126,7 +126,11 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
           ? 'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95' 
           : 'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]'
         }
-      `} style={{ borderRadius: isLandscape ? '0' : undefined }}>
+      `} style={{ 
+        borderRadius: isLandscape ? '0' : undefined,
+        height: isLandscape ? (window.innerHeight <= 500 ? 'calc(100vh - 3rem)' : 'calc(100vh - 2rem)') : undefined,
+        width: isLandscape ? '100vw' : undefined
+      }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
           <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'}`}>
             <DialogTitle className={`flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1' : ''}`}>
