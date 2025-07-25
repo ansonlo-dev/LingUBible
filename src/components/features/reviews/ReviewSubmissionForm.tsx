@@ -481,12 +481,43 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   // Step validation functions
   const validateCourseSelectionStep = () => {
-    const basicValid = selectedCourse && selectedTerm && selectedInstructors.length > 0;
+    // Basic validation: course and term must be selected
+    if (!selectedCourse || !selectedTerm) {
+      return false;
+    }
+    
     // For new reviews, also check if user can submit reviews
     if (!isEditMode && reviewEligibility && !reviewEligibility.canSubmit) {
       return false;
     }
-    return basicValid;
+    
+    // Check instructor selection based on available instructor types
+    const lectureInstructors = availableInstructors.filter(record => record.session_type === 'Lecture');
+    const tutorialInstructors = availableInstructors.filter(record => record.session_type === 'Tutorial');
+    
+    const hasLectureInstructors = lectureInstructors.length > 0;
+    const hasTutorialInstructors = tutorialInstructors.length > 0;
+    
+    const selectedLectureInstructors = selectedInstructors.filter(key => key.endsWith('|Lecture'));
+    const selectedTutorialInstructors = selectedInstructors.filter(key => key.endsWith('|Tutorial'));
+    
+    // If both lecture and tutorial instructors are available, user must select at least one from each
+    if (hasLectureInstructors && hasTutorialInstructors) {
+      return selectedLectureInstructors.length > 0 && selectedTutorialInstructors.length > 0;
+    }
+    
+    // If only lecture instructors are available, user must select at least one lecture instructor
+    if (hasLectureInstructors && !hasTutorialInstructors) {
+      return selectedLectureInstructors.length > 0;
+    }
+    
+    // If only tutorial instructors are available, user must select at least one tutorial instructor
+    if (!hasLectureInstructors && hasTutorialInstructors) {
+      return selectedTutorialInstructors.length > 0;
+    }
+    
+    // If no instructors are available, validation fails
+    return false;
   };
 
   const validateCourseReviewStep = () => {
