@@ -129,6 +129,15 @@ div[style*="position: fixed"][style*="right: 14px"] {
 }
 
 @layer components {
+  /* 設定頁面特定樣式 - 覆蓋 Tailwind 的 max-w-4xl 和 mx-auto，僅在大螢幕上生效 */
+  @media (min-width: 1024px) {
+    .settings-page-container {
+      max-width: none !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+  }
+
   /* 新的佈局系統 */
   .app-layout {
     display: flex;

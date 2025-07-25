@@ -409,7 +409,7 @@ export default function UserSettings() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8 max-w-4xl">
+      <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8 max-w-4xl settings-page-container">
         {/* 頁面標題 */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
