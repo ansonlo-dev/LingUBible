@@ -42,6 +42,7 @@ export interface MyReviewFilters {
   selectedTeachingLanguages: string[];
   selectedGrades: string[];
   selectedSessionTypes: string[];
+  selectedServiceLearning: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   itemsPerPage: number;
@@ -57,6 +58,7 @@ interface MyReviewsFiltersProps {
   teachingLanguageCounts: { [key: string]: number };
   gradeCounts: { [key: string]: number };
   sessionTypeCounts: { [key: string]: number };
+  serviceLearningCounts: { [key: string]: number };
   totalReviews: number;
   filteredReviews: number;
   onClearAll: () => void;
@@ -71,6 +73,7 @@ export function MyReviewsFilters({
   teachingLanguageCounts,
   gradeCounts,
   sessionTypeCounts,
+  serviceLearningCounts,
   totalReviews,
   filteredReviews,
   onClearAll
@@ -119,6 +122,10 @@ export function MyReviewsFilters({
     updateFilters({ selectedSessionTypes: values, currentPage: 1 });
   };
 
+  const handleServiceLearningChange = (values: string[]) => {
+    updateFilters({ selectedServiceLearning: values, currentPage: 1 });
+  };
+
   const handleSearchTermChange = (value: string) => {
     updateFilters({ searchTerm: value, currentPage: 1 });
   };
@@ -131,7 +138,8 @@ export function MyReviewsFilters({
       (filters.selectedTerms || []).length > 0 ||
       (filters.selectedTeachingLanguages || []).length > 0 ||
       (filters.selectedGrades || []).length > 0 ||
-      (filters.selectedSessionTypes || []).length > 0
+      (filters.selectedSessionTypes || []).length > 0 ||
+      (filters.selectedServiceLearning || []).length > 0
     );
   };
 
@@ -144,6 +152,7 @@ export function MyReviewsFilters({
     if ((filters.selectedTeachingLanguages || []).length > 0) count++;
     if ((filters.selectedGrades || []).length > 0) count++;
     if ((filters.selectedSessionTypes || []).length > 0) count++;
+    if ((filters.selectedServiceLearning || []).length > 0) count++;
     return count;
   };
 
@@ -272,6 +281,17 @@ export function MyReviewsFilters({
     return Object.entries(teachingLanguageCounts).map(([language, count]) => ({
       value: language,
       label: getTeachingLanguageName(language, t),
+      count
+    }));
+  };
+
+  // Helper function to create service learning options
+  const getServiceLearningOptions = () => {
+    return Object.entries(serviceLearningCounts).map(([type, count]) => ({
+      value: type,
+      label: type === 'compulsory' ? t('review.compulsory') :
+             type === 'optional' ? t('review.optional') : 
+             t('review.noServiceLearning'),
       count
     }));
   };
@@ -445,6 +465,26 @@ export function MyReviewsFilters({
               />
             </div>
           </div>
+
+          {/* Service Learning */}
+          <div className="flex items-center gap-2 min-w-0">
+            <label className={getLabelClassName()}>
+              <GraduationCap className="h-4 w-4" />
+              {t('filter.reviewServiceLearning')}
+            </label>
+            <div className="flex-1 min-w-0">
+              <MultiSelectDropdown
+                options={getServiceLearningOptions()}
+                selectedValues={filters.selectedServiceLearning || []}
+                onSelectionChange={handleServiceLearningChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full text-sm"
+                showCounts={true}
+                maxHeight="max-h-48"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Desktop: Grid layout for better control */}
@@ -561,6 +601,26 @@ export function MyReviewsFilters({
                   options={getTeachingLanguageOptions()}
                   selectedValues={filters.selectedTeachingLanguages || []}
                   onSelectionChange={handleTeachingLanguageChange}
+                  placeholder={t('common.all')}
+                  totalCount={totalReviews}
+                  className="w-full text-sm"
+                  showCounts={true}
+                  maxHeight="max-h-48"
+                />
+              </div>
+            </div>
+
+            {/* Service Learning */}
+            <div className="flex items-center gap-1 min-w-0">
+              <label className={getLabelClassName()}>
+                <GraduationCap className="h-4 w-4" />
+                {t('filter.reviewServiceLearning')}
+              </label>
+              <div className="flex-1 min-w-0">
+                <MultiSelectDropdown
+                  options={getServiceLearningOptions()}
+                  selectedValues={filters.selectedServiceLearning || []}
+                  onSelectionChange={handleServiceLearningChange}
                   placeholder={t('common.all')}
                   totalCount={totalReviews}
                   className="w-full text-sm"

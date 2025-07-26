@@ -134,6 +134,7 @@ const MyReviews = () => {
     selectedTeachingLanguages: [],
     selectedGrades: [],
     selectedSessionTypes: [],
+    selectedServiceLearning: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
     itemsPerPage: 2, // 只顯示2個評論（1行）
@@ -344,6 +345,32 @@ const MyReviews = () => {
     return counts;
   }, [reviews]);
 
+  // Calculate service learning counts
+  const serviceLearningCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    reviews.forEach(reviewInfo => {
+      let hasServiceLearning = false;
+      const serviceLearningTypes = new Set<string>();
+      
+      reviewInfo.instructorDetails.forEach(instructorDetail => {
+        if (instructorDetail.has_service_learning) {
+          hasServiceLearning = true;
+          serviceLearningTypes.add(instructorDetail.service_learning_type);
+        }
+      });
+      
+      if (hasServiceLearning) {
+        // Count each unique service learning type for this review
+        serviceLearningTypes.forEach(type => {
+          counts[type] = (counts[type] || 0) + 1;
+        });
+      } else {
+        counts['none'] = (counts['none'] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [reviews]);
+
   // 篩選和排序評論
   const filteredAndSortedReviews = useMemo(() => {
     let filteredReviews = [...reviews];
@@ -450,6 +477,23 @@ const MyReviews = () => {
       );
     }
 
+    // 服務學習篩選
+    if (filters.selectedServiceLearning.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        return filters.selectedServiceLearning.some(selectedType => {
+          if (selectedType === 'none') {
+            // Check if no instructors have service learning
+            return !reviewInfo.instructorDetails.some(detail => detail.has_service_learning);
+          } else {
+            // Check for specific service learning type (compulsory/optional)
+            return reviewInfo.instructorDetails.some(detail => 
+              detail.has_service_learning && detail.service_learning_type === selectedType
+            );
+          }
+        });
+      });
+    }
+
     // 排序
     filteredReviews.sort((a, b) => {
       let aValue: any;
@@ -536,6 +580,7 @@ const MyReviews = () => {
       selectedTeachingLanguages: [],
       selectedGrades: [],
       selectedSessionTypes: [],
+      selectedServiceLearning: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
       itemsPerPage: 2,
@@ -585,6 +630,7 @@ const MyReviews = () => {
           teachingLanguageCounts={teachingLanguageCounts}
           gradeCounts={gradeCounts}
           sessionTypeCounts={sessionTypeCounts}
+          serviceLearningCounts={serviceLearningCounts}
           totalReviews={reviews.length}
           filteredReviews={filteredAndSortedReviews.length}
           onClearAll={handleClearAllFilters}
