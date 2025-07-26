@@ -88,10 +88,12 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const [serviceLearningTooltipOpen, setServiceLearningTooltipOpen] = useState(false);
   const [departmentTooltipOpen, setDepartmentTooltipOpen] = useState(false);
   const [teachingBadgeTooltipOpen, setTeachingBadgeTooltipOpen] = useState(false);
+  const [offeredBadgeTooltipOpen, setOfferedBadgeTooltipOpen] = useState(false);
   const teachingLanguageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const serviceLearningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const departmentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const teachingBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const offeredBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -107,6 +109,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       }
       if (teachingBadgeTimeoutRef.current) {
         clearTimeout(teachingBadgeTimeoutRef.current);
+      }
+      if (offeredBadgeTimeoutRef.current) {
+        clearTimeout(offeredBadgeTimeoutRef.current);
       }
     };
   }, []);
@@ -144,14 +149,17 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    // Only navigate if enableTwoTapMode is true (catalog pages)
     if (props.enableTwoTapMode) {
+      // Catalog pages: navigate to courses with filter
       const currentTerm = getCurrentTermCode();
       const searchParams = new URLSearchParams();
       searchParams.set('offeredTerm', currentTerm);
       navigate(`/courses?${searchParams.toString()}`);
+    } else if (isMobile) {
+      // Main page mobile: show tooltip only
+      setOfferedBadgeTooltipOpen(true);
     }
-    // For main page (enableTwoTapMode=false), do nothing
+    // Desktop main page: do nothing (hover tooltip handles this)
   };
 
   const handleTeachingBadgeClick = (e: React.MouseEvent) => {
@@ -346,6 +354,14 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     if (teachingBadgeTimeoutRef.current) {
       clearTimeout(teachingBadgeTimeoutRef.current);
       teachingBadgeTimeoutRef.current = null;
+    }
+  };
+
+  const resetOfferedBadgeState = () => {
+    setOfferedBadgeTooltipOpen(false);
+    if (offeredBadgeTimeoutRef.current) {
+      clearTimeout(offeredBadgeTimeoutRef.current);
+      offeredBadgeTimeoutRef.current = null;
     }
   };
 
@@ -761,9 +777,12 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               {/* 開設狀態徽章和平均GPA */}
               <div className="flex flex-col items-end">
                 <ResponsiveTooltip 
-                  content={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
-                  hasClickAction={props.isOfferedInCurrentTerm}
+                  content={props.isOfferedInCurrentTerm ? `${t('offered.yes')} - ${currentTermName}` : `${t('offered.no')} - ${currentTermName}`}
+                  hasClickAction={false}
                   showCloseButton={true}
+                  onReset={resetOfferedBadgeState}
+                  open={isMobile ? offeredBadgeTooltipOpen : undefined}
+                  onOpenChange={isMobile ? setOfferedBadgeTooltipOpen : undefined}
                 >
                   <Badge 
                     variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
@@ -772,7 +791,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
                         : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
                     }`}
-                    onClick={props.isOfferedInCurrentTerm ? handleOfferedBadgeClick : undefined}
+                    onClick={handleOfferedBadgeClick}
                   >
                     {props.isOfferedInCurrentTerm ? (
                       <>
@@ -979,37 +998,33 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
             
             {/* 教學狀態徽章和平均GPA */}
             <div className="flex flex-col items-end">
-              <ResponsiveTooltip 
-                content={props.isTeachingInCurrentTerm ? t('teaching.tooltip.clickable').replace('{term}', currentTermName) : t('teaching.tooltip.no').replace('{term}', currentTermName)}
-                hasClickAction={props.isTeachingInCurrentTerm}
-                clickActionText={props.enableTwoTapMode ? t('tooltip.clickAgainToFilter') : undefined}
-                showCloseButton={true}
-                onReset={resetTeachingBadgeState}
-                open={isMobile ? teachingBadgeTooltipOpen : undefined}
-                onOpenChange={isMobile ? setTeachingBadgeTooltipOpen : undefined}
-              >
-                <Badge 
-                  variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
-                  className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
-                    props.isTeachingInCurrentTerm 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
-                  }`}
-                  onClick={props.isTeachingInCurrentTerm ? handleTeachingBadgeClick : undefined}
+              {props.isTeachingInCurrentTerm ? (
+                <ResponsiveTooltip 
+                  content={`${t('teaching.yes')} - ${currentTermName}`}
+                  hasClickAction={false}
+                  showCloseButton={true}
+                  onReset={resetTeachingBadgeState}
+                  open={isMobile ? teachingBadgeTooltipOpen : undefined}
+                  onOpenChange={isMobile ? setTeachingBadgeTooltipOpen : undefined}
                 >
-                  {props.isTeachingInCurrentTerm ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      {t('teaching.yes')}
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-3 w-3 mr-1" />
-                      {t('teaching.no')}
-                    </>
-                  )}
+                  <Badge 
+                    variant="default"
+                    className="text-xs font-medium flex-shrink-0 transition-all duration-200 bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105"
+                    onClick={handleTeachingBadgeClick}
+                  >
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    {t('teaching.yes')}
+                  </Badge>
+                </ResponsiveTooltip>
+              ) : (
+                <Badge 
+                  variant="secondary"
+                  className="text-xs font-medium flex-shrink-0 transition-all duration-200 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help"
+                >
+                  <XCircle className="h-3 w-3 mr-1" />
+                  {t('teaching.no')}
                 </Badge>
-              </ResponsiveTooltip>
+              )}
               
               {/* Average GPA below teaching badge */}
               <AverageGPADisplay gpa={props.averageGPA} isLoading={props.isLoading} />
