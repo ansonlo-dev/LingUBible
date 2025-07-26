@@ -137,11 +137,9 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         }
       `} style={{ 
         borderRadius: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
-        height: isLandscape 
-          ? (viewportDimensions.height <= 500 ? 'calc(100vh - 3rem)' : 'calc(100vh - 2rem)') 
-          : viewportDimensions.width < 640 
-            ? '100vh' 
-            : undefined,
+        height: (isLandscape || viewportDimensions.width < 640) 
+          ? '100vh' 
+          : undefined,
         width: (isLandscape || viewportDimensions.width < 640) ? '100vw' : undefined,
         top: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
         left: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
@@ -150,7 +148,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         position: (isLandscape || viewportDimensions.width < 640) ? 'fixed' : undefined
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-12' : ''}`}>
+          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1 pt-8' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-12' : ''}`}>
             <DialogTitle className={`flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1' : ''}`}>
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               {t('avatar.customize')}
@@ -240,7 +238,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
 
                 {/* 選擇區域 */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <div className="bg-muted/20 p-3">
+                  <div className="bg-muted/20 p-3 pb-6">
                     {activeTab === 'animals' ? (
                       <div className="grid grid-cols-10 gap-1.5">
                         {animals.map((animal, index) => (
