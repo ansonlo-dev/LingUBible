@@ -10,6 +10,7 @@ export default defineConfig(({ command, mode }) => {
   const isDevelopment = mode === 'development';
   const isBuild = command === 'build';
   const skipMinify = process.env.VITE_SKIP_MINIFY === 'true';
+  const isCloudflare = process.env.CF_PAGES === '1' || process.env.CLOUDFLARE_ENV;
 
   return {
     server: {
@@ -47,8 +48,8 @@ export default defineConfig(({ command, mode }) => {
           if (id.includes('fonts/LXGWWenKai') && id.includes('.ttf')) return true;
           return false;
         },
-        // 最大並行處理
-        maxParallelFileOps: 16,
+        // Cloudflare 環境下使用更保守的並行設定
+        maxParallelFileOps: isCloudflare ? 8 : 16,
         output: {
           // 最小化分塊 - 減少檔案數量以加速
           manualChunks: isProduction ? (id) => {

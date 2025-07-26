@@ -3,16 +3,11 @@ compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [build]
-command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:workers"
+command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:cf-fast"
 cwd = ""
 watch_dir = "src"
 
-[build.environment_variables]
-SKIP_FONT_PROCESSING = "true"
-NODE_ENV = "production"
-VITE_BUILD_CACHE = "true"
-VITE_APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"
-VITE_APPWRITE_PROJECT_ID = "lingubible"
+# 移動環境變數到命令中以避免警告
 
 # 環境變數在構建命令中設置
 
