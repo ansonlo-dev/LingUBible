@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,6 +28,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
     height: typeof window !== 'undefined' ? window.innerHeight : 768
   });
+  const hasAddedHistoryEntry = useRef(false);
 
   const animals = getAllAnimals();
   const backgrounds = getAllBackgrounds();
@@ -65,12 +66,46 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
     }
   }, [customAvatar]);
 
+  // 處理手機返回按鈕以避免在 PWA 中退出應用
+  useEffect(() => {
+    if (isOpen) {
+      if (!hasAddedHistoryEntry.current) {
+        window.history.pushState({ modal: 'avatar-customizer' }, '');
+        hasAddedHistoryEntry.current = true;
+      }
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isOpen) {
+        setIsOpen(false);
+        hasAddedHistoryEntry.current = false;
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isOpen]);
+
   // 隨機選擇
   const randomize = () => {
     const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
     const randomBackground = Math.floor(Math.random() * backgrounds.length);
     setSelectedAnimal(randomAnimal);
     setSelectedBackgroundIndex(randomBackground);
+  };
+
+  // 處理關閉彈出框
+  const handleClose = () => {
+    if (hasAddedHistoryEntry.current) {
+      // 如果當前 history state 是我們的頭像自訂模態，則通過 history.back() 關閉
+      if (window.history.state && window.history.state.modal === 'avatar-customizer') {
+        window.history.back();
+        return; // 讓 popstate 事件處理關閉
+      }
+      hasAddedHistoryEntry.current = false;
+    }
+    setIsOpen(false);
   };
 
   // 保存頭像
@@ -82,7 +117,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         description: t('avatar.saveSuccessDesc'),
         variant: "success",
       });
-      setIsOpen(false);
+      handleClose();
     } else {
       toast({
         title: t('avatar.saveFailed'),
@@ -101,7 +136,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         description: t('avatar.resetSuccessDesc'),
         variant: "success",
       });
-      setIsOpen(false);
+      handleClose();
     } else {
       toast({
         title: t('avatar.deleteFailed'),
@@ -156,7 +191,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                 {t('avatar.customize')}
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-muted/50 transition-colors"
                 aria-label="Close"
               >
