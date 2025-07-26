@@ -187,13 +187,13 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                   </div>
                 </div>
 
-                {/* 操作按鈕 - 同一行，減少寬度 */}
-                <div className="flex gap-3 justify-center">
-                  <Button onClick={randomize} variant="outline" size="sm" className="h-9 text-xs px-4">
+                {/* 操作按鈕 - 兩行顯示 */}
+                <div className="flex flex-col gap-2 items-center">
+                  <Button onClick={randomize} variant="outline" size="sm" className="h-9 text-xs px-4 w-32">
                     <Shuffle className="h-3 w-3 mr-2" />
                     {t('avatar.randomize')}
                   </Button>
-                  <Button onClick={handleSave} disabled={isLoading} size="sm" className="h-9 text-xs px-4">
+                  <Button onClick={handleSave} disabled={isLoading} size="sm" className="h-9 text-xs px-4 w-32">
                     <Save className="h-3 w-3 mr-2" />
                     {isLoading ? t('avatar.saving') : t('avatar.save')}
                   </Button>
@@ -247,7 +247,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                             onClick={() => setSelectedAnimal(animal)}
                             className={`
                               aspect-square rounded-md transition-[transform,background-color,box-shadow] duration-200 hover:scale-110
-                              flex items-center justify-center text-lg
+                              flex items-center justify-center text-2xl
                               ${selectedAnimal === animal 
                                 ? 'bg-primary/20 ring-2 ring-primary scale-105' 
                                 : 'bg-white/80 dark:bg-background/80 hover:bg-white dark:hover:bg-background'
@@ -381,7 +381,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                           onClick={() => setSelectedAnimal(animal)}
                           className={`
                             aspect-square rounded-lg transition-[transform,background-color,box-shadow] duration-200 hover:scale-110
-                            flex items-center justify-center text-base sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl
+                            flex items-center justify-center text-2xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl
                             ${selectedAnimal === animal 
                               ? 'bg-primary/20 ring-2 ring-primary scale-105' 
                               : 'bg-white/80 dark:bg-background/80 hover:bg-white dark:hover:bg-background'

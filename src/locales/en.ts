@@ -883,7 +883,6 @@ export default {
   'background.rust': 'Rust',
   'background.copper': 'Copper',
   'background.bronze': 'Bronze',
-  'background.mahogany': 'Mahogany',
   'background.navy': 'Navy',
   'background.midnight': 'Midnight',
   'background.steel': 'Steel',

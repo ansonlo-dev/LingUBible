@@ -820,7 +820,6 @@ export default {
   'background.rust': '鐵鏽',
   'background.copper': '銅色',
   'background.bronze': '青銅',
-  'background.mahogany': '桃花心木',
   'background.navy': '海軍藍',
   'background.midnight': '午夜',
   'background.steel': '鋼鐵',

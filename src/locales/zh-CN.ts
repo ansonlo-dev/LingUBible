@@ -869,7 +869,6 @@ export default {
   'background.rust': '铁锈',
   'background.copper': '铜色',
   'background.bronze': '青铜',
-  'background.mahogany': '桃花心木',
   'background.navy': '海军蓝',
   'background.midnight': '午夜',
   'background.steel': '钢铁',
