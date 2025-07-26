@@ -8,6 +8,8 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ command, mode }) => {
   const isProduction = mode === 'production';
   const isDevelopment = mode === 'development';
+  const isBuild = command === 'build';
+  const skipMinify = process.env.VITE_SKIP_MINIFY === 'true';
 
   return {
     server: {
@@ -31,54 +33,63 @@ export default defineConfig(({ command, mode }) => {
       outDir: 'dist',
       sourcemap: isDevelopment,
       target: 'es2020',
-      minify: isProduction ? 'esbuild' : false,
+      minify: skipMinify ? false : (isProduction ? 'esbuild' : false),
       // Disable esbuild to prevent SIGBUS in Cloudflare Workers
       rollupOptions: {
-        treeshake: isProduction,
-        // 排除大型字型檔案以加速建置
+        // 激進的 tree shaking
+        treeshake: {
+          moduleSideEffects: false,
+          propertyReadSideEffects: false,
+          tryCatchDeoptimization: false,
+        },
+        // 排除大型資源
         external: id => {
-          // 排除大型字型檔案，讓它們直接複製而不處理
-          if (id.includes('fonts/LXGWWenKai') && id.includes('.ttf')) {
-            return true;
-          }
+          if (id.includes('fonts/LXGWWenKai') && id.includes('.ttf')) return true;
           return false;
         },
+        // 最大並行處理
+        maxParallelFileOps: 16,
         output: {
-          // Enhanced chunking strategy for better build performance
+          // 最小化分塊 - 減少檔案數量以加速
           manualChunks: isProduction ? (id) => {
-            // 語言文件單獨分塊以加速構建
-            if (id.includes('src/locales/en.ts')) return 'en';
-            if (id.includes('src/locales/zh-CN.ts')) return 'zh-CN';
-            if (id.includes('src/locales/zh-TW.ts')) return 'zh-TW';
-            
-            // 其他 vendor 分塊
-            if (id.includes('react') || id.includes('react-dom')) return 'react-vendor';
-            if (id.includes('react-router-dom')) return 'router';
-            if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui-vendor';
-            if (id.includes('@tanstack/react-query') || id.includes('appwrite')) return 'query-vendor';
-            if (id.includes('echarts')) return 'chart-vendor';
-            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('date-fns')) return 'utils';
+            // 只保留最重要的分塊
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) return 'react';
+              if (id.includes('echarts')) return 'charts';
+              return 'vendor';
+            }
+            // 語言文件延遲載入
+            if (id.includes('src/locales/')) return 'locale';
+            return 'app';
           } : undefined,
-          chunkFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
-          entryFileNames: isProduction ? 'assets/[name]-[hash].js' : 'assets/[name].js',
-          assetFileNames: isProduction ? 'assets/[name]-[hash].[ext]' : 'assets/[name].[ext]',
+          // 簡化檔名以加速
+          chunkFileNames: '[name]-[hash:6].js',
+          entryFileNames: '[name]-[hash:6].js', 
+          assetFileNames: '[name]-[hash:6].[ext]',
+          // 壓縮設定
+          compact: true,
+          minifyInternalExports: true,
         }
       },
-      chunkSizeWarningLimit: 1500,
-      reportCompressedSize: false, // 關閉壓縮大小報告以加速建置
-      cssCodeSplit: true,
-      assetsInlineLimit: 4096,
-      // 優化建置性能
+      // 極致性能設定
+      chunkSizeWarningLimit: 2000, // 增加限制以減少警告
+      reportCompressedSize: false, // 關閉大小報告
+      cssCodeSplit: false, // 單一 CSS 檔案更快
+      assetsInlineLimit: 8192, // 更多小檔案內聯
       write: true,
       emptyOutDir: true,
-      // 排除字型資料夾以加速建置
       assetsDir: 'assets',
       copyPublicDir: true,
+      // 關閉所有分析功能以加速
+      manifest: false,
+      ssrManifest: false,
     },
     optimizeDeps: {
-      include: [
+      // Vite 5.1+ 相容設定
+      noDiscovery: isBuild,
+      include: isBuild ? undefined : [
         'react',
-        'react-dom',
+        'react-dom', 
         'react-router-dom',
         '@tanstack/react-query',
         'lucide-react',
@@ -90,27 +101,31 @@ export default defineConfig(({ command, mode }) => {
       exclude: [
         '@vite/client', 
         '@vite/env',
-        // 排除語言文件以加速構建
+        // 構建時排除所有語言文件
         'src/locales/en.ts',
         'src/locales/zh-CN.ts', 
         'src/locales/zh-TW.ts'
       ],
-      // 啟用快取以加速重建
       force: false,
-      // Disable esbuild options completely to prevent SIGBUS
-      // esbuildOptions disabled for Cloudflare Workers compatibility
+      // 只在開發時掃描依賴
+      entries: isBuild ? [] : ['src/main.tsx'],
     },
-    // Optimized esbuild settings for speed and Cloudflare Workers compatibility
-    esbuild: {
+    // 條件式 esbuild 設定
+    esbuild: skipMinify ? false : {
       target: 'es2020',
       legalComments: 'none',
-      // Enable safe minification options
-      minifyIdentifiers: isProduction,
-      minifySyntax: isProduction,
-      minifyWhitespace: isProduction,
-      // Avoid problematic options that can cause SIGBUS
+      // 激進的最佳化
+      minifyIdentifiers: true,
+      minifySyntax: true,
+      minifyWhitespace: true,
       keepNames: false,
-      drop: isProduction ? ['console', 'debugger'] : [],
+      // 移除所有除錯程式碼
+      drop: ['console', 'debugger'],
+      // 使用更快的轉換
+      treeShaking: true,
+      // JSX 最佳化 
+      jsxFactory: 'React.createElement',
+      jsxFragment: 'React.Fragment',
     },
     worker: {
       format: 'es',
@@ -127,7 +142,13 @@ export default defineConfig(({ command, mode }) => {
       stringify: 'auto',
       namedExports: true,
     },
-    // 啟用快取以加速重建
+    // 極致快取和性能設定
     cacheDir: '.vite',
+    clearScreen: false, // 減少終端輸出
+    logLevel: 'warn', // 只顯示警告以減少日誌
+    // 關閉不必要的功能
+    experimental: {
+      renderBuiltUrl: false,
+    },
   };
 });
