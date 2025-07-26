@@ -729,6 +729,7 @@ export default {
   'filter.selectLecturer': 'Select Lecturer',
   'filter.allSubjects': 'All Subjects',
   'filter.teachingLanguage': 'Teaching Language',
+  'filter.allServiceLearning': 'All Service Learning',
   'filter.teachingStatus': 'Teaching Status',
   'filter.teachingTerm': 'Teaching Term',
   'filter.allStatuses': 'All Statuses',
