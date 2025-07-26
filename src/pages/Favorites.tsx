@@ -20,12 +20,16 @@ interface FavoriteCourse {
   course_title_sc?: string;
   department: string;
   teachingLanguages: string[];
+  currentTermTeachingLanguage?: string | null;
+  serviceLearningTypes?: ('compulsory' | 'optional')[];
+  currentTermServiceLearning?: ('compulsory' | 'optional') | null;
   average_rating: number;
   review_count: number;
   is_offered_in_current_term: boolean;
   average_workload?: number;
   average_difficulty?: number;
   average_usefulness?: number;
+  average_gpa?: number;
 }
 
 interface FavoriteInstructor {
@@ -80,30 +84,36 @@ const Favorites = () => {
     try {
       setCoursesLoading(true);
       const favorites = await FavoritesService.getUserFavorites('course');
-      const coursePromises = favorites.map(async (favorite: UserFavorite) => {
-        const courseData = await CourseService.getCourseByCode(favorite.item_id);
+      const courseCodes = favorites.map((favorite: UserFavorite) => favorite.item_id);
+      
+      // 使用批量API獲取所有課程數據
+      const coursesDataMap = await CourseService.getBatchFavoriteCoursesData(courseCodes);
+      
+      const results = courseCodes.map(courseCode => {
+        const courseData = coursesDataMap.get(courseCode);
         if (courseData) {
-          // 獲取課程統計數據
-          const stats = await CourseService.getCourseDetailedStats(courseData.course_code);
           return {
-            course_code: courseData.course_code,
-            course_title: courseData.course_title,
-            course_title_tc: courseData.course_title_tc,
-            course_title_sc: courseData.course_title_sc,
-            department: courseData.department,
-            teachingLanguages: await CourseService.getCourseTeachingLanguages(courseData.course_code),
-            average_rating: stats.averageRating || 0,
-            review_count: stats.reviewCount || 0,
-            is_offered_in_current_term: await CourseService.isCourseOfferedInTerm(courseData.course_code, getCurrentTermCode()),
-            average_workload: stats.averageWorkload,
-            average_difficulty: stats.averageDifficulty,
-            average_usefulness: stats.averageUsefulness,
+            course_code: courseData.course.course_code,
+            course_title: courseData.course.course_title,
+            course_title_tc: courseData.course.course_title_tc,
+            course_title_sc: courseData.course.course_title_sc,
+            department: courseData.course.department,
+            teachingLanguages: courseData.teachingLanguages,
+            currentTermTeachingLanguage: courseData.currentTermTeachingLanguage,
+            serviceLearningTypes: courseData.serviceLearningTypes,
+            currentTermServiceLearning: courseData.currentTermServiceLearning,
+            average_rating: courseData.stats.averageRating || 0,
+            review_count: courseData.stats.reviewCount || 0,
+            is_offered_in_current_term: courseData.isOfferedInCurrentTerm,
+            average_workload: courseData.stats.averageWorkload,
+            average_difficulty: courseData.stats.averageDifficulty,
+            average_usefulness: courseData.stats.averageUsefulness,
+            average_gpa: courseData.stats.averageGPA,
           };
         }
         return null;
       });
 
-      const results = await Promise.all(coursePromises);
       setFavoriteCourses(results.filter(Boolean) as FavoriteCourse[]);
     } catch (error) {
       console.error('Error loading favorite courses:', error);
@@ -259,13 +269,16 @@ const Favorites = () => {
                   titleSc={course.course_title_sc}
                   department={course.department}
                   teachingLanguages={course.teachingLanguages}
-                  currentTermTeachingLanguage={null}
+                  currentTermTeachingLanguage={course.currentTermTeachingLanguage}
+                  serviceLearningTypes={course.serviceLearningTypes || []}
+                  currentTermServiceLearning={course.currentTermServiceLearning}
                   rating={course.average_rating}
                   reviewCount={course.review_count}
                   isOfferedInCurrentTerm={course.is_offered_in_current_term}
                   averageWorkload={course.average_workload}
                   averageDifficulty={course.average_difficulty}
                   averageUsefulness={course.average_usefulness}
+                  averageGPA={course.average_gpa}
                   isFavorited={true}
                   onFavoriteToggle={() => handleRemoveFavorite('course', course.course_code)}
                   onTeachingLanguageClick={handleTeachingLanguageClick}

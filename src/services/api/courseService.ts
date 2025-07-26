@@ -455,6 +455,8 @@ export class CourseService {
     };
     teachingLanguages: string[];
     currentTermTeachingLanguage: string | null;
+    serviceLearningTypes: ('compulsory' | 'optional')[];
+    currentTermServiceLearning: ('compulsory' | 'optional') | null;
     isOfferedInCurrentTerm: boolean;
   }>> {
     if (courseCodes.length === 0) {
@@ -468,6 +470,8 @@ export class CourseService {
         statsMap,
         teachingLanguagesMap,
         currentTermLanguagesMap,
+        serviceLearningTypesMap,
+        currentTermServiceLearningMap,
         currentTermOfferedCourses
       ] = await Promise.all([
         // 獲取所有課程基本信息
@@ -486,6 +490,10 @@ export class CourseService {
         this.getBatchCourseTeachingLanguages(courseCodes),
         // 獲取當前學期教學語言
         this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
+        // 獲取服務學習類型
+        this.getBatchCourseServiceLearning(courseCodes),
+        // 獲取當前學期服務學習
+        this.getBatchCourseCurrentTermServiceLearning(courseCodes),
         // 獲取當前學期開設狀態
         this.getCoursesOfferedInTermBatch(getCurrentTermCode(), courseCodes)
       ]);
@@ -509,6 +517,8 @@ export class CourseService {
           stats,
           teachingLanguages: teachingLanguagesMap.get(course.course_code) || [],
           currentTermTeachingLanguage: currentTermLanguagesMap.get(course.course_code) || null,
+          serviceLearningTypes: serviceLearningTypesMap.get(course.course_code) || [],
+          currentTermServiceLearning: currentTermServiceLearningMap.get(course.course_code) || null,
           isOfferedInCurrentTerm: currentTermOfferedCourses.has(course.course_code)
         });
       });
