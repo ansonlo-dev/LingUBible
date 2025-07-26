@@ -161,8 +161,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
               {/* 左半部：預覽和控制 */}
               <div className="w-2/5 flex flex-col p-4">
                 {/* 預覽區域 */}
-                <div className="flex items-center justify-center p-6 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl mb-6">
-                  <div className="text-center space-y-3">
+                <div className="flex items-center justify-center p-4 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl mb-3">
+                  <div className="text-center space-y-1">
                     <SmartAvatar
                       userId={user.$id}
                       customAvatar={{
@@ -179,8 +179,8 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       className="mx-auto w-24 h-24 [&_span[role='img']]:text-6xl"
                     />
                     <div>
-                      <p className="font-semibold text-foreground text-base">{t('avatar.preview')}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-semibold text-foreground text-sm">{t('avatar.preview')}</p>
+                      <p className="text-xs text-muted-foreground">
                         {getAnimalName(selectedAnimal)}+{t(backgrounds[selectedBackgroundIndex]?.name)}
                       </p>
                     </div>
