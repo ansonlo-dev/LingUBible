@@ -517,9 +517,14 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                           {/* Service Learning Badge */}
                           {props.serviceLearningTypes && props.serviceLearningTypes.length > 0 && (
                             <ResponsiveTooltip 
-                              content={props.serviceLearningTypes.map(type => 
-                                `${type === 'compulsory' ? t('review.compulsory') : t('review.optional')}: ${t('features.serviceLearning')}${type === props.currentTermServiceLearning ? ` (${t('teaching.current')})` : ''}`
-                              ).join('\n')}
+                              content={`${t('features.serviceLearning')}: ${[...props.serviceLearningTypes].sort((a, b) => {
+                                // SO (optional) always comes before SC (compulsory)
+                                if (a === 'optional' && b === 'compulsory') return -1;
+                                if (a === 'compulsory' && b === 'optional') return 1;
+                                return 0;
+                              }).map(type => 
+                                `${type === 'compulsory' ? t('review.compulsory') : t('review.optional')}${type === props.currentTermServiceLearning ? ` (${t('teaching.current')})` : ''}`
+                              ).join(', ')}`}
                               hasClickAction={true}
                               clickActionText={t('tooltip.clickAgainToFilter')}
                               showCloseButton={true}
@@ -529,7 +534,12 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 onClick={handleServiceLearningClick}
                               >
                                 <div className="flex items-center gap-1">
-                                  {props.serviceLearningTypes.map((type, index) => (
+                                  {[...props.serviceLearningTypes].sort((a, b) => {
+                                    // SO (optional) always comes before SC (compulsory)
+                                    if (a === 'optional' && b === 'compulsory') return -1;
+                                    if (a === 'compulsory' && b === 'optional') return 1;
+                                    return 0;
+                                  }).map((type, index) => (
                                     <span 
                                       key={type}
                                       className={`${
