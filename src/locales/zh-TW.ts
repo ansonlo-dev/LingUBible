@@ -1875,4 +1875,7 @@ export default {
 
   // Chart translations
   'chart.noGradeDataDescription': '當有評論資料時，將顯示成績分佈圖表。',
+
+  // Features
+  'features.serviceLearning': '服務學習',
 };
