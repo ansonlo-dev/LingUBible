@@ -627,6 +627,8 @@ const Courses = () => {
                   department={translateDepartmentName(course.department, t)}
                   teachingLanguages={course.teachingLanguages}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
+                  serviceLearningTypes={course.serviceLearningTypes || []}
+                  currentTermServiceLearning={course.currentTermServiceLearning}
                   rating={course.averageRating}
                   reviewCount={course.reviewCount}
                   isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
