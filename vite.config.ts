@@ -31,7 +31,7 @@ export default defineConfig(({ command, mode }) => {
       outDir: 'dist',
       sourcemap: isDevelopment,
       target: 'es2020',
-      minify: isProduction ? 'esbuild' : false,
+      minify: isProduction ? 'terser' : false,
       rollupOptions: {
         treeshake: isProduction,
         // 排除大型字型檔案以加速建置
@@ -94,23 +94,25 @@ export default defineConfig(({ command, mode }) => {
       // 啟用快取以加速重建
       force: false,
       // 確保 Bun 兼容性和性能優化
-      esbuildOptions: {
-        target: 'es2020',
-        keepNames: false,
-        minifyIdentifiers: isProduction,
-        minifySyntax: isProduction,
-        minifyWhitespace: isProduction,
-      },
+      // Commented out esbuildOptions to avoid SIGSEGV in Cloudflare Workers
+      // esbuildOptions: {
+      //   target: 'es2020',
+      //   keepNames: false,
+      //   minifyIdentifiers: isProduction,
+      //   minifySyntax: isProduction,
+      //   minifyWhitespace: isProduction,
+      // },
     },
-    esbuild: {
-      target: 'es2020',
-      legalComments: 'none',
-      drop: isProduction ? ['console', 'debugger'] : [],
-      treeShaking: true,
-      minifyIdentifiers: isProduction,
-      minifySyntax: isProduction,
-      minifyWhitespace: isProduction,
-    },
+    // Using Terser for minification instead of esbuild to avoid SIGSEGV in Cloudflare Workers
+    // esbuild: {
+    //   target: 'es2020',
+    //   legalComments: 'none',
+    //   drop: isProduction ? ['console', 'debugger'] : [],
+    //   treeShaking: true,
+    //   minifyIdentifiers: isProduction,
+    //   minifySyntax: isProduction,
+    //   minifyWhitespace: isProduction,
+    // },
     worker: {
       format: 'es',
     },

@@ -1,8 +1,9 @@
 name = "lingubible"
-compatibility_date = "2025-06-30"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
 
 [build]
-command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:workers-optimized"
+command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:workers"
 cwd = ""
 watch_dir = "src"
 
