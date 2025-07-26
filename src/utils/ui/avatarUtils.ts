@@ -69,7 +69,6 @@ const BACKGROUND_COLORS = [
   { name: 'background.rust', light: 'from-orange-700 to-red-700', dark: 'from-orange-900/30 to-red-900/30' },
   { name: 'background.copper', light: 'from-amber-700 to-orange-800', dark: 'from-amber-900/30 to-orange-900/30' },
   { name: 'background.bronze', light: 'from-yellow-700 to-amber-800', dark: 'from-yellow-900/30 to-amber-900/30' },
-  { name: 'background.mahogany', light: 'from-red-800 to-amber-800', dark: 'from-red-900/30 to-amber-900/30' },
   
   // 深冷色調
   { name: 'background.navy', light: 'from-blue-800 to-indigo-800', dark: 'from-blue-900/30 to-indigo-900/30' },
@@ -90,14 +89,11 @@ const BACKGROUND_COLORS = [
   { name: 'background.indigo', light: 'from-indigo-700 to-violet-800', dark: 'from-indigo-900/30 to-violet-900/30' },
   { name: 'background.royal', light: 'from-blue-800 to-purple-800', dark: 'from-blue-900/30 to-purple-900/30' },
   
-  // 深中性色和原有色彩
+  // 深中性色
   { name: 'background.charcoal', light: 'from-gray-800 to-slate-800', dark: 'from-gray-900/30 to-slate-900/30' },
   { name: 'background.graphite', light: 'from-stone-800 to-gray-800', dark: 'from-stone-900/30 to-gray-900/30' },
   { name: 'background.obsidian', light: 'from-slate-800 to-stone-900', dark: 'from-slate-900/30 to-stone-900/30' },
-  { name: 'background.cloud', light: 'from-gray-700 to-slate-800', dark: 'from-gray-900/30 to-slate-900/30' },
-  { name: 'background.stone', light: 'from-stone-700 to-gray-800', dark: 'from-stone-900/30 to-gray-900/30' },
-  { name: 'background.warm', light: 'from-amber-700 to-yellow-700', dark: 'from-amber-900/30 to-yellow-900/30' },
-  { name: 'background.ice', light: 'from-blue-800 via-cyan-800 to-slate-700', dark: 'from-blue-900/30 via-cyan-900/30 to-slate-900/30' },
+  { name: 'background.onyx', light: 'from-neutral-800 to-stone-800', dark: 'from-neutral-900/30 to-stone-900/30' },
   
   // 特殊漸變 (5种)
   { name: 'background.rainbow', light: 'from-red-700 via-yellow-600 to-blue-800', dark: 'from-red-900/30 via-yellow-900/30 to-blue-900/30' },
