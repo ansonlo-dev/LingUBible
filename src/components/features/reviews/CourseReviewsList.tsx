@@ -773,7 +773,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <span 
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                             onClick={() => {
                               if (!isMobile) {
                                 // Desktop: apply filter immediately
@@ -1248,7 +1248,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1261,7 +1261,6 @@ export const CourseReviewsList = ({
                               }));
                             }
                           }}
-                          title={t('filter.clickToFilterByTerm', { term: term.name })}
                         >
                           <span className="truncate">{term.name}</span>
                         </button>
@@ -1287,7 +1286,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1300,7 +1299,6 @@ export const CourseReviewsList = ({
                                 }));
                               }
                             }}
-                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
@@ -1344,7 +1342,6 @@ export const CourseReviewsList = ({
                               }));
                             }
                           }}
-                          title={t('filter.clickToFilterByTerm', { term: term.name })}
                         >
                           <span className="truncate">{term.name}</span>
                         </button>
@@ -1383,7 +1380,6 @@ export const CourseReviewsList = ({
                                 }));
                               }
                             }}
-                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
@@ -1541,12 +1537,11 @@ export const CourseReviewsList = ({
                     />
                   </div>
                   <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-                    <span 
-                      className="truncate cursor-help" 
-                      title={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}
-                    >
-                      {formatDateTimeUTC8(review.submitted_at)}
-                    </span>
+                    <ResponsiveTooltip content={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}>
+                      <span className="truncate cursor-help">
+                        {formatDateTimeUTC8(review.submitted_at)}
+                      </span>
+                    </ResponsiveTooltip>
                   </div>
                 </div>
               </div>
@@ -1644,7 +1639,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1657,7 +1652,6 @@ export const CourseReviewsList = ({
                               }));
                             }
                           }}
-                          title={t('filter.clickToFilterByTerm', { term: term.name })}
                         >
                           <span className="truncate">{term.name}</span>
                         </button>
@@ -1683,7 +1677,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1696,7 +1690,6 @@ export const CourseReviewsList = ({
                                 }));
                               }
                             }}
-                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
@@ -1740,7 +1733,6 @@ export const CourseReviewsList = ({
                               }));
                             }
                           }}
-                          title={t('filter.clickToFilterByTerm', { term: term.name })}
                         >
                           <span className="truncate">{term.name}</span>
                         </button>
@@ -1779,7 +1771,6 @@ export const CourseReviewsList = ({
                                 }));
                               }
                             }}
-                            title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
                           </button>
@@ -1942,12 +1933,11 @@ export const CourseReviewsList = ({
                     />
                   </div>
                   <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-                    <span 
-                      className="truncate cursor-help" 
-                      title={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}
-                    >
-                      {formatDateTimeUTC8(review.submitted_at)}
-                    </span>
+                    <ResponsiveTooltip content={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}>
+                      <span className="truncate cursor-help">
+                        {formatDateTimeUTC8(review.submitted_at)}
+                      </span>
+                    </ResponsiveTooltip>
                   </div>
                 </div>
               </div>

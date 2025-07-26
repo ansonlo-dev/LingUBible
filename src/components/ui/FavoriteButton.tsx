@@ -133,6 +133,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
           ],
           'transition-all duration-200',
           'hover:bg-red-500/20 hover:border-red-500/50',
+          !showText && 'cursor-help', // Add cursor-help when tooltip is enabled
           className
         )}
         onClick={handleFavoriteClick}

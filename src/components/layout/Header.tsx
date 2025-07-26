@@ -2,6 +2,7 @@ import { PanelRightClose, PanelRightOpen, Search, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 import { MobileSearchModal } from '@/components/common/MobileSearchModal';
 import { useState, useEffect } from 'react';

@@ -49,7 +49,7 @@ export function Footer() {
                     href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-help"
                   >
                     MIT
                   </a>
@@ -64,7 +64,7 @@ export function Footer() {
                     href="https://github.com/ansonlo-dev/LingUBible" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors cursor-help"
                   >
                     <Github className="h-4 w-4" />
                   </a>
@@ -101,34 +101,41 @@ export function Footer() {
               <FooterKofiButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
               {releaseUrl ? (
-                <a
-                  href={releaseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 ${
-                    versionStatus === 'beta' 
-                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
-                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                  }`}
-                  title={t('footer.versionTooltip', { version })}
-                >
-                  {isLoading ? (
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-3 w-3" />
-                  )}
-                  {version}
-                </a>
+                <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
+                  <a
+                    href={releaseUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 cursor-help ${
+                      versionStatus === 'beta' 
+                        ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                    }`}
+                  >
+                    {isLoading ? (
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-3 w-3" />
+                    )}
+                    {version}
+                  </a>
+                </ResponsiveTooltip>
               ) : (
-                <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium ${
-                  versionStatus === 'beta' 
-                    ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
-                    : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
-                }`}>
-                  {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
-                  {version}
-                  {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
-                </span>
+                <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium cursor-help ${
+                    versionStatus === 'beta' 
+                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
+                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                  }`}>
+                    {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
+                    {version}
+                    {error && (
+                      <ResponsiveTooltip content={t('footer.versionError', { error })}>
+                        <span className="text-xs opacity-60 cursor-help">*</span>
+                      </ResponsiveTooltip>
+                    )}
+                  </span>
+                </ResponsiveTooltip>
               )}
               <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.faq')}
@@ -153,28 +160,30 @@ export function Footer() {
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <a 
-                    href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    title={t('footer.mitTooltip')}
-                  >
-                    MIT
-                  </a>
+                  <ResponsiveTooltip content={t('footer.mitTooltip')}>
+                    <a 
+                      href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-help"
+                    >
+                      MIT
+                    </a>
+                  </ResponsiveTooltip>
                   <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <a 
-                    href="https://github.com/ansonlo-dev/LingUBible" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors"
-                    title={t('footer.githubTooltip')}
-                  >
-                    <Github className="h-4 w-4" />
-                  </a>
+                  <ResponsiveTooltip content={t('footer.githubTooltip')}>
+                    <a 
+                      href="https://github.com/ansonlo-dev/LingUBible" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors cursor-help"
+                    >
+                      <Github className="h-4 w-4" />
+                    </a>
+                  </ResponsiveTooltip>
                 </div>
               </div>
               
@@ -183,34 +192,41 @@ export function Footer() {
                 <FooterKofiButton />
                 <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
                 {releaseUrl ? (
-                  <a
-                    href={releaseUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 ${
-                      versionStatus === 'beta' 
-                        ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
-                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                    }`}
-                    title={t('footer.versionTooltip', { version })}
-                  >
-                    {isLoading ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <ExternalLink className="h-3 w-3" />
-                    )}
-                    {version}
-                  </a>
+                  <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
+                    <a
+                      href={releaseUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 cursor-help ${
+                        versionStatus === 'beta' 
+                          ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                          : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <ExternalLink className="h-3 w-3" />
+                      )}
+                      {version}
+                    </a>
+                  </ResponsiveTooltip>
                 ) : (
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium ${
-                    versionStatus === 'beta' 
-                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
-                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
-                  }`}>
-                    {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
-                    {version}
-                    {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
-                  </span>
+                  <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium cursor-help ${
+                      versionStatus === 'beta' 
+                        ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
+                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                    }`}>
+                      {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
+                      {version}
+                      {error && (
+                        <ResponsiveTooltip content={t('footer.versionError', { error })}>
+                          <span className="text-xs opacity-60 cursor-help">*</span>
+                        </ResponsiveTooltip>
+                      )}
+                    </span>
+                  </ResponsiveTooltip>
                 )}
               </div>
             </div>
@@ -267,34 +283,41 @@ export function Footer() {
           {/* Status badges row */}
           <div className="flex justify-center items-center space-x-3">
             {releaseUrl ? (
-              <a
-                href={releaseUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 ${
-                  versionStatus === 'beta' 
-                    ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
-                    : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                }`}
-                title={t('footer.versionTooltip', { version })}
-              >
-                {isLoading ? (
-                  <RefreshCw className="h-3 w-3 animate-spin" />
-                ) : (
-                  <ExternalLink className="h-3 w-3" />
-                )}
-                {version}
-              </a>
+              <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
+                <a
+                  href={releaseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 cursor-help ${
+                    versionStatus === 'beta' 
+                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                  }`}
+                >
+                  {isLoading ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-3 w-3" />
+                  )}
+                  {version}
+                </a>
+              </ResponsiveTooltip>
             ) : (
-              <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium ${
-                versionStatus === 'beta' 
-                  ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
-                  : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
-              }`}>
-                {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
-                {version}
-                {error && <span className="text-xs opacity-60" title={t('footer.versionError', { error })}>*</span>}
-              </span>
+              <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
+                <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium cursor-help ${
+                  versionStatus === 'beta' 
+                    ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
+                    : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                }`}>
+                  {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
+                  {version}
+                  {error && (
+                    <ResponsiveTooltip content={t('footer.versionError', { error })}>
+                      <span className="text-xs opacity-60 cursor-help">*</span>
+                    </ResponsiveTooltip>
+                  )}
+                </span>
+              </ResponsiveTooltip>
             )}
           </div>
           
@@ -346,31 +369,33 @@ export function Footer() {
           <div className="flex flex-col items-center space-y-3 pb-2">
             {/* License info */}
             <div className="flex items-center space-x-2">
-              <a 
-                href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title={t('footer.mitTooltip')}
-              >
-                MIT
-              </a>
+              <ResponsiveTooltip content={t('footer.mitTooltip')}>
+                <a 
+                  href="https://github.com/ansonlo-dev/LingUBible/blob/main/LICENSE" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-600 dark:text-muted-foreground bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full font-mono hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-help"
+                >
+                  MIT
+                </a>
+              </ResponsiveTooltip>
                              <span className="text-xs text-gray-600 dark:text-muted-foreground">
                  2025 LingUBible
                </span>
             </div>
             
             {/* GitHub link */}
-            <a 
-              href="https://github.com/ansonlo-dev/LingUBible" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors group"
-              title={t('footer.githubTooltip')}
-            >
-              <Github className="h-4 w-4 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium">GitHub</span>
-            </a>
+            <ResponsiveTooltip content={t('footer.githubTooltip')}>
+              <a 
+                href="https://github.com/ansonlo-dev/LingUBible" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-gray-600 dark:text-muted-foreground hover:text-foreground transition-colors group cursor-help"
+              >
+                <Github className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium">GitHub</span>
+              </a>
+            </ResponsiveTooltip>
           </div>
         </div>
         </div>

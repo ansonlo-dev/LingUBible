@@ -821,7 +821,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -907,7 +907,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -1027,7 +1027,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -1177,7 +1177,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -1284,7 +1284,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -1434,7 +1434,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -1794,7 +1794,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -1926,7 +1926,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -2042,7 +2042,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -2188,7 +2188,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -2291,7 +2291,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
@@ -2437,7 +2437,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
                                               })()}
                                             >
-                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden cursor-help">
                                                 <div className="flex items-center gap-1">
                                                   {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
                                                     <span 
