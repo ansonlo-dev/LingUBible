@@ -614,6 +614,7 @@ const InstructorsList = () => {
                     teachingLanguages={instructor.teachingLanguages}
                     currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
                     onTeachingLanguageClick={handleTeachingLanguageClick}
+                    enableTwoTapMode={true}
                   />
                 ))}
               </InstructorGrid>

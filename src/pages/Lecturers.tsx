@@ -234,6 +234,11 @@ const Lecturers = () => {
   const [teachingLanguageTooltipStates, setTeachingLanguageTooltipStates] = useState<{[key: string]: boolean}>({});
   const [teachingLanguageTapCounts, setTeachingLanguageTapCounts] = useState<{[key: string]: number}>({});
   const [teachingLanguageTimeouts, setTeachingLanguageTimeouts] = useState<{[key: string]: NodeJS.Timeout}>({});
+  
+  // Department badge tooltip states for mobile
+  const [departmentTooltipOpen, setDepartmentTooltipOpen] = useState(false);
+  const [departmentTapCount, setDepartmentTapCount] = useState(0);
+  
   const [pendingGradeFilter, setPendingGradeFilter] = useState<string | null>(null);
   const [pendingRequirementFilter, setPendingRequirementFilter] = useState<{ filterKey: string; value: boolean } | null>(null);
   
@@ -649,12 +654,44 @@ const Lecturers = () => {
     e.stopPropagation();
     e.preventDefault();
     
-    // Navigate to instructors catalog with department filter applied
+    if (isMobile) {
+      // Mobile/tablet: require 2 taps to apply filter
+      const newTapCount = departmentTapCount + 1;
+      setDepartmentTapCount(newTapCount);
+      
+      if (newTapCount === 1) {
+        // First tap: show tooltip
+        setDepartmentTooltipOpen(true);
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+          setDepartmentTapCount(0);
+          setDepartmentTooltipOpen(false);
+        }, 3000);
+      } else if (newTapCount === 2) {
+        // Second tap: navigate
+        applyDepartmentNavigation();
+        resetDepartmentTooltipState();
+      }
+    } else {
+      // Desktop: 1 tap to navigate
+      applyDepartmentNavigation();
+    }
+  };
+  
+  // Apply department navigation
+  const applyDepartmentNavigation = () => {
     const searchParams = new URLSearchParams();
     const rawDepartmentName = extractRawDepartmentName(instructor?.department || '');
     searchParams.set('department', rawDepartmentName);
     
     navigate(`/instructors?${searchParams.toString()}`);
+  };
+  
+  // Reset department tooltip state
+  const resetDepartmentTooltipState = () => {
+    setDepartmentTapCount(0);
+    setDepartmentTooltipOpen(false);
   };
 
   // Collect all instructor details for teaching languages hook
@@ -1548,6 +1585,9 @@ const Lecturers = () => {
                   content={t('filter.clickToFilterDepartment')}
                   hasClickAction={true}
                   clickActionText={t('tooltip.clickAgainToFilter')}
+                  open={isMobile ? departmentTooltipOpen : undefined}
+                  onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
+                  onReset={resetDepartmentTooltipState}
                 >
                   <Badge 
                     variant="outline"
@@ -3044,44 +3084,10 @@ const Lecturers = () => {
                                             onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
                                             open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] : undefined}
                                             onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
-                                            onSecondTap={() => {
-                                              console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
-                                              const newFilters = { ...filters };
-                                              
-                                              // 切換教學語言篩選器
-                                              if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                                newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                              } else {
-                                                newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                              }
-                                              
-                                              // 重置頁面到第一頁
-                                              newFilters.currentPage = 1;
-                                              
-                                              handleFiltersChange(newFilters);
-                                              setPendingTeachingLanguageFilter(null);
-                                            }}
                                           >
                                             <span 
                                               className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
-                                              onClick={() => {
-                                                if (!isMobile) {
-                                                  // Desktop: apply filter immediately
-                                                  const newFilters = { ...filters };
-                                                  
-                                                  // 切換教學語言篩選器
-                                                  if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                                    newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                                  } else {
-                                                    newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                                  }
-                                                  
-                                                  // 重置頁面到第一頁
-                                                  newFilters.currentPage = 1;
-                                                  
-                                                  handleFiltersChange(newFilters);
-                                                }
-                                              }}
+                                              onClick={(e) => handleTeachingLanguageBadgeClick(teachingLanguage, e)}
                                             >
                                               <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
                                             </span>

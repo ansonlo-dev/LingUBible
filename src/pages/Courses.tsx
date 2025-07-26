@@ -675,6 +675,7 @@ const Courses = () => {
                   isLoading={statsLoading}
                   onTeachingLanguageClick={handleTeachingLanguageClick}
                   onServiceLearningClick={handleServiceLearningClick}
+                  enableTwoTapMode={true}
                 />
                 ))}
               </div>

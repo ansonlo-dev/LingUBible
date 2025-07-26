@@ -178,6 +178,12 @@ const CourseDetail = () => {
   const isMobile = useIsMobile();
   const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
   const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
+  
+  // Teaching language tooltip states for mobile
+  const [teachingLanguageTooltipStates, setTeachingLanguageTooltipStates] = useState<{[key: string]: boolean}>({});
+  const [teachingLanguageTapCounts, setTeachingLanguageTapCounts] = useState<{[key: string]: number}>({});
+  const [termTooltipStates, setTermTooltipStates] = useState<{[key: string]: boolean}>({});
+  const [termTapCounts, setTermTapCounts] = useState<{[key: string]: number}>({});
 
   // Clear pending states when clicking outside
   useEffect(() => {
@@ -451,16 +457,51 @@ const CourseDetail = () => {
   }, [teachingInfo, selectedTermFilter, selectedTeachingLanguageFilter]);
 
   // 教學語言徽章點擊處理器
-  const handleTeachingLanguageBadgeClick = (languageCode: string) => {
+  const handleTeachingLanguageBadgeClick = (languageCode: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
     if (isMobile) {
-      if (pendingTeachingLanguageFilter !== languageCode) {
-        setPendingTeachingLanguageFilter(languageCode);
-        return; // Only set pending on first tap, do not apply filter
-      } else if (pendingTeachingLanguageFilter === languageCode) {
-        setPendingTeachingLanguageFilter(null);
-        // Continue to apply filter below
+      // Mobile/tablet: require 2 taps to apply filter
+      const currentTapCount = teachingLanguageTapCounts[languageCode] || 0;
+      const newTapCount = currentTapCount + 1;
+      
+      setTeachingLanguageTapCounts(prev => ({
+        ...prev,
+        [languageCode]: newTapCount
+      }));
+      
+      if (newTapCount === 1) {
+        // First tap: show tooltip
+        setTeachingLanguageTooltipStates(prev => ({
+          ...prev,
+          [languageCode]: true
+        }));
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+          setTeachingLanguageTapCounts(prev => ({
+            ...prev,
+            [languageCode]: 0
+          }));
+          setTeachingLanguageTooltipStates(prev => ({
+            ...prev,
+            [languageCode]: false
+          }));
+        }, 3000);
+      } else if (newTapCount === 2) {
+        // Second tap: apply filter and close tooltip
+        applyTeachingLanguageFilter(languageCode);
+        resetTeachingLanguageTooltipState(languageCode);
       }
+    } else {
+      // Desktop: 1 tap to apply filter
+      applyTeachingLanguageFilter(languageCode);
     }
+  };
+  
+  // Apply teaching language filter
+  const applyTeachingLanguageFilter = (languageCode: string) => {
     const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
     const isSelected = currentValues.includes(languageCode);
     
@@ -473,17 +514,64 @@ const CourseDetail = () => {
       setSelectedTeachingLanguageFilter([...currentValues, languageCode]);
     }
   };
+  
+  // Reset teaching language tooltip state
+  const resetTeachingLanguageTooltipState = (languageCode: string) => {
+    setTeachingLanguageTapCounts(prev => ({
+      ...prev,
+      [languageCode]: 0
+    }));
+    setTeachingLanguageTooltipStates(prev => ({
+      ...prev,
+      [languageCode]: false
+    }));
+  };
 
-  const handleTermBadgeClick = (termCode: string) => {
+  const handleTermBadgeClick = (termCode: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
     if (isMobile) {
-      if (pendingTermFilter !== termCode) {
-        setPendingTermFilter(termCode);
-        return; // Only set pending on first tap, do not apply filter
-      } else if (pendingTermFilter === termCode) {
-        setPendingTermFilter(null);
-        // Continue to apply filter below
+      // Mobile/tablet: require 2 taps to apply filter
+      const currentTapCount = termTapCounts[termCode] || 0;
+      const newTapCount = currentTapCount + 1;
+      
+      setTermTapCounts(prev => ({
+        ...prev,
+        [termCode]: newTapCount
+      }));
+      
+      if (newTapCount === 1) {
+        // First tap: show tooltip
+        setTermTooltipStates(prev => ({
+          ...prev,
+          [termCode]: true
+        }));
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+          setTermTapCounts(prev => ({
+            ...prev,
+            [termCode]: 0
+          }));
+          setTermTooltipStates(prev => ({
+            ...prev,
+            [termCode]: false
+          }));
+        }, 3000);
+      } else if (newTapCount === 2) {
+        // Second tap: apply filter and close tooltip
+        applyTermFilter(termCode);
+        resetTermTooltipState(termCode);
       }
+    } else {
+      // Desktop: 1 tap to apply filter
+      applyTermFilter(termCode);
     }
+  };
+  
+  // Apply term filter
+  const applyTermFilter = (termCode: string) => {
     const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
     const isSelected = currentValues.includes(termCode);
     
@@ -495,6 +583,18 @@ const CourseDetail = () => {
       // Add to selection
       setSelectedTermFilter([...currentValues, termCode]);
     }
+  };
+  
+  // Reset term tooltip state
+  const resetTermTooltipState = (termCode: string) => {
+    setTermTapCounts(prev => ({
+      ...prev,
+      [termCode]: 0
+    }));
+    setTermTooltipStates(prev => ({
+      ...prev,
+      [termCode]: false
+    }));
   };
 
   const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
@@ -1278,19 +1378,13 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTermFilter(term.term_code);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTermFilter(null);
-                                          handleTermBadgeClick(term.term_code);
-                                        }}
+                                        open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                        onReset={() => resetTermTooltipState(term.term_code)}
                                       >
                                         <button
-                                          onClick={() => {
-                                            if (!isMobile) {
-                                              handleTermBadgeClick(term.term_code);
-                                            }
+                                          onClick={(e) => {
+                                            handleTermBadgeClick(term.term_code, e);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
@@ -1313,19 +1407,13 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTeachingLanguageFilter(teachingLanguage);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTeachingLanguageFilter(null);
-                                          handleTeachingLanguageBadgeClick(teachingLanguage);
-                                        }}
+                                        open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
+                                        onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
                                       >
                                         <button
-                                          onClick={() => {
-                                            if (!isMobile) {
-                                              handleTeachingLanguageBadgeClick(teachingLanguage);
-                                            }
+                                          onClick={(e) => {
+                                            handleTeachingLanguageBadgeClick(teachingLanguage, e);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
@@ -1450,19 +1538,13 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTermFilter(term.term_code);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTermFilter(null);
-                                          handleTermBadgeClick(term.term_code);
-                                        }}
+                                        open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                        onReset={() => resetTermTooltipState(term.term_code)}
                                       >
                                         <button
-                                          onClick={() => {
-                                            if (!isMobile) {
-                                              handleTermBadgeClick(term.term_code);
-                                            }
+                                          onClick={(e) => {
+                                            handleTermBadgeClick(term.term_code, e);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
@@ -1485,19 +1567,13 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTeachingLanguageFilter(teachingLanguage);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTeachingLanguageFilter(null);
-                                          handleTeachingLanguageBadgeClick(teachingLanguage);
-                                        }}
+                                        open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
+                                        onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
                                       >
                                         <button
-                                          onClick={() => {
-                                            if (!isMobile) {
-                                              handleTeachingLanguageBadgeClick(teachingLanguage);
-                                            }
+                                          onClick={(e) => {
+                                            handleTeachingLanguageBadgeClick(teachingLanguage, e);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
@@ -1519,19 +1595,13 @@ const CourseDetail = () => {
                                       content={t('filter.clickToFilterByTerm', { term: term.name })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
-                                      onFirstTap={() => {
-                                        setPendingTermFilter(term.term_code);
-                                      }}
-                                      onSecondTap={() => {
-                                        setPendingTermFilter(null);
-                                        handleTermBadgeClick(term.term_code);
-                                      }}
+                                      open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                      onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                      onReset={() => resetTermTooltipState(term.term_code)}
                                     >
                                       <button
-                                        onClick={() => {
-                                          if (!isMobile) {
-                                            handleTermBadgeClick(term.term_code);
-                                          }
+                                        onClick={(e) => {
+                                          handleTermBadgeClick(term.term_code, e);
                                         }}
                                         className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                           (() => {
