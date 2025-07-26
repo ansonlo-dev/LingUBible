@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
 import { BookLoadingAnimation } from '@/components/ui/BookLoadingAnimation';
+import { SimpleTooltip } from '@/components/ui/responsive-tooltip';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -813,24 +814,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === course.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === course.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
@@ -891,24 +900,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === instructor.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === instructor.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
@@ -1003,24 +1020,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === course.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === course.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                           {/* Service Learning badges */}
                                           {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
@@ -1041,29 +1066,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
 
                                               return (
-                                                <span 
-                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
-                                                  title={tooltipText}
-                                                >
-                                                  <div className="flex items-center gap-1">
-                                                    {sortedTypes.map((type, index) => {
-                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                      const text = type === 'optional' ? 'SO' : 'SC';
-                                                      return (
-                                                        <span 
-                                                          key={type}
-                                                          className={`${
-                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
-                                                          } ${
-                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
-                                                          }`}
-                                                        >
-                                                          {text}
-                                                        </span>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </span>
+                                                <SimpleTooltip content={tooltipText}>
+                                                  <span 
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  >
+                                                    <div className="flex items-center gap-1">
+                                                      {sortedTypes.map((type, index) => {
+                                                        const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
+                                                        return (
+                                                          <span 
+                                                            key={type}
+                                                            className={`${
+                                                              index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                            } ${
+                                                              isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                            }`}
+                                                          >
+                                                            {text}
+                                                          </span>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </span>
+                                                </SimpleTooltip>
                                               );
                                             })()
                                           )}
@@ -1144,24 +1170,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === instructor.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === instructor.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
@@ -1243,24 +1277,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === course.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === course.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                           {/* Service Learning badges */}
                                           {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
@@ -1281,29 +1323,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
 
                                               return (
-                                                <span 
-                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
-                                                  title={tooltipText}
-                                                >
-                                                  <div className="flex items-center gap-1">
-                                                    {sortedTypes.map((type, index) => {
-                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                      const text = type === 'optional' ? 'SO' : 'SC';
-                                                      return (
-                                                        <span 
-                                                          key={type}
-                                                          className={`${
-                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
-                                                          } ${
-                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
-                                                          }`}
-                                                        >
-                                                          {text}
-                                                        </span>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </span>
+                                                <SimpleTooltip content={tooltipText}>
+                                                  <span 
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  >
+                                                    <div className="flex items-center gap-1">
+                                                      {sortedTypes.map((type, index) => {
+                                                        const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
+                                                        return (
+                                                          <span 
+                                                            key={type}
+                                                            className={`${
+                                                              index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                            } ${
+                                                              isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                            }`}
+                                                          >
+                                                            {text}
+                                                          </span>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </span>
+                                                </SimpleTooltip>
                                               );
                                             })()
                                           )}
@@ -1384,24 +1427,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === instructor.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === instructor.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
@@ -1736,24 +1787,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === course.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === course.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                           {/* Service Learning badges */}
                                           {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
@@ -1774,29 +1833,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
 
                                               return (
-                                                <span 
-                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
-                                                  title={tooltipText}
-                                                >
-                                                  <div className="flex items-center gap-1">
-                                                    {sortedTypes.map((type, index) => {
-                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                      const text = type === 'optional' ? 'SO' : 'SC';
-                                                      return (
-                                                        <span 
-                                                          key={type}
-                                                          className={`${
-                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
-                                                          } ${
-                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
-                                                          }`}
-                                                        >
-                                                          {text}
-                                                        </span>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </span>
+                                                <SimpleTooltip content={tooltipText}>
+                                                  <span 
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  >
+                                                    <div className="flex items-center gap-1">
+                                                      {sortedTypes.map((type, index) => {
+                                                        const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
+                                                        return (
+                                                          <span 
+                                                            key={type}
+                                                            className={`${
+                                                              index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                            } ${
+                                                              isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                            }`}
+                                                          >
+                                                            {text}
+                                                          </span>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </span>
+                                                </SimpleTooltip>
                                               );
                                             })()
                                           )}
@@ -1859,24 +1919,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === instructor.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === instructor.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
@@ -1967,24 +2035,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === course.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === course.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                           {/* Service Learning badges */}
                                           {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
@@ -2005,29 +2081,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
 
                                               return (
-                                                <span 
-                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
-                                                  title={tooltipText}
-                                                >
-                                                  <div className="flex items-center gap-1">
-                                                    {sortedTypes.map((type, index) => {
-                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                      const text = type === 'optional' ? 'SO' : 'SC';
-                                                      return (
-                                                        <span 
-                                                          key={type}
-                                                          className={`${
-                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
-                                                          } ${
-                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
-                                                          }`}
-                                                        >
-                                                          {text}
-                                                        </span>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </span>
+                                                <SimpleTooltip content={tooltipText}>
+                                                  <span 
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  >
+                                                    <div className="flex items-center gap-1">
+                                                      {sortedTypes.map((type, index) => {
+                                                        const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
+                                                        return (
+                                                          <span 
+                                                            key={type}
+                                                            className={`${
+                                                              index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                            } ${
+                                                              isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                            }`}
+                                                          >
+                                                            {text}
+                                                          </span>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </span>
+                                                </SimpleTooltip>
                                               );
                                             })()
                                           )}
@@ -2104,24 +2181,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === instructor.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === instructor.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
@@ -2199,24 +2284,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(course.currentTermTeachingLanguage || (course.teachingLanguages && course.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === course.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(course.teachingLanguages || [course.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === course.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                           {/* Service Learning badges */}
                                           {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
@@ -2237,29 +2330,30 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
 
                                               return (
-                                                <span 
-                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
-                                                  title={tooltipText}
-                                                >
-                                                  <div className="flex items-center gap-1">
-                                                    {sortedTypes.map((type, index) => {
-                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                      const text = type === 'optional' ? 'SO' : 'SC';
-                                                      return (
-                                                        <span 
-                                                          key={type}
-                                                          className={`${
-                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
-                                                          } ${
-                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
-                                                          }`}
-                                                        >
-                                                          {text}
-                                                        </span>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </span>
+                                                <SimpleTooltip content={tooltipText}>
+                                                  <span 
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  >
+                                                    <div className="flex items-center gap-1">
+                                                      {sortedTypes.map((type, index) => {
+                                                        const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
+                                                        return (
+                                                          <span 
+                                                            key={type}
+                                                            className={`${
+                                                              index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                            } ${
+                                                              isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                            }`}
+                                                          >
+                                                            {text}
+                                                          </span>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </span>
+                                                </SimpleTooltip>
                                               );
                                             })()
                                           )}
@@ -2336,24 +2430,32 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                             {departmentName}
                                           </span>
                                           {(instructor.currentTermTeachingLanguage || (instructor.teachingLanguages && instructor.teachingLanguages.length > 0)) && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
-                                              <div className="flex items-center gap-1">
-                                                {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
-                                                  <span 
-                                                    key={code}
-                                                    className={`${
-                                                      index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                                    }`}
-                                                  >
-                                                    {code === instructor.currentTermTeachingLanguage ? (
-                                                      <strong>{code}</strong>
-                                                    ) : (
-                                                      code
-                                                    )}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </span>
+                                            <SimpleTooltip
+                                              content={(() => {
+                                                const languages = instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean);
+                                                const languageNames = languages.map(code => getTeachingLanguageName(code, t));
+                                                return `${t('course.teachingLanguage')}: ${languageNames.join(', ')}`;
+                                              })()}
+                                            >
+                                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 overflow-hidden">
+                                                <div className="flex items-center gap-1">
+                                                  {(instructor.teachingLanguages || [instructor.currentTermTeachingLanguage].filter(Boolean)).map((code, index) => (
+                                                    <span 
+                                                      key={code}
+                                                      className={`${
+                                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                                      }`}
+                                                    >
+                                                      {code === instructor.currentTermTeachingLanguage ? (
+                                                        <strong>{code}</strong>
+                                                      ) : (
+                                                        code
+                                                      )}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </span>
+                                            </SimpleTooltip>
                                           )}
                                         </div>
                                       </div>
