@@ -37,9 +37,13 @@ export default defineConfig(({ command, mode }) => {
       minify: skipMinify ? false : (isProduction ? 'esbuild' : false),
       // Disable esbuild to prevent SIGBUS in Cloudflare Workers
       rollupOptions: {
-        // 激進的 tree shaking
+        // 安全的 tree shaking - 避免破壞 React
         treeshake: {
-          moduleSideEffects: false,
+          moduleSideEffects: (id) => {
+            // 保留 React 相關模組的副作用
+            if (id.includes('react') || id.includes('scheduler')) return true;
+            return false;
+          },
           propertyReadSideEffects: false,
           tryCatchDeoptimization: false,
         },
@@ -51,12 +55,15 @@ export default defineConfig(({ command, mode }) => {
         // Cloudflare 環境下使用更保守的並行設定
         maxParallelFileOps: isCloudflare ? 8 : 16,
         output: {
-          // 最小化分塊 - 減少檔案數量以加速
+          // 安全的分塊策略 - 確保 React 完整性
           manualChunks: isProduction ? (id) => {
-            // 只保留最重要的分塊
             if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom')) return 'react';
+              // React 生態系統保持在一起
+              if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+                return 'react-vendor';
+              }
               if (id.includes('echarts')) return 'charts';
+              if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui';
               return 'vendor';
             }
             // 語言文件延遲載入
