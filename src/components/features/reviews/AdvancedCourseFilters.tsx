@@ -275,8 +275,8 @@ export function AdvancedCourseFilters({
     return orderedTypes.map(type => ({
       value: type,
       label: type === 'optional' ? 
-        `SO - ${t('features.serviceLearning')} (${t('common.optional')})` : 
-        `SC - ${t('features.serviceLearning')} (${t('common.compulsory')})`,
+        `SO - ${t('common.optional')}` : 
+        `SC - ${t('common.compulsory')}`,
       count: serviceLearningCounts[type] || 0
     }));
   };
