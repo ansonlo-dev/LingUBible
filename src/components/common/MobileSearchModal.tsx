@@ -54,13 +54,13 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
     if (typeof window === 'undefined') return false;
     const width = viewportDimensions.width;
     const height = viewportDimensions.height;
-    // iPad devices: Mini (1024x768), Air (1180x820), Pro (1366x1024)
+    // iPad devices: Mini (1024x768), Air (1180x820), Pro (1366x1024 landscape / 1024x1366 portrait)
     // Check for iPad-like aspect ratios and sizes
     const maxDimension = Math.max(width, height);
     const minDimension = Math.min(width, height);
     const isIPadSize = (
       (maxDimension >= 1024 && maxDimension <= 1400) && 
-      (minDimension >= 768 && minDimension <= 1100)
+      (minDimension >= 768 && minDimension <= 1024)  // Updated to include iPad Pro portrait (1024 width)
     );
     return isIPadSize && isDesktopMode;
   }, [viewportDimensions.width, viewportDimensions.height, isDesktopMode]);
