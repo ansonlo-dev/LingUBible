@@ -80,6 +80,7 @@ export interface CourseFilters {
   searchTerm: string;
   subjectArea: string[];
   teachingLanguage: string[];
+  serviceLearning: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   offeredTerm: string[];
@@ -158,6 +159,7 @@ export function AdvancedCourseFilters({
       filters.searchTerm.trim() !== '' ||
       filters.subjectArea.length > 0 ||
       filters.teachingLanguage.length > 0 ||
+      filters.serviceLearning.length > 0 ||
       filters.offeredTerm.length > 0
     );
   };
@@ -167,6 +169,7 @@ export function AdvancedCourseFilters({
     if (filters.searchTerm.trim()) count++;
     if (filters.subjectArea.length > 0) count++;
     if (filters.teachingLanguage.length > 0) count++;
+    if (filters.serviceLearning.length > 0) count++;
     if (filters.offeredTerm.length > 0) count++;
     return count;
   };
@@ -238,6 +241,43 @@ export function AdvancedCourseFilters({
       value: langCode,
       label: `${langCode} - ${mapLanguageCode(langCode, t)}`,
       count: languageCounts[langCode] || 0
+    }));
+  };
+
+  const getServiceLearningCounts = () => {
+    const counts: { [key: string]: number } = {};
+    
+    // Initialize counts for service learning types
+    const allServiceLearningTypes = ['optional', 'compulsory'];
+    allServiceLearningTypes.forEach(type => {
+      counts[type] = 0;
+    });
+    
+    // Count courses for each service learning type
+    courses.forEach(course => {
+      if (course.serviceLearningTypes && course.serviceLearningTypes.length > 0) {
+        course.serviceLearningTypes.forEach(type => {
+          if (counts.hasOwnProperty(type)) {
+            counts[type]++;
+          }
+        });
+      }
+    });
+    
+    return counts;
+  };
+
+  // Helper function to get ordered service learning options
+  const getOrderedServiceLearningOptions = () => {
+    const serviceLearningCounts = getServiceLearningCounts();
+    const orderedTypes = ['optional', 'compulsory'];
+    
+    return orderedTypes.map(type => ({
+      value: type,
+      label: type === 'optional' ? 
+        `SO - ${t('features.serviceLearning')} (${t('common.optional')})` : 
+        `SC - ${t('features.serviceLearning')} (${t('common.compulsory')})`,
+      count: serviceLearningCounts[type] || 0
     }));
   };
 
@@ -391,6 +431,22 @@ export function AdvancedCourseFilters({
             selectedValues={filters.teachingLanguage}
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}
+            totalCount={totalCourses}
+            className="flex-1 h-10 text-sm"
+          />
+        </div>
+
+        {/* 服務學習 */}
+        <div className="flex items-center gap-2 lg:flex-1">
+          <label className={getLabelClassName()}>
+            <Sparkles className="h-4 w-4" />
+            {t('features.serviceLearning')}
+          </label>
+          <MultiSelectDropdown
+            options={getOrderedServiceLearningOptions()}
+            selectedValues={filters.serviceLearning}
+            onSelectionChange={(values) => updateFilters({ serviceLearning: values })}
+            placeholder={t('filter.allServiceLearning')}
             totalCount={totalCourses}
             className="flex-1 h-10 text-sm"
           />

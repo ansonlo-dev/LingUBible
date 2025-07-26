@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { Star, MessageSquare, BookOpen, Mail, CheckCircle, XCircle, GraduationCap, Scale, Brain, Target, Loader2, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,7 @@ import { useTheme } from '@/hooks/theme/useTheme';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { formatGPA } from '@/utils/gradeUtils';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PopularCourseCardProps {
   type: 'course';
@@ -70,6 +72,25 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const { t, language: currentLanguage } = useLanguage();
   const currentTermName = getCurrentTermName();
   const { isDark } = useTheme();
+  const isMobile = useIsMobile();
+  
+  // Tap count states for different click behaviors on mobile vs desktop
+  const [teachingLanguageTapCount, setTeachingLanguageTapCount] = useState(0);
+  const [serviceLearningTapCount, setServiceLearningTapCount] = useState(0);
+  const teachingLanguageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const serviceLearningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (teachingLanguageTimeoutRef.current) {
+        clearTimeout(teachingLanguageTimeoutRef.current);
+      }
+      if (serviceLearningTimeoutRef.current) {
+        clearTimeout(serviceLearningTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // 獲取多語言標題（僅對課程類型）
   const titleInfo = props.type === 'course' 
@@ -147,9 +168,32 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    // Call the callback with all teaching languages
-    if (props.onTeachingLanguageClick && props.teachingLanguages) {
-      props.onTeachingLanguageClick(props.teachingLanguages);
+    if (isMobile) {
+      // Mobile/tablet: require 2 taps to apply filter
+      const newTapCount = teachingLanguageTapCount + 1;
+      setTeachingLanguageTapCount(newTapCount);
+      
+      if (teachingLanguageTimeoutRef.current) {
+        clearTimeout(teachingLanguageTimeoutRef.current);
+      }
+      
+      if (newTapCount === 2) {
+        // Second tap: apply filter
+        if (props.onTeachingLanguageClick && props.teachingLanguages) {
+          props.onTeachingLanguageClick(props.teachingLanguages);
+        }
+        setTeachingLanguageTapCount(0);
+      } else {
+        // First tap: show tooltip, reset after delay
+        teachingLanguageTimeoutRef.current = setTimeout(() => {
+          setTeachingLanguageTapCount(0);
+        }, 3000);
+      }
+    } else {
+      // Desktop: 1 tap to apply filter
+      if (props.onTeachingLanguageClick && props.teachingLanguages) {
+        props.onTeachingLanguageClick(props.teachingLanguages);
+      }
     }
   };
 
@@ -157,9 +201,32 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    // Call the callback with all service learning types
-    if (props.onServiceLearningClick && props.serviceLearningTypes) {
-      props.onServiceLearningClick(props.serviceLearningTypes);
+    if (isMobile) {
+      // Mobile/tablet: require 2 taps to apply filter
+      const newTapCount = serviceLearningTapCount + 1;
+      setServiceLearningTapCount(newTapCount);
+      
+      if (serviceLearningTimeoutRef.current) {
+        clearTimeout(serviceLearningTimeoutRef.current);
+      }
+      
+      if (newTapCount === 2) {
+        // Second tap: apply filter
+        if (props.onServiceLearningClick && props.serviceLearningTypes) {
+          props.onServiceLearningClick(props.serviceLearningTypes);
+        }
+        setServiceLearningTapCount(0);
+      } else {
+        // First tap: show tooltip, reset after delay
+        serviceLearningTimeoutRef.current = setTimeout(() => {
+          setServiceLearningTapCount(0);
+        }, 3000);
+      }
+    } else {
+      // Desktop: 1 tap to apply filter
+      if (props.onServiceLearningClick && props.serviceLearningTypes) {
+        props.onServiceLearningClick(props.serviceLearningTypes);
+      }
     }
   };
 
@@ -490,7 +557,11 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 `${code}: ${getTeachingLanguageName(code, t)}${code === props.currentTermTeachingLanguage ? ` (${t('teaching.current')})` : ''}`
                               ).join('\n')}
                               hasClickAction={true}
-                              clickActionText={t('tooltip.clickAgainToFilter')}
+                              clickActionText={
+                                isMobile 
+                                  ? (teachingLanguageTapCount === 1 ? t('tooltip.clickAgainToFilter') : undefined)
+                                  : undefined
+                              }
                               showCloseButton={true}
                             >
                               <span 
@@ -526,7 +597,11 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 `${type === 'compulsory' ? t('review.compulsory') : t('review.optional')}${type === props.currentTermServiceLearning ? ` (${t('teaching.current')})` : ''}`
                               ).join(', ')}`}
                               hasClickAction={true}
-                              clickActionText={t('tooltip.clickAgainToFilter')}
+                              clickActionText={
+                                isMobile 
+                                  ? (serviceLearningTapCount === 1 ? t('tooltip.clickAgainToFilter') : undefined)
+                                  : undefined
+                              }
                               showCloseButton={true}
                             >
                               <span 
@@ -732,7 +807,11 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       <ResponsiveTooltip 
                         content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
                         hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
+                        clickActionText={
+                          isMobile 
+                            ? (teachingLanguageTapCount === 1 ? t('tooltip.clickAgainToFilter') : undefined)
+                            : undefined
+                        }
                         showCloseButton={true}
                       >
                         <span 

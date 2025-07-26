@@ -33,6 +33,7 @@ const Courses = () => {
       searchTerm: '',
       subjectArea: [],
       teachingLanguage: [],
+      serviceLearning: [],
       sortBy: 'code',
       sortOrder: 'asc',
       offeredTerm: [],
@@ -44,6 +45,7 @@ const Courses = () => {
     const searchTerm = searchParams.get('search') || '';
     const subjectArea = searchParams.getAll('subjectArea');
     const teachingLanguage = searchParams.getAll('teachingLanguage');
+    const serviceLearning = searchParams.getAll('serviceLearning');
     const sortBy = searchParams.get('sortBy') || 'code';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
     const offeredTerm = searchParams.getAll('offeredTerm');
@@ -55,6 +57,7 @@ const Courses = () => {
       searchTerm,
       subjectArea,
       teachingLanguage,
+      serviceLearning,
       sortBy: sortBy as CourseFilters['sortBy'],
       sortOrder: sortOrder as CourseFilters['sortOrder'],
       offeredTerm,
@@ -358,6 +361,21 @@ const Courses = () => {
       });
     }
 
+    // 服務學習篩選
+    if (filters.serviceLearning.length > 0) {
+      filtered = filtered.filter(course => {
+        // 檢查課程是否有任何服務學習類型與篩選條件匹配
+        if (!course.serviceLearningTypes || course.serviceLearningTypes.length === 0) {
+          return false; // 沒有服務學習記錄的課程不匹配任何篩選
+        }
+        
+        // 檢查課程的服務學習類型是否包含任何篩選的類型
+        return course.serviceLearningTypes.some(type => 
+          filters.serviceLearning.includes(type)
+        );
+      });
+    }
+
     // 開設學期篩選
     if (filters.offeredTerm.length > 0) {
       filtered = filtered.filter(course => {
@@ -446,6 +464,7 @@ const Courses = () => {
     if (newFilters.searchTerm !== filters.searchTerm ||
         JSON.stringify(newFilters.subjectArea) !== JSON.stringify(filters.subjectArea) ||
         JSON.stringify(newFilters.teachingLanguage) !== JSON.stringify(filters.teachingLanguage) ||
+        JSON.stringify(newFilters.serviceLearning) !== JSON.stringify(filters.serviceLearning) ||
         newFilters.sortBy !== filters.sortBy ||
         newFilters.sortOrder !== filters.sortOrder ||
         JSON.stringify(newFilters.offeredTerm) !== JSON.stringify(filters.offeredTerm)) {
@@ -461,6 +480,9 @@ const Courses = () => {
     }
     if (newFilters.teachingLanguage.length > 0) {
       newFilters.teachingLanguage.forEach(lang => newSearchParams.append('teachingLanguage', lang));
+    }
+    if (newFilters.serviceLearning.length > 0) {
+      newFilters.serviceLearning.forEach(type => newSearchParams.append('serviceLearning', type));
     }
     if (newFilters.sortBy !== 'code') newSearchParams.set('sortBy', newFilters.sortBy);
     if (newFilters.sortOrder !== 'asc') newSearchParams.set('sortOrder', newFilters.sortOrder);
@@ -486,6 +508,19 @@ const Courses = () => {
     }));
   };
 
+  const handleServiceLearningClick = (types: ('compulsory' | 'optional')[]) => {
+    // 合併現有的服務學習篩選與新點擊的類型
+    const currentTypes = new Set(filters.serviceLearning);
+    types.forEach(type => currentTypes.add(type));
+    
+    // 更新篩選器
+    setFilters(prev => ({
+      ...prev,
+      serviceLearning: Array.from(currentTypes),
+      currentPage: 1 // 重置到第一頁
+    }));
+  };
+
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, currentPage: page }));
     // 滾動到頁面頂部
@@ -497,6 +532,7 @@ const Courses = () => {
       searchTerm: '',
       subjectArea: [],
       teachingLanguage: [],
+      serviceLearning: [],
       sortBy: 'code',
       sortOrder: 'asc',
       offeredTerm: [],
@@ -638,6 +674,7 @@ const Courses = () => {
                   averageGPA={course.averageGPA}
                   isLoading={statsLoading}
                   onTeachingLanguageClick={handleTeachingLanguageClick}
+                  onServiceLearningClick={handleServiceLearningClick}
                 />
                 ))}
               </div>

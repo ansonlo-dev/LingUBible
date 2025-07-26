@@ -653,6 +653,7 @@ export default {
   'filter.allSubjects': '所有學科',
   'filter.subjectArea': '學科領域',
   'filter.teachingLanguage': '教學語言',
+  'filter.allServiceLearning': '所有服務學習',
   // Teaching Languages
   'language.mandarinChinese': '普通話',
   'filter.offeredTerms': '開設學期',
