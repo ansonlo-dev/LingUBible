@@ -178,7 +178,7 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
     const baseContent = !hasClickAction || !memoizedClickActionText ? memoizedContent : (
       <div>
         {memoizedContent}
-        <div className="mt-2 text-xs opacity-70 italic border-t border-border/40 pt-2 text-muted-foreground">
+        <div className="mt-3 pt-2 border-t border-border text-xs text-muted-foreground">
           {memoizedClickActionText || t('tooltip.clickAgainToActivate')}
         </div>
       </div>

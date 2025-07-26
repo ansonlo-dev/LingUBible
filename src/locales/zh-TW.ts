@@ -1206,6 +1206,8 @@ export default {
   'common.info': '資訊',
   'common.teaching': '教學',
   'common.courses': '課程',
+  'common.optional': '選修',
+  'common.compulsory': '必修',
   // Back to Top
   'backToTop.label': '回到頂部',
 
