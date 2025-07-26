@@ -26,7 +26,9 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
   const [isLandscape, setIsLandscape] = useState(false);
   const [viewportDimensions, setViewportDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+    availableHeight: typeof window !== 'undefined' ? 
+      ((window as any).visualViewport?.height || window.innerHeight) : 768
   });
   const hasAddedHistoryEntry = useRef(false);
 
@@ -39,17 +41,28 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
     const checkOrientation = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
+      const visualViewport = (window as any).visualViewport;
+      const availableHeight = visualViewport?.height || height;
       setIsLandscape(width > height && width <= 1024);
-      setViewportDimensions({ width, height });
+      setViewportDimensions({ width, height, availableHeight });
     };
 
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    
+    // 監聽 visualViewport 變化（地址欄顯示/隱藏）
+    const visualViewport = (window as any).visualViewport;
+    if (visualViewport) {
+      visualViewport.addEventListener('resize', checkOrientation);
+    }
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      if (visualViewport) {
+        visualViewport.removeEventListener('resize', checkOrientation);
+      }
     };
   }, []);
 
@@ -155,9 +168,9 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       </DialogTrigger>
       <DialogContent className={`
         ${isLandscape 
-          ? 'fixed top-0 left-0 right-0 max-w-none translate-x-0 translate-y-0' 
+          ? 'fixed top-0 left-0 right-0 max-w-none translate-x-0 translate-y-0 h-[100dvh] support-dvh:h-[100dvh]' 
           : viewportDimensions.width < 640 
-            ? 'fixed left-0 right-0 top-0 max-w-none translate-x-0 translate-y-0 w-full rounded-none'
+            ? 'fixed left-0 right-0 top-0 max-w-none translate-x-0 translate-y-0 w-full rounded-none h-[100dvh] support-dvh:h-[100dvh]'
             : 'max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl'
         } 
         bg-white dark:bg-gray-900 shadow-xl 
@@ -173,9 +186,12 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         [&>button]:hidden
       `} style={{ 
         borderRadius: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
-        height: (isLandscape || viewportDimensions.width < 640) 
-          ? '100vh' 
-          : undefined,
+        // 如果瀏覽器不支持dvh，使用計算出的高度作為備選
+        height: (typeof CSS !== 'undefined' && CSS.supports('height', '100dvh')) ? undefined : (
+          (isLandscape || viewportDimensions.width < 640) 
+            ? `${viewportDimensions.availableHeight}px` 
+            : undefined
+        ),
         width: (isLandscape || viewportDimensions.width < 640) ? '100vw' : undefined,
         top: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
         left: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
@@ -184,7 +200,11 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         position: (isLandscape || viewportDimensions.width < 640) ? 'fixed' : undefined
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1 pt-4' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-6' : ''}`}>
+          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-6' : ''}`} style={{
+            paddingTop: isLandscape 
+              ? `${Math.max(16, (viewportDimensions.height - viewportDimensions.availableHeight) + 8)}px` 
+              : undefined
+          }}>
             <DialogTitle className={`flex items-center justify-between text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1 mr-1' : ''}`}>
               <div className="flex items-center gap-2">
                 <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
