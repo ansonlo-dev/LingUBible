@@ -900,6 +900,7 @@ export default {
   'background.charcoal': 'Charcoal',
   'background.graphite': 'Graphite',
   'background.obsidian': 'Obsidian',
+  'background.onyx': 'Onyx',
   'animal.🐱': 'Cat',
   'animal.🐶': 'Dog',
   'animal.🐰': 'Rabbit',

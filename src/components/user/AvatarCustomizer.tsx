@@ -305,7 +305,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-10 gap-1.5">
+                      <div className="grid grid-cols-10 gap-2">
                         {backgrounds.map((bg, index) => (
                           <button
                             key={index}
@@ -417,7 +417,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
               {/* 可滾動的選擇區域 */}
               <div className={`flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 ${viewportDimensions.width < 640 ? 'pb-8' : 'pb-3 sm:pb-6'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="max-w-4xl mx-auto">
-                  <div className="bg-muted/20 rounded-xl p-2 sm:p-4">
+                  <div className="bg-muted/20 rounded-xl p-2 sm:p-4 mt-2 sm:mt-3">
                   {activeTab === 'animals' ? (
                     <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 sm:gap-3">
                       {animals.map((animal, index) => (
@@ -439,7 +439,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 sm:gap-3">
+                    <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 sm:gap-3 md:gap-4">
                       {backgrounds.map((bg, index) => (
                         <button
                           key={index}

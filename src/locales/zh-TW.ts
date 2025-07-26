@@ -837,6 +837,7 @@ export default {
   'background.charcoal': '木炭',
   'background.graphite': '石墨',
   'background.obsidian': '黑曜石',
+  'background.onyx': '瑪瑙',
   'animal.🐱': '貓咪',
   'animal.🐶': '小狗',
   'animal.🐰': '兔子',
