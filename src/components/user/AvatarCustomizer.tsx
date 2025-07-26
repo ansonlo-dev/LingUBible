@@ -114,7 +114,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       <DialogContent className={`
         ${isLandscape 
           ? 'fixed top-0 left-0 right-0 max-w-none translate-x-0 translate-y-0' 
-          : 'max-w-none max-h-none w-screen h-screen sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl'
+          : 'max-w-none max-h-none w-screen sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl'
         } 
         bg-white dark:bg-gray-900 shadow-xl 
         ${!isLandscape ? 'sm:rounded-2xl' : ''} 
@@ -128,11 +128,14 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         }
       `} style={{ 
         borderRadius: isLandscape ? '0' : undefined,
-        height: isLandscape ? (window.innerHeight <= 500 ? 'calc(100vh - 3rem)' : 'calc(100vh - 2rem)') : undefined,
-        width: isLandscape ? '100vw' : undefined
+        height: isLandscape 
+          ? (window.innerHeight <= 500 ? 'calc(100vh - 3rem)' : 'calc(100vh - 2rem)') 
+          : (window.innerWidth < 640 ? 'calc(100vh - 4rem)' : undefined), // 移動端避免佔用網址列區域
+        width: isLandscape ? '100vw' : undefined,
+        top: (!isLandscape && window.innerWidth < 640) ? '2rem' : undefined // 移動端從頂部留出空間
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'}`}>
+          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && window.innerWidth < 640 ? 'pt-4' : ''}`}>
             <DialogTitle className={`flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1' : ''}`}>
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               {t('avatar.customize')}
