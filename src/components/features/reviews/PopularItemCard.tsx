@@ -760,7 +760,11 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               
               {/* 開設狀態徽章和平均GPA */}
               <div className="flex flex-col items-end">
-                <ResponsiveTooltip content={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}>
+                <ResponsiveTooltip 
+                  content={props.isOfferedInCurrentTerm ? t('offered.tooltip.clickable').replace('{term}', currentTermName) : t('offered.tooltip.no').replace('{term}', currentTermName)}
+                  hasClickAction={props.isOfferedInCurrentTerm}
+                  showCloseButton={true}
+                >
                   <Badge 
                     variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
                     className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
