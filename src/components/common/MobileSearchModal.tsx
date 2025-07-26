@@ -521,22 +521,24 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       {/* Search Modal Content */}
       {isDesktopMode ? (
         <div 
-          className={isLargeDesktop ? "fixed inset-0 flex items-center justify-center p-4" : "fixed top-16"}
+          className={isLargeDesktop ? "fixed inset-0 flex items-center justify-center p-4" : "fixed inset-0 flex items-center justify-center"}
           key={`desktop-modal-${isSidebarCollapsed}-${isIPadDevice}`} // Force re-render when sidebar or device type changes
           style={{
             ...(isLargeDesktop ? {} : {
               // iPad-specific positioning that adapts to sidebar
-              left: `${modalLeftPosition}rem`,
-              right: '1rem',
-              transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
+              paddingLeft: `${modalLeftPosition}rem`,
+              paddingRight: '1rem',
+              paddingTop: '1rem',
+              paddingBottom: '1rem',
+              transition: 'padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
             }),
             zIndex: 9999, // Standard z-index
             pointerEvents: 'auto'
           }}
-          onClick={isLargeDesktop ? handleBackdropClick : undefined}
+          onClick={handleBackdropClick}
         >
           <div 
-            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal ${isLargeDesktop ? 'w-full' : ''}`}
+            className={`bg-white dark:bg-card rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden desktop-search-modal w-full`}
             style={{
               ...(isLargeDesktop ? {
                 // Large desktop: centered with consistent max width
@@ -544,10 +546,10 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                 width: '100%',
                 height: viewportDimensions.height <= 600 ? 'calc(100vh - 8rem)' : '75vh'
               } : {
-                // iPad: adaptive width that considers sidebar space
-                width: '100%',
+                // iPad: centered with adaptive max width that considers available space
                 maxWidth: '64rem',
-                height: viewportDimensions.height <= 600 ? 'calc(100vh - 3rem)' : '75vh'
+                width: '100%',
+                height: viewportDimensions.height <= 600 ? 'calc(100vh - 2rem)' : '75vh'
               })
             }}
             onClick={(e) => e.stopPropagation()}
