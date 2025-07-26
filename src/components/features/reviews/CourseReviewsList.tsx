@@ -149,6 +149,7 @@ export const CourseReviewsList = ({
     selectedSessionTypes: [],
     selectedTeachingLanguages: [],
     selectedGrades: [],
+    selectedServiceLearning: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
     itemsPerPage: 6,
@@ -291,6 +292,36 @@ export const CourseReviewsList = ({
     return counts;
   }, [allReviews, teachingLanguagesLoading, getTeachingLanguageForInstructor]);
 
+  // 計算各服務學習類型的評論數量
+  const serviceLearningCounts = useMemo(() => {
+    if (!allReviews) return {};
+    const counts: { [key: string]: number } = {};
+    
+    allReviews.forEach(reviewInfo => {
+      let hasServiceLearning = false;
+      const serviceLearningTypes = new Set<string>();
+      
+      reviewInfo.instructorDetails.forEach(instructorDetail => {
+        if (instructorDetail.has_service_learning) {
+          hasServiceLearning = true;
+          serviceLearningTypes.add(instructorDetail.service_learning_type);
+        }
+      });
+      
+      if (hasServiceLearning) {
+        counts['has'] = (counts['has'] || 0) + 1;
+        // Count each unique service learning type for this review
+        serviceLearningTypes.forEach(type => {
+          counts[type] = (counts[type] || 0) + 1;
+        });
+      } else {
+        counts['none'] = (counts['none'] || 0) + 1;
+      }
+    });
+    
+    return counts;
+  }, [allReviews]);
+
   // 篩選和排序評論
   const filteredAndSortedReviews = useMemo(() => {
     let filteredReviews = allReviews || [];
@@ -359,6 +390,27 @@ export const CourseReviewsList = ({
             instructorDetail.session_type
           );
           return teachingLanguage && filters.selectedTeachingLanguages.includes(teachingLanguage);
+        });
+      });
+    }
+
+    // 服務學習篩選
+    if (filters.selectedServiceLearning.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        // Check if any of the selected service learning types match
+        return filters.selectedServiceLearning.some(selectedType => {
+          if (selectedType === 'has') {
+            // Check if any instructor has service learning
+            return reviewInfo.instructorDetails.some(instructorDetail => instructorDetail.has_service_learning);
+          } else if (selectedType === 'none') {
+            // Check if no instructors have service learning
+            return !reviewInfo.instructorDetails.some(instructorDetail => instructorDetail.has_service_learning);
+          } else {
+            // Check for specific service learning type (compulsory/optional)
+            return reviewInfo.instructorDetails.some(instructorDetail => 
+              instructorDetail.has_service_learning && instructorDetail.service_learning_type === selectedType
+            );
+          }
         });
       });
     }
@@ -466,6 +518,7 @@ export const CourseReviewsList = ({
       selectedSessionTypes: [],
       selectedTeachingLanguages: [],
       selectedGrades: [],
+      selectedServiceLearning: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
       itemsPerPage: 6,
@@ -1140,6 +1193,7 @@ export const CourseReviewsList = ({
           sessionTypeCounts={sessionTypeCounts}
           teachingLanguageCounts={teachingLanguageCounts}
           gradeCounts={gradeCounts}
+          serviceLearningCounts={serviceLearningCounts}
           totalReviews={totalReviews}
           filteredReviews={filteredCount}
           onFiltersChange={handleFiltersChange}
@@ -1535,6 +1589,7 @@ export const CourseReviewsList = ({
           sessionTypeCounts={sessionTypeCounts}
           teachingLanguageCounts={teachingLanguageCounts}
           gradeCounts={gradeCounts}
+          serviceLearningCounts={serviceLearningCounts}
           totalReviews={totalReviews}
           filteredReviews={filteredCount}
           onFiltersChange={handleFiltersChange}

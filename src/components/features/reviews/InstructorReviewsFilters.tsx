@@ -38,6 +38,7 @@ export interface InstructorReviewFilters {
   selectedSessionTypes: string[];
   selectedTeachingLanguages: string[];
   selectedGrades: string[];
+  selectedServiceLearning: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   itemsPerPage: number;
@@ -53,6 +54,7 @@ interface InstructorReviewsFiltersProps {
   sessionTypeCounts: { [key: string]: number };
   teachingLanguageCounts: { [key: string]: number };
   gradeCounts: { [key: string]: number };
+  serviceLearningCounts: { [key: string]: number };
   totalReviews: number;
   filteredReviews: number;
   onClearAll: () => void;
@@ -67,6 +69,7 @@ export function InstructorReviewsFilters({
   sessionTypeCounts,
   teachingLanguageCounts,
   gradeCounts,
+  serviceLearningCounts,
   totalReviews,
   filteredReviews,
   onClearAll
@@ -103,13 +106,18 @@ export function InstructorReviewsFilters({
     updateFilters({ selectedGrades: values, currentPage: 1 });
   };
 
+  const handleServiceLearningChange = (values: string[]) => {
+    updateFilters({ selectedServiceLearning: values, currentPage: 1 });
+  };
+
   const hasActiveFilters = () => {
     return (filters.selectedLanguages || []).length > 0 ||
            (filters.selectedTerms || []).length > 0 ||
            (filters.selectedCourses || []).length > 0 ||
            (filters.selectedSessionTypes || []).length > 0 ||
            (filters.selectedTeachingLanguages || []).length > 0 ||
-           (filters.selectedGrades || []).length > 0;
+           (filters.selectedGrades || []).length > 0 ||
+           (filters.selectedServiceLearning || []).length > 0;
   };
 
   const getActiveFiltersCount = () => {
@@ -120,6 +128,7 @@ export function InstructorReviewsFilters({
     if ((filters.selectedSessionTypes || []).length > 0) count++;
     if ((filters.selectedTeachingLanguages || []).length > 0) count++;
     if ((filters.selectedGrades || []).length > 0) count++;
+    if ((filters.selectedServiceLearning || []).length > 0) count++;
     return count;
   };
 
@@ -335,6 +344,31 @@ export function InstructorReviewsFilters({
               maxHeight="max-h-48"
             />
           </div>
+
+          {/* 服務學習篩選 */}
+          <div className="flex items-center gap-2">
+            <label className={getLabelClassName()}>
+              <GraduationCap className="h-4 w-4" />
+              {t('filter.reviewServiceLearning')}
+            </label>
+            <MultiSelectDropdown
+              options={Object.entries(serviceLearningCounts || {}).map(([type, count]) => ({
+                value: type,
+                label: type === 'has' ? t('review.hasServiceLearning') : 
+                       type === 'compulsory' ? t('review.compulsory') :
+                       type === 'optional' ? t('review.optional') : 
+                       t('review.noServiceLearning'),
+                count: count
+              }))}
+              selectedValues={filters.selectedServiceLearning}
+              onSelectionChange={handleServiceLearningChange}
+              placeholder={t('common.all')}
+              totalCount={totalReviews}
+              className="flex-1 h-10 text-sm"
+              showCounts={true}
+              maxHeight="max-h-48"
+            />
+          </div>
         </div>
 
         {/* Desktop: Two-row layout with labels above dropdowns */}
@@ -364,6 +398,10 @@ export function InstructorReviewsFilters({
             <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
               <MessageSquare className="h-4 w-4" />
               <span>{t('filter.reviewTeachingLanguage')}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1 text-sm font-medium text-muted-foreground px-1">
+              <GraduationCap className="h-4 w-4" />
+              <span>{t('filter.reviewServiceLearning')}</span>
             </div>
           </div>
 
@@ -475,6 +513,24 @@ export function InstructorReviewsFilters({
                 }))}
                 selectedValues={filters.selectedTeachingLanguages}
                 onSelectionChange={handleTeachingLanguageChange}
+                placeholder={t('common.all')}
+                totalCount={totalReviews}
+                className="w-full h-10 text-sm"
+                showCounts={true}
+              />
+            </div>
+            <div className="flex-1">
+              <MultiSelectDropdown
+                options={Object.entries(serviceLearningCounts || {}).map(([type, count]) => ({
+                  value: type,
+                  label: type === 'has' ? t('review.hasServiceLearning') : 
+                         type === 'compulsory' ? t('review.compulsory') :
+                         type === 'optional' ? t('review.optional') : 
+                         t('review.noServiceLearning'),
+                  count: count
+                }))}
+                selectedValues={filters.selectedServiceLearning}
+                onSelectionChange={handleServiceLearningChange}
                 placeholder={t('common.all')}
                 totalCount={totalReviews}
                 className="w-full h-10 text-sm"

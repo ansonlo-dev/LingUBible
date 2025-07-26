@@ -435,6 +435,7 @@ export default {
   'filter.reviewInstructor': '讲师',
   'filter.reviewSessionType': '课堂类型',
   'filter.reviewTeachingLanguage': '教学语言',
+  'filter.reviewServiceLearning': '服务学习',
   'filter.reviewCourse': '课程',
   'filter.allLanguages': '所有语言',
   'filter.allTerms': '所有学期',

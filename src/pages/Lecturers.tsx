@@ -400,6 +400,7 @@ const Lecturers = () => {
     selectedSessionTypes: [],
     selectedTeachingLanguages: [],
     selectedGrades: [],
+    selectedServiceLearning: [],
     sortBy: 'postDate',
     sortOrder: 'desc',
     itemsPerPage: 6,
@@ -1113,7 +1114,8 @@ const Lecturers = () => {
       courseCounts: {},
       sessionTypeCounts: {},
       teachingLanguageCounts: {},
-      gradeCounts: {}
+      gradeCounts: {},
+      serviceLearningCounts: {}
     };
 
     const languageCounts: { [key: string]: number } = {};
@@ -1122,6 +1124,7 @@ const Lecturers = () => {
     const sessionTypeCounts: { [key: string]: number } = {};
     const teachingLanguageCounts: { [key: string]: number } = {};
     const gradeCounts: { [key: string]: number } = {};
+    const serviceLearningCounts: { [key: string]: number } = {};
 
     reviews.forEach(reviewInfo => {
       // 語言計數
@@ -1158,6 +1161,17 @@ const Lecturers = () => {
         if (teachingLanguage) {
           teachingLanguageCounts[teachingLanguage] = (teachingLanguageCounts[teachingLanguage] || 0) + 1;
         }
+
+        // 服務學習計數
+        if (currentInstructorDetail.has_service_learning) {
+          const serviceType = currentInstructorDetail.service_learning_type;
+          if (serviceType === 'compulsory' || serviceType === 'optional') {
+            serviceLearningCounts[serviceType] = (serviceLearningCounts[serviceType] || 0) + 1;
+          }
+          serviceLearningCounts['has'] = (serviceLearningCounts['has'] || 0) + 1;
+        } else {
+          serviceLearningCounts['none'] = (serviceLearningCounts['none'] || 0) + 1;
+        }
       }
 
       // 成績計數
@@ -1174,7 +1188,8 @@ const Lecturers = () => {
       courseCounts,
       sessionTypeCounts,
       teachingLanguageCounts,
-      gradeCounts
+      gradeCounts,
+      serviceLearningCounts
     };
   };
 
@@ -1251,6 +1266,26 @@ const Lecturers = () => {
         const grade = reviewInfo.review.course_final_grade;
         const normalizedGrade = grade === '-1' ? 'N/A' : grade;
         return filters.selectedGrades.includes(normalizedGrade);
+      });
+    }
+
+    // 服務學習篩選
+    if (filters.selectedServiceLearning.length > 0) {
+      filteredReviews = filteredReviews.filter(reviewInfo => {
+        const currentInstructorDetail = reviewInfo.instructorDetails.find(detail => detail.instructor_name === decodedName);
+        if (!currentInstructorDetail) return false;
+        
+        return filters.selectedServiceLearning.some(selectedType => {
+          if (selectedType === 'has') {
+            return currentInstructorDetail.has_service_learning;
+          } else if (selectedType === 'none') {
+            return !currentInstructorDetail.has_service_learning;
+          } else if (selectedType === 'compulsory' || selectedType === 'optional') {
+            return currentInstructorDetail.has_service_learning && 
+                   currentInstructorDetail.service_learning_type === selectedType;
+          }
+          return false;
+        });
       });
     }
 
@@ -1349,7 +1384,7 @@ const Lecturers = () => {
   const totalPages = Math.ceil(filteredReviews.length / filters.itemsPerPage);
 
   // 獲取篩選器統計數據
-  const { languageCounts, termCounts, courseCounts, sessionTypeCounts, teachingLanguageCounts, gradeCounts } = getFilterCounts();
+  const { languageCounts, termCounts, courseCounts, sessionTypeCounts, teachingLanguageCounts, gradeCounts, serviceLearningCounts } = getFilterCounts();
 
   // 處理篩選器變更
   const handleFiltersChange = (newFilters: InstructorReviewFilters) => {
@@ -1365,6 +1400,7 @@ const Lecturers = () => {
       selectedSessionTypes: [],
       selectedTeachingLanguages: [],
       selectedGrades: [],
+      selectedServiceLearning: [],
       sortBy: 'postDate',
       sortOrder: 'desc',
       itemsPerPage: 6,
@@ -2560,6 +2596,7 @@ const Lecturers = () => {
               sessionTypeCounts={sessionTypeCounts}
               teachingLanguageCounts={teachingLanguageCounts}
               gradeCounts={gradeCounts}
+              serviceLearningCounts={serviceLearningCounts}
               totalReviews={reviews.length}
               filteredReviews={filteredReviews.length}
               onClearAll={handleClearAllFilters}

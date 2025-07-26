@@ -433,6 +433,7 @@ export default {
   'filter.reviewInstructor': '講師',
   'filter.reviewSessionType': '課堂類型',
   'filter.reviewTeachingLanguage': '教學語言',
+  'filter.reviewServiceLearning': '服務學習',
   'filter.reviewCourse': '課程',
   'filter.allLanguages': '所有語言',
   'filter.allTerms': '所有學期',
