@@ -480,67 +480,72 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                           {translateDepartmentName(props.department, t)}
                         </span>
                       </span>
-                      {/* Teaching Language Badge */}
-                      {props.teachingLanguages && props.teachingLanguages.length > 0 && (
-                        <ResponsiveTooltip 
-                          content={props.teachingLanguages.map(code => 
-                            `${code}: ${getTeachingLanguageName(code, t)}${code === props.currentTermTeachingLanguage ? ` (${t('teaching.current')})` : ''}`
-                          ).join('\n')}
-                          hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          showCloseButton={true}
-                        >
-                          <span 
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
-                            onClick={handleTeachingLanguageClick}
-                          >
-                            <div className="flex items-center gap-1">
-                              {props.teachingLanguages.map((code, index) => (
-                                <span 
-                                  key={code}
-                                  className={`${
-                                    index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
-                                  }`}
-                                >
-                                  <span className={code === props.currentTermTeachingLanguage ? 'underline' : ''}>
-                                    {code}
-                                  </span>
-                                </span>
-                              ))}
-                            </div>
-                          </span>
-                        </ResponsiveTooltip>
-                      )}
-                      {/* Service Learning Badge */}
-                      {props.serviceLearningTypes && props.serviceLearningTypes.length > 0 && (
-                        <ResponsiveTooltip 
-                          content={props.serviceLearningTypes.map(type => 
-                            `${type === 'compulsory' ? t('review.compulsory') : t('review.optional')}: ${t('features.serviceLearning')}${type === props.currentTermServiceLearning ? ` (${t('teaching.current')})` : ''}`
-                          ).join('\n')}
-                          hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          showCloseButton={true}
-                        >
-                          <span 
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200"
-                            onClick={handleServiceLearningClick}
-                          >
-                            <div className="flex items-center gap-1">
-                              {props.serviceLearningTypes.map((type, index) => (
-                                <span 
-                                  key={type}
-                                  className={`${
-                                    index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
-                                  }`}
-                                >
-                                  <span className={type === props.currentTermServiceLearning ? 'underline' : ''}>
-                                    {type === 'compulsory' ? 'SC' : 'SO'}
-                                  </span>
-                                </span>
-                              ))}
-                            </div>
-                          </span>
-                        </ResponsiveTooltip>
+                      {/* Teaching Language and Service Learning Badges Row */}
+                      {(props.teachingLanguages?.length || props.serviceLearningTypes?.length) && (
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                          {/* Teaching Language Badge */}
+                          {props.teachingLanguages && props.teachingLanguages.length > 0 && (
+                            <ResponsiveTooltip 
+                              content={props.teachingLanguages.map(code => 
+                                `${code}: ${getTeachingLanguageName(code, t)}${code === props.currentTermTeachingLanguage ? ` (${t('teaching.current')})` : ''}`
+                              ).join('\n')}
+                              hasClickAction={true}
+                              clickActionText={t('tooltip.clickAgainToFilter')}
+                              showCloseButton={true}
+                            >
+                              <span 
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
+                                onClick={handleTeachingLanguageClick}
+                              >
+                                <div className="flex items-center gap-1">
+                                  {props.teachingLanguages.map((code, index) => (
+                                    <span 
+                                      key={code}
+                                      className={`${
+                                        index > 0 ? 'border-l border-orange-300 dark:border-orange-700 pl-1' : ''
+                                      }`}
+                                    >
+                                      <span className={code === props.currentTermTeachingLanguage ? 'underline' : ''}>
+                                        {code}
+                                      </span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </span>
+                            </ResponsiveTooltip>
+                          )}
+                          {/* Service Learning Badge */}
+                          {props.serviceLearningTypes && props.serviceLearningTypes.length > 0 && (
+                            <ResponsiveTooltip 
+                              content={props.serviceLearningTypes.map(type => 
+                                `${type === 'compulsory' ? t('review.compulsory') : t('review.optional')}: ${t('features.serviceLearning')}${type === props.currentTermServiceLearning ? ` (${t('teaching.current')})` : ''}`
+                              ).join('\n')}
+                              hasClickAction={true}
+                              clickActionText={t('tooltip.clickAgainToFilter')}
+                              showCloseButton={true}
+                            >
+                              <span 
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200"
+                                onClick={handleServiceLearningClick}
+                              >
+                                <div className="flex items-center gap-1">
+                                  {props.serviceLearningTypes.map((type, index) => (
+                                    <span 
+                                      key={type}
+                                      className={`${
+                                        index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                      }`}
+                                    >
+                                      <span className={type === props.currentTermServiceLearning ? 'underline' : ''}>
+                                        {type === 'compulsory' ? 'SC' : 'SO'}
+                                      </span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </span>
+                            </ResponsiveTooltip>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
