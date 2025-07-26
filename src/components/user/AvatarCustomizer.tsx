@@ -305,7 +305,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-10 gap-2">
+                      <div className="grid grid-cols-10 gap-3">
                         {backgrounds.map((bg, index) => (
                           <button
                             key={index}
@@ -439,7 +439,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 sm:gap-3 md:gap-4">
+                    <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 sm:gap-3 md:gap-5 lg:gap-6">
                       {backgrounds.map((bg, index) => (
                         <button
                           key={index}
