@@ -29,7 +29,7 @@ export const BetaNotice: React.FC = () => {
                       href="https://drive.google.com/drive/folders/1K9DNhe7nTz3C7KDBnoeg03CMSxNY6YDv?usp=drive_link"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-amber-800 dark:text-amber-200 underline hover:text-amber-900 dark:hover:text-amber-100 font-medium"
+                      className="text-lg font-extrabold text-amber-900 dark:text-amber-100 bg-amber-200 dark:bg-amber-800 px-3 py-1.5 rounded-lg underline hover:bg-amber-300 dark:hover:bg-amber-700 hover:text-amber-950 dark:hover:text-amber-50 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       {t('beta.notice.oldReviews.linkText')}
                     </a>{' '}
