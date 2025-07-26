@@ -1022,6 +1022,51 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               </div>
                                             </span>
                                           )}
+                                          {/* Service Learning badges */}
+                                          {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
+                                            (() => {
+                                              // Sort service learning types: SO first, then SC
+                                              const sortedTypes = [...course.serviceLearningTypes].sort((a, b) => {
+                                                if (a === 'optional' && b !== 'optional') return -1;
+                                                if (b === 'optional' && a !== 'optional') return 1;
+                                                return 0;
+                                              });
+
+                                              const serviceLearningTexts = sortedTypes.map(type => {
+                                                const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                const text = type === 'optional' ? 'SO' : 'SC';
+                                                return isCurrentTerm ? `${text} (${t('badge.currentTerm')})` : text;
+                                              });
+
+                                              const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
+
+                                              return (
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  title={tooltipText}
+                                                >
+                                                  <div className="flex items-center gap-1">
+                                                    {sortedTypes.map((type, index) => {
+                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                      const text = type === 'optional' ? 'SO' : 'SC';
+                                                      return (
+                                                        <span 
+                                                          key={type}
+                                                          className={`${
+                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                          } ${
+                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                          }`}
+                                                        >
+                                                          {text}
+                                                        </span>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </span>
+                                              );
+                                            })()
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-3 flex-shrink-0">
@@ -1216,6 +1261,51 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 ))}
                                               </div>
                                             </span>
+                                          )}
+                                          {/* Service Learning badges */}
+                                          {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
+                                            (() => {
+                                              // Sort service learning types: SO first, then SC
+                                              const sortedTypes = [...course.serviceLearningTypes].sort((a, b) => {
+                                                if (a === 'optional' && b !== 'optional') return -1;
+                                                if (b === 'optional' && a !== 'optional') return 1;
+                                                return 0;
+                                              });
+
+                                              const serviceLearningTexts = sortedTypes.map(type => {
+                                                const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                const text = type === 'optional' ? 'SO' : 'SC';
+                                                return isCurrentTerm ? `${text} (${t('badge.currentTerm')})` : text;
+                                              });
+
+                                              const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
+
+                                              return (
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  title={tooltipText}
+                                                >
+                                                  <div className="flex items-center gap-1">
+                                                    {sortedTypes.map((type, index) => {
+                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                      const text = type === 'optional' ? 'SO' : 'SC';
+                                                      return (
+                                                        <span 
+                                                          key={type}
+                                                          className={`${
+                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                          } ${
+                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                          }`}
+                                                        >
+                                                          {text}
+                                                        </span>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </span>
+                                              );
+                                            })()
                                           )}
                                         </div>
                                       </div>
@@ -1665,6 +1755,51 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                               </div>
                                             </span>
                                           )}
+                                          {/* Service Learning badges */}
+                                          {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
+                                            (() => {
+                                              // Sort service learning types: SO first, then SC
+                                              const sortedTypes = [...course.serviceLearningTypes].sort((a, b) => {
+                                                if (a === 'optional' && b !== 'optional') return -1;
+                                                if (b === 'optional' && a !== 'optional') return 1;
+                                                return 0;
+                                              });
+
+                                              const serviceLearningTexts = sortedTypes.map(type => {
+                                                const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                const text = type === 'optional' ? 'SO' : 'SC';
+                                                return isCurrentTerm ? `${text} (${t('badge.currentTerm')})` : text;
+                                              });
+
+                                              const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
+
+                                              return (
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  title={tooltipText}
+                                                >
+                                                  <div className="flex items-center gap-1">
+                                                    {sortedTypes.map((type, index) => {
+                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                      const text = type === 'optional' ? 'SO' : 'SC';
+                                                      return (
+                                                        <span 
+                                                          key={type}
+                                                          className={`${
+                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                          } ${
+                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                          }`}
+                                                        >
+                                                          {text}
+                                                        </span>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </span>
+                                              );
+                                            })()
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-1 text-sm text-gray-500 ml-2 flex-shrink-0">
@@ -1850,6 +1985,51 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 ))}
                                               </div>
                                             </span>
+                                          )}
+                                          {/* Service Learning badges */}
+                                          {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
+                                            (() => {
+                                              // Sort service learning types: SO first, then SC
+                                              const sortedTypes = [...course.serviceLearningTypes].sort((a, b) => {
+                                                if (a === 'optional' && b !== 'optional') return -1;
+                                                if (b === 'optional' && a !== 'optional') return 1;
+                                                return 0;
+                                              });
+
+                                              const serviceLearningTexts = sortedTypes.map(type => {
+                                                const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                const text = type === 'optional' ? 'SO' : 'SC';
+                                                return isCurrentTerm ? `${text} (${t('badge.currentTerm')})` : text;
+                                              });
+
+                                              const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
+
+                                              return (
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  title={tooltipText}
+                                                >
+                                                  <div className="flex items-center gap-1">
+                                                    {sortedTypes.map((type, index) => {
+                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                      const text = type === 'optional' ? 'SO' : 'SC';
+                                                      return (
+                                                        <span 
+                                                          key={type}
+                                                          className={`${
+                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                          } ${
+                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                          }`}
+                                                        >
+                                                          {text}
+                                                        </span>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </span>
+                                              );
+                                            })()
                                           )}
                                         </div>
                                       </div>
@@ -2037,6 +2217,51 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                 ))}
                                               </div>
                                             </span>
+                                          )}
+                                          {/* Service Learning badges */}
+                                          {course.serviceLearningTypes && course.serviceLearningTypes.length > 0 && (
+                                            (() => {
+                                              // Sort service learning types: SO first, then SC
+                                              const sortedTypes = [...course.serviceLearningTypes].sort((a, b) => {
+                                                if (a === 'optional' && b !== 'optional') return -1;
+                                                if (b === 'optional' && a !== 'optional') return 1;
+                                                return 0;
+                                              });
+
+                                              const serviceLearningTexts = sortedTypes.map(type => {
+                                                const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                const text = type === 'optional' ? 'SO' : 'SC';
+                                                return isCurrentTerm ? `${text} (${t('badge.currentTerm')})` : text;
+                                              });
+
+                                              const tooltipText = `${t('features.serviceLearning')}: ${serviceLearningTexts.join(', ')}`;
+
+                                              return (
+                                                <span 
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 cursor-help overflow-hidden"
+                                                  title={tooltipText}
+                                                >
+                                                  <div className="flex items-center gap-1">
+                                                    {sortedTypes.map((type, index) => {
+                                                      const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
+                                                      const text = type === 'optional' ? 'SO' : 'SC';
+                                                      return (
+                                                        <span 
+                                                          key={type}
+                                                          className={`${
+                                                            index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                                          } ${
+                                                            isCurrentTerm ? 'underline decoration-2 underline-offset-1' : ''
+                                                          }`}
+                                                        >
+                                                          {text}
+                                                        </span>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </span>
+                                              );
+                                            })()
                                           )}
                                         </div>
                                       </div>
