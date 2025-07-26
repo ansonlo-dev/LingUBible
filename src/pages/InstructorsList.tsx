@@ -619,7 +619,7 @@ const InstructorsList = () => {
               </InstructorGrid>
 
               {/* 分頁組件 */}
-              <div className="mt-12">
+              <div>
                 <Pagination
                   currentPage={filters.currentPage}
                   totalPages={paginationData.totalPages}

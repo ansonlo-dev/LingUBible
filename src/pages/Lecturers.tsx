@@ -229,6 +229,11 @@ const Lecturers = () => {
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
   const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
   const [pendingReviewLanguageFilter, setPendingReviewLanguageFilter] = useState<string | null>(null);
+  
+  // Teaching language tooltip states for mobile
+  const [teachingLanguageTooltipStates, setTeachingLanguageTooltipStates] = useState<{[key: string]: boolean}>({});
+  const [teachingLanguageTapCounts, setTeachingLanguageTapCounts] = useState<{[key: string]: number}>({});
+  const [teachingLanguageTimeouts, setTeachingLanguageTimeouts] = useState<{[key: string]: NodeJS.Timeout}>({});
   const [pendingGradeFilter, setPendingGradeFilter] = useState<string | null>(null);
   const [pendingRequirementFilter, setPendingRequirementFilter] = useState<{ filterKey: string; value: boolean } | null>(null);
   
@@ -277,6 +282,99 @@ const Lecturers = () => {
     const languageName = getTeachingLanguageName(languageCode, t);
     // Always use dash separator for consistency with catalog pages
     return `${languageCode} - ${languageName}`;
+  };
+
+  // Handle teaching language badge click
+  const handleTeachingLanguageBadgeClick = (teachingLanguage: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (isMobile) {
+      // Mobile/tablet: require 2 taps to apply filter
+      const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
+      const newTapCount = currentTapCount + 1;
+      
+      setTeachingLanguageTapCounts(prev => ({
+        ...prev,
+        [teachingLanguage]: newTapCount
+      }));
+      
+      // Clear existing timeout
+      if (teachingLanguageTimeouts[teachingLanguage]) {
+        clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
+      }
+      
+      if (newTapCount === 1) {
+        // First tap: show tooltip
+        setTeachingLanguageTooltipStates(prev => ({
+          ...prev,
+          [teachingLanguage]: true
+        }));
+        
+        // Set timeout to reset
+        const timeoutId = setTimeout(() => {
+          setTeachingLanguageTapCounts(prev => ({
+            ...prev,
+            [teachingLanguage]: 0
+          }));
+          setTeachingLanguageTooltipStates(prev => ({
+            ...prev,
+            [teachingLanguage]: false
+          }));
+          setTeachingLanguageTimeouts(prev => {
+            const newTimeouts = { ...prev };
+            delete newTimeouts[teachingLanguage];
+            return newTimeouts;
+          });
+        }, 3000);
+        
+        setTeachingLanguageTimeouts(prev => ({
+          ...prev,
+          [teachingLanguage]: timeoutId
+        }));
+      } else if (newTapCount === 2) {
+        // Second tap: apply filter and close tooltip
+        applyTeachingLanguageFilter(teachingLanguage);
+        resetTeachingLanguageTooltipState(teachingLanguage);
+      }
+    } else {
+      // Desktop: 1 tap to apply filter
+      applyTeachingLanguageFilter(teachingLanguage);
+    }
+  };
+
+  // Apply teaching language filter
+  const applyTeachingLanguageFilter = (teachingLanguage: string) => {
+    const newFilters = { ...filters };
+    
+    // Toggle teaching language filter
+    if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
+      newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
+    } else {
+      newFilters.selectedTeachingLanguages = [teachingLanguage];
+    }
+    
+    handleFiltersChange(newFilters);
+  };
+
+  // Reset teaching language tooltip state
+  const resetTeachingLanguageTooltipState = (teachingLanguage: string) => {
+    setTeachingLanguageTapCounts(prev => ({
+      ...prev,
+      [teachingLanguage]: 0
+    }));
+    setTeachingLanguageTooltipStates(prev => ({
+      ...prev,
+      [teachingLanguage]: false
+    }));
+    if (teachingLanguageTimeouts[teachingLanguage]) {
+      clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
+      setTeachingLanguageTimeouts(prev => {
+        const newTimeouts = { ...prev };
+        delete newTimeouts[teachingLanguage];
+        return newTimeouts;
+      });
+    }
   };
   
   const [instructor, setInstructor] = useState<Instructor | null>(null);
@@ -2152,42 +2250,13 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTeachingLanguageFilter(teachingLanguage);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTeachingLanguageFilter(null);
-                                          // Apply the teaching language filter
-                                          const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                          const isSelected = currentValues.includes(teachingLanguage);
-                                          
-                                          if (isSelected) {
-                                            // Remove from selection
-                                            const newValues = currentValues.filter(v => v !== teachingLanguage);
-                                            setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
-                                          } else {
-                                            // Add to selection
-                                            setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
-                                          }
-                                        }}
+                                        showCloseButton={true}
+                                        onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
+                                        open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] : undefined}
+                                        onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
                                       >
                                         <button
-                                          onClick={() => {
-                                            if (!isMobile) {
-                                              // Desktop: apply filter immediately
-                                              const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                              const isSelected = currentValues.includes(teachingLanguage);
-                                              
-                                              if (isSelected) {
-                                                // Remove from selection
-                                                const newValues = currentValues.filter(v => v !== teachingLanguage);
-                                                setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
-                                              } else {
-                                                // Add to selection
-                                                setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
-                                              }
-                                            }
-                                          }}
+                                          onClick={(e) => handleTeachingLanguageBadgeClick(teachingLanguage, e)}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
                                               const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -2361,42 +2430,13 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTeachingLanguageFilter(teachingLanguage);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTeachingLanguageFilter(null);
-                                          // Apply the teaching language filter
-                                          const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                          const isSelected = currentValues.includes(teachingLanguage);
-                                          
-                                          if (isSelected) {
-                                            // Remove from selection
-                                            const newValues = currentValues.filter(v => v !== teachingLanguage);
-                                            setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
-                                          } else {
-                                            // Add to selection
-                                            setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
-                                          }
-                                        }}
+                                        showCloseButton={true}
+                                        onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
+                                        open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] : undefined}
+                                        onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
                                       >
                                         <button
-                                          onClick={() => {
-                                            if (!isMobile) {
-                                              // Desktop: apply filter immediately
-                                              const currentValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
-                                              const isSelected = currentValues.includes(teachingLanguage);
-                                              
-                                              if (isSelected) {
-                                                // Remove from selection
-                                                const newValues = currentValues.filter(v => v !== teachingLanguage);
-                                                setSelectedTeachingLanguageFilter(newValues.length === 0 ? 'all' : newValues);
-                                              } else {
-                                                // Add to selection
-                                                setSelectedTeachingLanguageFilter([...currentValues, teachingLanguage]);
-                                              }
-                                            }
-                                          }}
+                                          onClick={(e) => handleTeachingLanguageBadgeClick(teachingLanguage, e)}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
                                               const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
@@ -3000,10 +3040,10 @@ const Lecturers = () => {
                                             content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                             hasClickAction={true}
                                             clickActionText={t('tooltip.clickAgainToFilter')}
-                                            onFirstTap={() => {
-                                              console.log('🗣️ Teaching Language Badge (Lecturers): First tap - setting pending filter');
-                                              setPendingTeachingLanguageFilter(teachingLanguage);
-                                            }}
+                                            showCloseButton={true}
+                                            onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
+                                            open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] : undefined}
+                                            onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
                                             onSecondTap={() => {
                                               console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
                                               const newFilters = { ...filters };
@@ -3127,48 +3167,14 @@ const Lecturers = () => {
                                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                           hasClickAction={true}
                                           clickActionText={t('tooltip.clickAgainToFilter')}
-                                          onFirstTap={() => {
-                                            console.log('🗣️ Teaching Language Badge (Lecturers): First tap - setting pending filter');
-                                            setPendingTeachingLanguageFilter(teachingLanguage);
-                                          }}
-                                          onSecondTap={() => {
-                                            console.log('✅ Teaching Language Badge (Lecturers): Second tap - applying filter');
-                                            const newFilters = { ...filters };
-                                            
-                                            // 切換教學語言篩選器
-                                            if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                              newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                            } else {
-                                              newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                            }
-                                            
-                                            // 重置頁面到第一頁
-                                            newFilters.currentPage = 1;
-                                            
-                                            handleFiltersChange(newFilters);
-                                            setPendingTeachingLanguageFilter(null);
-                                          }}
+                                          showCloseButton={true}
+                                          onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
+                                          open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] : undefined}
+                                          onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
                                         >
                                           <span 
                                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
-                                            onClick={() => {
-                                              if (!isMobile) {
-                                                // Desktop: apply filter immediately
-                                                const newFilters = { ...filters };
-                                                
-                                                // 切換教學語言篩選器
-                                                if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                                  newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                                } else {
-                                                  newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                                }
-                                                
-                                                // 重置頁面到第一頁
-                                                newFilters.currentPage = 1;
-                                                
-                                                handleFiltersChange(newFilters);
-                                              }
-                                            }}
+                                            onClick={(e) => handleTeachingLanguageBadgeClick(teachingLanguage, e)}
                                           >
                                             <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
                                           </span>
