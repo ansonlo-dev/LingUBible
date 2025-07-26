@@ -156,164 +156,158 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    if (isMobile && props.enableTwoTapMode) {
-      // Mobile/tablet with two-tap mode enabled: require 2 taps to navigate (catalog pages)
-      const newTapCount = teachingBadgeTapCount + 1;
-      setTeachingBadgeTapCount(newTapCount);
-      
-      if (teachingBadgeTimeoutRef.current) {
-        clearTimeout(teachingBadgeTimeoutRef.current);
-      }
-      
-      if (newTapCount === 1) {
-        // First tap: show tooltip
-        setTeachingBadgeTooltipOpen(true);
-        teachingBadgeTimeoutRef.current = setTimeout(() => {
+    if (isMobile) {
+      if (props.enableTwoTapMode) {
+        // Mobile/tablet with two-tap mode enabled: require 2 taps to navigate (catalog pages)
+        const newTapCount = teachingBadgeTapCount + 1;
+        setTeachingBadgeTapCount(newTapCount);
+        
+        if (teachingBadgeTimeoutRef.current) {
+          clearTimeout(teachingBadgeTimeoutRef.current);
+        }
+        
+        if (newTapCount === 1) {
+          // First tap: show tooltip
+          setTeachingBadgeTooltipOpen(true);
+          teachingBadgeTimeoutRef.current = setTimeout(() => {
+            setTeachingBadgeTapCount(0);
+            setTeachingBadgeTooltipOpen(false);
+          }, 3000);
+        } else if (newTapCount === 2) {
+          // Second tap: navigate
+          const currentTerm = getCurrentTermCode();
+          const searchParams = new URLSearchParams();
+          searchParams.set('teachingTerm', currentTerm);
+          navigate(`/instructors?${searchParams.toString()}`);
           setTeachingBadgeTapCount(0);
           setTeachingBadgeTooltipOpen(false);
-        }, 3000);
-      } else if (newTapCount === 2) {
-        // Second tap: navigate
-        const currentTerm = getCurrentTermCode();
-        const searchParams = new URLSearchParams();
-        searchParams.set('teachingTerm', currentTerm);
-        navigate(`/instructors?${searchParams.toString()}`);
-        setTeachingBadgeTapCount(0);
-        setTeachingBadgeTooltipOpen(false);
+        }
+      } else {
+        // Mobile without two-tap mode (main page): first tap shows tooltip, no navigation
+        setTeachingBadgeTooltipOpen(true);
       }
-    } else {
-      // Desktop or mobile without two-tap mode: 1 tap to navigate immediately (main page)
-      const currentTerm = getCurrentTermCode();
-      const searchParams = new URLSearchParams();
-      searchParams.set('teachingTerm', currentTerm);
-      navigate(`/instructors?${searchParams.toString()}`);
     }
+    // Desktop: do nothing on click (hover tooltip handles this)
   };
 
   const handleDepartmentBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    if (isMobile && props.enableTwoTapMode) {
-      // Mobile/tablet with two-tap mode enabled: require 2 taps to navigate (catalog pages)
-      const newTapCount = departmentTapCount + 1;
-      setDepartmentTapCount(newTapCount);
-      
-      if (departmentTimeoutRef.current) {
-        clearTimeout(departmentTimeoutRef.current);
-      }
-      
-      if (newTapCount === 1) {
-        // First tap: show tooltip
-        setDepartmentTooltipOpen(true);
-        departmentTimeoutRef.current = setTimeout(() => {
+    if (isMobile) {
+      if (props.enableTwoTapMode) {
+        // Mobile/tablet with two-tap mode enabled: require 2 taps to navigate (catalog pages)
+        const newTapCount = departmentTapCount + 1;
+        setDepartmentTapCount(newTapCount);
+        
+        if (departmentTimeoutRef.current) {
+          clearTimeout(departmentTimeoutRef.current);
+        }
+        
+        if (newTapCount === 1) {
+          // First tap: show tooltip
+          setDepartmentTooltipOpen(true);
+          departmentTimeoutRef.current = setTimeout(() => {
+            setDepartmentTapCount(0);
+            setDepartmentTooltipOpen(false);
+          }, 3000);
+        } else if (newTapCount === 2) {
+          // Second tap: navigate
+          const searchParams = new URLSearchParams();
+          const rawDepartmentName = extractRawDepartmentName(props.department);
+          
+          if (props.type === 'course') {
+            // For course cards, navigate to courses catalog with subject area filter
+            searchParams.set('subjectArea', rawDepartmentName);
+            navigate(`/courses?${searchParams.toString()}`);
+          } else {
+            // For instructor cards, navigate to instructors catalog with department filter
+            searchParams.set('department', rawDepartmentName);
+            navigate(`/instructors?${searchParams.toString()}`);
+          }
           setDepartmentTapCount(0);
           setDepartmentTooltipOpen(false);
-        }, 3000);
-      } else if (newTapCount === 2) {
-        // Second tap: navigate
-        const searchParams = new URLSearchParams();
-        const rawDepartmentName = extractRawDepartmentName(props.department);
-        
-        if (props.type === 'course') {
-          // For course cards, navigate to courses catalog with subject area filter
-          searchParams.set('subjectArea', rawDepartmentName);
-          navigate(`/courses?${searchParams.toString()}`);
-        } else {
-          // For instructor cards, navigate to instructors catalog with department filter
-          searchParams.set('department', rawDepartmentName);
-          navigate(`/instructors?${searchParams.toString()}`);
         }
-        setDepartmentTapCount(0);
-        setDepartmentTooltipOpen(false);
-      }
-    } else {
-      // Desktop or mobile without two-tap mode: 1 tap to navigate immediately (main page)
-      const searchParams = new URLSearchParams();
-      const rawDepartmentName = extractRawDepartmentName(props.department);
-      
-      if (props.type === 'course') {
-        // For course cards, navigate to courses catalog with subject area filter
-        searchParams.set('subjectArea', rawDepartmentName);
-        navigate(`/courses?${searchParams.toString()}`);
       } else {
-        // For instructor cards, navigate to instructors catalog with department filter
-        searchParams.set('department', rawDepartmentName);
-        navigate(`/instructors?${searchParams.toString()}`);
+        // Mobile without two-tap mode (main page): first tap shows tooltip, no navigation
+        setDepartmentTooltipOpen(true);
       }
     }
+    // Desktop: do nothing on click (hover tooltip handles this)
   };
 
   const handleTeachingLanguageClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    if (isMobile && props.enableTwoTapMode) {
-      // Mobile/tablet with two-tap mode enabled: require 2 taps to apply filter (catalog pages)
-      const newTapCount = teachingLanguageTapCount + 1;
-      setTeachingLanguageTapCount(newTapCount);
-      
-      if (teachingLanguageTimeoutRef.current) {
-        clearTimeout(teachingLanguageTimeoutRef.current);
-      }
-      
-      if (newTapCount === 1) {
-        // First tap: show tooltip
-        setTeachingLanguageTooltipOpen(true);
-        teachingLanguageTimeoutRef.current = setTimeout(() => {
+    if (isMobile) {
+      if (props.enableTwoTapMode) {
+        // Mobile/tablet with two-tap mode enabled: require 2 taps to apply filter (catalog pages)
+        const newTapCount = teachingLanguageTapCount + 1;
+        setTeachingLanguageTapCount(newTapCount);
+        
+        if (teachingLanguageTimeoutRef.current) {
+          clearTimeout(teachingLanguageTimeoutRef.current);
+        }
+        
+        if (newTapCount === 1) {
+          // First tap: show tooltip
+          setTeachingLanguageTooltipOpen(true);
+          teachingLanguageTimeoutRef.current = setTimeout(() => {
+            setTeachingLanguageTapCount(0);
+            setTeachingLanguageTooltipOpen(false);
+          }, 3000);
+        } else if (newTapCount === 2) {
+          // Second tap: apply filter and close tooltip
+          if (props.onTeachingLanguageClick && props.teachingLanguages) {
+            props.onTeachingLanguageClick(props.teachingLanguages);
+          }
           setTeachingLanguageTapCount(0);
           setTeachingLanguageTooltipOpen(false);
-        }, 3000);
-      } else if (newTapCount === 2) {
-        // Second tap: apply filter and close tooltip
-        if (props.onTeachingLanguageClick && props.teachingLanguages) {
-          props.onTeachingLanguageClick(props.teachingLanguages);
         }
-        setTeachingLanguageTapCount(0);
-        setTeachingLanguageTooltipOpen(false);
-      }
-    } else {
-      // Desktop or mobile without two-tap mode: 1 tap to apply filter immediately (main page)
-      if (props.onTeachingLanguageClick && props.teachingLanguages) {
-        props.onTeachingLanguageClick(props.teachingLanguages);
+      } else {
+        // Mobile without two-tap mode (main page): first tap shows tooltip, no filter application
+        setTeachingLanguageTooltipOpen(true);
       }
     }
+    // Desktop: do nothing on click (hover tooltip handles this)
   };
 
   const handleServiceLearningClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    if (isMobile && props.enableTwoTapMode) {
-      // Mobile/tablet with two-tap mode enabled: require 2 taps to apply filter (catalog pages)
-      const newTapCount = serviceLearningTapCount + 1;
-      setServiceLearningTapCount(newTapCount);
-      
-      if (serviceLearningTimeoutRef.current) {
-        clearTimeout(serviceLearningTimeoutRef.current);
-      }
-      
-      if (newTapCount === 1) {
-        // First tap: show tooltip
-        setServiceLearningTooltipOpen(true);
-        serviceLearningTimeoutRef.current = setTimeout(() => {
+    if (isMobile) {
+      if (props.enableTwoTapMode) {
+        // Mobile/tablet with two-tap mode enabled: require 2 taps to apply filter (catalog pages)
+        const newTapCount = serviceLearningTapCount + 1;
+        setServiceLearningTapCount(newTapCount);
+        
+        if (serviceLearningTimeoutRef.current) {
+          clearTimeout(serviceLearningTimeoutRef.current);
+        }
+        
+        if (newTapCount === 1) {
+          // First tap: show tooltip
+          setServiceLearningTooltipOpen(true);
+          serviceLearningTimeoutRef.current = setTimeout(() => {
+            setServiceLearningTapCount(0);
+            setServiceLearningTooltipOpen(false);
+          }, 3000);
+        } else if (newTapCount === 2) {
+          // Second tap: apply filter and close tooltip
+          if (props.onServiceLearningClick && props.serviceLearningTypes) {
+            props.onServiceLearningClick(props.serviceLearningTypes);
+          }
           setServiceLearningTapCount(0);
           setServiceLearningTooltipOpen(false);
-        }, 3000);
-      } else if (newTapCount === 2) {
-        // Second tap: apply filter and close tooltip
-        if (props.onServiceLearningClick && props.serviceLearningTypes) {
-          props.onServiceLearningClick(props.serviceLearningTypes);
         }
-        setServiceLearningTapCount(0);
-        setServiceLearningTooltipOpen(false);
-      }
-    } else {
-      // Desktop or mobile without two-tap mode: 1 tap to apply filter immediately (main page)
-      if (props.onServiceLearningClick && props.serviceLearningTypes) {
-        props.onServiceLearningClick(props.serviceLearningTypes);
+      } else {
+        // Mobile without two-tap mode (main page): first tap shows tooltip, no filter application
+        setServiceLearningTooltipOpen(true);
       }
     }
+    // Desktop: do nothing on click (hover tooltip handles this)
   };
 
   // Reset functions for when tooltip is closed externally
@@ -684,9 +678,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 (isMobile && props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined
                               }
                               showCloseButton={true}
-                              onReset={props.enableTwoTapMode ? resetTeachingLanguageState : undefined}
-                              open={(isMobile && props.enableTwoTapMode) ? teachingLanguageTooltipOpen : undefined}
-                              onOpenChange={(isMobile && props.enableTwoTapMode) ? setTeachingLanguageTooltipOpen : undefined}
+                              onReset={resetTeachingLanguageState}
+                              open={isMobile ? teachingLanguageTooltipOpen : undefined}
+                              onOpenChange={isMobile ? setTeachingLanguageTooltipOpen : undefined}
                             >
                               <span 
                                 className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
@@ -725,9 +719,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 (isMobile && props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined
                               }
                               showCloseButton={true}
-                              onReset={props.enableTwoTapMode ? resetServiceLearningState : undefined}
-                              open={(isMobile && props.enableTwoTapMode) ? serviceLearningTooltipOpen : undefined}
-                              onOpenChange={(isMobile && props.enableTwoTapMode) ? setServiceLearningTooltipOpen : undefined}
+                              onReset={resetServiceLearningState}
+                              open={isMobile ? serviceLearningTooltipOpen : undefined}
+                              onOpenChange={isMobile ? setServiceLearningTooltipOpen : undefined}
                             >
                               <span 
                                 className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200"
@@ -917,9 +911,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       hasClickAction={true}
                       clickActionText={(props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
                       showCloseButton={true}
-                      onReset={props.enableTwoTapMode ? resetDepartmentState : undefined}
-                      open={(isMobile && props.enableTwoTapMode) ? departmentTooltipOpen : undefined}
-                      onOpenChange={(isMobile && props.enableTwoTapMode) ? setDepartmentTooltipOpen : undefined}
+                      onReset={resetDepartmentState}
+                      open={isMobile ? departmentTooltipOpen : undefined}
+                      onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
                     >
                       <span 
                         className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
@@ -939,9 +933,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                           (isMobile && props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined
                         }
                         showCloseButton={true}
-                        onReset={props.enableTwoTapMode ? resetTeachingLanguageState : undefined}
-                        open={(isMobile && props.enableTwoTapMode) ? teachingLanguageTooltipOpen : undefined}
-                        onOpenChange={(isMobile && props.enableTwoTapMode) ? setTeachingLanguageTooltipOpen : undefined}
+                        onReset={resetTeachingLanguageState}
+                        open={isMobile ? teachingLanguageTooltipOpen : undefined}
+                        onOpenChange={isMobile ? setTeachingLanguageTooltipOpen : undefined}
                       >
                         <span 
                           className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
@@ -976,9 +970,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 hasClickAction={props.isTeachingInCurrentTerm}
                 clickActionText={props.enableTwoTapMode ? t('tooltip.clickAgainToFilter') : undefined}
                 showCloseButton={true}
-                onReset={props.enableTwoTapMode ? resetTeachingBadgeState : undefined}
-                open={(isMobile && props.enableTwoTapMode) ? teachingBadgeTooltipOpen : undefined}
-                onOpenChange={(isMobile && props.enableTwoTapMode) ? setTeachingBadgeTooltipOpen : undefined}
+                onReset={resetTeachingBadgeState}
+                open={isMobile ? teachingBadgeTooltipOpen : undefined}
+                onOpenChange={isMobile ? setTeachingBadgeTooltipOpen : undefined}
               >
                 <Badge 
                   variant={props.isTeachingInCurrentTerm ? "default" : "secondary"}
