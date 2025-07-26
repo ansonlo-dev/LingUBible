@@ -46,7 +46,7 @@ export function SearchHistory({ onHistoryItemClick }: SearchHistoryProps) {
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900 dark:text-white">
           {t('search.history.title')}
         </h3>
