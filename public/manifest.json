@@ -1,0 +1,47 @@
+{
+  "name": "LingUBible",
+  "short_name": "LingUBible",
+  "description": "LingUBible is a platform for reviewing courses and instructors at Lingnan University",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#bcbec0",
+  "theme_color": "#e31f26",
+  "scope": "/",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "social"],
+  "shortcuts": [
+    {
+      "name": "Courses",
+      "short_name": "Courses",
+      "description": "Browse course reviews",
+      "url": "/courses",
+      "icons": [
+        {
+          "src": "/manifest-512_v2.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Instructors",
+      "short_name": "Instructors",
+      "description": "Browse instructor reviews",
+      "url": "/instructors",
+      "icons": [
+        {
+          "src": "/manifest-512_v2.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/manifest-512_v2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 

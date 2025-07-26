@@ -19,6 +19,8 @@
     <meta name="title" content="LingUBible - Reg科聖經 | 嶺南大學課程與講師評價平台" />
     <meta name="description" content="真實可靠的Reg科聖經，幫助嶺南大學同學們作出明智的選課決定。專業的課程與講師評價平台，提供真實學生評價。" />
     <meta name="author" content="LingUBible" />
+    <meta name="application-name" content="LingUBible" />
+    <meta name="generator" content="LingUBible" />
     <meta name="theme-color" content="#dc2626" />
     <meta name="msapplication-TileColor" content="#dc2626" />
     <meta name="msapplication-config" content="browserconfig.xml" />
@@ -29,8 +31,8 @@
     <link rel="shortcut icon" href="favicon-google.ico" />
     
     <!-- High-quality favicons for modern browsers (preserves transparency and rounded corners) -->
-    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/png" href="favicon-google-32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     
     <!-- Apple touch icon -->
@@ -38,7 +40,10 @@
     <meta name="apple-mobile-web-app-title" content="LingUBible" />
     
     <!-- Web App Manifest -->
-    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="manifest" type="application/json" href="/manifest.json">
+    
+    <!-- Brand Identity -->
+    <link rel="alternate" type="application/ld+json" href="brand-identity.json" />
 
     <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash_screens/iPhone_16_Pro_Max_landscape.png">
     <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash_screens/iPhone_16_Pro_landscape.png">
@@ -89,7 +94,7 @@
     <meta property="og:title" content="LingUBible - Reg科聖經 | 嶺南大學課程與講師評價平台" />
     <meta property="og:description" content="真實可靠的Reg科聖經，幫助嶺南大學同學們作出明智的選課決定。專業的課程與講師評價平台。" />
     <meta property="og:image" content="https://lingubible.com/meta-image.png" />
-    <meta property="og:site_name" content="LingUBible - Reg科聖經" />
+    <meta property="og:site_name" content="LingUBible" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
@@ -106,46 +111,51 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://lingubible.com/" />
     
-    <!-- Structured Data -->
+    <!-- Google Site Name Structured Data -->
     <script type="application/ld+json">
-    [
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "LingUBible",
+      "alternateName": ["Reg科聖經", "嶺大Reg科聖經", "嶺南大學課程評價平台", "lingubible.com"],
+      "url": "https://lingubible.com/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://lingubible.com/favicon-google.png",
+        "width": 96,
+        "height": 96
+      },
+      "publisher": {
+        "@type": "Organization",
         "name": "LingUBible",
-        "alternateName": ["嶺大Reg科聖經", "Reg科聖經", "嶺南大學課程評價平台"],
         "url": "https://lingubible.com/",
-        "description": "真實可靠的Reg科聖經，幫助嶺南大學同學們作出明智的選課決定。專業的課程與講師評價平台，提供真實學生評價。",
         "logo": {
           "@type": "ImageObject",
           "url": "https://lingubible.com/favicon-google.png",
           "width": 96,
           "height": 96
-        },
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://lingubible.com/courses?search={search_term_string}",
-          "query-input": "required name=search_term_string"
         }
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "LingUBible",
-        "url": "https://lingubible.com/",
-        "logo": "https://lingubible.com/favicon-google.png",
-        "description": "嶺南大學課程與講師評價平台，提供真實可靠的學生評價和選課指南。",
-        "foundingDate": "2025",
-        "sameAs": [
-          "https://lingubible.com/"
-        ],
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer service",
-          "url": "https://lingubible.com/contact"
-        }
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://lingubible.com/courses?search={search_term_string}",
+        "query-input": "required name=search_term_string"
       }
-    ]
+    }
+    </script>
+    
+    <!-- Organization Structured Data for Brand Recognition -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "LingUBible",
+      "url": "https://lingubible.com/",
+      "logo": "https://lingubible.com/favicon-google.png",
+      "sameAs": [],
+      "description": "嶺南大學課程與講師評價平台 - Lingnan University Course Review Platform",
+      "knowsAbout": ["Course Reviews", "Instructor Ratings", "Lingnan University", "Higher Education"]
+    }
     </script>
     
     <!-- Fonts -->
