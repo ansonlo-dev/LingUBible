@@ -2612,7 +2612,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           {reviewEligibility.existingReviews.map((review) => (
                             <button
                               key={review.$id}
-                              onClick={() => navigate(`/courses/${selectedCourse}#review-${review.$id}`)}
+                              onClick={() => navigate(`/courses/${selectedCourse}?review_id=${review.$id}`)}
                               className="inline-flex items-center gap-2 px-3 py-1.5 bg-background/80 border border-destructive/30 rounded-md text-sm hover:bg-background hover:border-destructive/50 transition-colors"
                             >
                               <div className="flex-shrink-0">
