@@ -8,7 +8,7 @@ export const BetaNotice: React.FC = () => {
 
   return (
     <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         <div className="flex items-start py-3 gap-3">
           <div className="flex items-start space-x-3 flex-1 min-w-0">
             <div className="flex-shrink-0 mt-0.5">
