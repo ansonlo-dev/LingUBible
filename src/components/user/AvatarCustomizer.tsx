@@ -8,7 +8,7 @@ import { useCustomAvatar } from '@/hooks/useCustomAvatar';
 import { getAllAnimals, getAllBackgrounds, getTotalCombinations } from "@/utils/ui/avatarUtils";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Palette, Shuffle, Save, Trash2, Sparkles, Radius } from 'lucide-react';
+import { Palette, Shuffle, Save, Trash2, Sparkles, Radius, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface AvatarCustomizerProps {
@@ -149,9 +149,18 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
           <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1 pt-8' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-12' : ''}`}>
-            <DialogTitle className={`flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1' : ''}`}>
-              <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              {t('avatar.customize')}
+            <DialogTitle className={`flex items-center justify-between text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1 mr-1' : ''}`}>
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                {t('avatar.customize')}
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-muted/50 transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </DialogTitle>
           </DialogHeader>
 
