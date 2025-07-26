@@ -573,10 +573,10 @@ export const CourseReviewsList = ({
                 <h4 className="font-semibold text-lg flex items-center gap-2 min-w-0 md:flex-1">
                   {instructor.instructor_name !== currentInstructorName ? (
                   <a 
-                    href={`/instructors/${encodeURIComponent(instructor.instructor_name)}`}
+                    href={`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${review.$id}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`);
+                      navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${review.$id}`);
                     }}
                       className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
                   >
