@@ -20,6 +20,8 @@ interface PopularCourseCardProps {
   department: string;
   teachingLanguages?: string[]; // Array of teaching language codes in chronological order
   currentTermTeachingLanguage?: string | null; // Current term's teaching language for bolding
+  serviceLearningTypes?: ('compulsory' | 'optional')[]; // Array of service learning types
+  currentTermServiceLearning?: ('compulsory' | 'optional') | null; // Current term's service learning type
   rating: number;
   reviewCount: number;
   isOfferedInCurrentTerm?: boolean;
@@ -34,6 +36,8 @@ interface PopularCourseCardProps {
   onFavoriteToggle?: (newState: boolean) => void;
   // 新增：教學語言點擊回調
   onTeachingLanguageClick?: (languages: string[]) => void;
+  // 新增：服務學習點擊回調
+  onServiceLearningClick?: (types: ('compulsory' | 'optional')[]) => void;
 }
 
 interface PopularInstructorCardProps {
@@ -146,6 +150,16 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     // Call the callback with all teaching languages
     if (props.onTeachingLanguageClick && props.teachingLanguages) {
       props.onTeachingLanguageClick(props.teachingLanguages);
+    }
+  };
+
+  const handleServiceLearningClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent link navigation
+    
+    // Call the callback with all service learning types
+    if (props.onServiceLearningClick && props.serviceLearningTypes) {
+      props.onServiceLearningClick(props.serviceLearningTypes);
     }
   };
 
@@ -490,6 +504,37 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 >
                                   <span className={code === props.currentTermTeachingLanguage ? 'underline' : ''}>
                                     {code}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          </span>
+                        </ResponsiveTooltip>
+                      )}
+                      {/* Service Learning Badge */}
+                      {props.serviceLearningTypes && props.serviceLearningTypes.length > 0 && (
+                        <ResponsiveTooltip 
+                          content={props.serviceLearningTypes.map(type => 
+                            `${type === 'compulsory' ? t('review.compulsory') : t('review.optional')}: ${t('features.serviceLearning')}${type === props.currentTermServiceLearning ? ` (${t('teaching.current')})` : ''}`
+                          ).join('\n')}
+                          hasClickAction={true}
+                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          showCloseButton={true}
+                        >
+                          <span 
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200"
+                            onClick={handleServiceLearningClick}
+                          >
+                            <div className="flex items-center gap-1">
+                              {props.serviceLearningTypes.map((type, index) => (
+                                <span 
+                                  key={type}
+                                  className={`${
+                                    index > 0 ? 'border-l border-purple-300 dark:border-purple-700 pl-1' : ''
+                                  }`}
+                                >
+                                  <span className={type === props.currentTermServiceLearning ? 'underline' : ''}>
+                                    {type === 'compulsory' ? 'SC' : 'SO'}
                                   </span>
                                 </span>
                               ))}

@@ -26,6 +26,8 @@ export interface CourseWithStats extends Course {
   averageGPA: number;
   teachingLanguages?: string[]; // Teaching language codes from teaching records (chronological order)
   currentTermTeachingLanguage?: string | null; // Current term's teaching language
+  serviceLearningTypes?: ('compulsory' | 'optional')[]; // Service learning types from teaching records
+  currentTermServiceLearning?: ('compulsory' | 'optional') | null; // Current term's service learning type
 }
 
 export interface CourseWithDetailedStats extends Course {
@@ -2409,16 +2411,20 @@ export class CourseService {
         });
       }
 
-      // 獲取所有課程的教學語言數據（帶錯誤處理的優雅降級）
+      // 獲取所有課程的教學語言和服務學習數據（帶錯誤處理的優雅降級）
       const courseCodes = courses.map(course => course.course_code);
       let teachingLanguagesMap = new Map<string, string[]>();
       let currentTermTeachingLanguagesMap = new Map<string, string | null>();
+      let serviceLearningTypesMap = new Map<string, ('compulsory' | 'optional')[]>();
+      let currentTermServiceLearningMap = new Map<string, ('compulsory' | 'optional') | null>();
 
       try {
-        // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
-        const [languagesResult, currentTermResult] = await Promise.allSettled([
+        // 嘗試獲取教學語言和服務學習數據，但如果失敗則繼續正常流程
+        const [languagesResult, currentTermResult, serviceLearningResult, currentTermServiceLearningResult] = await Promise.allSettled([
           this.getBatchCourseTeachingLanguages(courseCodes),
-          this.getBatchCourseCurrentTermTeachingLanguages(courseCodes)
+          this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
+          this.getBatchCourseServiceLearning(courseCodes),
+          this.getBatchCourseCurrentTermServiceLearning(courseCodes)
         ]);
 
         if (languagesResult.status === 'fulfilled') {
@@ -2432,8 +2438,20 @@ export class CourseService {
         } else {
           console.warn('Failed to fetch course current term teaching languages, continuing without current term language:', currentTermResult.reason);
         }
+
+        if (serviceLearningResult.status === 'fulfilled') {
+          serviceLearningTypesMap = serviceLearningResult.value;
+        } else {
+          console.warn('Failed to fetch course service learning types, continuing without service learning badges:', serviceLearningResult.reason);
+        }
+
+        if (currentTermServiceLearningResult.status === 'fulfilled') {
+          currentTermServiceLearningMap = currentTermServiceLearningResult.value;
+        } else {
+          console.warn('Failed to fetch course current term service learning, continuing without current term service learning:', currentTermServiceLearningResult.reason);
+        }
       } catch (error) {
-        console.warn('Error fetching teaching language data for courses, continuing without language badges:', error);
+        console.warn('Error fetching teaching language and service learning data for courses, continuing without badges:', error);
       }
 
       // 組合課程和統計信息（使用 map 一次性處理）
@@ -2448,16 +2466,20 @@ export class CourseService {
           averageGPA: 0
         };
 
-        // 獲取教學語言數據
+        // 獲取教學語言和服務學習數據
         const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
         const currentTermTeachingLanguage = currentTermTeachingLanguagesMap.get(course.course_code) || null;
+        const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
+        const currentTermServiceLearning = currentTermServiceLearningMap.get(course.course_code) || null;
 
         return {
           ...course,
           ...stats,
           isOfferedInCurrentTerm: coursesOfferedInCurrentTerm.has(course.course_code),
           teachingLanguages,
-          currentTermTeachingLanguage
+          currentTermTeachingLanguage,
+          serviceLearningTypes,
+          currentTermServiceLearning
         };
       });
 
@@ -4084,6 +4106,124 @@ export class CourseService {
       return teachingLanguagesMap;
     } catch (error) {
       console.error('Error fetching batch current term teaching languages:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * 批量獲取課程的服務學習類型
+   * 返回每個課程的所有服務學習類型（按時間順序）
+   */
+  static async getBatchCourseServiceLearning(courseCodes: string[]): Promise<Map<string, ('compulsory' | 'optional')[]>> {
+    try {
+      if (courseCodes.length === 0) {
+        return new Map();
+      }
+
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCodes),
+          Query.orderAsc('$createdAt'),
+          Query.select(['course_code', 'service_learning', '$createdAt']),
+          Query.limit(1000) // Reasonable limit for batch processing
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as (TeachingRecord & { service_learning: string | null })[];
+      
+      // Group by course code and maintain chronological order
+      const courseServiceLearningMap = new Map<string, ('compulsory' | 'optional')[]>();
+      
+      // Initialize maps for each course
+      courseCodes.forEach(courseCode => {
+        courseServiceLearningMap.set(courseCode, []);
+      });
+      
+      // Process records by course
+      const recordsByCourse = new Map<string, (TeachingRecord & { service_learning: string | null })[]>();
+      teachingRecords.forEach(record => {
+        if (!recordsByCourse.has(record.course_code)) {
+          recordsByCourse.set(record.course_code, []);
+        }
+        recordsByCourse.get(record.course_code)!.push(record);
+      });
+      
+      // Extract unique service learning types for each course in chronological order
+      recordsByCourse.forEach((records, courseCode) => {
+        const seenTypes = new Set<string>();
+        const orderedTypes: ('compulsory' | 'optional')[] = [];
+        
+        records.forEach(record => {
+          if (record.service_learning && 
+              (record.service_learning === 'compulsory' || record.service_learning === 'optional') &&
+              !seenTypes.has(record.service_learning)) {
+            seenTypes.add(record.service_learning);
+            orderedTypes.push(record.service_learning as 'compulsory' | 'optional');
+          }
+        });
+        
+        courseServiceLearningMap.set(courseCode, orderedTypes);
+      });
+
+      return courseServiceLearningMap;
+    } catch (error) {
+      console.error('Error fetching batch course service learning:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * 批量獲取當前學期課程的服務學習類型
+   */
+  static async getBatchCourseCurrentTermServiceLearning(courseCodes: string[]): Promise<Map<string, ('compulsory' | 'optional') | null>> {
+    try {
+      const currentTermCode = getCurrentTermCode();
+      const cacheKey = `batch_current_term_service_learning_${currentTermCode}`;
+      
+      // 檢查緩存
+      const cached = this.getCached<Map<string, ('compulsory' | 'optional') | null>>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      if (courseCodes.length === 0) {
+        return new Map();
+      }
+
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCodes),
+          Query.equal('term_code', currentTermCode),
+          Query.select(['course_code', 'service_learning']),
+          Query.limit(courseCodes.length)
+        ]
+      );
+
+      const serviceLearningMap = new Map<string, ('compulsory' | 'optional') | null>();
+      
+      // 初始化所有課程為 null
+      courseCodes.forEach(courseCode => {
+        serviceLearningMap.set(courseCode, null);
+      });
+
+      // 填入找到的服務學習類型
+      response.documents.forEach((doc: any) => {
+        const record = doc as unknown as TeachingRecord;
+        if (record.service_learning === 'compulsory' || record.service_learning === 'optional') {
+          serviceLearningMap.set(record.course_code, record.service_learning as 'compulsory' | 'optional');
+        }
+      });
+
+      // 緩存結果
+      this.setCached(cacheKey, serviceLearningMap, 5 * 60 * 1000); // 5分鐘緩存
+
+      return serviceLearningMap;
+    } catch (error) {
+      console.error('Error fetching batch current term service learning:', error);
       return new Map();
     }
   }

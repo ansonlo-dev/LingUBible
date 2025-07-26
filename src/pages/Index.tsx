@@ -532,6 +532,8 @@ const Index = () => {
                       department={course.department}
                       teachingLanguages={course.teachingLanguages || []}
                       currentTermTeachingLanguage={course.currentTermTeachingLanguage}
+                      serviceLearningTypes={course.serviceLearningTypes || []}
+                      currentTermServiceLearning={course.currentTermServiceLearning}
                       rating={course.averageRating}
                       reviewCount={course.reviewCount}
                       isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
@@ -629,6 +631,8 @@ const Index = () => {
                       department={course.department}
                       teachingLanguages={course.teachingLanguages || []}
                       currentTermTeachingLanguage={course.currentTermTeachingLanguage}
+                      serviceLearningTypes={course.serviceLearningTypes || []}
+                      currentTermServiceLearning={course.currentTermServiceLearning}
                       rating={course.averageRating}
                       reviewCount={course.reviewCount}
                       isOfferedInCurrentTerm={course.isOfferedInCurrentTerm}
