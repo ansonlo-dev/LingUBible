@@ -693,14 +693,14 @@ const MyReviews = () => {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-lg">
                             <a
-                              href={`/courses/${reviewInfo.review.course_code}`}
+                              href={`/courses/${reviewInfo.review.course_code}?review_id=${reviewInfo.review.$id}`}
                               className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
                               onClick={(e) => {
                                 if (e.ctrlKey || e.metaKey || e.button === 1) {
                                   return;
                                 }
                                 e.preventDefault();
-                                navigate(`/courses/${reviewInfo.review.course_code}`);
+                                navigate(`/courses/${reviewInfo.review.course_code}?review_id=${reviewInfo.review.$id}`);
                               }}
                             >
                               <div className="font-bold">{reviewInfo.review.course_code}</div>
@@ -928,14 +928,14 @@ const MyReviews = () => {
                                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
                                   <div className="font-semibold text-lg min-w-0 md:flex-1">
                                     <a
-                                      href={`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`}
+                                      href={`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}?review_id=${reviewInfo.review.$id}`}
                                       className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
                                       onClick={(e) => {
                                         if (e.ctrlKey || e.metaKey || e.button === 1) {
                                           return;
                                         }
                                         e.preventDefault();
-                                        navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}`);
+                                        navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}?review_id=${reviewInfo.review.$id}`);
                                       }}
                                     >
                                       {nameInfo ? (
