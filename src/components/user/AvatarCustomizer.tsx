@@ -184,7 +184,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         position: (isLandscape || viewportDimensions.width < 640) ? 'fixed' : undefined
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1 pt-8' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-12' : ''}`}>
+          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1 pt-4' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-6' : ''}`}>
             <DialogTitle className={`flex items-center justify-between text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1 mr-1' : ''}`}>
               <div className="flex items-center gap-2">
                 <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -305,7 +305,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-10 gap-3">
+                      <div className="grid grid-cols-10 gap-2">
                         {backgrounds.map((bg, index) => (
                           <button
                             key={index}
@@ -321,7 +321,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                             <div 
                               className={`w-full h-full bg-gradient-to-br ${bg.light}`}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 hidden md:block">
                               <div className="absolute bottom-0.5 left-0.5 right-0.5">
                                 <p className="text-xs text-white font-medium capitalize truncate">
                                   {t(bg.name)}
@@ -439,7 +439,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 sm:gap-3 md:gap-5 lg:gap-6">
+                    <div className="grid grid-cols-8 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2 sm:gap-2 md:gap-2 lg:gap-2">
                       {backgrounds.map((bg, index) => (
                         <button
                           key={index}
@@ -455,7 +455,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                           <div 
                             className={`w-full h-full bg-gradient-to-br ${bg.light}`}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 hidden md:block">
                             <div className="absolute bottom-0.5 left-0.5 right-0.5 sm:bottom-1 sm:left-1 sm:right-1">
                               <p className="text-xs text-white font-medium capitalize truncate">
                                 {t(bg.name)}
