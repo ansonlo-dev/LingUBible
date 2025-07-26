@@ -144,12 +144,14 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
     
-    // Navigate to courses catalog with current term filter applied
-    const currentTerm = getCurrentTermCode();
-    const searchParams = new URLSearchParams();
-    searchParams.set('offeredTerm', currentTerm);
-    
-    navigate(`/courses?${searchParams.toString()}`);
+    // Only navigate if enableTwoTapMode is true (catalog pages)
+    if (props.enableTwoTapMode) {
+      const currentTerm = getCurrentTermCode();
+      const searchParams = new URLSearchParams();
+      searchParams.set('offeredTerm', currentTerm);
+      navigate(`/courses?${searchParams.toString()}`);
+    }
+    // For main page (enableTwoTapMode=false), do nothing
   };
 
   const handleTeachingBadgeClick = (e: React.MouseEvent) => {
@@ -906,24 +908,32 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       </span>
                     )}
                     {/* Department Badge */}
-                    <ResponsiveTooltip 
-                      content={t('filter.clickToFilterDepartment')}
-                      hasClickAction={true}
-                      clickActionText={(props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
-                      showCloseButton={true}
-                      onReset={resetDepartmentState}
-                      open={isMobile ? departmentTooltipOpen : undefined}
-                      onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
-                    >
-                      <span 
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
-                        onClick={handleDepartmentBadgeClick}
+                    {props.enableTwoTapMode ? (
+                      <ResponsiveTooltip 
+                        content={t('filter.clickToFilterDepartment')}
+                        hasClickAction={true}
+                        clickActionText={(props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
+                        showCloseButton={true}
+                        onReset={resetDepartmentState}
+                        open={isMobile ? departmentTooltipOpen : undefined}
+                        onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
                       >
+                        <span 
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
+                          onClick={handleDepartmentBadgeClick}
+                        >
+                          <span className="break-words hyphens-auto">
+                            {translateDepartmentName(props.department, t)}
+                          </span>
+                        </span>
+                      </ResponsiveTooltip>
+                    ) : (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
                         <span className="break-words hyphens-auto">
                           {translateDepartmentName(props.department, t)}
                         </span>
                       </span>
-                    </ResponsiveTooltip>
+                    )}
                     {/* Teaching Language Badge */}
                     {props.teachingLanguages && props.teachingLanguages.length > 0 && (
                       <ResponsiveTooltip 
