@@ -708,7 +708,7 @@ export const CourseReviewsList = ({
                     }}
                   >
                     <span 
-                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
                         instructor.session_type === 'Lecture' 
                           ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                           : instructor.session_type === 'Tutorial'
@@ -833,7 +833,7 @@ export const CourseReviewsList = ({
                   }}
                 >
                   <span 
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105 shrink-0 ${
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
                       instructor.session_type === 'Lecture' 
                         ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                         : instructor.session_type === 'Tutorial'
@@ -898,7 +898,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <span 
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                           onClick={() => {
                             if (!isMobile) {
                               // Desktop: apply filter immediately
@@ -1329,7 +1329,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1367,7 +1367,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1720,7 +1720,7 @@ export const CourseReviewsList = ({
                         }}
                       >
                         <button
-                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                          className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1758,7 +1758,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
