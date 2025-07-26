@@ -21,6 +21,10 @@ interface ResponsiveTooltipProps {
   onFirstTap?: () => void;
   onSecondTap?: () => void;
   showCloseButton?: boolean; // New prop to control close button visibility
+  onReset?: () => void; // Add reset callback for when tooltip is closed externally
+  // Controlled mode props for mobile
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
@@ -39,14 +43,28 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
   onFirstTap,
   onSecondTap,
   showCloseButton = false,
+  onReset,
+  open,
+  onOpenChange,
 }) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [hasBeenTapped, setHasBeenTapped] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const triggerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Use controlled mode if open and onOpenChange are provided, otherwise use internal state
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  const isOpen = isControlled ? open : internalIsOpen;
+  const setIsOpen = useCallback((newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange!(newOpen);
+    } else {
+      setInternalIsOpen(newOpen);
+    }
+  }, [isControlled, onOpenChange]);
   
   // Memoize the content to prevent unnecessary re-renders
   const memoizedContent = useMemo(() => content, [content]);
@@ -123,6 +141,10 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
+        // Notify parent component to reset its state
+        if (onReset) {
+          onReset();
+        }
       }
     };
     
@@ -132,6 +154,10 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
       setHasBeenTapped(false);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      // Notify parent component to reset its state
+      if (onReset) {
+        onReset();
       }
     };
 
@@ -149,7 +175,7 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
       document.removeEventListener('touchstart', handleClickOutside, true);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [isMobile, isOpen]);
+  }, [isMobile, isOpen, onReset]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -171,7 +197,11 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-  }, []);
+    // Notify parent component to reset its state
+    if (onReset) {
+      onReset();
+    }
+  }, [onReset]);
 
   // Prepare content with close button for mobile
   const mobileContent = useMemo(() => {
@@ -228,57 +258,18 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
                 // Get the original onClick handler
                 const originalOnClick = (children as React.ReactElement).props?.onClick;
                 
-                console.log('🎯 ResponsiveTooltip Mobile Click Debug:', {
-                  hasClickAction,
-                  isOpen,
-                  hasBeenTapped,
-                  isMobile,
-                  hasOriginalOnClick: !!originalOnClick,
-                  isPending,
-                  tapNumber: !hasBeenTapped ? 'FIRST_TAP' : 'SECOND_TAP'
-                });
-                
-                if (hasClickAction) {
-                  if (!hasBeenTapped) {
-                    // First tap - show tooltip, call first tap callback
-                    console.log('🔄 ResponsiveTooltip: First tap - showing tooltip, calling onFirstTap');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsOpen(true);
-                    setHasBeenTapped(true);
-                    // Clear any existing timeout
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-                    // Call first tap callback if provided
-                    if (onFirstTap) {
-                      onFirstTap();
-                    }
-                    return;
-                  } else {
-                    // Second tap - hide tooltip, call second tap callback, then original action
-                    console.log('✅ ResponsiveTooltip: Second tap - hiding tooltip, calling onSecondTap and originalOnClick');
-                    setIsOpen(false);
-                    setHasBeenTapped(false);
-                    // Call second tap callback if provided
-                    if (onSecondTap) {
-                      onSecondTap();
-                    }
-                    // Don't prevent default, let the original action happen
-                    if (originalOnClick) {
-                      console.log('🚀 ResponsiveTooltip: Calling originalOnClick');
-                      originalOnClick(e);
-                    } else {
-                      console.log('⚠️ ResponsiveTooltip: No originalOnClick found');
-                    }
-                    return;
-                  }
-                } else {
-                  // No click action, just handle regular tooltip behavior
-                  // Toggle tooltip on tap for informational tooltips
+                // For mobile with click action, let the parent component handle all the logic
+                if (hasClickAction && originalOnClick) {
+                  // Simply call the original onClick - parent will manage state
+                  originalOnClick(e);
+                } else if (!hasClickAction) {
+                  // For informational tooltips (no click action), handle locally
                   if (isOpen) {
                     setIsOpen(false);
                     setHasBeenTapped(false);
+                    if (onReset) {
+                      onReset();
+                    }
                   } else {
                     setIsOpen(true);
                     setHasBeenTapped(true);

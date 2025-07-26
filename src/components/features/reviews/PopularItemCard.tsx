@@ -77,6 +77,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   // Tap count states for different click behaviors on mobile vs desktop
   const [teachingLanguageTapCount, setTeachingLanguageTapCount] = useState(0);
   const [serviceLearningTapCount, setServiceLearningTapCount] = useState(0);
+  // Tooltip open states for mobile
+  const [teachingLanguageTooltipOpen, setTeachingLanguageTooltipOpen] = useState(false);
+  const [serviceLearningTooltipOpen, setServiceLearningTooltipOpen] = useState(false);
   const teachingLanguageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const serviceLearningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -177,17 +180,20 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
         clearTimeout(teachingLanguageTimeoutRef.current);
       }
       
-      if (newTapCount === 2) {
-        // Second tap: apply filter
+      if (newTapCount === 1) {
+        // First tap: show tooltip
+        setTeachingLanguageTooltipOpen(true);
+        teachingLanguageTimeoutRef.current = setTimeout(() => {
+          setTeachingLanguageTapCount(0);
+          setTeachingLanguageTooltipOpen(false);
+        }, 3000);
+      } else if (newTapCount === 2) {
+        // Second tap: apply filter and close tooltip
         if (props.onTeachingLanguageClick && props.teachingLanguages) {
           props.onTeachingLanguageClick(props.teachingLanguages);
         }
         setTeachingLanguageTapCount(0);
-      } else {
-        // First tap: show tooltip, reset after delay
-        teachingLanguageTimeoutRef.current = setTimeout(() => {
-          setTeachingLanguageTapCount(0);
-        }, 3000);
+        setTeachingLanguageTooltipOpen(false);
       }
     } else {
       // Desktop: 1 tap to apply filter
@@ -210,23 +216,45 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
         clearTimeout(serviceLearningTimeoutRef.current);
       }
       
-      if (newTapCount === 2) {
-        // Second tap: apply filter
+      if (newTapCount === 1) {
+        // First tap: show tooltip
+        setServiceLearningTooltipOpen(true);
+        serviceLearningTimeoutRef.current = setTimeout(() => {
+          setServiceLearningTapCount(0);
+          setServiceLearningTooltipOpen(false);
+        }, 3000);
+      } else if (newTapCount === 2) {
+        // Second tap: apply filter and close tooltip
         if (props.onServiceLearningClick && props.serviceLearningTypes) {
           props.onServiceLearningClick(props.serviceLearningTypes);
         }
         setServiceLearningTapCount(0);
-      } else {
-        // First tap: show tooltip, reset after delay
-        serviceLearningTimeoutRef.current = setTimeout(() => {
-          setServiceLearningTapCount(0);
-        }, 3000);
+        setServiceLearningTooltipOpen(false);
       }
     } else {
       // Desktop: 1 tap to apply filter
       if (props.onServiceLearningClick && props.serviceLearningTypes) {
         props.onServiceLearningClick(props.serviceLearningTypes);
       }
+    }
+  };
+
+  // Reset functions for when tooltip is closed externally
+  const resetTeachingLanguageState = () => {
+    setTeachingLanguageTapCount(0);
+    setTeachingLanguageTooltipOpen(false);
+    if (teachingLanguageTimeoutRef.current) {
+      clearTimeout(teachingLanguageTimeoutRef.current);
+      teachingLanguageTimeoutRef.current = null;
+    }
+  };
+
+  const resetServiceLearningState = () => {
+    setServiceLearningTapCount(0);
+    setServiceLearningTooltipOpen(false);
+    if (serviceLearningTimeoutRef.current) {
+      clearTimeout(serviceLearningTimeoutRef.current);
+      serviceLearningTimeoutRef.current = null;
     }
   };
 
@@ -561,6 +589,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 isMobile ? t('tooltip.clickAgainToFilter') : undefined
                               }
                               showCloseButton={true}
+                              onReset={resetTeachingLanguageState}
+                              open={isMobile ? teachingLanguageTooltipOpen : undefined}
+                              onOpenChange={isMobile ? setTeachingLanguageTooltipOpen : undefined}
                             >
                               <span 
                                 className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
@@ -599,6 +630,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                                 isMobile ? t('tooltip.clickAgainToFilter') : undefined
                               }
                               showCloseButton={true}
+                              onReset={resetServiceLearningState}
+                              open={isMobile ? serviceLearningTooltipOpen : undefined}
+                              onOpenChange={isMobile ? setServiceLearningTooltipOpen : undefined}
                             >
                               <span 
                                 className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200"
