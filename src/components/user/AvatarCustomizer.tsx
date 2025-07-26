@@ -24,15 +24,22 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
   const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState(customAvatar?.backgroundIndex || 0);
   const [activeTab, setActiveTab] = useState<'animals' | 'backgrounds'>('animals');
   const [isLandscape, setIsLandscape] = useState(false);
+  const [viewportDimensions, setViewportDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768
+  });
 
   const animals = getAllAnimals();
   const backgrounds = getAllBackgrounds();
   const totalCombinations = getTotalCombinations();
 
-  // 檢測螢幕方向
+  // 檢測螢幕方向和視窗尺寸
   useEffect(() => {
     const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight && window.innerWidth <= 1024);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      setIsLandscape(width > height && width <= 1024);
+      setViewportDimensions({ width, height });
     };
 
     checkOrientation();
@@ -114,28 +121,36 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
       <DialogContent className={`
         ${isLandscape 
           ? 'fixed top-0 left-0 right-0 max-w-none translate-x-0 translate-y-0' 
-          : 'max-w-none max-h-none w-screen sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl'
+          : viewportDimensions.width < 640 
+            ? 'fixed left-0 right-0 top-0 max-w-none translate-x-0 translate-y-0 w-full rounded-none'
+            : 'max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl'
         } 
         bg-white dark:bg-gray-900 shadow-xl 
-        ${!isLandscape ? 'sm:rounded-2xl' : ''} 
-        border-0 ${!isLandscape ? 'sm:border' : ''} 
+        ${!isLandscape && viewportDimensions.width >= 640 ? 'sm:rounded-2xl' : ''} 
+        border-0 ${!isLandscape && viewportDimensions.width >= 640 ? 'sm:border' : ''} 
         p-0 overflow-hidden 
         data-[state=open]:animate-in data-[state=closed]:animate-out 
         data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
-        ${isLandscape 
+        ${isLandscape || viewportDimensions.width < 640
           ? 'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95' 
           : 'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]'
         }
       `} style={{ 
-        borderRadius: isLandscape ? '0' : undefined,
+        borderRadius: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
         height: isLandscape 
-          ? (window.innerHeight <= 500 ? 'calc(100vh - 3rem)' : 'calc(100vh - 2rem)') 
-          : (window.innerWidth < 640 ? 'calc(100vh - 4rem)' : undefined), // 移動端避免佔用網址列區域
-        width: isLandscape ? '100vw' : undefined,
-        top: (!isLandscape && window.innerWidth < 640) ? '2rem' : undefined // 移動端從頂部留出空間
+          ? (viewportDimensions.height <= 500 ? 'calc(100vh - 3rem)' : 'calc(100vh - 2rem)') 
+          : viewportDimensions.width < 640 
+            ? '100vh' 
+            : undefined,
+        width: (isLandscape || viewportDimensions.width < 640) ? '100vw' : undefined,
+        top: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
+        left: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
+        right: (isLandscape || viewportDimensions.width < 640) ? '0' : undefined,
+        transform: (isLandscape || viewportDimensions.width < 640) ? 'none' : undefined,
+        position: (isLandscape || viewportDimensions.width < 640) ? 'fixed' : undefined
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && window.innerWidth < 640 ? 'pt-4' : ''}`}>
+          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-12' : ''}`}>
             <DialogTitle className={`flex items-center gap-2 text-lg sm:text-xl font-bold text-foreground ${isLandscape ? 'mt-1 ml-1' : ''}`}>
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               {t('avatar.customize')}
@@ -357,7 +372,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
               </div>
 
               {/* 可滾動的選擇區域 */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 pb-3 sm:pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className={`flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 ${viewportDimensions.width < 640 ? 'pb-8' : 'pb-3 sm:pb-6'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="max-w-4xl mx-auto">
                   <div className="bg-muted/20 rounded-xl p-2 sm:p-4">
                   {activeTab === 'animals' ? (
