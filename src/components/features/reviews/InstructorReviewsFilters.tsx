@@ -354,8 +354,7 @@ export function InstructorReviewsFilters({
             <MultiSelectDropdown
               options={Object.entries(serviceLearningCounts || {}).map(([type, count]) => ({
                 value: type,
-                label: type === 'has' ? t('review.hasServiceLearning') : 
-                       type === 'compulsory' ? t('review.compulsory') :
+                label: type === 'compulsory' ? t('review.compulsory') :
                        type === 'optional' ? t('review.optional') : 
                        t('review.noServiceLearning'),
                 count: count
@@ -523,8 +522,7 @@ export function InstructorReviewsFilters({
               <MultiSelectDropdown
                 options={Object.entries(serviceLearningCounts || {}).map(([type, count]) => ({
                   value: type,
-                  label: type === 'has' ? t('review.hasServiceLearning') : 
-                         type === 'compulsory' ? t('review.compulsory') :
+                  label: type === 'compulsory' ? t('review.compulsory') :
                          type === 'optional' ? t('review.optional') : 
                          t('review.noServiceLearning'),
                   count: count

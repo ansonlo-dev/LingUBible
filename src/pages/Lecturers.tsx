@@ -1168,7 +1168,6 @@ const Lecturers = () => {
           if (serviceType === 'compulsory' || serviceType === 'optional') {
             serviceLearningCounts[serviceType] = (serviceLearningCounts[serviceType] || 0) + 1;
           }
-          serviceLearningCounts['has'] = (serviceLearningCounts['has'] || 0) + 1;
         } else {
           serviceLearningCounts['none'] = (serviceLearningCounts['none'] || 0) + 1;
         }
@@ -1276,9 +1275,7 @@ const Lecturers = () => {
         if (!currentInstructorDetail) return false;
         
         return filters.selectedServiceLearning.some(selectedType => {
-          if (selectedType === 'has') {
-            return currentInstructorDetail.has_service_learning;
-          } else if (selectedType === 'none') {
+          if (selectedType === 'none') {
             return !currentInstructorDetail.has_service_learning;
           } else if (selectedType === 'compulsory' || selectedType === 'optional') {
             return currentInstructorDetail.has_service_learning && 

@@ -248,7 +248,7 @@ export function AdvancedCourseFilters({
     const counts: { [key: string]: number } = {};
     
     // Initialize counts for service learning types
-    const allServiceLearningTypes = ['optional', 'compulsory'];
+    const allServiceLearningTypes = ['none', 'optional', 'compulsory'];
     allServiceLearningTypes.forEach(type => {
       counts[type] = 0;
     });
@@ -261,6 +261,9 @@ export function AdvancedCourseFilters({
             counts[type]++;
           }
         });
+      } else {
+        // Course has no service learning
+        counts['none']++;
       }
     });
     
@@ -270,13 +273,13 @@ export function AdvancedCourseFilters({
   // Helper function to get ordered service learning options
   const getOrderedServiceLearningOptions = () => {
     const serviceLearningCounts = getServiceLearningCounts();
-    const orderedTypes = ['optional', 'compulsory'];
+    const orderedTypes = ['none', 'optional', 'compulsory'];
     
     return orderedTypes.map(type => ({
       value: type,
-      label: type === 'optional' ? 
-        `SO - ${t('common.optional')}` : 
-        `SC - ${t('common.compulsory')}`,
+      label: type === 'none' ? t('review.noServiceLearning') :
+             type === 'optional' ? t('review.optional') : 
+             t('review.compulsory'),
       count: serviceLearningCounts[type] || 0
     }));
   };

@@ -309,7 +309,6 @@ export const CourseReviewsList = ({
       });
       
       if (hasServiceLearning) {
-        counts['has'] = (counts['has'] || 0) + 1;
         // Count each unique service learning type for this review
         serviceLearningTypes.forEach(type => {
           counts[type] = (counts[type] || 0) + 1;
@@ -399,10 +398,7 @@ export const CourseReviewsList = ({
       filteredReviews = filteredReviews.filter(reviewInfo => {
         // Check if any of the selected service learning types match
         return filters.selectedServiceLearning.some(selectedType => {
-          if (selectedType === 'has') {
-            // Check if any instructor has service learning
-            return reviewInfo.instructorDetails.some(instructorDetail => instructorDetail.has_service_learning);
-          } else if (selectedType === 'none') {
+          if (selectedType === 'none') {
             // Check if no instructors have service learning
             return !reviewInfo.instructorDetails.some(instructorDetail => instructorDetail.has_service_learning);
           } else {

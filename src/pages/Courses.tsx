@@ -364,15 +364,15 @@ const Courses = () => {
     // 服務學習篩選
     if (filters.serviceLearning.length > 0) {
       filtered = filtered.filter(course => {
-        // 檢查課程是否有任何服務學習類型與篩選條件匹配
-        if (!course.serviceLearningTypes || course.serviceLearningTypes.length === 0) {
-          return false; // 沒有服務學習記錄的課程不匹配任何篩選
-        }
-        
-        // 檢查課程的服務學習類型是否包含任何篩選的類型
-        return course.serviceLearningTypes.some(type => 
-          filters.serviceLearning.includes(type)
-        );
+        return filters.serviceLearning.some(selectedType => {
+          if (selectedType === 'none') {
+            // 檢查課程是否沒有服務學習
+            return !course.serviceLearningTypes || course.serviceLearningTypes.length === 0;
+          } else {
+            // 檢查課程是否有指定的服務學習類型
+            return course.serviceLearningTypes && course.serviceLearningTypes.includes(selectedType);
+          }
+        });
       });
     }
 
