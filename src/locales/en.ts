@@ -43,6 +43,11 @@ export default {
   'beta.notice.title': 'Website Under Development',
   'beta.notice.message': 'This website is currently under construction and using mock data (not real course/instructor data). Some features are not finished and may be incomplete or unstable. We expect to complete the basic features and publish to the public by the end of August 2025. Thank you for your understanding and support.',
   'beta.notice.dismiss': 'I understand',
+  'beta.notice.expand': 'Expand notice',
+  'beta.notice.collapse': 'Collapse notice',
+  'beta.notice.oldReviews.prefix': 'Before the actual data is loaded, please click here',
+  'beta.notice.oldReviews.linkText': 'Google Drive',
+  'beta.notice.oldReviews.suffix': 'to view old reviews.',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理

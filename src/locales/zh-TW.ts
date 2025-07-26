@@ -42,6 +42,11 @@ export default {
   'beta.notice.title': '網站開發中',
   'beta.notice.message': '本網站目前正在建設中，使用的是模擬數據（非真實課程/講師數據）。部分功能尚未完成，可能不完整或不穩定。我們預計在2025年8月底完成基本功能並公開發布。感謝您的理解與支持。',
   'beta.notice.dismiss': '我知道了',
+  'beta.notice.expand': '展開通知',
+  'beta.notice.collapse': '收起通知',
+  'beta.notice.oldReviews.prefix': '在實際數據載入之前，請點擊這裡',
+  'beta.notice.oldReviews.linkText': 'Google 雲端硬碟',
+  'beta.notice.oldReviews.suffix': '查看舊評論。',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理
