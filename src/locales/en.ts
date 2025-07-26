@@ -1269,6 +1269,8 @@ export default {
   'common.courses': 'Courses',
   'common.students': 'Students',
   'common.reviews': 'Reviews',
+  'common.optional': 'Optional',
+  'common.compulsory': 'Compulsory',
   'backToTop.label': 'Back to top',
 
   // =============================================================================

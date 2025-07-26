@@ -558,9 +558,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                               ).join('\n')}
                               hasClickAction={true}
                               clickActionText={
-                                isMobile 
-                                  ? (teachingLanguageTapCount === 1 ? t('tooltip.clickAgainToFilter') : undefined)
-                                  : undefined
+                                isMobile ? t('tooltip.clickAgainToFilter') : undefined
                               }
                               showCloseButton={true}
                             >
@@ -598,9 +596,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                               ).join(', ')}`}
                               hasClickAction={true}
                               clickActionText={
-                                isMobile 
-                                  ? (serviceLearningTapCount === 1 ? t('tooltip.clickAgainToFilter') : undefined)
-                                  : undefined
+                                isMobile ? t('tooltip.clickAgainToFilter') : undefined
                               }
                               showCloseButton={true}
                             >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 interface TechnologyNetworkAnimationProps {
@@ -26,19 +26,13 @@ export const TechnologyNetworkAnimation: React.FC<TechnologyNetworkAnimationProp
   loop = true
 }) => {
   const [key, setKey] = useState(0);
-  const animationRef = useRef<any>(null);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     let previousOrientation = window.innerWidth > window.innerHeight;
     
     const handleOrientationChange = () => {
-      // 暫停動畫
-      if (animationRef.current) {
-        animationRef.current.pause();
-      }
-      
-      // 延遲後重新渲染動畫
+      // 延遲後重新渲染動畫（透過改變key強制重新載入）
       timeoutId = setTimeout(() => {
         setKey(prev => prev + 1);
       }, 300);
@@ -79,7 +73,6 @@ export const TechnologyNetworkAnimation: React.FC<TechnologyNetworkAnimationProp
       <div className={`${sizeClasses[size]} relative portrait:scale-[1.35] portrait:sm:scale-100 portrait:my-5 portrait:sm:my-0 transition-all duration-300`} style={{ aspectRatio: '1/1' }}>
         <DotLottieReact
           key={key}
-          ref={animationRef}
           src="/animations/technology-network-red.lottie"
           className="absolute inset-0 w-full h-full object-contain"
           autoplay={autoplay}
