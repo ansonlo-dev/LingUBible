@@ -20,37 +20,91 @@ const CUTE_AVATARS = [
   '🐝', '🦋', '🐞', '🐛', '🦗', '🕷️', '🐜', '🐌', '🐿️', '🦔'
 ];
 
-// 背景顏色方案 (20種)
+// 背景顏色方案 (60種) - 30淺色 + 25深色 + 5特殊漸變
 const BACKGROUND_COLORS = [
+  // 淺色系 (30種) - 適合淺色主題
   // 溫暖色調
   { name: 'background.sunset', light: 'from-orange-100 to-pink-100', dark: 'from-orange-900/30 to-pink-900/30' },
   { name: 'background.peach', light: 'from-orange-200 to-orange-100', dark: 'from-orange-900/30 to-red-900/30' },
   { name: 'background.coral', light: 'from-red-100 to-pink-100', dark: 'from-red-900/30 to-pink-900/30' },
   { name: 'background.rose', light: 'from-pink-100 to-rose-100', dark: 'from-pink-900/30 to-rose-900/30' },
+  { name: 'background.apricot', light: 'from-orange-50 to-amber-100', dark: 'from-orange-900/30 to-amber-900/30' },
+  { name: 'background.cream', light: 'from-yellow-50 to-orange-50', dark: 'from-yellow-900/30 to-orange-900/30' },
+  { name: 'background.vanilla', light: 'from-amber-50 to-yellow-100', dark: 'from-amber-900/30 to-yellow-900/30' },
+  { name: 'background.blush', light: 'from-rose-50 to-pink-100', dark: 'from-rose-900/30 to-pink-900/30' },
+  { name: 'background.cherry', light: 'from-red-100 to-rose-100', dark: 'from-red-900/30 to-rose-900/30' },
+  { name: 'background.salmon', light: 'from-pink-100 to-orange-100', dark: 'from-pink-900/30 to-orange-900/30' },
   
   // 冷色調
   { name: 'background.ocean', light: 'from-blue-100 to-cyan-100', dark: 'from-blue-900/30 to-cyan-900/30' },
   { name: 'background.sky', light: 'from-sky-100 to-blue-100', dark: 'from-sky-900/30 to-blue-900/30' },
   { name: 'background.mint', light: 'from-green-100 to-emerald-100', dark: 'from-green-900/30 to-emerald-900/30' },
   { name: 'background.forest', light: 'from-emerald-100 to-teal-100', dark: 'from-emerald-900/30 to-teal-900/30' },
+  { name: 'background.powder', light: 'from-blue-50 to-sky-100', dark: 'from-blue-900/30 to-sky-900/30' },
+  { name: 'background.seafoam', light: 'from-teal-50 to-green-100', dark: 'from-teal-900/30 to-green-900/30' },
+  { name: 'background.aqua', light: 'from-cyan-50 to-blue-100', dark: 'from-cyan-900/30 to-blue-900/30' },
+  { name: 'background.jade', light: 'from-green-50 to-emerald-100', dark: 'from-green-900/30 to-emerald-900/30' },
+  { name: 'background.turquoise', light: 'from-teal-100 to-cyan-100', dark: 'from-teal-900/30 to-cyan-900/30' },
+  { name: 'background.sage', light: 'from-emerald-50 to-teal-100', dark: 'from-emerald-900/30 to-teal-900/30' },
   
   // 紫色系
   { name: 'background.lavender', light: 'from-purple-100 to-pink-100', dark: 'from-purple-900/30 to-pink-900/30' },
   { name: 'background.grape', light: 'from-violet-100 to-purple-100', dark: 'from-violet-900/30 to-purple-900/30' },
-  { name: 'background.plum', light: 'from-indigo-800 to-purple-800', dark: 'from-indigo-900/30 to-purple-900/30' },
+  { name: 'background.lilac', light: 'from-purple-50 to-violet-100', dark: 'from-purple-900/30 to-violet-900/30' },
+  { name: 'background.orchid', light: 'from-pink-100 to-purple-100', dark: 'from-pink-900/30 to-purple-900/30' },
+  { name: 'background.mauve', light: 'from-violet-50 to-purple-100', dark: 'from-violet-900/30 to-purple-900/30' },
   
-  // 中性色調
+  // 中性淺色
+  { name: 'background.pearl', light: 'from-gray-50 to-slate-100', dark: 'from-gray-900/30 to-slate-900/30' },
+  { name: 'background.ivory', light: 'from-stone-50 to-neutral-100', dark: 'from-stone-900/30 to-neutral-900/30' },
+  { name: 'background.sand', light: 'from-amber-50 to-stone-100', dark: 'from-amber-900/30 to-stone-900/30' },
+  { name: 'background.linen', light: 'from-neutral-50 to-stone-100', dark: 'from-neutral-900/30 to-stone-900/30' },
+  { name: 'background.opal', light: 'from-slate-50 to-gray-100', dark: 'from-slate-900/30 to-gray-900/30' },
+  
+  // 深色系 (30種) - 適合深色主題
+  // 深暖色調
+  { name: 'background.burgundy', light: 'from-red-800 to-rose-800', dark: 'from-red-900/30 to-rose-900/30' },
+  { name: 'background.maroon', light: 'from-red-700 to-red-800', dark: 'from-red-900/30 to-red-900/30' },
+  { name: 'background.crimson', light: 'from-rose-700 to-pink-800', dark: 'from-rose-900/30 to-pink-900/30' },
+  { name: 'background.rust', light: 'from-orange-700 to-red-700', dark: 'from-orange-900/30 to-red-900/30' },
+  { name: 'background.copper', light: 'from-amber-700 to-orange-800', dark: 'from-amber-900/30 to-orange-900/30' },
+  { name: 'background.bronze', light: 'from-yellow-700 to-amber-800', dark: 'from-yellow-900/30 to-amber-900/30' },
+  { name: 'background.mahogany', light: 'from-red-800 to-amber-800', dark: 'from-red-900/30 to-amber-900/30' },
+  
+  // 深冷色調
+  { name: 'background.navy', light: 'from-blue-800 to-indigo-800', dark: 'from-blue-900/30 to-indigo-900/30' },
+  { name: 'background.midnight', light: 'from-slate-800 to-blue-900', dark: 'from-slate-900/30 to-blue-900/30' },
+  { name: 'background.steel', light: 'from-slate-700 to-gray-800', dark: 'from-slate-900/30 to-gray-900/30' },
+  { name: 'background.emerald', light: 'from-green-700 to-emerald-800', dark: 'from-green-900/30 to-emerald-900/30' },
+  { name: 'background.pine', light: 'from-green-800 to-teal-800', dark: 'from-green-900/30 to-teal-900/30' },
+  { name: 'background.teal', light: 'from-teal-700 to-cyan-800', dark: 'from-teal-900/30 to-cyan-900/30' },
+  { name: 'background.cobalt', light: 'from-blue-700 to-sky-800', dark: 'from-blue-900/30 to-sky-900/30' },
+  { name: 'background.sapphire', light: 'from-sky-700 to-blue-800', dark: 'from-sky-900/30 to-blue-900/30' },
+  { name: 'background.arctic', light: 'from-cyan-700 to-blue-800', dark: 'from-cyan-900/30 to-blue-900/30' },
+  { name: 'background.deep_sea', light: 'from-teal-800 to-blue-900', dark: 'from-teal-900/30 to-blue-900/30' },
+  
+  // 深紫色系
+  { name: 'background.plum', light: 'from-indigo-800 to-purple-800', dark: 'from-indigo-900/30 to-purple-900/30' },
+  { name: 'background.eggplant', light: 'from-purple-800 to-violet-800', dark: 'from-purple-900/30 to-violet-900/30' },
+  { name: 'background.amethyst', light: 'from-violet-700 to-purple-800', dark: 'from-violet-900/30 to-purple-900/30' },
+  { name: 'background.indigo', light: 'from-indigo-700 to-violet-800', dark: 'from-indigo-900/30 to-violet-900/30' },
+  { name: 'background.royal', light: 'from-blue-800 to-purple-800', dark: 'from-blue-900/30 to-purple-900/30' },
+  
+  // 深中性色和原有色彩
+  { name: 'background.charcoal', light: 'from-gray-800 to-slate-800', dark: 'from-gray-900/30 to-slate-900/30' },
+  { name: 'background.graphite', light: 'from-stone-800 to-gray-800', dark: 'from-stone-900/30 to-gray-900/30' },
+  { name: 'background.obsidian', light: 'from-slate-800 to-stone-900', dark: 'from-slate-900/30 to-stone-900/30' },
   { name: 'background.cloud', light: 'from-gray-700 to-slate-800', dark: 'from-gray-900/30 to-slate-900/30' },
   { name: 'background.stone', light: 'from-stone-700 to-gray-800', dark: 'from-stone-900/30 to-gray-900/30' },
   { name: 'background.warm', light: 'from-amber-700 to-yellow-700', dark: 'from-amber-900/30 to-yellow-900/30' },
+  { name: 'background.ice', light: 'from-blue-800 via-cyan-800 to-slate-700', dark: 'from-blue-900/30 via-cyan-900/30 to-slate-900/30' },
   
-  // 特殊漸變
+  // 特殊漸變 (5种)
   { name: 'background.rainbow', light: 'from-red-700 via-yellow-600 to-blue-800', dark: 'from-red-900/30 via-yellow-900/30 to-blue-900/30' },
   { name: 'background.aurora', light: 'from-green-700 via-blue-800 to-purple-800', dark: 'from-green-900/30 via-blue-900/30 to-purple-900/30' },
   { name: 'background.cosmic', light: 'from-indigo-800 via-purple-800 to-pink-700', dark: 'from-indigo-900/30 via-purple-900/30 to-pink-900/30' },
   { name: 'background.tropical', light: 'from-cyan-700 via-teal-800 to-green-800', dark: 'from-cyan-900/30 via-teal-900/30 to-green-900/30' },
-  { name: 'background.fire', light: 'from-red-700 via-orange-700 to-yellow-600', dark: 'from-red-900/30 via-orange-900/30 to-yellow-900/30' },
-  { name: 'background.ice', light: 'from-blue-800 via-cyan-800 to-slate-700', dark: 'from-blue-900/30 via-cyan-900/30 to-slate-900/30' }
+  { name: 'background.fire', light: 'from-red-700 via-orange-700 to-yellow-600', dark: 'from-red-900/30 via-orange-900/30 to-yellow-900/30' }
 ];
 
 // 用戶自定義頭像接口
