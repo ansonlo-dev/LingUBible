@@ -2677,7 +2677,7 @@ const Lecturers = () => {
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -2690,7 +2690,6 @@ const Lecturers = () => {
                                 });
                               }
                             }}
-                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           >
                             <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
@@ -2715,7 +2714,7 @@ const Lecturers = () => {
                             }}
                           >
                             <button
-                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer min-w-0 flex items-center justify-center"
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help min-w-0 flex items-center justify-center"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -2729,7 +2728,6 @@ const Lecturers = () => {
                                   });
                                 }
                               }}
-                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             >
                               <span className="truncate text-center">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
                             </button>
@@ -2797,7 +2795,7 @@ const Lecturers = () => {
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -2810,7 +2808,6 @@ const Lecturers = () => {
                                 });
                               }
                             }}
-                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           >
                             <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
@@ -2835,7 +2832,7 @@ const Lecturers = () => {
                             }}
                           >
                             <button
-                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -2848,7 +2845,6 @@ const Lecturers = () => {
                                   });
                                 }
                               }}
-                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             >
                               <span className="truncate text-center">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
                             </button>
@@ -3585,12 +3581,11 @@ const Lecturers = () => {
                       />
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-                      <span 
-                        className="truncate cursor-help" 
-                        title={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}
-                      >
-                        {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
-                      </span>
+                      <ResponsiveTooltip content={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}>
+                        <span className="truncate cursor-help">
+                          {formatDateTimeUTC8(reviewInfo.review.submitted_at)}
+                        </span>
+                      </ResponsiveTooltip>
                     </div>
                   </div>
                 </div>

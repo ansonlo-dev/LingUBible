@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getStatus } from "@openstatus/react";
 import { useLanguage } from '@/hooks/useLanguage';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 interface OpenStatusWidgetProps {
   slug: string;
@@ -95,13 +96,13 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
   const targetHref = href || `https://${slug}.openstatus.dev`;
 
   return (
-    <a
-      href={targetHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-105 ${config.bgColor} ${config.textColor} ${config.hoverColor} ${className}`}
-      title={`${t('status.serviceStatus')}: ${config.text} - ${t('status.poweredBy')} OpenStatus`}
-    >
+    <ResponsiveTooltip content={`${t('status.serviceStatus')}: ${config.text} - ${t('status.poweredBy')} OpenStatus`}>
+      <a
+        href={targetHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-105 ${config.bgColor} ${config.textColor} ${config.hoverColor} cursor-help ${className}`}
+      >
       <div 
         className={`w-2 h-2 rounded-full ${config.dotColor} ${loading ? 'animate-pulse' : ''}`} 
       />
@@ -120,5 +121,6 @@ export function OpenStatusWidget({ slug, href, className = '' }: OpenStatusWidge
         </svg>
       )}
     </a>
+    </ResponsiveTooltip>
   );
 } 

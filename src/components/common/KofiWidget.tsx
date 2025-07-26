@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 declare global {
   interface Window {
@@ -57,11 +58,11 @@ export function FooterKofiButton({ className = '' }: { className?: string }) {
   };
 
   return (
-    <button
-      onClick={handleDonate}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 hover:shadow-md bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/50 dark:to-rose-900/50 border border-pink-200/60 dark:border-pink-700/60 text-pink-700 dark:text-red-400 hover:from-pink-200 hover:to-rose-200 dark:hover:from-pink-800/60 dark:hover:to-rose-800/60 hover:border-pink-300 dark:hover:border-pink-600 whitespace-nowrap ${className}`}
-      title={t('kofi.supportProject') || 'Support this project'}
-    >
+    <ResponsiveTooltip content={t('kofi.supportProject') || 'Support this project'}>
+      <button
+        onClick={handleDonate}
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 hover:shadow-md bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/50 dark:to-rose-900/50 border border-pink-200/60 dark:border-pink-700/60 text-pink-700 dark:text-red-400 hover:from-pink-200 hover:to-rose-200 dark:hover:from-pink-800/60 dark:hover:to-rose-800/60 hover:border-pink-300 dark:hover:border-pink-600 whitespace-nowrap cursor-help ${className}`}
+      >
       {/* Ko-fi 標誌圖片 */}
       <img 
         src="/logomarkLogo.webp" 
@@ -70,6 +71,7 @@ export function FooterKofiButton({ className = '' }: { className?: string }) {
       />
       <span className="font-semibold text-xs">{t('kofi.donate') || 'Donate'}</span>
     </button>
+    </ResponsiveTooltip>
   );
 }
 
@@ -88,13 +90,14 @@ export function CustomKofiButton() {
     : "fixed bottom-4 right-4 z-[60]"; // 生產模式下正常位置
 
   return (
-    <button
-      onClick={handleDonate}
-      className={`${positionClass} bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm font-medium border border-pink-400/30`}
-      title={t('kofi.supportProject') || 'Support this project'}
-    >
-      <span className="text-base">❤️</span>
-      <span className="hidden sm:inline font-semibold">{t('kofi.donate') || 'Donate'}</span>
-    </button>
+    <ResponsiveTooltip content={t('kofi.supportProject') || 'Support this project'}>
+      <button
+        onClick={handleDonate}
+        className={`${positionClass} bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm font-medium border border-pink-400/30 cursor-help`}
+      >
+        <span className="text-base">❤️</span>
+        <span className="hidden sm:inline font-semibold">{t('kofi.donate') || 'Donate'}</span>
+      </button>
+    </ResponsiveTooltip>
   );
 } 

@@ -692,7 +692,7 @@ const MyReviews = () => {
                           clickActionText={t('tooltip.clickAgainToFilter')}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -703,7 +703,6 @@ const MyReviews = () => {
                                 currentPage: 1
                               });
                             }}
-                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           >
                             <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
@@ -716,7 +715,7 @@ const MyReviews = () => {
                             clickActionText={t('tooltip.clickAgainToFilter')}
                           >
                             <button
-                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-pointer max-w-[120px]"
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -727,7 +726,6 @@ const MyReviews = () => {
                                   currentPage: 1
                                 });
                               }}
-                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             >
                               <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
                             </button>
@@ -766,7 +764,7 @@ const MyReviews = () => {
                           clickActionText={t('tooltip.clickAgainToFilter')}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -777,7 +775,6 @@ const MyReviews = () => {
                                 currentPage: 1
                               });
                             }}
-                            title={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           >
                             <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
@@ -790,7 +787,7 @@ const MyReviews = () => {
                             clickActionText={t('tooltip.clickAgainToFilter')}
                           >
                             <button
-                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-pointer"
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -801,7 +798,6 @@ const MyReviews = () => {
                                   currentPage: 1
                                 });
                               }}
-                              title={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             >
                               <span className="truncate">{getLanguageDisplayName(reviewInfo.review.review_language || 'en')}</span>
                             </button>
@@ -830,32 +826,34 @@ const MyReviews = () => {
                       {/* 操作按鈕 - 垂直排列，每個按鈕一行 */}
                       <div className="flex flex-col gap-2">
                         <div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditReview(reviewInfo.review.$id, reviewInfo.review.course_code)}
-                            className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
-                            title={t('common.edit')}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
+                          <ResponsiveTooltip content={t('common.edit')}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditReview(reviewInfo.review.$id, reviewInfo.review.course_code)}
+                              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary cursor-help"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </ResponsiveTooltip>
                         </div>
                         <div>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={deletingReviewId === reviewInfo.review.$id}
-                                className="h-8 w-8 p-0 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 dark:hover:border-red-600"
-                                title={t('common.delete')}
-                              >
+                              <ResponsiveTooltip content={t('common.delete')}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={deletingReviewId === reviewInfo.review.$id}
+                                  className="h-8 w-8 p-0 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 dark:hover:border-red-600 cursor-help"
+                                >
                                 {deletingReviewId === reviewInfo.review.$id ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
                                 ) : (
                                   <Trash2 className="h-3 w-3" />
                                 )}
-                              </Button>
+                                </Button>
+                              </ResponsiveTooltip>
                             </AlertDialogTrigger>
                             <AlertDialogContent className="bg-white dark:bg-gray-900">
                               <AlertDialogHeader>
@@ -1241,12 +1239,11 @@ const MyReviews = () => {
                       />
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-                      <span 
-                        className="truncate cursor-help" 
-                        title={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}
-                      >
-                        {formatDateTimeUTC8(reviewInfo.review.$createdAt)}
-                      </span>
+                      <ResponsiveTooltip content={t('review.timestampTooltip', { timezone: 'Hong Kong Time (UTC+8)' })}>
+                        <span className="truncate cursor-help">
+                          {formatDateTimeUTC8(reviewInfo.review.$createdAt)}
+                        </span>
+                      </ResponsiveTooltip>
                     </div>
                   </div>
                 </div>
