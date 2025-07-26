@@ -89,11 +89,16 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const [departmentTooltipOpen, setDepartmentTooltipOpen] = useState(false);
   const [teachingBadgeTooltipOpen, setTeachingBadgeTooltipOpen] = useState(false);
   const [offeredBadgeTooltipOpen, setOfferedBadgeTooltipOpen] = useState(false);
+  const [notTeachingBadgeTooltipOpen, setNotTeachingBadgeTooltipOpen] = useState(false);
+  // StatBox tooltip states
+  const [statBoxTooltipOpen, setStatBoxTooltipOpen] = useState<{[key: string]: boolean}>({});
   const teachingLanguageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const serviceLearningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const departmentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const teachingBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const offeredBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const notTeachingBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const statBoxTimeoutRefs = useRef<{[key: string]: NodeJS.Timeout | null}>({});
   
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -113,6 +118,13 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       if (offeredBadgeTimeoutRef.current) {
         clearTimeout(offeredBadgeTimeoutRef.current);
       }
+      if (notTeachingBadgeTimeoutRef.current) {
+        clearTimeout(notTeachingBadgeTimeoutRef.current);
+      }
+      // Cleanup statBox timeouts
+      Object.values(statBoxTimeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
     };
   }, []);
   
@@ -365,6 +377,55 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     }
   };
 
+  const resetNotTeachingBadgeState = () => {
+    setNotTeachingBadgeTooltipOpen(false);
+    if (notTeachingBadgeTimeoutRef.current) {
+      clearTimeout(notTeachingBadgeTimeoutRef.current);
+      notTeachingBadgeTimeoutRef.current = null;
+    }
+  };
+
+  const handleNotTeachingBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent link navigation
+    
+    if (isMobile) {
+      // Mobile: show tooltip only, no navigation
+      setNotTeachingBadgeTooltipOpen(true);
+    }
+    // Desktop: do nothing (hover tooltip handles this)
+  };
+
+  // StatBox tooltip management
+  const setStatBoxTooltipState = (label: string, isOpen: boolean) => {
+    setStatBoxTooltipOpen(prev => ({ ...prev, [label]: isOpen }));
+  };
+
+  const resetStatBoxTooltipState = (label: string) => {
+    setStatBoxTooltipState(label, false);
+    if (statBoxTimeoutRefs.current[label]) {
+      clearTimeout(statBoxTimeoutRefs.current[label]!);
+      statBoxTimeoutRefs.current[label] = null;
+    }
+  };
+
+  const handleStatBoxClick = (e: React.MouseEvent, label: string) => {
+    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent link navigation
+    
+    if (isMobile) {
+      // Mobile: show tooltip only, no navigation
+      setStatBoxTooltipState(label, true);
+    } else {
+      // Desktop: navigate to detail page
+      if (props.type === 'course') {
+        navigate(`/courses/${props.code}`);
+      } else {
+        navigate(`/instructors/${encodeURIComponent(props.name)}`);
+      }
+    }
+  };
+
   // Get faculty by department name
   const getFacultyByDepartment = (department: string): string => {
     // First try to extract raw department name if it's translated
@@ -546,17 +607,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       return `${label}: ${displayValue}/5`;
     };
 
-    // Handle navigation on click
-    const handleStatBoxClick = (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent card click
-      e.preventDefault(); // Prevent link navigation
-      
-      if (props.type === 'course') {
-        navigate(`/courses/${props.code}`);
-      } else {
-        navigate(`/instructors/${encodeURIComponent(props.name)}`);
-      }
-    };
+    // This will be replaced by the parent's handleStatBoxClick
     
     return (
       <div className="flex flex-col items-center gap-1 flex-1">
@@ -566,11 +617,14 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
           hasClickAction={true}
           clickActionText=""
           showCloseButton={true}
+          onReset={() => resetStatBoxTooltipState(label)}
+          open={isMobile ? statBoxTooltipOpen[label] : undefined}
+          onOpenChange={(isOpen) => isMobile ? setStatBoxTooltipState(label, isOpen || false) : undefined}
         >
           <div 
             className="flex items-center justify-center px-3 py-1.5 rounded-lg hover:scale-105 transition-transform cursor-pointer"
             style={{ backgroundColor, width: '90%' }}
-            onClick={handleStatBoxClick}
+            onClick={(e) => handleStatBoxClick(e, label)}
           >
             <span className="font-bold text-lg text-white drop-shadow-sm">{displayValue}</span>
           </div>
@@ -1017,13 +1071,23 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   </Badge>
                 </ResponsiveTooltip>
               ) : (
-                <Badge 
-                  variant="secondary"
-                  className="text-xs font-medium flex-shrink-0 transition-all duration-200 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help"
+                <ResponsiveTooltip 
+                  content={`${t('teaching.no')} - ${currentTermName}`}
+                  hasClickAction={false}
+                  showCloseButton={true}
+                  onReset={resetNotTeachingBadgeState}
+                  open={isMobile ? notTeachingBadgeTooltipOpen : undefined}
+                  onOpenChange={isMobile ? setNotTeachingBadgeTooltipOpen : undefined}
                 >
-                  <XCircle className="h-3 w-3 mr-1" />
-                  {t('teaching.no')}
-                </Badge>
+                  <Badge 
+                    variant="secondary"
+                    className="text-xs font-medium flex-shrink-0 transition-all duration-200 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help"
+                    onClick={handleNotTeachingBadgeClick}
+                  >
+                    <XCircle className="h-3 w-3 mr-1" />
+                    {t('teaching.no')}
+                  </Badge>
+                </ResponsiveTooltip>
               )}
               
               {/* Average GPA below teaching badge */}
