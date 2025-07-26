@@ -560,6 +560,7 @@ export default {
   'course.noReviewsDesc': 'No reviews available for this lecturer yet',
   'course.noReviewsTitle': 'No Student Reviews',
   'course.noReviewsDescription': '{courseName} has not received any student reviews yet. If you have taken this course, feel free to share your learning experience.',
+  'course.teachingLanguage': 'Teaching Language',
   'course.showAllReviews': 'Show All Reviews',
   'course.students': 'students',
   'course.reviews': 'reviews',

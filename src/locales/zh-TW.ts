@@ -551,6 +551,7 @@ export default {
   'course.noReviewsDesc': '目前還沒有針對此講師的評論',
   'course.noReviewsTitle': '暫無學生評論',
   'course.noReviewsDescription': '{courseName} 尚未收到任何學生評論。如果您曾經修讀過這門課程，歡迎分享您的學習體驗。',
+  'course.teachingLanguage': '教學語言',
   'difficulty.easy': '簡單',
   'difficulty.medium': '中等',
   'difficulty.hard': '困難',

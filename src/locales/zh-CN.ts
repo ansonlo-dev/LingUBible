@@ -561,6 +561,7 @@ export default {
   'course.noReviewsDesc': '目前还没有针对此讲师的评论',
   'course.noReviewsTitle': '暂无学生评论',
   'course.noReviewsDescription': '{courseName} 尚未收到任何学生评论。如果您曾经修读过这门课程，欢迎分享您的学习体验。',
+  'course.teachingLanguage': '教学语言',
   'course.showAllReviews': '显示所有评论',
   'course.students': '学生',
   'course.reviews': '评论',
