@@ -737,7 +737,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                         </span>
                       </span>
                       {/* Teaching Language and Service Learning Badges Row */}
-                      {(props.teachingLanguages?.length || props.serviceLearningTypes?.length) && (
+                      {!courseStatsLoading && ((props.teachingLanguages?.length ?? 0) > 0 || (props.serviceLearningTypes?.length ?? 0) > 0) && (
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           {/* Teaching Language Badge */}
                           {props.teachingLanguages && props.teachingLanguages.length > 0 && (
@@ -1012,7 +1012,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       </span>
                     )}
                     {/* Teaching Language Badge */}
-                    {props.teachingLanguages && props.teachingLanguages.length > 0 && (
+                    {!props.isLoading && props.teachingLanguages && props.teachingLanguages.length > 0 && (
                       <ResponsiveTooltip 
                         content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
                         hasClickAction={true}
