@@ -375,15 +375,31 @@ export async function createVerifiedAccount(requestData, context) {
 
     try {
       // 創建用戶帳戶
-      log('🔨 創建用戶帳戶');
+      // 清理和驗證 name 參數，確保不會被誤認為電話號碼
+      const cleanName = name ? String(name).trim() : undefined;
+      log('🔨 創建用戶帳戶，參數:', { 
+        email, 
+        name: cleanName, 
+        nameType: typeof cleanName,
+        nameLength: cleanName ? cleanName.length : 0
+      });
+      
+      const userId = ID.unique();
+      
+      // 修復參數順序：users.create(userId, email, phone, password, name)
       const user = await users.create(
-        ID.unique(),
-        email,
-        password,
-        name
+        userId,          // string: 用戶 ID
+        email,           // string: 郵件地址
+        undefined,       // phone: 不使用電話號碼（設為 undefined）
+        password,        // string: 密碼
+        cleanName        // string|undefined: 用戶名稱
       );
-
-      log('✅ 用戶帳戶創建成功，ID:', user.$id);
+      
+      log('✅ 用戶帳戶創建成功，用戶信息:', {
+        userId: user.$id,
+        email: user.email,
+        name: user.name
+      });
 
       // 標記用戶為已驗證
       await users.updateEmailVerification(user.$id, true);

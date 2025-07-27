@@ -9,6 +9,7 @@
         "users.*.create"
       ],
       "timeout": 15,
+      "specification": "s-4vcpu-4gb",
       "enabled": true,
       "logging": true,
       "entrypoint": "src/main.js",

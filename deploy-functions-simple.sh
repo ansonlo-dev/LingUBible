@@ -15,5 +15,8 @@ echo "✅ cleanup-expired-codes deployed"
 appwrite functions create-deployment --function-id=get-user-stats --code=functions/get-user-stats --activate=true
 echo "✅ get-user-stats deployed"
 
+appwrite functions create-deployment --function-id=user-validation --code=functions/user-validation --activate=true
+echo "✅ user-validation deployed"
+
 echo "🎉 All functions deployed successfully!"
 echo "📊 Check status with: appwrite functions list" 
