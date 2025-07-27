@@ -13,6 +13,7 @@ export default defineConfig(({ command, mode }) => {
   const isCloudflare = process.env.CF_PAGES === '1' || process.env.CLOUDFLARE_ENV;
 
   return {
+    root: '.',
     publicDir: 'public',
     server: {
       host: "::",
@@ -38,7 +39,7 @@ export default defineConfig(({ command, mode }) => {
       target: 'es2020',
       minify: skipMinify ? false : (isProduction ? 'esbuild' : false),
       rollupOptions: {
-        input: './public/index.html',
+        input: path.resolve(__dirname, 'index.html'),
         // 完全安全的 tree shaking - 保護所有關鍵模組
         treeshake: isProduction ? {
           moduleSideEffects: (id) => {
@@ -91,15 +92,15 @@ export default defineConfig(({ command, mode }) => {
       },
       // 極致性能設定
       chunkSizeWarningLimit: 2000, // 增加限制以減少警告
-      reportCompressedSize: isBuild, // 建置時顯示大小報告
+      reportCompressedSize: isBuild && !isCloudflare, // Cloudflare 環境跳過大小報告以加速
       cssCodeSplit: false, // 單一 CSS 檔案更快
       assetsInlineLimit: 8192, // 更多小檔案內聯
       write: true,
       emptyOutDir: true,
       assetsDir: 'assets',
       copyPublicDir: true,
-      // 建置時啟用清單以顯示詳細資訊
-      manifest: isBuild,
+      // 建置時啟用清單以顯示詳細資訊（Cloudflare 環境跳過以加速）
+      manifest: isBuild && !isCloudflare,
       ssrManifest: false,
     },
     optimizeDeps: {
@@ -165,7 +166,7 @@ export default defineConfig(({ command, mode }) => {
     // 極致快取和性能設定
     cacheDir: '.vite',
     clearScreen: !isBuild, // 建置時不清除螢幕以顯示進度
-    logLevel: isBuild ? 'info' : 'warn', // 建置時顯示進度，開發時只顯示警告
+    logLevel: isBuild ? 'info' : 'info', // 建置時顯示進度，開發時也顯示資訊
     // 關閉不必要的功能
     experimental: {
       renderBuiltUrl: false,
