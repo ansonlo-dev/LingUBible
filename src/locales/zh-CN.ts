@@ -740,6 +740,7 @@ export default {
   'filter.clickToFilterRequirement': '点击以依{requirement}筛选',
   'filter.clickToFilterBySessionType': '点击以依课堂类型筛选：{type}',
   'filter.clickToFilterByGrade': '点击以依成绩筛选：{grade}',
+  'filter.clickToFilterServiceLearning': '点击以依服务学习筛选：{type}',
   'filter.clickAgainToApplyFilter': '再次点击以应用筛选',
   'filter.courseRequirements': '课程要求筛选器',
   'filter.courseRequirementsInstructions': '按课程要求筛选评论。点击 全部/✓/✗ 来筛选每个要求。',

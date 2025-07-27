@@ -40,6 +40,7 @@ interface CourseReviewsListProps {
   loading?: boolean;
   selectedLanguages?: string[];
   onToggleLanguage?: (language: string) => void;
+  onToggleServiceLearning?: (serviceType: string) => void; // Service learning filter handler
   t?: (key: string, params?: Record<string, any>) => any;
   hideHeader?: boolean; // New prop to hide the card header when wrapped in CollapsibleSection
   externalGradeFilter?: string; // External grade to filter by
@@ -57,6 +58,7 @@ export const CourseReviewsList = ({
   loading = false, 
   selectedLanguages = [], 
   onToggleLanguage,
+  onToggleServiceLearning,
   t: tProp,
   hideHeader = false,
   externalGradeFilter,
@@ -76,6 +78,7 @@ export const CourseReviewsList = ({
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
   const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
   const [pendingLanguageFilter, setPendingLanguageFilter] = useState<string | null>(null);
+  const [pendingServiceLearningFilter, setPendingServiceLearningFilter] = useState<string | null>(null);
   
   // Clear pending states when clicking outside
   useEffect(() => {
@@ -85,6 +88,7 @@ export const CourseReviewsList = ({
       setPendingSessionTypeFilter(null);
       setPendingTermFilter(null);
       setPendingLanguageFilter(null);
+      setPendingServiceLearningFilter(null);
     };
 
     // Add a small delay to avoid clearing immediately when clicking the badge itself
@@ -100,18 +104,19 @@ export const CourseReviewsList = ({
 
   // Clear pending states after timeout
   useEffect(() => {
-    if (pendingGradeFilter || pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingLanguageFilter) {
+    if (pendingGradeFilter || pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingLanguageFilter || pendingServiceLearningFilter) {
       const timer = setTimeout(() => {
         setPendingGradeFilter(null);
         setPendingTeachingLanguageFilter(null);
         setPendingSessionTypeFilter(null);
         setPendingTermFilter(null);
         setPendingLanguageFilter(null);
+        setPendingServiceLearningFilter(null);
       }, 3000); // Clear after 3 seconds
 
       return () => clearTimeout(timer);
     }
-  }, [pendingGradeFilter, pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingLanguageFilter]);
+  }, [pendingGradeFilter, pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingLanguageFilter, pendingServiceLearningFilter]);
   
   // Extract course code and term code for teaching languages hook
   const firstReview = allReviews?.[0];
@@ -555,6 +560,28 @@ export const CourseReviewsList = ({
     };
     
     return languageMap[reviewLang] || reviewLang;
+  };
+
+  // Service learning badge click handler
+  const handleServiceLearningBadgeClick = (serviceType: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (isMobile) {
+      // Mobile/tablet: require 2 taps to apply filter
+      if (pendingServiceLearningFilter !== serviceType) {
+        setPendingServiceLearningFilter(serviceType);
+        return; // Only set pending on first tap, do not apply filter
+      } else if (pendingServiceLearningFilter === serviceType) {
+        setPendingServiceLearningFilter(null);
+        // Continue to apply filter below
+      }
+    }
+    
+    // Apply filter (desktop immediate, mobile on second tap)
+    if (onToggleServiceLearning) {
+      onToggleServiceLearning(serviceType);
+    }
   };
 
   const renderRequirementBadge = (hasRequirement: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
@@ -1006,19 +1033,28 @@ export const CourseReviewsList = ({
                 </h5>
                 <div className="ml-4 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span 
-                      className={cn(
-                        "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
-                        instructor.service_learning_type === 'compulsory'
-                          ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-                          : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                      )}
+                    <ResponsiveTooltip
+                      content={t('filter.clickToFilterServiceLearning', { 
+                        type: instructor.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional')
+                      })}
+                      hasClickAction={true}
+                      clickActionText={t('tooltip.clickAgainToFilter')}
                     >
-                      {instructor.service_learning_type === 'compulsory' 
-                        ? t('review.compulsory') 
-                        : t('review.optional')
-                      }
-                    </span>
+                      <span 
+                        className={cn(
+                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105",
+                          instructor.service_learning_type === 'compulsory'
+                            ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
+                            : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
+                        )}
+                        onClick={(e) => handleServiceLearningBadgeClick(instructor.service_learning_type, e)}
+                      >
+                        {instructor.service_learning_type === 'compulsory' 
+                          ? t('review.compulsory') 
+                          : t('review.optional')
+                        }
+                      </span>
+                    </ResponsiveTooltip>
                   </div>
                   {instructor.service_learning_description && (
                     <div className="text-xs break-words">

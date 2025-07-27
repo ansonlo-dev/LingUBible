@@ -755,6 +755,7 @@ export default {
   'filter.clickToFilterRequirement': 'Click to filter by requirement: {requirement}',
   'filter.clickToFilterBySessionType': 'Click to filter by session type: {type}',
   'filter.clickToFilterByGrade': 'Click to filter by grade: {grade}',
+  'filter.clickToFilterServiceLearning': 'Click to filter by service learning: {type}',
   'filter.clickAgainToApplyFilter': 'Click again to apply filter',
   'filter.courseRequirements': 'Course Requirements Filter',
   'filter.courseRequirementsInstructions': 'Filter reviews by course requirements. Click All/✓/✗ for each requirement.',

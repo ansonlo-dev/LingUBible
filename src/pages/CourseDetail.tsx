@@ -288,6 +288,7 @@ const CourseDetail = () => {
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
+  const [selectedServiceLearningFilter, setSelectedServiceLearningFilter] = useState<string[]>([]);
 
   // Grade distribution chart filter state
   const [selectedTermFilter, setSelectedTermFilter] = useState<string | string[]>('all');
@@ -595,6 +596,20 @@ const CourseDetail = () => {
       ...prev,
       [termCode]: false
     }));
+  };
+
+  // Service learning filter handler
+  const handleServiceLearningToggle = (serviceType: string) => {
+    setSelectedServiceLearningFilter(prev => {
+      const isSelected = prev.includes(serviceType);
+      if (isSelected) {
+        // Remove from selection
+        return prev.filter(type => type !== serviceType);
+      } else {
+        // Add to selection (replace existing selection for simplicity)
+        return [serviceType];
+      }
+    });
   };
 
   const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
@@ -1064,6 +1079,7 @@ const CourseDetail = () => {
               externalGradeFilter={externalGradeFilter}
               course={course}
               hideHeader={true}
+              onToggleServiceLearning={handleServiceLearningToggle}
             />
           </div>
         </TabsContent>

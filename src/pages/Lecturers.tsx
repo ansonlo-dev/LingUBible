@@ -229,6 +229,7 @@ const Lecturers = () => {
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
   const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
   const [pendingReviewLanguageFilter, setPendingReviewLanguageFilter] = useState<string | null>(null);
+  const [pendingServiceLearningFilter, setPendingServiceLearningFilter] = useState<string | null>(null);
   
   // Teaching language tooltip states for mobile
   const [teachingLanguageTooltipStates, setTeachingLanguageTooltipStates] = useState<{[key: string]: boolean}>({});
@@ -253,6 +254,7 @@ const Lecturers = () => {
       setPendingReviewLanguageFilter(null);
       setPendingGradeFilter(null);
       setPendingRequirementFilter(null);
+      setPendingServiceLearningFilter(null);
     };
 
     // Add a small delay to avoid clearing immediately when clicking the badge itself
@@ -268,7 +270,7 @@ const Lecturers = () => {
 
   // Clear pending states after timeout
   useEffect(() => {
-    if (pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingReviewLanguageFilter || pendingGradeFilter || pendingRequirementFilter) {
+    if (pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingReviewLanguageFilter || pendingGradeFilter || pendingRequirementFilter || pendingServiceLearningFilter) {
       const timer = setTimeout(() => {
         setPendingTeachingLanguageFilter(null);
         setPendingSessionTypeFilter(null);
@@ -276,11 +278,12 @@ const Lecturers = () => {
         setPendingReviewLanguageFilter(null);
         setPendingGradeFilter(null);
         setPendingRequirementFilter(null);
+        setPendingServiceLearningFilter(null);
       }, 3000); // Clear after 3 seconds
 
       return () => clearTimeout(timer);
     }
-  }, [pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingReviewLanguageFilter, pendingGradeFilter, pendingRequirementFilter]);
+  }, [pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingReviewLanguageFilter, pendingGradeFilter, pendingRequirementFilter, pendingServiceLearningFilter]);
 
   // Helper function to generate responsive teaching language labels
   const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
@@ -3300,19 +3303,52 @@ const Lecturers = () => {
                                   </h5>
                                   <div className="ml-4 space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <span 
-                                        className={cn(
-                                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
-                                          currentInstructorDetail.service_learning_type === 'compulsory'
-                                            ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-                                            : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                                        )}
+                                      <ResponsiveTooltip
+                                        content={t('filter.clickToFilterServiceLearning', { 
+                                          type: currentInstructorDetail.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional')
+                                        })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        onFirstTap={() => {
+                                          console.log('📋 Service Learning Badge (Lecturers): First tap - setting pending filter');
+                                          setPendingServiceLearningFilter(currentInstructorDetail.service_learning_type);
+                                        }}
+                                        onSecondTap={() => {
+                                          console.log('✅ Service Learning Badge (Lecturers): Second tap - applying filter');
+                                          setPendingServiceLearningFilter(null);
+                                          handleFiltersChange({
+                                            ...filters,
+                                            selectedServiceLearning: [currentInstructorDetail.service_learning_type],
+                                            currentPage: 1
+                                          });
+                                        }}
                                       >
-                                        {currentInstructorDetail.service_learning_type === 'compulsory' 
-                                          ? t('review.compulsory') 
-                                          : t('review.optional')
-                                        }
-                                      </span>
+                                        <span 
+                                          className={cn(
+                                            "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105",
+                                            currentInstructorDetail.service_learning_type === 'compulsory'
+                                              ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
+                                              : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
+                                          )}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (!isMobile) {
+                                              // Desktop: apply filter immediately
+                                              handleFiltersChange({
+                                                ...filters,
+                                                selectedServiceLearning: [currentInstructorDetail.service_learning_type],
+                                                currentPage: 1
+                                              });
+                                            }
+                                          }}
+                                        >
+                                          {currentInstructorDetail.service_learning_type === 'compulsory' 
+                                            ? t('review.compulsory') 
+                                            : t('review.optional')
+                                          }
+                                        </span>
+                                      </ResponsiveTooltip>
                                     </div>
                                     {currentInstructorDetail.service_learning_description && (
                                       <div className="text-sm break-words">
@@ -3534,19 +3570,52 @@ const Lecturers = () => {
                                         </h5>
                                         <div className="ml-4 space-y-2">
                                           <div className="flex items-center gap-2">
-                                            <span 
-                                              className={cn(
-                                                "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
-                                                instructor.service_learning_type === 'compulsory'
-                                                  ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-                                                  : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                                              )}
+                                            <ResponsiveTooltip
+                                              content={t('filter.clickToFilterServiceLearning', { 
+                                                type: instructor.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional')
+                                              })}
+                                              hasClickAction={true}
+                                              clickActionText={t('tooltip.clickAgainToFilter')}
+                                              onFirstTap={() => {
+                                                console.log('📋 Service Learning Badge (Lecturers Other): First tap - setting pending filter');
+                                                setPendingServiceLearningFilter(instructor.service_learning_type);
+                                              }}
+                                              onSecondTap={() => {
+                                                console.log('✅ Service Learning Badge (Lecturers Other): Second tap - applying filter');
+                                                setPendingServiceLearningFilter(null);
+                                                handleFiltersChange({
+                                                  ...filters,
+                                                  selectedServiceLearning: [instructor.service_learning_type],
+                                                  currentPage: 1
+                                                });
+                                              }}
                                             >
-                                              {instructor.service_learning_type === 'compulsory' 
-                                                ? t('review.compulsory') 
-                                                : t('review.optional')
-                                              }
-                                            </span>
+                                              <span 
+                                                className={cn(
+                                                  "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105",
+                                                  instructor.service_learning_type === 'compulsory'
+                                                    ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
+                                                    : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
+                                                )}
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  e.stopPropagation();
+                                                  if (!isMobile) {
+                                                    // Desktop: apply filter immediately
+                                                    handleFiltersChange({
+                                                      ...filters,
+                                                      selectedServiceLearning: [instructor.service_learning_type],
+                                                      currentPage: 1
+                                                    });
+                                                  }
+                                                }}
+                                              >
+                                                {instructor.service_learning_type === 'compulsory' 
+                                                  ? t('review.compulsory') 
+                                                  : t('review.optional')
+                                                }
+                                              </span>
+                                            </ResponsiveTooltip>
                                           </div>
                                           {instructor.service_learning_description && (
                                             <div className="text-sm break-words">
