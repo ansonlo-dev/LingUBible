@@ -13,6 +13,7 @@ export default defineConfig(({ command, mode }) => {
   const isCloudflare = process.env.CF_PAGES === '1' || process.env.CLOUDFLARE_ENV;
 
   return {
+    publicDir: 'public',
     server: {
       host: "::",
       port: 8080,

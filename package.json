@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "vite --host",
     "dev:performance": "vite --mode development --open /performance",
-    "build": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production",
+    "build": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production && rm -f dist/public/index.html && echo '✓ 清理重複的 index.html'",
     "build:dev": "vite build --mode development", 
     "build:prod": "NODE_ENV=production bun run prebuild && vite build",
     "build:fast": "SKIP_FONT_PROCESSING=true vite build --mode production",
@@ -19,7 +19,7 @@
     "build:lightning": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=8192' VITE_SKIP_MINIFY=true NODE_ENV=production vite build --mode production",
     "build:workers": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production vite build --mode production",
     "build:workers-optimized": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production vite build --mode production",
-    "build:cf-fast": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=2048' CLOUDFLARE_ENV=1 NODE_ENV=production vite build --mode production",
+    "build:cf-fast": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=2048' CLOUDFLARE_ENV=1 NODE_ENV=production vite build --mode production && rm -f dist/public/index.html && echo '✓ 清理重複的 index.html'",
     "build:analyze": "vite build --mode production && bun run analyze:bundle",
     "analyze:bundle": "echo '📊 Bundle analysis complete. Check dist/ for output.'",
     "lint": "eslint .",
