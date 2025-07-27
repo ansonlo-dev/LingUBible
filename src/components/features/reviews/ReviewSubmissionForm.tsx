@@ -3074,6 +3074,69 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             </div>
 
                             <div className="space-y-3">
+                              <Label className="font-bold">{t('review.serviceLearningSectionTitle')}</Label>
+                              <div className="space-y-2">
+                                {evaluation.hasServiceLearning ? (
+                                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800/30">
+                                    <div className="flex items-center gap-2">
+                                      <Award className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                      <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                        {t('review.hasServiceLearning')}
+                                      </span>
+                                      <Badge 
+                                        variant={evaluation.serviceLearningType === 'compulsory' ? "destructive" : "default"}
+                                        className={`text-xs ${
+                                          evaluation.serviceLearningType === 'compulsory' 
+                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' 
+                                            : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                        }`}
+                                      >
+                                        {evaluation.serviceLearningType === 'compulsory' ? t('review.serviceLearningCompulsory') : t('review.serviceLearningOptional')}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                      {t('review.serviceLearningAutoFilled')}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-900/20 rounded-md border border-gray-200 dark:border-gray-800/30">
+                                    <div className="flex items-center gap-2">
+                                      <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                                        {t('review.noServiceLearning')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {evaluation.hasServiceLearning && (
+                                <div className="space-y-2">
+                                  <Label htmlFor={`serviceLearningDescription-${idx}`}>
+                                    {t('review.serviceLearningDescription')}
+                                    {evaluation.serviceLearningType === 'compulsory' && (
+                                      <span className="text-destructive ml-1">*</span>
+                                    )}
+                                  </Label>
+                                  <HybridMarkdownEditor
+                                    t={t}
+                                    id={`serviceLearningDescription-${idx}`}
+                                    value={evaluation.serviceLearningDescription}
+                                    onChange={(value) => updateInstructorEvaluation(idx, 'serviceLearningDescription', value)}
+                                    placeholder={
+                                      evaluation.serviceLearningType === 'optional' 
+                                        ? t('review.serviceLearningOptionalPlaceholder')
+                                        : t('review.serviceLearningPlaceholder')
+                                    }
+                                    rows={3}
+                                    minWords={evaluation.serviceLearningType === 'compulsory' ? 5 : 0}
+                                    maxWords={1000}
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-3">
                               <Label htmlFor={`teachingComments-${idx}`} className="font-bold">
                                 {t('review.teachingComments')} <span className="text-red-500">*</span>
                               </Label>
