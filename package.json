@@ -8,7 +8,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "dev:performance": "vite --mode development --open /performance",
     "build": "SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production",
     "build:dev": "vite build --mode development", 
