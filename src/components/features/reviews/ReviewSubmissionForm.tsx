@@ -3699,24 +3699,22 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         )}
 
                         {/* 服務學習 */}
-                        {instructor.serviceLearningType && (
+                        {instructor.hasServiceLearning && (
                           <div className="mb-6">
                             <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                               <GraduationCap className="h-4 w-4 shrink-0" />
                               <span>{t('review.serviceLearning')}</span>
                             </h5>
                             <div className="ml-4 space-y-2">
-                              {instructor.serviceLearningType && (
-                                <div className="flex items-center gap-2">
-                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
-                                    instructor.serviceLearningType === 'compulsory'
-                                      ? 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
-                                      : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
-                                  }`}>
-                                    {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${
+                                  instructor.serviceLearningType === 'compulsory'
+                                    ? 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+                                    : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                                }`}>
+                                  {instructor.serviceLearningType === 'compulsory' ? t('review.compulsory') : t('review.optional')}
+                                </span>
+                              </div>
                               {instructor.serviceLearningDescription && (
                                 <div className="text-xs break-words">
                                   <div className="text-xs">{renderCommentMarkdown(instructor.serviceLearningDescription)}</div>
