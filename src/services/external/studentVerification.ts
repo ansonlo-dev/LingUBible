@@ -396,14 +396,29 @@ class StudentVerificationService {
           };
         }
       } else if (result.status === 'failed') {
-        console.error('❌ 創建帳戶執行失敗:', {
+        console.error('❌ 創建帳戶執行失敗 (第399行錯誤位置):', {
+          email,
           error: result.error,
           stderr: result.stderr,
-          stdout: result.stdout
+          stdout: result.stdout,
+          fullResult: result
         });
+        
+        // 提供更具體的錯誤訊息
+        let specificError = '創建帳戶失敗';
+        if (result.error?.includes('Email not verified')) {
+          specificError = '郵件驗證未完成，請先完成郵件驗證';
+        } else if (result.error?.includes('already exists')) {
+          specificError = '此郵件地址已經註冊過帳戶';
+        } else if (result.error?.includes('reCAPTCHA')) {
+          specificError = 'reCAPTCHA 驗證失敗，請重新嘗試';
+        } else if (result.stderr) {
+          specificError = `伺服器錯誤: ${result.stderr}`;
+        }
+        
         return {
           success: false,
-          message: `創建帳戶失敗: ${result.error || result.stderr || '未知錯誤'}`
+          message: `${specificError}: ${result.error || result.stderr || '未知錯誤'}`
         };
       } else {
         console.error('❌ 創建帳戶狀態異常:', result);

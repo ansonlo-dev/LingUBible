@@ -1,7 +1,7 @@
 // 開發模式配置
 export const DEV_MODE = {
   // 臨時硬編碼開發模式為 true，因為環境變數設置有問題
-  enabled: false, // process.env.DEV_MODE === 'true',
+  enabled: true, // process.env.DEV_MODE === 'true',
   
   // 開發模式下允許的測試郵件域名（現在允許所有域名）
   allowedTestDomains: [
