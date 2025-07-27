@@ -71,7 +71,7 @@ export function generateStructuredData(
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": customData?.name || SEO_CONFIG.SITE_NAME,
-    "alternateName": language === 'zh-TW' ? ['Reg科聖經', '嶺南選課神器', '嶺大課程評價'] : 
+    "alternateName": language === 'zh-TW' ? ['Reg科聖經', '嶺南選課指南', '嶺大課程評價'] : 
                      language === 'zh-CN' ? ['课程评价平台', '岭南大学选课'] : 
                      ['Course Reviews', 'Lecturer Ratings'],
     "description": customData?.description || seoData.description,

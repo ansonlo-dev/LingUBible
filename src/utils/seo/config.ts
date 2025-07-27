@@ -21,7 +21,7 @@ export const SEO_CONFIG = {
     'zh-TW': {
       title: 'LingUBible - Reg科聖經 | 嶺南大學課程與講師評價平台',
       description: '真實可靠的Reg科聖經，幫助嶺南大學同學們作出明智的選課決定。查看課程評價、講師評分，找到最適合的課程和教授。',
-      keywords: 'Reg科聖經,嶺南大學,LingU,嶺大,課程評價,講師評分,學生評價,選課指南,課程推薦,教學評估,大學課程,選課神器,嶺南選課,課程評論,教授評價,學生心得,選修課推薦,必修課評價,嶺南課程,LingUBible',
+      keywords: 'Reg科聖經,嶺南大學,LingU,嶺大,課程評價,講師評分,學生評價,選課指南,課程推薦,教學評估,大學課程,選課指南,嶺南選課,課程評論,教授評價,學生心得,選修課推薦,必修課評價,嶺南課程,LingUBible',
       locale: 'zh_TW',
       lang: 'zh-TW'
     },
@@ -42,7 +42,7 @@ export const SEO_CONFIG = {
         description: 'Seek insights broadly, choose courses wisely. A platform for Lingnan University students to share honest course and lecturer reviews.'
       },
       'zh-TW': {
-        title: 'LingUBible - Reg科聖經 | 嶺南大學選課神器',
+        title: 'LingUBible - Reg科聖經 | 嶺南大學選課指南',
         description: '博覽群評，擇善而學。Reg科聖經助你選課無憂！查看真實課程評價、講師評分，找到最適合的課程。嶺南大學學生專屬的選課指南平台。'
       },
       'zh-CN': {
