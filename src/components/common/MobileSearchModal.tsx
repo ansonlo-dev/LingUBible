@@ -1073,7 +1073,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                     <div className="flex items-center gap-1">
                                                       {sortedTypes.map((type, index) => {
                                                         const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                        const text = type === 'optional' ? t('review.optional') : t('review.compulsory');
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
                                                         return (
                                                           <span 
                                                             key={type}
@@ -1330,7 +1330,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                     <div className="flex items-center gap-1">
                                                       {sortedTypes.map((type, index) => {
                                                         const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                        const text = type === 'optional' ? t('review.optional') : t('review.compulsory');
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
                                                         return (
                                                           <span 
                                                             key={type}
@@ -1840,7 +1840,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                     <div className="flex items-center gap-1">
                                                       {sortedTypes.map((type, index) => {
                                                         const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                        const text = type === 'optional' ? t('review.optional') : t('review.compulsory');
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
                                                         return (
                                                           <span 
                                                             key={type}
@@ -2088,7 +2088,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                     <div className="flex items-center gap-1">
                                                       {sortedTypes.map((type, index) => {
                                                         const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                        const text = type === 'optional' ? t('review.optional') : t('review.compulsory');
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
                                                         return (
                                                           <span 
                                                             key={type}
@@ -2337,7 +2337,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                                     <div className="flex items-center gap-1">
                                                       {sortedTypes.map((type, index) => {
                                                         const isCurrentTerm = course.currentTermServiceLearning?.includes(type);
-                                                        const text = type === 'optional' ? t('review.optional') : t('review.compulsory');
+                                                        const text = type === 'optional' ? 'SO' : 'SC';
                                                         return (
                                                           <span 
                                                             key={type}
