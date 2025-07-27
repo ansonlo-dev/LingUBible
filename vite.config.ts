@@ -36,8 +36,8 @@ export default defineConfig(({ command, mode }) => {
       sourcemap: isDevelopment,
       target: 'es2020',
       minify: skipMinify ? false : (isProduction ? 'esbuild' : false),
-      // Disable esbuild to prevent SIGBUS in Cloudflare Workers
       rollupOptions: {
+        input: './public/index.html',
         // 完全安全的 tree shaking - 保護所有關鍵模組
         treeshake: isProduction ? {
           moduleSideEffects: (id) => {
@@ -90,15 +90,15 @@ export default defineConfig(({ command, mode }) => {
       },
       // 極致性能設定
       chunkSizeWarningLimit: 2000, // 增加限制以減少警告
-      reportCompressedSize: false, // 關閉大小報告
+      reportCompressedSize: isBuild, // 建置時顯示大小報告
       cssCodeSplit: false, // 單一 CSS 檔案更快
       assetsInlineLimit: 8192, // 更多小檔案內聯
       write: true,
       emptyOutDir: true,
       assetsDir: 'assets',
       copyPublicDir: true,
-      // 關閉所有分析功能以加速
-      manifest: false,
+      // 建置時啟用清單以顯示詳細資訊
+      manifest: isBuild,
       ssrManifest: false,
     },
     optimizeDeps: {
@@ -163,8 +163,8 @@ export default defineConfig(({ command, mode }) => {
     },
     // 極致快取和性能設定
     cacheDir: '.vite',
-    clearScreen: false, // 減少終端輸出
-    logLevel: 'warn', // 只顯示警告以減少日誌
+    clearScreen: !isBuild, // 建置時不清除螢幕以顯示進度
+    logLevel: isBuild ? 'info' : 'warn', // 建置時顯示進度，開發時只顯示警告
     // 關閉不必要的功能
     experimental: {
       renderBuiltUrl: false,
