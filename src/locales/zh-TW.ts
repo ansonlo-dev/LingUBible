@@ -186,6 +186,7 @@ export default {
   'verification.disposableEmail': '一次性郵件地址 - 適合測試使用',
   'verification.codeAlreadySent': '驗證碼已發送，請檢查您的信箱或等待 {remainingMinutes} 分鐘後重新發送',
   'verification.invalidCodeFormat': '驗證碼必須是 6 位數字',
+  'verification.success': '嶺南人郵件驗證成功！您現在可以設置密碼以完成註冊。',
   'settings.title': '用戶設定',
   'settings.subtitle': '管理您的個人資料和偏好設定',
   'settings.backToHome': '返回首頁',

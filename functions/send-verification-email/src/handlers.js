@@ -81,7 +81,7 @@ export async function sendVerificationCode(requestData, context) {
         log('⏰ 驗證碼尚未過期，剩餘時間:', remainingMinutes, '分鐘');
         return res.json({
           success: false,
-          message: `Verification code already sent. Please check your inbox or wait ${remainingMinutes} minutes before resending`,
+          message: `驗證碼已發送，請檢查您的信箱或等待 ${remainingMinutes} 分鐘後重新發送`,
           messageKey: 'verification.codeAlreadySent',
           remainingMinutes
         }, 400);

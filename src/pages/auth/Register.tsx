@@ -275,17 +275,6 @@ export default function Register() {
                 />
               )}
               
-              {/* 驗證成功提示 */}
-              {isStudentVerified && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <p className="text-sm text-green-600 dark:text-green-400">
-                      {t('auth.studentVerificationSuccess')}
-                    </p>
-                  </div>
-                </div>
-              )}
 
               {/* Username field with responsive layout */}
               <div className="flex flex-col md:flex-row md:items-start space-y-2 md:space-y-0 md:space-x-4">
