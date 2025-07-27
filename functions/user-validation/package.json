@@ -8,7 +8,7 @@
     "start": "bun run src/main.js"
   },
   "dependencies": {
-    "node-appwrite": "^15.0.0"
+    "node-appwrite": "^17.2.0"
   },
   "keywords": ["appwrite", "validation", "oauth", "security"],
   "author": "LingUBible",

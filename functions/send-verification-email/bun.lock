@@ -4,7 +4,7 @@
     "": {
       "name": "send-verification-email",
       "dependencies": {
-        "node-appwrite": "^13.0.0",
+        "node-appwrite": "^17.2.0",
         "resend": "^4.5.1",
       },
     },
@@ -34,7 +34,7 @@
 
     "leac": ["leac@0.6.0", "", {}, "sha512-y+SqErxb8h7nE/fiEX07jsbuhrpO9lL8eca7/Y1nuWV2moNlXhyd59iDGcRf6moVyDMbmTNzL40SUyrFU/yDpg=="],
 
-    "node-appwrite": ["node-appwrite@13.0.0", "", { "dependencies": { "node-fetch-native-with-agent": "1.7.2" } }, "sha512-O1g1RWcRYcvnVvR0Dykjoe/4UcL6ELVvZosb4B8/hhNvleuWfN2fOFxzeCaU8amGW6UtVtZqvNaUT3IF1mPBdA=="],
+    "node-appwrite": ["node-appwrite@17.2.0", "", { "dependencies": { "node-fetch-native-with-agent": "1.7.2" } }, "sha512-naYUsVZEdF6YKF/q/s0DBQkAHJj2RhEWwmcXrkbfAAPc3Bn+D3CCftBqyNWeo17JBCoYWqQEgT2Od9xOVQR26A=="],
 
     "node-fetch-native-with-agent": ["node-fetch-native-with-agent@1.7.2", "", {}, "sha512-5MaOOCuJEvcckoz7/tjdx1M6OusOY6Xc5f459IaruGStWnKzlI1qpNgaAwmn4LmFYcsSlj+jBMk84wmmRxfk5g=="],
 

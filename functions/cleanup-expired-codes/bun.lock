@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "handle-review-vote",
+      "name": "cleanup-expired-codes",
       "dependencies": {
         "node-appwrite": "^17.2.0",
       },

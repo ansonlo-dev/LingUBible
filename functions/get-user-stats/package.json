@@ -9,7 +9,7 @@
     "dev": "bun --watch src/main.js"
   },
   "dependencies": {
-    "node-appwrite": "^13.0.0"
+    "node-appwrite": "^17.2.0"
   },
   "engines": {
     "bun": ">=1.1.0"
@@ -17,4 +17,4 @@
   "keywords": ["appwrite", "function", "user-stats", "bun"],
   "author": "LingUBible",
   "license": "MIT"
-} 
+}

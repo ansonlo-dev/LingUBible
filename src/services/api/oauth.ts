@@ -115,13 +115,20 @@ export const oauthService = {
    */
   async loginWithGoogle(): Promise<void> {
     try {
-      // 在開始 OAuth 流程前，顯示警告提示
+      // 🚨 SECURITY: Enhanced warning for OAuth login
+      console.warn('🚨 SECURITY NOTICE: Google OAuth login will create account immediately');
       console.warn('⚠️ Google 登入提醒：只有 @ln.hk 或 @ln.edu.hk 郵箱的學生才能使用此功能');
       console.warn('⚠️ 非學生郵箱創建的帳戶將被系統自動刪除');
+      console.warn('🛡️ Backend validation will immediately delete non-student accounts');
       
       const redirectUrl = `${window.location.origin}/oauth/login-callback`;
       
+      // Set a timestamp marker for OAuth start time
+      sessionStorage.setItem('oauthStartTime', Date.now().toString());
+      sessionStorage.setItem('oauthAttemptActive', 'true');
+      
       // 創建 OAuth 會話（這會創建用戶帳戶）
+      // Note: This WILL create an account immediately, validation happens after
       await account.createOAuth2Session(
         OAuthProvider.Google,
         redirectUrl,
@@ -129,6 +136,7 @@ export const oauthService = {
       );
     } catch (error: any) {
       console.error('Google 登入失敗:', error);
+      sessionStorage.removeItem('oauthAttemptActive');
       throw error;
     }
   },

@@ -268,17 +268,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     });
                 }
                 
-                // 安全檢查：驗證主帳戶郵箱是否為學生郵箱
-                // 允許連結任何 Google 郵箱，但主帳戶必須是學生郵箱
+                // 🚨 ENHANCED SECURITY: 驗證主帳戶郵箱是否為學生郵箱
                 console.log('🔍 檢查用戶郵箱:', currentUser.email, '是否為學生郵箱:', oauthService.isStudentEmail(currentUser.email));
                 
-                // 暫時註釋掉嚴格的學生郵箱檢查，允許所有已登入的用戶
-                // 這個檢查主要是為了防止非學生用戶註冊，但不應該阻止已經存在的用戶登入
-                console.log('⚠️ 暫時跳過學生郵箱檢查，允許所有已驗證用戶登入');
+                // 🛡️ CRITICAL: Re-enable strict student email validation for OAuth security
+                console.log('🛡️ 啟用嚴格的學生郵箱檢查，防止 OAuth 安全漏洞');
                 
-                /*
                 if (currentUser && !oauthService.isStudentEmail(currentUser.email)) {
-                    console.warn('檢測到非學生主帳戶郵箱，檢查是否為 OAuth 連結操作:', currentUser.email);
+                    console.error('🚨 SECURITY: 檢測到非學生主帳戶郵箱:', currentUser.email);
+                    
+                    // OAuth accounts should be immediately blocked if they bypass validation
+                    const oauthAttemptActive = sessionStorage.getItem('oauthAttemptActive');
+                    if (oauthAttemptActive === 'true') {
+                        console.error('🚨 CRITICAL: Non-student OAuth account detected in AuthContext!');
+                        
+                        // Force cleanup immediately
+                        await cleanupNonStudentSession(currentUser.email);
+                        return null;
+                    }
                     
                     // 檢查是否有 Google 身份提供者連結
                     try {
@@ -296,22 +303,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 // 主帳戶和 Google 郵箱都不是學生郵箱，清理會話
                                 console.warn('主帳戶和 Google 郵箱都不是學生郵箱，清理會話');
                                 await cleanupNonStudentSession(currentUser.email);
-                                return;
+                                return null;
                             }
                         } else {
                             // 沒有 Google 連結且主帳戶不是學生郵箱，清理會話
                             console.warn('主帳戶不是學生郵箱且沒有 Google 連結，清理會話');
                             await cleanupNonStudentSession(currentUser.email);
-                            return;
+                            return null;
                         }
                     } catch (identityError) {
                         console.error('檢查身份提供者失敗:', identityError);
                         // 如果無法檢查身份提供者，為安全起見清理會話
                         await cleanupNonStudentSession(currentUser.email);
-                        return;
+                        return null;
                     }
                 }
-                */
                 
                 console.log('✅ 所有檢查通過，設置用戶狀態:', currentUser.email);
                 setUser(currentUser);

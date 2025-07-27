@@ -6,7 +6,8 @@
       "runtime": "bun-1.1",
       "execute": ["any"],
       "events": [
-        "users.*.create"
+        "users.*.create",
+        "users.*.sessions.*.create"
       ],
       "timeout": 15,
       "specification": "s-4vcpu-4gb",

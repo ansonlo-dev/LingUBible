@@ -9,10 +9,10 @@
     "dev": "bun run src/main.js"
   },
   "dependencies": {
-    "resend": "^4.5.1",
-    "node-appwrite": "^13.0.0"
+    "node-appwrite": "^17.2.0",
+    "resend": "^4.5.1"
   },
   "engines": {
     "bun": ">=1.1.0"
   }
-} 
+}

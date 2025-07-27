@@ -29,6 +29,49 @@ export default async ({ req, res, log, error }) => {
       log('⚠️ Failed to parse request body, treating as event trigger');
     }
 
+    // 🚨 CRITICAL: OAuth Security Check - Immediate validation for OAuth-created accounts
+    if (requestBody.$id && requestBody.email) {
+      const oauthEmail = requestBody.email;
+      log(`🚨 OAUTH SECURITY CHECK: Immediate validation for email: ${oauthEmail}`);
+      
+      if (!isStudentEmail(oauthEmail)) {
+        log(`🚫 BLOCKING OAUTH LOGIN: Non-student email detected: ${oauthEmail}`);
+        
+        // Immediate deletion without any delay
+        try {
+          log(`🗑️ IMMEDIATE OAUTH DELETION: ${requestBody.$id}`);
+          await users.delete(requestBody.$id);
+          log(`✅ OAUTH ACCOUNT DELETED: ${requestBody.$id}`);
+          
+          return res.json({
+            success: false,
+            action: 'oauth_account_blocked',
+            reason: 'non_student_email',
+            email: oauthEmail,
+            userId: requestBody.$id,
+            message: 'OAuth account with non-student email immediately blocked and deleted',
+            blocked: true
+          }, 403);
+          
+        } catch (deleteError) {
+          error(`❌ OAUTH DELETION FAILED ${requestBody.$id}: ${deleteError.message}`);
+          
+          return res.json({
+            success: false,
+            action: 'oauth_account_blocked_deletion_failed',
+            reason: 'non_student_email',
+            email: oauthEmail,
+            userId: requestBody.$id,
+            message: 'OAuth account blocked but deletion failed',
+            deleteError: deleteError.message,
+            blocked: true
+          }, 403);
+        }
+      } else {
+        log(`✅ OAUTH VALIDATION PASSED: Student email allowed: ${oauthEmail}`);
+      }
+    }
+
     // Handle direct API calls for immediate user deletion
     if (requestBody.action === 'immediate_user_deletion') {
       const { userId, email, reason } = requestBody;

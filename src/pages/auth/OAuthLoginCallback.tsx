@@ -230,19 +230,55 @@ export default function OAuthLoginCallback() {
           console.log('🔍 OAuth 登入郵箱檢查:', { email, isStudentEmail });
           
           if (!isStudentEmail) {
-            // 如果不是學生郵箱，這是一個嚴重的安全問題
-            // 我們需要立即刪除用戶帳戶（不只是會話）
-            console.error('❌ 非學生郵箱成功創建帳戶，這是安全漏洞:', email);
+            // 🚨 CRITICAL SECURITY BREACH: Non-student email account created via OAuth
+            console.error('🚨 CRITICAL SECURITY BREACH: 非學生郵箱成功創建帳戶，立即執行多重清理:', email);
+            
+            // Clear OAuth attempt markers immediately
+            sessionStorage.removeItem('oauthAttemptActive');
+            sessionStorage.removeItem('oauthStartTime');
             
             try {
-              // 首先嘗試刪除當前會話
+              // Step 1: Delete current session immediately
+              console.log('🚫 [STEP 1] 刪除當前會話...');
               await account.deleteSession('current');
-              console.log('🚫 已刪除當前會話');
+              console.log('✅ [STEP 1] 當前會話已刪除');
               
-              // 調用後端清理函數來刪除用戶帳戶
+              // Step 2: Call user-validation function for immediate account deletion
               try {
-                console.log('🗑️ 調用後端清理函數刪除用戶帳戶...');
-                const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
+                console.log('🗑️ [STEP 2] 調用 user-validation 函數進行緊急帳戶刪除...');
+                const validationResponse = await fetch(`https://fra.cloud.appwrite.io/v1/functions/user-validation/executions`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': 'lingubible',
+                  },
+                  body: JSON.stringify({
+                    body: JSON.stringify({
+                      action: 'immediate_user_deletion',
+                      userId: currentUser.$id,
+                      email: email,
+                      reason: 'oauth_non_student_email_security_breach'
+                    }),
+                    async: false,
+                    method: 'POST'
+                  }),
+                });
+                
+                if (validationResponse.ok) {
+                  const result = await validationResponse.json();
+                  console.log('✅ [STEP 2] user-validation 緊急刪除成功:', result);
+                } else {
+                  const errorText = await validationResponse.text();
+                  console.error('❌ [STEP 2] user-validation 緊急刪除失敗:', validationResponse.status, errorText);
+                }
+              } catch (validationError) {
+                console.error('❌ [STEP 2] 調用 user-validation 函數失敗:', validationError);
+              }
+              
+              // Step 3: Also call cleanup function as backup
+              try {
+                console.log('🗑️ [STEP 3] 調用 cleanup 函數作為備份清理...');
+                const cleanupResponse = await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -253,25 +289,33 @@ export default function OAuthLoginCallback() {
                       action: 'immediate_cleanup',
                       userId: currentUser.$id,
                       email: email,
-                      reason: 'non_student_email_oauth_login'
+                      reason: 'oauth_non_student_email_backup_cleanup'
                     }),
                     async: false,
                     method: 'POST'
                   }),
                 });
                 
-                if (response.ok) {
-                  const result = await response.json();
-                  console.log('✅ 後端清理函數調用成功:', result);
+                if (cleanupResponse.ok) {
+                  const result = await cleanupResponse.json();
+                  console.log('✅ [STEP 3] cleanup 備份清理成功:', result);
                 } else {
-                  const errorText = await response.text();
-                  console.error('❌ 後端清理函數調用失敗:', response.status, errorText);
+                  const errorText = await cleanupResponse.text();
+                  console.error('❌ [STEP 3] cleanup 備份清理失敗:', cleanupResponse.status, errorText);
                 }
               } catch (cleanupError) {
-                console.error('❌ 調用後端清理函數失敗:', cleanupError);
+                console.error('❌ [STEP 3] 調用 cleanup 函數失敗:', cleanupError);
               }
               
-              console.error('🚨 安全警告：非學生郵箱帳戶已創建但被阻止登入:', email);
+              // Step 4: Report security incident
+              console.error('🚨 [SECURITY INCIDENT] OAuth 安全漏洞報告:', {
+                email: email,
+                userId: currentUser.$id,
+                timestamp: new Date().toISOString(),
+                oauthStartTime: sessionStorage.getItem('oauthStartTime'),
+                userAgent: navigator.userAgent,
+                incident: 'non_student_email_oauth_account_creation'
+              });
               
             } catch (deleteError) {
               console.error('❌ 刪除會話失敗:', deleteError);
@@ -304,6 +348,10 @@ export default function OAuthLoginCallback() {
             emailVerification: currentUser.emailVerification,
             status: currentUser.status
           });
+
+          // Clear OAuth attempt markers on successful login
+          sessionStorage.removeItem('oauthAttemptActive');
+          sessionStorage.removeItem('oauthStartTime');
           
           // 強制刷新用戶狀態，確保 UI 立即同步
           console.log('🔄 開始 OAuth 強制刷新用戶狀態...');
