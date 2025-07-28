@@ -768,13 +768,13 @@ export const CourseReviewsList = ({
                   {/* 課堂類型徽章 */}
                   <ResponsiveTooltip
                     ref={(el) => {
-                      if (el) tooltipRefs.current[`session-${instructor.session_type}-desktop`] = el;
+                      if (el) tooltipRefs.current[`session-${instructor.instructor_name}-${instructor.session_type}-desktop`] = el;
                     }}
                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                     hasClickAction={true}
                     clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                    open={isMobile ? mobileTapStates[`session-${instructor.session_type}-desktop`] : undefined}
-                    onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.session_type}-desktop`]: open })) : undefined}
+                    open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-desktop`] : undefined}
+                    onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-desktop`]: open })) : undefined}
                   >
                     <span 
                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
@@ -785,7 +785,7 @@ export const CourseReviewsList = ({
                           : ''
                       }`}
                       onClick={() => {
-                        handleMobileTwoTap(`session-${instructor.session_type}-desktop`, () => {
+                        handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-desktop`, () => {
                           const newFilters = { ...filters };
                           const sessionType = instructor.session_type;
                           
@@ -817,18 +817,18 @@ export const CourseReviewsList = ({
                       return (
                         <ResponsiveTooltip
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`teaching-lang-${teachingLanguage}-desktop`] = el;
+                            if (el) tooltipRefs.current[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`] = el;
                           }}
                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                          open={isMobile ? mobileTapStates[`teaching-lang-${teachingLanguage}-desktop`] : undefined}
-                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${teachingLanguage}-desktop`]: open })) : undefined}
+                          open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`] : undefined}
+                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`]: open })) : undefined}
                         >
                           <span 
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                             onClick={() => {
-                              handleMobileTwoTap(`teaching-lang-${teachingLanguage}-desktop`, () => {
+                              handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`, () => {
                                 const newFilters = { ...filters };
                                 
                                 // 切換教學語言篩選器
@@ -860,13 +860,13 @@ export const CourseReviewsList = ({
                 {/* 課堂類型徽章 */}
                 <ResponsiveTooltip
                   ref={(el) => {
-                    if (el) tooltipRefs.current[`session-${instructor.session_type}-mobile`] = el;
+                    if (el) tooltipRefs.current[`session-${instructor.instructor_name}-${instructor.session_type}-mobile`] = el;
                   }}
                   content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                   hasClickAction={true}
                   clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                  open={isMobile ? mobileTapStates[`session-${instructor.session_type}-mobile`] : undefined}
-                  onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.session_type}-mobile`]: open })) : undefined}
+                  open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-mobile`] : undefined}
+                  onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-mobile`]: open })) : undefined}
                 >
                   <span 
                     className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
@@ -877,7 +877,7 @@ export const CourseReviewsList = ({
                         : ''
                     }`}
                     onClick={() => {
-                      handleMobileTwoTap(`session-${instructor.session_type}-mobile`, () => {
+                      handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-mobile`, () => {
                         const newFilters = { ...filters };
                         const sessionType = instructor.session_type;
                         
@@ -909,18 +909,18 @@ export const CourseReviewsList = ({
                     return (
                       <ResponsiveTooltip
                         ref={(el) => {
-                          if (el) tooltipRefs.current[`teaching-lang-${teachingLanguage}-mobile`] = el;
+                          if (el) tooltipRefs.current[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`] = el;
                         }}
                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                        open={isMobile ? mobileTapStates[`teaching-lang-${teachingLanguage}-mobile`] : undefined}
-                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${teachingLanguage}-mobile`]: open })) : undefined}
+                        open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`] : undefined}
+                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`]: open })) : undefined}
                       >
                         <span 
                           className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                           onClick={() => {
-                            handleMobileTwoTap(`teaching-lang-${teachingLanguage}-mobile`, () => {
+                            handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`, () => {
                               const newFilters = { ...filters };
                               
                               // 切換教學語言篩選器
@@ -1027,15 +1027,15 @@ export const CourseReviewsList = ({
                   <div className="flex items-center gap-2">
                     <ResponsiveTooltip
                       ref={(el) => {
-                        if (el) tooltipRefs.current[`service-learning-${instructor.service_learning_type}`] = el;
+                        if (el) tooltipRefs.current[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`] = el;
                       }}
                       content={t('filter.clickToFilterServiceLearning', { 
                         type: instructor.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional')
                       })}
                       hasClickAction={true}
                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                      open={isMobile ? mobileTapStates[`service-learning-${instructor.service_learning_type}`] : undefined}
-                      onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.service_learning_type}`]: open })) : undefined}
+                      open={isMobile ? mobileTapStates[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`] : undefined}
+                      onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`]: open })) : undefined}
                     >
                       <span 
                         className={cn(
@@ -1047,10 +1047,21 @@ export const CourseReviewsList = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          handleMobileTwoTap(`service-learning-${instructor.service_learning_type}`, () => {
-                            if (onToggleServiceLearning) {
-                              onToggleServiceLearning(instructor.service_learning_type);
+                          handleMobileTwoTap(`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`, () => {
+                            const newFilters = { ...filters };
+                            const serviceType = instructor.service_learning_type;
+                            
+                            // 切換服務學習篩選器  
+                            if (newFilters.selectedServiceLearning.includes(serviceType)) {
+                              newFilters.selectedServiceLearning = newFilters.selectedServiceLearning.filter(type => type !== serviceType);
+                            } else {
+                              newFilters.selectedServiceLearning = [serviceType];
                             }
+                            
+                            // 重置頁面到第一頁
+                            newFilters.currentPage = 1;
+                            
+                            handleFiltersChange(newFilters);
                           });
                         }}
                       >
@@ -1285,7 +1296,7 @@ export const CourseReviewsList = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-hideheader-1`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1314,7 +1325,7 @@ export const CourseReviewsList = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-hideheader-1`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1348,7 +1359,7 @@ export const CourseReviewsList = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-hideheader-2`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1377,7 +1388,7 @@ export const CourseReviewsList = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-hideheader-2`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1639,7 +1650,7 @@ export const CourseReviewsList = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-card-1`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1668,7 +1679,7 @@ export const CourseReviewsList = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-card-1`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1702,7 +1713,7 @@ export const CourseReviewsList = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-card-2`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1731,7 +1742,7 @@ export const CourseReviewsList = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-card-2`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
