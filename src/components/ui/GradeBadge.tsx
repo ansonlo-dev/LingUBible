@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getGradeInfo } from '@/utils/gradeUtils';
@@ -15,7 +15,7 @@ interface GradeBadgeProps {
   onMobileTooltipChange?: (open: boolean) => void;
 }
 
-export const GradeBadge: React.FC<GradeBadgeProps> = ({ 
+export const GradeBadge = forwardRef<HTMLDivElement, GradeBadgeProps>(({ 
   grade, 
   size = 'md', 
   showTooltip = true,
@@ -24,7 +24,7 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   isPending = false,
   mobileTooltipOpen,
   onMobileTooltipChange
-}) => {
+}, ref) => {
   const { t } = useLanguage();
   
   // Handle N/A grades (stored as "-1")
@@ -181,7 +181,7 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   };
 
   const badgeElement = (
-    <div className="mb-2">
+    <div className="mb-2" ref={ref}>
       <ResponsiveTooltip 
         content={getFilterTooltipText() || ''} 
         disabled={!showTooltip}
@@ -222,4 +222,6 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   );
 
   return badgeElement;
-}; 
+});
+
+GradeBadge.displayName = 'GradeBadge'; 

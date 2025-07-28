@@ -131,6 +131,7 @@ const MyReviews = () => {
   const [mobileTapStates, setMobileTapStates] = useState<{[key: string]: boolean}>({});
   const [mobileTapCounts, setMobileTapCounts] = useState<{[key: string]: number}>({});
   const mobileTimeoutRefs = useRef<{[key: string]: NodeJS.Timeout | null}>({});
+  const tooltipRefs = useRef<{[key: string]: HTMLElement | null}>({});
 
   // 篩選和排序狀態
   const [filters, setFilters] = useState<MyReviewFilters>({
@@ -210,6 +211,54 @@ const MyReviews = () => {
     }
   };
 
+
+  // Handle clicks outside tooltips to close them
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Get all currently active tooltip keys
+      const activeKeys = Object.keys(mobileTapStates).filter(key => mobileTapStates[key]);
+      
+      if (activeKeys.length === 0) return;
+
+      // Check if click is outside all active tooltips
+      let clickedInsideAnyTooltip = false;
+      
+      for (const key of activeKeys) {
+        const tooltipElement = tooltipRefs.current[key];
+        if (tooltipElement && tooltipElement.contains(target)) {
+          clickedInsideAnyTooltip = true;
+          break;
+        }
+      }
+
+      // If clicked outside all tooltips, close all active tooltips
+      if (!clickedInsideAnyTooltip) {
+        activeKeys.forEach(key => {
+          // Clear timeout
+          if (mobileTimeoutRefs.current[key]) {
+            clearTimeout(mobileTimeoutRefs.current[key]);
+            mobileTimeoutRefs.current[key] = null;
+          }
+          
+          // Reset states
+          setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+          setMobileTapStates(prev => ({ ...prev, [key]: false }));
+        });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobile, mobileTapStates]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -760,6 +809,9 @@ const MyReviews = () => {
                           } : undefined}
                         >
                           <button
+                            ref={(el) => {
+                              if (el) tooltipRefs.current[`term-mobile-${reviewInfo.term.term_code}`] = el;
+                            }}
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
@@ -789,6 +841,9 @@ const MyReviews = () => {
                             } : undefined}
                           >
                             <button
+                              ref={(el) => {
+                                if (el) tooltipRefs.current[`lang-mobile-${reviewInfo.review.review_language || 'en'}`] = el;
+                              }}
                               className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -844,6 +899,9 @@ const MyReviews = () => {
                           } : undefined}
                         >
                           <button
+                            ref={(el) => {
+                              if (el) tooltipRefs.current[`term-desktop-${reviewInfo.term.term_code}`] = el;
+                            }}
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
@@ -873,6 +931,9 @@ const MyReviews = () => {
                             } : undefined}
                           >
                             <button
+                              ref={(el) => {
+                                if (el) tooltipRefs.current[`lang-desktop-${reviewInfo.review.review_language || 'en'}`] = el;
+                              }}
                               className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -896,6 +957,9 @@ const MyReviews = () => {
                       {reviewInfo.review.course_final_grade && (
                         <div className="flex flex-col items-center">
                           <GradeBadge 
+                            ref={(el) => {
+                              if (el) tooltipRefs.current[`grade-${reviewInfo.review.course_final_grade}`] = el;
+                            }}
                             grade={reviewInfo.review.course_final_grade}
                             size="md"
                             showTooltip={true}
@@ -1105,6 +1169,9 @@ const MyReviews = () => {
                                       } : undefined}
                                     >
                                       <span 
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] = el;
+                                        }}
                                         className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 ${
                                           instructorDetail.session_type === 'Lecture' 
                                             ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
@@ -1136,6 +1203,9 @@ const MyReviews = () => {
                                             } : undefined}
                                           >
                                             <span 
+                                              ref={(el) => {
+                                                if (el) tooltipRefs.current[`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`] = el;
+                                              }}
                                               className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
                                               onClick={() => {
                                                 handleMobileTwoTap(`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`, () => {
@@ -1177,6 +1247,9 @@ const MyReviews = () => {
                                     } : undefined}
                                   >
                                     <span 
+                                      ref={(el) => {
+                                        if (el) tooltipRefs.current[`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] = el;
+                                      }}
                                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 ${
                                         instructorDetail.session_type === 'Lecture' 
                                           ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
@@ -1208,6 +1281,9 @@ const MyReviews = () => {
                                           } : undefined}
                                         >
                                           <span 
+                                            ref={(el) => {
+                                              if (el) tooltipRefs.current[`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`] = el;
+                                            }}
                                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
                                             onClick={() => {
                                               handleMobileTwoTap(`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`, () => {
@@ -1319,6 +1395,9 @@ const MyReviews = () => {
                                       } : undefined}
                                     >
                                       <span 
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`] = el;
+                                        }}
                                         className={cn(
                                           "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105",
                                           instructorDetail.service_learning_type === 'compulsory'
