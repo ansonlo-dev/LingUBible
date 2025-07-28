@@ -1194,19 +1194,34 @@ const MyReviews = () => {
                                     <span>{t('review.serviceLearning')}</span>
                                   </h5>
                                   <div className="ml-4 space-y-2">
-                                    <span 
-                                      className={cn(
-                                        "inline-flex items-center px-1.5 py-0.5 rounded text-xs",
-                                        instructorDetail.service_learning_type === 'compulsory'
-                                          ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-                                          : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                                      )}
+                                    <ResponsiveTooltip
+                                      content={t('filter.clickToFilterByServiceLearning', { type: instructorDetail.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional') })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
                                     >
-                                      {instructorDetail.service_learning_type === 'compulsory' 
-                                        ? t('review.compulsory') 
-                                        : t('review.optional')
-                                      }
-                                    </span>
+                                      <span 
+                                        className={cn(
+                                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105",
+                                          instructorDetail.service_learning_type === 'compulsory'
+                                            ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
+                                            : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
+                                        )}
+                                        onClick={() => {
+                                          // 設置服務學習篩選
+                                          const serviceType = instructorDetail.service_learning_type;
+                                          handleFiltersChange({
+                                            ...filters,
+                                            selectedServiceLearning: [serviceType],
+                                            currentPage: 1
+                                          });
+                                        }}
+                                      >
+                                        {instructorDetail.service_learning_type === 'compulsory' 
+                                          ? t('review.compulsory') 
+                                          : t('review.optional')
+                                        }
+                                      </span>
+                                    </ResponsiveTooltip>
                                     {instructorDetail.service_learning_description && (
                                       <div className="text-xs text-muted-foreground break-words">
                                         {hasMarkdownFormatting(instructorDetail.service_learning_description) ? 

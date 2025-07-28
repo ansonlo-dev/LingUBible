@@ -201,8 +201,8 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
             transform
             flex items-center justify-center
             backdrop-blur-sm
-            ${showTooltip ? 'cursor-help' : ''}
-            ${onClick ? 'cursor-pointer hover:scale-110' : ''}
+            ${showTooltip ? 'cursor-help' : (onClick ? 'cursor-pointer' : '')}
+            ${onClick ? 'hover:scale-110' : ''}
           `}
           style={{
             fontWeight: '800',
