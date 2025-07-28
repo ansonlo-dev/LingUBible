@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -184,6 +184,10 @@ const CourseDetail = () => {
   const [teachingLanguageTapCounts, setTeachingLanguageTapCounts] = useState<{[key: string]: number}>({});
   const [termTooltipStates, setTermTooltipStates] = useState<{[key: string]: boolean}>({});
   const [termTapCounts, setTermTapCounts] = useState<{[key: string]: number}>({});
+  
+  // Refs for tooltip elements to handle click outside
+  const tooltipRefs = useRef<{[key: string]: HTMLElement | null}>({});
+  const timeoutRefs = useRef<{[key: string]: NodeJS.Timeout | null}>({});
 
   // Clear pending states when clicking outside
   useEffect(() => {
@@ -214,6 +218,85 @@ const CourseDetail = () => {
       return () => clearTimeout(timer);
     }
   }, [pendingTeachingLanguageFilter, pendingTermFilter]);
+
+  // Handle clicks outside tooltips to close them (same pattern as MyReviews.tsx)
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Get all currently active tooltip keys from both term and teaching language states
+      const activeTermKeys = Object.keys(termTooltipStates).filter(key => termTooltipStates[key]).map(key => `term-${key}`);
+      const activeLanguageKeys = Object.keys(teachingLanguageTooltipStates).filter(key => teachingLanguageTooltipStates[key]).map(key => `lang-${key}`);
+      const allActiveKeys = [...activeTermKeys, ...activeLanguageKeys];
+      
+      if (allActiveKeys.length === 0) return;
+
+      // Add a small delay to allow onClick handlers to process first
+      // This prevents interference with the two-tap functionality
+      setTimeout(() => {
+        // Check if click is outside all active tooltips
+        let clickedInsideAnyTooltip = false;
+        
+        for (const key of allActiveKeys) {
+          const tooltipElement = tooltipRefs.current[key];
+          if (tooltipElement && tooltipElement.contains(target)) {
+            clickedInsideAnyTooltip = true;
+            break;
+          }
+        }
+
+        // If clicked outside all tooltips, close all active tooltips
+        if (!clickedInsideAnyTooltip) {
+          // Close term tooltips
+          Object.keys(termTooltipStates).filter(key => termTooltipStates[key]).forEach(termKey => {
+            const refKey = `term-${termKey}`;
+            // Clear timeout
+            if (timeoutRefs.current[refKey]) {
+              clearTimeout(timeoutRefs.current[refKey]);
+              timeoutRefs.current[refKey] = null;
+            }
+            
+            // Reset states
+            setTermTapCounts(prev => ({ ...prev, [termKey]: 0 }));
+            setTermTooltipStates(prev => ({ ...prev, [termKey]: false }));
+          });
+          
+          // Close teaching language tooltips
+          Object.keys(teachingLanguageTooltipStates).filter(key => teachingLanguageTooltipStates[key]).forEach(langKey => {
+            const refKey = `lang-${langKey}`;
+            // Clear timeout
+            if (timeoutRefs.current[refKey]) {
+              clearTimeout(timeoutRefs.current[refKey]);
+              timeoutRefs.current[refKey] = null;
+            }
+            
+            // Reset states
+            setTeachingLanguageTapCounts(prev => ({ ...prev, [langKey]: 0 }));
+            setTeachingLanguageTooltipStates(prev => ({ ...prev, [langKey]: false }));
+          });
+        }
+      }, 10); // Small delay to let onClick handlers process first
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobile, termTooltipStates, teachingLanguageTooltipStates]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(timeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, []);
 
   // Helper function to generate responsive teaching language labels
   const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
@@ -458,14 +541,22 @@ const CourseDetail = () => {
   }, [teachingInfo, selectedTermFilter, selectedTeachingLanguageFilter]);
 
   // 教學語言徽章點擊處理器
-  const handleTeachingLanguageBadgeClick = (languageCode: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleTeachingLanguageBadgeClick = (languageCode: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     
     if (isMobile) {
       // Mobile/tablet: require 2 taps to apply filter
       const currentTapCount = teachingLanguageTapCounts[languageCode] || 0;
       const newTapCount = currentTapCount + 1;
+      
+      // Clear existing timeout for this key
+      const refKey = `lang-${languageCode}`;
+      if (timeoutRefs.current[refKey]) {
+        clearTimeout(timeoutRefs.current[refKey]);
+      }
       
       setTeachingLanguageTapCounts(prev => ({
         ...prev,
@@ -480,7 +571,7 @@ const CourseDetail = () => {
         }));
         
         // Reset after 3 seconds
-        setTimeout(() => {
+        timeoutRefs.current[refKey] = setTimeout(() => {
           setTeachingLanguageTapCounts(prev => ({
             ...prev,
             [languageCode]: 0
@@ -518,6 +609,13 @@ const CourseDetail = () => {
   
   // Reset teaching language tooltip state
   const resetTeachingLanguageTooltipState = (languageCode: string) => {
+    // Clear timeout
+    const refKey = `lang-${languageCode}`;
+    if (timeoutRefs.current[refKey]) {
+      clearTimeout(timeoutRefs.current[refKey]);
+      timeoutRefs.current[refKey] = null;
+    }
+    
     setTeachingLanguageTapCounts(prev => ({
       ...prev,
       [languageCode]: 0
@@ -528,14 +626,22 @@ const CourseDetail = () => {
     }));
   };
 
-  const handleTermBadgeClick = (termCode: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleTermBadgeClick = (termCode: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     
     if (isMobile) {
       // Mobile/tablet: require 2 taps to apply filter
       const currentTapCount = termTapCounts[termCode] || 0;
       const newTapCount = currentTapCount + 1;
+      
+      // Clear existing timeout for this key
+      const refKey = `term-${termCode}`;
+      if (timeoutRefs.current[refKey]) {
+        clearTimeout(timeoutRefs.current[refKey]);
+      }
       
       setTermTapCounts(prev => ({
         ...prev,
@@ -550,7 +656,7 @@ const CourseDetail = () => {
         }));
         
         // Reset after 3 seconds
-        setTimeout(() => {
+        timeoutRefs.current[refKey] = setTimeout(() => {
           setTermTapCounts(prev => ({
             ...prev,
             [termCode]: 0
@@ -588,6 +694,13 @@ const CourseDetail = () => {
   
   // Reset term tooltip state
   const resetTermTooltipState = (termCode: string) => {
+    // Clear timeout
+    const refKey = `term-${termCode}`;
+    if (timeoutRefs.current[refKey]) {
+      clearTimeout(timeoutRefs.current[refKey]);
+      timeoutRefs.current[refKey] = null;
+    }
+    
     setTermTapCounts(prev => ({
       ...prev,
       [termCode]: 0
@@ -1391,6 +1504,9 @@ const CourseDetail = () => {
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                        }}
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
@@ -1420,6 +1536,9 @@ const CourseDetail = () => {
                                       
                                       {/* Teaching language part (right side) */}
                                       <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                        }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
@@ -1551,6 +1670,9 @@ const CourseDetail = () => {
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                        }}
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
@@ -1580,6 +1702,9 @@ const CourseDetail = () => {
                                       
                                       {/* Teaching language part (right side) */}
                                       <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                        }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
@@ -1608,6 +1733,9 @@ const CourseDetail = () => {
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
+                                      ref={(el) => {
+                                        if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                      }}
                                       content={t('filter.clickToFilterByTerm', { term: term.name })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}

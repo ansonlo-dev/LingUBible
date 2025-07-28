@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useIsMobile } from '@/hooks/use-mobile';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, 
   ArrowLeft,
@@ -236,6 +236,9 @@ const Lecturers = () => {
   const [teachingLanguageTapCounts, setTeachingLanguageTapCounts] = useState<{[key: string]: number}>({});
   const [teachingLanguageTimeouts, setTeachingLanguageTimeouts] = useState<{[key: string]: NodeJS.Timeout}>({});
   
+  // Refs for tooltip elements to handle click outside
+  const tooltipRefs = useRef<{[key: string]: HTMLElement | null}>({});
+  
   // Department badge tooltip states for mobile
   const [departmentTooltipOpen, setDepartmentTooltipOpen] = useState(false);
   const [departmentTapCount, setDepartmentTapCount] = useState(0);
@@ -284,6 +287,74 @@ const Lecturers = () => {
       return () => clearTimeout(timer);
     }
   }, [pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingReviewLanguageFilter, pendingGradeFilter, pendingRequirementFilter, pendingServiceLearningFilter]);
+
+  // Handle clicks outside tooltips to close them (same pattern as MyReviews.tsx)
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Get all currently active tooltip keys from teaching language states
+      const activeLanguageKeys = Object.keys(teachingLanguageTooltipStates).filter(key => teachingLanguageTooltipStates[key]).map(key => `lang-${key}`);
+      
+      if (activeLanguageKeys.length === 0) return;
+
+      // Add a small delay to allow onClick handlers to process first
+      // This prevents interference with the two-tap functionality
+      setTimeout(() => {
+        // Check if click is outside all active tooltips
+        let clickedInsideAnyTooltip = false;
+        
+        for (const key of activeLanguageKeys) {
+          const tooltipElement = tooltipRefs.current[key];
+          if (tooltipElement && tooltipElement.contains(target)) {
+            clickedInsideAnyTooltip = true;
+            break;
+          }
+        }
+
+        // If clicked outside all tooltips, close all active tooltips
+        if (!clickedInsideAnyTooltip) {
+          // Close teaching language tooltips
+          Object.keys(teachingLanguageTooltipStates).filter(key => teachingLanguageTooltipStates[key]).forEach(langKey => {
+            const refKey = `lang-${langKey}`;
+            
+            // Clear existing timeout
+            if (teachingLanguageTimeouts[langKey]) {
+              clearTimeout(teachingLanguageTimeouts[langKey]);
+              setTeachingLanguageTimeouts(prev => {
+                const newTimeouts = { ...prev };
+                delete newTimeouts[langKey];
+                return newTimeouts;
+              });
+            }
+            
+            // Reset states
+            setTeachingLanguageTapCounts(prev => ({ ...prev, [langKey]: 0 }));
+            setTeachingLanguageTooltipStates(prev => ({ ...prev, [langKey]: false }));
+          });
+        }
+      }, 10); // Small delay to let onClick handlers process first
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobile, teachingLanguageTooltipStates, teachingLanguageTimeouts]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(teachingLanguageTimeouts).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, [teachingLanguageTimeouts]);
 
   // Helper function to generate responsive teaching language labels
   const getResponsiveTeachingLanguageLabel = (languageCode: string): string => {
@@ -2323,6 +2394,9 @@ const Lecturers = () => {
                                       
                                       {/* Teaching language part (right side) */}
                                       <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                        }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
@@ -2503,6 +2577,9 @@ const Lecturers = () => {
                                       
                                       {/* Teaching language part (right side) */}
                                       <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                        }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
@@ -3110,6 +3187,9 @@ const Lecturers = () => {
                                       if (teachingLanguage) {
                                         return (
                                           <ResponsiveTooltip
+                                            ref={(el) => {
+                                              if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                            }}
                                             content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                             hasClickAction={true}
                                             clickActionText={t('tooltip.clickAgainToFilter')}
