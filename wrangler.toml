@@ -1,5 +1,5 @@
 # 預設環境 (staging)
-name = "lingubible-staging"
+name = "lingubible"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
