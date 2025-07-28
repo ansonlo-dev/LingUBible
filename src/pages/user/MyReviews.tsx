@@ -216,7 +216,7 @@ const MyReviews = () => {
   useEffect(() => {
     if (!isMobile) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as HTMLElement;
       
       // Get all currently active tooltip keys
@@ -224,31 +224,35 @@ const MyReviews = () => {
       
       if (activeKeys.length === 0) return;
 
-      // Check if click is outside all active tooltips
-      let clickedInsideAnyTooltip = false;
-      
-      for (const key of activeKeys) {
-        const tooltipElement = tooltipRefs.current[key];
-        if (tooltipElement && tooltipElement.contains(target)) {
-          clickedInsideAnyTooltip = true;
-          break;
-        }
-      }
-
-      // If clicked outside all tooltips, close all active tooltips
-      if (!clickedInsideAnyTooltip) {
-        activeKeys.forEach(key => {
-          // Clear timeout
-          if (mobileTimeoutRefs.current[key]) {
-            clearTimeout(mobileTimeoutRefs.current[key]);
-            mobileTimeoutRefs.current[key] = null;
+      // Add a small delay to allow onClick handlers to process first
+      // This prevents interference with the two-tap functionality
+      setTimeout(() => {
+        // Check if click is outside all active tooltips
+        let clickedInsideAnyTooltip = false;
+        
+        for (const key of activeKeys) {
+          const tooltipElement = tooltipRefs.current[key];
+          if (tooltipElement && tooltipElement.contains(target)) {
+            clickedInsideAnyTooltip = true;
+            break;
           }
-          
-          // Reset states
-          setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
-          setMobileTapStates(prev => ({ ...prev, [key]: false }));
-        });
-      }
+        }
+
+        // If clicked outside all tooltips, close all active tooltips
+        if (!clickedInsideAnyTooltip) {
+          activeKeys.forEach(key => {
+            // Clear timeout
+            if (mobileTimeoutRefs.current[key]) {
+              clearTimeout(mobileTimeoutRefs.current[key]);
+              mobileTimeoutRefs.current[key] = null;
+            }
+            
+            // Reset states
+            setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+            setMobileTapStates(prev => ({ ...prev, [key]: false }));
+          });
+        }
+      }, 10); // Small delay to let onClick handlers process first
     };
 
     document.addEventListener('mousedown', handleClickOutside);
