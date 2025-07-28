@@ -128,6 +128,10 @@ export interface InstructorDetail {
   has_reading: boolean;
   has_attendance_requirement: boolean;
   comments: string;
+  // Service learning fields for each instructor
+  has_service_learning: boolean;
+  service_learning_type: 'compulsory' | 'optional';
+  service_learning_description: string;
 }
 
 export interface InstructorTeachingCourse {
