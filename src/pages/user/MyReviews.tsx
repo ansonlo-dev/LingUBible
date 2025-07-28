@@ -783,8 +783,8 @@ const MyReviews = () => {
                           {reviewInfo.review.is_anon ? t('review.anonymousUser') : reviewInfo.review.username}
                         </span>
                       </div>
-                      {/* 學期和語言徽章 - 手機版顯示在下方 */}
-                      <div className="flex gap-2 md:hidden max-w-[calc(100%-3rem)]">
+                      {/* 學期和語言徽章 - 手機版顯示：豎屏分兩行，橫屏同一行 */}
+                      <div className="flex flex-col portrait:gap-1.5 landscape:flex-row landscape:gap-2 md:hidden max-w-[calc(100%-3rem)]">
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
@@ -815,7 +815,7 @@ const MyReviews = () => {
                             <span className="truncate">{reviewInfo.term.name}</span>
                           </button>
                         </ResponsiveTooltip>
-                        {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
+                        {/* 語言徽章 */}
                         {reviewInfo.review.review_language && (
                           <ResponsiveTooltip
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
