@@ -681,6 +681,7 @@ export default {
   'filter.clickToFilterBySessionType': '點擊以依課堂類型篩選：{type}',
   'filter.clickToFilterByGrade': '點擊以依成績篩選：{grade}',
   'filter.clickToFilterServiceLearning': '點擊以依服務學習篩選：{type}',
+  'filter.clickToFilterByServiceLearning': '點擊以依服務學習篩選：{type}',
   'filter.clickAgainToApplyFilter': '再次點擊以套用篩選',
   'filter.courseRequirements': '課程要求篩選器',
   'filter.courseRequirementsInstructions': '按課程要求篩選評論。點擊 全部/✓/✗ 來篩選每個要求。',

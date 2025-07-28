@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +46,7 @@ import { MyReviewsFilters, MyReviewFilters } from '@/components/features/reviews
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 interface UserReviewInfo extends CourseReviewInfo {
@@ -119,11 +120,17 @@ const MyReviews = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const [reviews, setReviews] = useState<UserReviewInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+
+  // Mobile tap states for two-tap functionality
+  const [mobileTapStates, setMobileTapStates] = useState<{[key: string]: boolean}>({});
+  const [mobileTapCounts, setMobileTapCounts] = useState<{[key: string]: number}>({});
+  const mobileTimeoutRefs = useRef<{[key: string]: NodeJS.Timeout | null}>({});
 
   // 篩選和排序狀態
   const [filters, setFilters] = useState<MyReviewFilters>({
@@ -165,6 +172,52 @@ const MyReviews = () => {
     courseCode,
     termCode
   });
+
+  // Helper function for mobile two-tap functionality
+  const handleMobileTwoTap = (key: string, action: () => void) => {
+    if (!isMobile) {
+      // Desktop: apply filter immediately
+      action();
+      return;
+    }
+
+    // Mobile: require two taps
+    const currentCount = mobileTapCounts[key] || 0;
+    const newCount = currentCount + 1;
+    
+    // Clear existing timeout for this key
+    if (mobileTimeoutRefs.current[key]) {
+      clearTimeout(mobileTimeoutRefs.current[key]);
+    }
+    
+    setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
+
+    if (newCount === 1) {
+      // First tap: show tooltip
+      setMobileTapStates(prev => ({ ...prev, [key]: true }));
+      mobileTimeoutRefs.current[key] = setTimeout(() => {
+        setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+        setMobileTapStates(prev => ({ ...prev, [key]: false }));
+      }, 3000);
+    } else if (newCount === 2) {
+      // Second tap: apply filter and hide tooltip
+      action();
+      setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+      setMobileTapStates(prev => ({ ...prev, [key]: false }));
+      if (mobileTimeoutRefs.current[key]) {
+        clearTimeout(mobileTimeoutRefs.current[key]);
+      }
+    }
+  };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(mobileTimeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, []);
 
   useEffect(() => {
     loadUserReviews();
@@ -563,12 +616,22 @@ const MyReviews = () => {
     setFilters(newFilters);
   };
 
-  const handleSessionTypeClick = (sessionType: string) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedSessionTypes: [sessionType],
-      currentPage: 1
-    }));
+  const handleSessionTypeClick = (sessionType: string, key?: string) => {
+    if (key) {
+      handleMobileTwoTap(key, () => {
+        setFilters(prev => ({
+          ...prev,
+          selectedSessionTypes: [sessionType],
+          currentPage: 1
+        }));
+      });
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        selectedSessionTypes: [sessionType],
+        currentPage: 1
+      }));
+    }
   };
 
   const handleClearAllFilters = () => {
@@ -689,18 +752,26 @@ const MyReviews = () => {
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`term-mobile-${reviewInfo.term.term_code}`] : undefined}
+                          onOpenChange={isMobile ? (open) => {
+                            if (!open) {
+                              setMobileTapStates(prev => ({ ...prev, [`term-mobile-${reviewInfo.term.term_code}`]: false }));
+                            }
+                          } : undefined}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              // 設置學期篩選
-                              handleFiltersChange({
-                                ...filters,
-                                selectedTerms: [reviewInfo.term.term_code],
-                                currentPage: 1
+                              handleMobileTwoTap(`term-mobile-${reviewInfo.term.term_code}`, () => {
+                                // 設置學期篩選
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedTerms: [reviewInfo.term.term_code],
+                                  currentPage: 1
+                                });
                               });
                             }}
                           >
@@ -712,18 +783,26 @@ const MyReviews = () => {
                           <ResponsiveTooltip
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
-                            clickActionText={t('tooltip.clickAgainToFilter')}
+                            clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                            open={isMobile ? mobileTapStates[`lang-mobile-${reviewInfo.review.review_language || 'en'}`] : undefined}
+                            onOpenChange={isMobile ? (open) => {
+                              if (!open) {
+                                setMobileTapStates(prev => ({ ...prev, [`lang-mobile-${reviewInfo.review.review_language || 'en'}`]: false }));
+                              }
+                            } : undefined}
                           >
                             <button
                               className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                // 設置評論語言篩選
-                                handleFiltersChange({
-                                  ...filters,
-                                  selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
-                                  currentPage: 1
+                                handleMobileTwoTap(`lang-mobile-${reviewInfo.review.review_language || 'en'}`, () => {
+                                  // 設置評論語言篩選
+                                  handleFiltersChange({
+                                    ...filters,
+                                    selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
+                                    currentPage: 1
+                                  });
                                 });
                               }}
                             >
@@ -761,18 +840,26 @@ const MyReviews = () => {
                         <ResponsiveTooltip
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`term-desktop-${reviewInfo.term.term_code}`] : undefined}
+                          onOpenChange={isMobile ? (open) => {
+                            if (!open) {
+                              setMobileTapStates(prev => ({ ...prev, [`term-desktop-${reviewInfo.term.term_code}`]: false }));
+                            }
+                          } : undefined}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              // 設置學期篩選
-                              handleFiltersChange({
-                                ...filters,
-                                selectedTerms: [reviewInfo.term.term_code],
-                                currentPage: 1
+                              handleMobileTwoTap(`term-desktop-${reviewInfo.term.term_code}`, () => {
+                                // 設置學期篩選
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedTerms: [reviewInfo.term.term_code],
+                                  currentPage: 1
+                                });
                               });
                             }}
                           >
@@ -784,18 +871,26 @@ const MyReviews = () => {
                           <ResponsiveTooltip
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
-                            clickActionText={t('tooltip.clickAgainToFilter')}
+                            clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                            open={isMobile ? mobileTapStates[`lang-desktop-${reviewInfo.review.review_language || 'en'}`] : undefined}
+                            onOpenChange={isMobile ? (open) => {
+                              if (!open) {
+                                setMobileTapStates(prev => ({ ...prev, [`lang-desktop-${reviewInfo.review.review_language || 'en'}`]: false }));
+                              }
+                            } : undefined}
                           >
                             <button
                               className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                // 設置評論語言篩選
-                                handleFiltersChange({
-                                  ...filters,
-                                  selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
-                                  currentPage: 1
+                                handleMobileTwoTap(`lang-desktop-${reviewInfo.review.review_language || 'en'}`, () => {
+                                  // 設置評論語言篩選
+                                  handleFiltersChange({
+                                    ...filters,
+                                    selectedReviewLanguages: [reviewInfo.review.review_language || 'en'],
+                                    currentPage: 1
+                                  });
                                 });
                               }}
                             >
@@ -812,14 +907,27 @@ const MyReviews = () => {
                             size="md"
                             showTooltip={true}
                             hasClickAction={true}
-                            onClick={() => {
+                            isPending={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}`] : false}
+                            onFirstTap={isMobile ? () => {
+                              setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: true }));
+                            } : undefined}
+                            onSecondTap={isMobile ? () => {
                               const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
                               handleFiltersChange({
                                 ...filters,
                                 selectedGrades: [normalizedGrade],
                                 currentPage: 1
                               });
-                            }}
+                              setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: false }));
+                            } : undefined}
+                            onClick={!isMobile ? () => {
+                              const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
+                              handleFiltersChange({
+                                ...filters,
+                                selectedGrades: [normalizedGrade],
+                                currentPage: 1
+                              });
+                            } : undefined}
                           />
                         </div>
                       )}
@@ -1003,7 +1111,13 @@ const MyReviews = () => {
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
                                       hasClickAction={true}
-                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                      open={isMobile ? mobileTapStates[`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] : undefined}
+                                      onOpenChange={isMobile ? (open) => {
+                                        if (!open) {
+                                          setMobileTapStates(prev => ({ ...prev, [`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: false }));
+                                        }
+                                      } : undefined}
                                     >
                                       <span 
                                         className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 ${
@@ -1013,7 +1127,7 @@ const MyReviews = () => {
                                             ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
                                             : ''
                                         }`}
-                                        onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                        onClick={() => handleSessionTypeClick(instructorDetail.session_type, isMobile ? `session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}` : undefined)}
                                       >
                                         {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
                                       </span>
@@ -1030,23 +1144,31 @@ const MyReviews = () => {
                                           <ResponsiveTooltip
                                             content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                             hasClickAction={true}
-                                            clickActionText={t('tooltip.clickAgainToFilter')}
+                                            clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                            open={isMobile ? mobileTapStates[`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`] : undefined}
+                                            onOpenChange={isMobile ? (open) => {
+                                              if (!open) {
+                                                setMobileTapStates(prev => ({ ...prev, [`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`]: false }));
+                                              }
+                                            } : undefined}
                                           >
                                             <span 
                                               className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
                                               onClick={() => {
-                                                // 設置教學語言篩選
-                                                const teachingLanguage = getTeachingLanguageForInstructor(
-                                                  instructorDetail.instructor_name,
-                                                  instructorDetail.session_type
-                                                );
-                                                if (teachingLanguage) {
-                                                  handleFiltersChange({
-                                                    ...filters,
-                                                    selectedTeachingLanguages: [teachingLanguage],
-                                                    currentPage: 1
-                                                  });
-                                                }
+                                                handleMobileTwoTap(`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`, () => {
+                                                  // 設置教學語言篩選
+                                                  const teachingLanguage = getTeachingLanguageForInstructor(
+                                                    instructorDetail.instructor_name,
+                                                    instructorDetail.session_type
+                                                  );
+                                                  if (teachingLanguage) {
+                                                    handleFiltersChange({
+                                                      ...filters,
+                                                      selectedTeachingLanguages: [teachingLanguage],
+                                                      currentPage: 1
+                                                    });
+                                                  }
+                                                });
                                               }}
                                             >
                                               {getTeachingLanguageName(teachingLanguage, t)}
@@ -1065,7 +1187,13 @@ const MyReviews = () => {
                                   <ResponsiveTooltip
                                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
                                     hasClickAction={true}
-                                    clickActionText={t('tooltip.clickAgainToFilter')}
+                                    clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                    open={isMobile ? mobileTapStates[`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] : undefined}
+                                    onOpenChange={isMobile ? (open) => {
+                                      if (!open) {
+                                        setMobileTapStates(prev => ({ ...prev, [`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: false }));
+                                      }
+                                    } : undefined}
                                   >
                                     <span 
                                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 ${
@@ -1075,7 +1203,7 @@ const MyReviews = () => {
                                           ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
                                           : ''
                                       }`}
-                                      onClick={() => handleSessionTypeClick(instructorDetail.session_type)}
+                                      onClick={() => handleSessionTypeClick(instructorDetail.session_type, isMobile ? `session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}` : undefined)}
                                     >
                                       {t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`)}
                                     </span>
@@ -1092,23 +1220,31 @@ const MyReviews = () => {
                                         <ResponsiveTooltip
                                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                           hasClickAction={true}
-                                          clickActionText={t('tooltip.clickAgainToFilter')}
+                                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                          open={isMobile ? mobileTapStates[`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`] : undefined}
+                                          onOpenChange={isMobile ? (open) => {
+                                            if (!open) {
+                                              setMobileTapStates(prev => ({ ...prev, [`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`]: false }));
+                                            }
+                                          } : undefined}
                                         >
                                           <span 
                                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50"
                                             onClick={() => {
-                                              // 設置教學語言篩選
-                                              const teachingLanguage = getTeachingLanguageForInstructor(
-                                                instructorDetail.instructor_name,
-                                                instructorDetail.session_type
-                                              );
-                                              if (teachingLanguage) {
-                                                handleFiltersChange({
-                                                  ...filters,
-                                                  selectedTeachingLanguages: [teachingLanguage],
-                                                  currentPage: 1
-                                                });
-                                              }
+                                              handleMobileTwoTap(`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`, () => {
+                                                // 設置教學語言篩選
+                                                const teachingLanguage = getTeachingLanguageForInstructor(
+                                                  instructorDetail.instructor_name,
+                                                  instructorDetail.session_type
+                                                );
+                                                if (teachingLanguage) {
+                                                  handleFiltersChange({
+                                                    ...filters,
+                                                    selectedTeachingLanguages: [teachingLanguage],
+                                                    currentPage: 1
+                                                  });
+                                                }
+                                              });
                                             }}
                                           >
                                             {getTeachingLanguageName(teachingLanguage, t)}
