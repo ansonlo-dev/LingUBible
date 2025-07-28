@@ -107,9 +107,6 @@ export interface Review {
   course_usefulness: number;
   course_final_grade: string;
   course_comments: string;
-  has_service_learning: boolean;
-  service_learning_description?: string;
-  service_learning_type?: 'compulsory' | 'optional';
   submitted_at: string;
   instructor_details: string; // JSON string
   review_language?: string; // Language of the review (en, zh-TW, zh-CN)
@@ -131,10 +128,6 @@ export interface InstructorDetail {
   has_reading: boolean;
   has_attendance_requirement: boolean;
   comments: string;
-  // Service learning fields for each instructor
-  has_service_learning: boolean;
-  service_learning_type: 'compulsory' | 'optional';
-  service_learning_description: string;
 }
 
 export interface InstructorTeachingCourse {
@@ -1254,8 +1247,7 @@ export class CourseService {
         Query.limit(300), // 從 100 增加到 300，但添加欄位限制
         Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code', 
                      'course_workload', 'course_difficulties', 'course_usefulness', 
-                     'course_final_grade', 'course_comments', 'has_service_learning',
-                     'service_learning_description', 'service_learning_type', 'submitted_at', 'instructor_details', 'review_language', '$createdAt'])
+                     'course_final_grade', 'course_comments', 'submitted_at', 'instructor_details', 'review_language', '$createdAt'])
       ];
       
       // Add language filter if specified
@@ -1316,8 +1308,7 @@ export class CourseService {
         Query.limit(this.MAX_REVIEWS_LIMIT), // 使用常數限制
         Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
                      'course_workload', 'course_difficulties', 'course_usefulness',
-                     'course_final_grade', 'course_comments', 'has_service_learning',
-                     'service_learning_description', 'service_learning_type', 'instructor_details', 'review_language', 'submitted_at', '$createdAt'])
+                     'course_final_grade', 'course_comments', 'instructor_details', 'review_language', 'submitted_at', '$createdAt'])
       ];
       
       // Add language filter if specified
@@ -1639,8 +1630,7 @@ export class CourseService {
           Query.limit(1000),
           Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
                        'course_workload', 'course_difficulties', 'course_usefulness',
-                       'course_final_grade', 'course_comments', 'has_service_learning',
-                       'service_learning_description', 'service_learning_type', 'instructor_details',
+                       'course_final_grade', 'course_comments', 'instructor_details',
                        'review_language', 'submitted_at', '$createdAt']) // 只選擇必要的欄位
         ]
       );
@@ -3590,8 +3580,7 @@ export class CourseService {
           Query.limit(this.MAX_REVIEWS_LIMIT),
           Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
                        'course_workload', 'course_difficulties', 'course_usefulness',
-                       'course_final_grade', 'course_comments', 'has_service_learning',
-                       'service_learning_description', 'service_learning_type', 'submitted_at', 'instructor_details', 'review_language', '$createdAt'])
+                       'course_final_grade', 'course_comments', 'submitted_at', 'instructor_details', 'review_language', '$createdAt'])
         ]
       );
 
@@ -3807,8 +3796,7 @@ export class CourseService {
         Query.limit(300),
         Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code', 
                      'course_workload', 'course_difficulties', 'course_usefulness', 
-                     'course_final_grade', 'course_comments', 'has_service_learning',
-                     'service_learning_description', 'service_learning_type', 'submitted_at', 'instructor_details', 'review_language', '$createdAt'])
+                     'course_final_grade', 'course_comments', 'submitted_at', 'instructor_details', 'review_language', '$createdAt'])
       ];
       
       // 添加語言過濾器
