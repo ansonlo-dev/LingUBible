@@ -186,28 +186,16 @@ const MyReviews = () => {
     const currentCount = mobileTapCounts[key] || 0;
     const newCount = currentCount + 1;
     
-    // Clear existing timeout for this key
-    if (mobileTimeoutRefs.current[key]) {
-      clearTimeout(mobileTimeoutRefs.current[key]);
-    }
-    
     setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
 
     if (newCount === 1) {
       // First tap: show tooltip
       setMobileTapStates(prev => ({ ...prev, [key]: true }));
-      mobileTimeoutRefs.current[key] = setTimeout(() => {
-        setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
-        setMobileTapStates(prev => ({ ...prev, [key]: false }));
-      }, 3000);
     } else if (newCount === 2) {
       // Second tap: apply filter and hide tooltip
       action();
       setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
       setMobileTapStates(prev => ({ ...prev, [key]: false }));
-      if (mobileTimeoutRefs.current[key]) {
-        clearTimeout(mobileTimeoutRefs.current[key]);
-      }
     }
   };
 
@@ -241,12 +229,6 @@ const MyReviews = () => {
         // If clicked outside all tooltips, close all active tooltips
         if (!clickedInsideAnyTooltip) {
           activeKeys.forEach(key => {
-            // Clear timeout
-            if (mobileTimeoutRefs.current[key]) {
-              clearTimeout(mobileTimeoutRefs.current[key]);
-              mobileTimeoutRefs.current[key] = null;
-            }
-            
             // Reset states
             setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
             setMobileTapStates(prev => ({ ...prev, [key]: false }));
