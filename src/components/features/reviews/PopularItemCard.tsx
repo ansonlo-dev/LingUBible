@@ -1014,7 +1014,9 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                     {/* Teaching Language Badge */}
                     {!props.isLoading && props.teachingLanguages && props.teachingLanguages.length > 0 && (
                       <ResponsiveTooltip 
-                        content={props.teachingLanguages.map(code => `${code}: ${getTeachingLanguageName(code, t)}`).join('\n')}
+                        content={props.teachingLanguages.map(code => 
+                          `${code}: ${getTeachingLanguageName(code, t)}${code === props.currentTermTeachingLanguage ? ` (${t('teaching.current')})` : ''}`
+                        ).join('\n')}
                         hasClickAction={true}
                         clickActionText={
                           (isMobile && props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined
