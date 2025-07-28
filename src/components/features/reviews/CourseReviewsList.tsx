@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,21 +74,17 @@ export const CourseReviewsList = ({
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
   const isMobile = useIsMobile();
   const [pendingGradeFilter, setPendingGradeFilter] = useState<string | null>(null);
-  const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
-  const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
-  const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
-  const [pendingLanguageFilter, setPendingLanguageFilter] = useState<string | null>(null);
-  const [pendingServiceLearningFilter, setPendingServiceLearningFilter] = useState<string | null>(null);
+  
+  // Mobile tap states for tooltip and filter functionality (similar to MyReviews.tsx)
+  const [mobileTapStates, setMobileTapStates] = useState<{[key: string]: boolean}>({});
+  const [mobileTapCounts, setMobileTapCounts] = useState<{[key: string]: number}>({});
+  const mobileTimeoutRefs = useRef<{[key: string]: NodeJS.Timeout | null}>({});
+  const tooltipRefs = useRef<{[key: string]: HTMLElement | null}>({});
   
   // Clear pending states when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       setPendingGradeFilter(null);
-      setPendingTeachingLanguageFilter(null);
-      setPendingSessionTypeFilter(null);
-      setPendingTermFilter(null);
-      setPendingLanguageFilter(null);
-      setPendingServiceLearningFilter(null);
     };
 
     // Add a small delay to avoid clearing immediately when clicking the badge itself
@@ -104,19 +100,117 @@ export const CourseReviewsList = ({
 
   // Clear pending states after timeout
   useEffect(() => {
-    if (pendingGradeFilter || pendingTeachingLanguageFilter || pendingSessionTypeFilter || pendingTermFilter || pendingLanguageFilter || pendingServiceLearningFilter) {
+    if (pendingGradeFilter) {
       const timer = setTimeout(() => {
         setPendingGradeFilter(null);
-        setPendingTeachingLanguageFilter(null);
-        setPendingSessionTypeFilter(null);
-        setPendingTermFilter(null);
-        setPendingLanguageFilter(null);
-        setPendingServiceLearningFilter(null);
       }, 3000); // Clear after 3 seconds
 
       return () => clearTimeout(timer);
     }
-  }, [pendingGradeFilter, pendingTeachingLanguageFilter, pendingSessionTypeFilter, pendingTermFilter, pendingLanguageFilter, pendingServiceLearningFilter]);
+  }, [pendingGradeFilter]);
+
+  // Handle clicks outside tooltips to close them (same pattern as MyReviews.tsx)
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Get all currently active tooltip keys
+      const activeKeys = Object.keys(mobileTapStates).filter(key => mobileTapStates[key]);
+      
+      if (activeKeys.length === 0) return;
+
+      // Add a small delay to allow onClick handlers to process first
+      // This prevents interference with the two-tap functionality
+      setTimeout(() => {
+        // Check if click is outside all active tooltips
+        let clickedInsideAnyTooltip = false;
+        
+        for (const key of activeKeys) {
+          const tooltipElement = tooltipRefs.current[key];
+          if (tooltipElement && tooltipElement.contains(target)) {
+            clickedInsideAnyTooltip = true;
+            break;
+          }
+        }
+
+        // If clicked outside all tooltips, close all active tooltips
+        if (!clickedInsideAnyTooltip) {
+          activeKeys.forEach(key => {
+            // Clear timeout
+            if (mobileTimeoutRefs.current[key]) {
+              clearTimeout(mobileTimeoutRefs.current[key]);
+              mobileTimeoutRefs.current[key] = null;
+            }
+            
+            // Reset states
+            setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+            setMobileTapStates(prev => ({ ...prev, [key]: false }));
+          });
+        }
+      }, 10); // Small delay to let onClick handlers process first
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobile, mobileTapStates]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(mobileTimeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, []);
+
+  // Handle mobile two-tap functionality (same pattern as MyReviews.tsx)
+  const handleMobileTwoTap = (key: string, action: () => void) => {
+    if (!isMobile) {
+      // Desktop: apply filter immediately
+      action();
+      return;
+    }
+
+    // Mobile: require two taps
+    const currentCount = mobileTapCounts[key] || 0;
+    const newCount = currentCount + 1;
+    
+    // Clear existing timeout for this key
+    if (mobileTimeoutRefs.current[key]) {
+      clearTimeout(mobileTimeoutRefs.current[key]);
+    }
+    
+    setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
+
+    if (newCount === 1) {
+      // First tap: show tooltip
+      setMobileTapStates(prev => ({ ...prev, [key]: true }));
+      
+      // Auto-hide after 3 seconds
+      mobileTimeoutRefs.current[key] = setTimeout(() => {
+        setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+        setMobileTapStates(prev => ({ ...prev, [key]: false }));
+      }, 3000);
+    } else if (newCount === 2) {
+      // Second tap: apply filter and hide tooltip
+      if (mobileTimeoutRefs.current[key]) {
+        clearTimeout(mobileTimeoutRefs.current[key]);
+        mobileTimeoutRefs.current[key] = null;
+      }
+      
+      setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+      setMobileTapStates(prev => ({ ...prev, [key]: false }));
+      
+      action();
+    }
+  };
   
   // Extract course code and term code for teaching languages hook
   const firstReview = allReviews?.[0];
@@ -135,7 +229,6 @@ export const CourseReviewsList = ({
 
   // Use teaching languages hook
   const { 
-    teachingLanguages, 
     loading: teachingLanguagesLoading, 
     getTeachingLanguageForInstructor 
   } = useInstructorDetailTeachingLanguages({
@@ -562,34 +655,19 @@ export const CourseReviewsList = ({
     return languageMap[reviewLang] || reviewLang;
   };
 
-  // Service learning badge click handler
-  const handleServiceLearningBadgeClick = (serviceType: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    if (isMobile) {
-      // Mobile/tablet: require 2 taps to apply filter
-      if (pendingServiceLearningFilter !== serviceType) {
-        setPendingServiceLearningFilter(serviceType);
-        return; // Only set pending on first tap, do not apply filter
-      } else if (pendingServiceLearningFilter === serviceType) {
-        setPendingServiceLearningFilter(null);
-        // Continue to apply filter below
-      }
-    }
-    
-    // Apply filter (desktop immediate, mobile on second tap)
-    if (onToggleServiceLearning) {
-      onToggleServiceLearning(serviceType);
-    }
-  };
 
   const renderRequirementBadge = (hasRequirement: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
+    const key = `requirement-${filterKey}-${hasRequirement ? 'has' : 'no'}`;
     return (
       <ResponsiveTooltip 
+        ref={(el) => {
+          if (el) tooltipRefs.current[key] = el;
+        }}
         content={t('filter.clickToFilterRequirement', { requirement: label })}
         hasClickAction={true}
-        clickActionText={t('tooltip.clickAgainToFilter')}
+        clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+        open={isMobile ? mobileTapStates[key] : undefined}
+        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [key]: open })) : undefined}
       >
         <Badge
           variant={hasRequirement ? "default" : "secondary"}
@@ -597,32 +675,12 @@ export const CourseReviewsList = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (isMobile) {
-              const filterValue = hasRequirement ? 'has' : 'no';
-              const pendingKey = `${filterKey}-${filterValue}`;
-              const currentPending = `${filterKey}-${requirementsFilters[filterKey]}`;
-              
-              if (pendingKey !== currentPending) {
-                // First tap - set pending state
-                setRequirementsFilters(prev => ({
-                  ...prev,
-                  [filterKey]: filterValue
-                }));
-                return;
-              } else {
-                // Second tap - apply filter and clear pending
-                setRequirementsFilters(prev => ({
-                  ...prev,
-                  [filterKey]: filterValue
-                }));
-                return;
-              }
-            }
-            // Desktop: apply filter immediately
-            setRequirementsFilters(prev => ({
-              ...prev,
-              [filterKey]: hasRequirement ? 'has' : 'no'
-            }));
+            handleMobileTwoTap(key, () => {
+              setRequirementsFilters(prev => ({
+                ...prev,
+                [filterKey]: hasRequirement ? 'has' : 'no'
+              }));
+            });
           }}
         >
           {hasRequirement ? (
@@ -709,30 +767,14 @@ export const CourseReviewsList = ({
                 <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
                   {/* 課堂類型徽章 */}
                   <ResponsiveTooltip
+                    ref={(el) => {
+                      if (el) tooltipRefs.current[`session-${instructor.session_type}-desktop`] = el;
+                    }}
                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                     hasClickAction={true}
-                    clickActionText={t('tooltip.clickAgainToFilter')}
-                    onFirstTap={() => {
-                      console.log('🎯 Session Type Badge (Desktop): First tap - setting pending filter');
-                      setPendingSessionTypeFilter(instructor.session_type);
-                    }}
-                    onSecondTap={() => {
-                      console.log('🎯 Session Type Badge (Desktop): Second tap - applying filter');
-                      const newFilters = { ...filters };
-                      const sessionType = instructor.session_type;
-                      
-                      // 切換篩選器
-                      if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                        newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                      } else {
-                        newFilters.selectedSessionTypes = [sessionType];
-                      }
-                      
-                      // 重置頁面到第一頁
-                      newFilters.currentPage = 1;
-                      
-                      handleFiltersChange(newFilters);
-                    }}
+                    clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                    open={isMobile ? mobileTapStates[`session-${instructor.session_type}-desktop`] : undefined}
+                    onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.session_type}-desktop`]: open })) : undefined}
                   >
                     <span 
                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
@@ -743,8 +785,7 @@ export const CourseReviewsList = ({
                           : ''
                       }`}
                       onClick={() => {
-                        if (!isMobile) {
-                          // Desktop: apply filter immediately
+                        handleMobileTwoTap(`session-${instructor.session_type}-desktop`, () => {
                           const newFilters = { ...filters };
                           const sessionType = instructor.session_type;
                           
@@ -759,7 +800,7 @@ export const CourseReviewsList = ({
                           newFilters.currentPage = 1;
                           
                           handleFiltersChange(newFilters);
-                        }
+                        });
                       }}
                     >
                       {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
@@ -775,35 +816,19 @@ export const CourseReviewsList = ({
                     if (teachingLanguage) {
                       return (
                         <ResponsiveTooltip
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`teaching-lang-${teachingLanguage}-desktop`] = el;
+                          }}
                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          onFirstTap={() => {
-                            console.log('🎯 Teaching Language Badge (Desktop): First tap - setting pending filter');
-                            setPendingTeachingLanguageFilter(teachingLanguage);
-                          }}
-                          onSecondTap={() => {
-                            console.log('🎯 Teaching Language Badge (Desktop): Second tap - applying filter');
-                            const newFilters = { ...filters };
-                            
-                            // 切換教學語言篩選器
-                            if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                              newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                            } else {
-                              newFilters.selectedTeachingLanguages = [teachingLanguage];
-                            }
-                            
-                            // 重置頁面到第一頁
-                            newFilters.currentPage = 1;
-                            
-                            handleFiltersChange(newFilters);
-                          }}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`teaching-lang-${teachingLanguage}-desktop`] : undefined}
+                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${teachingLanguage}-desktop`]: open })) : undefined}
                         >
                           <span 
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                             onClick={() => {
-                              if (!isMobile) {
-                                // Desktop: apply filter immediately
+                              handleMobileTwoTap(`teaching-lang-${teachingLanguage}-desktop`, () => {
                                 const newFilters = { ...filters };
                                 
                                 // 切換教學語言篩選器
@@ -817,7 +842,7 @@ export const CourseReviewsList = ({
                                 newFilters.currentPage = 1;
                                 
                                 handleFiltersChange(newFilters);
-                              }
+                              });
                             }}
                           >
                             <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
@@ -834,30 +859,14 @@ export const CourseReviewsList = ({
               <div className="flex md:hidden flex-wrap items-center gap-2">
                 {/* 課堂類型徽章 */}
                 <ResponsiveTooltip
+                  ref={(el) => {
+                    if (el) tooltipRefs.current[`session-${instructor.session_type}-mobile`] = el;
+                  }}
                   content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                   hasClickAction={true}
-                  clickActionText={t('tooltip.clickAgainToFilter')}
-                  onFirstTap={() => {
-                    console.log('🎯 Session Type Badge (Mobile): First tap - setting pending filter');
-                    setPendingSessionTypeFilter(instructor.session_type);
-                  }}
-                  onSecondTap={() => {
-                    console.log('🎯 Session Type Badge (Mobile): Second tap - applying filter');
-                    const newFilters = { ...filters };
-                    const sessionType = instructor.session_type;
-                    
-                    // 切換篩選器
-                    if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                      newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                    } else {
-                      newFilters.selectedSessionTypes = [sessionType];
-                    }
-                    
-                    // 重置頁面到第一頁
-                    newFilters.currentPage = 1;
-                    
-                    handleFiltersChange(newFilters);
-                  }}
+                  clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                  open={isMobile ? mobileTapStates[`session-${instructor.session_type}-mobile`] : undefined}
+                  onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.session_type}-mobile`]: open })) : undefined}
                 >
                   <span 
                     className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
@@ -868,8 +877,7 @@ export const CourseReviewsList = ({
                         : ''
                     }`}
                     onClick={() => {
-                      if (!isMobile) {
-                        // Desktop: apply filter immediately
+                      handleMobileTwoTap(`session-${instructor.session_type}-mobile`, () => {
                         const newFilters = { ...filters };
                         const sessionType = instructor.session_type;
                         
@@ -884,7 +892,7 @@ export const CourseReviewsList = ({
                         newFilters.currentPage = 1;
                         
                         handleFiltersChange(newFilters);
-                      }
+                      });
                     }}
                   >
                     {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
@@ -900,35 +908,19 @@ export const CourseReviewsList = ({
                   if (teachingLanguage) {
                     return (
                       <ResponsiveTooltip
+                        ref={(el) => {
+                          if (el) tooltipRefs.current[`teaching-lang-${teachingLanguage}-mobile`] = el;
+                        }}
                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                         hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                        onFirstTap={() => {
-                          console.log('🎯 Teaching Language Badge (Mobile): First tap - setting pending filter');
-                          setPendingTeachingLanguageFilter(teachingLanguage);
-                        }}
-                        onSecondTap={() => {
-                          console.log('🎯 Teaching Language Badge (Mobile): Second tap - applying filter');
-                          const newFilters = { ...filters };
-                          
-                          // 切換教學語言篩選器
-                          if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                            newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                          } else {
-                            newFilters.selectedTeachingLanguages = [teachingLanguage];
-                          }
-                          
-                          // 重置頁面到第一頁
-                          newFilters.currentPage = 1;
-                          
-                          handleFiltersChange(newFilters);
-                        }}
+                        clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        open={isMobile ? mobileTapStates[`teaching-lang-${teachingLanguage}-mobile`] : undefined}
+                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${teachingLanguage}-mobile`]: open })) : undefined}
                       >
                         <span 
                           className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                           onClick={() => {
-                            if (!isMobile) {
-                              // Desktop: apply filter immediately
+                            handleMobileTwoTap(`teaching-lang-${teachingLanguage}-mobile`, () => {
                               const newFilters = { ...filters };
                               
                               // 切換教學語言篩選器
@@ -942,7 +934,7 @@ export const CourseReviewsList = ({
                               newFilters.currentPage = 1;
                               
                               handleFiltersChange(newFilters);
-                            }
+                            });
                           }}
                         >
                           <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
@@ -1034,11 +1026,16 @@ export const CourseReviewsList = ({
                 <div className="ml-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <ResponsiveTooltip
+                      ref={(el) => {
+                        if (el) tooltipRefs.current[`service-learning-${instructor.service_learning_type}`] = el;
+                      }}
                       content={t('filter.clickToFilterServiceLearning', { 
                         type: instructor.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional')
                       })}
                       hasClickAction={true}
-                      clickActionText={t('tooltip.clickAgainToFilter')}
+                      clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                      open={isMobile ? mobileTapStates[`service-learning-${instructor.service_learning_type}`] : undefined}
+                      onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.service_learning_type}`]: open })) : undefined}
                     >
                       <span 
                         className={cn(
@@ -1047,7 +1044,15 @@ export const CourseReviewsList = ({
                             ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
                             : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
                         )}
-                        onClick={(e) => handleServiceLearningBadgeClick(instructor.service_learning_type, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleMobileTwoTap(`service-learning-${instructor.service_learning_type}`, () => {
+                            if (onToggleServiceLearning) {
+                              onToggleServiceLearning(instructor.service_learning_type);
+                            }
+                          });
+                        }}
                       >
                         {instructor.service_learning_type === 'compulsory' 
                           ? t('review.compulsory') 
@@ -1266,36 +1271,27 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 手機版單獨行 */}
                     <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                       <ResponsiveTooltip
+                        ref={(el) => {
+                          if (el) tooltipRefs.current[`term-${term.term_code}-hideheader-1`] = el;
+                        }}
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                        onFirstTap={() => {
-                          console.log('📅 Term Badge (hideHeader): First tap - setting pending filter');
-                          setPendingTermFilter(term.term_code);
-                        }}
-                        onSecondTap={() => {
-                          console.log('✅ Term Badge (hideHeader): Second tap - applying filter');
-                          setPendingTermFilter(null);
-                          setFilters(prev => ({
-                            ...prev,
-                            selectedTerms: [term.term_code],
-                            currentPage: 1
-                          }));
-                        }}
+                        clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-1`] : undefined}
+                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-1`]: open })) : undefined}
                       >
                         <button
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (!isMobile) {
-                              // Desktop: apply filter immediately
+                            handleMobileTwoTap(`term-${term.term_code}`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
                                 currentPage: 1
                               }));
-                            }
+                            });
                           }}
                         >
                           <span className="truncate">{term.name}</span>
@@ -1304,36 +1300,27 @@ export const CourseReviewsList = ({
                       {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`review-lang-${review.review_language}-hideheader-1`] = el;
+                          }}
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          onFirstTap={() => {
-                            console.log('🌐 Review Language Badge (hideHeader): First tap - setting pending filter');
-                            setPendingLanguageFilter(review.review_language!);
-                          }}
-                          onSecondTap={() => {
-                            console.log('✅ Review Language Badge (hideHeader): Second tap - applying filter');
-                            setPendingLanguageFilter(null);
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedLanguages: [review.review_language!],
-                              currentPage: 1
-                            }));
-                          }}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-hideheader-1`] : undefined}
+                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-1`]: open })) : undefined}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (!isMobile) {
-                                // Desktop: apply filter immediately
+                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
                                   currentPage: 1
                                 }));
-                              }
+                              });
                             }}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
@@ -1347,36 +1334,27 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
                     <div className="hidden md:flex items-center gap-2 shrink-0">
                       <ResponsiveTooltip
+                        ref={(el) => {
+                          if (el) tooltipRefs.current[`term-${term.term_code}-hideheader-2`] = el;
+                        }}
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                        onFirstTap={() => {
-                          console.log('📅 Term Badge (hideHeader): First tap - setting pending filter');
-                          setPendingTermFilter(term.term_code);
-                        }}
-                        onSecondTap={() => {
-                          console.log('✅ Term Badge (hideHeader): Second tap - applying filter');
-                          setPendingTermFilter(null);
-                          setFilters(prev => ({
-                            ...prev,
-                            selectedTerms: [term.term_code],
-                            currentPage: 1
-                          }));
-                        }}
+                        clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-2`] : undefined}
+                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-2`]: open })) : undefined}
                       >
                         <button
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (!isMobile) {
-                              // Desktop: apply filter immediately
+                            handleMobileTwoTap(`term-${term.term_code}`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
                                 currentPage: 1
                               }));
-                            }
+                            });
                           }}
                         >
                           <span className="truncate">{term.name}</span>
@@ -1385,36 +1363,27 @@ export const CourseReviewsList = ({
                       {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`review-lang-${review.review_language}-hideheader-2`] = el;
+                          }}
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          onFirstTap={() => {
-                            console.log('🌐 Review Language Badge (hideHeader): First tap - setting pending filter');
-                            setPendingLanguageFilter(review.review_language!);
-                          }}
-                          onSecondTap={() => {
-                            console.log('✅ Review Language Badge (hideHeader): Second tap - applying filter');
-                            setPendingLanguageFilter(null);
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedLanguages: [review.review_language!],
-                              currentPage: 1
-                            }));
-                          }}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-hideheader-2`] : undefined}
+                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-2`]: open })) : undefined}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (!isMobile) {
-                                // Desktop: apply filter immediately
+                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
                                   currentPage: 1
                                 }));
-                              }
+                              });
                             }}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
@@ -1426,28 +1395,27 @@ export const CourseReviewsList = ({
                     {review.course_final_grade && (
                       <div className="flex flex-col items-center">
                         <GradeBadge 
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`grade-${review.course_final_grade}`] = el;
+                          }}
                           grade={review.course_final_grade}
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
-                          isPending={pendingGradeFilter === (review.course_final_grade === "-1" ? "N/A" : review.course_final_grade)}
-                          onFirstTap={() => {
-                            const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
-                            console.log('🔄 CourseReviewsList.tsx: First tap - setting pending filter');
-                            setPendingGradeFilter(normalizedGrade);
-                          }}
-                          onSecondTap={() => {
-                            console.log('✅ CourseReviewsList.tsx: Second tap - clearing pending filter');
-                            setPendingGradeFilter(null);
-                          }}
+                          isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : false}
+                          mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : undefined}
+                          onMobileTooltipChange={isMobile ? () => {
+                            // Tooltip state managed by timeout
+                          } : undefined}
                           onClick={() => {
-                            const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
-                            console.log('🚀 CourseReviewsList.tsx: Applying grade filter');
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedGrades: [normalizedGrade],
-                              currentPage: 1
-                            }));
+                            handleMobileTwoTap(`grade-${review.course_final_grade}`, () => {
+                              const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
+                              setFilters(prev => ({
+                                ...prev,
+                                selectedGrades: [normalizedGrade],
+                                currentPage: 1
+                              }));
+                            });
                           }}
                         />
                       </div>
@@ -1657,36 +1625,27 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 手機版單獨行 */}
                     <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                       <ResponsiveTooltip
+                        ref={(el) => {
+                          if (el) tooltipRefs.current[`term-${term.term_code}-card-1`] = el;
+                        }}
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                        onFirstTap={() => {
-                          console.log('📅 Term Badge (Card): First tap - setting pending filter');
-                          setPendingTermFilter(term.term_code);
-                        }}
-                        onSecondTap={() => {
-                          console.log('✅ Term Badge (Card): Second tap - applying filter');
-                          setPendingTermFilter(null);
-                          setFilters(prev => ({
-                            ...prev,
-                            selectedTerms: [term.term_code],
-                            currentPage: 1
-                          }));
-                        }}
+                        clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-card-1`] : undefined}
+                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-1`]: open })) : undefined}
                       >
                         <button
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (!isMobile) {
-                              // Desktop: apply filter immediately
+                            handleMobileTwoTap(`term-${term.term_code}`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
                                 currentPage: 1
                               }));
-                            }
+                            });
                           }}
                         >
                           <span className="truncate">{term.name}</span>
@@ -1695,36 +1654,27 @@ export const CourseReviewsList = ({
                       {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`review-lang-${review.review_language}-card-1`] = el;
+                          }}
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          onFirstTap={() => {
-                            console.log('🌐 Review Language Badge (Card): First tap - setting pending filter');
-                            setPendingLanguageFilter(review.review_language!);
-                          }}
-                          onSecondTap={() => {
-                            console.log('✅ Review Language Badge (Card): Second tap - applying filter');
-                            setPendingLanguageFilter(null);
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedLanguages: [review.review_language!],
-                              currentPage: 1
-                            }));
-                          }}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-card-1`] : undefined}
+                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-1`]: open })) : undefined}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (!isMobile) {
-                                // Desktop: apply filter immediately
+                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
                                   currentPage: 1
                                 }));
-                              }
+                              });
                             }}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
@@ -1738,36 +1688,27 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
                     <div className="hidden md:flex items-center gap-2 shrink-0">
                       <ResponsiveTooltip
+                        ref={(el) => {
+                          if (el) tooltipRefs.current[`term-${term.term_code}-card-2`] = el;
+                        }}
                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                         hasClickAction={true}
-                        clickActionText={t('tooltip.clickAgainToFilter')}
-                        onFirstTap={() => {
-                          console.log('📅 Term Badge (Card): First tap - setting pending filter');
-                          setPendingTermFilter(term.term_code);
-                        }}
-                        onSecondTap={() => {
-                          console.log('✅ Term Badge (Card): Second tap - applying filter');
-                          setPendingTermFilter(null);
-                          setFilters(prev => ({
-                            ...prev,
-                            selectedTerms: [term.term_code],
-                            currentPage: 1
-                          }));
-                        }}
+                        clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-card-2`] : undefined}
+                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-2`]: open })) : undefined}
                       >
                         <button
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (!isMobile) {
-                              // Desktop: apply filter immediately
+                            handleMobileTwoTap(`term-${term.term_code}`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
                                 currentPage: 1
                               }));
-                            }
+                            });
                           }}
                         >
                           <span className="truncate">{term.name}</span>
@@ -1776,36 +1717,27 @@ export const CourseReviewsList = ({
                       {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
                       {review.review_language && (
                         <ResponsiveTooltip
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`review-lang-${review.review_language}-card-2`] = el;
+                          }}
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
-                          clickActionText={t('tooltip.clickAgainToFilter')}
-                          onFirstTap={() => {
-                            console.log('🌐 Review Language Badge (Card): First tap - setting pending filter');
-                            setPendingLanguageFilter(review.review_language!);
-                          }}
-                          onSecondTap={() => {
-                            console.log('✅ Review Language Badge (Card): Second tap - applying filter');
-                            setPendingLanguageFilter(null);
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedLanguages: [review.review_language!],
-                              currentPage: 1
-                            }));
-                          }}
+                          clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-card-2`] : undefined}
+                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-2`]: open })) : undefined}
                         >
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (!isMobile) {
-                                // Desktop: apply filter immediately
+                              handleMobileTwoTap(`review-lang-${review.review_language}`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
                                   currentPage: 1
                                 }));
-                              }
+                              });
                             }}
                           >
                             <span className="truncate">{getLanguageDisplayName(review.review_language)}</span>
@@ -1817,33 +1749,27 @@ export const CourseReviewsList = ({
                     {review.course_final_grade && (
                       <div className="flex flex-col items-center">
                         <GradeBadge 
+                          ref={(el) => {
+                            if (el) tooltipRefs.current[`grade-${review.course_final_grade}`] = el;
+                          }}
                           grade={review.course_final_grade}
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
-                          isPending={pendingGradeFilter === (review.course_final_grade === "-1" ? "N/A" : review.course_final_grade)}
+                          isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : false}
+                          mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : undefined}
+                          onMobileTooltipChange={isMobile ? () => {
+                            // Tooltip state managed by timeout
+                          } : undefined}
                           onClick={() => {
-                            const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
-                            if (isMobile) {
-                              if (pendingGradeFilter !== normalizedGrade) {
-                                setPendingGradeFilter(normalizedGrade);
-                                return;
-                              } else {
-                                setPendingGradeFilter(null);
-                                setFilters(prev => ({
-                                  ...prev,
-                                  selectedGrades: [normalizedGrade],
-                                  currentPage: 1
-                                }));
-                                return;
-                              }
-                            }
-                            // Desktop: apply filter immediately
-                            setFilters(prev => ({
-                              ...prev,
-                              selectedGrades: [normalizedGrade],
-                              currentPage: 1
-                            }));
+                            handleMobileTwoTap(`grade-${review.course_final_grade}`, () => {
+                              const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
+                              setFilters(prev => ({
+                                ...prev,
+                                selectedGrades: [normalizedGrade],
+                                currentPage: 1
+                              }));
+                            });
                           }}
                         />
                       </div>
