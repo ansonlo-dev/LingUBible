@@ -656,7 +656,7 @@ export const CourseReviewsList = ({
             if (el) tooltipRefs.current[key] = el;
           }}
           variant={hasRequirement ? "default" : "secondary"}
-          className={`text-xs shrink-0 cursor-pointer transition-all duration-200 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+          className={`text-xs shrink-0 cursor-help transition-all duration-200 ${hasRequirement ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1054,7 +1054,7 @@ export const CourseReviewsList = ({
                           if (el) tooltipRefs.current[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`] = el;
                         }} 
                         className={cn(
-                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-pointer transition-all duration-200 hover:scale-105",
+                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105",
                           instructor.service_learning_type === 'compulsory'
                             ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40"
                             : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
