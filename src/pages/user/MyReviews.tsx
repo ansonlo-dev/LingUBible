@@ -121,6 +121,7 @@ const MyReviews = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  console.log('📱 isMobile state:', isMobile);
   
   const [reviews, setReviews] = useState<UserReviewInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,8 +176,11 @@ const MyReviews = () => {
 
   // Helper function for mobile two-tap functionality
   const handleMobileTwoTap = (key: string, action: () => void) => {
+    console.log('🔍 handleMobileTwoTap called:', { key, isMobile });
+    
     if (!isMobile) {
       // Desktop: apply filter immediately
+      console.log('🖥️ Desktop mode: applying filter immediately');
       action();
       return;
     }
@@ -185,22 +189,28 @@ const MyReviews = () => {
     const currentCount = mobileTapCounts[key] || 0;
     const newCount = currentCount + 1;
     
+    console.log('📱 Mobile tap:', { key, currentCount, newCount, currentState: mobileTapStates[key] });
+    
     // Clear existing timeout for this key
     if (mobileTimeoutRefs.current[key]) {
       clearTimeout(mobileTimeoutRefs.current[key]);
+      console.log('⏰ Cleared existing timeout for key:', key);
     }
     
     setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
 
     if (newCount === 1) {
       // First tap: show tooltip
+      console.log('👆 First tap: showing tooltip for key:', key);
       setMobileTapStates(prev => ({ ...prev, [key]: true }));
       mobileTimeoutRefs.current[key] = setTimeout(() => {
+        console.log('⏰ Timeout reached for key:', key);
         setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
         setMobileTapStates(prev => ({ ...prev, [key]: false }));
       }, 3000);
     } else if (newCount === 2) {
       // Second tap: apply filter and hide tooltip
+      console.log('👆👆 Second tap: applying filter for key:', key);
       action();
       setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
       setMobileTapStates(prev => ({ ...prev, [key]: false }));
@@ -209,6 +219,15 @@ const MyReviews = () => {
       }
     }
   };
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('📊 Mobile tap counts updated:', mobileTapCounts);
+  }, [mobileTapCounts]);
+
+  useEffect(() => {
+    console.log('🔄 Mobile tap states updated:', mobileTapStates);
+  }, [mobileTapStates]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -764,9 +783,11 @@ const MyReviews = () => {
                           <button
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
+                              console.log('🏷️ Term badge clicked (mobile):', reviewInfo.term.term_code);
                               e.preventDefault();
                               e.stopPropagation();
                               handleMobileTwoTap(`term-mobile-${reviewInfo.term.term_code}`, () => {
+                                console.log('🎯 Term filter action triggered:', reviewInfo.term.term_code);
                                 // 設置學期篩選
                                 handleFiltersChange({
                                   ...filters,
@@ -921,7 +942,9 @@ const MyReviews = () => {
                               }
                             } : undefined}
                             onClick={() => {
+                              console.log('🔵 Grade circle clicked:', reviewInfo.review.course_final_grade);
                               handleMobileTwoTap(`grade-${reviewInfo.review.course_final_grade}`, () => {
+                                console.log('🎯 Grade filter action triggered:', reviewInfo.review.course_final_grade);
                                 const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
                                 handleFiltersChange({
                                   ...filters,
@@ -1357,7 +1380,9 @@ const MyReviews = () => {
                                             : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
                                         )}
                                         onClick={() => {
+                                          console.log('🎓 Service learning badge clicked:', instructorDetail.service_learning_type);
                                           handleMobileTwoTap(`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`, () => {
+                                            console.log('🎯 Service learning filter action triggered:', instructorDetail.service_learning_type);
                                             // 設置服務學習篩選
                                             const serviceType = instructorDetail.service_learning_type;
                                             handleFiltersChange({
