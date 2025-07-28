@@ -119,23 +119,13 @@ export const CourseReviewsList = ({
       // Get all currently active tooltip keys
       const activeKeys = Object.keys(mobileTapStates).filter(key => mobileTapStates[key]);
       
-      console.log('🖱️ CourseReviewsList handleClickOutside:', { 
-        targetTagName: target.tagName,
-        targetClassName: target.className,
-        activeKeys,
-        allStates: mobileTapStates,
-        allCounts: mobileTapCounts
-      });
-      
       if (activeKeys.length === 0) {
-        console.log('🚫 No active tooltips, returning');
         return;
       }
 
       // Add a small delay to allow onClick handlers to process first
       // This prevents interference with the two-tap functionality
       setTimeout(() => {
-        console.log('⏰ Click outside timeout fired');
         // Check if click is outside all active tooltips
         let clickedInsideAnyTooltip = false;
         
@@ -143,28 +133,16 @@ export const CourseReviewsList = ({
           const tooltipElement = tooltipRefs.current[key];
           if (tooltipElement && tooltipElement.contains(target)) {
             clickedInsideAnyTooltip = true;
-            console.log('✅ Clicked inside tooltip:', key);
             break;
           }
         }
 
-        console.log('🎯 Click analysis:', { clickedInsideAnyTooltip, activeKeys });
-
         // If clicked outside all tooltips, close all active tooltips
         if (!clickedInsideAnyTooltip) {
-          console.log('🔄 Resetting all active tooltips:', activeKeys);
           activeKeys.forEach(key => {
             // Reset states
-            setMobileTapCounts(prev => {
-              const updated = { ...prev, [key]: 0 };
-              console.log('📊 Click outside - reset tap counts:', updated);
-              return updated;
-            });
-            setMobileTapStates(prev => {
-              const updated = { ...prev, [key]: false };
-              console.log('🎯 Click outside - reset tap states:', updated);
-              return updated;
-            });
+            setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+            setMobileTapStates(prev => ({ ...prev, [key]: false }));
           });
         }
       }, 10); // Small delay to let onClick handlers process first
@@ -190,18 +168,8 @@ export const CourseReviewsList = ({
 
   // Handle mobile two-tap functionality (same pattern as MyReviews.tsx)
   const handleMobileTwoTap = (key: string, action: () => void) => {
-    console.log('🔥 CourseReviewsList handleMobileTwoTap called:', { 
-      key, 
-      isMobile, 
-      currentCount: mobileTapCounts[key] || 0,
-      currentState: mobileTapStates[key] || false,
-      allStates: mobileTapStates,
-      allCounts: mobileTapCounts
-    });
-    
     if (!isMobile) {
       // Desktop: apply filter immediately
-      console.log('🖥️ Desktop mode, applying action immediately');
       action();
       return;
     }
@@ -210,38 +178,16 @@ export const CourseReviewsList = ({
     const currentCount = mobileTapCounts[key] || 0;
     const newCount = currentCount + 1;
     
-    console.log('📱 Mobile tap:', { key, currentCount, newCount });
-    
-    setMobileTapCounts(prev => {
-      const updated = { ...prev, [key]: newCount };
-      console.log('📊 Updated tap counts:', updated);
-      return updated;
-    });
+    setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
 
     if (newCount === 1) {
       // First tap: show tooltip
-      console.log('👆 First tap - showing tooltip');
-      setMobileTapStates(prev => {
-        const updated = { ...prev, [key]: true };
-        console.log('🎯 Updated tap states:', updated);
-        return updated;
-      });
+      setMobileTapStates(prev => ({ ...prev, [key]: true }));
     } else if (newCount === 2) {
       // Second tap: apply filter and hide tooltip
-      console.log('👆👆 Second tap - applying filter and hiding tooltip');
       action();
-      setMobileTapCounts(prev => {
-        const updated = { ...prev, [key]: 0 };
-        console.log('📊 Reset tap counts:', updated);
-        return updated;
-      });
-      setMobileTapStates(prev => {
-        const updated = { ...prev, [key]: false };
-        console.log('🎯 Reset tap states:', updated);
-        return updated;
-      });
-    } else {
-      console.log('⚠️ Unexpected tap count:', newCount);
+      setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+      setMobileTapStates(prev => ({ ...prev, [key]: false }));
     }
   };
   
@@ -699,6 +645,10 @@ export const CourseReviewsList = ({
         open={isMobile ? mobileTapStates[key] : undefined}
         onOpenChange={isMobile ? () => {
           // Tooltip state managed by handleMobileTwoTap
+        } : undefined}
+        onReset={isMobile ? () => {
+          setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
+          setMobileTapStates(prev => ({ ...prev, [key]: false }));
         } : undefined}
       >
         <Badge
