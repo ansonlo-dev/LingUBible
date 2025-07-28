@@ -920,26 +920,16 @@ const MyReviews = () => {
                                 setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: false }));
                               }
                             } : undefined}
-                            onFirstTap={isMobile ? () => {
-                              setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: true }));
-                            } : undefined}
-                            onSecondTap={isMobile ? () => {
-                              const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
-                              handleFiltersChange({
-                                ...filters,
-                                selectedGrades: [normalizedGrade],
-                                currentPage: 1
+                            onClick={() => {
+                              handleMobileTwoTap(`grade-${reviewInfo.review.course_final_grade}`, () => {
+                                const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
+                                handleFiltersChange({
+                                  ...filters,
+                                  selectedGrades: [normalizedGrade],
+                                  currentPage: 1
+                                });
                               });
-                              setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: false }));
-                            } : undefined}
-                            onClick={!isMobile ? () => {
-                              const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
-                              handleFiltersChange({
-                                ...filters,
-                                selectedGrades: [normalizedGrade],
-                                currentPage: 1
-                              });
-                            } : undefined}
+                            }}
                           />
                         </div>
                       )}

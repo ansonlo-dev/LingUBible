@@ -11,8 +11,6 @@ interface GradeBadgeProps {
   onClick?: () => void;
   hasClickAction?: boolean;
   isPending?: boolean;
-  onFirstTap?: () => void;
-  onSecondTap?: () => void;
   mobileTooltipOpen?: boolean;
   onMobileTooltipChange?: (open: boolean) => void;
 }
@@ -24,8 +22,6 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   onClick,
   hasClickAction = false,
   isPending = false,
-  onFirstTap,
-  onSecondTap,
   mobileTooltipOpen,
   onMobileTooltipChange
 }) => {
@@ -194,8 +190,6 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
         isPending={isPending}
         open={mobileTooltipOpen}
         onOpenChange={onMobileTooltipChange}
-        onFirstTap={onFirstTap}
-        onSecondTap={onSecondTap}
       >
         <div 
           className={`
