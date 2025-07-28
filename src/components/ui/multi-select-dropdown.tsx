@@ -258,21 +258,13 @@ export function MultiSelectDropdown({
 
   const getDisplayText = () => {
     if (safeSelectedValues.length === 0) {
-      console.log('🔍 MultiSelectDropdown: Showing placeholder:', placeholder);
       return placeholder; // Show placeholder when nothing is selected
     } else if (safeSelectedValues.length === 1) {
       const option = options.find(opt => opt.value === safeSelectedValues[0]);
-      console.log('🔍 MultiSelectDropdown: Single selection:', { 
-        value: safeSelectedValues[0], 
-        option: option?.label, 
-        isTeachingLanguage: option?.isTeachingLanguage,
-        isMobile 
-      });
       if (option && option.isTeachingLanguage && isMobile) {
         // For teaching language options on mobile, format as two lines in the placeholder
         const parts = option.label.split(/\s*-\s*/);
         if (parts.length >= 2) {
-          console.log('🔍 MultiSelectDropdown: Returning JSX for teaching language mobile');
           return (
             <div className="flex flex-col items-start py-0.5">
               <div className="font-mono font-semibold text-primary text-xs leading-tight">
@@ -290,7 +282,6 @@ export function MultiSelectDropdown({
       if (option && /^[A-F][+-]?\s*\([\d.]+\)$/.test(option.label)) {
         const match = option.label.match(/^([A-F][+-]?)(\s*)(\([\d.]+\))$/);
         if (match) {
-          console.log('🔍 MultiSelectDropdown: Returning JSX for grade option');
           return (
             <span className="flex items-center">
               <span className="font-mono font-semibold">{match[1]}</span>
@@ -301,11 +292,9 @@ export function MultiSelectDropdown({
         }
       }
       
-      console.log('🔍 MultiSelectDropdown: Returning raw label:', option?.label);
       return option ? option.label : safeSelectedValues[0];
     } else {
       const countText = t('common.selectedCount', { count: safeSelectedValues.length });
-      console.log('🔍 MultiSelectDropdown: Multiple selection count:', countText);
       return countText;
     }
   };
@@ -327,11 +316,7 @@ export function MultiSelectDropdown({
           <SelectValue>
             <div className="w-full overflow-hidden">
               <div className="truncate">
-                {(() => {
-                  const displayText = getDisplayText();
-                  console.log('🔍 SelectValue: Rendering display text type:', typeof displayText, displayText);
-                  return displayText;
-                })()}
+                {getDisplayText()}
               </div>
             </div>
           </SelectValue>
