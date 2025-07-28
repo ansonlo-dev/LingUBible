@@ -13,6 +13,8 @@ interface GradeBadgeProps {
   isPending?: boolean;
   onFirstTap?: () => void;
   onSecondTap?: () => void;
+  mobileTooltipOpen?: boolean;
+  onMobileTooltipChange?: (open: boolean) => void;
 }
 
 export const GradeBadge: React.FC<GradeBadgeProps> = ({ 
@@ -23,7 +25,9 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
   hasClickAction = false,
   isPending = false,
   onFirstTap,
-  onSecondTap
+  onSecondTap,
+  mobileTooltipOpen,
+  onMobileTooltipChange
 }) => {
   const { t } = useLanguage();
   
@@ -188,6 +192,8 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
         hasClickAction={hasClickAction}
         clickActionText={hasClickAction ? t('tooltip.clickAgainToFilter') : undefined}
         isPending={isPending}
+        open={mobileTooltipOpen}
+        onOpenChange={onMobileTooltipChange}
         onFirstTap={onFirstTap}
         onSecondTap={onSecondTap}
       >

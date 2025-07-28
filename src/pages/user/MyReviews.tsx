@@ -756,6 +756,7 @@ const MyReviews = () => {
                           open={isMobile ? mobileTapStates[`term-mobile-${reviewInfo.term.term_code}`] : undefined}
                           onOpenChange={isMobile ? (open) => {
                             if (!open) {
+                              setMobileTapCounts(prev => ({ ...prev, [`term-mobile-${reviewInfo.term.term_code}`]: 0 }));
                               setMobileTapStates(prev => ({ ...prev, [`term-mobile-${reviewInfo.term.term_code}`]: false }));
                             }
                           } : undefined}
@@ -787,12 +788,13 @@ const MyReviews = () => {
                             open={isMobile ? mobileTapStates[`lang-mobile-${reviewInfo.review.review_language || 'en'}`] : undefined}
                             onOpenChange={isMobile ? (open) => {
                               if (!open) {
+                                setMobileTapCounts(prev => ({ ...prev, [`lang-mobile-${reviewInfo.review.review_language || 'en'}`]: 0 }));
                                 setMobileTapStates(prev => ({ ...prev, [`lang-mobile-${reviewInfo.review.review_language || 'en'}`]: false }));
                               }
                             } : undefined}
                           >
                             <button
-                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
+                              className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -844,6 +846,7 @@ const MyReviews = () => {
                           open={isMobile ? mobileTapStates[`term-desktop-${reviewInfo.term.term_code}`] : undefined}
                           onOpenChange={isMobile ? (open) => {
                             if (!open) {
+                              setMobileTapCounts(prev => ({ ...prev, [`term-desktop-${reviewInfo.term.term_code}`]: 0 }));
                               setMobileTapStates(prev => ({ ...prev, [`term-desktop-${reviewInfo.term.term_code}`]: false }));
                             }
                           } : undefined}
@@ -875,6 +878,7 @@ const MyReviews = () => {
                             open={isMobile ? mobileTapStates[`lang-desktop-${reviewInfo.review.review_language || 'en'}`] : undefined}
                             onOpenChange={isMobile ? (open) => {
                               if (!open) {
+                                setMobileTapCounts(prev => ({ ...prev, [`lang-desktop-${reviewInfo.review.review_language || 'en'}`]: 0 }));
                                 setMobileTapStates(prev => ({ ...prev, [`lang-desktop-${reviewInfo.review.review_language || 'en'}`]: false }));
                               }
                             } : undefined}
@@ -908,6 +912,14 @@ const MyReviews = () => {
                             showTooltip={true}
                             hasClickAction={true}
                             isPending={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}`] : false}
+                            mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}`] : undefined}
+                            onMobileTooltipChange={isMobile ? (open) => {
+                              if (!open) {
+                                // Reset tap count when tooltip is closed externally
+                                setMobileTapCounts(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: 0 }));
+                                setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: false }));
+                              }
+                            } : undefined}
                             onFirstTap={isMobile ? () => {
                               setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: true }));
                             } : undefined}
@@ -1115,6 +1127,7 @@ const MyReviews = () => {
                                       open={isMobile ? mobileTapStates[`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] : undefined}
                                       onOpenChange={isMobile ? (open) => {
                                         if (!open) {
+                                          setMobileTapCounts(prev => ({ ...prev, [`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: 0 }));
                                           setMobileTapStates(prev => ({ ...prev, [`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: false }));
                                         }
                                       } : undefined}
@@ -1148,6 +1161,7 @@ const MyReviews = () => {
                                             open={isMobile ? mobileTapStates[`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`] : undefined}
                                             onOpenChange={isMobile ? (open) => {
                                               if (!open) {
+                                                setMobileTapCounts(prev => ({ ...prev, [`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`]: 0 }));
                                                 setMobileTapStates(prev => ({ ...prev, [`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`]: false }));
                                               }
                                             } : undefined}
@@ -1191,6 +1205,7 @@ const MyReviews = () => {
                                     open={isMobile ? mobileTapStates[`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] : undefined}
                                     onOpenChange={isMobile ? (open) => {
                                       if (!open) {
+                                        setMobileTapCounts(prev => ({ ...prev, [`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: 0 }));
                                         setMobileTapStates(prev => ({ ...prev, [`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: false }));
                                       }
                                     } : undefined}
@@ -1224,6 +1239,7 @@ const MyReviews = () => {
                                           open={isMobile ? mobileTapStates[`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`] : undefined}
                                           onOpenChange={isMobile ? (open) => {
                                             if (!open) {
+                                              setMobileTapCounts(prev => ({ ...prev, [`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`]: 0 }));
                                               setMobileTapStates(prev => ({ ...prev, [`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`]: false }));
                                             }
                                           } : undefined}
@@ -1333,7 +1349,15 @@ const MyReviews = () => {
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterByServiceLearning', { type: instructorDetail.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional') })}
                                       hasClickAction={true}
-                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                      open={isMobile ? mobileTapStates[`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`] : undefined}
+                                      onOpenChange={isMobile ? (open) => {
+                                        if (!open) {
+                                          // Reset tap count when tooltip is closed externally
+                                          setMobileTapCounts(prev => ({ ...prev, [`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`]: 0 }));
+                                          setMobileTapStates(prev => ({ ...prev, [`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`]: false }));
+                                        }
+                                      } : undefined}
                                     >
                                       <span 
                                         className={cn(
@@ -1343,12 +1367,14 @@ const MyReviews = () => {
                                             : "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40"
                                         )}
                                         onClick={() => {
-                                          // 設置服務學習篩選
-                                          const serviceType = instructorDetail.service_learning_type;
-                                          handleFiltersChange({
-                                            ...filters,
-                                            selectedServiceLearning: [serviceType],
-                                            currentPage: 1
+                                          handleMobileTwoTap(`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`, () => {
+                                            // 設置服務學習篩選
+                                            const serviceType = instructorDetail.service_learning_type;
+                                            handleFiltersChange({
+                                              ...filters,
+                                              selectedServiceLearning: [serviceType],
+                                              currentPage: 1
+                                            });
                                           });
                                         }}
                                       >

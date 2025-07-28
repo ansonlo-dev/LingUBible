@@ -1322,7 +1322,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1713,7 +1713,7 @@ export const CourseReviewsList = ({
                           }}
                         >
                           <button
-                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help max-w-[120px]"
+                            className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
