@@ -1,4 +1,5 @@
-name = "lingubible"
+# 預設環境 (staging)
+name = "lingubible-staging"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -6,10 +7,6 @@ compatibility_flags = ["nodejs_compat"]
 command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:cf-fast"
 cwd = ""
 watch_dir = "src"
-
-# 移動環境變數到命令中以避免警告
-
-# 環境變數在構建命令中設置
 
 # 靜態資源配置 - 用於 SPA
 [assets]
@@ -19,3 +16,8 @@ not_found_handling = "single-page-application"
 # 觀察性設定 - 啟用日誌記錄以確保部署設定一致性
 [observability.logs]
 enabled = true
+
+# 生產環境配置
+[env.production]
+name = "lingubible"
+# 生產環境使用相同的靜態資源配置

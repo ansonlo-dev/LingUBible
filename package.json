@@ -26,6 +26,8 @@
     "preview": "vite preview",
     "deploy": "bun run build:workers && wrangler deploy",
     "deploy:fast": "bun run build:workers-optimized && wrangler deploy",
+    "deploy:staging": "bun run build:cf-fast && wrangler deploy",
+    "deploy:production": "bun run build:cf-fast && wrangler deploy --env production",
     "wrangler": "wrangler",
     "performance:test": "echo '🚀 Running performance tests...' && bun run build && echo '✅ Performance test completed'",
     "performance:lighthouse": "echo '💡 Run: lighthouse http://localhost:8080 --output=html --output-path=./performance-report.html'",
