@@ -756,7 +756,13 @@ export const CourseReviewsList = ({
                     hasClickAction={true}
                     clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                     open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-desktop`] : undefined}
-                    onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-desktop`]: open })) : undefined}
+                    onOpenChange={isMobile ? () => {
+                      // Tooltip state managed by handleMobileTwoTap
+                    } : undefined}
+                    onReset={isMobile ? () => {
+                      setMobileTapCounts(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-desktop`]: 0 }));
+                      setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-desktop`]: false }));
+                    } : undefined}
                   >
                     <span
                       ref={(el) => {
@@ -805,7 +811,13 @@ export const CourseReviewsList = ({
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`] : undefined}
-                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`]: open })) : undefined}
+                          onOpenChange={isMobile ? () => {
+                            // Tooltip state managed by handleMobileTwoTap
+                          } : undefined}
+                          onReset={isMobile ? () => {
+                            setMobileTapCounts(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`]: false }));
+                          } : undefined}
                         >
                           <span
                             ref={(el) => {
@@ -848,7 +860,13 @@ export const CourseReviewsList = ({
                   hasClickAction={true}
                   clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                   open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-mobile`] : undefined}
-                  onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-mobile`]: open })) : undefined}
+                  onOpenChange={isMobile ? () => {
+                    // Tooltip state managed by handleMobileTwoTap
+                  } : undefined}
+                  onReset={isMobile ? () => {
+                    setMobileTapCounts(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-mobile`]: 0 }));
+                    setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-mobile`]: false }));
+                  } : undefined}
                 >
                   <span
                     ref={(el) => {
@@ -897,7 +915,13 @@ export const CourseReviewsList = ({
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`] : undefined}
-                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`]: open })) : undefined}
+                        onOpenChange={isMobile ? () => {
+                          // Tooltip state managed by handleMobileTwoTap
+                        } : undefined}
+                        onReset={isMobile ? () => {
+                          setMobileTapCounts(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`]: false }));
+                        } : undefined}
                       >
                         <span
                           ref={(el) => {
@@ -1017,7 +1041,13 @@ export const CourseReviewsList = ({
                       hasClickAction={true}
                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                       open={isMobile ? mobileTapStates[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`] : undefined}
-                      onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`]: open })) : undefined}
+                      onOpenChange={isMobile ? () => {
+                        // Tooltip state managed by handleMobileTwoTap
+                      } : undefined}
+                      onReset={isMobile ? () => {
+                        setMobileTapCounts(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`]: 0 }));
+                        setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`]: false }));
+                      } : undefined}
                     >
                       <span
                         ref={(el) => {
@@ -1271,7 +1301,13 @@ export const CourseReviewsList = ({
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-1`] : undefined}
-                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-1`]: open })) : undefined}
+                        onOpenChange={isMobile ? () => {
+                          // Tooltip state managed by handleMobileTwoTap
+                        } : undefined}
+                        onReset={isMobile ? () => {
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-hideheader-1`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-1`]: false }));
+                        } : undefined}
                       >
                         <button
                           ref={(el) => {
@@ -1300,7 +1336,13 @@ export const CourseReviewsList = ({
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-hideheader-1`] : undefined}
-                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-1`]: open })) : undefined}
+                          onOpenChange={isMobile ? () => {
+                            // Tooltip state managed by handleMobileTwoTap
+                          } : undefined}
+                          onReset={isMobile ? () => {
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-1`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-1`]: false }));
+                          } : undefined}
                         >
                           <button
                             ref={(el) => {
@@ -1334,7 +1376,13 @@ export const CourseReviewsList = ({
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-2`] : undefined}
-                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-2`]: open })) : undefined}
+                        onOpenChange={isMobile ? () => {
+                          // Tooltip state managed by handleMobileTwoTap
+                        } : undefined}
+                        onReset={isMobile ? () => {
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-hideheader-2`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-2`]: false }));
+                        } : undefined}
                       >
                         <button
                           ref={(el) => {
@@ -1363,7 +1411,13 @@ export const CourseReviewsList = ({
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-hideheader-2`] : undefined}
-                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-2`]: open })) : undefined}
+                          onOpenChange={isMobile ? () => {
+                            // Tooltip state managed by handleMobileTwoTap
+                          } : undefined}
+                          onReset={isMobile ? () => {
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-2`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-2`]: false }));
+                          } : undefined}
                         >
                           <button
                             ref={(el) => {
@@ -1625,7 +1679,13 @@ export const CourseReviewsList = ({
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-card-1`] : undefined}
-                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-1`]: open })) : undefined}
+                        onOpenChange={isMobile ? () => {
+                          // Tooltip state managed by handleMobileTwoTap
+                        } : undefined}
+                        onReset={isMobile ? () => {
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-card-1`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-1`]: false }));
+                        } : undefined}
                       >
                         <button
                           ref={(el) => {
@@ -1654,7 +1714,13 @@ export const CourseReviewsList = ({
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-card-1`] : undefined}
-                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-1`]: open })) : undefined}
+                          onOpenChange={isMobile ? () => {
+                            // Tooltip state managed by handleMobileTwoTap
+                          } : undefined}
+                          onReset={isMobile ? () => {
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-card-1`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-1`]: false }));
+                          } : undefined}
                         >
                           <button
                             ref={(el) => {
@@ -1688,7 +1754,13 @@ export const CourseReviewsList = ({
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-card-2`] : undefined}
-                        onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-2`]: open })) : undefined}
+                        onOpenChange={isMobile ? () => {
+                          // Tooltip state managed by handleMobileTwoTap
+                        } : undefined}
+                        onReset={isMobile ? () => {
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-card-2`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-2`]: false }));
+                        } : undefined}
                       >
                         <button
                           ref={(el) => {
@@ -1717,7 +1789,13 @@ export const CourseReviewsList = ({
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-card-2`] : undefined}
-                          onOpenChange={isMobile ? (open) => setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-2`]: open })) : undefined}
+                          onOpenChange={isMobile ? () => {
+                            // Tooltip state managed by handleMobileTwoTap
+                          } : undefined}
+                          onReset={isMobile ? () => {
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-card-2`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-2`]: false }));
+                          } : undefined}
                         >
                           <button
                             ref={(el) => {
