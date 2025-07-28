@@ -15,7 +15,7 @@ export default {
   'hero.title': '歡迎來到',
   'hero.regBible': '一個屬於嶺南人的Reg科聖經',
   'hero.subtitle': '博覽群評，擇善而學',
-  'hero.subtitleDesktop': '博覽群評，擇善而學3',
+  'hero.subtitleDesktop': '博覽群評，擇善而學',
   'hero.subtitleMobileLine1': '博覽群評，擇善而學',
   'hero.subtitleMobileLine2': '',
   'hero.action': '集思廣益',
