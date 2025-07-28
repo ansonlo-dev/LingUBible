@@ -774,10 +774,8 @@ const MyReviews = () => {
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`term-mobile-${reviewInfo.term.term_code}`] : undefined}
                           onOpenChange={isMobile ? (open) => {
-                            if (!open) {
-                              setMobileTapCounts(prev => ({ ...prev, [`term-mobile-${reviewInfo.term.term_code}`]: 0 }));
-                              setMobileTapStates(prev => ({ ...prev, [`term-mobile-${reviewInfo.term.term_code}`]: false }));
-                            }
+                            console.log('🔄 Term tooltip change:', { open, key: `term-mobile-${reviewInfo.term.term_code}` });
+                            // Don't reset tap count here - let timeout handle it
                           } : undefined}
                         >
                           <button
@@ -808,10 +806,8 @@ const MyReviews = () => {
                             clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                             open={isMobile ? mobileTapStates[`lang-mobile-${reviewInfo.review.review_language || 'en'}`] : undefined}
                             onOpenChange={isMobile ? (open) => {
-                              if (!open) {
-                                setMobileTapCounts(prev => ({ ...prev, [`lang-mobile-${reviewInfo.review.review_language || 'en'}`]: 0 }));
-                                setMobileTapStates(prev => ({ ...prev, [`lang-mobile-${reviewInfo.review.review_language || 'en'}`]: false }));
-                              }
+                              console.log('🔄 Language tooltip change:', { open, key: `lang-mobile-${reviewInfo.review.review_language || 'en'}` });
+                              // Don't reset tap count here - let timeout handle it
                             } : undefined}
                           >
                             <button
@@ -866,10 +862,8 @@ const MyReviews = () => {
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                           open={isMobile ? mobileTapStates[`term-desktop-${reviewInfo.term.term_code}`] : undefined}
                           onOpenChange={isMobile ? (open) => {
-                            if (!open) {
-                              setMobileTapCounts(prev => ({ ...prev, [`term-desktop-${reviewInfo.term.term_code}`]: 0 }));
-                              setMobileTapStates(prev => ({ ...prev, [`term-desktop-${reviewInfo.term.term_code}`]: false }));
-                            }
+                            console.log('🔄 Term tooltip change:', { open, key: `term-desktop-${reviewInfo.term.term_code}` });
+                            // Don't reset tap count here - let timeout handle it
                           } : undefined}
                         >
                           <button
@@ -898,10 +892,8 @@ const MyReviews = () => {
                             clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                             open={isMobile ? mobileTapStates[`lang-desktop-${reviewInfo.review.review_language || 'en'}`] : undefined}
                             onOpenChange={isMobile ? (open) => {
-                              if (!open) {
-                                setMobileTapCounts(prev => ({ ...prev, [`lang-desktop-${reviewInfo.review.review_language || 'en'}`]: 0 }));
-                                setMobileTapStates(prev => ({ ...prev, [`lang-desktop-${reviewInfo.review.review_language || 'en'}`]: false }));
-                              }
+                              console.log('🔄 Language tooltip change:', { open, key: `lang-desktop-${reviewInfo.review.review_language || 'en'}` });
+                              // Don't reset tap count here - let timeout handle it
                             } : undefined}
                           >
                             <button
@@ -935,11 +927,8 @@ const MyReviews = () => {
                             isPending={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}`] : false}
                             mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}`] : undefined}
                             onMobileTooltipChange={isMobile ? (open) => {
-                              if (!open) {
-                                // Reset tap count when tooltip is closed externally
-                                setMobileTapCounts(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: 0 }));
-                                setMobileTapStates(prev => ({ ...prev, [`grade-${reviewInfo.review.course_final_grade}`]: false }));
-                              }
+                              console.log('🔄 Grade tooltip change:', { open, key: `grade-${reviewInfo.review.course_final_grade}` });
+                              // Don't reset tap count here - let timeout handle it
                             } : undefined}
                             onClick={() => {
                               console.log('🔵 Grade circle clicked:', reviewInfo.review.course_final_grade);
@@ -1139,10 +1128,8 @@ const MyReviews = () => {
                                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                                       open={isMobile ? mobileTapStates[`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] : undefined}
                                       onOpenChange={isMobile ? (open) => {
-                                        if (!open) {
-                                          setMobileTapCounts(prev => ({ ...prev, [`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: 0 }));
-                                          setMobileTapStates(prev => ({ ...prev, [`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: false }));
-                                        }
+                                        console.log('🔄 Session type tooltip change:', { open, key: `session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}` });
+                                        // Don't reset tap count here - let timeout handle it
                                       } : undefined}
                                     >
                                       <span 
@@ -1173,10 +1160,8 @@ const MyReviews = () => {
                                             clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                                             open={isMobile ? mobileTapStates[`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`] : undefined}
                                             onOpenChange={isMobile ? (open) => {
-                                              if (!open) {
-                                                setMobileTapCounts(prev => ({ ...prev, [`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`]: 0 }));
-                                                setMobileTapStates(prev => ({ ...prev, [`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}`]: false }));
-                                              }
+                                              console.log('🔄 Teaching language tooltip change:', { open, key: `teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}` });
+                                              // Don't reset tap count here - let timeout handle it
                                             } : undefined}
                                           >
                                             <span 
@@ -1217,10 +1202,8 @@ const MyReviews = () => {
                                     clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                                     open={isMobile ? mobileTapStates[`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`] : undefined}
                                     onOpenChange={isMobile ? (open) => {
-                                      if (!open) {
-                                        setMobileTapCounts(prev => ({ ...prev, [`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: 0 }));
-                                        setMobileTapStates(prev => ({ ...prev, [`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}`]: false }));
-                                      }
+                                      console.log('🔄 Session type tooltip change:', { open, key: `session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}` });
+                                      // Don't reset tap count here - let timeout handle it
                                     } : undefined}
                                   >
                                     <span 
@@ -1251,10 +1234,8 @@ const MyReviews = () => {
                                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                                           open={isMobile ? mobileTapStates[`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`] : undefined}
                                           onOpenChange={isMobile ? (open) => {
-                                            if (!open) {
-                                              setMobileTapCounts(prev => ({ ...prev, [`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`]: 0 }));
-                                              setMobileTapStates(prev => ({ ...prev, [`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}`]: false }));
-                                            }
+                                            console.log('🔄 Teaching language tooltip change:', { open, key: `teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}` });
+                                            // Don't reset tap count here - let timeout handle it
                                           } : undefined}
                                         >
                                           <span 
@@ -1365,11 +1346,8 @@ const MyReviews = () => {
                                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                                       open={isMobile ? mobileTapStates[`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`] : undefined}
                                       onOpenChange={isMobile ? (open) => {
-                                        if (!open) {
-                                          // Reset tap count when tooltip is closed externally
-                                          setMobileTapCounts(prev => ({ ...prev, [`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`]: 0 }));
-                                          setMobileTapStates(prev => ({ ...prev, [`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}`]: false }));
-                                        }
+                                        console.log('🔄 Service learning tooltip change:', { open, key: `service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}` });
+                                        // Don't reset tap count here - let timeout handle it
                                       } : undefined}
                                     >
                                       <span 
