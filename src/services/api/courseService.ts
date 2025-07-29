@@ -1372,6 +1372,17 @@ export class CourseService {
       return reviewsWithInfo.filter((info): info is NonNullable<typeof info> => info !== null);
     } catch (error) {
       console.error('Error fetching instructor reviews from details:', error);
+      console.error('Environment info:', {
+        endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+        projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+        instructorName,
+        language
+      });
+      
+      // 提供更詳細的錯誤信息
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch instructor reviews: ${error.message}`);
+      }
       throw new Error('Failed to fetch instructor reviews');
     }
   }
@@ -2703,6 +2714,16 @@ export class CourseService {
       return reviewsWithVotes;
     } catch (error) {
       console.error('Error fetching instructor reviews with votes (batch):', error);
+      console.error('Environment info:', {
+        endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+        projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+        instructorName
+      });
+      
+      // 提供更詳細的錯誤信息
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch instructor reviews with votes: ${error.message}`);
+      }
       throw new Error('Failed to fetch instructor reviews with votes');
     }
   }
