@@ -179,6 +179,7 @@ export function AdvancedInstructorFilters({
   // Helper function to translate faculty names
   const getFacultyTranslationKey = (faculty: string): string => {
     const facultyKeyMapping: { [key: string]: string } = {
+      // mark update
       'Faculty of Arts': 'faculty.arts',
       'Faculty of Business': 'faculty.business',
       'Faculty of Social Sciences': 'faculty.socialSciences',
@@ -191,6 +192,7 @@ export function AdvancedInstructorFilters({
 
   const getFacultyGrouping = () => {
     return {
+      // mark update
       'Faculty of Arts': {
         icon: Palette,
         departments: [

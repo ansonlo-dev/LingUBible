@@ -27,6 +27,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 // Helper function to get faculty by department name
 const getFacultyByDepartment = (department: string): string => {
   const facultyMapping: { [key: string]: string } = {
+    // mark update
     // Faculty of Arts
     'Chinese': 'faculty.arts',
     'Cultural Studies': 'faculty.arts',

@@ -110,9 +110,9 @@ export function ReviewCard({
         <div className="space-y-4">
           {/* 評論內容 */}
           <div className="text-sm">
-            <p className={`${!isExpanded && content.length > 200 ? 'line-clamp-3' : ''}`}>
+            <div className={`whitespace-pre-line ${!isExpanded && content.length > 200 ? 'line-clamp-3' : ''}`}>
               {content}
-            </p>
+            </div>
             {content.length > 200 && (
               <Button
                 variant="link"
@@ -135,7 +135,7 @@ export function ReviewCard({
                   </h4>
                   <ul className="space-y-1">
                     {pros.map((pro, index) => (
-                      <li key={index} className="text-muted-foreground">
+                      <li key={index} className="text-muted-foreground whitespace-pre-line">
                         • {pro}
                       </li>
                     ))}
@@ -150,7 +150,7 @@ export function ReviewCard({
                   </h4>
                   <ul className="space-y-1">
                     {cons.map((con, index) => (
-                      <li key={index} className="text-muted-foreground">
+                      <li key={index} className="text-muted-foreground whitespace-pre-line">
                         • {con}
                       </li>
                     ))}

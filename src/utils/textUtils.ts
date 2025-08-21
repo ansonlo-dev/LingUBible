@@ -235,6 +235,7 @@ export function extractInstructorNameForSorting(fullName: string): string {
  */
 export const translateDepartmentName = (department: string, t: any): string => {
   const departmentMap: { [key: string]: string } = {
+    // mark update
     // Faculty of Arts departments
     'Chinese': t('department.chinese'),
     'Digital Arts and Creative Industries': t('department.digitalArts'),

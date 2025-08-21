@@ -1886,6 +1886,7 @@ export default {
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 學院與學系
   // =============================================================================
+  // mark update
   'faculty.arts': 'Faculty of Arts',
   'faculty.business': 'Faculty of Business', 
   'faculty.socialSciences': 'Faculty of Social Sciences',

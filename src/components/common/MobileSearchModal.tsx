@@ -211,6 +211,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   // Get faculty by department name
   const getFacultyByDepartment = (department: string): string => {
     const facultyMapping: { [key: string]: string } = {
+      // mark update
       // Faculty of Arts
       'Chinese': 'faculty.arts',
       'Cultural Studies': 'faculty.arts',

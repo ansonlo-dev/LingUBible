@@ -432,6 +432,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     const rawDepartment = extractRawDepartmentName(department);
     
     const facultyMapping: { [key: string]: string } = {
+      // mark update
       // Faculty of Arts
       'Chinese': 'faculty.arts',
       'Cultural Studies': 'faculty.arts',
