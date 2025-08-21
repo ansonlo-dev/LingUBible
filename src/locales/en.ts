@@ -753,7 +753,7 @@ export default {
   'filter.clickToFilterByTerm': 'Click to filter by term: {term}',
   'filter.clickToFilterByLanguage': 'Click to filter by language: {language}',
   'filter.clickToFilterByTeachingLanguage': 'Click to filter by teaching language: {language}',
-  'term.unknown': 'Unknown',
+  'term.unknown': 'Unknown term',
   'term.yearOrBefore': '{year} on or before',
   'filter.clickToFilterRequirement': 'Click to filter by requirement: {requirement}',
   'filter.clickToFilterBySessionType': 'Click to filter by session type: {type}',
