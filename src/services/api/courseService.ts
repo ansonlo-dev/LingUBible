@@ -1347,8 +1347,61 @@ export class CourseService {
             this.getCourseByCode(review.course_code)
           ]);
           
-          if (!term || !course) {
+          if (!course) {
             return null;
+          }
+
+          // Handle missing terms by creating a fallback term object
+          let finalTerm = term;
+          if (!term) {
+            console.warn(`CourseService: Creating fallback term for missing term_code: "${review.term_code}" for instructor "${instructorName}"`);
+            
+            // Parse term information
+            let termName = review.term_code;
+            let startDate = new Date().toISOString();
+            let endDate = new Date().toISOString();
+            
+            // Handle different term code formats
+            if (review.term_code === '2021_on_or_before') {
+              termName = '2021年或之前';
+              startDate = new Date('2021-01-01').toISOString();
+              endDate = new Date('2021-12-31').toISOString();
+            } else if (review.term_code === 'historical') {
+              termName = '歷史學期';
+              startDate = new Date('2020-01-01').toISOString();
+              endDate = new Date('2020-12-31').toISOString();
+            } else {
+              // Try to parse standard term format (e.g., "2023S1", "2024S2")
+              const termMatch = review.term_code.match(/^(\d{4})S([12])$/);
+              if (termMatch) {
+                const year = termMatch[1];
+                const semester = termMatch[2];
+                termName = `${year}年第${semester}學期`;
+                const startYear = parseInt(year);
+                if (semester === '1') {
+                  startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                  endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                } else {
+                  startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                  endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                }
+              } else {
+                // Fallback for unrecognized formats
+                termName = `未知學期 (${review.term_code})`;
+              }
+            }
+            
+            // Create fallback term object
+            finalTerm = {
+              $id: `fallback_${review.term_code}`,
+              term_code: review.term_code,
+              name: termName,
+              start_date: startDate,
+              end_date: endDate,
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Term;
+            
           }
 
           // 解析講師詳情 - 保留所有講師的資料以便顯示展開按鈕
@@ -1361,7 +1414,7 @@ export class CourseService {
 
           return {
             review,
-            term,
+            term: finalTerm,
             course,
             instructorDetails
           };
@@ -3559,13 +3612,65 @@ export class CourseService {
           const course = coursesMap.get(record.course_code);
           const term = termsMap.get(record.term_code);
 
-          if (!course || !term) {
+          if (!course) {
             return null;
+          }
+
+          // Handle missing terms by creating a fallback term object
+          let finalTerm = term;
+          if (!term) {
+            console.warn(`CourseService: Creating fallback term for missing term_code: "${record.term_code}" for instructor "${instructorName}" teaching courses`);
+            
+            // Parse term information
+            let termName = record.term_code;
+            let startDate = new Date().toISOString();
+            let endDate = new Date().toISOString();
+            
+            // Handle different term code formats
+            if (record.term_code === '2021_on_or_before') {
+              termName = '2021年或之前';
+              startDate = new Date('2021-01-01').toISOString();
+              endDate = new Date('2021-12-31').toISOString();
+            } else if (record.term_code === 'historical') {
+              termName = '歷史學期';
+              startDate = new Date('2020-01-01').toISOString();
+              endDate = new Date('2020-12-31').toISOString();
+            } else {
+              // Try to parse standard term format (e.g., "2023S1", "2024S2")
+              const termMatch = record.term_code.match(/^(\d{4})S([12])$/);
+              if (termMatch) {
+                const year = termMatch[1];
+                const semester = termMatch[2];
+                termName = `${year}年第${semester}學期`;
+                const startYear = parseInt(year);
+                if (semester === '1') {
+                  startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                  endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                } else {
+                  startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                  endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                }
+              } else {
+                // Fallback for unrecognized formats
+                termName = `未知學期 (${record.term_code})`;
+              }
+            }
+            
+            // Create fallback term object
+            finalTerm = {
+              $id: `fallback_${record.term_code}`,
+              term_code: record.term_code,
+              name: termName,
+              start_date: startDate,
+              end_date: endDate,
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Term;
           }
 
           return {
             course,
-            term,
+            term: finalTerm,
             sessionType: record.session_type
           };
         })
@@ -3669,8 +3774,60 @@ export class CourseService {
           const course = coursesMap.get(review.course_code);
           const term = termsMap.get(review.term_code);
 
-          if (!course || !term) {
+          if (!course) {
             return null;
+          }
+
+          // Handle missing terms by creating a fallback term object
+          let finalTerm = term;
+          if (!term) {
+            console.warn(`CourseService: Creating fallback term for missing term_code: "${review.term_code}" for instructor "${instructorName}"`);
+            
+            // Parse term information
+            let termName = review.term_code;
+            let startDate = new Date().toISOString();
+            let endDate = new Date().toISOString();
+            
+            // Handle different term code formats
+            if (review.term_code === '2021_on_or_before') {
+              termName = '2021年或之前';
+              startDate = new Date('2021-01-01').toISOString();
+              endDate = new Date('2021-12-31').toISOString();
+            } else if (review.term_code === 'historical') {
+              termName = '歷史學期';
+              startDate = new Date('2020-01-01').toISOString();
+              endDate = new Date('2020-12-31').toISOString();
+            } else {
+              // Try to parse standard term format (e.g., "2023S1", "2024S2")
+              const termMatch = review.term_code.match(/^(\d{4})S([12])$/);
+              if (termMatch) {
+                const year = termMatch[1];
+                const semester = termMatch[2];
+                termName = `${year}年第${semester}學期`;
+                const startYear = parseInt(year);
+                if (semester === '1') {
+                  startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                  endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                } else {
+                  startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                  endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                }
+              } else {
+                // Fallback for unrecognized formats
+                termName = `未知學期 (${review.term_code})`;
+              }
+            }
+            
+            // Create fallback term object
+            finalTerm = {
+              $id: `fallback_${review.term_code}`,
+              term_code: review.term_code,
+              name: termName,
+              start_date: startDate,
+              end_date: endDate,
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Term;
           }
 
           // 解析講師詳情並找到該講師的評價
@@ -3689,7 +3846,7 @@ export class CourseService {
           return {
             review,
             course,
-            term,
+            term: finalTerm,
             instructorDetail
           };
         })
