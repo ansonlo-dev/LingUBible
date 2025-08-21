@@ -1362,10 +1362,12 @@ export class CourseService {
             let endDate = new Date().toISOString();
             
             // Handle different term code formats
-            if (review.term_code === '2021_on_or_before') {
-              termName = '2021年或之前';
-              startDate = new Date('2021-01-01').toISOString();
-              endDate = new Date('2021-12-31').toISOString();
+            const yearOnOrBeforeMatch = review.term_code.match(/^(\d{4})_on_or_before$/);
+            if (yearOnOrBeforeMatch) {
+              const year = yearOnOrBeforeMatch[1];
+              termName = `${year}年或之前`;
+              startDate = new Date(`${year}-01-01`).toISOString();
+              endDate = new Date(`${year}-12-31`).toISOString();
             } else if (review.term_code === 'historical') {
               termName = '歷史學期';
               startDate = new Date('2020-01-01').toISOString();
@@ -1387,7 +1389,7 @@ export class CourseService {
                 }
               } else {
                 // Fallback for unrecognized formats
-                termName = `未知學期`;
+                termName = `未知學期`; // This will be handled by the UI with proper translations
               }
             }
             
@@ -3627,10 +3629,12 @@ export class CourseService {
             let endDate = new Date().toISOString();
             
             // Handle different term code formats
-            if (record.term_code === '2021_on_or_before') {
-              termName = '2021年或之前';
-              startDate = new Date('2021-01-01').toISOString();
-              endDate = new Date('2021-12-31').toISOString();
+            const yearOnOrBeforeMatch = record.term_code.match(/^(\d{4})_on_or_before$/);
+            if (yearOnOrBeforeMatch) {
+              const year = yearOnOrBeforeMatch[1];
+              termName = `${year}年或之前`;
+              startDate = new Date(`${year}-01-01`).toISOString();
+              endDate = new Date(`${year}-12-31`).toISOString();
             } else if (record.term_code === 'historical') {
               termName = '歷史學期';
               startDate = new Date('2020-01-01').toISOString();
@@ -3652,7 +3656,7 @@ export class CourseService {
                 }
               } else {
                 // Fallback for unrecognized formats
-                termName = `未知學期`;
+                termName = `未知學期`; // This will be handled by the UI with proper translations
               }
             }
             
@@ -3789,10 +3793,12 @@ export class CourseService {
             let endDate = new Date().toISOString();
             
             // Handle different term code formats
-            if (review.term_code === '2021_on_or_before') {
-              termName = '2021年或之前';
-              startDate = new Date('2021-01-01').toISOString();
-              endDate = new Date('2021-12-31').toISOString();
+            const yearOnOrBeforeMatch = review.term_code.match(/^(\d{4})_on_or_before$/);
+            if (yearOnOrBeforeMatch) {
+              const year = yearOnOrBeforeMatch[1];
+              termName = `${year}年或之前`;
+              startDate = new Date(`${year}-01-01`).toISOString();
+              endDate = new Date(`${year}-12-31`).toISOString();
             } else if (review.term_code === 'historical') {
               termName = '歷史學期';
               startDate = new Date('2020-01-01').toISOString();
@@ -3814,7 +3820,7 @@ export class CourseService {
                 }
               } else {
                 // Fallback for unrecognized formats
-                termName = `未知學期`;
+                termName = `未知學期`; // This will be handled by the UI with proper translations
               }
             }
             
@@ -4059,10 +4065,12 @@ export class CourseService {
             let endDate = '2021-12-31T23:59:59.999Z';
             
             // Handle special term codes
-            if (review.term_code === '2021_on_or_before') {
-              termName = '2021年或之前';
+            const yearOnOrBeforeMatch = review.term_code.match(/^(\d{4})_on_or_before$/);
+            if (yearOnOrBeforeMatch) {
+              const year = yearOnOrBeforeMatch[1];
+              termName = `${year}年或之前`;
               startDate = '2000-01-01T00:00:00.000Z';
-              endDate = '2021-12-31T23:59:59.999Z';
+              endDate = `${year}-12-31T23:59:59.999Z`;
             } else if (review.term_code === 'historical') {
               termName = '歷史記錄';
               startDate = '2000-01-01T00:00:00.000Z';
