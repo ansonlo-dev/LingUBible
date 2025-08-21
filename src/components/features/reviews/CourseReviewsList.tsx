@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
-import { getInstructorName, getTeachingLanguageName, getCourseTitle } from '@/utils/textUtils';
+import { getInstructorName, getTeachingLanguageName, getCourseTitle, getTermName } from '@/utils/textUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -295,7 +295,7 @@ export const CourseReviewsList = ({
     const counts: { [key: string]: { name: string; count: number } } = {};
     allReviews.forEach(reviewInfo => {
       const termCode = reviewInfo.term.term_code;
-      const termName = reviewInfo.term.name;
+      const termName = getTermName(reviewInfo.term.name, t);
       if (!counts[termCode]) {
         counts[termCode] = { name: termName, count: 0 };
       }
@@ -773,7 +773,9 @@ export const CourseReviewsList = ({
                           ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                           : instructor.session_type === 'Tutorial'
                           ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                          : ''
+                          : instructor.session_type === 'Unknown'
+                          ? 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900/50'
+                          : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
                       }`}
                       onClick={() => {
                         handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-desktop`, () => {
@@ -877,7 +879,9 @@ export const CourseReviewsList = ({
                         ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                         : instructor.session_type === 'Tutorial'
                         ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
-                        : ''
+                        : instructor.session_type === 'Unknown'
+                        ? 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900/50'
+                        : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
                     }`}
                     onClick={() => {
                       handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-mobile`, () => {
@@ -976,35 +980,52 @@ export const CourseReviewsList = ({
                 </div>
               </div>
               
-              {instructor.grading !== null && instructor.grading !== -1 && (
-                <div className="text-center">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
-                    <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
-                    <div className="flex items-center justify-center lg:ml-1">
+              <div className="text-center">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                  <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {instructor.grading === null ? (
+                      <span className="text-muted-foreground">
+                        {t('review.rating.notRated')}
+                      </span>
+                    ) : instructor.grading === -1 ? (
+                      <span className="text-muted-foreground">
+                        {t('review.notApplicable')}
+                      </span>
+                    ) : (
                       <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
-                    </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* 課程要求 */}
-            <div className="mb-6">
-              <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4 shrink-0" />
-                <span>{t('review.courseRequirements')}</span>
-              </h5>
-              <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
-                {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz')}
-                {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm')}
-                {renderRequirementBadge(instructor.has_final, t('review.requirements.final'), 'final')}
-                {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
-                {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
-                {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation')}
-                {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'), 'reading')}
               </div>
             </div>
+
+            {/* 課程要求 - 只有在有任何要求時才顯示 */}
+            {(instructor.has_attendance_requirement || 
+              instructor.has_quiz || 
+              instructor.has_midterm || 
+              instructor.has_final || 
+              instructor.has_individual_assignment || 
+              instructor.has_group_project || 
+              instructor.has_presentation || 
+              instructor.has_reading) && (
+              <div className="mb-6">
+                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <span>{t('review.courseRequirements')}</span>
+                </h5>
+                <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                  {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
+                  {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz')}
+                  {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm')}
+                  {renderRequirementBadge(instructor.has_final, t('review.requirements.final'), 'final')}
+                  {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
+                  {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
+                  {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation')}
+                  {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'), 'reading')}
+                </div>
+              </div>
+            )}
 
             {/* 講師評論 */}
             {instructor.comments && (
@@ -1017,9 +1038,9 @@ export const CourseReviewsList = ({
                   {hasMarkdownFormatting(instructor.comments) ? (
                     <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
                   ) : (
-                    <p className="text-sm">
+                    <div className="text-sm whitespace-pre-line">
                       {instructor.comments}
-                    </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1297,7 +1318,7 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 手機版單獨行 */}
                     <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                       <ResponsiveTooltip
-                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                        content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-1`] : undefined}
@@ -1326,7 +1347,7 @@ export const CourseReviewsList = ({
                             });
                           }}
                         >
-                          <span className="truncate">{term.name}</span>
+                          <span className="truncate">{getTermName(term.name, t)}</span>
                         </button>
                       </ResponsiveTooltip>
                       {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
@@ -1372,7 +1393,7 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
                     <div className="hidden md:flex items-center gap-2 shrink-0">
                       <ResponsiveTooltip
-                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                        content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-2`] : undefined}
@@ -1401,7 +1422,7 @@ export const CourseReviewsList = ({
                             });
                           }}
                         >
-                          <span className="truncate">{term.name}</span>
+                          <span className="truncate">{getTermName(term.name, t)}</span>
                         </button>
                       </ResponsiveTooltip>
                       {/* 語言徽章 - 桌面版顯示在學期旁邊 */}
@@ -1675,7 +1696,7 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 手機版單獨行 */}
                     <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                       <ResponsiveTooltip
-                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                        content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-card-1`] : undefined}
@@ -1704,7 +1725,7 @@ export const CourseReviewsList = ({
                             });
                           }}
                         >
-                          <span className="truncate">{term.name}</span>
+                          <span className="truncate">{getTermName(term.name, t)}</span>
                         </button>
                       </ResponsiveTooltip>
                       {/* 語言徽章 - 手機版顯示在學期旁邊，限制最大寬度避免重疊 */}
@@ -1750,7 +1771,7 @@ export const CourseReviewsList = ({
                     {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
                     <div className="hidden md:flex items-center gap-2 shrink-0">
                       <ResponsiveTooltip
-                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                        content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-card-2`] : undefined}
@@ -1779,7 +1800,7 @@ export const CourseReviewsList = ({
                             });
                           }}
                         >
-                          <span className="truncate">{term.name}</span>
+                          <span className="truncate">{getTermName(term.name, t)}</span>
                         </button>
                       </ResponsiveTooltip>
                       {/* 語言徽章 - 桌面版顯示在學期旁邊 */}

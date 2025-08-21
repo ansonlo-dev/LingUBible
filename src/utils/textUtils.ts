@@ -293,7 +293,7 @@ export const getTeachingLanguageName = (code: string, t: any): string => {
  * @returns Translated term name
  */
 export function getTermName(termName: string, t: (key: string) => string): string {
-  if (termName === '未知學期') {
+  if (termName === '未知學期' || termName === 'UNKNOWN') {
     return t('term.unknown');
   }
   return termName;
