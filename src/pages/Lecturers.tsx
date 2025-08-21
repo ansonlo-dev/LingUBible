@@ -50,7 +50,7 @@ import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getCurrentTermCode, getCurrentTermName, getTermStatus, isCurrentTerm } from '@/utils/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
-import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName } from '@/utils/textUtils';
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
@@ -1207,7 +1207,7 @@ const Lecturers = () => {
 
       // 學期計數
       const termCode = reviewInfo.term.term_code;
-      const termName = reviewInfo.term.name;
+      const termName = getTermName(reviewInfo.term.name, t);
       if (!termCounts[termCode]) {
         termCounts[termCode] = { name: termName, count: 0 };
       }
@@ -2044,7 +2044,7 @@ const Lecturers = () => {
                     <MultiSelectDropdown
                       options={availableTerms.map((term): SelectOption => ({
                         value: term.term_code,
-                        label: term.name,
+                        label: getTermName(term.name, t),
                         count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0,
                         status: isCurrentTerm(term.term_code) ? 'current' : 
                                new Date(term.end_date) < new Date() ? 'past' : 'future'
@@ -2184,7 +2184,7 @@ const Lecturers = () => {
                     <MultiSelectDropdown
                       options={availableTerms.map((term): SelectOption => ({
                         value: term.term_code,
-                        label: term.name,
+                        label: getTermName(term.name, t),
                         count: teachingCourses?.filter(tc => tc.term.term_code === term.term_code).length || 0,
                         status: isCurrentTerm(term.term_code) ? 'current' : 
                                new Date(term.end_date) < new Date() ? 'past' : 'future'
@@ -2359,7 +2359,7 @@ const Lecturers = () => {
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
-                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                         onFirstTap={() => {
@@ -2385,7 +2385,7 @@ const Lecturers = () => {
                                             })()
                                           }`}
                                         >
-                                          {term.name}
+                                          {getTermName(term.name, t)}
                                         </button>
                                       </ResponsiveTooltip>
                                       
@@ -2424,7 +2424,7 @@ const Lecturers = () => {
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
-                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
                                       onFirstTap={() => {
@@ -2450,7 +2450,7 @@ const Lecturers = () => {
                                           })()
                                         }`}
                                       >
-                                        {term.name}
+                                        {getTermName(term.name, t)}
                                       </button>
                                     </ResponsiveTooltip>
                                   )}
@@ -2542,7 +2542,7 @@ const Lecturers = () => {
                                     <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
-                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                         onFirstTap={() => {
@@ -2568,7 +2568,7 @@ const Lecturers = () => {
                                             })()
                                           }`}
                                         >
-                                          {term.name}
+                                          {getTermName(term.name, t)}
                                         </button>
                                       </ResponsiveTooltip>
                                       
@@ -2607,7 +2607,7 @@ const Lecturers = () => {
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
-                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
                                       onFirstTap={() => {
@@ -2633,7 +2633,7 @@ const Lecturers = () => {
                                           })()
                                         }`}
                                       >
-                                        {term.name}
+                                        {getTermName(term.name, t)}
                                       </button>
                                     </ResponsiveTooltip>
                                   )}
@@ -2739,7 +2739,7 @@ const Lecturers = () => {
                       {/* 學期和語言徽章 - 手機版單獨行 */}
                       <div className="flex gap-2 mt-1 flex-wrap md:hidden max-w-[calc(100%-3rem)]">
                         <ResponsiveTooltip
-                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          content={t('filter.clickToFilterByTerm', { term: getTermName(reviewInfo.term.name, t) })}
                           hasClickAction={true}
                           clickActionText={t('tooltip.clickAgainToFilter')}
                           onFirstTap={() => {
@@ -2771,7 +2771,7 @@ const Lecturers = () => {
                               }
                             }}
                           >
-                            <span className="truncate">{reviewInfo.term.name}</span>
+                            <span className="truncate">{getTermName(reviewInfo.term.name, t)}</span>
                           </button>
                         </ResponsiveTooltip>
                         {reviewInfo.review.review_language && (
@@ -2820,7 +2820,7 @@ const Lecturers = () => {
                       {/* 學期和語言徽章 - 桌面版顯示在成績圓圈左側 */}
                       <div className="hidden md:flex items-center gap-2 shrink-0">
                         <ResponsiveTooltip
-                          content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
+                          content={t('filter.clickToFilterByTerm', { term: getTermName(reviewInfo.term.name, t) })}
                           hasClickAction={true}
                           clickActionText={t('tooltip.clickAgainToFilter')}
                           onFirstTap={() => {
@@ -2852,7 +2852,7 @@ const Lecturers = () => {
                               }
                             }}
                           >
-                            <span className="truncate">{reviewInfo.term.name}</span>
+                            <span className="truncate">{getTermName(reviewInfo.term.name, t)}</span>
                           </button>
                         </ResponsiveTooltip>
                         {reviewInfo.review.review_language && (

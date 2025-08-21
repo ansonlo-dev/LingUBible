@@ -358,6 +358,7 @@ export default {
   'sessionTypeBadge.tutorial': '导修',
   'sessionTypeBadge.lab': '实验',
   'sessionTypeBadge.seminar': '研讨',
+  'sessionTypeBadge.unknown': '未知',
   // Grade and GPA
   'grade.tooltip.title': '成绩信息',
   'grade.gpa': 'GPA',
@@ -737,6 +738,7 @@ export default {
   'filter.clickToFilterByTerm': '点击以依{term}筛选',
   'filter.clickToFilterByLanguage': '点击以依{language}筛选',
   'filter.clickToFilterByTeachingLanguage': '点击以依教学语言筛选：{language}',
+  'term.unknown': '未知学期',
   'filter.clickToFilterRequirement': '点击以依{requirement}筛选',
   'filter.clickToFilterBySessionType': '点击以依课堂类型筛选：{type}',
   'filter.clickToFilterByGrade': '点击以依成绩筛选：{grade}',

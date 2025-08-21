@@ -349,6 +349,7 @@ export default {
   'sessionTypeBadge.tutorial': '導修',
   'sessionTypeBadge.lab': '實驗',
   'sessionTypeBadge.seminar': '研討',
+  'sessionTypeBadge.unknown': '未知',
   // Grade and GPA
   'grade.tooltip.title': '成績資訊',
   'grade.gpa': 'GPA',
@@ -677,6 +678,7 @@ export default {
   'filter.clickToFilterByTerm': '點擊以依{term}篩選',
   'filter.clickToFilterByLanguage': '點擊以依{language}篩選',
   'filter.clickToFilterByTeachingLanguage': '點擊以依教學語言篩選：{language}',
+  'term.unknown': '未知學期',
   'filter.clickToFilterRequirement': '點擊以依{requirement}篩選',
   'filter.clickToFilterBySessionType': '點擊以依課堂類型篩選：{type}',
   'filter.clickToFilterByGrade': '點擊以依成績篩選：{grade}',

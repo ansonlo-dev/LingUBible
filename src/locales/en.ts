@@ -368,6 +368,7 @@ export default {
   'sessionTypeBadge.tutorial': 'Tutorial',
   'sessionTypeBadge.lab': 'Lab',
   'sessionTypeBadge.seminar': 'Seminar',
+  'sessionTypeBadge.unknown': 'Unknown',
   // Grade and GPA
   'grade.tooltip.title': 'Grade Information',
   'grade.gpa': 'GPA',
@@ -752,6 +753,7 @@ export default {
   'filter.clickToFilterByTerm': 'Click to filter by term: {term}',
   'filter.clickToFilterByLanguage': 'Click to filter by language: {language}',
   'filter.clickToFilterByTeachingLanguage': 'Click to filter by teaching language: {language}',
+  'term.unknown': 'Unknown Term',
   'filter.clickToFilterRequirement': 'Click to filter by requirement: {requirement}',
   'filter.clickToFilterBySessionType': 'Click to filter by session type: {type}',
   'filter.clickToFilterByGrade': 'Click to filter by grade: {grade}',

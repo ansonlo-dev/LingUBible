@@ -287,6 +287,19 @@ export const getTeachingLanguageName = (code: string, t: any): string => {
 };
 
 /**
+ * Get term name with proper translation
+ * @param termName - The term name from the database
+ * @param t - Translation function
+ * @returns Translated term name
+ */
+export function getTermName(termName: string, t: (key: string) => string): string {
+  if (termName === '未知學期') {
+    return t('term.unknown');
+  }
+  return termName;
+}
+
+/**
  * 處理英文單複數形式
  * @param count 數量
  * @param singular 單數形式
