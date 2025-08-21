@@ -2311,33 +2311,52 @@ const Lecturers = () => {
                       <div key={courseCode} className="p-3 rounded-lg space-y-3">
                         {/* First row: Course info */}
                         <div className="flex-shrink-0">
-                          <a
-                            href={`/courses/${encodeURIComponent(courseCode)}`}
-                            onClick={(e) => {
-                              if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                return;
-                              }
-                              e.preventDefault();
-                              navigate(`/courses/${encodeURIComponent(courseCode)}`);
-                            }}
-                            className="font-medium text-sm hover:text-primary transition-colors"
-                          >
-                            <div className="flex flex-col">
-                              {/* 課程代碼 - 作為主標題 */}
-                              <span className="font-mono font-semibold">{courseCode}</span>
-                              {/* 英文課程名稱 - 作為副標題 */}
-                              <span className="text-sm text-muted-foreground font-normal">{data.course.course_title}</span>
-                              {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
-                              {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                                const chineseName = language === 'zh-TW' ? data.course.course_title_tc : data.course.course_title_sc;
-                                return chineseName && (
-                                  <span className="text-xs text-muted-foreground font-normal">
-                                    {chineseName}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                          </a>
+                          {(() => {
+                            const endsWithX = courseCode.endsWith('X');
+                            
+                            if (endsWithX) {
+                              // For course codes ending with 'X', show only the course code without link
+                              return (
+                                <div className="font-medium text-sm">
+                                  <div className="flex flex-col">
+                                    {/* 課程代碼 - 作為主標題 */}
+                                    <span className="font-mono font-semibold text-muted-foreground">{courseCode}</span>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              // For normal course codes, show the full clickable link with titles
+                              return (
+                                <a
+                                  href={`/courses/${encodeURIComponent(courseCode)}`}
+                                  onClick={(e) => {
+                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                      return;
+                                    }
+                                    e.preventDefault();
+                                    navigate(`/courses/${encodeURIComponent(courseCode)}`);
+                                  }}
+                                  className="font-medium text-sm hover:text-primary transition-colors"
+                                >
+                                  <div className="flex flex-col">
+                                    {/* 課程代碼 - 作為主標題 */}
+                                    <span className="font-mono font-semibold">{courseCode}</span>
+                                    {/* 英文課程名稱 - 作為副標題 */}
+                                    <span className="text-sm text-muted-foreground font-normal">{data.course.course_title}</span>
+                                    {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
+                                    {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                                      const chineseName = language === 'zh-TW' ? data.course.course_title_tc : data.course.course_title_sc;
+                                      return chineseName && (
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                          {chineseName}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+                                </a>
+                              );
+                            }
+                          })()}
                         </div>
                         
                         {/* Second row: Term and Teaching Language Badges */}
@@ -2494,33 +2513,52 @@ const Lecturers = () => {
                       <div key={courseCode} className="p-3 rounded-lg space-y-3">
                         {/* First row: Course info */}
                         <div className="flex-shrink-0">
-                          <a
-                            href={`/courses/${encodeURIComponent(courseCode)}`}
-                            onClick={(e) => {
-                              if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                return;
-                              }
-                              e.preventDefault();
-                              navigate(`/courses/${encodeURIComponent(courseCode)}`);
-                            }}
-                            className="font-medium text-sm hover:text-primary transition-colors"
-                          >
-                            <div className="flex flex-col">
-                              {/* 課程代碼 - 作為主標題 */}
-                              <span className="font-mono font-semibold">{courseCode}</span>
-                              {/* 英文課程名稱 - 作為副標題 */}
-                              <span className="text-sm text-muted-foreground font-normal">{data.course.course_title}</span>
-                              {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
-                              {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                                const chineseName = language === 'zh-TW' ? data.course.course_title_tc : data.course.course_title_sc;
-                                return chineseName && (
-                                  <span className="text-xs text-muted-foreground font-normal">
-                                    {chineseName}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                          </a>
+                          {(() => {
+                            const endsWithX = courseCode.endsWith('X');
+                            
+                            if (endsWithX) {
+                              // For course codes ending with 'X', show only the course code without link
+                              return (
+                                <div className="font-medium text-sm">
+                                  <div className="flex flex-col">
+                                    {/* 課程代碼 - 作為主標題 */}
+                                    <span className="font-mono font-semibold text-muted-foreground">{courseCode}</span>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              // For normal course codes, show the full clickable link with titles
+                              return (
+                                <a
+                                  href={`/courses/${encodeURIComponent(courseCode)}`}
+                                  onClick={(e) => {
+                                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                      return;
+                                    }
+                                    e.preventDefault();
+                                    navigate(`/courses/${encodeURIComponent(courseCode)}`);
+                                  }}
+                                  className="font-medium text-sm hover:text-primary transition-colors"
+                                >
+                                  <div className="flex flex-col">
+                                    {/* 課程代碼 - 作為主標題 */}
+                                    <span className="font-mono font-semibold">{courseCode}</span>
+                                    {/* 英文課程名稱 - 作為副標題 */}
+                                    <span className="text-sm text-muted-foreground font-normal">{data.course.course_title}</span>
+                                    {/* 中文課程名稱 - 作為次副標題（只在中文模式下顯示） */}
+                                    {(language === 'zh-TW' || language === 'zh-CN') && (() => {
+                                      const chineseName = language === 'zh-TW' ? data.course.course_title_tc : data.course.course_title_sc;
+                                      return chineseName && (
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                          {chineseName}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+                                </a>
+                              );
+                            }
+                          })()}
                         </div>
                         
                         {/* Second row: Term and Teaching Language Badges */}
@@ -2930,36 +2968,49 @@ const Lecturers = () => {
                   {/* 課程標題 - 單獨一行，使用完整寬度 */}
                   <div className="w-full">
                     <h4 className="font-semibold text-lg w-full">
-                      <a
-                        href={`/courses/${reviewInfo.course.course_code}?review_id=${reviewInfo.review.$id}`}
-                        className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md block no-underline w-full"
-                        onClick={(e) => {
-                          // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
-                          // Let normal clicks use the default link behavior
-                          if (e.ctrlKey || e.metaKey || e.button === 1) {
-                            // Let browser handle these naturally
-                            return;
-                          }
-                          // For normal clicks, prevent default and use React Router
-                          e.preventDefault();
-                          navigate(`/courses/${reviewInfo.course.course_code}?review_id=${reviewInfo.review.$id}`);
-                        }}
-                      >
-                        {(() => {
-                          const courseInfo = getCourseTitle(reviewInfo.course, language);
+                      {(() => {
+                        const courseCode = reviewInfo.course.course_code;
+                        const endsWithX = courseCode.endsWith('X');
+                        
+                        if (endsWithX) {
+                          // For course codes ending with 'X', show only the course code without link
                           return (
-                            <div className="w-full">
-                              <div className="font-bold">{reviewInfo.course.course_code}</div>
-                              <div className="font-medium">{courseInfo.primary}</div>
-                              {courseInfo.secondary && (
-                                <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                  {courseInfo.secondary}
-                                </div>
-                              )}
+                            <div className="px-2 py-1 block w-full">
+                              <div className="font-bold text-muted-foreground">{courseCode}</div>
                             </div>
                           );
-                        })()}
-                      </a>
+                        } else {
+                          // For normal course codes, show the full clickable link with titles
+                          const courseInfo = getCourseTitle(reviewInfo.course, language);
+                          return (
+                            <a
+                              href={`/courses/${courseCode}?review_id=${reviewInfo.review.$id}`}
+                              className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md block no-underline w-full"
+                              onClick={(e) => {
+                                // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
+                                // Let normal clicks use the default link behavior
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  // Let browser handle these naturally
+                                  return;
+                                }
+                                // For normal clicks, prevent default and use React Router
+                                e.preventDefault();
+                                navigate(`/courses/${courseCode}?review_id=${reviewInfo.review.$id}`);
+                              }}
+                            >
+                              <div className="w-full">
+                                <div className="font-bold">{courseCode}</div>
+                                <div className="font-medium">{courseInfo.primary}</div>
+                                {courseInfo.secondary && (
+                                  <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                                    {courseInfo.secondary}
+                                  </div>
+                                )}
+                              </div>
+                            </a>
+                          );
+                        }
+                      })()}
                     </h4>
                   </div>
 
