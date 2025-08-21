@@ -695,10 +695,11 @@ export const CourseReviewsList = ({
                       const isUnknown = instructor.instructor_name === 'UNKNOWN';
                       
                       if (isUnknown) {
-                        // For UNKNOWN instructor, show without link and without translation
+                        // For UNKNOWN instructor, show without link but with translation
+                        const unknownText = siteLanguage === 'en' ? 'Unknown instructor' : '未知教師';
                         return (
                           <span className="px-2 py-1 inline-block">
-                            <div className="font-bold text-muted-foreground">UNKNOWN</div>
+                            <div className="font-bold text-muted-foreground">{unknownText}</div>
                           </span>
                         );
                       } else {
@@ -743,10 +744,11 @@ export const CourseReviewsList = ({
                         const isUnknown = instructor.instructor_name === 'UNKNOWN';
                         
                         if (isUnknown) {
-                          // For UNKNOWN instructor, show without translation
+                          // For UNKNOWN instructor, show with translation
+                          const unknownText = siteLanguage === 'en' ? 'Unknown instructor' : '未知教師';
                           return (
                             <div>
-                              <div className="font-bold text-muted-foreground">UNKNOWN</div>
+                              <div className="font-bold text-muted-foreground">{unknownText}</div>
                             </div>
                           );
                         }
