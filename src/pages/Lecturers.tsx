@@ -2722,7 +2722,7 @@ const Lecturers = () => {
                 <div key={index} data-review-id={reviewInfo.review.$id} className="rounded-lg p-3 space-y-2 overflow-hidden bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
                   {/* 評論基本信息 */}
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-2 min-w-0 flex-1">
+                    <div className="flex flex-col gap-2 min-w-0 flex-1 w-full max-w-full">
                       <div className="flex items-center gap-2 min-w-0">
                         <ReviewAvatar
                           isAnonymous={reviewInfo.review.is_anon}
@@ -2815,12 +2815,12 @@ const Lecturers = () => {
                         )}
                       </div>
                       {/* 課程標題 - 顯示在學生姓名/匿名行下方 */}
-                      <div className="space-y-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-lg">
+                      <div className="space-y-2 w-full">
+                        <div className="w-full">
+                          <h4 className="font-semibold text-lg w-full">
                             <a
                               href={`/courses/${reviewInfo.course.course_code}?review_id=${reviewInfo.review.$id}`}
-                              className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md block no-underline"
+                              className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md block no-underline w-full"
                               onClick={(e) => {
                                 // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
                                 // Let normal clicks use the default link behavior
@@ -2836,7 +2836,7 @@ const Lecturers = () => {
                               {(() => {
                                 const courseInfo = getCourseTitle(reviewInfo.course, language);
                                 return (
-                                  <div>
+                                  <div className="w-full">
                                     <div className="font-bold">{reviewInfo.course.course_code}</div>
                                     <div className="font-medium">{courseInfo.primary}</div>
                                     {courseInfo.secondary && (
