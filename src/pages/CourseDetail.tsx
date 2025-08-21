@@ -831,7 +831,7 @@ const CourseDetail = () => {
                 {error || t('pages.courseDetail.courseNotFound')}
               </p>
               <Button onClick={() => navigate('/courses')} className="h-auto py-3 text-sm font-medium w-full sm:w-auto sm:text-base">
-                <span className="text-center leading-tight">{t('pages.courseDetail.backToCourseList')}</span>
+                <span className="text-center leading-tight">{t('pages.courseDetail.backToCoursesCatalog')}</span>
               </Button>
             </CardContent>
           </Card>

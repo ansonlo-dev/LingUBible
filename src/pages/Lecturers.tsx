@@ -1518,13 +1518,12 @@ const Lecturers = () => {
           <Card className="max-w-md w-full">
             <CardHeader className="text-center">
               <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-              <CardTitle className="text-xl">載入失敗</CardTitle>
+              <CardTitle className="text-xl">{t('pages.lecturers.loadFailed')}</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-muted-foreground">{error}</p>
-              <Button onClick={() => navigate('/instructors')} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t('common.back')}
+              <Button onClick={() => navigate('/instructors')} className="h-auto py-3 text-sm font-medium w-full sm:w-auto sm:text-base">
+                <span className="text-center leading-tight">{t('pages.lecturers.backToInstructorsCatalog')}</span>
               </Button>
             </CardContent>
           </Card>

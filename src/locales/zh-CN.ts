@@ -459,7 +459,12 @@ export default {
   'pages.courseDetail.loadError': '载入课程数据时发生错误',
   'pages.courseDetail.loadingCourseData': '载入课程数据中...',
   'pages.courseDetail.loadFailed': '载入失败',
-  'pages.courseDetail.backToCourseList': '返回课程列表',
+  'pages.courseDetail.backToCoursesCatalog': '返回课程目录',
+  
+  // Lecturers page
+  'pages.lecturers.loadFailed': '载入失败',
+  'pages.lecturers.backToInstructorsCatalog': '返回讲师目录',
+  
   'pages.courseDetail.reviews': '课程评论',
   'pages.courseDetail.averageRating': '平均评分',
   'pages.courseDetail.reviewCount': '评论数',

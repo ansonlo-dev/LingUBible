@@ -458,7 +458,12 @@ export default {
   'pages.courseDetail.loadError': 'Error loading course data',
   'pages.courseDetail.loadingCourseData': 'Loading course data...',
   'pages.courseDetail.loadFailed': 'Load Failed',
-  'pages.courseDetail.backToCourseList': 'Back to Course List',
+  'pages.courseDetail.backToCoursesCatalog': 'Back to Courses Catalog',
+  
+  // Lecturers page
+  'pages.lecturers.loadFailed': 'Load Failed',
+  'pages.lecturers.backToInstructorsCatalog': 'Back to Instructors Catalog',
+  
   'pages.courseDetail.reviews': 'Course Reviews',
   'pages.courseDetail.averageRating': 'Average Rating',
   'pages.courseDetail.reviewCount': 'Review Count',

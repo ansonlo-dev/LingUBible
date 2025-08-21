@@ -459,7 +459,12 @@ export default {
   'pages.courseDetail.loadError': '載入課程資料時發生錯誤',
   'pages.courseDetail.loadingCourseData': '載入課程資料中...',
   'pages.courseDetail.loadFailed': '載入失敗',
-  'pages.courseDetail.backToCourseList': '返回課程列表',
+  'pages.courseDetail.backToCoursesCatalog': '返回課程目錄',
+  
+  // Lecturers page
+  'pages.lecturers.loadFailed': '載入失敗',
+  'pages.lecturers.backToInstructorsCatalog': '返回講師目錄',
+  
   'pages.courseDetail.reviews': '課程評論',
   'pages.courseDetail.averageRating': '平均評分',
   'pages.courseDetail.reviewCount': '評論數',
