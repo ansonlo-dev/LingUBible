@@ -3806,12 +3806,9 @@ export class CourseService {
    */
   static async getCourseReviewsWithVotesOptimized(courseCode: string, userId?: string, language?: string): Promise<(CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]> {
     try {
-      // Debug logging and cache clearing for ACT2200
+      // Clear cache for debugging if this is ACT2200
       if (courseCode === 'ACT2200') {
         console.log('=== DEBUG: Fetching reviews for ACT2200 ===');
-        console.log('CourseCode:', courseCode);
-        console.log('UserId:', userId);
-        console.log('Language:', language);
         
         // Clear all ACT2200 related caches for debugging
         const possibleCacheKeys = [
@@ -3827,50 +3824,6 @@ export class CourseService {
             this.cache.delete(key);
           }
         });
-        
-        // Direct test query to see what's in the database
-        try {
-          console.log('DEBUG: Testing direct database query for all reviews...');
-          const testResponse = await databases.listDocuments(
-            this.DATABASE_ID,
-            this.REVIEWS_COLLECTION_ID,
-            [
-              Query.limit(10),
-              Query.select(['$id', 'course_code', 'course_comments'])
-            ]
-          );
-          console.log('DEBUG: All reviews in database (first 10):', testResponse.documents.map(doc => ({ 
-            id: doc.$id, 
-            course_code: doc.course_code, 
-            comment: doc.course_comments?.substring(0, 50) + '...' 
-          })));
-          
-          // Test query specifically for ACT2200
-          const testACT2200Response = await databases.listDocuments(
-            this.DATABASE_ID,
-            this.REVIEWS_COLLECTION_ID,
-            [
-              Query.equal('course_code', 'ACT2200'),
-              Query.select(['$id', 'course_code', 'course_comments'])
-            ]
-          );
-          console.log('DEBUG: Direct ACT2200 query result:', testACT2200Response.documents);
-          
-          // Test with looser query (no filter)
-          const allReviewsResponse = await databases.listDocuments(
-            this.DATABASE_ID,
-            this.REVIEWS_COLLECTION_ID,
-            [
-              Query.limit(100),
-              Query.select(['$id', 'course_code'])
-            ]
-          );
-          const act2200Reviews = allReviewsResponse.documents.filter(doc => doc.course_code === 'ACT2200');
-          console.log('DEBUG: ACT2200 reviews found by filtering all reviews:', act2200Reviews);
-          
-        } catch (debugError) {
-          console.log('DEBUG: Direct query error:', debugError);
-        }
       }
 
       const cacheKey = `course_reviews_votes_optimized_${courseCode}_${userId || 'anonymous'}_${language || 'all'}`;
@@ -3878,9 +3831,6 @@ export class CourseService {
       // 檢查緩存（較短緩存時間，因為包含用戶投票信息）
       const cached = this.getCached<(CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[]>(cacheKey);
       if (cached) {
-        if (courseCode === 'ACT2200') {
-          console.log('DEBUG: Returning cached results for ACT2200:', cached.length, 'reviews');
-        }
         return cached;
       }
 
@@ -3899,11 +3849,6 @@ export class CourseService {
         queries.push(Query.equal('review_language', language));
       }
       
-      // Debug logging for ACT2200
-      if (courseCode === 'ACT2200') {
-        console.log('DEBUG: Query filters for ACT2200:', queries);
-      }
-      
       // 獲取評論
       const response = await databases.listDocuments(
         this.DATABASE_ID,
@@ -3911,34 +3856,15 @@ export class CourseService {
         queries
       );
 
-      // Debug logging for ACT2200
-      if (courseCode === 'ACT2200') {
-        console.log('DEBUG: Raw database response for ACT2200:');
-        console.log('Total documents found:', response.total);
-        console.log('Documents returned:', response.documents.length);
-        console.log('Sample documents:', response.documents.slice(0, 3));
-      }
-
       const reviews = response.documents as unknown as Review[];
       
       if (reviews.length === 0) {
-        if (courseCode === 'ACT2200') {
-          console.log('DEBUG: No reviews found for ACT2200, returning empty array');
-        }
         return [];
       }
 
       // 獲取所有唯一的學期代碼
       const uniqueTermCodes = [...new Set(reviews.map(review => review.term_code))];
       const reviewIds = reviews.map(review => review.$id);
-      
-      // Debug logging for ACT2200
-      if (courseCode === 'ACT2200') {
-        console.log('DEBUG: Processing reviews for ACT2200:');
-        console.log('Reviews term_codes:', reviews.map(r => ({ id: r.$id, term_code: r.term_code, course_code: r.course_code })));
-        console.log('Unique term codes:', uniqueTermCodes);
-        console.log('Full review data (first review):', JSON.stringify(reviews[0], null, 2));
-      }
       
       // 並行批量獲取學期信息、投票統計和用戶投票
       const [termsResponse, voteStatsMap, userVotesMap] = await Promise.all([
@@ -3955,44 +3881,67 @@ export class CourseService {
         userId ? this.getBatchUserVotesForReviews(reviewIds, userId) : Promise.resolve(new Map())
       ]);
 
-      // Debug logging for ACT2200
-      if (courseCode === 'ACT2200') {
-        console.log('DEBUG: Terms response for ACT2200:');
-        console.log('Terms found:', termsResponse.documents.length);
-        console.log('Terms data:', termsResponse.documents.map(term => ({ term_code: term.term_code, name: term.name })));
-      }
-
       // 創建學期查找映射
       const termsMap = new Map<string, Term>();
       (termsResponse.documents as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
-      
-      // Debug logging for ACT2200
-      if (courseCode === 'ACT2200') {
-        console.log('DEBUG: Terms map for ACT2200:');
-        console.log('Terms map keys:', Array.from(termsMap.keys()));
-        console.log('Terms map size:', termsMap.size);
-      }
 
       // 處理評論信息
       const reviewsWithInfo = reviews
         .map((review) => {
-          const term = termsMap.get(review.term_code);
+          let term = termsMap.get(review.term_code);
 
-          // Debug logging for ACT2200
-          if (courseCode === 'ACT2200') {
-            console.log(`DEBUG: Processing review ${review.$id}:`);
-            console.log(`  - Review term_code: "${review.term_code}"`);
-            console.log(`  - Found term:`, term ? { term_code: term.term_code, name: term.name } : 'NOT FOUND');
-            console.log(`  - Terms map has this term_code:`, termsMap.has(review.term_code));
-          }
-
+          // Handle missing terms by creating a fallback term object
           if (!term) {
-            if (courseCode === 'ACT2200') {
-              console.log(`DEBUG: Review ${review.$id} filtered out - no matching term found for term_code: "${review.term_code}"`);
+            console.warn(`CourseService: Creating fallback term for missing term_code: "${review.term_code}" in course ${courseCode}`);
+            
+            // Create a fallback term for missing term records
+            let termName = review.term_code;
+            let startDate = '2021-01-01T00:00:00.000Z';
+            let endDate = '2021-12-31T23:59:59.999Z';
+            
+            // Handle special term codes
+            if (review.term_code === '2021_on_or_before') {
+              termName = '2021年或之前';
+              startDate = '2000-01-01T00:00:00.000Z';
+              endDate = '2021-12-31T23:59:59.999Z';
+            } else if (review.term_code === 'historical') {
+              termName = '歷史記錄';
+              startDate = '2000-01-01T00:00:00.000Z';
+              endDate = '2020-12-31T23:59:59.999Z';
+            } else {
+              // Try to parse standard term codes like "2023S1", "2024S2", etc.
+              const termMatch = review.term_code.match(/^(\d{4})(S[12])?$/);
+              if (termMatch) {
+                const year = termMatch[1];
+                const semester = termMatch[2];
+                if (semester === 'S1') {
+                  termName = `${year}年第一學期`;
+                  startDate = `${year}-09-01T00:00:00.000Z`;
+                  endDate = `${year}-12-31T23:59:59.999Z`;
+                } else if (semester === 'S2') {
+                  termName = `${year}年第二學期`;
+                  startDate = `${year}-01-01T00:00:00.000Z`;
+                  endDate = `${year}-05-31T23:59:59.999Z`;
+                } else {
+                  termName = `${year}年`;
+                  startDate = `${year}-01-01T00:00:00.000Z`;
+                  endDate = `${year}-12-31T23:59:59.999Z`;
+                }
+              }
             }
-            return null;
+            
+            term = {
+              $id: `fallback_${review.term_code}`,
+              term_code: review.term_code,
+              name: termName,
+              start_date: startDate,
+              end_date: endDate,
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Term;
+            
           }
 
           // 解析講師詳情
@@ -4007,10 +3956,6 @@ export class CourseService {
           const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
           const userVote = userId ? userVotesMap.get(review.$id) : undefined;
 
-          if (courseCode === 'ACT2200') {
-            console.log(`DEBUG: Review ${review.$id} successfully processed with term ${term.term_code}`);
-          }
-
           return {
             review,
             term,
@@ -4023,12 +3968,6 @@ export class CourseService {
         .filter((info): info is NonNullable<typeof info> => info !== null)
         .sort((a, b) => new Date(b.review.$createdAt).getTime() - new Date(a.review.$createdAt).getTime());
 
-      // Debug logging for ACT2200
-      if (courseCode === 'ACT2200') {
-        console.log('DEBUG: Final processed reviews for ACT2200:');
-        console.log('Reviews with info length:', reviewsWithInfo.length);
-        console.log('Sample processed review:', reviewsWithInfo[0]);
-      }
 
       // 緩存結果（較短時間，因為包含用戶特定數據）
       this.setCached(cacheKey, reviewsWithInfo, 2 * 60 * 1000); // 2分鐘緩存
