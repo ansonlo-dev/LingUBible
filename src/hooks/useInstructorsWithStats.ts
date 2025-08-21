@@ -47,82 +47,42 @@ export function useInstructorsWithStats(options: UseInstructorsWithStatsOptions 
       setError(null);
       
       if (enableProgressiveLoading) {
-        // 第一階段：快速載入基本講師信息
-        const basicInstructors = await CourseService.getAllInstructors();
-        
-        // 先顯示基本講師（無統計信息）
-        const instructorsWithEmptyStats: InstructorWithDetailedStats[] = basicInstructors.map(instructor => ({
-          ...instructor,
-          reviewCount: 0,
-          teachingScore: 0,
-          gradingFairness: 0,
-          isTeachingInCurrentTerm: false
-        }));
-        
-        setInstructors(instructorsWithEmptyStats);
-        setLoading(false);
-        
-        // 第二階段：載入詳細統計數據
+        // 優化的漸進式載入：直接載入完整數據，先顯示基本欄位
         setStatsLoading(true);
+        
         try {
-          const instructorNames = basicInstructors.map(instructor => instructor.name);
+          // 並行載入所有需要的數據
+          const instructorsWithStats = await CourseService.getAllInstructorsWithDetailedStats();
           
-          // 並行載入基本統計和詳細評分數據
-          const [instructorsWithStats, detailedRatings] = await Promise.all([
-            CourseService.getAllInstructorsWithDetailedStats(),
-            CourseService.getBatchInstructorDetailedStats(instructorNames)
-          ]);
+          // 先顯示基本講師信息（重置統計信息）
+          const instructorsWithEmptyStats: InstructorWithDetailedStats[] = instructorsWithStats.map(instructor => ({
+            ...instructor,
+            reviewCount: 0,
+            teachingScore: 0,
+            gradingFairness: 0,
+            averageGPA: 0,
+            isTeachingInCurrentTerm: instructor.isTeachingInCurrentTerm // 保留此信息
+          }));
           
-          // 合併詳細評分數據
-          const enhancedInstructors = instructorsWithStats.map(instructor => {
-            const detailedStats = detailedRatings.get(instructor.name);
-            if (detailedStats) {
-              return {
-                ...instructor,
-                reviewCount: detailedStats.reviewCount,
-                teachingScore: detailedStats.teachingScore,
-                gradingFairness: detailedStats.gradingFairness
-              };
-            }
-            return instructor;
-          });
+          setInstructors(instructorsWithEmptyStats);
+          setLoading(false);
           
-          setInstructors(enhancedInstructors);
+          // 短暫延遲後顯示完整統計信息，創造漸進式載入體驗
+          setTimeout(() => {
+            setInstructors(instructorsWithStats);
+            setStatsLoading(false);
+          }, 300);
+          
         } catch (statsError) {
           console.error('Error loading instructor stats:', statsError);
-          // 如果詳細統計載入失敗，至少載入基本統計
-          try {
-            const instructorsWithStats = await CourseService.getAllInstructorsWithDetailedStats();
-            setInstructors(instructorsWithStats);
-          } catch (fallbackError) {
-            console.error('Error loading fallback instructor stats:', fallbackError);
-          }
-        } finally {
+          setError('Failed to load instructors');
+          setLoading(false);
           setStatsLoading(false);
         }
       } else {
-        // 非漸進式載入：一次性載入所有數據
+        // 直接載入完整數據
         const instructorsWithStats = await CourseService.getAllInstructorsWithDetailedStats();
-        const instructorNames = instructorsWithStats.map(instructor => instructor.name);
-        
-        // 並行載入詳細評分數據
-        const detailedRatings = await CourseService.getBatchInstructorDetailedStats(instructorNames);
-        
-        // 合併詳細評分數據
-        const enhancedInstructors = instructorsWithStats.map(instructor => {
-          const detailedStats = detailedRatings.get(instructor.name);
-          if (detailedStats) {
-            return {
-              ...instructor,
-              reviewCount: detailedStats.reviewCount,
-              teachingScore: detailedStats.teachingScore,
-              gradingFairness: detailedStats.gradingFairness
-            };
-          }
-          return instructor;
-        });
-        
-        setInstructors(enhancedInstructors);
+        setInstructors(instructorsWithStats);
         setLoading(false);
       }
     } catch (err) {

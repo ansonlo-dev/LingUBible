@@ -30,30 +30,38 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
       setError(null);
       
       if (enableProgressiveLoading) {
-        // 漸進式載入：先顯示基本課程，然後載入統計信息
-        const basicCourses = await CourseService.getAllCourses();
-        
-        // 先顯示基本課程（無統計信息）
-        const coursesWithEmptyStats: CourseWithStats[] = basicCourses.map(course => ({
-          ...course,
-          reviewCount: 0,
-          averageRating: 0,
-          studentCount: 0,
-          isOfferedInCurrentTerm: false
-        }));
-        
-        setCourses(coursesWithEmptyStats);
-        setLoading(false);
-        
-        // 背景載入完整統計信息
+        // 優化的漸進式載入：直接載入完整數據，先顯示基本欄位
         setStatsLoading(true);
+        
         try {
           const coursesWithStats = await CourseService.getCoursesWithStatsBatch();
-          setCourses(coursesWithStats);
-        } catch (statsError) {
-          console.error('Error loading course stats:', statsError);
-          // 統計信息載入失敗不影響基本功能
-        } finally {
+          
+          // 先顯示基本課程信息（重置統計信息）
+          const coursesWithEmptyStats: CourseWithStats[] = coursesWithStats.map(course => ({
+            ...course,
+            reviewCount: 0,
+            averageRating: 0,
+            studentCount: 0,
+            averageWorkload: -1,
+            averageDifficulty: -1,
+            averageUsefulness: -1,
+            averageGPA: 0,
+            isOfferedInCurrentTerm: course.isOfferedInCurrentTerm // 保留此信息
+          }));
+          
+          setCourses(coursesWithEmptyStats);
+          setLoading(false);
+          
+          // 短暫延遲後顯示完整統計信息，創造漸進式載入體驗
+          setTimeout(() => {
+            setCourses(coursesWithStats);
+            setStatsLoading(false);
+          }, 300);
+          
+        } catch (error) {
+          console.error('Error loading courses:', error);
+          setError('Failed to load courses');
+          setLoading(false);
           setStatsLoading(false);
         }
       } else {

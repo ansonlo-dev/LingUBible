@@ -548,7 +548,7 @@ export function AdvancedCourseFilters({
             {t('pagination.coursesPerPage')}
           </label>
           <div className="flex gap-2">
-            {[6, 12, 24, 9999].map((count) => (
+            {[6, 12, 24].map((count) => (
               <Button
                 key={count}
                 variant={filters.itemsPerPage === count ? "default" : "outline"}
@@ -556,7 +556,7 @@ export function AdvancedCourseFilters({
                 onClick={() => updateFilters({ itemsPerPage: count, currentPage: 1 })}
                 className="h-6 px-3 text-xs border-0"
               >
-                {count === 9999 ? t('pagination.showAll') : count}
+                {count}
               </Button>
             ))}
           </div>

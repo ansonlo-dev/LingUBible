@@ -586,7 +586,7 @@ export function AdvancedInstructorFilters({
             {t('pagination.instructorsPerPage')}
           </label>
           <div className="flex gap-2">
-            {[6, 12, 24, 9999].map((size) => (
+            {[6, 12, 24].map((size) => (
               <Button
                 key={size}
                 variant={filters.itemsPerPage === size ? 'default' : 'outline'}
@@ -594,7 +594,7 @@ export function AdvancedInstructorFilters({
                 onClick={() => onPageSizeChange(size)}
                 className="h-6 px-3 text-xs border-0"
               >
-                {size === 9999 ? t('pagination.showAll') : size}
+                {size}
               </Button>
             ))}
           </div>

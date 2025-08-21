@@ -421,7 +421,6 @@ export default {
   'pagination.itemsPerPage': '每頁課程數',
   'pagination.coursesPerPage': '每頁課程數',
   'pagination.reviewsPerPage': '每頁評論數',
-  'pagination.showAll': '顯示全部',
   'pagination.showingItems': '顯示第 {start} - {end} 項，共 {total} 項',
   'pagination.pageInfo': '第 {current} 頁，共 {total} 頁',
   'pagination.first': '首頁',

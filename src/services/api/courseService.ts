@@ -2124,6 +2124,13 @@ export class CourseService {
   static async getAllInstructorsWithDetailedStats(): Promise<InstructorWithDetailedStats[]> {
     try {
       const currentTermCode = getCurrentTermCode();
+      const cacheKey = `all_instructors_detailed_stats_${currentTermCode}`;
+      
+      // 檢查緩存
+      const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
       
       // 並行獲取講師、評論和當前學期教學記錄數據
       const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
@@ -2299,6 +2306,9 @@ export class CourseService {
         return aNameForSort.localeCompare(bNameForSort);
       });
 
+      // 緩存結果 - 講師統計數據相對穩定，使用較長緩存時間
+      this.setCached(cacheKey, finalInstructorsWithDetailedStats, 10 * 60 * 1000); // 10分鐘緩存
+      
       return finalInstructorsWithDetailedStats;
     } catch (error) {
       console.error('Error fetching all instructors with detailed stats:', error);
@@ -2592,8 +2602,8 @@ export class CourseService {
         };
       });
 
-      // 緩存結果
-      this.setCached(cacheKey, coursesWithStats);
+      // 緩存結果 - 課程統計數據相對穩定，使用較長緩存時間
+      this.setCached(cacheKey, coursesWithStats, 10 * 60 * 1000); // 10分鐘緩存
       
       return coursesWithStats;
     } catch (error) {
