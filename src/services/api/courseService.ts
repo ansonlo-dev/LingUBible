@@ -1347,8 +1347,23 @@ export class CourseService {
             this.getCourseByCode(review.course_code)
           ]);
           
+          // Handle missing courses by creating a fallback course object
+          let finalCourse = course;
           if (!course) {
-            return null;
+            console.warn(`CourseService: Creating fallback course for missing course_code: "${review.course_code}" for instructor "${instructorName}"`);
+            
+            // Create fallback course object
+            finalCourse = {
+              $id: `fallback_${review.course_code}`,
+              course_code: review.course_code,
+              course_title: review.course_code, // Use course code as title
+              course_title_zh: review.course_code, // Use course code as Chinese title
+              department: 'Unknown', // Default department
+              department_zh: '未知', // Default Chinese department
+              credits: 3, // Default credits
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Course;
           }
 
           // Handle missing terms by creating a fallback term object
@@ -1373,23 +1388,47 @@ export class CourseService {
               startDate = new Date('2020-01-01').toISOString();
               endDate = new Date('2020-12-31').toISOString();
             } else {
-              // Try to parse standard term format (e.g., "2023S1", "2024S2")
-              const termMatch = review.term_code.match(/^(\d{4})S([12])$/);
-              if (termMatch) {
-                const year = termMatch[1];
-                const semester = termMatch[2];
-                termName = `${year}年第${semester}學期`;
-                const startYear = parseInt(year);
-                if (semester === '1') {
-                  startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
-                  endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
-                } else {
-                  startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
-                  endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
-                }
+              // Handle simple year format (e.g., "2017")
+              const yearOnlyMatch = review.term_code.match(/^(\d{4})$/);
+              if (yearOnlyMatch) {
+                const year = parseInt(yearOnlyMatch[1]);
+                termName = review.term_code; // Keep original term_code for proper translation
+                startDate = new Date(year, 0, 1).toISOString(); // January 1st
+                endDate = new Date(year, 11, 31).toISOString(); // December 31st
               } else {
-                // Fallback for unrecognized formats
-                termName = `未知學期`; // This will be handled by the UI with proper translations
+                // Handle YYYY-T# format (e.g., "2017-T1", "2017-T2")
+                const termCodeMatch = review.term_code.match(/^(\d{4})-T([12])$/);
+                if (termCodeMatch) {
+                  const startYear = parseInt(termCodeMatch[1]);
+                  const termNumber = termCodeMatch[2];
+                  termName = review.term_code; // Keep original term_code for proper translation
+                  if (termNumber === '1') {
+                    startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                    endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                  } else {
+                    startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                    endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                  }
+                } else {
+                  // Try to parse standard term format (e.g., "2023S1", "2024S2")
+                  const termMatch = review.term_code.match(/^(\d{4})S([12])$/);
+                  if (termMatch) {
+                    const year = termMatch[1];
+                    const semester = termMatch[2];
+                    termName = `${year}年第${semester}學期`;
+                    const startYear = parseInt(year);
+                    if (semester === '1') {
+                      startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                      endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                    } else {
+                      startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                      endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                    }
+                  } else {
+                    // Keep original term_code for unrecognized formats
+                    termName = review.term_code; // This will be handled by getTermName() function
+                  }
+                }
               }
             }
             
@@ -1417,7 +1456,7 @@ export class CourseService {
           return {
             review,
             term: finalTerm,
-            course,
+            course: finalCourse,
             instructorDetails
           };
         })
@@ -3614,8 +3653,23 @@ export class CourseService {
           const course = coursesMap.get(record.course_code);
           const term = termsMap.get(record.term_code);
 
+          // Handle missing courses by creating a fallback course object
+          let finalCourse = course;
           if (!course) {
-            return null;
+            console.warn(`CourseService: Creating fallback course for missing course_code: "${record.course_code}" for instructor "${instructorName}" teaching courses`);
+            
+            // Create fallback course object
+            finalCourse = {
+              $id: `fallback_${record.course_code}`,
+              course_code: record.course_code,
+              course_title: record.course_code, // Use course code as title
+              course_title_zh: record.course_code, // Use course code as Chinese title
+              department: 'Unknown', // Default department
+              department_zh: '未知', // Default Chinese department
+              credits: 3, // Default credits
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Course;
           }
 
           // Handle missing terms by creating a fallback term object
@@ -3640,23 +3694,47 @@ export class CourseService {
               startDate = new Date('2020-01-01').toISOString();
               endDate = new Date('2020-12-31').toISOString();
             } else {
-              // Try to parse standard term format (e.g., "2023S1", "2024S2")
-              const termMatch = record.term_code.match(/^(\d{4})S([12])$/);
-              if (termMatch) {
-                const year = termMatch[1];
-                const semester = termMatch[2];
-                termName = `${year}年第${semester}學期`;
-                const startYear = parseInt(year);
-                if (semester === '1') {
-                  startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
-                  endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
-                } else {
-                  startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
-                  endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
-                }
+              // Handle simple year format (e.g., "2017")
+              const yearOnlyMatch = record.term_code.match(/^(\d{4})$/);
+              if (yearOnlyMatch) {
+                const year = parseInt(yearOnlyMatch[1]);
+                termName = record.term_code; // Keep original term_code for proper translation
+                startDate = new Date(year, 0, 1).toISOString(); // January 1st
+                endDate = new Date(year, 11, 31).toISOString(); // December 31st
               } else {
-                // Fallback for unrecognized formats
-                termName = `未知學期`; // This will be handled by the UI with proper translations
+                // Handle YYYY-T# format (e.g., "2017-T1", "2017-T2")
+                const termCodeMatch = record.term_code.match(/^(\d{4})-T([12])$/);
+                if (termCodeMatch) {
+                  const startYear = parseInt(termCodeMatch[1]);
+                  const termNumber = termCodeMatch[2];
+                  termName = record.term_code; // Keep original term_code for proper translation
+                  if (termNumber === '1') {
+                    startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                    endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                  } else {
+                    startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                    endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                  }
+                } else {
+                  // Try to parse standard term format (e.g., "2023S1", "2024S2")
+                  const termMatch = record.term_code.match(/^(\d{4})S([12])$/);
+                  if (termMatch) {
+                    const year = termMatch[1];
+                    const semester = termMatch[2];
+                    termName = `${year}年第${semester}學期`;
+                    const startYear = parseInt(year);
+                    if (semester === '1') {
+                      startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                      endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                    } else {
+                      startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                      endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                    }
+                  } else {
+                    // Keep original term_code for unrecognized formats
+                    termName = record.term_code; // This will be handled by getTermName() function
+                  }
+                }
               }
             }
             
@@ -3673,7 +3751,7 @@ export class CourseService {
           }
 
           return {
-            course,
+            course: finalCourse,
             term: finalTerm,
             sessionType: record.session_type
           };
@@ -3778,8 +3856,23 @@ export class CourseService {
           const course = coursesMap.get(review.course_code);
           const term = termsMap.get(review.term_code);
 
+          // Handle missing courses by creating a fallback course object
+          let finalCourse = course;
           if (!course) {
-            return null;
+            console.warn(`CourseService: Creating fallback course for missing course_code: "${review.course_code}" for instructor "${instructorName}" reviews`);
+            
+            // Create fallback course object
+            finalCourse = {
+              $id: `fallback_${review.course_code}`,
+              course_code: review.course_code,
+              course_title: review.course_code, // Use course code as title
+              course_title_zh: review.course_code, // Use course code as Chinese title
+              department: 'Unknown', // Default department
+              department_zh: '未知', // Default Chinese department
+              credits: 3, // Default credits
+              $createdAt: new Date().toISOString(),
+              $updatedAt: new Date().toISOString()
+            } as Course;
           }
 
           // Handle missing terms by creating a fallback term object
@@ -3804,23 +3897,47 @@ export class CourseService {
               startDate = new Date('2020-01-01').toISOString();
               endDate = new Date('2020-12-31').toISOString();
             } else {
-              // Try to parse standard term format (e.g., "2023S1", "2024S2")
-              const termMatch = review.term_code.match(/^(\d{4})S([12])$/);
-              if (termMatch) {
-                const year = termMatch[1];
-                const semester = termMatch[2];
-                termName = `${year}年第${semester}學期`;
-                const startYear = parseInt(year);
-                if (semester === '1') {
-                  startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
-                  endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
-                } else {
-                  startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
-                  endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
-                }
+              // Handle simple year format (e.g., "2017")
+              const yearOnlyMatch = review.term_code.match(/^(\d{4})$/);
+              if (yearOnlyMatch) {
+                const year = parseInt(yearOnlyMatch[1]);
+                termName = review.term_code; // Keep original term_code for proper translation
+                startDate = new Date(year, 0, 1).toISOString(); // January 1st
+                endDate = new Date(year, 11, 31).toISOString(); // December 31st
               } else {
-                // Fallback for unrecognized formats
-                termName = `未知學期`; // This will be handled by the UI with proper translations
+                // Handle YYYY-T# format (e.g., "2017-T1", "2017-T2")
+                const termCodeMatch = review.term_code.match(/^(\d{4})-T([12])$/);
+                if (termCodeMatch) {
+                  const startYear = parseInt(termCodeMatch[1]);
+                  const termNumber = termCodeMatch[2];
+                  termName = review.term_code; // Keep original term_code for proper translation
+                  if (termNumber === '1') {
+                    startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                    endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                  } else {
+                    startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                    endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                  }
+                } else {
+                  // Try to parse standard term format (e.g., "2023S1", "2024S2")
+                  const termMatch = review.term_code.match(/^(\d{4})S([12])$/);
+                  if (termMatch) {
+                    const year = termMatch[1];
+                    const semester = termMatch[2];
+                    termName = `${year}年第${semester}學期`;
+                    const startYear = parseInt(year);
+                    if (semester === '1') {
+                      startDate = new Date(startYear, 8, 1).toISOString(); // September 1st
+                      endDate = new Date(startYear + 1, 0, 31).toISOString(); // January 31st next year
+                    } else {
+                      startDate = new Date(startYear, 1, 1).toISOString(); // February 1st
+                      endDate = new Date(startYear, 5, 30).toISOString(); // June 30th
+                    }
+                  } else {
+                    // Keep original term_code for unrecognized formats
+                    termName = review.term_code; // This will be handled by getTermName() function
+                  }
+                }
               }
             }
             
@@ -3851,7 +3968,7 @@ export class CourseService {
 
           return {
             review,
-            course,
+            course: finalCourse,
             term: finalTerm,
             instructorDetail
           };
@@ -4076,23 +4193,39 @@ export class CourseService {
               startDate = '2000-01-01T00:00:00.000Z';
               endDate = '2020-12-31T23:59:59.999Z';
             } else {
-              // Try to parse standard term codes like "2023S1", "2024S2", etc.
-              const termMatch = review.term_code.match(/^(\d{4})(S[12])?$/);
-              if (termMatch) {
-                const year = termMatch[1];
-                const semester = termMatch[2];
-                if (semester === 'S1') {
-                  termName = `${year}年第一學期`;
+              // Handle YYYY-T# format (e.g., "2017-T1", "2017-T2")
+              const termCodeMatch = review.term_code.match(/^(\d{4})-T([12])$/);
+              if (termCodeMatch) {
+                const year = termCodeMatch[1];
+                const termNumber = termCodeMatch[2];
+                termName = review.term_code; // Keep original term_code for proper translation
+                if (termNumber === '1') {
                   startDate = `${year}-09-01T00:00:00.000Z`;
                   endDate = `${year}-12-31T23:59:59.999Z`;
-                } else if (semester === 'S2') {
-                  termName = `${year}年第二學期`;
+                } else {
                   startDate = `${year}-01-01T00:00:00.000Z`;
                   endDate = `${year}-05-31T23:59:59.999Z`;
-                } else {
-                  termName = `${year}年`;
-                  startDate = `${year}-01-01T00:00:00.000Z`;
-                  endDate = `${year}-12-31T23:59:59.999Z`;
+                }
+              } else {
+                // Try to parse standard term codes like "2023S1", "2024S2", etc.
+                const termMatch = review.term_code.match(/^(\d{4})(S[12])?$/);
+                if (termMatch) {
+                  const year = termMatch[1];
+                  const semester = termMatch[2];
+                  if (semester === 'S1') {
+                    termName = `${year}年第一學期`;
+                    startDate = `${year}-09-01T00:00:00.000Z`;
+                    endDate = `${year}-12-31T23:59:59.999Z`;
+                  } else if (semester === 'S2') {
+                    termName = `${year}年第二學期`;
+                    startDate = `${year}-01-01T00:00:00.000Z`;
+                    endDate = `${year}-05-31T23:59:59.999Z`;
+                  } else {
+                    // Handle simple year format (e.g., "2017") - keep original term_code
+                    termName = review.term_code;
+                    startDate = `${year}-01-01T00:00:00.000Z`;
+                    endDate = `${year}-12-31T23:59:59.999Z`;
+                  }
                 }
               }
             }
