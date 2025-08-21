@@ -399,7 +399,10 @@ const CourseDetail = () => {
           
           // Store the formatted label
           const sessionTypeTranslated = detail.session_type === 'Lecture' ? t('sessionType.lecture') : t('sessionType.tutorial');
-          instructorSessionLabels.set(key, `${detail.instructor_name} (${sessionTypeTranslated})`);
+          const instructorDisplayName = detail.instructor_name === 'UNKNOWN' 
+            ? (language === 'en' ? 'Unknown instructor' : '未知教師')
+            : detail.instructor_name;
+          instructorSessionLabels.set(key, `${instructorDisplayName} (${sessionTypeTranslated})`);
         });
       } catch (error) {
         console.warn('Failed to parse instructor details:', error);
