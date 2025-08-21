@@ -1387,7 +1387,7 @@ export class CourseService {
                 }
               } else {
                 // Fallback for unrecognized formats
-                termName = `未知學期 (${review.term_code})`;
+                termName = `未知學期`;
               }
             }
             
@@ -3652,7 +3652,7 @@ export class CourseService {
                 }
               } else {
                 // Fallback for unrecognized formats
-                termName = `未知學期 (${record.term_code})`;
+                termName = `未知學期`;
               }
             }
             
@@ -3814,7 +3814,7 @@ export class CourseService {
                 }
               } else {
                 // Fallback for unrecognized formats
-                termName = `未知學期 (${review.term_code})`;
+                termName = `未知學期`;
               }
             }
             

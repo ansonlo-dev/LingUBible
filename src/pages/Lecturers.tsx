@@ -2820,7 +2820,7 @@ const Lecturers = () => {
                           <h4 className="font-semibold text-lg">
                             <a
                               href={`/courses/${reviewInfo.course.course_code}?review_id=${reviewInfo.review.$id}`}
-                              className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+                              className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md block no-underline"
                               onClick={(e) => {
                                 // Only prevent default if it's a special click (Ctrl, Cmd, middle-click)
                                 // Let normal clicks use the default link behavior
@@ -3325,12 +3325,18 @@ const Lecturers = () => {
                                   </div>
                                 </div>
                                 
-                                {currentInstructorDetail.grading !== null && currentInstructorDetail.grading !== -1 && (
+                                {currentInstructorDetail.grading !== null && (
                                   <div className="text-center">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 mb-1">
                                       <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
                                       <div className="flex items-center justify-center">
-                                        <StarRating rating={currentInstructorDetail.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                        {currentInstructorDetail.grading === -1 ? (
+                                          <span className="text-muted-foreground">
+                                            {t('review.notApplicable')}
+                                          </span>
+                                        ) : (
+                                          <StarRating rating={currentInstructorDetail.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -3338,22 +3344,31 @@ const Lecturers = () => {
                               </div>
 
                               {/* 課程要求 */}
-                              <div className="mb-4">
-                                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                  <FileText className="h-4 w-4 shrink-0" />
-                                  <span>{t('review.courseRequirements')}</span>
-                                </h5>
-                                <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                                  {renderBooleanBadge(currentInstructorDetail.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_quiz, t('review.requirements.quiz'), 'quiz')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_midterm, t('review.requirements.midterm'), 'midterm')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_final, t('review.requirements.final'), 'final')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_presentation, t('review.requirements.presentation'), 'presentation')}
-                                  {renderBooleanBadge(currentInstructorDetail.has_reading, t('review.requirements.reading'), 'reading')}
+                              {(currentInstructorDetail.has_attendance_requirement || 
+                                currentInstructorDetail.has_quiz || 
+                                currentInstructorDetail.has_midterm || 
+                                currentInstructorDetail.has_final || 
+                                currentInstructorDetail.has_individual_assignment || 
+                                currentInstructorDetail.has_group_project || 
+                                currentInstructorDetail.has_presentation || 
+                                currentInstructorDetail.has_reading) && (
+                                <div className="mb-4">
+                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                    <FileText className="h-4 w-4 shrink-0" />
+                                    <span>{t('review.courseRequirements')}</span>
+                                  </h5>
+                                  <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                                    {renderBooleanBadge(currentInstructorDetail.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_quiz, t('review.requirements.quiz'), 'quiz')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_midterm, t('review.requirements.midterm'), 'midterm')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_final, t('review.requirements.final'), 'final')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_presentation, t('review.requirements.presentation'), 'presentation')}
+                                    {renderBooleanBadge(currentInstructorDetail.has_reading, t('review.requirements.reading'), 'reading')}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
 
                               {/* 講師評論 */}
                               {currentInstructorDetail.comments && (
@@ -3592,12 +3607,18 @@ const Lecturers = () => {
                                         </div>
                                       </div>
                                       
-                                      {instructor.grading !== null && instructor.grading !== -1 && (
+                                      {instructor.grading !== null && (
                                         <div className="text-center">
                                           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
                                             <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
                                             <div className="flex items-center justify-center lg:ml-1">
-                                              <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                              {instructor.grading === -1 ? (
+                                                <span className="text-muted-foreground">
+                                                  {t('review.notApplicable')}
+                                                </span>
+                                              ) : (
+                                                <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                                              )}
                                             </div>
                                           </div>
                                         </div>
@@ -3605,22 +3626,31 @@ const Lecturers = () => {
                                     </div>
 
                                     {/* 課程要求 */}
-                                    <div className="mb-4">
-                                      <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                        <FileText className="h-4 w-4 shrink-0" />
-                                        <span>{t('review.courseRequirements')}</span>
-                                      </h5>
-                                      <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_quiz, t('review.requirements.quiz'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_midterm, t('review.requirements.midterm'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_final, t('review.requirements.final'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_group_project, t('review.requirements.groupProject'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_presentation, t('review.requirements.presentation'))}
-                                        {renderBooleanBadgeWithoutFilter(instructor.has_reading, t('review.requirements.reading'))}
+                                    {(instructor.has_attendance_requirement || 
+                                      instructor.has_quiz || 
+                                      instructor.has_midterm || 
+                                      instructor.has_final || 
+                                      instructor.has_individual_assignment || 
+                                      instructor.has_group_project || 
+                                      instructor.has_presentation || 
+                                      instructor.has_reading) && (
+                                      <div className="mb-4">
+                                        <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                          <FileText className="h-4 w-4 shrink-0" />
+                                          <span>{t('review.courseRequirements')}</span>
+                                        </h5>
+                                        <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_quiz, t('review.requirements.quiz'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_midterm, t('review.requirements.midterm'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_final, t('review.requirements.final'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_group_project, t('review.requirements.groupProject'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_presentation, t('review.requirements.presentation'))}
+                                          {renderBooleanBadgeWithoutFilter(instructor.has_reading, t('review.requirements.reading'))}
+                                        </div>
                                       </div>
-                                    </div>
+                                    )}
 
                                     {/* 講師評論 */}
                                     {instructor.comments && (
