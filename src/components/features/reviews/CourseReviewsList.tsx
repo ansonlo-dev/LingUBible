@@ -691,39 +691,66 @@ export const CourseReviewsList = ({
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
                 <h4 className="font-semibold text-lg flex items-center gap-2 min-w-0 md:flex-1">
                   {instructor.instructor_name !== currentInstructorName ? (
-                  <a 
-                    href={`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`);
-                    }}
-                      className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
-                  >
-                    {(() => {
-                      const fullInstructor = instructorsMap.get(instructor.instructor_name);
-                      if (fullInstructor) {
-                        const nameInfo = getInstructorName(fullInstructor, siteLanguage);
+                    (() => {
+                      const isUnknown = instructor.instructor_name === 'UNKNOWN';
+                      
+                      if (isUnknown) {
+                        // For UNKNOWN instructor, show without link and without translation
                         return (
-                          <div>
-                              <div className="font-bold">{nameInfo.primary}</div>
-                            {nameInfo.secondary && (
-                              <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                {nameInfo.secondary}
-                              </div>
-                            )}
-                          </div>
+                          <span className="px-2 py-1 inline-block">
+                            <div className="font-bold text-muted-foreground">UNKNOWN</div>
+                          </span>
+                        );
+                      } else {
+                        // For normal instructors, show the full clickable link
+                        return (
+                          <a 
+                            href={`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`);
+                            }}
+                            className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+                          >
+                            {(() => {
+                              const fullInstructor = instructorsMap.get(instructor.instructor_name);
+                              if (fullInstructor) {
+                                const nameInfo = getInstructorName(fullInstructor, siteLanguage);
+                                return (
+                                  <div>
+                                      <div className="font-bold">{nameInfo.primary}</div>
+                                    {nameInfo.secondary && (
+                                      <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                                        {nameInfo.secondary}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div>
+                                    <div className="font-bold">{instructor.instructor_name}</div>
+                                </div>
+                              );
+                            })()}
+                          </a>
                         );
                       }
-                      return (
-                        <div>
-                            <div className="font-bold">{instructor.instructor_name}</div>
-                        </div>
-                      );
-                    })()}
-                  </a>
+                    })()
                   ) : (
                     <span>
                       {(() => {
+                        const isUnknown = instructor.instructor_name === 'UNKNOWN';
+                        
+                        if (isUnknown) {
+                          // For UNKNOWN instructor, show without translation
+                          return (
+                            <div>
+                              <div className="font-bold text-muted-foreground">UNKNOWN</div>
+                            </div>
+                          );
+                        }
+                        
                         const fullInstructor = instructorsMap.get(instructor.instructor_name);
                         if (fullInstructor) {
                           const nameInfo = getInstructorName(fullInstructor, siteLanguage);
