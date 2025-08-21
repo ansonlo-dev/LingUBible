@@ -420,6 +420,7 @@ export default {
   'pagination.itemsPerPage': 'Courses per page',
   'pagination.coursesPerPage': 'Courses per page',
   'pagination.reviewsPerPage': 'Reviews per page',
+  'pagination.showAll': 'Show All',
   'pagination.showingItems': 'Showing {start} - {end} of {total} items',
   'pagination.pageInfo': 'Page {current} of {total}',
   'pagination.first': 'First',

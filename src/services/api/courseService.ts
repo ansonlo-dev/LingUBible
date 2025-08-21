@@ -186,8 +186,8 @@ export class CourseService {
   private static readonly TERMS_COLLECTION_ID = 'terms';
 
   // 性能優化常數
-  private static readonly MAX_COURSES_LIMIT = 200; // 從 150 調整到 200，平衡性能和數據完整性
-  private static readonly MAX_INSTRUCTORS_LIMIT = 200; // 從 150 調整到 200
+  private static readonly MAX_COURSES_LIMIT = 10000; // 移除限制，允許顯示所有課程
+  private static readonly MAX_INSTRUCTORS_LIMIT = 10000; // 移除限制，允許顯示所有講師
   private static readonly MAX_REVIEWS_LIMIT = 1000; // 從 1500 減少到 1000
   private static readonly MAX_TEACHING_RECORDS_LIMIT = 500; // 從 800 減少到 500
   private static readonly MAX_SEARCH_RESULTS = 50; // 新增：搜尋結果限制

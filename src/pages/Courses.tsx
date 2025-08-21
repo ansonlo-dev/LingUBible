@@ -680,14 +680,16 @@ const Courses = () => {
                 ))}
               </div>
 
-              {/* 分頁組件 */}
-              <Pagination
-                currentPage={filters.currentPage}
-                totalPages={paginationData.totalPages}
-                onPageChange={handlePageChange}
-                itemsPerPage={filters.itemsPerPage}
-                totalItems={paginationData.totalItems}
-              />
+              {/* 分頁組件 - 只在非"顯示全部"模式下顯示 */}
+              {filters.itemsPerPage !== 9999 && (
+                <Pagination
+                  currentPage={filters.currentPage}
+                  totalPages={paginationData.totalPages}
+                  onPageChange={handlePageChange}
+                  itemsPerPage={filters.itemsPerPage}
+                  totalItems={paginationData.totalItems}
+                />
+              )}
             </>
           )}
         </div>

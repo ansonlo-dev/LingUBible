@@ -422,6 +422,7 @@ export default {
   'pagination.itemsPerPage': '每页课程数',
   'pagination.coursesPerPage': '每页课程数',
   'pagination.reviewsPerPage': '每页评论数',
+  'pagination.showAll': '显示全部',
   'pagination.showingItems': '显示第 {start} - {end} 项，共 {total} 项',
   'pagination.pageInfo': '第 {current} 页，共 {total} 页',
   'pagination.first': '首页',
