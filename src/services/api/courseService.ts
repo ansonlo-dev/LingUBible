@@ -1365,7 +1365,7 @@ export class CourseService {
             const yearOnOrBeforeMatch = review.term_code.match(/^(\d{4})_on_or_before$/);
             if (yearOnOrBeforeMatch) {
               const year = yearOnOrBeforeMatch[1];
-              termName = `${year}年或之前`;
+              termName = review.term_code; // Keep original term_code for proper translation
               startDate = new Date(`${year}-01-01`).toISOString();
               endDate = new Date(`${year}-12-31`).toISOString();
             } else if (review.term_code === 'historical') {
@@ -3632,7 +3632,7 @@ export class CourseService {
             const yearOnOrBeforeMatch = record.term_code.match(/^(\d{4})_on_or_before$/);
             if (yearOnOrBeforeMatch) {
               const year = yearOnOrBeforeMatch[1];
-              termName = `${year}年或之前`;
+              termName = record.term_code; // Keep original term_code for proper translation
               startDate = new Date(`${year}-01-01`).toISOString();
               endDate = new Date(`${year}-12-31`).toISOString();
             } else if (record.term_code === 'historical') {
@@ -3796,7 +3796,7 @@ export class CourseService {
             const yearOnOrBeforeMatch = review.term_code.match(/^(\d{4})_on_or_before$/);
             if (yearOnOrBeforeMatch) {
               const year = yearOnOrBeforeMatch[1];
-              termName = `${year}年或之前`;
+              termName = review.term_code; // Keep original term_code for proper translation
               startDate = new Date(`${year}-01-01`).toISOString();
               endDate = new Date(`${year}-12-31`).toISOString();
             } else if (review.term_code === 'historical') {
@@ -4068,7 +4068,7 @@ export class CourseService {
             const yearOnOrBeforeMatch = review.term_code.match(/^(\d{4})_on_or_before$/);
             if (yearOnOrBeforeMatch) {
               const year = yearOnOrBeforeMatch[1];
-              termName = `${year}年或之前`;
+              termName = review.term_code; // Keep original term_code for proper translation
               startDate = '2000-01-01T00:00:00.000Z';
               endDate = `${year}-12-31T23:59:59.999Z`;
             } else if (review.term_code === 'historical') {
