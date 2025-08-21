@@ -292,10 +292,34 @@ export const getTeachingLanguageName = (code: string, t: any): string => {
  * @param t - Translation function
  * @returns Translated term name
  */
-export function getTermName(termName: string, t: (key: string) => string): string {
+export function getTermName(termName: string, t: any): string {
+  // Handle special format 3: UNKNOWN
   if (termName === '未知學期' || termName === 'UNKNOWN') {
     return t('term.unknown');
   }
+  
+  // Handle special format 2: year_on_or_before (e.g., "2021_on_or_before")
+  const yearOnOrBeforeMatch = termName.match(/^(\d{4})_on_or_before$/);
+  if (yearOnOrBeforeMatch) {
+    const year = yearOnOrBeforeMatch[1];
+    return t('term.yearOrBefore', { year });
+  }
+  
+  // Handle special format 1: year only (e.g., "2021" or "2021年")
+  const yearOnlyMatch = termName.match(/^(\d{4})年?$/);
+  if (yearOnlyMatch) {
+    return yearOnlyMatch[1]; // Extract and display only the year part
+  }
+  
+  // Handle format: YYYY-T# (e.g., "2017-T1" to "2017-18, Term 1")
+  const termCodeMatch = termName.match(/^(\d{4})-T(\d)$/);
+  if (termCodeMatch) {
+    const startYear = parseInt(termCodeMatch[1]);
+    const termNumber = termCodeMatch[2];
+    const endYear = (startYear + 1).toString().slice(-2); // Get last 2 digits of next year
+    return `${startYear}-${endYear}, Term ${termNumber}`;
+  }
+  
   return termName;
 }
 

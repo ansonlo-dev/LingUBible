@@ -679,6 +679,7 @@ export default {
   'filter.clickToFilterByLanguage': '點擊以依{language}篩選',
   'filter.clickToFilterByTeachingLanguage': '點擊以依教學語言篩選：{language}',
   'term.unknown': '未知學期',
+  'term.yearOrBefore': '{year}或之前',
   'filter.clickToFilterRequirement': '點擊以依{requirement}篩選',
   'filter.clickToFilterBySessionType': '點擊以依課堂類型篩選：{type}',
   'filter.clickToFilterByGrade': '點擊以依成績篩選：{grade}',

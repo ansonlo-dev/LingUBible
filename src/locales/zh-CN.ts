@@ -739,6 +739,7 @@ export default {
   'filter.clickToFilterByLanguage': '点击以依{language}筛选',
   'filter.clickToFilterByTeachingLanguage': '点击以依教学语言筛选：{language}',
   'term.unknown': '未知学期',
+  'term.yearOrBefore': '{year}或之前',
   'filter.clickToFilterRequirement': '点击以依{requirement}筛选',
   'filter.clickToFilterBySessionType': '点击以依课堂类型筛选：{type}',
   'filter.clickToFilterByGrade': '点击以依成绩筛选：{grade}',
