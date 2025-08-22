@@ -1,7 +1,7 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
-import { processPluralTranslation } from '@/utils/textUtils';
+import { processPluralTranslation, getCourseTeachingLanguagesWithFallback } from '@/utils/textUtils';
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -144,6 +144,41 @@ export function AdvancedCourseFilters({
     'none': 0, 'optional': 0, 'compulsory': 0
   });
   const [statsLoading, setStatsLoading] = useState(true);
+
+  // Update teaching language statistics when courses data changes
+  useEffect(() => {
+    if (courses && courses.length > 0) {
+      console.log('📊 Updating teaching language statistics for', courses.length, 'courses');
+      
+      // Use the same logic as the course cards to ensure consistency
+      const languageCounts: { [key: string]: number } = {
+        'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0
+      };
+      
+      let coursesWithLanguages = 0;
+      courses.forEach(course => {
+        // Use the same fallback logic as course cards
+        const courseLanguages = getCourseTeachingLanguagesWithFallback(course);
+        
+        if (courseLanguages && courseLanguages.length > 0) {
+          coursesWithLanguages++;
+          
+          // Count each language for this course
+          courseLanguages.forEach(langCode => {
+            if (languageCounts.hasOwnProperty(langCode)) {
+              languageCounts[langCode]++;
+            }
+          });
+        }
+      });
+      
+      console.log(`📊 Found ${coursesWithLanguages} courses with teaching language data out of ${courses.length} total`);
+      console.log('🎯 Language counts:', languageCounts);
+      
+      setRealLanguageStats(languageCounts);
+      console.log('✅ Teaching language statistics updated with fallback logic');
+    }
+  }, [courses]);
 
   // Load available terms
   useEffect(() => {
