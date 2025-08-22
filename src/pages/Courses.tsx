@@ -84,7 +84,7 @@ const Courses = () => {
     statsLoading, 
     error 
   } = useCoursesWithStats({ 
-    enableProgressiveLoading: false // 暫時關閉漸進式載入來調試
+    enableProgressiveLoading: true // 開啟漸進式載入
   });
 
   // Debug: 監測數據載入狀況
@@ -100,6 +100,8 @@ const Courses = () => {
         console.log(`Course ${course.course_code}:`, {
           hasTeachingLanguages: 'teachingLanguages' in course,
           teachingLanguagesValue: course.teachingLanguages,
+          hasServiceLearning: 'serviceLearningTypes' in course,
+          serviceLearningTypes: course.serviceLearningTypes,
           reviewCount: course.reviewCount,
           averageRating: course.averageRating,
           hasReviewCount: 'reviewCount' in course,

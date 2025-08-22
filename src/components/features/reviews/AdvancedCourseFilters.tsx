@@ -160,10 +160,11 @@ export function AdvancedCourseFilters({
 
   // Update teaching language statistics when courses data changes
   useEffect(() => {
-    console.log('🔄 AdvancedCourseFilters: courses changed, length:', courses?.length);
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🔄 [${timestamp}] AdvancedCourseFilters: courses changed, length:`, courses?.length);
     
     if (courses && courses.length > 0) {
-      console.log('📊 Updating teaching language statistics for', courses.length, 'courses');
+      console.log(`📊 [${timestamp}] Updating teaching language statistics for`, courses.length, 'courses');
       
       // Debug: Log first few courses structure
       console.log('📝 Sample course data structure:');
@@ -235,6 +236,7 @@ export function AdvancedCourseFilters({
       
       setRealLanguageStats(languageCounts);
       console.log('✅ Teaching language statistics updated with fallback logic');
+      console.log('📊 Final language stats:', languageCounts);
     } else {
       console.log('❌ No courses data or empty array');
     }
@@ -288,6 +290,7 @@ export function AdvancedCourseFilters({
           
           // Compute service learning statistics synchronously from courses array  
           const serviceLearningStats = CourseService.getServiceLearningStatisticsForCourses(courses);
+          console.log('📈 Service learning stats computed:', serviceLearningStats);
           
           // Compute term statistics asynchronously (needs teaching records)
           const termStats = await CourseService.getOfferedTermStatisticsForCourses(courses);
@@ -296,6 +299,7 @@ export function AdvancedCourseFilters({
           setRealServiceLearningStats(serviceLearningStats);
           
           console.log('✅ Service learning and term statistics computed successfully');
+          console.log('📊 Final service learning stats:', serviceLearningStats);
         } catch (error) {
           console.error('❌ Error computing service learning and term statistics:', error);
         }
