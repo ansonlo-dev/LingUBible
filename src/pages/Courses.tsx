@@ -659,7 +659,7 @@ const Courses = () => {
                   titleTc={course.course_title_tc}
                   titleSc={course.course_title_sc}
                   code={course.course_code}
-                  department={translateDepartmentName(course.department, t)}
+                  department={course.department}
                   teachingLanguages={getCourseTeachingLanguagesRealOnly(course)}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}

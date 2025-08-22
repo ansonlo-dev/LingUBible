@@ -580,7 +580,7 @@ const Index = () => {
                       name={instructor.name}
                       nameTc={instructor.name_tc}
                       nameSc={instructor.name_sc}
-                      department={translateDepartmentName(instructor.department, t)}
+                      department={instructor.department}
                       reviewCount={instructor.reviewCount}
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
@@ -679,7 +679,7 @@ const Index = () => {
                       name={instructor.name}
                       nameTc={instructor.name_tc}
                       nameSc={instructor.name_sc}
-                      department={translateDepartmentName(instructor.department, t)}
+                      department={instructor.department}
                       reviewCount={instructor.reviewCount}
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
