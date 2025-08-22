@@ -218,18 +218,37 @@ export function AdvancedCourseFilters({
       counts[code] = 0;
     });
     
+    console.log(`🔍 getLanguageCounts: Processing ${courses.length} courses...`);
+    
     // Count courses for each teaching language code with fallback logic
-    courses.forEach(course => {
+    let coursesWithRealData = 0;
+    let coursesWithFallbackData = 0;
+    
+    courses.forEach((course, index) => {
       // Get teaching languages from either real data or fallback
       const courseLanguages = (() => {
         // Prioritize real teaching language data
         if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+          coursesWithRealData++;
           return course.teachingLanguages;
         }
         
         // Use conservative fallback logic
-        return getCourseTeachingLanguagesWithFallback(course);
+        const fallback = getCourseTeachingLanguagesWithFallback(course);
+        if (fallback.length > 0) {
+          coursesWithFallbackData++;
+        }
+        return fallback;
       })();
+      
+      // Debug log for first few courses
+      if (index < 3) {
+        console.log(`🔍 Course ${course.course_code}:`, {
+          realData: course.teachingLanguages,
+          finalLanguages: courseLanguages,
+          source: course.teachingLanguages?.length > 0 ? 'real' : 'fallback'
+        });
+      }
       
       // Count each language for this course
       courseLanguages.forEach(langCode => {
@@ -238,6 +257,9 @@ export function AdvancedCourseFilters({
         }
       });
     });
+    
+    console.log(`📊 Language counts result:`, counts);
+    console.log(`📈 Data sources: ${coursesWithRealData} real + ${coursesWithFallbackData} fallback`);
     
     return counts;
   };
@@ -263,19 +285,36 @@ export function AdvancedCourseFilters({
       counts[type] = 0;
     });
     
+    console.log(`🔍 getServiceLearningCounts: Processing ${courses.length} courses...`);
+    
     // Count courses for each service learning type
-    courses.forEach(course => {
+    let coursesWithServiceData = 0;
+    
+    courses.forEach((course, index) => {
       if (course.serviceLearningTypes && course.serviceLearningTypes.length > 0) {
+        // Course has service learning data
+        coursesWithServiceData++;
+        
+        // Debug log for first few courses
+        if (index < 3) {
+          console.log(`🔍 Course ${course.course_code}:`, {
+            serviceLearningTypes: course.serviceLearningTypes
+          });
+        }
+        
         course.serviceLearningTypes.forEach(type => {
           if (counts.hasOwnProperty(type)) {
             counts[type]++;
           }
         });
       } else {
-        // Course has no service learning
+        // Course has no service learning data - count as 'none'
         counts['none']++;
       }
     });
+    
+    console.log(`📊 Service learning counts result:`, counts);
+    console.log(`📈 Courses with service learning data: ${coursesWithServiceData}`);
     
     return counts;
   };
