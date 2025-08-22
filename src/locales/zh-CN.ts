@@ -42,13 +42,10 @@ export default {
   'footer.githubTooltip': '在 GitHub 上查看源代码',
   'footer.mitTooltip': '查看 MIT 许可证',
   'beta.notice.title': '网站开发中',
-  'beta.notice.message': '本网站目前正在建设中，使用的是模拟数据（非真实课程/讲师数据）。部分功能尚未完成，可能不完整或不稳定。我们预计在2025年8月底完成基本功能并公开发布。感谢您的理解与支持。',
+  'beta.notice.message': '数据已经整理完成并导入系统，但仍存在大量问题，目前系统不稳定。部分功能尚未完成，可能不完整或不稳定。我们正努力修复问题，感谢您的理解与支持。',
   'beta.notice.dismiss': '我知道了',
   'beta.notice.expand': '展开通知',
   'beta.notice.collapse': '收起通知',
-  'beta.notice.oldReviews.prefix': '在实际数据加载之前，请点击这里',
-  'beta.notice.oldReviews.linkText': 'Google 云端硬盘',
-  'beta.notice.oldReviews.suffix': '查看旧评论。',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理

@@ -40,13 +40,10 @@ export default {
   'footer.githubTooltip': '在 GitHub 上查看原始碼',
   'footer.mitTooltip': '查看 MIT 授權條款',
   'beta.notice.title': '網站開發中',
-  'beta.notice.message': '本網站目前正在建設中，使用的是模擬數據（非真實課程/講師數據）。部分功能尚未完成，可能不完整或不穩定。我們預計在2025年8月底完成基本功能並公開發布。感謝您的理解與支持。',
+  'beta.notice.message': '數據已經整理完成並匯入系統，但仍存在大量問題，目前系統不穩定。部分功能尚未完成，可能不完整或不穩定。我們正努力修復問題，感謝您的理解與支持。',
   'beta.notice.dismiss': '我知道了',
   'beta.notice.expand': '展開通知',
   'beta.notice.collapse': '收起通知',
-  'beta.notice.oldReviews.prefix': '在實際數據載入之前，請點擊這裡',
-  'beta.notice.oldReviews.linkText': 'Google 雲端硬碟',
-  'beta.notice.oldReviews.suffix': '查看舊評論。',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理

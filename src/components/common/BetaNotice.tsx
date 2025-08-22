@@ -23,18 +23,6 @@ export const BetaNotice: React.FC = () => {
                   <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
                     {t('beta.notice.message')}
                   </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
-                    {t('beta.notice.oldReviews.prefix')}{' '}
-                    <a 
-                      href="https://drive.google.com/drive/folders/1K9DNhe7nTz3C7KDBnoeg03CMSxNY6YDv?usp=drive_link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-lg font-extrabold text-amber-900 dark:text-amber-100 bg-amber-200 dark:bg-amber-800 px-3 py-1.5 rounded-lg underline hover:bg-amber-300 dark:hover:bg-amber-700 hover:text-amber-950 dark:hover:text-amber-50 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
-                    >
-                      {t('beta.notice.oldReviews.linkText')}
-                    </a>{' '}
-                    {t('beta.notice.oldReviews.suffix')}
-                  </p>
                 </div>
               )}
             </div>

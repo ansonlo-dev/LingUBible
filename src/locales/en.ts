@@ -41,13 +41,10 @@ export default {
   'footer.githubTooltip': 'View source code on GitHub',
   'footer.mitTooltip': 'View MIT License',
   'beta.notice.title': 'Website Under Development',
-  'beta.notice.message': 'This website is currently under construction and using mock data (not real course/instructor data). Some features are not finished and may be incomplete or unstable. We expect to complete the basic features and publish to the public by the end of August 2025. Thank you for your understanding and support.',
+  'beta.notice.message': 'Data has been organized and imported into the system, but many bugs still exist and the system remains unstable. Some features are not finished and may be incomplete or unstable. We are working hard to fix the issues. Thank you for your understanding and support.',
   'beta.notice.dismiss': 'I understand',
   'beta.notice.expand': 'Expand notice',
   'beta.notice.collapse': 'Collapse notice',
-  'beta.notice.oldReviews.prefix': 'Before the actual data is loaded, please click here',
-  'beta.notice.oldReviews.linkText': 'Google Drive',
-  'beta.notice.oldReviews.suffix': 'to view old reviews.',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理
