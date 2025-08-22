@@ -27,53 +27,32 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 // Helper function to get faculty by department name
 const getFacultyByDepartment = (department: string): string => {
   const facultyMapping: { [key: string]: string } = {
-    // mark update
-    // Affiliated Units
-    'LIFE': 'faculty.affiliatedUnits',
     // Faculty of Arts
-    'AIGCS': 'faculty.arts',
-    'CEAL': 'faculty.arts',
-    'CFCI': 'faculty.arts',
-    'CLEAC': 'faculty.arts',
-    'CHI': 'faculty.arts',
-    'CS': 'faculty.arts',
-    'DACI': 'faculty.arts',
-    'ENG': 'faculty.arts',
-    'HIST': 'faculty.arts',
-    'PHILO': 'faculty.arts',
-    'TRAN': 'faculty.arts',
+    'Chinese': 'faculty.arts',
+    'Cultural Studies': 'faculty.arts',
+    'Digital Arts and Creative Industries': 'faculty.arts',
+    'English': 'faculty.arts',
+    'History': 'faculty.arts',
+    'Philosophy': 'faculty.arts',
+    'Translation': 'faculty.arts',
+    'Centre for English and Additional Languages': 'faculty.arts',
+    'Centre for Chinese Language and Assessment': 'faculty.arts',
     // Faculty of Business
-    'ACCT': 'faculty.business',
-    'BUS': 'faculty.business',
-    'FIN': 'faculty.business',
-    'MGT': 'faculty.business',
-    'MKT': 'faculty.business',
-    'ORM': 'faculty.business',
-    'HKIBS': 'faculty.business',
-    'IIRM': 'faculty.business',
+    'Accountancy': 'faculty.business',
+    'Finance': 'faculty.business',
+    'Management': 'faculty.business',
+    'Marketing and International Business': 'faculty.business',
+    'Operations and Risk Management': 'faculty.business',
     // Faculty of Social Sciences
-    'ECON': 'faculty.socialSciences',
-    'GOV': 'faculty.socialSciences',
-    'PSY': 'faculty.socialSciences',
-    'SOCSC': 'faculty.socialSciences',
-    'SOCSP': 'faculty.socialSciences',
-    // School of Data Science
-    'DAI': 'faculty.dataScience',
-    'DIDS': 'faculty.dataScience',
-    'LEODCIDS': 'faculty.dataScience',
-    'SDS': 'faculty.dataScience',
-    // School of Graduate Studies
-    'GS': 'faculty.graduateStudies',
-    // School of Interdisciplinary Studies
-    'SIS': 'faculty.interdisciplinaryStudies',
-    'SU': 'faculty.interdisciplinaryStudies',
-    'WBLMP': 'faculty.interdisciplinaryStudies',
-    // Research Institutes, Centres and Programmes
-    'APIAS': 'faculty.researchInstitutes',
-    'IPS': 'faculty.researchInstitutes',
-    // Units and Offices
-    'OSL': 'faculty.unitsOffices',
-    'TLC': 'faculty.unitsOffices',
+    'Psychology': 'faculty.socialSciences',
+    'Economics': 'faculty.socialSciences',
+    'Government and International Affairs': 'faculty.socialSciences',
+    'Sociology and Social Policy': 'faculty.socialSciences',
+    // Core and Other
+    'Core Office': 'faculty.core',
+    'Science Unit': 'faculty.core',
+    'Lui Che Woo Music and Arts': 'faculty.core',
+    'Chan Shu-Ming Data Science Institute': 'faculty.core',
   };
   return facultyMapping[department] || 'faculty.other';
 };
@@ -134,113 +113,6 @@ export function AdvancedCourseFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
-  
-  // Real statistics from teaching_records database
-  const [realLanguageStats, setRealLanguageStats] = useState<{ [key: string]: number }>({
-    'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0
-  });
-  const [realTermStats, setRealTermStats] = useState<{ [key: string]: number }>({});
-  const [realServiceLearningStats, setRealServiceLearningStats] = useState<{ [key: string]: number }>({
-    'none': 0, 'optional': 0, 'compulsory': 0
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  // Debug: 監測realLanguageStats的變化
-  useEffect(() => {
-    const timestamp = new Date().toLocaleTimeString();
-    console.log(`🕒 ${timestamp} - realLanguageStats changed:`, realLanguageStats);
-    if (realLanguageStats.C > 0) {
-      console.log(`🎯 ${timestamp} - Cantonese count is now: ${realLanguageStats.C}`);
-    } else if (Object.values(realLanguageStats).some(val => val > 0)) {
-      console.log(`⚠️ ${timestamp} - Cantonese count is 0 but other languages have values:`, realLanguageStats);
-    } else {
-      console.log(`❌ ${timestamp} - All language counts are 0`);
-    }
-  }, [realLanguageStats]);
-
-  // Update teaching language statistics when courses data changes
-  useEffect(() => {
-    const timestamp = new Date().toLocaleTimeString();
-    console.log(`🔄 [${timestamp}] AdvancedCourseFilters: courses changed, length:`, courses?.length);
-    
-    if (courses && courses.length > 0) {
-      console.log(`📊 [${timestamp}] Updating teaching language statistics for`, courses.length, 'courses');
-      
-      // Debug: Log first few courses structure
-      console.log('📝 Sample course data structure:');
-      courses.slice(0, 3).forEach(course => {
-        console.log(`Course ${course.course_code}:`, {
-          hasTeachingLanguages: course.hasOwnProperty('teachingLanguages'),
-          teachingLanguages: course.teachingLanguages,
-          reviewCount: course.reviewCount,
-          hasReviewCount: course.hasOwnProperty('reviewCount'),
-          allKeys: Object.keys(course).sort()
-        });
-      });
-      
-      // Use the same logic as the course cards to ensure consistency
-      const languageCounts: { [key: string]: number } = {
-        'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0
-      };
-      
-      let coursesWithLanguages = 0;
-      let coursesProcessed = 0;
-      let coursesWithRealData = 0;
-      let coursesWithFallbackData = 0;
-      
-      courses.forEach((course, index) => {
-        coursesProcessed++;
-        
-        // 優先使用真實的teaching_records數據
-        let courseLanguages: string[] = [];
-        
-        if (course.teachingLanguages && course.teachingLanguages.length > 0) {
-          // 有真實數據 - 直接使用
-          courseLanguages = course.teachingLanguages;
-          coursesWithRealData++;
-        } else {
-          // 無真實數據 - 使用保守的fallback邏輯
-          courseLanguages = getCourseTeachingLanguagesWithFallback(course);
-          if (courseLanguages.length > 0) {
-            coursesWithFallbackData++;
-          }
-        }
-        
-        if (courseLanguages && courseLanguages.length > 0) {
-          coursesWithLanguages++;
-          
-          // Debug log for first few courses
-          if (index < 5) {
-            console.log(`🔍 Course ${course.course_code}:`, {
-              realData: course.teachingLanguages,
-              finalLanguages: courseLanguages,
-              source: course.teachingLanguages?.length > 0 ? 'real' : 'fallback'
-            });
-          }
-          
-          // Count each language for this course
-          courseLanguages.forEach(langCode => {
-            if (languageCounts.hasOwnProperty(langCode)) {
-              languageCounts[langCode]++;
-            }
-          });
-        } else if (index < 5) {
-          console.log(`❌ Course ${course.course_code} has no languages`);
-        }
-      });
-      
-      console.log(`📊 Processed ${coursesProcessed} courses`);
-      console.log(`📚 Found ${coursesWithLanguages} courses with teaching language data out of ${courses.length} total`);
-      console.log(`🔢 Data sources: ${coursesWithRealData} real + ${coursesWithFallbackData} fallback`);
-      console.log('🎯 Language counts:', languageCounts);
-      
-      setRealLanguageStats(languageCounts);
-      console.log('✅ Teaching language statistics updated with fallback logic');
-      console.log('📊 Final language stats:', languageCounts);
-    } else {
-      console.log('❌ No courses data or empty array');
-    }
-  }, [courses]);
 
   // Load available terms
   useEffect(() => {
@@ -277,41 +149,6 @@ export function AdvancedCourseFilters({
 
     loadAvailableTerms();
   }, []);
-
-  // 🚀 REMOVED: Old statistics calculation to avoid conflict with the new fallback-based calculation above
-  // This was causing the "68 -> 0" issue by overriding the correct fallback-based statistics
-  
-  // Service learning and term statistics calculation (these don't conflict)
-  useEffect(() => {
-    const computeServiceLearningAndTermStats = async () => {
-      if (courses.length > 0) {
-        try {
-          console.log('📊 Computing service learning and term statistics...');
-          
-          // Compute service learning statistics synchronously from courses array  
-          const serviceLearningStats = CourseService.getServiceLearningStatisticsForCourses(courses);
-          console.log('📈 Service learning stats computed:', serviceLearningStats);
-          
-          // Compute term statistics asynchronously (needs teaching records)
-          const termStats = await CourseService.getOfferedTermStatisticsForCourses(courses);
-          
-          setRealTermStats(termStats);
-          setRealServiceLearningStats(serviceLearningStats);
-          
-          console.log('✅ Service learning and term statistics computed successfully');
-          console.log('📊 Final service learning stats:', serviceLearningStats);
-        } catch (error) {
-          console.error('❌ Error computing service learning and term statistics:', error);
-        }
-      } else {
-        setRealTermStats({});
-        setRealServiceLearningStats({ 'none': 0, 'optional': 0, 'compulsory': 0 });
-      }
-      setStatsLoading(false);
-    };
-
-    computeServiceLearningAndTermStats();
-  }, [courses]); // Recompute when courses change
 
   const updateFilters = (updates: Partial<CourseFilters>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -373,9 +210,36 @@ export function AdvancedCourseFilters({
   };
 
   const getLanguageCounts = () => {
-    // Return cached real teaching language statistics
-    // This will be populated by real database data from teaching_records
-    return realLanguageStats;
+    const counts: { [key: string]: number } = {};
+    
+    // Initialize counts for all 8 teaching language codes in the desired order
+    const allLanguageCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
+    allLanguageCodes.forEach(code => {
+      counts[code] = 0;
+    });
+    
+    // Count courses for each teaching language code with fallback logic
+    courses.forEach(course => {
+      // Get teaching languages from either real data or fallback
+      const courseLanguages = (() => {
+        // Prioritize real teaching language data
+        if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+          return course.teachingLanguages;
+        }
+        
+        // Use conservative fallback logic
+        return getCourseTeachingLanguagesWithFallback(course);
+      })();
+      
+      // Count each language for this course
+      courseLanguages.forEach(langCode => {
+        if (counts.hasOwnProperty(langCode)) {
+          counts[langCode]++;
+        }
+      });
+    });
+    
+    return counts;
   };
 
   // Helper function to get ordered language options
@@ -391,8 +255,29 @@ export function AdvancedCourseFilters({
   };
 
   const getServiceLearningCounts = () => {
-    // Return cached real service learning statistics from teaching_records database
-    return realServiceLearningStats;
+    const counts: { [key: string]: number } = {};
+    
+    // Initialize counts for service learning types
+    const allServiceLearningTypes = ['none', 'optional', 'compulsory'];
+    allServiceLearningTypes.forEach(type => {
+      counts[type] = 0;
+    });
+    
+    // Count courses for each service learning type
+    courses.forEach(course => {
+      if (course.serviceLearningTypes && course.serviceLearningTypes.length > 0) {
+        course.serviceLearningTypes.forEach(type => {
+          if (counts.hasOwnProperty(type)) {
+            counts[type]++;
+          }
+        });
+      } else {
+        // Course has no service learning
+        counts['none']++;
+      }
+    });
+    
+    return counts;
   };
 
   // Helper function to get ordered service learning options
@@ -410,8 +295,24 @@ export function AdvancedCourseFilters({
   };
 
   const getTermCounts = () => {
-    // Return cached real term statistics from teaching_records database
-    return realTermStats;
+    const counts: { [key: string]: number } = {};
+    
+    availableTerms.forEach(term => {
+      // Get the actual courses offered in this term
+      const coursesOfferedInTerm = termCoursesMap.get(term.term_code) || new Set();
+      
+      // Count how many of the current filtered courses are offered in this term
+      let count = 0;
+      courses.forEach(course => {
+        if (coursesOfferedInTerm.has(course.course_code)) {
+          count++;
+        }
+      });
+      
+      counts[term.term_code] = count;
+    });
+    
+    return counts;
   };
 
   // Helper function to create subject options sorted alphabetically by subject code
@@ -420,16 +321,14 @@ export function AdvancedCourseFilters({
     const subjectCodeMap = new Map<string, { count: number; department: string }>();
     
     courses.forEach(course => {
-      if (course.course_code) {
+      if (course.course_code && course.department) {
         // Extract subject code from course code (e.g., "BUS1001" -> "BUS")
         const subjectCode = course.course_code.replace(/\d.*$/, '');
         
         if (subjectCodeMap.has(subjectCode)) {
           subjectCodeMap.get(subjectCode)!.count++;
         } else {
-          // Use department if available, otherwise use "Unknown Department"
-          const department = course.department || 'Unknown Department';
-          subjectCodeMap.set(subjectCode, { count: 1, department });
+          subjectCodeMap.set(subjectCode, { count: 1, department: course.department });
         }
       }
     });
