@@ -4,7 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
-import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
@@ -208,59 +208,17 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
 
 
-  // Get faculty by department name
-  const getFacultyByDepartment = (department: string): string => {
-    const facultyMapping: { [key: string]: string } = {
-      // mark update
-      // Affiliated Units
-      'LIFE': 'faculty.affiliatedUnits',
-      // Faculty of Arts
-      'AIGCS': 'faculty.arts',
-      'CEAL': 'faculty.arts',
-      'CFCI': 'faculty.arts',
-      'CLEAC': 'faculty.arts',
-      'CHI': 'faculty.arts',
-      'CS': 'faculty.arts',
-      'DACI': 'faculty.arts',
-      'ENG': 'faculty.arts',
-      'HIST': 'faculty.arts',
-      'PHILO': 'faculty.arts',
-      'TRAN': 'faculty.arts',
-      // Faculty of Business
-      'ACCT': 'faculty.business',
-      'BUS': 'faculty.business',
-      'FIN': 'faculty.business',
-      'MGT': 'faculty.business',
-      'MKT': 'faculty.business',
-      'ORM': 'faculty.business',
-      'HKIBS': 'faculty.business',
-      'IIRM': 'faculty.business',
-      // Faculty of Social Sciences
-      'ECON': 'faculty.socialSciences',
-      'GOV': 'faculty.socialSciences',
-      'PSY': 'faculty.socialSciences',
-      'SOCSC': 'faculty.socialSciences',
-      'SOCSP': 'faculty.socialSciences',
-      // School of Data Science
-      'DAI': 'faculty.dataScience',
-      'DIDS': 'faculty.dataScience',
-      'LEODCIDS': 'faculty.dataScience',
-      'SDS': 'faculty.dataScience',
-      // School of Graduate Studies
-      'GS': 'faculty.graduateStudies',
-      // School of Interdisciplinary Studies
-      'SIS': 'faculty.interdisciplinaryStudies',
-      'SU': 'faculty.interdisciplinaryStudies',
-      'WBLMP': 'faculty.interdisciplinaryStudies',
-      // Research Institutes, Centres and Programmes
-      'APIAS': 'faculty.researchInstitutes',
-      'IPS': 'faculty.researchInstitutes',
-      // Units and Offices
-      'OSL': 'faculty.unitsOffices',
-      'TLC': 'faculty.unitsOffices'
-    };
-    
-    return facultyMapping[department] || '';
+  // Multi-department support: render multiple faculty badges for multi-department items
+  const renderFacultyBadges = (department: string) => {
+    const faculties = getFacultiesForMultiDepartment(department);
+    return faculties.map((facultyKey, index) => (
+      <span 
+        key={facultyKey}
+        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+      >
+        {t(facultyKey)}
+      </span>
+    ));
   };
 
   // 載入數據
@@ -802,7 +760,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {filteredCourses.map((course, index) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
-                                const facultyKey = getFacultyByDepartment(course.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const courseUrl = `/courses/${course.course_code}`;
                                 
                                 return (
@@ -821,11 +779,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(course.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -888,7 +842,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {filteredInstructors.map((instructor, index) => {
                                 const instructorName = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 
                                 return (
@@ -907,11 +861,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {instructorName.secondary || ''}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(instructor.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -991,7 +941,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {popularCourses.map((course) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
-                                const facultyKey = getFacultyByDepartment(course.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const courseUrl = `/courses/${course.course_code}`;
                                 return (
                                   <a
@@ -1027,11 +977,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(course.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -1144,7 +1090,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {popularInstructors.map((instructor) => {
                                 const nameInfo = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 return (
                                   <a
@@ -1177,11 +1123,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(instructor.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -1248,7 +1190,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {topCourses.map((course) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
-                                const facultyKey = getFacultyByDepartment(course.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const courseUrl = `/courses/${course.course_code}`;
                                 return (
                                   <a
@@ -1284,11 +1226,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(course.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -1401,7 +1339,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {topInstructors.map((instructor) => {
                                 const nameInfo = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 return (
                                   <a
@@ -1434,11 +1372,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(instructor.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -1775,7 +1709,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {filteredCourses.map((course, index) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
-                                const facultyKey = getFacultyByDepartment(course.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const courseUrl = `/courses/${course.course_code}`;
                                 
                                 return (
@@ -1794,11 +1728,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {titleInfo.secondary ? `${titleInfo.primary} • ${titleInfo.secondary}` : titleInfo.primary}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(course.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -1907,7 +1837,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {filteredInstructors.map((instructor, index) => {
                                 const instructorName = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 
                                 return (
@@ -1926,11 +1856,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                           {instructorName.secondary || ''}
                                         </div>
                                         <div className="flex items-center gap-1 flex-wrap mt-1">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(instructor.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -2006,7 +1932,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {popularCourses.map((course) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
-                                const facultyKey = getFacultyByDepartment(course.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const courseUrl = `/courses/${course.course_code}`;
                                 return (
                                   <a
@@ -2042,11 +1968,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(course.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -2155,7 +2077,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {popularInstructors.map((instructor) => {
                                 const nameInfo = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 return (
                                   <a
@@ -2188,11 +2110,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(instructor.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -2255,7 +2173,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {topCourses.map((course) => {
                                 const titleInfo = getCourseTitle(course, currentLanguage);
                                 const departmentName = translateDepartmentName(course.department, t);
-                                const facultyKey = getFacultyByDepartment(course.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const courseUrl = `/courses/${course.course_code}`;
                                 return (
                                   <a
@@ -2291,11 +2209,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(course.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
@@ -2404,7 +2318,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                               {topInstructors.map((instructor) => {
                                 const nameInfo = getInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
-                                const facultyKey = getFacultyByDepartment(instructor.department);
+                                // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
                                 return (
                                   <a
@@ -2437,11 +2351,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* 第3行：學院和系所 */}
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          {facultyKey && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                                              {t(facultyKey)}
-                                            </span>
-                                          )}
+                                          {renderFacultyBadges(instructor.department)}
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                                             {departmentName}
                                           </span>
