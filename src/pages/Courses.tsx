@@ -11,7 +11,7 @@ import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { translateDepartmentName, courseMatchesLanguageFilterRealOnly, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
+import { translateDepartmentName, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
 
 
 /**
@@ -349,9 +349,14 @@ const Courses = () => {
 
     // 教學語言篩選 - 僅使用真實資料庫數據
     if (filters.teachingLanguage.length > 0) {
-      filtered = filtered.filter(course => 
-        courseMatchesLanguageFilterRealOnly(course, filters.teachingLanguage)
-      );
+      filtered = filtered.filter(course => {
+        // Only use real teaching language data for filtering
+        if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+          return course.teachingLanguages.some(langCode => filters.teachingLanguage.includes(langCode));
+        }
+        // If no real data, exclude from results
+        return false;
+      });
     }
 
     // 服務學習篩選

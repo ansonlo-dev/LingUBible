@@ -2550,8 +2550,12 @@ export class CourseService {
 
         if (languagesResult.status === 'fulfilled') {
           teachingLanguagesMap = languagesResult.value;
+          console.log('✅ Successfully fetched teaching languages for', teachingLanguagesMap.size, 'courses');
+          // 輸出前5個課程的語言數據作為調試
+          const first5 = Array.from(teachingLanguagesMap.entries()).slice(0, 5);
+          console.log('📝 Sample teaching language data:', first5);
         } else {
-          console.warn('Failed to fetch course teaching languages, continuing without language badges:', languagesResult.reason);
+          console.warn('❌ Failed to fetch course teaching languages, continuing without language badges:', languagesResult.reason);
         }
 
         if (currentTermResult.status === 'fulfilled') {
@@ -4838,7 +4842,7 @@ export class CourseService {
 
   /**
    * 🚀 OPTIMIZED: Get teaching language statistics based on current courses array
-   * Only uses real database data, no inference
+   * Uses ONLY real database data from teaching records
    * Returns count of courses that teach in each language
    */
   static getTeachingLanguageStatisticsForCourses(courses: any[]): { [key: string]: number } {
@@ -4847,9 +4851,13 @@ export class CourseService {
     };
 
     try {
+      console.log('🔍 Computing teaching language statistics for', courses.length, 'courses');
+      
+      let coursesWithLanguages = 0;
       courses.forEach(course => {
-        // Only use real teaching languages data, skip inference
+        // Only count courses with real teaching language data
         if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+          coursesWithLanguages++;
           const courseLanguages = course.teachingLanguages;
           
           // Count each language for this course
@@ -4859,15 +4867,19 @@ export class CourseService {
             }
           });
         }
-        // If no real data, skip this course entirely (don't count it)
+        // If no real teaching language data, skip this course entirely
       });
 
+      console.log(`📊 Found ${coursesWithLanguages} courses with teaching language data out of ${courses.length} total`);
+      console.log('🎯 Language counts:', languageCounts);
+      
       return languageCounts;
     } catch (error) {
       console.error('Error computing teaching language statistics for courses:', error);
       return { 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
     }
   }
+
 
 
   /**
