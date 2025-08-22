@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Eye, EyeOff } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
 import { BarChart3, BoxSelect, BarChart, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
@@ -70,6 +72,10 @@ interface GradeDistributionChartProps {
   defaultExpanded?: boolean;
   /** 是否隱藏標題頭部（用於已有標題的容器中） */
   hideHeader?: boolean;
+  /** 是否顯示 N/A 成績 */
+  showNAGrades?: boolean;
+  /** N/A 成績顯示狀態變更回調函數 */
+  onNAToggleChange?: (showNA: boolean) => void;
 }
 
 const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo(({
@@ -88,6 +94,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   filterLabel,
   rawReviewData,
   defaultExpanded = false,
+  showNAGrades = true,
+  onNAToggleChange,
   hideHeader = false
 }) => {
   const { t, language } = useLanguage();
@@ -95,6 +103,17 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   
   // Chart type state
   const [chartType, setChartType] = React.useState<ChartType>('bar');
+
+  // Filter N/A grades from distribution if needed
+  const filteredGradeDistribution = React.useMemo(() => {
+    if (showNAGrades) {
+      return gradeDistribution;
+    }
+    
+    const filtered = { ...gradeDistribution };
+    delete filtered['N/A'];
+    return filtered;
+  }, [gradeDistribution, showNAGrades]);
   
   // Cumulative line visibility state
   const [showCumulativeLine, setShowCumulativeLine] = React.useState(true);
@@ -381,20 +400,20 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // 使用 useMemo 優化性能，避免重複計算
   const { completeDistribution, sortedGrades, totalCount, maxCount, statistics, boxPlotStats } = React.useMemo(() => {
     // 獲取完整的成績分佈（包含 0 計數的成績）
-    const completeDistribution = getCompleteGradeDistribution(gradeDistribution);
+    const completeDistribution = getCompleteGradeDistribution(filteredGradeDistribution);
     const sortedGrades = sortGradesDescending(Object.keys(completeDistribution));
     
     // 計算總數
-    const totalCount = Object.values(gradeDistribution).reduce((sum, count) => sum + count, 0);
+    const totalCount = Object.values(filteredGradeDistribution).reduce((sum, count) => sum + count, 0);
     
     // 計算最大值用於標準化
     const maxCount = Math.max(...Object.values(completeDistribution));
     
     // 計算統計數據
-    const statistics = calculateGradeStatistics(gradeDistribution);
+    const statistics = calculateGradeStatistics(filteredGradeDistribution);
     
     // 計算箱線圖統計數據
-    const boxPlotStats = calculateBoxPlotStatistics(gradeDistribution);
+    const boxPlotStats = calculateBoxPlotStatistics(filteredGradeDistribution);
     
     return {
       completeDistribution,
@@ -404,7 +423,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       statistics,
       boxPlotStats
     };
-  }, [gradeDistribution]);
+  }, [filteredGradeDistribution]);
 
   // Helper function to filter reviews by instructor and calculate real grade distribution
   const getGradeDistributionByInstructor = (instructorValue: string): Record<string, number> => {
@@ -1927,6 +1946,29 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 )}
               </div>
             )}
+            
+            {/* N/A Grades Toggle */}
+            {onNAToggleChange && (
+              <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                <button
+                  onClick={() => onNAToggleChange(!showNAGrades)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                  title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+                >
+                  {showNAGrades ? (
+                    <>
+                      <Eye className="h-3 w-3" />
+                      <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="h-3 w-3" />
+                      <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
         
@@ -2245,6 +2287,29 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                     />
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* N/A Grades Toggle */}
+            {onNAToggleChange && (
+              <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                <button
+                  onClick={() => onNAToggleChange(!showNAGrades)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                  title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+                >
+                  {showNAGrades ? (
+                    <>
+                      <Eye className="h-3 w-3" />
+                      <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="h-3 w-3" />
+                      <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>

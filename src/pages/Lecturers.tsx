@@ -520,6 +520,9 @@ const Lecturers = () => {
 
   // Grade distribution chart filter state
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
+  
+  // N/A grades visibility state
+  const [showNAGrades, setShowNAGrades] = useState<boolean>(true);
 
   // 解碼 URL 參數
   const decodedName = instructorName ? decodeURIComponent(instructorName) : null;
@@ -2019,6 +2022,8 @@ const Lecturers = () => {
                         filterLabel={t('chart.filterByCourse')}
                         rawReviewData={filteredReviewsForChart}
                         hideHeader={true}
+                        showNAGrades={showNAGrades}
+                        onNAToggleChange={setShowNAGrades}
                         onBarClick={(grade) => {
                           // 設置成績篩選並滾動到學生評論區域
                           setExternalGradeFilter(grade);
@@ -3916,6 +3921,8 @@ const Lecturers = () => {
                     filterLabel={t('chart.filterByCourse')}
                     rawReviewData={filteredReviewsForChart}
                     hideHeader={true}
+                    showNAGrades={showNAGrades}
+                    onNAToggleChange={setShowNAGrades}
                     onBarClick={(grade) => {
                       // 設置成績篩選並滾動到學生評論區域
                       setExternalGradeFilter(grade);
