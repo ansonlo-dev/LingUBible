@@ -1853,122 +1853,123 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 </Button>
               </div>
             </div>
-            
-            {/* 篩選器下拉選單 - 支援多選 */}
-            {filterOptions && filterOptions.length > 0 && onFilterChange && (
-              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto min-w-0">
-                {filterLabel && (
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {(() => {
-                      // Show plural form for all chart types
-                      // Add (s) for plural in English only
-                      const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
-                                      !filterLabel.includes('课程') && !filterLabel.includes('教师');
-                      return isEnglish ? filterLabel + '(s)' : filterLabel;
-                    })()}:
-                  </span>
-                )}
-                {chartType === 'bar' ? (
-                  // Single selection for bar chart
-                  <Select 
-                    value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
-                    onValueChange={(value) => onFilterChange(value)}
-                  >
-                    <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
-                      <SelectValue placeholder={t('common.all')}>
-                        <div className="w-full overflow-hidden">
-                          <div className="truncate">
-                            {(() => {
-                              const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
-                              if (currentValue === 'all') {
-                                return t('common.all');
-                              } else {
-                                const option = filterOptions.find(opt => opt.value === currentValue);
-                                return option ? option.label : currentValue;
-                              }
-                            })()}
-                          </div>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
-                      <SelectItem value="all" textValue={t('common.all')}>
-                        <div className="flex items-center justify-between w-full min-w-0">
-                          <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
-                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                            {totalCount}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      {filterOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
-                          <div className="flex items-center justify-between w-full min-w-0">
-                            <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
-                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                              {option.count}
-                            </Badge>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  // Multiple selection for stacked chart and box plot
-                  <div className="relative w-full sm:w-auto min-w-0">
-                    <MultiSelectDropdown
-                      options={filterOptions.map((option): SelectOption => ({
-                        value: option.value,
-                        label: option.label,
-                        count: option.count
-                      }))}
-                      selectedValues={(() => {
-                        const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
-                        // If 'all' is selected or no values, return empty array to show placeholder
-                        if (values.length === 0 || values.includes('all')) {
-                          return [];
-                        }
-                        return values;
-                      })()}
-                      onSelectionChange={(values: string[]) => {
-                        if (values.length === 0) {
-                          onFilterChange('all'); // When nothing selected, set to 'all'
-                        } else {
-                          onFilterChange(values);
-                        }
-                      }}
-                      placeholder={t('common.all')}
-                      className="w-full sm:max-w-[320px] md:max-w-[400px]"
-                      showCounts={true}
-                      maxHeight="max-h-48"
-                      totalCount={totalCount}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* N/A Grades Toggle */}
-            {onNAToggleChange && (
-              <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                <button
-                  onClick={() => onNAToggleChange(!showNAGrades)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
-                  title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-                >
-                  {showNAGrades ? (
-                    <>
-                      <Eye className="h-3 w-3" />
-                      <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="h-3 w-3" />
-                      <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                    </>
+                
+                {/* 右側控制項目 */}
+                <div className="flex items-center gap-2">
+                  {/* N/A Grades Toggle */}
+                  {onNAToggleChange && (
+                    <button
+                      onClick={() => onNAToggleChange(!showNAGrades)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                      title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+                    >
+                      {showNAGrades ? (
+                        <>
+                          <Eye className="h-3 w-3" />
+                          <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="h-3 w-3" />
+                          <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
-              </div>
-            )}
+                  
+                  {/* 篩選器 */}
+                  {filterOptions && filterOptions.length > 0 && onFilterChange && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      {filterLabel && (
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {(() => {
+                            // Show plural form for all chart types
+                            // Add (s) for plural in English only
+                            const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                            !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                            return isEnglish ? filterLabel + '(s)' : filterLabel;
+                          })()}:
+                        </span>
+                      )}
+                      {chartType === 'bar' ? (
+                        // Single selection for bar chart
+                        <Select 
+                          value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
+                          onValueChange={(value) => onFilterChange(value)}
+                        >
+                          <SelectTrigger className="w-full sm:max-w-[200px] h-8 min-w-0">
+                            <SelectValue placeholder={t('common.all')}>
+                              <div className="w-full overflow-hidden">
+                                <div className="truncate">
+                                  {(() => {
+                                    const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                                    if (currentValue === 'all') {
+                                      return t('common.all');
+                                    } else {
+                                      const option = filterOptions.find(opt => opt.value === currentValue);
+                                      return option ? option.label : currentValue;
+                                    }
+                                  })()} 
+                                </div>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[300px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                            <SelectItem value="all" textValue={t('common.all')}>
+                              <div className="flex items-center justify-between w-full min-w-0">
+                                <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                                <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                  {totalCount}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                            {filterOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
+                                <div className="flex items-center justify-between w-full min-w-0">
+                                  <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                    {option.count}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        // Multiple selection for stacked chart and box plot
+                        <div className="relative w-full sm:w-auto min-w-0">
+                          <MultiSelectDropdown
+                            options={filterOptions.map((option): SelectOption => ({
+                              value: option.value,
+                              label: option.label,
+                              count: option.count
+                            }))}
+                            selectedValues={(() => {
+                              const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+                              // If 'all' is selected or no values, return empty array to show placeholder
+                              if (values.length === 0 || values.includes('all')) {
+                                return [];
+                              }
+                              return values;
+                            })()}
+                            onSelectionChange={(values: string[]) => {
+                              if (values.length === 0) {
+                                onFilterChange('all'); // When nothing selected, set to 'all'
+                              } else {
+                                onFilterChange(values);
+                              }
+                            }}
+                            placeholder={t('common.all')}
+                            className="w-full sm:max-w-[200px]"
+                            showCounts={true}
+                            maxHeight="max-h-48"
+                            totalCount={totalCount}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
           </div>
         </div>
         
@@ -2196,122 +2197,123 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 </Button>
               </div>
             </div>
-            
-            {/* 篩選器下拉選單 - 支援多選 */}
-            {filterOptions && filterOptions.length > 0 && onFilterChange && (
-              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto min-w-0">
-                {filterLabel && (
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {(() => {
-                      // Show plural form for all chart types
-                      // Add (s) for plural in English only
-                      const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
-                                      !filterLabel.includes('课程') && !filterLabel.includes('教师');
-                      return isEnglish ? filterLabel + '(s)' : filterLabel;
-                    })()}:
-                  </span>
-                )}
-                {chartType === 'bar' ? (
-                  // Single selection for bar chart
-                  <Select 
-                    value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
-                    onValueChange={(value) => onFilterChange(value)}
-                  >
-                    <SelectTrigger className="w-full sm:max-w-[320px] md:max-w-[400px] h-8 min-w-0">
-                      <SelectValue placeholder={t('common.all')}>
-                        <div className="w-full overflow-hidden">
-                          <div className="truncate">
-                            {(() => {
-                              const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
-                              if (currentValue === 'all') {
-                                return t('common.all');
-                              } else {
-                                const option = filterOptions.find(opt => opt.value === currentValue);
-                                return option ? option.label : currentValue;
-                              }
-                            })()}
-                          </div>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[400px]" position="popper" side="bottom" align="end" sideOffset={8}>
-                      <SelectItem value="all" textValue={t('common.all')}>
-                        <div className="flex items-center justify-between w-full min-w-0">
-                          <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
-                          <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                            {totalCount}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      {filterOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
-                          <div className="flex items-center justify-between w-full min-w-0">
-                            <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
-                            <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
-                              {option.count}
-                            </Badge>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  // Multiple selection for stacked chart and box plot
-                  <div className="relative w-full sm:w-auto min-w-0">
-                    <MultiSelectDropdown
-                      options={filterOptions.map((option): SelectOption => ({
-                        value: option.value,
-                        label: option.label,
-                        count: option.count
-                      }))}
-                      selectedValues={(() => {
-                        const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
-                        // If 'all' is selected or no values, return empty array to show placeholder
-                        if (values.length === 0 || values.includes('all')) {
-                          return [];
-                        }
-                        return values;
-                      })()}
-                      onSelectionChange={(values: string[]) => {
-                        if (values.length === 0) {
-                          onFilterChange('all'); // When nothing selected, set to 'all'
-                        } else {
-                          onFilterChange(values);
-                        }
-                      }}
-                      placeholder={t('common.all')}
-                      className="w-full sm:max-w-[320px] md:max-w-[400px]"
-                      showCounts={true}
-                      maxHeight="max-h-48"
-                      totalCount={totalCount}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* N/A Grades Toggle */}
-            {onNAToggleChange && (
-              <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                <button
-                  onClick={() => onNAToggleChange(!showNAGrades)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
-                  title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-                >
-                  {showNAGrades ? (
-                    <>
-                      <Eye className="h-3 w-3" />
-                      <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="h-3 w-3" />
-                      <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                    </>
+                
+                {/* 右側控制項目 */}
+                <div className="flex items-center gap-2">
+                  {/* N/A Grades Toggle */}
+                  {onNAToggleChange && (
+                    <button
+                      onClick={() => onNAToggleChange(!showNAGrades)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                      title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+                    >
+                      {showNAGrades ? (
+                        <>
+                          <Eye className="h-3 w-3" />
+                          <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="h-3 w-3" />
+                          <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
-              </div>
-            )}
+                  
+                  {/* 篩選器 */}
+                  {filterOptions && filterOptions.length > 0 && onFilterChange && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      {filterLabel && (
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {(() => {
+                            // Show plural form for all chart types
+                            // Add (s) for plural in English only
+                            const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                            !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                            return isEnglish ? filterLabel + '(s)' : filterLabel;
+                          })()}:
+                        </span>
+                      )}
+                      {chartType === 'bar' ? (
+                        // Single selection for bar chart
+                        <Select 
+                          value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
+                          onValueChange={(value) => onFilterChange(value)}
+                        >
+                          <SelectTrigger className="w-full sm:max-w-[200px] h-8 min-w-0">
+                            <SelectValue placeholder={t('common.all')}>
+                              <div className="w-full overflow-hidden">
+                                <div className="truncate">
+                                  {(() => {
+                                    const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                                    if (currentValue === 'all') {
+                                      return t('common.all');
+                                    } else {
+                                      const option = filterOptions.find(opt => opt.value === currentValue);
+                                      return option ? option.label : currentValue;
+                                    }
+                                  })()} 
+                                </div>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[300px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                            <SelectItem value="all" textValue={t('common.all')}>
+                              <div className="flex items-center justify-between w-full min-w-0">
+                                <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                                <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                  {totalCount}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                            {filterOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
+                                <div className="flex items-center justify-between w-full min-w-0">
+                                  <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                                  <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                    {option.count}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        // Multiple selection for stacked chart and box plot
+                        <div className="relative w-full sm:w-auto min-w-0">
+                          <MultiSelectDropdown
+                            options={filterOptions.map((option): SelectOption => ({
+                              value: option.value,
+                              label: option.label,
+                              count: option.count
+                            }))}
+                            selectedValues={(() => {
+                              const values = Array.isArray(selectedFilter) ? selectedFilter : (selectedFilter ? [selectedFilter] : []);
+                              // If 'all' is selected or no values, return empty array to show placeholder
+                              if (values.length === 0 || values.includes('all')) {
+                                return [];
+                              }
+                              return values;
+                            })()}
+                            onSelectionChange={(values: string[]) => {
+                              if (values.length === 0) {
+                                onFilterChange('all'); // When nothing selected, set to 'all'
+                              } else {
+                                onFilterChange(values);
+                              }
+                            }}
+                            placeholder={t('common.all')}
+                            className="w-full sm:max-w-[200px]"
+                            showCounts={true}
+                            maxHeight="max-h-48"
+                            totalCount={totalCount}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
           </div>
         </div>
         
