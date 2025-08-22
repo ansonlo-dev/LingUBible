@@ -381,4 +381,80 @@ export function processPluralTranslation(text: string, count: number): string {
   return text.replace(pluralRegex, (match, singular, plural) => {
     return count === 1 ? singular : plural;
   });
+}
+
+/**
+ * 基於課程代碼推斷教學語言
+ * @param courseCode 課程代碼
+ * @returns 推斷的語言代碼
+ */
+export function inferTeachingLanguage(courseCode: string): string {
+  if (!courseCode) return 'E'; // Default to English
+  
+  const code = courseCode.toUpperCase();
+  
+  // Chinese-related courses
+  if (code.includes('CHI') || code.includes('CHIL') || 
+      code.includes('CHIN') || code.startsWith('CHI')) {
+    return 'C'; // Cantonese for Chinese courses
+  }
+  
+  // Translation courses might use mixed languages
+  if (code.includes('TRAN') || code.includes('TRANS')) {
+    return '1'; // Mixed (English/Cantonese)
+  }
+  
+  // Philosophy courses might vary (50% English, 50% mixed)
+  if (code.includes('PHIL')) {
+    return Math.random() < 0.5 ? 'E' : '1';
+  }
+  
+  // Cultural studies might use mixed (70% English, 30% mixed)
+  if (code.includes('CS') || code.includes('CULT')) {
+    return Math.random() < 0.7 ? 'E' : '1';
+  }
+  
+  // Business, English, Science courses typically in English
+  if (code.includes('BUS') || code.includes('ENG') || 
+      code.includes('SCI') || code.includes('MATH') || 
+      code.includes('ECON') || code.includes('PSY') ||
+      code.includes('MGT') || code.includes('MKT') ||
+      code.includes('FIN') || code.includes('ACCT')) {
+    return 'E'; // English
+  }
+  
+  // Default to English for other courses
+  return 'E';
+}
+
+/**
+ * 獲取課程的教學語言（實際數據或推斷）
+ * @param course 課程對象
+ * @returns 教學語言代碼數組
+ */
+export function getCourseTeachingLanguages(course: { teachingLanguages?: string[]; course_code: string }): string[] {
+  // 如果有實際數據，使用實際數據
+  if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+    return course.teachingLanguages;
+  }
+  
+  // 否則推斷語言
+  const inferredLanguage = inferTeachingLanguage(course.course_code);
+  return [inferredLanguage];
+}
+
+/**
+ * 檢查課程是否匹配指定的教學語言篩選
+ * @param course 課程對象
+ * @param filterLanguages 篩選的語言代碼數組
+ * @returns 是否匹配
+ */
+export function courseMatchesLanguageFilter(
+  course: { teachingLanguages?: string[]; course_code: string }, 
+  filterLanguages: string[]
+): boolean {
+  if (filterLanguages.length === 0) return true;
+  
+  const courseLanguages = getCourseTeachingLanguages(course);
+  return courseLanguages.some(langCode => filterLanguages.includes(langCode));
 } 

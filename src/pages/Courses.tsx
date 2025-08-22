@@ -11,7 +11,7 @@ import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { translateDepartmentName } from '@/utils/textUtils';
+import { translateDepartmentName, courseMatchesLanguageFilter, getCourseTeachingLanguages } from '@/utils/textUtils';
 
 
 /**
@@ -346,19 +346,11 @@ const Courses = () => {
       });
     }
 
-    // 教學語言篩選 - 使用教學記錄中的語言代碼
+    // 教學語言篩選 - 使用實際數據或推斷語言
     if (filters.teachingLanguage.length > 0) {
-      filtered = filtered.filter(course => {
-        // 檢查課程是否有任何教學語言與篩選條件匹配
-        if (!course.teachingLanguages || course.teachingLanguages.length === 0) {
-          return false; // 沒有教學語言記錄的課程不匹配任何篩選
-        }
-        
-        // 檢查課程的教學語言是否包含任何篩選的語言代碼
-        return course.teachingLanguages.some(langCode => 
-          filters.teachingLanguage.includes(langCode)
-        );
-      });
+      filtered = filtered.filter(course => 
+        courseMatchesLanguageFilter(course, filters.teachingLanguage)
+      );
     }
 
     // 服務學習篩選
@@ -661,7 +653,7 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={translateDepartmentName(course.department, t)}
-                  teachingLanguages={course.teachingLanguages}
+                  teachingLanguages={getCourseTeachingLanguages(course)}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}

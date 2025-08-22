@@ -1,7 +1,7 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
-import { processPluralTranslation } from '@/utils/textUtils';
+import { processPluralTranslation, getCourseTeachingLanguages } from '@/utils/textUtils';
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -261,47 +261,18 @@ export function AdvancedCourseFilters({
     console.log(`📊 Language counting: ${coursesWithLanguages}/${totalCourses} courses have teaching language data`);
     console.log(`📊 Found ${coursesWithoutLanguages.length} courses without teaching language data`);
     
-    // For courses without language data, make intelligent guesses based on patterns
+    // For courses without language data, use the same inference logic as filtering
     if (coursesWithoutLanguages.length > 0) {
       coursesWithoutLanguages.forEach(course => {
-        // Smart language inference based on course code patterns
-        let inferredLanguage = 'E'; // Default to English
-        
-        if (course.course_code) {
-          const courseCode = course.course_code.toUpperCase();
-          
-          // Chinese-related courses
-          if (courseCode.includes('CHI') || courseCode.includes('CHIL') || 
-              courseCode.includes('CHIN') || courseCode.startsWith('CHI')) {
-            inferredLanguage = 'C'; // Cantonese for Chinese courses
-          }
-          // Translation courses might use mixed languages
-          else if (courseCode.includes('TRAN') || courseCode.includes('TRANS')) {
-            inferredLanguage = '1'; // Mixed (English/Cantonese)
-          }
-          // Philosophy courses might vary
-          else if (courseCode.includes('PHIL')) {
-            // 50% English, 50% mixed
-            inferredLanguage = Math.random() < 0.5 ? 'E' : '1';
-          }
-          // Cultural studies might use mixed
-          else if (courseCode.includes('CS') || courseCode.includes('CULT')) {
-            inferredLanguage = Math.random() < 0.7 ? 'E' : '1'; // 70% English, 30% mixed
-          }
-          // Business, English, Science courses typically in English
-          else if (courseCode.includes('BUS') || courseCode.includes('ENG') || 
-                   courseCode.includes('SCI') || courseCode.includes('MATH') || 
-                   courseCode.includes('ECON') || courseCode.includes('PSY') ||
-                   courseCode.includes('MGT') || courseCode.includes('MKT') ||
-                   courseCode.includes('FIN') || courseCode.includes('ACCT')) {
-            inferredLanguage = 'E'; // English
-          }
-        }
+        // Use the same helper function for consistency
+        const inferredLanguages = getCourseTeachingLanguages(course);
         
         // Add to counts
-        if (counts.hasOwnProperty(inferredLanguage)) {
-          counts[inferredLanguage]++;
-        }
+        inferredLanguages.forEach(langCode => {
+          if (counts.hasOwnProperty(langCode)) {
+            counts[langCode]++;
+          }
+        });
       });
       
       console.log(`📊 Applied intelligent language inference to ${coursesWithoutLanguages.length} courses`);
@@ -424,20 +395,21 @@ export function AdvancedCourseFilters({
         }
       });
       
-      // For courses without teaching records, make reasonable assumptions
+      // For courses without teaching records, make conservative assumptions
       if (coursesWithoutTeachingRecords.length > 0) {
-        // Assume newer courses are more likely to be offered in recent terms
+        // Much more conservative assumptions to avoid inflated numbers
         const termIndex = availableTerms.indexOf(term);
-        if (termIndex < 3) {
-          // For the 3 most recent terms, assume 80% of courses without records are offered
-          count += Math.floor(coursesWithoutTeachingRecords.length * 0.8);
+        if (termIndex === 0) {
+          // Only current/most recent term gets a modest boost
+          count += Math.floor(coursesWithoutTeachingRecords.length * 0.3); // 30% for current term
+        } else if (termIndex < 3) {
+          // Recent terms get smaller boost
+          count += Math.floor(coursesWithoutTeachingRecords.length * 0.15); // 15% for recent terms
         } else if (termIndex < 6) {
-          // For the next 3 terms, assume 50% are offered
-          count += Math.floor(coursesWithoutTeachingRecords.length * 0.5);
-        } else {
-          // For older terms, assume 20% are offered
-          count += Math.floor(coursesWithoutTeachingRecords.length * 0.2);
+          // Older terms get minimal boost
+          count += Math.floor(coursesWithoutTeachingRecords.length * 0.05); // 5% for older terms
         }
+        // No assumption for very old terms
       }
       
       counts[term.term_code] = count;
