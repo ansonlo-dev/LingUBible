@@ -393,6 +393,9 @@ const CourseDetail = () => {
   // Grade distribution chart filter state
   const [selectedTermFilter, setSelectedTermFilter] = useState<string | string[]>('all');
   const [selectedTeachingLanguageFilter, setSelectedTeachingLanguageFilter] = useState<string | string[]>('all');
+  
+  // N/A grades toggle state
+  const [showNAGrades, setShowNAGrades] = useState<boolean>(true);
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -743,6 +746,11 @@ const CourseDetail = () => {
         return [serviceType];
       }
     });
+  };
+
+  // N/A grades toggle handler
+  const handleNAToggleChange = (showNA: boolean) => {
+    setShowNAGrades(showNA);
   };
 
   const handleInstructorClick = (instructorName: string, event?: React.MouseEvent) => {
@@ -1813,6 +1821,8 @@ const CourseDetail = () => {
                   rawReviewData={allReviewsForChart}
                   defaultExpanded={true}
                   hideHeader={true}
+                  showNAGrades={showNAGrades}
+                  onNAToggleChange={handleNAToggleChange}
                   onBarClick={(grade) => {
                     // 設置成績篩選並滾動到學生評論區域
                     setExternalGradeFilter(grade);
