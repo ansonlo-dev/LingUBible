@@ -193,6 +193,7 @@ const Courses = () => {
         for (const termCode of filters.offeredTerm) {
           if (termCode !== getCurrentTermCode()) {
             const coursesOfferedInTerm = await CourseService.getCoursesOfferedInTermBatch(termCode);
+            // 🐛 FIX: The returned Set already has lowercase course codes, so we can use them directly
             coursesOfferedInTerm.forEach(courseCode => allCoursesOffered.add(courseCode));
           }
         }
@@ -376,8 +377,9 @@ const Courses = () => {
           if (termCode === getCurrentTermCode()) {
             return course.isOfferedInCurrentTerm;
           }
-          // 對於其他學期，使用非同步檢查的結果
-          return termFilteredCourses.has(course.course_code);
+          // 對於其他學期，使用非同步檢查的結果  
+          // 🐛 FIX: Convert to lowercase for case-insensitive comparison
+          return termFilteredCourses.has(course.course_code.toLowerCase());
         });
       });
     }

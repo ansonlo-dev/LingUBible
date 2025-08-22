@@ -586,7 +586,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     if (!selectedCourse || !selectedTerm) return [];
     
     return availableInstructors.filter(instructor => 
-      instructor.course_code === selectedCourse && instructor.term_code === selectedTerm
+      // 🐛 FIX: Case-insensitive comparison for course codes
+      instructor.course_code.toLowerCase() === selectedCourse.toLowerCase() && instructor.term_code === selectedTerm
     );
   }, [availableInstructors, selectedCourse, selectedTerm]);
 
@@ -1474,7 +1475,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         
         // If preselected course code is provided, set it
         if (preselectedCourseCode) {
-          const course = coursesData.find(c => c.course_code === preselectedCourseCode);
+          // 🐛 FIX: Case-insensitive comparison for course codes
+          const course = coursesData.find(c => c.course_code.toLowerCase() === preselectedCourseCode.toLowerCase());
           if (course) {
             setSelectedCourse(course.course_code);
           }
@@ -2430,7 +2432,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       disabled={coursesLoading || !!preselectedCourseCode}
                     >
                       <SelectTrigger className="md:flex-1">
-                        <SelectValue placeholder={coursesLoading ? t('review.loadingCourses') : t('review.selectCoursePlaceholder')}><div className="w-full overflow-hidden"><div className="truncate">{selectedCourse ? courses?.find(c => c.course_code === selectedCourse)?.course_code + " - " + courses?.find(c => c.course_code === selectedCourse)?.course_title : (coursesLoading ? t("review.loadingCourses") : t("review.selectCoursePlaceholder"))}</div></div></SelectValue>
+                        <SelectValue placeholder={coursesLoading ? t('review.loadingCourses') : t('review.selectCoursePlaceholder')}><div className="w-full overflow-hidden"><div className="truncate">{selectedCourse ? courses?.find(c => c.course_code.toLowerCase() === selectedCourse.toLowerCase())?.course_code + " - " + courses?.find(c => c.course_code.toLowerCase() === selectedCourse.toLowerCase())?.course_title : (coursesLoading ? t("review.loadingCourses") : t("review.selectCoursePlaceholder"))}</div></div></SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {(filteredCourses || []).map((course) => (
@@ -2650,10 +2652,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                       <div className="font-semibold text-lg">
                         <div className="font-bold text-primary">{selectedCourse}</div>
                         <div className="text-sm text-primary font-normal">
-                          {courses?.find(c => c.course_code === selectedCourse)?.course_title}
+                          {courses?.find(c => c.course_code.toLowerCase() === selectedCourse.toLowerCase())?.course_title}
                         </div>
                         {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                          const selectedCourseData = courses?.find(c => c.course_code === selectedCourse);
+                          // 🐛 FIX: Case-insensitive comparison for course codes
+                          const selectedCourseData = courses?.find(c => c.course_code.toLowerCase() === selectedCourse.toLowerCase());
                           const chineseName = language === 'zh-TW' ? selectedCourseData?.course_title_tc : selectedCourseData?.course_title_sc;
                           return chineseName && (
                             <div className="text-sm text-primary font-normal mt-0.5">
@@ -3454,10 +3457,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           <div className="font-semibold text-lg">
                             <div className="font-bold text-primary">{selectedCourse}</div>
                             <div className="text-sm text-primary font-normal">
-                              {courses?.find(c => c.course_code === selectedCourse)?.course_title}
+                              {courses?.find(c => c.course_code.toLowerCase() === selectedCourse.toLowerCase())?.course_title}
                             </div>
                             {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                              const selectedCourseData = courses?.find(c => c.course_code === selectedCourse);
+                              // 🐛 FIX: Case-insensitive comparison for course codes  
+                              const selectedCourseData = courses?.find(c => c.course_code.toLowerCase() === selectedCourse.toLowerCase());
                               const chineseName = language === 'zh-TW' ? selectedCourseData?.course_title_tc : selectedCourseData?.course_title_sc;
                               return chineseName && (
                                 <div className="text-sm text-primary font-normal mt-0.5">

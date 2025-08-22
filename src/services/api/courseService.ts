@@ -517,7 +517,8 @@ export class CourseService {
           currentTermTeachingLanguage: currentTermLanguagesMap.get(course.course_code) || null,
           serviceLearningTypes: serviceLearningTypesMap.get(course.course_code) || [],
           currentTermServiceLearning: currentTermServiceLearningMap.get(course.course_code) || null,
-          isOfferedInCurrentTerm: currentTermOfferedCourses.has(course.course_code)
+          // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+          isOfferedInCurrentTerm: currentTermOfferedCourses.has(course.course_code.toLowerCase())
         });
       });
 
@@ -3112,7 +3113,9 @@ export class CourseService {
       );
 
       const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
-      const offeredCourses = new Set(teachingRecords.map(record => record.course_code));
+      // 🐛 FIX: Convert course codes to lowercase to handle case sensitivity issues
+      // Teaching records may have uppercase suffixes (e.g., "CHI4342A") while courses database has lowercase (e.g., "CHI4342a")
+      const offeredCourses = new Set(teachingRecords.map(record => record.course_code.toLowerCase()));
 
       // 緩存結果（較長時間，因為學期數據相對穩定）
       this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000); // 10分鐘緩存
@@ -4926,10 +4929,12 @@ export class CourseService {
       
       teachingRecords.forEach(record => {
         if (record.teaching_language) {
-          if (!courseLanguages.has(record.course_code)) {
-            courseLanguages.set(record.course_code, new Set());
+          // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+          const lowerCourseCode = record.course_code.toLowerCase();
+          if (!courseLanguages.has(lowerCourseCode)) {
+            courseLanguages.set(lowerCourseCode, new Set());
           }
-          courseLanguages.get(record.course_code)!.add(record.teaching_language);
+          courseLanguages.get(lowerCourseCode)!.add(record.teaching_language);
         }
       });
 
@@ -4969,18 +4974,20 @@ export class CourseService {
       // Get cached teaching records
       const teachingRecords = await this.getAllTeachingRecordsCached();
       
-      // Create a set of current course codes for quick lookup
-      const currentCourseCodes = new Set(courses.map(course => course.course_code));
+      // 🐛 FIX: Create a set of current course codes in lowercase for case-insensitive lookup
+      const currentCourseCodes = new Set(courses.map(course => course.course_code.toLowerCase()));
       
       // Group by course and term, but only for courses that are in the current array
       const courseTerms = new Map<string, Set<string>>();
       
       teachingRecords.forEach(record => {
-        if (record.term_code && currentCourseCodes.has(record.course_code)) {
-          if (!courseTerms.has(record.course_code)) {
-            courseTerms.set(record.course_code, new Set());
+        // 🐛 FIX: Convert teaching record course code to lowercase for case-insensitive comparison  
+        const lowerCourseCode = record.course_code.toLowerCase();
+        if (record.term_code && currentCourseCodes.has(lowerCourseCode)) {
+          if (!courseTerms.has(lowerCourseCode)) {
+            courseTerms.set(lowerCourseCode, new Set());
           }
-          courseTerms.get(record.course_code)!.add(record.term_code);
+          courseTerms.get(lowerCourseCode)!.add(record.term_code);
         }
       });
 
@@ -5001,13 +5008,16 @@ export class CourseService {
       // Track which courses already have teaching records for current term
       teachingRecords.forEach(record => {
         if (record.term_code === currentTermCode) {
-          coursesWithCurrentTermRecords.add(record.course_code);
+          // 🐛 FIX: Convert to lowercase for case-insensitive comparison
+          coursesWithCurrentTermRecords.add(record.course_code.toLowerCase());
         }
       });
       
       // Add courses that are offered in current term but don't have teaching records  
       courses.forEach(course => {
-        if (course.isOfferedInCurrentTerm && !coursesWithCurrentTermRecords.has(course.course_code)) {
+        // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+        const lowerCourseCode = course.course_code.toLowerCase();
+        if (course.isOfferedInCurrentTerm && !coursesWithCurrentTermRecords.has(lowerCourseCode)) {
           termCounts[currentTermCode] = (termCounts[currentTermCode] || 0) + 1;
         }
       });
@@ -5043,10 +5053,12 @@ export class CourseService {
       
       teachingRecords.forEach(record => {
         if (record.term_code) {
-          if (!courseTerms.has(record.course_code)) {
-            courseTerms.set(record.course_code, new Set());
+          // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+          const lowerCourseCode = record.course_code.toLowerCase();
+          if (!courseTerms.has(lowerCourseCode)) {
+            courseTerms.set(lowerCourseCode, new Set());
           }
-          courseTerms.get(record.course_code)!.add(record.term_code);
+          courseTerms.get(lowerCourseCode)!.add(record.term_code);
         }
       });
 
@@ -5125,13 +5137,15 @@ export class CourseService {
       const courseServiceLearning = new Map<string, Set<string>>();
       
       teachingRecords.forEach(record => {
-        if (!courseServiceLearning.has(record.course_code)) {
-          courseServiceLearning.set(record.course_code, new Set());
+        // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+        const lowerCourseCode = record.course_code.toLowerCase();
+        if (!courseServiceLearning.has(lowerCourseCode)) {
+          courseServiceLearning.set(lowerCourseCode, new Set());
         }
         
         // Handle service learning values
         const serviceType = record.service_learning || 'none';
-        courseServiceLearning.get(record.course_code)!.add(serviceType);
+        courseServiceLearning.get(lowerCourseCode)!.add(serviceType);
       });
 
       // Count courses for each service learning type
@@ -5188,10 +5202,12 @@ export class CourseService {
       
       teachingRecords.forEach(record => {
         if (record.teaching_language) {
-          if (!courseLanguages.has(record.course_code)) {
-            courseLanguages.set(record.course_code, new Set());
+          // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+          const lowerCourseCode = record.course_code.toLowerCase();
+          if (!courseLanguages.has(lowerCourseCode)) {
+            courseLanguages.set(lowerCourseCode, new Set());
           }
-          courseLanguages.get(record.course_code)!.add(record.teaching_language);
+          courseLanguages.get(lowerCourseCode)!.add(record.teaching_language);
         }
       });
 
@@ -5257,10 +5273,12 @@ export class CourseService {
       
       teachingRecords.forEach(record => {
         if (record.term_code) {
-          if (!courseTerms.has(record.course_code)) {
-            courseTerms.set(record.course_code, new Set());
+          // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+          const lowerCourseCode = record.course_code.toLowerCase();
+          if (!courseTerms.has(lowerCourseCode)) {
+            courseTerms.set(lowerCourseCode, new Set());
           }
-          courseTerms.get(record.course_code)!.add(record.term_code);
+          courseTerms.get(lowerCourseCode)!.add(record.term_code);
         }
       });
 
@@ -5305,13 +5323,15 @@ export class CourseService {
       const courseServiceLearning = new Map<string, Set<string>>();
       
       teachingRecords.forEach(record => {
-        if (!courseServiceLearning.has(record.course_code)) {
-          courseServiceLearning.set(record.course_code, new Set());
+        // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
+        const lowerCourseCode = record.course_code.toLowerCase();
+        if (!courseServiceLearning.has(lowerCourseCode)) {
+          courseServiceLearning.set(lowerCourseCode, new Set());
         }
         
         // Handle service learning values
         const serviceType = record.service_learning || 'none';
-        courseServiceLearning.get(record.course_code)!.add(serviceType);
+        courseServiceLearning.get(lowerCourseCode)!.add(serviceType);
       });
 
       // Count courses for each service learning type
