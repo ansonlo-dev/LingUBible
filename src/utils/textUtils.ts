@@ -384,7 +384,23 @@ export function processPluralTranslation(text: string, count: number): string {
 }
 
 /**
- * 基於課程代碼推斷教學語言
+ * 生成基於字符串的確定性偽隨機數 (0-1)
+ * @param str 輸入字符串
+ * @returns 0到1之間的偽隨機數
+ */
+function seededRandom(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Convert to positive number and normalize to 0-1
+  return Math.abs(hash) / 2147483648;
+}
+
+/**
+ * 基於課程代碼推斷教學語言 (確定性)
  * @param courseCode 課程代碼
  * @returns 推斷的語言代碼
  */
@@ -392,39 +408,84 @@ export function inferTeachingLanguage(courseCode: string): string {
   if (!courseCode) return 'E'; // Default to English
   
   const code = courseCode.toUpperCase();
+  const rand = seededRandom(courseCode); // Deterministic pseudo-random based on course code
   
-  // Chinese-related courses
+  // Chinese-related courses - vary between Cantonese and Putonghua
   if (code.includes('CHI') || code.includes('CHIL') || 
       code.includes('CHIN') || code.startsWith('CHI')) {
-    return 'C'; // Cantonese for Chinese courses
+    // 60% Cantonese, 30% Putonghua, 10% mixed
+    if (rand < 0.6) return 'C'; // Cantonese
+    if (rand < 0.9) return 'P'; // Putonghua
+    return '1'; // Mixed English/Cantonese
   }
   
-  // Translation courses might use mixed languages
+  // Translation courses - varied language combinations
   if (code.includes('TRAN') || code.includes('TRANS')) {
-    return '1'; // Mixed (English/Cantonese)
+    // Translation courses can use various language combinations
+    if (rand < 0.4) return '1'; // English/Cantonese
+    if (rand < 0.6) return '2'; // English/Putonghua 
+    if (rand < 0.8) return '3'; // Cantonese/Putonghua
+    return '4'; // English/Cantonese/Putonghua
   }
   
-  // Philosophy courses might vary (50% English, 50% mixed)
+  // Philosophy courses - more language diversity
   if (code.includes('PHIL')) {
-    return Math.random() < 0.5 ? 'E' : '1';
+    if (rand < 0.4) return 'E'; // English
+    if (rand < 0.7) return '1'; // English/Cantonese
+    if (rand < 0.85) return 'C'; // Cantonese
+    return '2'; // English/Putonghua
   }
   
-  // Cultural studies might use mixed (70% English, 30% mixed)
+  // Cultural studies - varied language usage
   if (code.includes('CS') || code.includes('CULT')) {
-    return Math.random() < 0.7 ? 'E' : '1';
+    if (rand < 0.5) return 'E'; // English
+    if (rand < 0.7) return '1'; // English/Cantonese
+    if (rand < 0.85) return 'C'; // Cantonese
+    return '3'; // Cantonese/Putonghua
   }
   
-  // Business, English, Science courses typically in English
+  // History courses - might use local languages
+  if (code.includes('HIST')) {
+    if (rand < 0.6) return 'E'; // English
+    if (rand < 0.8) return 'C'; // Cantonese
+    if (rand < 0.9) return '1'; // English/Cantonese
+    return 'P'; // Putonghua
+  }
+  
+  // Language-specific courses (Chinese Language Education and Assessment Centre)
+  if (code.includes('CHIL') || code.includes('CEAL')) {
+    // Chinese Language courses - likely Putonghua or mixed
+    if (rand < 0.5) return 'P'; // Putonghua
+    if (rand < 0.8) return 'C'; // Cantonese
+    return '3'; // Cantonese/Putonghua
+  }
+  
+  // Business, English, Science courses typically in English, but some mixed
   if (code.includes('BUS') || code.includes('ENG') || 
       code.includes('SCI') || code.includes('MATH') || 
       code.includes('ECON') || code.includes('PSY') ||
       code.includes('MGT') || code.includes('MKT') ||
       code.includes('FIN') || code.includes('ACCT')) {
-    return 'E'; // English
+    // Mostly English, but some mixed for local business context
+    if (rand < 0.85) return 'E'; // English
+    if (rand < 0.95) return '1'; // English/Cantonese for local business context
+    return '2'; // English/Putonghua for mainland business
   }
   
-  // Default to English for other courses
-  return 'E';
+  // Government and Social Sciences - varied for local context
+  if (code.includes('GOV') || code.includes('SOC') || code.includes('POL')) {
+    if (rand < 0.6) return 'E'; // English
+    if (rand < 0.8) return '1'; // English/Cantonese for local politics
+    if (rand < 0.9) return 'C'; // Cantonese for local issues
+    return '2'; // English/Putonghua for mainland affairs
+  }
+  
+  // Default distribution for other courses
+  if (rand < 0.75) return 'E'; // 75% English (most common)
+  if (rand < 0.85) return 'C'; // 10% Cantonese
+  if (rand < 0.92) return '1'; // 7% English/Cantonese
+  if (rand < 0.97) return 'P'; // 5% Putonghua
+  return '2'; // 3% English/Putonghua
 }
 
 /**
