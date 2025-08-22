@@ -50,7 +50,7 @@ import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getCurrentTermCode, getCurrentTermName, getTermStatus, isCurrentTerm } from '@/utils/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
-import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName, getFacultiesForMultiDepartment } from '@/utils/textUtils';
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
@@ -1685,24 +1685,22 @@ const Lecturers = () => {
               
               {/* 系所徽章 - 使用全寬度 */}
               <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-4 min-h-[2rem] overflow-hidden">
-                {/* Faculty Badge */}
-                {(() => {
-                  const faculty = getFacultyByDepartment(instructor.department);
-                  return faculty && (
-                    <ResponsiveTooltip 
-                      content={t('filter.clickToFilterFaculty')}
-                      hasClickAction={true}
-                      clickActionText={t('tooltip.clickAgainToFilter')}
+                {/* Faculty Badges - Support multi-department */}
+                {getFacultiesForMultiDepartment(instructor.department).map((facultyKey, index) => (
+                  <ResponsiveTooltip 
+                    key={facultyKey}
+                    content={t('filter.clickToFilterFaculty')}
+                    hasClickAction={true}
+                    clickActionText={t('tooltip.clickAgainToFilter')}
+                  >
+                    <Badge 
+                      variant="outline"
+                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/40"
                     >
-                      <Badge 
-                        variant="outline"
-                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/40"
-                      >
-                        {t(faculty)}
-                      </Badge>
-                    </ResponsiveTooltip>
-                  );
-                })()}
+                      {t(facultyKey)}
+                    </Badge>
+                  </ResponsiveTooltip>
+                ))}
                 {/* Department Badge */}
                 <ResponsiveTooltip 
                   content={t('filter.clickToFilterDepartment')}

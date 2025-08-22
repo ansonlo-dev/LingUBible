@@ -31,7 +31,7 @@ import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
-import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
+import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
@@ -977,18 +977,16 @@ const CourseDetail = () => {
             {/* 系所徽章 - 使用全寬度 */}
             {course.department && (
               <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-4 min-h-[2rem] overflow-hidden">
-                {/* Faculty Badge */}
-                {(() => {
-                  const faculty = getFacultyByDepartment(course.department);
-                  return faculty && (
-                    <Badge 
-                      variant="outline"
-                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
-                    >
-                      {t(faculty)}
-                    </Badge>
-                  );
-                })()}
+                {/* Faculty Badges - Support multi-department */}
+                {getFacultiesForMultiDepartment(course.department).map((facultyKey, index) => (
+                  <Badge 
+                    key={facultyKey}
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit"
+                  >
+                    {t(facultyKey)}
+                  </Badge>
+                ))}
                 {/* Department Badge */}
                 <Badge 
                   variant="outline"
