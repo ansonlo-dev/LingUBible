@@ -11,7 +11,7 @@ import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { translateDepartmentName, courseMatchesLanguageFilter, getCourseTeachingLanguages } from '@/utils/textUtils';
+import { translateDepartmentName, courseMatchesLanguageFilterRealOnly, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
 
 
 /**
@@ -347,10 +347,10 @@ const Courses = () => {
       });
     }
 
-    // 教學語言篩選 - 使用實際數據或推斷語言
+    // 教學語言篩選 - 僅使用真實資料庫數據
     if (filters.teachingLanguage.length > 0) {
       filtered = filtered.filter(course => 
-        courseMatchesLanguageFilter(course, filters.teachingLanguage)
+        courseMatchesLanguageFilterRealOnly(course, filters.teachingLanguage)
       );
     }
 
@@ -655,7 +655,7 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={translateDepartmentName(course.department, t)}
-                  teachingLanguages={getCourseTeachingLanguages(course)}
+                  teachingLanguages={getCourseTeachingLanguagesRealOnly(course)}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}

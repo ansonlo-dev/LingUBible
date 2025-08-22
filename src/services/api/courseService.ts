@@ -4838,35 +4838,28 @@ export class CourseService {
 
   /**
    * 🚀 OPTIMIZED: Get teaching language statistics based on current courses array
-   * This matches exactly with the actual filtering logic used in the frontend
+   * Only uses real database data, no inference
    * Returns count of courses that teach in each language
    */
   static getTeachingLanguageStatisticsForCourses(courses: any[]): { [key: string]: number } {
-    // Import getCourseTeachingLanguages dynamically to avoid circular imports
     const languageCounts: { [key: string]: number } = {
       'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0
     };
 
     try {
       courses.forEach(course => {
-        // Use the same logic as the actual filtering
-        let courseLanguages: string[] = [];
-        
-        // If course has real teaching languages data, use it
+        // Only use real teaching languages data, skip inference
         if (course.teachingLanguages && course.teachingLanguages.length > 0) {
-          courseLanguages = course.teachingLanguages;
-        } else {
-          // Otherwise use inference logic - same as getCourseTeachingLanguages
-          const inferredLanguage = this.inferTeachingLanguageForStats(course.course_code);
-          courseLanguages = [inferredLanguage];
+          const courseLanguages = course.teachingLanguages;
+          
+          // Count each language for this course
+          courseLanguages.forEach(langCode => {
+            if (languageCounts.hasOwnProperty(langCode)) {
+              languageCounts[langCode]++;
+            }
+          });
         }
-        
-        // Count each language for this course
-        courseLanguages.forEach(langCode => {
-          if (languageCounts.hasOwnProperty(langCode)) {
-            languageCounts[langCode]++;
-          }
-        });
+        // If no real data, skip this course entirely (don't count it)
       });
 
       return languageCounts;
@@ -4876,55 +4869,6 @@ export class CourseService {
     }
   }
 
-  /**
-   * Simplified inference logic for statistics (matches textUtils.inferTeachingLanguage)
-   */
-  private static inferTeachingLanguageForStats(courseCode: string): string {
-    if (!courseCode) return 'E';
-    
-    const code = courseCode.toUpperCase();
-    const rand = this.seededRandom(courseCode); // Same deterministic logic
-    
-    // Chinese-related courses
-    if (code.includes('CHI') || code.includes('CHIL') || 
-        code.includes('CHIN') || code.startsWith('CHI')) {
-      if (rand < 0.6) return 'C';
-      if (rand < 0.9) return 'P';
-      return '1';
-    }
-    
-    // Translation courses
-    if (code.includes('TRAN') || code.includes('TRANS')) {
-      if (rand < 0.4) return '1';
-      if (rand < 0.6) return '2';
-      if (rand < 0.8) return '3';
-      return '4';
-    }
-    
-    // Philosophy courses
-    if (code.includes('PHIL')) {
-      if (rand < 0.4) return 'E';
-      if (rand < 0.7) return '1';
-      if (rand < 0.85) return 'C';
-      return '2';
-    }
-    
-    // Other courses - default to English
-    return 'E';
-  }
-
-  /**
-   * Seeded random function (matches textUtils.seededRandom)
-   */
-  private static seededRandom(seed: string): number {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-      const char = seed.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash) / 2147483647;
-  }
 
   /**
    * 🚀 OPTIMIZED: Get teaching language statistics using cached data (DEPRECATED)

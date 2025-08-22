@@ -492,6 +492,7 @@ export function inferTeachingLanguage(courseCode: string): string {
  * 獲取課程的教學語言（實際數據或推斷）
  * @param course 課程對象
  * @returns 教學語言代碼數組
+ * @deprecated 此函數包含推測邏輯，請使用 getCourseTeachingLanguagesRealOnly
  */
 export function getCourseTeachingLanguages(course: { teachingLanguages?: string[]; course_code: string }): string[] {
   // 如果有實際數據，使用實際數據
@@ -505,10 +506,26 @@ export function getCourseTeachingLanguages(course: { teachingLanguages?: string[
 }
 
 /**
+ * 獲取課程的教學語言（僅使用真實資料庫數據）
+ * @param course 課程對象
+ * @returns 教學語言代碼數組，如果沒有真實數據則返回空數組
+ */
+export function getCourseTeachingLanguagesRealOnly(course: { teachingLanguages?: string[]; course_code: string }): string[] {
+  // 僅返回實際數據，不使用推測
+  if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+    return course.teachingLanguages;
+  }
+  
+  // 沒有真實數據時返回空數組
+  return [];
+}
+
+/**
  * 檢查課程是否匹配指定的教學語言篩選
  * @param course 課程對象
  * @param filterLanguages 篩選的語言代碼數組
  * @returns 是否匹配
+ * @deprecated 此函數包含推測邏輯，請使用 courseMatchesLanguageFilterRealOnly
  */
 export function courseMatchesLanguageFilter(
   course: { teachingLanguages?: string[]; course_code: string }, 
@@ -517,5 +534,24 @@ export function courseMatchesLanguageFilter(
   if (filterLanguages.length === 0) return true;
   
   const courseLanguages = getCourseTeachingLanguages(course);
+  return courseLanguages.some(langCode => filterLanguages.includes(langCode));
+}
+
+/**
+ * 檢查課程是否匹配指定的教學語言篩選（僅使用真實資料庫數據）
+ * @param course 課程對象
+ * @param filterLanguages 篩選的語言代碼數組
+ * @returns 是否匹配
+ */
+export function courseMatchesLanguageFilterRealOnly(
+  course: { teachingLanguages?: string[]; course_code: string }, 
+  filterLanguages: string[]
+): boolean {
+  if (filterLanguages.length === 0) return true;
+  
+  const courseLanguages = getCourseTeachingLanguagesRealOnly(course);
+  // 如果課程沒有真實的教學語言數據，則不匹配任何篩選
+  if (courseLanguages.length === 0) return false;
+  
   return courseLanguages.some(langCode => filterLanguages.includes(langCode));
 } 

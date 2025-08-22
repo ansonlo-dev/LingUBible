@@ -1,7 +1,7 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
-import { processPluralTranslation, getCourseTeachingLanguages } from '@/utils/textUtils';
+import { processPluralTranslation } from '@/utils/textUtils';
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
