@@ -2551,6 +2551,16 @@ export class CourseService {
         if (languagesResult.status === 'fulfilled') {
           teachingLanguagesMap = languagesResult.value;
           console.log('✅ Successfully fetched teaching languages for', teachingLanguagesMap.size, 'courses');
+          
+          // 計算有語言數據的課程數
+          let coursesWithLanguages = 0;
+          teachingLanguagesMap.forEach((languages, courseCode) => {
+            if (languages.length > 0) {
+              coursesWithLanguages++;
+            }
+          });
+          console.log(`📊 ${coursesWithLanguages} courses have teaching language data out of ${teachingLanguagesMap.size} total`);
+          
           // 輸出前5個課程的語言數據作為調試
           const first5 = Array.from(teachingLanguagesMap.entries()).slice(0, 5);
           console.log('📝 Sample teaching language data:', first5);
@@ -2597,7 +2607,7 @@ export class CourseService {
         const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
         const currentTermServiceLearning = currentTermServiceLearningMap.get(course.course_code) || null;
 
-        return {
+        const courseWithStats = {
           ...course,
           ...stats,
           isOfferedInCurrentTerm: coursesOfferedInCurrentTerm.has(course.course_code),
@@ -2606,6 +2616,13 @@ export class CourseService {
           serviceLearningTypes,
           currentTermServiceLearning
         };
+
+        // 調試：檢查前3個課程的教學語言數據
+        if (coursesWithStats.length < 3) {
+          console.log(`🔍 Course ${course.course_code}: teachingLanguages =`, teachingLanguages);
+        }
+
+        return courseWithStats;
       });
 
       // 緩存結果 - 課程統計數據相對穩定，使用較長緩存時間
@@ -4697,8 +4714,12 @@ export class CourseService {
   static async getBatchCourseTeachingLanguages(courseCodes: string[]): Promise<Map<string, string[]>> {
     try {
       if (courseCodes.length === 0) {
+        console.log('🔍 getBatchCourseTeachingLanguages: No course codes provided');
         return new Map();
       }
+
+      console.log(`🔍 getBatchCourseTeachingLanguages: Fetching teaching languages for ${courseCodes.length} courses`);
+      console.log('📝 First 5 course codes:', courseCodes.slice(0, 5));
 
       const response = await databases.listDocuments(
         this.DATABASE_ID,
@@ -4710,6 +4731,8 @@ export class CourseService {
           Query.limit(1000) // Reasonable limit for batch processing
         ]
       );
+
+      console.log(`🔍 getBatchCourseTeachingLanguages: Found ${response.documents.length} teaching records`);
 
       const teachingRecords = response.documents as unknown as (TeachingRecord & { teaching_language: string })[];
       
@@ -4744,6 +4767,11 @@ export class CourseService {
         
         courseLanguagesMap.set(courseCode, orderedLanguages);
       });
+
+      console.log(`🎯 getBatchCourseTeachingLanguages: Returning ${courseLanguagesMap.size} courses with language data`);
+      // 輸出前3個課程的語言數據作為調試
+      const first3 = Array.from(courseLanguagesMap.entries()).slice(0, 3);
+      console.log('📝 Sample language mapping:', first3);
 
       return courseLanguagesMap;
     } catch (error) {
