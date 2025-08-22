@@ -236,34 +236,60 @@ export function extractInstructorNameForSorting(fullName: string): string {
 export const translateDepartmentName = (department: string, t: any): string => {
   const departmentMap: { [key: string]: string } = {
     // mark update
-    // Faculty of Arts departments
-    'Chinese': t('department.chinese'),
-    'Digital Arts and Creative Industries': t('department.digitalArts'),
-    'English': t('department.english'),
-    'History': t('department.history'),
-    'Philosophy': t('department.philosophy'),
-    'Translation': t('department.translation'),
-    'Centre for English and Additional Languages': t('department.englishLanguageCentre'),
-    'Chinese Language Education and Assessment Centre': t('department.chineseLanguageCentre'),
+    // Affiliated Units
+    'LIFE': t('department.life'),
     
-    // Faculty of Liberal Arts and Social Sciences
-    'Cultural Studies': t('department.culturalStudies'),
-    'Psychology': t('department.psychology'),
-    'Economics': t('department.economics'),
-    'Government and International Affairs': t('department.government'),
-    'Sociology and Social Policy': t('department.sociology'),
+    // Faculty of Arts departments
+    'AIGCS': t('department.aigcs'),
+    'CEAL': t('department.ceal'),
+    'CFCI': t('department.cfci'),
+    'CLEAC': t('department.cleac'),
+    'CHI': t('department.chinese'),
+    'CS': t('department.culturalStudies'),
+    'DACI': t('department.digitalArts'),
+    'ENG': t('department.english'),
+    'HIST': t('department.history'),
+    'PHILO': t('department.philosophy'),
+    'TRAN': t('department.translation'),
     
     // Faculty of Business departments  
-    'Accountancy': t('department.accountancy'),
-    'Finance': t('department.finance'),
-    'Management': t('department.management'),
-    'Marketing and International Business': t('department.marketing'),
-    'Operations and Risk Management': t('department.operations'),
+    'ACCT': t('department.accountancy'),
+    'BUS': t('department.businessOffice'),
+    'FIN': t('department.finance'),
+    'MGT': t('department.management'),
+    'MKT': t('department.marketing'),
+    'ORM': t('department.operations'),
+    'HKIBS': t('department.hkibs'),
+    'IIRM': t('department.iirm'),
     
-    // Other units
-    'Science Unit': t('department.scienceUnit'),
-    'Wong Bing Lai Music and Performing Arts Unit': t('department.musicUnit'),
-    'LEO Dr David P. Chan Institute of Data Science': t('department.dataScience'),
+    // Faculty of Social Sciences
+    'ECON': t('department.economics'),
+    'GOV': t('department.government'),
+    'PSY': t('department.psychology'),
+    'SOCSC': t('department.socialSciences'),
+    'SOCSP': t('department.sociology'),
+    
+    // School of Data Science
+    'DAI': t('department.dai'),
+    'DIDS': t('department.dids'),
+    'LEODCIDS': t('department.leodcids'),
+    'SDS': t('department.sds'),
+    
+    // School of Graduate Studies
+    'GS': t('department.graduateStudies'),
+    
+    // School of Interdisciplinary Studies
+    'SIS': t('department.sis'),
+    'SU': t('department.scienceUnit'),
+    'WBLMP': t('department.musicUnit'),
+    
+    // Research Institutes, Centres and Programmes
+    'APIAS': t('department.apias'),
+    'IPS': t('department.ips'),
+    
+    // Units and Offices
+    'OSL': t('department.osl'),
+    'TLC': t('department.tlc'),
     
     // Default fallback
     default: department

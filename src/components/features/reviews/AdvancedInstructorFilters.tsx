@@ -180,11 +180,15 @@ export function AdvancedInstructorFilters({
   const getFacultyTranslationKey = (faculty: string): string => {
     const facultyKeyMapping: { [key: string]: string } = {
       // mark update
+      'Affiliated Units': 'faculty.affiliatedUnits',
       'Faculty of Arts': 'faculty.arts',
       'Faculty of Business': 'faculty.business',
       'Faculty of Social Sciences': 'faculty.socialSciences',
-      'School of Interdisciplinary Studies': 'faculty.interdisciplinaryStudies',
       'School of Data Science': 'faculty.dataScience',
+      'School of Graduate Studies': 'faculty.graduateStudies',
+      'School of Interdisciplinary Studies': 'faculty.interdisciplinaryStudies',
+      'Research Institutes, Centres and Programmes': 'faculty.researchInstitutes',
+      'Units and Offices': 'faculty.unitsOffices',
       'Other': 'common.other'
     };
     return facultyKeyMapping[faculty] || faculty;
@@ -193,51 +197,86 @@ export function AdvancedInstructorFilters({
   const getFacultyGrouping = () => {
     return {
       // mark update
+      'Affiliated Units': {
+        icon: School,
+        departments: [
+          'LIFE'
+        ]
+      },
       'Faculty of Arts': {
         icon: Palette,
         departments: [
-          'Chinese',
-          'Cultural Studies',
-          'Digital Arts and Creative Industries',
-          'English',
-          'History',
-          'Philosophy',
-          'Translation',
-          'Centre for English and Additional Languages',
-          'Chinese Language Education and Assessment Centre'
+          'AIGCS',
+          'CEAL',
+          'CFCI',
+          'CLEAC',
+          'CHI',
+          'CS',
+          'DACI',
+          'ENG',
+          'HIST',
+          'PHILO',
+          'TRAN'
         ]
       },
       'Faculty of Business': {
         icon: Briefcase,
         departments: [
-          'Accountancy',
-          'Finance',
-          'Management',
-          'Marketing and International Business',
-          'Operations and Risk Management'
+          'ACCT',
+          'BUS',
+          'FIN',
+          'MGT',
+          'MKT',
+          'ORM',
+          'HKIBS',
+          'IIRM'
         ]
       },
       'Faculty of Social Sciences': {
         icon: Users,
         departments: [
-          'Psychology',
-          'Economics',
-          'Government and International Affairs',
-          'Sociology and Social Policy'
-        ]
-      },
-      'School of Interdisciplinary Studies': {
-        icon: GraduationCap,
-        departments: [
-          'Office of the Core Curriculum',
-          'Science Unit',
-          'Wong Bing Lai Music and Performing Arts Unit'
+          'ECON',
+          'GOV',
+          'PSY',
+          'SOCSC',
+          'SOCSP'
         ]
       },
       'School of Data Science': {
         icon: Calculator,
         departments: [
-          'LEO Dr David P. Chan Institute of Data Science'
+          'DAI',
+          'DIDS',
+          'LEODCIDS',
+          'SDS'
+        ]
+      },
+      'School of Graduate Studies': {
+        icon: GraduationCap,
+        departments: [
+          'GS'
+        ]
+      },
+      'School of Interdisciplinary Studies': {
+        icon: GraduationCap,
+        departments: [
+          'SIS',
+          'SU',
+          'WBLMP'
+        ]
+      },
+      'Research Institutes, Centres and Programmes': {
+        icon: School,
+        departments: [
+          'APIAS',
+          'IPS'
+        ]
+      },
+      'Units and Offices': {
+        icon: School,
+        departments: [
+          'OSL',
+          'TLC'
         ]
       },
       'Other': {

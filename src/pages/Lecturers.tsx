@@ -95,36 +95,52 @@ const getFacultyByDepartment = (department: string): string => {
   
   const facultyMapping: { [key: string]: string } = {
     // mark update
+    // Affiliated Units
+    'LIFE': 'faculty.affiliatedUnits',
     // Faculty of Arts
-    'Chinese': 'faculty.arts',
-    'Cultural Studies': 'faculty.arts',
-    'Digital Arts and Creative Industries': 'faculty.arts',
-    'English': 'faculty.arts',
-    'History': 'faculty.arts',
-    'Philosophy': 'faculty.arts',
-    'Translation': 'faculty.arts',
-    'Centre for English and Additional Languages': 'faculty.arts',
-    'Chinese Language Education and Assessment Centre': 'faculty.arts',
-    
+    'AIGCS': 'faculty.arts',
+    'CEAL': 'faculty.arts',
+    'CFCI': 'faculty.arts',
+    'CLEAC': 'faculty.arts',
+    'CHI': 'faculty.arts',
+    'CS': 'faculty.arts',
+    'DACI': 'faculty.arts',
+    'ENG': 'faculty.arts',
+    'HIST': 'faculty.arts',
+    'PHILO': 'faculty.arts',
+    'TRAN': 'faculty.arts',
     // Faculty of Business
-    'Accountancy': 'faculty.business',
-    'Finance': 'faculty.business',
-    'Management': 'faculty.business',
-    'Marketing and International Business': 'faculty.business',
-    'Operations and Risk Management': 'faculty.business',
-    
+    'ACCT': 'faculty.business',
+    'BUS': 'faculty.business',
+    'FIN': 'faculty.business',
+    'MGT': 'faculty.business',
+    'MKT': 'faculty.business',
+    'ORM': 'faculty.business',
+    'HKIBS': 'faculty.business',
+    'IIRM': 'faculty.business',
     // Faculty of Social Sciences
-    'Economics': 'faculty.socialSciences',
-    'Government and International Affairs': 'faculty.socialSciences',
-    'Psychology': 'faculty.socialSciences',
-    'Sociology and Social Policy': 'faculty.socialSciences',
-    
+    'ECON': 'faculty.socialSciences',
+    'GOV': 'faculty.socialSciences',
+    'PSY': 'faculty.socialSciences',
+    'SOCSC': 'faculty.socialSciences',
+    'SOCSP': 'faculty.socialSciences',
     // School of Data Science
-    'LEO Dr David P. Chan Institute of Data Science': 'faculty.dataScience',
-    
+    'DAI': 'faculty.dataScience',
+    'DIDS': 'faculty.dataScience',
+    'LEODCIDS': 'faculty.dataScience',
+    'SDS': 'faculty.dataScience',
+    // School of Graduate Studies
+    'GS': 'faculty.graduateStudies',
     // School of Interdisciplinary Studies
-    'Science Unit': 'faculty.interdisciplinaryStudies',
-    'Wong Bing Lai Music and Performing Arts Unit': 'faculty.interdisciplinaryStudies'
+    'SIS': 'faculty.interdisciplinaryStudies',
+    'SU': 'faculty.interdisciplinaryStudies',
+    'WBLMP': 'faculty.interdisciplinaryStudies',
+    // Research Institutes, Centres and Programmes
+    'APIAS': 'faculty.researchInstitutes',
+    'IPS': 'faculty.researchInstitutes',
+    // Units and Offices
+    'OSL': 'faculty.unitsOffices',
+    'TLC': 'faculty.unitsOffices'
   };
   
   return facultyMapping[rawDepartment] || '';

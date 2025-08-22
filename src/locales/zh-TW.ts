@@ -1787,6 +1787,13 @@ export default {
   'subjectArea.VIS': '視覺研究',
   'subjectArea.MGSL': '服務領導',
   // 嶺南大學真實學系部門
+  // 附屬單位
+  'department.life': '嶺南大學持續進修學院',
+  // 文學院
+  'department.aigcs': '環球中國文化高等研究院',
+  'department.ceal': '英語及外語教學中心',
+  'department.cfci': '電影與創意產業研究中心',
+  'department.cleac': '中國語文教學與測試中心',
   'department.chinese': '中文系',
   'department.culturalStudies': '文化研究系',
   'department.digitalArts': '數碼藝術及創意產業系',
@@ -1794,31 +1801,52 @@ export default {
   'department.history': '歷史系',
   'department.philosophy': '哲學系',
   'department.translation': '翻譯系',
-  'department.englishLanguageCentre': '英語及外語教學中心',
-  'department.chineseLanguageCentre': '中國語文教學與測試中心',
+  // 商學院
   'department.accountancy': '會計學系',
+  'department.businessOffice': '商學院院務室',
   'department.finance': '金融學系',
   'department.management': '管理學學系',
   'department.marketing': '市場及國際企業學系',
   'department.operations': '運營與風險管理學系',
-  'department.psychology': '心理學系',
+  'department.hkibs': '香港商學研究所',
+  'department.iirm': '保險與風險管理研究所',
+  // 社會科學院
   'department.economics': '經濟學系',
   'department.government': '政府與國際事務學系',
+  'department.psychology': '心理學系',
+  'department.socialSciences': '社會科學院',
   'department.sociology': '社會學及社會政策系',
-  'department.coreOffice': '核心課程辦事處',
+  // 數據科學學院
+  'department.dai': '人工智能學部',
+  'department.dids': '工業數據科學部',
+  'department.leodcids': '嶺南教育機構陳斌博士數據科學研究所',
+  'department.sds': '數據科學學院',
+  // 研究生院
+  'department.graduateStudies': '研究生院',
+  // 跨學科學院
+  'department.sis': '跨學科學院',
   'department.scienceUnit': '科學教研組',
   'department.musicUnit': '黃炳禮音樂及演藝部',
-  'department.dataScience': '嶺南教育機構陳斌博士數據科學研究所',
+  // 研究所、中心及課程
+  'department.apias': '亞太老年學研究中心',
+  'department.ips': '政策研究院',
+  // 單位及辦事處
+  'department.osl': '服務研習處',
+  'department.tlc': '教與學中心',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 學院與學系
   // =============================================================================
   // mark update
+  'faculty.affiliatedUnits': '附屬單位',
   'faculty.arts': '文學院',
   'faculty.business': '商學院', 
   'faculty.socialSciences': '社會科學院',
   'faculty.dataScience': '數據科學學院',
+  'faculty.graduateStudies': '研究生院',
   'faculty.interdisciplinaryStudies': '跨學科學院',
+  'faculty.researchInstitutes': '研究所、中心及課程',
+  'faculty.unitsOffices': '單位及辦事處',
 
   // Chart translations
   'chart.noGradeData': '暫無成績數據',

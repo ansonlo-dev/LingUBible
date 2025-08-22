@@ -1838,6 +1838,13 @@ export default {
   'subjectArea.VIS': 'Visual Studies',
   'subjectArea.MGSL': 'Service Leadership',
   // Real Academic Departments from Lingnan University
+  // Affiliated Units
+  'department.life': 'Lingnan Institute of Further Education',
+  // Faculty of Arts
+  'department.aigcs': 'The Advanced Institute for Global Chinese Studies',
+  'department.ceal': 'Centre for English and Additional Languages',
+  'department.cfci': 'Centre for Film and Creative Industries',
+  'department.cleac': 'Chinese Language Education and Assessment Centre',
   'department.chinese': 'Department of Chinese',
   'department.culturalStudies': 'Department of Cultural Studies',
   'department.digitalArts': 'Department of Digital Arts and Creative Industries',
@@ -1845,53 +1852,100 @@ export default {
   'department.history': 'Department of History',
   'department.philosophy': 'Department of Philosophy',
   'department.translation': 'Department of Translation',
-  'department.englishLanguageCentre': 'Centre for English and Additional Languages',
-  'department.chineseLanguageCentre': 'Chinese Language Education and Assessment Centre',
+  // Faculty of Business
   'department.accountancy': 'Department of Accountancy',
+  'department.businessOffice': 'Office of the Faculty of Business',
   'department.finance': 'Department of Finance',
   'department.management': 'Department of Management',
   'department.marketing': 'Department of Marketing and International Business',
   'department.operations': 'Department of Operations and Risk Management',
-  'department.psychology': 'Department of Psychology',
+  'department.hkibs': 'Hong Kong Institute of Business Studies',
+  'department.iirm': 'Institute of Insurance and Risk Management',
+  // Faculty of Social Sciences
   'department.economics': 'Department of Economics',
   'department.government': 'Department of Government and International Affairs',
+  'department.psychology': 'Department of Psychology',
+  'department.socialSciences': 'Faculty of Social Sciences',
   'department.sociology': 'Department of Sociology and Social Policy',
+  // School of Data Science
+  'department.dai': 'Division of Artificial Intelligence',
+  'department.dids': 'Division of Industrial Data Science',
+  'department.leodcids': 'LEO Dr David P. Chan Institute of Data Science',
+  'department.sds': 'School of Data Science',
+  // School of Graduate Studies
+  'department.graduateStudies': 'School of Graduate Studies',
+  // School of Interdisciplinary Studies
+  'department.sis': 'School of Interdisciplinary Studies',
   'department.scienceUnit': 'Science Unit',
   'department.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
-  'department.dataScience': 'LEO Dr David P. Chan Institute of Data Science',
+  // Research Institutes, Centres and Programmes
+  'department.apias': 'Asia-Pacific Institute of Ageing Studies',
+  'department.ips': 'Institute of Policy Studies',
+  // Units and Offices
+  'department.osl': 'Office of Service-Learning',
+  'department.tlc': 'Teaching and Learning Centre',
 
   // Mobile-specific department names (shorter versions)
+  // Affiliated Units
+  'departmentMobile.life': 'LIFE',
+  // Faculty of Arts
+  'departmentMobile.aigcs': 'AIGCS',
+  'departmentMobile.ceal': 'CEAL',
+  'departmentMobile.cfci': 'CFCI',
+  'departmentMobile.cleac': 'CLEAC',
   'departmentMobile.chinese': 'Chinese',
   'departmentMobile.culturalStudies': 'Cultural Studies',
-  'departmentMobile.digitalArts': 'Digital Arts and Creative Industries',
+  'departmentMobile.digitalArts': 'Digital Arts',
   'departmentMobile.english': 'English',
   'departmentMobile.history': 'History',
   'departmentMobile.philosophy': 'Philosophy',
   'departmentMobile.translation': 'Translation',
-  'departmentMobile.englishLanguageCentre': 'Centre for English and Additional Languages',
-  'departmentMobile.chineseLanguageCentre': 'Chinese Language Education and Assessment Centre',
+  // Faculty of Business
   'departmentMobile.accountancy': 'Accountancy',
+  'departmentMobile.businessOffice': 'Business Office',
   'departmentMobile.finance': 'Finance',
   'departmentMobile.management': 'Management',
-  'departmentMobile.marketing': 'Marketing and International Business',
-  'departmentMobile.operations': 'Operations and Risk Management',
-  'departmentMobile.psychology': 'Psychology',
+  'departmentMobile.marketing': 'Marketing',
+  'departmentMobile.operations': 'Operations',
+  'departmentMobile.hkibs': 'HKIBS',
+  'departmentMobile.iirm': 'IIRM',
+  // Faculty of Social Sciences
   'departmentMobile.economics': 'Economics',
-  'departmentMobile.government': 'Government and International Affairs',
-  'departmentMobile.sociology': 'Sociology and Social Policy',
+  'departmentMobile.government': 'Government',
+  'departmentMobile.psychology': 'Psychology',
+  'departmentMobile.socialSciences': 'Social Sciences',
+  'departmentMobile.sociology': 'Sociology',
+  // School of Data Science
+  'departmentMobile.dai': 'DAI',
+  'departmentMobile.dids': 'DIDS',
+  'departmentMobile.leodcids': 'LEODCIDS',
+  'departmentMobile.sds': 'SDS',
+  // School of Graduate Studies
+  'departmentMobile.graduateStudies': 'Graduate Studies',
+  // School of Interdisciplinary Studies
+  'departmentMobile.sis': 'SIS',
   'departmentMobile.scienceUnit': 'Science Unit',
-  'departmentMobile.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
-  'departmentMobile.dataScience': 'LEO Dr David P. Chan Institute of Data Science',
+  'departmentMobile.musicUnit': 'Music Unit',
+  // Research Institutes
+  'departmentMobile.apias': 'APIAS',
+  'departmentMobile.ips': 'IPS',
+  // Units and Offices
+  'departmentMobile.osl': 'OSL',
+  'departmentMobile.tlc': 'TLC',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 學院與學系
   // =============================================================================
   // mark update
+  'faculty.affiliatedUnits': 'Affiliated Units',
   'faculty.arts': 'Faculty of Arts',
   'faculty.business': 'Faculty of Business', 
   'faculty.socialSciences': 'Faculty of Social Sciences',
   'faculty.dataScience': 'School of Data Science',
+  'faculty.graduateStudies': 'School of Graduate Studies',
   'faculty.interdisciplinaryStudies': 'School of Interdisciplinary Studies',
+  'faculty.researchInstitutes': 'Research Institutes, Centres and Programmes',
+  'faculty.unitsOffices': 'Units and Offices',
 
   // Chart translations
   'chart.noGradeData': 'No grade data available',

@@ -1847,6 +1847,13 @@ export default {
   'subjectArea.VIS': '视觉研究',
   'subjectArea.MGSL': '服务领导',
   // 岭南大学真实学系部门
+  // 附属单位
+  'department.life': '岭南大学持续进修学院',
+  // 文学院
+  'department.aigcs': '环球中国文化高等研究院',
+  'department.ceal': '英语及外语教学中心',
+  'department.cfci': '电影与创意产业研究中心',
+  'department.cleac': '中国语文教学与测试中心',
   'department.chinese': '中文系',
   'department.culturalStudies': '文化研究系',
   'department.digitalArts': '数码艺术及创意产业系',
@@ -1854,31 +1861,52 @@ export default {
   'department.history': '历史系',
   'department.philosophy': '哲学系',
   'department.translation': '翻译系',
-  'department.englishLanguageCentre': '英语及外语教学中心',
-  'department.chineseLanguageCentre': '中国语文教学与测试中心',
+  // 商学院
   'department.accountancy': '会计学系',
+  'department.businessOffice': '商学院院务室',
   'department.finance': '金融学系',
   'department.management': '管理学学系',
   'department.marketing': '市场及国际企业学系',
   'department.operations': '运营与风险管理学系',
-  'department.psychology': '心理学系',
+  'department.hkibs': '香港商学研究所',
+  'department.iirm': '保险与风险管理研究所',
+  // 社会科学院
   'department.economics': '经济学系',
   'department.government': '政府与国际事务学系',
+  'department.psychology': '心理学系',
+  'department.socialSciences': '社会科学院',
   'department.sociology': '社会学及社会政策系',
-  'department.coreOffice': '核心课程办事处',
+  // 数据科学学院
+  'department.dai': '人工智能学部',
+  'department.dids': '工业数据科学部',
+  'department.leodcids': '岭南教育机构陈斌博士数据科学研究所',
+  'department.sds': '数据科学学院',
+  // 研究生院
+  'department.graduateStudies': '研究生院',
+  // 跨学科学院
+  'department.sis': '跨学科学院',
   'department.scienceUnit': '科学教研组',
   'department.musicUnit': '黄炳礼音乐及演艺部',
-  'department.dataScience': '岭南教育机构陈斌博士数据科学研究所',
+  // 研究所、中心及课程
+  'department.apias': '亚太老年学研究中心',
+  'department.ips': '政策研究院',
+  // 单位及办事处
+  'department.osl': '服务研习处',
+  'department.tlc': '教与学中心',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 学院与学系
   // =============================================================================
   // mark update
+  'faculty.affiliatedUnits': '附属单位',
   'faculty.arts': '文学院',
   'faculty.business': '商学院', 
   'faculty.socialSciences': '社会科学院',
   'faculty.dataScience': '数据科学学院',
+  'faculty.graduateStudies': '研究生院',
   'faculty.interdisciplinaryStudies': '跨学科学院',
+  'faculty.researchInstitutes': '研究所、中心及课程',
+  'faculty.unitsOffices': '单位及办事处',
 
   // Chart translations
   'chart.noGradeData': '暂无成绩数据',
