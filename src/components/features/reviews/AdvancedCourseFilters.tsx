@@ -259,15 +259,13 @@ export function AdvancedCourseFilters({
     
     // If less than 5% of courses have language data, assume data is missing and provide fallback
     if (totalCourses > 0 && coursesWithLanguages / totalCourses < 0.05) {
-      console.warn('⚠️ Most courses lack teaching language data, using fallback counts based on course codes');
+      console.warn('⚠️ Most courses lack teaching language data, using fallback counts based on reasonable distribution');
       
-      // Fallback: Estimate languages based on course patterns or assume default distribution
-      courses.forEach(course => {
-        // For now, assume English as default for most courses (this should be improved with actual data)
-        counts['E'] = Math.floor(totalCourses * 0.8); // 80% English
-        counts['C'] = Math.floor(totalCourses * 0.15); // 15% Cantonese
-        counts['1'] = Math.floor(totalCourses * 0.05); // 5% Mixed
-      });
+      // Fallback: Assume reasonable distribution based on university patterns
+      counts['E'] = Math.floor(totalCourses * 0.8); // 80% English
+      counts['C'] = Math.floor(totalCourses * 0.15); // 15% Cantonese
+      counts['1'] = Math.floor(totalCourses * 0.05); // 5% Mixed (English/Cantonese)
+      // Other language codes remain 0 as initialized
     }
     
     return counts;
