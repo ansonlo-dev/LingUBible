@@ -46,7 +46,11 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
             averageDifficulty: -1,
             averageUsefulness: -1,
             averageGPA: 0,
-            isOfferedInCurrentTerm: course.isOfferedInCurrentTerm // 保留此信息
+            isOfferedInCurrentTerm: course.isOfferedInCurrentTerm, // 保留此信息
+            teachingLanguages: course.teachingLanguages, // 保留教學語言數據
+            currentTermTeachingLanguage: course.currentTermTeachingLanguage, // 保留當前學期教學語言
+            serviceLearningTypes: course.serviceLearningTypes, // 保留服務學習類型
+            currentTermServiceLearning: course.currentTermServiceLearning // 保留當前學期服務學習
           }));
           
           setCourses(coursesWithEmptyStats);
@@ -87,7 +91,7 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
     const filtered = courses.filter(course =>
       course.course_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.course_department.toLowerCase().includes(searchTerm.toLowerCase())
+      course.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
     setFilteredCourses(filtered);
