@@ -228,12 +228,12 @@ export function extractInstructorNameForSorting(fullName: string): string {
 
 /**
  * 翻譯部門名稱
- * @param departmentName 原始部門名稱
+ * @param department 原始部門名稱（通常是縮寫代碼如CHI, ENG等）
  * @param t 翻譯函數
- * @param isMobile 是否為移動設備，用於選擇短格式部門名稱
- * @returns 翻譯後的部門名稱，如果沒有對應翻譯則返回原始名稱
+ * @param showAbbreviation 是否在翻譯後的部門名稱前顯示縮寫前綴，默認為false
+ * @returns 翻譯後的部門名稱，如果showAbbreviation為true則格式為「CHI - 中文系」，否則僅為「中文系」
  */
-export const translateDepartmentName = (department: string, t: any): string => {
+export const translateDepartmentName = (department: string, t: any, showAbbreviation: boolean = false): string => {
   const departmentMap: { [key: string]: string } = {
     // mark update
     // Affiliated Units
@@ -295,7 +295,14 @@ export const translateDepartmentName = (department: string, t: any): string => {
     default: department
   };
   
-  return departmentMap[department] || departmentMap.default;
+  const translatedName = departmentMap[department] || departmentMap.default;
+  
+  // Add abbreviation prefix only if showAbbreviation is true and it's a known department code
+  if (showAbbreviation && departmentMap[department]) {
+    return `${department} - ${translatedName}`;
+  }
+  
+  return translatedName;
 };
 
 // Teaching language code mappings with translation support

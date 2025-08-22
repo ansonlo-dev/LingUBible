@@ -500,7 +500,7 @@ export function AdvancedInstructorFilters({
                 data.departments.forEach(department => {
                   options.push({
                     value: department,
-                    label: `  ${translateDepartmentName(department, t)}`,
+                    label: `  ${translateDepartmentName(department, t, true)}`,
                     count: departmentCounts[department] || 0
                   });
                 });
