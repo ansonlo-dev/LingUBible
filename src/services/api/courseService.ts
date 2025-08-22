@@ -2590,7 +2590,7 @@ export class CourseService {
       }
 
       // 組合課程和統計信息（使用 map 一次性處理）
-      const coursesWithStats: CourseWithStats[] = courses.map(course => {
+      const coursesWithStats: CourseWithStats[] = courses.map((course, index) => {
         const stats = courseStatsMap.get(course.course_code) || {
           reviewCount: 0,
           averageRating: 0,
@@ -2618,7 +2618,7 @@ export class CourseService {
         };
 
         // 調試：檢查前3個課程的教學語言數據
-        if (coursesWithStats.length < 3) {
+        if (index < 3) {
           console.log(`🔍 Course ${course.course_code}: teachingLanguages =`, teachingLanguages);
         }
 
