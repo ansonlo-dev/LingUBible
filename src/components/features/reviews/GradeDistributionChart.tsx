@@ -401,7 +401,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   const { completeDistribution, sortedGrades, totalCount, maxCount, statistics, boxPlotStats } = React.useMemo(() => {
     // 獲取完整的成績分佈（包含 0 計數的成績）
     const completeDistribution = getCompleteGradeDistribution(filteredGradeDistribution);
-    const sortedGrades = sortGradesDescending(Object.keys(completeDistribution));
+    // 使用過濾後的分佈來獲取排序的成績列表
+    const sortedGrades = sortGradesDescending(Object.keys(filteredGradeDistribution).filter(grade => filteredGradeDistribution[grade] > 0));
     
     // 計算總數
     const totalCount = Object.values(filteredGradeDistribution).reduce((sum, count) => sum + count, 0);
@@ -426,14 +427,20 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   }, [filteredGradeDistribution]);
 
   // Helper function to filter reviews by instructor and calculate real grade distribution
-  const getGradeDistributionByInstructor = (instructorValue: string): Record<string, number> => {
+  const getGradeDistributionByInstructor = (instructorValue: string, applyNAFilter: boolean = true): Record<string, number> => {
     if (!rawReviewData || rawReviewData.length === 0) {
       return {};
     }
     
     // If 'all', return overall distribution
     if (instructorValue === 'all') {
-      return calculateGradeDistributionFromReviews(rawReviewData.map(r => ({ course_final_grade: r.review.course_final_grade })));
+      const distribution = calculateGradeDistributionFromReviews(rawReviewData.map(r => ({ course_final_grade: r.review.course_final_grade })));
+      if (applyNAFilter && !showNAGrades) {
+        const filtered = { ...distribution };
+        delete filtered['N/A'];
+        return filtered;
+      }
+      return distribution;
     }
     
     // Check if this is instructor page data structure (InstructorReviewFromDetails)
@@ -462,7 +469,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         return hasMatchingSessionType;
       });
       
-      return calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
+      const distribution = calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
+      if (applyNAFilter && !showNAGrades) {
+        const filtered = { ...distribution };
+        delete filtered['N/A'];
+        return filtered;
+      }
+      return distribution;
     } else {
       // For course page: filter by instructor (instructorValue is instructor|sessionType)
       const [targetInstructor, targetSessionType] = instructorValue.split('|');
@@ -481,7 +494,13 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         }
       });
       
-      return calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
+      const distribution = calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
+      if (applyNAFilter && !showNAGrades) {
+        const filtered = { ...distribution };
+        delete filtered['N/A'];
+        return filtered;
+      }
+      return distribution;
     }
   };
 
@@ -1529,8 +1548,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     
     // Process each option with real grade distributions
     const stackedData: Array<{ name: string; data: number[]; realCounts: number[]; total: number }> = optionsToProcess.map(option => {
-      // Get real grade distribution for this instructor/course
-      const realDistribution = getGradeDistributionByInstructor(option.value);
+      // Get real grade distribution for this instructor/course (with N/A filtering applied)
+      const realDistribution = getGradeDistributionByInstructor(option.value, true);
       
       // Calculate real counts and percentages for display
       const realCounts = sortedGrades.map(grade => realDistribution[grade] || 0);
@@ -1781,11 +1800,146 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   }
 
   if (totalCount === 0) {
-    return (
-      <div className={cn("p-4 text-center text-muted-foreground", className)}>
-        <div className="text-sm">{t('chart.noGradeData')}</div>
-      </div>
-    );
+    // Check if we have original data but filtered out (e.g., only N/A grades hidden)
+    const originalTotalCount = Object.values(gradeDistribution).reduce((sum, count) => sum + count, 0);
+    const hasOriginalData = originalTotalCount > 0;
+    
+    if (hasOriginalData) {
+      // Show controls even when filtered data is empty, so user can toggle back
+      if (hideHeader) {
+        return (
+          <div className={cn("space-y-0", className)}>
+            {/* Chart Content - Show controls */}
+            <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
+              <div className="mb-2 pt-3 px-2 sm:px-0">
+                <div className="flex flex-col gap-2 mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
+                    <div className="flex flex-col gap-2">
+                      {/* 圖表類型切換按鈕 */}
+                    <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
+                      {/* Chart type buttons - simplified for no data state */}
+                      <div className="text-sm text-muted-foreground">
+                        {t('chart.gradeDistribution')}
+                      </div>
+                    </div>
+                  </div>
+                      
+                      {/* 右側控制項目 */}
+                      <div className="flex items-center gap-2">
+                        {/* N/A Grades Toggle */}
+                        {onNAToggleChange && (
+                          <button
+                            onClick={() => onNAToggleChange(!showNAGrades)}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                            title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+                          >
+                            {showNAGrades ? (
+                              <>
+                                <Eye className="h-3 w-3" />
+                                <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="h-3 w-3" />
+                                <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                </div>
+                
+                {/* No data message */}
+                <div className="p-4 text-center text-muted-foreground">
+                  <div className="text-sm">{t('chart.noGradeData')}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      } else {
+        // Non-hideHeader version with controls
+        return (
+          <div className={cn("space-y-0 bg-transparent border-transparent rounded-lg", className)}>
+            {/* Header Toggle */}
+            <div className="w-full bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent transition-all duration-200 rounded-lg">
+              <Button
+                variant="ghost"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="w-full justify-between h-12 px-2 sm:px-4 bg-transparent hover:bg-transparent transition-all duration-200 rounded-lg group"
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <span className="font-semibold text-base">{title || t('chart.gradeDistribution')}</span>
+                </div>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  {isExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  )}
+                </div>
+              </Button>
+            </div>
+            
+            {isExpanded && (
+              <div className="space-y-0">
+                <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
+                  <div className="mb-2 pt-3 px-2 sm:px-0">
+                    <div className="flex flex-col gap-2 mb-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
+                        <div className="flex flex-col gap-2">
+                          <div className="text-sm text-muted-foreground">
+                            {t('chart.gradeDistribution')}
+                          </div>
+                        </div>
+                          
+                        {/* 右側控制項目 */}
+                        <div className="flex items-center gap-2">
+                          {/* N/A Grades Toggle */}
+                          {onNAToggleChange && (
+                            <button
+                              onClick={() => onNAToggleChange(!showNAGrades)}
+                              className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                              title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+                            >
+                              {showNAGrades ? (
+                                <>
+                                  <Eye className="h-3 w-3" />
+                                  <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <EyeOff className="h-3 w-3" />
+                                  <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* No data message */}
+                    <div className="p-4 text-center text-muted-foreground">
+                      <div className="text-sm">{t('chart.noGradeData')}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+    } else {
+      // No original data at all
+      return (
+        <div className={cn("p-4 text-center text-muted-foreground", className)}>
+          <div className="text-sm">{t('chart.noGradeData')}</div>
+        </div>
+      );
+    }
   }
 
   // When hideHeader is true, render chart content directly without collapsible wrapper
