@@ -228,12 +228,29 @@ export function extractInstructorNameForSorting(fullName: string): string {
 
 /**
  * 翻譯部門名稱
- * @param department 原始部門名稱（通常是縮寫代碼如CHI, ENG等）
+ * @param department 原始部門名稱（通常是縮寫代碼如CHI, ENG等，或多部門如"ECON / SOCSP"）
  * @param t 翻譯函數
  * @param showAbbreviation 是否在翻譯後的部門名稱前顯示縮寫前綴，默認為false
  * @returns 翻譯後的部門名稱，如果showAbbreviation為true則格式為「CHI - 中文系」，否則僅為「中文系」
  */
 export const translateDepartmentName = (department: string, t: any, showAbbreviation: boolean = false): string => {
+  // Handle multi-department cases (separated by " / ")
+  if (department.includes(' / ')) {
+    const departments = department.split(' / ').map(dept => dept.trim());
+    return departments.map(dept => translateSingleDepartment(dept, t, showAbbreviation)).join(' / ');
+  }
+  
+  return translateSingleDepartment(department, t, showAbbreviation);
+};
+
+/**
+ * 翻譯單一部門名稱
+ * @param department 單一部門代碼
+ * @param t 翻譯函數
+ * @param showAbbreviation 是否顯示縮寫前綴
+ * @returns 翻譯後的部門名稱
+ */
+const translateSingleDepartment = (department: string, t: any, showAbbreviation: boolean = false): string => {
   const departmentMap: { [key: string]: string } = {
     // mark update
     // Affiliated Units
@@ -303,6 +320,75 @@ export const translateDepartmentName = (department: string, t: any, showAbbrevia
   }
   
   return translatedName;
+};
+
+/**
+ * 為多部門獲取學院信息
+ * @param department 部門代碼（可能包含多個部門，用 " / " 分隔）
+ * @returns 學院信息數組，每個元素包含學院翻譯鍵
+ */
+export const getFacultiesForMultiDepartment = (department: string): string[] => {
+  // Handle multi-department cases
+  const departments = department.includes(' / ') 
+    ? department.split(' / ').map(dept => dept.trim())
+    : [department];
+  
+  const facultyMapping: { [key: string]: string } = {
+    // Affiliated Units
+    'LIFE': 'faculty.affiliatedUnits',
+    // Faculty of Arts
+    'AIGCS': 'faculty.arts',
+    'CEAL': 'faculty.arts',
+    'CFCI': 'faculty.arts',
+    'CLEAC': 'faculty.arts',
+    'CHI': 'faculty.arts',
+    'CS': 'faculty.arts',
+    'DACI': 'faculty.arts',
+    'ENG': 'faculty.arts',
+    'HIST': 'faculty.arts',
+    'PHILO': 'faculty.arts',
+    'TRAN': 'faculty.arts',
+    // Faculty of Business
+    'ACCT': 'faculty.business',
+    'BUS': 'faculty.business',
+    'FIN': 'faculty.business',
+    'MGT': 'faculty.business',
+    'MKT': 'faculty.business',
+    'ORM': 'faculty.business',
+    'HKIBS': 'faculty.business',
+    'IIRM': 'faculty.business',
+    // Faculty of Social Sciences
+    'ECON': 'faculty.socialSciences',
+    'GOV': 'faculty.socialSciences',
+    'PSY': 'faculty.socialSciences',
+    'SOCSC': 'faculty.socialSciences',
+    'SOCSP': 'faculty.socialSciences',
+    // School of Data Science
+    'DAI': 'faculty.dataScience',
+    'DIDS': 'faculty.dataScience',
+    'LEODCIDS': 'faculty.dataScience',
+    'SDS': 'faculty.dataScience',
+    // School of Graduate Studies
+    'GS': 'faculty.graduateStudies',
+    // School of Interdisciplinary Studies
+    'SIS': 'faculty.interdisciplinaryStudies',
+    'SU': 'faculty.interdisciplinaryStudies',
+    'WBLMP': 'faculty.interdisciplinaryStudies',
+    // Research Institutes, Centres and Programmes
+    'APIAS': 'faculty.researchInstitutes',
+    'IPS': 'faculty.researchInstitutes',
+    // Units and Offices
+    'OSL': 'faculty.unitsOffices',
+    'TLC': 'faculty.unitsOffices'
+  };
+
+  // Get unique faculties
+  const faculties = departments
+    .map(dept => facultyMapping[dept])
+    .filter(Boolean) // Remove undefined values
+    .filter((value, index, self) => self.indexOf(value) === index); // Remove duplicates
+  
+  return faculties;
 };
 
 // Teaching language code mappings with translation support

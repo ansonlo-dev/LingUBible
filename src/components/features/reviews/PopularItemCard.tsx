@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { StarRating } from '@/components/ui/star-rating';
-import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, getFacultiesForMultiDepartment } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { useTheme } from '@/hooks/theme/useTheme';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
@@ -741,12 +741,15 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   {/* Faculty, Department and Teaching Language Badges */}
                   <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground mt-2">
                     <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
-                      {/* Faculty Badge */}
-                      {getFacultyByDepartment(props.department) && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0">
-                          {t(getFacultyByDepartment(props.department))}
+                      {/* Faculty Badge(s) - Support multi-department */}
+                      {getFacultiesForMultiDepartment(props.department).map((facultyKey, index) => (
+                        <span 
+                          key={facultyKey}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0"
+                        >
+                          {t(facultyKey)}
                         </span>
-                      )}
+                      ))}
                       {/* Department Badge */}
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
                         <span className="break-words hyphens-auto">
@@ -995,12 +998,15 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 )}
                 <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground">
                   <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
-                    {/* Faculty Badge */}
-                    {getFacultyByDepartment(props.department) && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0">
-                        {t(getFacultyByDepartment(props.department))}
+                    {/* Faculty Badge(s) - Support multi-department */}
+                    {getFacultiesForMultiDepartment(props.department).map((facultyKey, index) => (
+                      <span 
+                        key={facultyKey}
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0"
+                      >
+                        {t(facultyKey)}
                       </span>
-                    )}
+                    ))}
                     {/* Department Badge */}
                     {props.enableTwoTapMode ? (
                       <ResponsiveTooltip 
