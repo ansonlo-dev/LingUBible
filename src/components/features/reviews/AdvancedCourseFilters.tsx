@@ -184,17 +184,37 @@ export function AdvancedCourseFilters({
       
       let coursesWithLanguages = 0;
       let coursesProcessed = 0;
+      let coursesWithRealData = 0;
+      let coursesWithFallbackData = 0;
+      
       courses.forEach((course, index) => {
         coursesProcessed++;
-        // Use the same fallback logic as course cards
-        const courseLanguages = getCourseTeachingLanguagesWithFallback(course);
+        
+        // 優先使用真實的teaching_records數據
+        let courseLanguages: string[] = [];
+        
+        if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+          // 有真實數據 - 直接使用
+          courseLanguages = course.teachingLanguages;
+          coursesWithRealData++;
+        } else {
+          // 無真實數據 - 使用保守的fallback邏輯
+          courseLanguages = getCourseTeachingLanguagesWithFallback(course);
+          if (courseLanguages.length > 0) {
+            coursesWithFallbackData++;
+          }
+        }
         
         if (courseLanguages && courseLanguages.length > 0) {
           coursesWithLanguages++;
           
           // Debug log for first few courses
           if (index < 5) {
-            console.log(`🔍 Course ${course.course_code} languages:`, courseLanguages);
+            console.log(`🔍 Course ${course.course_code}:`, {
+              realData: course.teachingLanguages,
+              finalLanguages: courseLanguages,
+              source: course.teachingLanguages?.length > 0 ? 'real' : 'fallback'
+            });
           }
           
           // Count each language for this course
@@ -210,6 +230,7 @@ export function AdvancedCourseFilters({
       
       console.log(`📊 Processed ${coursesProcessed} courses`);
       console.log(`📚 Found ${coursesWithLanguages} courses with teaching language data out of ${courses.length} total`);
+      console.log(`🔢 Data sources: ${coursesWithRealData} real + ${coursesWithFallbackData} fallback`);
       console.log('🎯 Language counts:', languageCounts);
       
       setRealLanguageStats(languageCounts);

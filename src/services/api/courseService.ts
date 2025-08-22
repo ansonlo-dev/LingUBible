@@ -4816,9 +4816,29 @@ export class CourseService {
       });
 
       console.log(`🎯 getBatchCourseTeachingLanguages: Returning ${courseLanguagesMap.size} courses with language data`);
-      // 輸出前3個課程的語言數據作為調試
-      const first3 = Array.from(courseLanguagesMap.entries()).slice(0, 3);
-      console.log('📝 Sample language mapping:', first3);
+      
+      // 計算每種語言的課程數量用於調試
+      const languageStats = { 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+      let coursesWithLanguages = 0;
+      
+      courseLanguagesMap.forEach((languages, courseCode) => {
+        if (languages.length > 0) {
+          coursesWithLanguages++;
+          languages.forEach(lang => {
+            if (languageStats.hasOwnProperty(lang)) {
+              languageStats[lang]++;
+            }
+          });
+        }
+      });
+      
+      console.log(`🔢 getBatchCourseTeachingLanguages statistics:`);
+      console.log(`📊 Total courses with languages: ${coursesWithLanguages}/${courseLanguagesMap.size}`);
+      console.log(`📈 Language distribution:`, languageStats);
+      
+      // 輸出前5個課程的語言數據作為調試
+      const first5 = Array.from(courseLanguagesMap.entries()).slice(0, 5);
+      console.log('📝 Sample language mapping:', first5);
 
       return courseLanguagesMap;
     } catch (error) {

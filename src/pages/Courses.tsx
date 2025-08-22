@@ -684,7 +684,13 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={course.department}
-                  teachingLanguages={getCourseTeachingLanguagesWithFallback(course)}
+                  teachingLanguages={(() => {
+                    // 優先使用真實的teaching_records數據，fallback為保守推測
+                    if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+                      return course.teachingLanguages; // 真實數據
+                    }
+                    return getCourseTeachingLanguagesWithFallback(course); // 保守fallback
+                  })()}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}
