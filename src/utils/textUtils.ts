@@ -651,6 +651,32 @@ export function getCourseTeachingLanguagesRealOnly(course: { teachingLanguages?:
 }
 
 /**
+ * 獲取課程的教學語言（帶安全後備機制）
+ * 主要使用真實資料庫數據，但在數據缺失時提供保守的後備
+ * @param course 課程對象  
+ * @returns 教學語言代碼數組
+ */
+export function getCourseTeachingLanguagesWithFallback(course: { teachingLanguages?: string[]; course_code: string }): string[] {
+  // 優先使用真實數據
+  if (course.teachingLanguages && course.teachingLanguages.length > 0) {
+    return course.teachingLanguages;
+  }
+  
+  // 數據缺失時的保守後備：僅對明顯的中文相關課程提供中文語言
+  // 這避免了過度推測，只處理最明確的情況
+  const code = course.course_code.toUpperCase();
+  
+  // 只對明確的中文課程提供語言推測
+  if (code.startsWith('CHIL') || code.startsWith('CHIN') || 
+      (code.includes('CHI') && (code.includes('1') || code.includes('2') || code.includes('3')))) {
+    return ['C']; // 中文課程推斷為粵語
+  }
+  
+  // 其他情況返回空數組，不顯示徽章
+  return [];
+}
+
+/**
  * 檢查課程是否匹配指定的教學語言篩選
  * @param course 課程對象
  * @param filterLanguages 篩選的語言代碼數組

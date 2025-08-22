@@ -11,7 +11,7 @@ import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { translateDepartmentName, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
+import { translateDepartmentName, getCourseTeachingLanguagesRealOnly, getCourseTeachingLanguagesWithFallback } from '@/utils/textUtils';
 
 
 /**
@@ -86,6 +86,7 @@ const Courses = () => {
   } = useCoursesWithStats({ 
     enableProgressiveLoading: true
   });
+
 
   // 🚀 組件載入時的選擇性預加載 - 只載入必要數據
   useEffect(() => {
@@ -368,7 +369,7 @@ const Courses = () => {
             return !course.serviceLearningTypes || course.serviceLearningTypes.length === 0;
           } else {
             // 檢查課程是否有指定的服務學習類型
-            return course.serviceLearningTypes && course.serviceLearningTypes.includes(selectedType);
+            return course.serviceLearningTypes && course.serviceLearningTypes.includes(selectedType as 'compulsory' | 'optional');
           }
         });
       });
@@ -660,7 +661,7 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={course.department}
-                  teachingLanguages={getCourseTeachingLanguagesRealOnly(course)}
+                  teachingLanguages={getCourseTeachingLanguagesWithFallback(course)}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}
