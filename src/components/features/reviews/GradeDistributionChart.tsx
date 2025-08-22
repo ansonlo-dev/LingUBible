@@ -399,10 +399,24 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
 
   // 使用 useMemo 優化性能，避免重複計算
   const { completeDistribution, sortedGrades, totalCount, maxCount, statistics, boxPlotStats } = React.useMemo(() => {
-    // 獲取完整的成績分佈（包含 0 計數的成績）
-    const completeDistribution = getCompleteGradeDistribution(filteredGradeDistribution);
-    // 使用過濾後的分佈來獲取排序的成績列表
-    const sortedGrades = sortGradesDescending(Object.keys(filteredGradeDistribution).filter(grade => filteredGradeDistribution[grade] > 0));
+    // 獲取完整的成績範圍，包含標準成績和實際數據中存在的成績
+    const standardGrades = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F'];
+    
+    // 獲取實際數據中存在的非標準成績（不包含 N/A）
+    const actualGrades = Object.keys(gradeDistribution).filter(grade => 
+      grade !== 'N/A' && !standardGrades.includes(grade) && gradeDistribution[grade] > 0
+    );
+    
+    // 結合標準成績和實際成績
+    const allGrades = [...standardGrades, ...actualGrades];
+    const gradesWithNA = showNAGrades ? [...allGrades, 'N/A'] : allGrades;
+    const sortedGrades = sortGradesDescending(gradesWithNA);
+
+    // 獲取完整的成績分佈（包含 0 計數的成績），但只包含我們想要顯示的成績
+    const completeDistribution: Record<string, number> = {};
+    sortedGrades.forEach(grade => {
+      completeDistribution[grade] = filteredGradeDistribution[grade] || 0;
+    });
     
     // 計算總數
     const totalCount = Object.values(filteredGradeDistribution).reduce((sum, count) => sum + count, 0);
@@ -424,7 +438,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       statistics,
       boxPlotStats
     };
-  }, [filteredGradeDistribution]);
+  }, [filteredGradeDistribution, showNAGrades, gradeDistribution]);
 
   // Helper function to filter reviews by instructor and calculate real grade distribution
   const getGradeDistributionByInstructor = (instructorValue: string, applyNAFilter: boolean = true): Record<string, number> => {
