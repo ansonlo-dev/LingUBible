@@ -50,7 +50,7 @@ import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getCurrentTermCode, getCurrentTermName, getTermStatus, isCurrentTerm } from '@/utils/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
-import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName, getFacultiesForMultiDepartment } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName, getFacultiesForMultiDepartment, splitInstructorDepartments } from '@/utils/textUtils';
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
@@ -774,8 +774,13 @@ const Lecturers = () => {
   // Apply department navigation
   const applyDepartmentNavigation = () => {
     const searchParams = new URLSearchParams();
-    const rawDepartmentName = extractRawDepartmentName(instructor?.department || '');
-    searchParams.set('department', rawDepartmentName);
+    
+    if (instructor?.department) {
+      // Split multi-department strings and join with comma
+      const departments = splitInstructorDepartments(instructor.department);
+      const rawDepartments = departments.map(dept => extractRawDepartmentName(dept));
+      searchParams.set('department', rawDepartments.join(','));
+    }
     
     navigate(`/instructors?${searchParams.toString()}`);
   };
@@ -784,6 +789,44 @@ const Lecturers = () => {
   const resetDepartmentTooltipState = () => {
     setDepartmentTapCount(0);
     setDepartmentTooltipOpen(false);
+  };
+
+  // Faculty badge click handler
+  const handleFacultyBadgeClick = (facultyKey: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Navigate to instructors catalog with faculty filter
+    const searchParams = new URLSearchParams();
+    
+    // Get all departments that belong to this faculty
+    const departmentMapping: { [key: string]: string[] } = {
+      // Faculty of Arts
+      'faculty.arts': ['AIGCS', 'CEAL', 'CFCI', 'CLEAC', 'CHI', 'CS', 'DACI', 'ENG', 'HIST', 'PHILO', 'TRAN'],
+      // Faculty of Business
+      'faculty.business': ['ACCT', 'BUS', 'FIN', 'MGT', 'MKT', 'ORM', 'HKIBS', 'IIRM'],
+      // Faculty of Social Sciences
+      'faculty.socialSciences': ['ECON', 'GOV', 'PSY', 'SOCSC', 'SOCSP'],
+      // School of Data Science
+      'faculty.dataScience': ['DAI', 'DIDS', 'LEODCIDS', 'SDS'],
+      // School of Graduate Studies
+      'faculty.graduateStudies': ['GS'],
+      // School of Interdisciplinary Studies
+      'faculty.interdisciplinaryStudies': ['SIS', 'SU', 'WBLMP'],
+      // Research Institutes, Centres and Programmes
+      'faculty.researchInstitutes': ['APIAS', 'IPS'],
+      // Units and Offices
+      'faculty.unitsOffices': ['OSL', 'TLC'],
+      // Affiliated Units
+      'faculty.affiliatedUnits': ['LIFE']
+    };
+
+    const departments = departmentMapping[facultyKey] || [];
+    if (departments.length > 0) {
+      searchParams.set('department', departments.join(','));
+    }
+    
+    navigate(`/instructors?${searchParams.toString()}`);
   };
 
   // Collect all instructor details for teaching languages hook
@@ -1696,6 +1739,7 @@ const Lecturers = () => {
                     <Badge 
                       variant="outline"
                       className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 w-fit cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/40"
+                      onClick={(e) => handleFacultyBadgeClick(facultyKey, e)}
                     >
                       {t(facultyKey)}
                     </Badge>
