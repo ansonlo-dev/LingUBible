@@ -3088,16 +3088,27 @@ export class CourseService {
     try {
       const cacheKey = `courses_offered_in_term_${termCode}`;
       
+      // 🔄 TEMPORARY: Clear cache for this fix to take effect immediately
+      // Remove this after the fix is deployed and tested
+      if (termCode === '2022-S') {
+        console.log(`🔄 Clearing cache for ${termCode} to apply query limit fix...`);
+        this.cache.delete(cacheKey);
+      }
+      
       // 檢查緩存
       const cached = this.getCached<Set<string>>(cacheKey);
       if (cached) {
         return cached;
       }
 
-      // 獲取指定學期的所有教學記錄
+      // 🐛 FIX: Use a much higher limit for term-specific queries to avoid missing courses
+      // 2022-S and other comprehensive terms may have >500 teaching records
+      // We need to get ALL courses offered in a term, not just the first 500 records
+      const TERM_QUERY_LIMIT = 5000; // Increased from 500 to handle comprehensive terms
+      
       const queries = [
         Query.equal('term_code', termCode),
-        Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
+        Query.limit(TERM_QUERY_LIMIT),
         Query.select(['course_code'])
       ];
 
@@ -3113,9 +3124,18 @@ export class CourseService {
       );
 
       const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+      
       // 🐛 FIX: Convert course codes to lowercase to handle case sensitivity issues
       // Teaching records may have uppercase suffixes (e.g., "CHI4342A") while courses database has lowercase (e.g., "CHI4342a")
       const offeredCourses = new Set(teachingRecords.map(record => record.course_code.toLowerCase()));
+
+      // Debug logging to help identify potential issues with large terms
+      console.log(`📊 Term ${termCode}: Found ${teachingRecords.length} teaching records, ${offeredCourses.size} unique courses`);
+      
+      // Warn if we hit the query limit (potential data truncation)
+      if (teachingRecords.length >= TERM_QUERY_LIMIT) {
+        console.warn(`⚠️  Term ${termCode} may have more data - hit query limit of ${TERM_QUERY_LIMIT} records!`);
+      }
 
       // 緩存結果（較長時間，因為學期數據相對穩定）
       this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000); // 10分鐘緩存
