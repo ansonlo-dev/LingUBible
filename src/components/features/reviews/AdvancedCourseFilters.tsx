@@ -181,37 +181,65 @@ export function AdvancedCourseFilters({
     loadAvailableTerms();
   }, []);
 
-  // Load real statistics from teaching_records database
+  // 🚀 Aggressive preloading of statistics on component mount
   useEffect(() => {
-    const loadRealStatistics = async () => {
+    let isComponentMounted = true;
+    
+    const preloadStatistics = async () => {
       try {
-        setStatsLoading(true);
-        console.log('📊 Loading real statistics from teaching_records database...');
+        console.log('🚀 Starting aggressive preloading of statistics...');
         
-        // Load all statistics in parallel
-        const [languageStats, termStats, serviceLearningStats] = await Promise.all([
-          CourseService.getTeachingLanguageStatistics(),
-          CourseService.getOfferedTermStatistics(),
-          CourseService.getServiceLearningStatistics()
+        // Start loading statistics immediately without blocking UI
+        const statisticsPromise = Promise.all([
+          CourseService.getTeachingLanguageStatisticsOptimized(),
+          CourseService.getOfferedTermStatisticsOptimized(), 
+          CourseService.getServiceLearningStatisticsOptimized()
         ]);
         
-        setRealLanguageStats(languageStats);
-        setRealTermStats(termStats);
-        setRealServiceLearningStats(serviceLearningStats);
+        // Don't wait for statistics, start setting loading state
+        setStatsLoading(true);
         
-        console.log('✅ Real statistics loaded:', {
-          languages: languageStats,
-          terms: Object.keys(termStats).length,
-          serviceLearning: serviceLearningStats
-        });
+        try {
+          const [languageStats, termStats, serviceLearningStats] = await statisticsPromise;
+          
+          if (!isComponentMounted) return;
+          
+          setRealLanguageStats(languageStats);
+          setRealTermStats(termStats);
+          setRealServiceLearningStats(serviceLearningStats);
+          
+          console.log('✅ Statistics preloaded successfully:', {
+            languages: Object.values(languageStats).reduce((sum, count) => sum + count, 0),
+            terms: Object.keys(termStats).length,
+            serviceLearning: Object.values(serviceLearningStats).reduce((sum, count) => sum + count, 0)
+          });
+        } catch (error) {
+          console.error('❌ Error preloading statistics:', error);
+          // Set fallback empty statistics
+          if (isComponentMounted) {
+            setRealLanguageStats({ 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 });
+            setRealTermStats({});
+            setRealServiceLearningStats({ 'none': 0, 'optional': 0, 'compulsory': 0 });
+          }
+        } finally {
+          if (isComponentMounted) {
+            setStatsLoading(false);
+          }
+        }
       } catch (error) {
-        console.error('Error loading real statistics:', error);
-      } finally {
-        setStatsLoading(false);
+        console.error('❌ Fatal error in statistics preloading:', error);
+        if (isComponentMounted) {
+          setStatsLoading(false);
+        }
       }
     };
 
-    loadRealStatistics();
+    // Start preloading immediately
+    preloadStatistics();
+    
+    return () => {
+      isComponentMounted = false;
+    };
   }, []);
 
   const updateFilters = (updates: Partial<CourseFilters>) => {

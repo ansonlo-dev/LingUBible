@@ -3,6 +3,7 @@ import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
+import { courseStatsCache, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
 
 export interface Course {
   $id: string;
@@ -4759,6 +4760,221 @@ export class CourseService {
       return null;
     }
   }
+
+  // =====================================================
+  // 🚀 OPTIMIZED CACHED STATISTICS METHODS
+  // =====================================================
+
+  /**
+   * Get all teaching records with caching - optimized for multiple statistics calls
+   * This method loads all teaching records once and caches them for reuse
+   */
+  static async getAllTeachingRecordsCached(): Promise<Array<{
+    course_code: string;
+    teaching_language: string;
+    term_code: string;
+    service_learning: string | null;
+  }>> {
+    // Check cache first
+    const cachedData = courseStatsCache.get(CACHE_KEYS.ALL_TEACHING_RECORDS);
+    if (cachedData) {
+      console.log('✅ Using cached teaching records');
+      return cachedData;
+    }
+
+    try {
+      console.log('🔄 Loading teaching records from database...');
+      
+      // Load all teaching records in one query
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.select(['course_code', 'teaching_language', 'term_code', 'service_learning']),
+          Query.limit(10000) // Large limit to get all records
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as Array<{
+        course_code: string;
+        teaching_language: string;
+        term_code: string;
+        service_learning: string | null;
+      }>;
+
+      // Cache the data
+      courseStatsCache.set(CACHE_KEYS.ALL_TEACHING_RECORDS, teachingRecords, CACHE_TTL.TEACHING_RECORDS);
+      
+      console.log(`✅ Loaded ${teachingRecords.length} teaching records and cached them`);
+      return teachingRecords;
+    } catch (error) {
+      console.error('Error fetching teaching records:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 🚀 OPTIMIZED: Get teaching language statistics using cached data
+   * Returns count of courses that teach in each language
+   */
+  static async getTeachingLanguageStatisticsOptimized(): Promise<{ [key: string]: number }> {
+    // Check cache first
+    const cachedStats = courseStatsCache.get(CACHE_KEYS.TEACHING_LANGUAGE_STATS);
+    if (cachedStats) {
+      console.log('✅ Using cached teaching language statistics');
+      return cachedStats;
+    }
+
+    try {
+      console.log('📊 Computing teaching language statistics...');
+      
+      // Get cached teaching records
+      const teachingRecords = await this.getAllTeachingRecordsCached();
+
+      // Group by course to avoid double counting
+      const courseLanguages = new Map<string, Set<string>>();
+      
+      teachingRecords.forEach(record => {
+        if (record.teaching_language) {
+          if (!courseLanguages.has(record.course_code)) {
+            courseLanguages.set(record.course_code, new Set());
+          }
+          courseLanguages.get(record.course_code)!.add(record.teaching_language);
+        }
+      });
+
+      // Count courses for each language
+      const languageCounts: { [key: string]: number } = {
+        'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0
+      };
+
+      courseLanguages.forEach((languages) => {
+        languages.forEach(language => {
+          if (languageCounts.hasOwnProperty(language)) {
+            languageCounts[language]++;
+          }
+        });
+      });
+
+      // Cache the results
+      courseStatsCache.set(CACHE_KEYS.TEACHING_LANGUAGE_STATS, languageCounts, CACHE_TTL.STATS);
+      
+      console.log('✅ Teaching language statistics computed and cached');
+      return languageCounts;
+    } catch (error) {
+      console.error('Error computing teaching language statistics:', error);
+      return { 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    }
+  }
+
+  /**
+   * 🚀 OPTIMIZED: Get offered term statistics using cached data
+   * Returns count of courses offered in each term
+   */
+  static async getOfferedTermStatisticsOptimized(): Promise<{ [key: string]: number }> {
+    // Check cache first
+    const cachedStats = courseStatsCache.get(CACHE_KEYS.OFFERED_TERM_STATS);
+    if (cachedStats) {
+      console.log('✅ Using cached term statistics');
+      return cachedStats;
+    }
+
+    try {
+      console.log('📊 Computing offered term statistics...');
+      
+      // Get cached teaching records
+      const teachingRecords = await this.getAllTeachingRecordsCached();
+
+      // Group by course and term to avoid double counting
+      const courseTerms = new Map<string, Set<string>>();
+      
+      teachingRecords.forEach(record => {
+        if (record.term_code) {
+          if (!courseTerms.has(record.course_code)) {
+            courseTerms.set(record.course_code, new Set());
+          }
+          courseTerms.get(record.course_code)!.add(record.term_code);
+        }
+      });
+
+      // Count courses for each term
+      const termCounts: { [key: string]: number } = {};
+
+      courseTerms.forEach((terms) => {
+        terms.forEach(term => {
+          termCounts[term] = (termCounts[term] || 0) + 1;
+        });
+      });
+
+      // Cache the results
+      courseStatsCache.set(CACHE_KEYS.OFFERED_TERM_STATS, termCounts, CACHE_TTL.STATS);
+      
+      console.log('✅ Term statistics computed and cached');
+      return termCounts;
+    } catch (error) {
+      console.error('Error computing term statistics:', error);
+      return {};
+    }
+  }
+
+  /**
+   * 🚀 OPTIMIZED: Get service learning statistics using cached data
+   * Returns count of courses with each service learning type
+   */
+  static async getServiceLearningStatisticsOptimized(): Promise<{ [key: string]: number }> {
+    // Check cache first
+    const cachedStats = courseStatsCache.get(CACHE_KEYS.SERVICE_LEARNING_STATS);
+    if (cachedStats) {
+      console.log('✅ Using cached service learning statistics');
+      return cachedStats;
+    }
+
+    try {
+      console.log('📊 Computing service learning statistics...');
+      
+      // Get cached teaching records
+      const teachingRecords = await this.getAllTeachingRecordsCached();
+
+      // Group by course to avoid double counting
+      const courseServiceLearning = new Map<string, Set<string>>();
+      
+      teachingRecords.forEach(record => {
+        if (!courseServiceLearning.has(record.course_code)) {
+          courseServiceLearning.set(record.course_code, new Set());
+        }
+        
+        // Handle service learning values
+        const serviceType = record.service_learning || 'none';
+        courseServiceLearning.get(record.course_code)!.add(serviceType);
+      });
+
+      // Count courses for each service learning type
+      const serviceLearningCounts: { [key: string]: number } = {
+        'none': 0, 'optional': 0, 'compulsory': 0
+      };
+
+      courseServiceLearning.forEach((types) => {
+        types.forEach(type => {
+          if (serviceLearningCounts.hasOwnProperty(type)) {
+            serviceLearningCounts[type]++;
+          }
+        });
+      });
+
+      // Cache the results
+      courseStatsCache.set(CACHE_KEYS.SERVICE_LEARNING_STATS, serviceLearningCounts, CACHE_TTL.STATS);
+      
+      console.log('✅ Service learning statistics computed and cached');
+      return serviceLearningCounts;
+    } catch (error) {
+      console.error('Error computing service learning statistics:', error);
+      return { 'none': 0, 'optional': 0, 'compulsory': 0 };
+    }
+  }
+
+  // =====================================================
+  // 🐌 LEGACY STATISTICS METHODS (DEPRECATED)
+  // =====================================================
 
   /**
    * Get teaching language statistics for all courses
