@@ -4761,6 +4761,184 @@ export class CourseService {
   }
 
   /**
+   * Get teaching language statistics for all courses
+   * Returns count of courses that teach in each language
+   */
+  static async getTeachingLanguageStatistics(): Promise<{ [key: string]: number }> {
+    try {
+      // Get all unique teaching language records
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.select(['course_code', 'teaching_language']),
+          Query.limit(10000) // Large limit to get all records
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as Array<{
+        course_code: string;
+        teaching_language: string;
+      }>;
+
+      // Group by course to avoid double counting
+      const courseLanguages = new Map<string, Set<string>>();
+      
+      teachingRecords.forEach(record => {
+        if (record.teaching_language) {
+          if (!courseLanguages.has(record.course_code)) {
+            courseLanguages.set(record.course_code, new Set());
+          }
+          courseLanguages.get(record.course_code)!.add(record.teaching_language);
+        }
+      });
+
+      // Count courses for each language
+      const languageCounts: { [key: string]: number } = {
+        'E': 0,
+        'C': 0, 
+        'P': 0,
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0
+      };
+
+      courseLanguages.forEach((languages) => {
+        languages.forEach(language => {
+          if (languageCounts.hasOwnProperty(language)) {
+            languageCounts[language]++;
+          }
+        });
+      });
+
+      return languageCounts;
+    } catch (error) {
+      console.error('Error fetching teaching language statistics:', error);
+      return {
+        'E': 0,
+        'C': 0, 
+        'P': 0,
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0
+      };
+    }
+  }
+
+  /**
+   * Get offered term statistics for all courses
+   * Returns count of courses offered in each term
+   */
+  static async getOfferedTermStatistics(): Promise<{ [key: string]: number }> {
+    try {
+      // Get all unique term records
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.select(['course_code', 'term_code']),
+          Query.limit(10000) // Large limit to get all records
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as Array<{
+        course_code: string;
+        term_code: string;
+      }>;
+
+      // Group by course and term to avoid double counting
+      const courseTerms = new Map<string, Set<string>>();
+      
+      teachingRecords.forEach(record => {
+        if (record.term_code) {
+          if (!courseTerms.has(record.course_code)) {
+            courseTerms.set(record.course_code, new Set());
+          }
+          courseTerms.get(record.course_code)!.add(record.term_code);
+        }
+      });
+
+      // Count courses for each term
+      const termCounts: { [key: string]: number } = {};
+
+      courseTerms.forEach((terms) => {
+        terms.forEach(term => {
+          termCounts[term] = (termCounts[term] || 0) + 1;
+        });
+      });
+
+      return termCounts;
+    } catch (error) {
+      console.error('Error fetching offered term statistics:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Get service learning statistics for all courses
+   * Returns count of courses for each service learning type
+   */
+  static async getServiceLearningStatistics(): Promise<{ [key: string]: number }> {
+    try {
+      // Get all unique service learning records
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.select(['course_code', 'service_learning']),
+          Query.limit(10000) // Large limit to get all records
+        ]
+      );
+
+      const teachingRecords = response.documents as unknown as Array<{
+        course_code: string;
+        service_learning: string | null;
+      }>;
+
+      // Group by course to avoid double counting
+      const courseServiceLearning = new Map<string, Set<string>>();
+      
+      teachingRecords.forEach(record => {
+        if (!courseServiceLearning.has(record.course_code)) {
+          courseServiceLearning.set(record.course_code, new Set());
+        }
+        
+        // Handle service learning values
+        const serviceType = record.service_learning || 'none';
+        courseServiceLearning.get(record.course_code)!.add(serviceType);
+      });
+
+      // Count courses for each service learning type
+      const serviceLearningCounts: { [key: string]: number } = {
+        'none': 0,
+        'optional': 0,
+        'compulsory': 0
+      };
+
+      courseServiceLearning.forEach((types) => {
+        types.forEach(type => {
+          if (serviceLearningCounts.hasOwnProperty(type)) {
+            serviceLearningCounts[type]++;
+          }
+        });
+      });
+
+      return serviceLearningCounts;
+    } catch (error) {
+      console.error('Error fetching service learning statistics:', error);
+      return {
+        'none': 0,
+        'optional': 0,
+        'compulsory': 0
+      };
+    }
+  }
+
+  /**
    * Batch get teaching languages for multiple instructor details
    * Optimized for performance when getting multiple instructor teaching languages at once
    */

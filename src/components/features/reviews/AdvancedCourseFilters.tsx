@@ -134,6 +134,16 @@ export function AdvancedCourseFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
+  
+  // Real statistics from teaching_records database
+  const [realLanguageStats, setRealLanguageStats] = useState<{ [key: string]: number }>({
+    'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0
+  });
+  const [realTermStats, setRealTermStats] = useState<{ [key: string]: number }>({});
+  const [realServiceLearningStats, setRealServiceLearningStats] = useState<{ [key: string]: number }>({
+    'none': 0, 'optional': 0, 'compulsory': 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Load available terms
   useEffect(() => {
@@ -169,6 +179,39 @@ export function AdvancedCourseFilters({
     };
 
     loadAvailableTerms();
+  }, []);
+
+  // Load real statistics from teaching_records database
+  useEffect(() => {
+    const loadRealStatistics = async () => {
+      try {
+        setStatsLoading(true);
+        console.log('📊 Loading real statistics from teaching_records database...');
+        
+        // Load all statistics in parallel
+        const [languageStats, termStats, serviceLearningStats] = await Promise.all([
+          CourseService.getTeachingLanguageStatistics(),
+          CourseService.getOfferedTermStatistics(),
+          CourseService.getServiceLearningStatistics()
+        ]);
+        
+        setRealLanguageStats(languageStats);
+        setRealTermStats(termStats);
+        setRealServiceLearningStats(serviceLearningStats);
+        
+        console.log('✅ Real statistics loaded:', {
+          languages: languageStats,
+          terms: Object.keys(termStats).length,
+          serviceLearning: serviceLearningStats
+        });
+      } catch (error) {
+        console.error('Error loading real statistics:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadRealStatistics();
   }, []);
 
   const updateFilters = (updates: Partial<CourseFilters>) => {
@@ -231,65 +274,9 @@ export function AdvancedCourseFilters({
   };
 
   const getLanguageCounts = () => {
-    const counts: { [key: string]: number } = {};
-    
-    // Initialize counts for all 8 teaching language codes in the desired order
-    const allLanguageCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
-    allLanguageCodes.forEach(code => {
-      counts[code] = 0;
-    });
-    
-    // Count courses with confirmed teaching language data
-    let coursesWithLanguages = 0;
-    let totalCourses = courses.length;
-    
-    const coursesWithoutLanguages: typeof courses = [];
-    
-    courses.forEach(course => {
-      if (course.teachingLanguages && course.teachingLanguages.length > 0) {
-        coursesWithLanguages++;
-        course.teachingLanguages.forEach(langCode => {
-          if (counts.hasOwnProperty(langCode)) {
-            counts[langCode]++;
-          }
-        });
-      } else {
-        coursesWithoutLanguages.push(course);
-      }
-    });
-    
-    console.log(`📊 Language counting: ${coursesWithLanguages}/${totalCourses} courses have teaching language data`);
-    console.log(`📊 Found ${coursesWithoutLanguages.length} courses without teaching language data`);
-    
-    // For courses without language data, use the same inference logic as filtering
-    if (coursesWithoutLanguages.length > 0) {
-      coursesWithoutLanguages.forEach(course => {
-        // Use the same helper function for consistency
-        const inferredLanguages = getCourseTeachingLanguages(course);
-        
-        // Add to counts
-        inferredLanguages.forEach(langCode => {
-          if (counts.hasOwnProperty(langCode)) {
-            counts[langCode]++;
-          }
-        });
-      });
-      
-      console.log(`📊 Applied intelligent language inference to ${coursesWithoutLanguages.length} courses`);
-    }
-    
-    // Complete fallback if we have very little data overall
-    if (totalCourses > 0 && coursesWithLanguages / totalCourses < 0.05 && coursesWithoutLanguages.length === totalCourses) {
-      console.warn('⚠️ No courses have teaching language data, using complete fallback distribution');
-      
-      // Reset and use fallback distribution
-      counts['E'] = Math.floor(totalCourses * 0.75); // 75% English
-      counts['C'] = Math.floor(totalCourses * 0.15); // 15% Cantonese
-      counts['1'] = Math.floor(totalCourses * 0.10); // 10% Mixed (English/Cantonese)
-      // Other language codes remain 0 as initialized
-    }
-    
-    return counts;
+    // Return cached real teaching language statistics
+    // This will be populated by real database data from teaching_records
+    return realLanguageStats;
   };
 
   // Helper function to get ordered language options
@@ -305,46 +292,8 @@ export function AdvancedCourseFilters({
   };
 
   const getServiceLearningCounts = () => {
-    const counts: { [key: string]: number } = {};
-    
-    // Initialize counts for service learning types
-    const allServiceLearningTypes = ['none', 'optional', 'compulsory'];
-    allServiceLearningTypes.forEach(type => {
-      counts[type] = 0;
-    });
-    
-    // Count courses for each service learning type
-    let coursesWithServiceLearning = 0;
-    let totalCourses = courses.length;
-    
-    courses.forEach(course => {
-      if (course.serviceLearningTypes && course.serviceLearningTypes.length > 0) {
-        coursesWithServiceLearning++;
-        course.serviceLearningTypes.forEach(type => {
-          if (counts.hasOwnProperty(type)) {
-            counts[type]++;
-          }
-        });
-      } else {
-        // Course has no service learning
-        counts['none']++;
-      }
-    });
-    
-    // Debug: Log service learning data availability
-    console.log(`📊 Service Learning counting: ${coursesWithServiceLearning}/${totalCourses} courses have service learning data`);
-    
-    // If less than 5% of courses have service learning data, provide more realistic fallback
-    if (totalCourses > 0 && coursesWithServiceLearning / totalCourses < 0.05) {
-      console.warn('⚠️ Most courses lack service learning data, adjusting fallback distribution');
-      
-      // More realistic distribution: Most courses don't have service learning
-      counts['none'] = Math.floor(totalCourses * 0.85); // 85% no service learning
-      counts['optional'] = Math.floor(totalCourses * 0.10); // 10% optional
-      counts['compulsory'] = Math.floor(totalCourses * 0.05); // 5% compulsory
-    }
-    
-    return counts;
+    // Return cached real service learning statistics from teaching_records database
+    return realServiceLearningStats;
   };
 
   // Helper function to get ordered service learning options
@@ -362,82 +311,8 @@ export function AdvancedCourseFilters({
   };
 
   const getTermCounts = () => {
-    const counts: { [key: string]: number } = {};
-    
-    // Debug: Check if termCoursesMap has data
-    const totalTermsWithCourses = termCoursesMap.size;
-    const totalCoursesInTermsMap = Array.from(termCoursesMap.values())
-      .reduce((sum, courseSet) => sum + courseSet.size, 0);
-    
-    console.log(`📊 Term counting: ${totalTermsWithCourses} terms with course data, ${totalCoursesInTermsMap} total course-term relationships`);
-    
-    // Count courses that have teaching records
-    const coursesWithTeachingRecords = new Set<string>();
-    termCoursesMap.forEach(courseSet => {
-      courseSet.forEach(courseCode => coursesWithTeachingRecords.add(courseCode));
-    });
-    
-    const coursesWithoutTeachingRecords = courses.filter(course => 
-      !coursesWithTeachingRecords.has(course.course_code)
-    );
-    
-    console.log(`📊 Found ${coursesWithoutTeachingRecords.length} courses without teaching records out of ${courses.length} total courses`);
-    
-    availableTerms.forEach(term => {
-      // Get the actual courses offered in this term
-      const coursesOfferedInTerm = termCoursesMap.get(term.term_code) || new Set();
-      
-      // Count courses that have confirmed teaching records in this term
-      let count = 0;
-      courses.forEach(course => {
-        if (coursesOfferedInTerm.has(course.course_code)) {
-          count++;
-        }
-      });
-      
-      // For courses without teaching records, make conservative assumptions
-      if (coursesWithoutTeachingRecords.length > 0) {
-        // Much more conservative assumptions to avoid inflated numbers
-        const termIndex = availableTerms.indexOf(term);
-        if (termIndex === 0) {
-          // Only current/most recent term gets a modest boost
-          count += Math.floor(coursesWithoutTeachingRecords.length * 0.3); // 30% for current term
-        } else if (termIndex < 3) {
-          // Recent terms get smaller boost
-          count += Math.floor(coursesWithoutTeachingRecords.length * 0.15); // 15% for recent terms
-        } else if (termIndex < 6) {
-          // Older terms get minimal boost
-          count += Math.floor(coursesWithoutTeachingRecords.length * 0.05); // 5% for older terms
-        }
-        // No assumption for very old terms
-      }
-      
-      counts[term.term_code] = count;
-      
-      // Debug log for terms with 0 courses
-      if (count === 0 && coursesOfferedInTerm.size === 0) {
-        console.log(`⚠️ Term ${term.term_code} has no course offerings in termCoursesMap`);
-      }
-    });
-    
-    // Fallback for complete data absence
-    const currentTermCode = availableTerms.find(term => term.term_code === '202526T2')?.term_code || 
-                            availableTerms[0]?.term_code;
-    
-    if (totalCoursesInTermsMap === 0 && courses.length > 0 && currentTermCode) {
-      console.warn('⚠️ No term-course relationships found, using complete fallback distribution');
-      counts[currentTermCode] = courses.length; // Assume all courses are offered in current term
-      
-      // Set some reasonable distribution for other recent terms
-      availableTerms.slice(1, 3).forEach(term => {
-        counts[term.term_code] = Math.floor(courses.length * 0.8); // 80% of courses in recent terms
-      });
-      availableTerms.slice(3, 6).forEach(term => {
-        counts[term.term_code] = Math.floor(courses.length * 0.6); // 60% of courses in older terms
-      });
-    }
-    
-    return counts;
+    // Return cached real term statistics from teaching_records database
+    return realTermStats;
   };
 
   // Helper function to create subject options sorted alphabetically by subject code
