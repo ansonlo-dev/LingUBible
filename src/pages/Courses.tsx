@@ -684,20 +684,7 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={course.department}
-                  teachingLanguages={(() => {
-                    const languages = getCourseTeachingLanguagesWithFallback(course);
-                    // 調試：檢查前幾個課程的數據
-                    if (course.course_code.startsWith('ACT')) {
-                      console.log(`🔍 Debug Course Data for ${course.course_code}:`, {
-                        realLanguages: course.teachingLanguages,
-                        fallbackResult: languages,
-                        reviewCount: course.reviewCount,
-                        hasTeachingLanguagesField: course.hasOwnProperty('teachingLanguages'),
-                        allFields: Object.keys(course)
-                      });
-                    }
-                    return languages;
-                  })()}
+                  teachingLanguages={getCourseTeachingLanguagesWithFallback(course)}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}

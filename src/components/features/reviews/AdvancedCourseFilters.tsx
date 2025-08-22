@@ -145,6 +145,19 @@ export function AdvancedCourseFilters({
   });
   const [statsLoading, setStatsLoading] = useState(true);
 
+  // Debug: 監測realLanguageStats的變化
+  useEffect(() => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🕒 ${timestamp} - realLanguageStats changed:`, realLanguageStats);
+    if (realLanguageStats.C > 0) {
+      console.log(`🎯 ${timestamp} - Cantonese count is now: ${realLanguageStats.C}`);
+    } else if (Object.values(realLanguageStats).some(val => val > 0)) {
+      console.log(`⚠️ ${timestamp} - Cantonese count is 0 but other languages have values:`, realLanguageStats);
+    } else {
+      console.log(`❌ ${timestamp} - All language counts are 0`);
+    }
+  }, [realLanguageStats]);
+
   // Update teaching language statistics when courses data changes
   useEffect(() => {
     console.log('🔄 AdvancedCourseFilters: courses changed, length:', courses?.length);
@@ -242,53 +255,37 @@ export function AdvancedCourseFilters({
     loadAvailableTerms();
   }, []);
 
-  // 🚀 Optimized statistics calculation using current courses array  
+  // 🚀 REMOVED: Old statistics calculation to avoid conflict with the new fallback-based calculation above
+  // This was causing the "68 -> 0" issue by overriding the correct fallback-based statistics
+  
+  // Service learning and term statistics calculation (these don't conflict)
   useEffect(() => {
-    const computeStatistics = async () => {
-      try {
-        console.log('🚀 Computing statistics for current courses array...');
-        setStatsLoading(true);
-        
-        // Compute teaching language statistics synchronously from courses array
-        const languageStats = CourseService.getTeachingLanguageStatisticsForCourses(courses);
-        
-        // Compute service learning statistics synchronously from courses array  
-        const serviceLearningStats = CourseService.getServiceLearningStatisticsForCourses(courses);
-        
-        // Compute term statistics asynchronously (needs teaching records)
-        const termStats = await CourseService.getOfferedTermStatisticsForCourses(courses);
-        
-        setRealLanguageStats(languageStats);
-        setRealTermStats(termStats);
-        setRealServiceLearningStats(serviceLearningStats);
-        
-        console.log('✅ Statistics computed successfully from courses array:', {
-          languages: Object.values(languageStats).reduce((sum, count) => sum + count, 0),
-          terms: Object.keys(termStats).length,
-          serviceLearning: Object.values(serviceLearningStats).reduce((sum, count) => sum + count, 0),
-          totalCourses: courses.length
-        });
-      } catch (error) {
-        console.error('❌ Error computing statistics:', error);
-        // Set fallback empty statistics
-        setRealLanguageStats({ 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 });
+    const computeServiceLearningAndTermStats = async () => {
+      if (courses.length > 0) {
+        try {
+          console.log('📊 Computing service learning and term statistics...');
+          
+          // Compute service learning statistics synchronously from courses array  
+          const serviceLearningStats = CourseService.getServiceLearningStatisticsForCourses(courses);
+          
+          // Compute term statistics asynchronously (needs teaching records)
+          const termStats = await CourseService.getOfferedTermStatisticsForCourses(courses);
+          
+          setRealTermStats(termStats);
+          setRealServiceLearningStats(serviceLearningStats);
+          
+          console.log('✅ Service learning and term statistics computed successfully');
+        } catch (error) {
+          console.error('❌ Error computing service learning and term statistics:', error);
+        }
+      } else {
         setRealTermStats({});
         setRealServiceLearningStats({ 'none': 0, 'optional': 0, 'compulsory': 0 });
-      } finally {
-        setStatsLoading(false);
       }
+      setStatsLoading(false);
     };
 
-    // Only compute when courses are loaded
-    if (courses.length > 0) {
-      computeStatistics();
-    } else {
-      // Reset statistics when no courses
-      setRealLanguageStats({ 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 });
-      setRealTermStats({});
-      setRealServiceLearningStats({ 'none': 0, 'optional': 0, 'compulsory': 0 });
-      setStatsLoading(false);
-    }
+    computeServiceLearningAndTermStats();
   }, [courses]); // Recompute when courses change
 
   const updateFilters = (updates: Partial<CourseFilters>) => {
