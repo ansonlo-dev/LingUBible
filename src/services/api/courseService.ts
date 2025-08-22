@@ -805,24 +805,71 @@ export class CourseService {
    */
   static async getCoursesWithStats(): Promise<CourseWithStats[]> {
     try {
+      console.log('🚀 getCoursesWithStats: Starting to load courses with complete data');
+      
       const courses = await this.getAllCourses();
       const currentTermCode = getCurrentTermCode();
+      const courseCodes = courses.map(course => course.course_code);
       
-      // 並行獲取所有課程的統計信息和當前學期開設狀態
-      const coursesWithStats = await Promise.all(
-        courses.map(async (course) => {
-          const [stats, isOfferedInCurrentTerm] = await Promise.all([
-            this.getCourseDetailedStats(course.course_code),
-            this.isCourseOfferedInTerm(course.course_code, currentTermCode)
-          ]);
-          
-          return {
-            ...course,
-            ...stats,
-            isOfferedInCurrentTerm
-          };
-        })
-      );
+      console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
+      
+      // 並行獲取所有必要的數據
+      const [
+        statsMap,
+        teachingLanguagesMap,
+        currentTermLanguagesMap,
+        serviceLearningTypesMap,
+        currentTermServiceLearningMap,
+        currentTermOfferedCourses
+      ] = await Promise.all([
+        // 獲取統計數據的Map
+        this.getBatchCourseDetailedStats(courseCodes),
+        // 獲取教學語言數據
+        this.getBatchCourseTeachingLanguages(courseCodes),
+        this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
+        // 獲取服務學習數據  
+        this.getBatchCourseServiceLearning(courseCodes),
+        this.getBatchCourseCurrentTermServiceLearning(courseCodes),
+        // 獲取當前學期開設狀態
+        this.getCoursesOfferedInTermBatch(currentTermCode, courseCodes)
+      ]);
+
+      console.log('✅ All batch data loaded successfully');
+      console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
+      
+      // 組合所有數據
+      const coursesWithStats = courses.map(course => {
+        const stats = statsMap.get(course.course_code) || {
+          reviewCount: 0,
+          averageRating: 0,
+          studentCount: 0,
+          averageWorkload: -1,
+          averageDifficulty: -1,
+          averageUsefulness: -1,
+          averageGPA: 0
+        };
+        
+        const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
+        const currentTermTeachingLanguage = currentTermLanguagesMap.get(course.course_code) || null;
+        const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
+        const currentTermServiceLearning = currentTermServiceLearningMap.get(course.course_code) || null;
+        const isOfferedInCurrentTerm = currentTermOfferedCourses.has(course.course_code);
+        
+        return {
+          ...course,
+          ...stats,
+          teachingLanguages,
+          currentTermTeachingLanguage,
+          serviceLearningTypes,
+          currentTermServiceLearning,
+          isOfferedInCurrentTerm
+        };
+      });
+
+      console.log('🎉 getCoursesWithStats: Completed successfully');
+      console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
+        c.teachingLanguages && c.teachingLanguages.length > 0
+      )?.course_code || 'none found');
 
       return coursesWithStats;
     } catch (error) {

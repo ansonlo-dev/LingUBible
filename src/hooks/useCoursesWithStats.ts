@@ -34,7 +34,7 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
         setStatsLoading(true);
         
         try {
-          const coursesWithStats = await CourseService.getCoursesWithStatsBatch();
+          const coursesWithStats = await CourseService.getCoursesWithStats();
           
           // 先顯示基本課程信息（重置統計信息）
           const coursesWithEmptyStats: CourseWithStats[] = coursesWithStats.map(course => ({
@@ -66,7 +66,7 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
         }
       } else {
         // 直接載入完整數據
-        const coursesWithStats = await CourseService.getCoursesWithStatsBatch();
+        const coursesWithStats = await CourseService.getCoursesWithStats();
         setCourses(coursesWithStats);
         setLoading(false);
       }

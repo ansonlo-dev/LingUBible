@@ -147,8 +147,22 @@ export function AdvancedCourseFilters({
 
   // Update teaching language statistics when courses data changes
   useEffect(() => {
+    console.log('🔄 AdvancedCourseFilters: courses changed, length:', courses?.length);
+    
     if (courses && courses.length > 0) {
       console.log('📊 Updating teaching language statistics for', courses.length, 'courses');
+      
+      // Debug: Log first few courses structure
+      console.log('📝 Sample course data structure:');
+      courses.slice(0, 3).forEach(course => {
+        console.log(`Course ${course.course_code}:`, {
+          hasTeachingLanguages: course.hasOwnProperty('teachingLanguages'),
+          teachingLanguages: course.teachingLanguages,
+          reviewCount: course.reviewCount,
+          hasReviewCount: course.hasOwnProperty('reviewCount'),
+          allKeys: Object.keys(course).sort()
+        });
+      });
       
       // Use the same logic as the course cards to ensure consistency
       const languageCounts: { [key: string]: number } = {
@@ -156,12 +170,19 @@ export function AdvancedCourseFilters({
       };
       
       let coursesWithLanguages = 0;
-      courses.forEach(course => {
+      let coursesProcessed = 0;
+      courses.forEach((course, index) => {
+        coursesProcessed++;
         // Use the same fallback logic as course cards
         const courseLanguages = getCourseTeachingLanguagesWithFallback(course);
         
         if (courseLanguages && courseLanguages.length > 0) {
           coursesWithLanguages++;
+          
+          // Debug log for first few courses
+          if (index < 5) {
+            console.log(`🔍 Course ${course.course_code} languages:`, courseLanguages);
+          }
           
           // Count each language for this course
           courseLanguages.forEach(langCode => {
@@ -169,14 +190,19 @@ export function AdvancedCourseFilters({
               languageCounts[langCode]++;
             }
           });
+        } else if (index < 5) {
+          console.log(`❌ Course ${course.course_code} has no languages`);
         }
       });
       
-      console.log(`📊 Found ${coursesWithLanguages} courses with teaching language data out of ${courses.length} total`);
+      console.log(`📊 Processed ${coursesProcessed} courses`);
+      console.log(`📚 Found ${coursesWithLanguages} courses with teaching language data out of ${courses.length} total`);
       console.log('🎯 Language counts:', languageCounts);
       
       setRealLanguageStats(languageCounts);
       console.log('✅ Teaching language statistics updated with fallback logic');
+    } else {
+      console.log('❌ No courses data or empty array');
     }
   }, [courses]);
 

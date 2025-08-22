@@ -84,8 +84,31 @@ const Courses = () => {
     statsLoading, 
     error 
   } = useCoursesWithStats({ 
-    enableProgressiveLoading: true
+    enableProgressiveLoading: false // 暫時關閉漸進式載入來調試
   });
+
+  // Debug: 監測數據載入狀況
+  useEffect(() => {
+    console.log('🔄 Courses component: courses data changed');
+    console.log('📊 Courses length:', courses.length);
+    console.log('⏳ Loading:', loading);
+    console.log('📈 Stats loading:', statsLoading);
+    
+    if (courses.length > 0) {
+      console.log('📝 First few courses data:');
+      courses.slice(0, 3).forEach(course => {
+        console.log(`Course ${course.course_code}:`, {
+          hasTeachingLanguages: 'teachingLanguages' in course,
+          teachingLanguagesValue: course.teachingLanguages,
+          reviewCount: course.reviewCount,
+          averageRating: course.averageRating,
+          hasReviewCount: 'reviewCount' in course,
+          departmentBadges: course.department,
+          keysCount: Object.keys(course).length
+        });
+      });
+    }
+  }, [courses, loading, statsLoading]);
 
 
   // 🚀 組件載入時的選擇性預加載 - 只載入必要數據
@@ -661,7 +684,20 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={course.department}
-                  teachingLanguages={getCourseTeachingLanguagesWithFallback(course)}
+                  teachingLanguages={(() => {
+                    const languages = getCourseTeachingLanguagesWithFallback(course);
+                    // 調試：檢查前幾個課程的數據
+                    if (course.course_code.startsWith('ACT')) {
+                      console.log(`🔍 Debug Course Data for ${course.course_code}:`, {
+                        realLanguages: course.teachingLanguages,
+                        fallbackResult: languages,
+                        reviewCount: course.reviewCount,
+                        hasTeachingLanguagesField: course.hasOwnProperty('teachingLanguages'),
+                        allFields: Object.keys(course)
+                      });
+                    }
+                    return languages;
+                  })()}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}
