@@ -391,6 +391,50 @@ export const getFacultiesForMultiDepartment = (department: string): string[] => 
   return faculties;
 };
 
+/**
+ * 拆分多部門講師的部門代碼
+ * @param department 部門代碼（可能包含多個部門，用 " / " 分隔）
+ * @returns 部門代碼數組
+ */
+export const splitInstructorDepartments = (department: string): string[] => {
+  if (!department) return [];
+  
+  return department.includes(' / ')
+    ? department.split(' / ').map(dept => dept.trim()).filter(Boolean)
+    : [department];
+};
+
+/**
+ * 檢查講師是否屬於指定部門（支持多部門講師）
+ * @param instructorDepartment 講師的部門字串（可能包含多部門）
+ * @param targetDepartment 目標部門代碼
+ * @returns 是否匹配
+ */
+export const doesInstructorBelongToDepartment = (instructorDepartment: string, targetDepartment: string): boolean => {
+  if (!instructorDepartment || !targetDepartment) return false;
+  
+  const instructorDepts = splitInstructorDepartments(instructorDepartment);
+  return instructorDepts.includes(targetDepartment);
+};
+
+/**
+ * 從講師列表中提取所有唯一部門代碼（處理多部門講師）
+ * @param instructors 講師列表
+ * @returns 唯一部門代碼數組
+ */
+export const extractUniqueDepartmentsFromInstructors = (instructors: Array<{ department: string }>): string[] => {
+  const departmentSet = new Set<string>();
+  
+  instructors.forEach(instructor => {
+    if (instructor.department) {
+      const departments = splitInstructorDepartments(instructor.department);
+      departments.forEach(dept => departmentSet.add(dept));
+    }
+  });
+  
+  return Array.from(departmentSet).sort();
+};
+
 // Teaching language code mappings with translation support
 export const getTeachingLanguageName = (code: string, t: any): string => {
   const translationKeys: { [key: string]: string } = {

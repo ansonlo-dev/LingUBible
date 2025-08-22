@@ -29,7 +29,7 @@ import { PopularItemCard } from '@/components/features/reviews/PopularItemCard';
 import { AdvancedInstructorFilters, InstructorFilters } from '@/components/features/reviews/AdvancedInstructorFilters';
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import { translateDepartmentName, extractInstructorNameForSorting } from '@/utils/textUtils';
+import { translateDepartmentName, extractInstructorNameForSorting, extractUniqueDepartmentsFromInstructors, doesInstructorBelongToDepartment } from '@/utils/textUtils';
 import { InstructorGrid } from '@/components/responsive';
 
 const InstructorsList = () => {
@@ -188,18 +188,10 @@ const InstructorsList = () => {
     return hasNonCurrentTerms && termFilterLoading;
   }, [filters.teachingTerm, termFilterLoading]);
 
-  // 📊 性能優化：記憶化可用部門計算
+  // 📊 性能優化：記憶化可用部門計算 - 支持多部門講師
   const { availableDepartments } = useMemo(() => {
-    const departments = new Set<string>();
-    
-    instructors.forEach(instructor => {
-      if (instructor.department) {
-        departments.add(instructor.department);
-      }
-    });
-    
     return {
-      availableDepartments: Array.from(departments).sort()
+      availableDepartments: extractUniqueDepartmentsFromInstructors(instructors)
     };
   }, [instructors]);
 
@@ -294,10 +286,12 @@ const InstructorsList = () => {
       });
     }
 
-    // 部門篩選
+    // 部門篩選 - 支持多部門講師
     if (filters.department.length > 0) {
       filtered = filtered.filter(instructor => 
-        filters.department.includes(instructor.department)
+        filters.department.some(targetDept => 
+          doesInstructorBelongToDepartment(instructor.department, targetDept)
+        )
       );
     }
 
