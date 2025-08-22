@@ -84,7 +84,7 @@ const Courses = () => {
     statsLoading, 
     error 
   } = useCoursesWithStats({ 
-    enableProgressiveLoading: true // 開啟漸進式載入
+    enableProgressiveLoading: false // 停用漸進式載入以避免統計資料衝突
   });
 
   // Debug: 監測數據載入狀況
