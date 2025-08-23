@@ -915,7 +915,7 @@ const CourseDetail = () => {
                   {course.course_code}
                   {course.credits && (
                     <span className="text-sm bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded font-normal whitespace-nowrap">
-                      {course.credits} {t('course.credits')}
+                      {course.credits === '0' ? t('course.nonCreditBearing') : `${course.credits} ${t('course.credits')}`}
                     </span>
                   )}
                 </CardTitle>
@@ -970,7 +970,7 @@ const CourseDetail = () => {
                     {course.course_code}
                     {course.credits && (
                       <span className="text-sm bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded font-normal whitespace-nowrap">
-                        {course.credits} {t('course.credits')}
+                        {course.credits === '0' ? t('course.nonCreditBearing') : `${course.credits} ${t('course.credits')}`}
                       </span>
                     )}
                   </CardTitle>

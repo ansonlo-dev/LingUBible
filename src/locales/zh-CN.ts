@@ -557,6 +557,7 @@ export default {
   'course.advancedMath': '高等数学',
   'course.englishLit': '英国文学',
   'course.credits': '学分',
+  'course.nonCreditBearing': '没有学分',
   'course.description': '课程描述',
   'course.prerequisites': '先修课程',
   'course.sections': '班别',

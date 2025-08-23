@@ -561,6 +561,7 @@ export default {
   'course.noReviewsDescription': '{courseName} 尚未收到任何學生評論。如果您曾經修讀過這門課程，歡迎分享您的學習體驗。',
   'course.teachingLanguage': '教學語言',
   'course.credits': '學分',
+  'course.nonCreditBearing': '沒有學分',
   'difficulty.easy': '簡單',
   'difficulty.medium': '中等',
   'difficulty.hard': '困難',

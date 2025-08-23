@@ -556,6 +556,7 @@ export default {
   'course.advancedMath': 'Advanced Mathematics',
   'course.englishLit': 'English Literature',
   'course.credits': 'credits',
+  'course.nonCreditBearing': 'non credit-bearing',
   'course.description': 'Course Description',
   'course.prerequisites': 'Prerequisites',
   'course.sections': 'Sections',
