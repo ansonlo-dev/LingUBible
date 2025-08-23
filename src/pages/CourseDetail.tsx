@@ -913,6 +913,11 @@ const CourseDetail = () => {
                 <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
                   <BookText className="h-7 w-7 text-primary" />
                   {course.course_code}
+                  {course.credits && (
+                    <span className="text-sm bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded font-normal whitespace-nowrap">
+                      {course.credits} {t('course.credits')}
+                    </span>
+                  )}
                 </CardTitle>
                 {/* Action buttons - desktop/tablet only inline */}
                 <div className="shrink-0 flex items-center gap-2">
@@ -963,6 +968,11 @@ const CourseDetail = () => {
                   <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
                     <BookText className="h-7 w-7 text-primary" />
                     {course.course_code}
+                    {course.credits && (
+                      <span className="text-sm bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded font-normal whitespace-nowrap">
+                        {course.credits} {t('course.credits')}
+                      </span>
+                    )}
                   </CardTitle>
                   <button 
                     onClick={() => navigate('/courses')}

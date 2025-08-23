@@ -555,7 +555,7 @@ export default {
   'course.introCS': 'Introduction to Computer Science',
   'course.advancedMath': 'Advanced Mathematics',
   'course.englishLit': 'English Literature',
-  'course.credits': 'Credits',
+  'course.credits': 'credits',
   'course.description': 'Course Description',
   'course.prerequisites': 'Prerequisites',
   'course.sections': 'Sections',

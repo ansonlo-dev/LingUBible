@@ -12,6 +12,7 @@ export interface Course {
   course_title_tc?: string;
   course_title_sc?: string;
   department: string;
+  credits?: string;
   $createdAt: string;
   $updatedAt: string;
 }
@@ -1498,7 +1499,7 @@ export class CourseService {
               course_title_zh: review.course_code, // Use course code as Chinese title
               department: 'Unknown', // Default department
               department_zh: '未知', // Default Chinese department
-              credits: 3, // Default credits
+              credits: "3", // Default credits
               $createdAt: new Date().toISOString(),
               $updatedAt: new Date().toISOString()
             } as Course;
@@ -3884,7 +3885,7 @@ export class CourseService {
               course_title_zh: record.course_code, // Use course code as Chinese title
               department: 'Unknown', // Default department
               department_zh: '未知', // Default Chinese department
-              credits: 3, // Default credits
+              credits: "3", // Default credits
               $createdAt: new Date().toISOString(),
               $updatedAt: new Date().toISOString()
             } as Course;
@@ -4087,7 +4088,7 @@ export class CourseService {
               course_title_zh: review.course_code, // Use course code as Chinese title
               department: 'Unknown', // Default department
               department_zh: '未知', // Default Chinese department
-              credits: 3, // Default credits
+              credits: "3", // Default credits
               $createdAt: new Date().toISOString(),
               $updatedAt: new Date().toISOString()
             } as Course;
