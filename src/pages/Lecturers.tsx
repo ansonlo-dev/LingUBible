@@ -1741,10 +1741,10 @@ const Lecturers = () => {
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <a 
-                      href={`mailto:${instructor.email}`} 
+                      href={`mailto:${instructor.email}@ln.edu.hk`} 
                       className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      {instructor.email}
+                      {instructor.email}@ln.edu.hk
                     </a>
                   </div>
                   {/* Back button - mobile only, right aligned */}
