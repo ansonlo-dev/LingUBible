@@ -1954,10 +1954,15 @@ const CourseDetail = () => {
                                 e.preventDefault();
                                 navigate(`/instructors/${encodeURIComponent(instructorName)}`);
                               }}
-                              className="font-medium text-sm text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-200 hover:text-primary/80"
+                              className="font-medium text-sm hover:text-primary transition-colors"
                             >
                               <div className="flex flex-col">
-                                <span className="truncate">{instructorName}</span>
+                                <span>{instructorName}</span>
+                                {(language === 'zh-TW' || language === 'zh-CN') && (
+                                  <span className="text-xs text-muted-foreground font-normal">
+                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
+                                  </span>
+                                )}
                               </div>
                             </a>
                           )}
@@ -2133,10 +2138,15 @@ const CourseDetail = () => {
                                 e.preventDefault();
                                 navigate(`/instructors/${encodeURIComponent(instructorName)}`);
                               }}
-                              className="font-medium text-sm text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-200 hover:text-primary/80"
+                              className="font-medium text-sm hover:text-primary transition-colors"
                             >
                               <div className="flex flex-col">
-                                <span className="truncate">{instructorName}</span>
+                                <span>{instructorName}</span>
+                                {(language === 'zh-TW' || language === 'zh-CN') && (
+                                  <span className="text-xs text-muted-foreground font-normal">
+                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
+                                  </span>
+                                )}
                               </div>
                             </a>
                           )}
