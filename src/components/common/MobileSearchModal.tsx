@@ -296,17 +296,76 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   // 搜索過濾邏輯
   const filteredCourses = searchQuery.trim() 
     ? allCourses.filter(course => {
-        // 只顯示有評論的課程
-        if (course.reviewCount === 0) return false;
-        
         const query = searchQuery.toLowerCase();
+        
+        // 獲取所有語言版本的部門名稱進行搜索
+        const departmentEnglish = course.department?.toLowerCase() || '';
+        const departmentTc = translateDepartmentName(course.department || '', (key: string) => {
+          const zhTwTranslations: Record<string, string> = {
+            'department.chinese': '中文系',
+            'department.culturalStudies': '文化研究系',
+            'department.digitalArts': '數碼藝術及創意產業系',
+            'department.english': '英文系',
+            'department.history': '歷史系',
+            'department.philosophy': '哲學系',
+            'department.translation': '翻譯系',
+            'department.englishLanguageCentre': '英語及外語教學中心',
+            'department.chineseLanguageCentre': '中國語文教學與測試中心',
+            'department.accountancy': '會計學系',
+            'department.finance': '金融學系',
+            'department.management': '管理學學系',
+            'department.marketing': '市場及國際企業學系',
+            'department.operations': '運營與風險管理學系',
+            'department.psychology': '心理學系',
+            'department.economics': '經濟學系',
+            'department.government': '政府與國際事務學系',
+            'department.sociology': '社會學及社會政策系',
+            'department.coreOffice': '核心課程辦事處',
+            'department.scienceUnit': '科學教研組',
+            'department.musicUnit': '黃炳禮音樂及演藝部',
+            'department.dataScience': '嶺南教育機構陳斌博士數據科學研究所'
+          };
+          return zhTwTranslations[key] || key;
+        }).toLowerCase();
+        const departmentSc = translateDepartmentName(course.department || '', (key: string) => {
+          const zhCnTranslations: Record<string, string> = {
+            'department.chinese': '中文系',
+            'department.culturalStudies': '文化研究系',
+            'department.digitalArts': '数码艺术及创意产业系',
+            'department.english': '英文系',
+            'department.history': '历史系',
+            'department.philosophy': '哲学系',
+            'department.translation': '翻译系',
+            'department.englishLanguageCentre': '英语及外语教学中心',
+            'department.chineseLanguageCentre': '中国语文教学与测试中心',
+            'department.accountancy': '会计学系',
+            'department.finance': '金融学系',
+            'department.management': '管理学学系',
+            'department.marketing': '市场及国际企业学系',
+            'department.operations': '运营与风险管理学系',
+            'department.psychology': '心理学系',
+            'department.economics': '经济学系',
+            'department.government': '政府与国际事务学系',
+            'department.sociology': '社会学及社会政策系',
+            'department.coreOffice': '核心课程办事处',
+            'department.scienceUnit': '科学教研组',
+            'department.musicUnit': '黄炳礼音乐及演艺部',
+            'department.dataScience': '岭南教育机构陈斌博士数据科学研究所'
+          };
+          return zhCnTranslations[key] || key;
+        }).toLowerCase();
+        
         return (
           // 課程代碼
           course.course_code.toLowerCase().includes(query) ||
           // 課程名稱（所有語言）
           course.course_title?.toLowerCase().includes(query) ||
           course.course_title_tc?.toLowerCase().includes(query) ||
-          course.course_title_sc?.toLowerCase().includes(query)
+          course.course_title_sc?.toLowerCase().includes(query) ||
+          // 部門名稱（所有語言）
+          departmentEnglish.includes(query) ||
+          departmentTc.includes(query) ||
+          departmentSc.includes(query)
         );
       })
       .sort((a, b) => b.reviewCount - a.reviewCount) // 按評論數降序排序
@@ -315,9 +374,6 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
   const filteredInstructors = searchQuery.trim()
     ? allInstructors.filter(instructor => {
-        // 只顯示有評論的講師
-        if (instructor.reviewCount === 0) return false;
-        
         const query = searchQuery.toLowerCase();
         
         // 獲取所有語言版本的部門名稱進行搜索
