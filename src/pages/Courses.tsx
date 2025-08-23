@@ -11,7 +11,7 @@ import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { translateDepartmentName, getCourseTeachingLanguagesRealOnly, getCourseTeachingLanguagesWithFallback } from '@/utils/textUtils';
+import { translateDepartmentName, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
 
 
 /**
@@ -686,13 +686,7 @@ const Courses = () => {
                   titleSc={course.course_title_sc}
                   code={course.course_code}
                   department={course.department}
-                  teachingLanguages={(() => {
-                    // 優先使用真實的teaching_records數據，fallback為保守推測
-                    if (course.teachingLanguages && course.teachingLanguages.length > 0) {
-                      return course.teachingLanguages; // 真實數據
-                    }
-                    return getCourseTeachingLanguagesWithFallback(course); // 保守fallback
-                  })()}
+                  teachingLanguages={getCourseTeachingLanguagesRealOnly(course)}
                   currentTermTeachingLanguage={course.currentTermTeachingLanguage}
                   serviceLearningTypes={course.serviceLearningTypes || []}
                   currentTermServiceLearning={course.currentTermServiceLearning}

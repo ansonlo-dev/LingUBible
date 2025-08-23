@@ -4768,23 +4768,13 @@ export class CourseService {
   static async getBatchCourseServiceLearning(courseCodes: string[]): Promise<Map<string, ('compulsory' | 'optional')[]>> {
     try {
       if (courseCodes.length === 0) {
+        console.log('🔍 getBatchCourseServiceLearning: No course codes provided');
         return new Map();
       }
 
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('course_code', courseCodes),
-          Query.orderAsc('$createdAt'),
-          Query.select(['course_code', 'service_learning', '$createdAt']),
-          Query.limit(1000) // Reasonable limit for batch processing
-        ]
-      );
-
-      const teachingRecords = response.documents as unknown as (TeachingRecord & { service_learning: string | null })[];
+      console.log(`🔍 getBatchCourseServiceLearning: Fetching service learning for ${courseCodes.length} courses`);
+      console.log('📝 First 5 course codes:', courseCodes.slice(0, 5));
       
-      // Group by course code and maintain chronological order
       const courseServiceLearningMap = new Map<string, ('compulsory' | 'optional')[]>();
       
       // Initialize maps for each course
@@ -4792,31 +4782,98 @@ export class CourseService {
         courseServiceLearningMap.set(courseCode, []);
       });
       
-      // Process records by course
-      const recordsByCourse = new Map<string, (TeachingRecord & { service_learning: string | null })[]>();
-      teachingRecords.forEach(record => {
-        if (!recordsByCourse.has(record.course_code)) {
-          recordsByCourse.set(record.course_code, []);
+      // Split into batches to avoid URL length limits (max ~50 courses per batch)
+      const batchSize = 50;
+      const batches = [];
+      
+      for (let i = 0; i < courseCodes.length; i += batchSize) {
+        batches.push(courseCodes.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchCourseServiceLearning: Processing ${batches.length} batches of ${batchSize} courses each`);
+      
+      let totalRecords = 0;
+      let totalCoursesWithData = 0;
+      
+      // Process each batch
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing service learning batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
+        
+        try {
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.equal('course_code', batch),
+              Query.orderAsc('$createdAt'),
+              Query.select(['course_code', 'service_learning', '$createdAt']),
+              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT)
+            ]
+          );
+
+          const teachingRecords = response.documents as unknown as (TeachingRecord & { service_learning: string | null })[];
+          totalRecords += teachingRecords.length;
+          
+          // Process records by course
+          const recordsByCourse = new Map<string, (TeachingRecord & { service_learning: string | null })[]>();
+          teachingRecords.forEach(record => {
+            if (!recordsByCourse.has(record.course_code)) {
+              recordsByCourse.set(record.course_code, []);
+            }
+            recordsByCourse.get(record.course_code)!.push(record);
+          });
+          
+          // Extract unique service learning types for each course in chronological order
+          recordsByCourse.forEach((records, courseCode) => {
+            const seenTypes = new Set<string>();
+            const orderedTypes: ('compulsory' | 'optional')[] = [];
+            
+            records.forEach(record => {
+              if (record.service_learning && 
+                  (record.service_learning === 'compulsory' || record.service_learning === 'optional') &&
+                  !seenTypes.has(record.service_learning)) {
+                seenTypes.add(record.service_learning);
+                orderedTypes.push(record.service_learning as 'compulsory' | 'optional');
+              }
+            });
+            
+            if (orderedTypes.length > 0) {
+              totalCoursesWithData++;
+              courseServiceLearningMap.set(courseCode, orderedTypes);
+            }
+          });
+        } catch (error) {
+          console.error(`❌ Error processing service learning batch ${batchIndex + 1}:`, error);
+          // Continue with other batches even if one fails
         }
-        recordsByCourse.get(record.course_code)!.push(record);
+      }
+
+      console.log(`🔍 getBatchCourseServiceLearning: Processed ${totalRecords} total records`);
+      console.log(`🎯 getBatchCourseServiceLearning: ${totalCoursesWithData} courses have service learning data`);
+      
+      // Calculate service learning statistics for debugging
+      const serviceStats = { 'compulsory': 0, 'optional': 0, 'none': 0 };
+      let coursesWithServiceLearning = 0;
+      
+      courseServiceLearningMap.forEach((types, courseCode) => {
+        if (types.length > 0) {
+          coursesWithServiceLearning++;
+          types.forEach(type => {
+            serviceStats[type]++;
+          });
+        } else {
+          serviceStats['none']++;
+        }
       });
       
-      // Extract unique service learning types for each course in chronological order
-      recordsByCourse.forEach((records, courseCode) => {
-        const seenTypes = new Set<string>();
-        const orderedTypes: ('compulsory' | 'optional')[] = [];
-        
-        records.forEach(record => {
-          if (record.service_learning && 
-              (record.service_learning === 'compulsory' || record.service_learning === 'optional') &&
-              !seenTypes.has(record.service_learning)) {
-            seenTypes.add(record.service_learning);
-            orderedTypes.push(record.service_learning as 'compulsory' | 'optional');
-          }
-        });
-        
-        courseServiceLearningMap.set(courseCode, orderedTypes);
-      });
+      console.log(`🔢 getBatchCourseServiceLearning statistics:`);
+      console.log(`📊 Total courses with service learning: ${coursesWithServiceLearning}/${courseServiceLearningMap.size}`);
+      console.log(`📈 Service learning distribution:`, serviceStats);
+      
+      // Output first 5 courses' service learning data for debugging
+      const first5 = Array.from(courseServiceLearningMap.entries()).slice(0, 5);
+      console.log('📝 Sample service learning mapping:', first5);
 
       return courseServiceLearningMap;
     } catch (error) {

@@ -1,7 +1,7 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
-import { processPluralTranslation, getCourseTeachingLanguagesWithFallback } from '@/utils/textUtils';
+import { processPluralTranslation, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -218,48 +218,37 @@ export function AdvancedCourseFilters({
       counts[code] = 0;
     });
     
-    console.log(`🔍 getLanguageCounts: Processing ${courses.length} courses...`);
+    console.log(`🔍 getLanguageCounts: Processing ${courses.length} courses (real data only)...`);
     
-    // Count courses for each teaching language code with fallback logic
+    // Count courses for each teaching language code using only real database data
     let coursesWithRealData = 0;
-    let coursesWithFallbackData = 0;
     
     courses.forEach((course, index) => {
-      // Get teaching languages from either real data or fallback
-      const courseLanguages = (() => {
-        // Prioritize real teaching language data
-        if (course.teachingLanguages && course.teachingLanguages.length > 0) {
-          coursesWithRealData++;
-          return course.teachingLanguages;
+      // Get teaching languages from real database data only
+      const courseLanguages = getCourseTeachingLanguagesRealOnly(course);
+      
+      if (courseLanguages.length > 0) {
+        coursesWithRealData++;
+        
+        // Debug log for first few courses
+        if (index < 3) {
+          console.log(`🔍 Course ${course.course_code}:`, {
+            realData: course.teachingLanguages,
+            finalLanguages: courseLanguages
+          });
         }
         
-        // Use conservative fallback logic
-        const fallback = getCourseTeachingLanguagesWithFallback(course);
-        if (fallback.length > 0) {
-          coursesWithFallbackData++;
-        }
-        return fallback;
-      })();
-      
-      // Debug log for first few courses
-      if (index < 3) {
-        console.log(`🔍 Course ${course.course_code}:`, {
-          realData: course.teachingLanguages,
-          finalLanguages: courseLanguages,
-          source: course.teachingLanguages?.length > 0 ? 'real' : 'fallback'
+        // Count each language for this course
+        courseLanguages.forEach(langCode => {
+          if (counts.hasOwnProperty(langCode)) {
+            counts[langCode]++;
+          }
         });
       }
-      
-      // Count each language for this course
-      courseLanguages.forEach(langCode => {
-        if (counts.hasOwnProperty(langCode)) {
-          counts[langCode]++;
-        }
-      });
     });
     
     console.log(`📊 Language counts result:`, counts);
-    console.log(`📈 Data sources: ${coursesWithRealData} real + ${coursesWithFallbackData} fallback`);
+    console.log(`📈 Courses with real language data: ${coursesWithRealData}`);
     
     return counts;
   };
