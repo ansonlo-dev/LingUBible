@@ -1622,6 +1622,8 @@ export default {
   'instructors.noTeachingTitle': '暂无教学记录',
   'instructors.noLectureRecords': '没有找到讲课记录',
   'instructors.noTutorialRecords': '没有找到导修记录',
+  'instructors.noProjectRecords': '没有找到专题记录',
+  'instructors.noSeminarRecords': '没有找到研讨记录',
   'instructors.teaching': '正在授课',
   'instructors.notTeaching': '未授课',
   'instructors.noTeachingDesc': '{name} 的教学记录尚未在系统中更新，或可能使用了不同的姓名格式。',

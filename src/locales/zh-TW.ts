@@ -1564,6 +1564,8 @@ export default {
   'instructors.noTeachingTitle': '暫無教學記錄',
   'instructors.noLectureRecords': '沒有找到講課記錄',
   'instructors.noTutorialRecords': '沒有找到導修記錄',
+  'instructors.noProjectRecords': '沒有找到專題記錄',
+  'instructors.noSeminarRecords': '沒有找到研討記錄',
   'instructors.teaching': '正在授課',
   'instructors.notTeaching': '未授課',
   'instructors.noTeachingDesc': '{name} 的教學記錄尚未在系統中更新，或可能使用了不同的姓名格式。',

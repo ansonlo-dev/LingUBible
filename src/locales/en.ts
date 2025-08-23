@@ -710,6 +710,8 @@ export default {
   'instructors.noTeachingTitle': 'No Teaching Records',
   'instructors.noLectureRecords': 'No lecture records found',
   'instructors.noTutorialRecords': 'No tutorial records found',
+  'instructors.noProjectRecords': 'No project records found',
+  'instructors.noSeminarRecords': 'No seminar records found',
   'instructors.teaching': 'Teaching',
   'instructors.notTeaching': 'Not Teaching',
   'instructors.noTeachingDesc': '{name}\'s teaching records have not been updated in the system, or may be using a different name format.',
