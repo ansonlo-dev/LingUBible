@@ -760,11 +760,13 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                         </span>
                       ))}
                       {/* Department Badge */}
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
-                        <span className="break-words hyphens-auto">
-                          {translateDepartmentName(props.department, t)}
+                      {props.department && translateDepartmentName(props.department, t) && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
+                          <span className="break-words hyphens-auto">
+                            {translateDepartmentName(props.department, t)}
+                          </span>
                         </span>
-                      </span>
+                      )}
                       {/* Teaching Language and Service Learning Badges Row */}
                       {!courseStatsLoading && ((props.teachingLanguages?.length ?? 0) > 0 || (props.serviceLearningTypes?.length ?? 0) > 0) && (
                         <div className="flex items-center gap-1 sm:gap-1.5">
@@ -1017,31 +1019,33 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                       </span>
                     ))}
                     {/* Department Badge */}
-                    {props.enableTwoTapMode ? (
-                      <ResponsiveTooltip 
-                        content={t('filter.clickToFilterDepartment')}
-                        hasClickAction={true}
-                        clickActionText={(props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
-                        showCloseButton={true}
-                        onReset={resetDepartmentState}
-                        open={isMobile ? departmentTooltipOpen : undefined}
-                        onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
-                      >
-                        <span 
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
-                          onClick={handleDepartmentBadgeClick}
+                    {props.department && translateDepartmentName(props.department, t) && (
+                      props.enableTwoTapMode ? (
+                        <ResponsiveTooltip 
+                          content={t('filter.clickToFilterDepartment')}
+                          hasClickAction={true}
+                          clickActionText={(props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
+                          showCloseButton={true}
+                          onReset={resetDepartmentState}
+                          open={isMobile ? departmentTooltipOpen : undefined}
+                          onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
                         >
+                          <span 
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
+                            onClick={handleDepartmentBadgeClick}
+                          >
+                            <span className="break-words hyphens-auto">
+                              {translateDepartmentName(props.department, t)}
+                            </span>
+                          </span>
+                        </ResponsiveTooltip>
+                      ) : (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
                           <span className="break-words hyphens-auto">
                             {translateDepartmentName(props.department, t)}
                           </span>
                         </span>
-                      </ResponsiveTooltip>
-                    ) : (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 shrink-0 max-w-full">
-                        <span className="break-words hyphens-auto">
-                          {translateDepartmentName(props.department, t)}
-                        </span>
-                      </span>
+                      )
                     )}
                     {/* Teaching Language Badge */}
                     {!props.isLoading && props.teachingLanguages && props.teachingLanguages.length > 0 && (

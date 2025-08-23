@@ -234,6 +234,11 @@ export function extractInstructorNameForSorting(fullName: string): string {
  * @returns 翻譯後的部門名稱，如果showAbbreviation為true則格式為「CHI - 中文系」，否則僅為「中文系」
  */
 export const translateDepartmentName = (department: string, t: any, showAbbreviation: boolean = false): string => {
+  // Handle empty or invalid department
+  if (!department || department.trim() === '') {
+    return '';
+  }
+  
   // Handle multi-department cases (separated by " / ")
   if (department.includes(' / ')) {
     const departments = department.split(' / ').map(dept => dept.trim());
