@@ -252,7 +252,8 @@ export class CourseService {
     const additionalCacheKeys = [
       `course_${courseCode}`,
       `course_reviews_${courseCode}`,
-      `course_stats_${courseCode}`
+      `course_stats_${courseCode}`,
+      `course_teaching_records_${courseCode}` // 新增教學記錄快取
     ];
     additionalCacheKeys.forEach(key => {
       this.cache.delete(key);
@@ -944,6 +945,15 @@ export class CourseService {
    */
   static async getCourseTeachingRecords(courseCode: string): Promise<TeachingRecord[]> {
     try {
+      const cacheKey = `course_teaching_records_${courseCode}`;
+      
+      // 檢查快取
+      const cached = this.getCached<TeachingRecord[]>(cacheKey);
+      if (cached) {
+        console.log(`📚 使用快取：課程 ${courseCode} 的教學記錄: ${cached.length} 筆記錄`);
+        return cached;
+      }
+
       const response = await databases.listDocuments(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
@@ -961,7 +971,10 @@ export class CourseService {
         instructor_name: (!record.instructor_name || record.instructor_name.trim() === '') ? 'UNKNOWN' : record.instructor_name
       }));
 
-      console.log(`📚 獲取課程 ${courseCode} 的教學記錄: ${teachingRecords.length} 筆記錄`);
+      // 快取結果 (10分鐘)
+      this.setCached(cacheKey, teachingRecords, 10 * 60 * 1000);
+      
+      console.log(`📚 獲取課程 ${courseCode} 的教學記錄: ${teachingRecords.length} 筆記錄 (已快取)`);
       return teachingRecords;
     } catch (error) {
       console.error('Error fetching teaching records:', error);

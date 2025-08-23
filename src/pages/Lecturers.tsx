@@ -3628,37 +3628,47 @@ const Lecturers = () => {
                                     <div className="space-y-2 mb-3">
                                       {/* Instructor name and badges container */}
                                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
-                                        <h4 className="font-semibold text-lg cursor-pointer hover:text-primary transition-colors min-w-0 md:flex-1">
-                                          <a
-                                            href={`/instructors/${encodeURIComponent(instructor.instructor_name)}`}
-                                            className="hover:underline"
-                                            onClick={(e) => {
-                                              e.preventDefault();
-                                              navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`);
-                                            }}
-                                          >
-                                            {(() => {
-                                              const fullInstructor = otherInstructorsMap.get(instructor.instructor_name);
-                                              if (fullInstructor) {
-                                                const nameInfo = getFormattedInstructorName(fullInstructor, language);
+                                        <h4 className="font-semibold text-lg min-w-0 md:flex-1">
+                                          {instructor.instructor_name === 'UNKNOWN' ? (
+                                            // For UNKNOWN instructors, display as non-clickable text
+                                            <div className="text-muted-foreground">
+                                              <div>
+                                                <div>{language === 'zh-TW' ? '未知教師' : language === 'zh-CN' ? '未知教师' : 'Unknown Instructor'}</div>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            // For known instructors, display as clickable link
+                                            <a
+                                              href={`/instructors/${encodeURIComponent(instructor.instructor_name)}`}
+                                              className="hover:underline cursor-pointer hover:text-primary transition-colors"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}`);
+                                              }}
+                                            >
+                                              {(() => {
+                                                const fullInstructor = otherInstructorsMap.get(instructor.instructor_name);
+                                                if (fullInstructor) {
+                                                  const nameInfo = getFormattedInstructorName(fullInstructor, language);
+                                                  return (
+                                                    <div>
+                                                      <div>{nameInfo.primary}</div>
+                                                      {nameInfo.secondary && (
+                                                        <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                                                          {nameInfo.secondary}
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                }
                                                 return (
                                                   <div>
-                                                    <div>{nameInfo.primary}</div>
-                                                    {nameInfo.secondary && (
-                                                      <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                                        {nameInfo.secondary}
-                                                      </div>
-                                                    )}
+                                                    <div>{instructor.instructor_name}</div>
                                                   </div>
                                                 );
-                                              }
-                                              return (
-                                                <div>
-                                                  <div>{instructor.instructor_name}</div>
-                                                </div>
-                                              );
-                                            })()}
-                                          </a>
+                                              })()}
+                                            </a>
+                                          )}
                                         </h4>
                                         
                                         {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}

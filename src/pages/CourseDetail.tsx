@@ -1494,26 +1494,36 @@ const CourseDetail = () => {
                       <div key={instructorName} className="p-3 rounded-lg space-y-3">
                         {/* First row: Instructor name */}
                         <div className="flex-shrink-0">
-                          <a
-                            href={`/instructors/${encodeURIComponent(instructorName)}`}
-                            onClick={(e) => {
-                              if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                return;
-                              }
-                              e.preventDefault();
-                              navigate(`/instructors/${encodeURIComponent(instructorName)}`);
-                            }}
-                            className="font-medium text-sm hover:text-primary transition-colors"
-                          >
-                            <div className="flex flex-col">
-                              <span>{instructorName}</span>
-                              {(language === 'zh-TW' || language === 'zh-CN') && (
-                                <span className="text-xs text-muted-foreground font-normal">
-                                  {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
-                                </span>
-                              )}
+                          {instructorName === 'UNKNOWN' ? (
+                            // For UNKNOWN instructors, display as non-clickable text
+                            <div className="font-medium text-sm text-muted-foreground">
+                              <div className="flex flex-col">
+                                <span>{language === 'zh-TW' ? '未知教師' : language === 'zh-CN' ? '未知教师' : 'Unknown Instructor'}</span>
+                              </div>
                             </div>
-                          </a>
+                          ) : (
+                            // For known instructors, display as clickable link
+                            <a
+                              href={`/instructors/${encodeURIComponent(instructorName)}`}
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  return;
+                                }
+                                e.preventDefault();
+                                navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+                              }}
+                              className="font-medium text-sm hover:text-primary transition-colors"
+                            >
+                              <div className="flex flex-col">
+                                <span>{instructorName}</span>
+                                {(language === 'zh-TW' || language === 'zh-CN') && (
+                                  <span className="text-xs text-muted-foreground font-normal">
+                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
+                                  </span>
+                                )}
+                              </div>
+                            </a>
+                          )}
                         </div>
                         
                         {/* Second row: Terms and Teaching Languages Badges */}
@@ -1660,26 +1670,36 @@ const CourseDetail = () => {
                       <div key={instructorName} className="p-3 rounded-lg space-y-3">
                         {/* First row: Instructor name */}
                         <div className="flex-shrink-0">
-                          <a
-                            href={`/instructors/${encodeURIComponent(instructorName)}`}
-                            onClick={(e) => {
-                              if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                return;
-                              }
-                              e.preventDefault();
-                              navigate(`/instructors/${encodeURIComponent(instructorName)}`);
-                            }}
-                            className="font-medium text-sm hover:text-primary transition-colors"
-                          >
-                            <div className="flex flex-col">
-                              <span>{instructorName}</span>
-                              {(language === 'zh-TW' || language === 'zh-CN') && (
-                                <span className="text-xs text-muted-foreground font-normal">
-                                  {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
-                                </span>
-                              )}
+                          {instructorName === 'UNKNOWN' ? (
+                            // For UNKNOWN instructors, display as non-clickable text
+                            <div className="font-medium text-sm text-muted-foreground">
+                              <div className="flex flex-col">
+                                <span>{language === 'zh-TW' ? '未知教師' : language === 'zh-CN' ? '未知教师' : 'Unknown Instructor'}</span>
+                              </div>
                             </div>
-                          </a>
+                          ) : (
+                            // For known instructors, display as clickable link
+                            <a
+                              href={`/instructors/${encodeURIComponent(instructorName)}`}
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  return;
+                                }
+                                e.preventDefault();
+                                navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+                              }}
+                              className="font-medium text-sm hover:text-primary transition-colors"
+                            >
+                              <div className="flex flex-col">
+                                <span>{instructorName}</span>
+                                {(language === 'zh-TW' || language === 'zh-CN') && (
+                                  <span className="text-xs text-muted-foreground font-normal">
+                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
+                                  </span>
+                                )}
+                              </div>
+                            </a>
+                          )}
                         </div>
                         
                         {/* Second row: Terms and Teaching Languages Badges */}
