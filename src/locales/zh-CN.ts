@@ -349,11 +349,13 @@ export default {
   'sessionType.lecture': '讲课 (Lecture)',
   'sessionType.tutorial': '导修 (Tutorial)',
   'sessionType.lab': '实验',
+  'sessionType.project': '专题 (Project)',
   'sessionType.seminar': '研讨',
   // Session types for review cards (without brackets)
   'sessionTypeBadge.lecture': '讲课',
   'sessionTypeBadge.tutorial': '导修',
   'sessionTypeBadge.lab': '实验',
+  'sessionTypeBadge.project': '专题',
   'sessionTypeBadge.seminar': '研讨',
   'sessionTypeBadge.unknown': '未知',
   // Grade and GPA
@@ -491,6 +493,8 @@ export default {
   'pages.courseDetail.filterByTeachingLanguage': '教学语言',
   'pages.courseDetail.noLectureRecords': '没有找到讲座记录',
   'pages.courseDetail.noTutorialRecords': '没有找到导修记录',
+  'pages.courseDetail.noProjectRecords': '没有找到专题记录',
+  'pages.courseDetail.noSeminarRecords': '没有找到研讨记录',
   'pages.courseDetail.offerRecords': '开设记录',
   'pages.courseDetail.courseInfo': '课程资讯',
   'pages.instructors.title': '教师目录',

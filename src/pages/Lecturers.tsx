@@ -933,7 +933,18 @@ const Lecturers = () => {
     return Array.from(courseSessionMap.entries())
       .map(([key, data]) => {
         const [courseCode, sessionType] = key.split('|');
-        const sessionTypeTranslated = sessionType === 'Lecture' ? t('sessionType.lecture') : t('sessionType.tutorial');
+        const getSessionTypeTranslated = (sessionType: string) => {
+          switch (sessionType) {
+            case 'Lecture': return t('sessionType.lecture');
+            case 'Tutorial': return t('sessionType.tutorial');
+            case 'Lab': return t('sessionType.lab');
+            case 'Project': return t('sessionType.project');
+            case 'Seminar': return t('sessionType.seminar');
+            default: return sessionType;
+          }
+        };
+        
+        const sessionTypeTranslated = getSessionTypeTranslated(sessionType);
         
         // Only show translated session type without English for Chinese languages
         const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
@@ -950,9 +961,15 @@ const Lecturers = () => {
         };
       })
       .sort((a, b) => {
-        // First sort by session type (Lecture before Tutorial)
+        // First sort by session type (Lecture, Tutorial, Project, Seminar)
         if (a.sessionType !== b.sessionType) {
-          return a.sessionType === 'Lecture' ? -1 : 1;
+          const sessionTypeOrder = ['Lecture', 'Tutorial', 'Project', 'Seminar'];
+          const aIndex = sessionTypeOrder.indexOf(a.sessionType);
+          const bIndex = sessionTypeOrder.indexOf(b.sessionType);
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+          }
+          return a.sessionType.localeCompare(b.sessionType);
         }
         
         // Within same session type, sort by course code alphabetically
@@ -1150,12 +1167,25 @@ const Lecturers = () => {
     if (teachingCourses && teachingCourses.length > 0) {
       const lectureCount = teachingCourses.filter(course => course.sessionType === 'Lecture').length;
       const tutorialCount = teachingCourses.filter(course => course.sessionType === 'Tutorial').length;
+      const projectCount = teachingCourses.filter(course => course.sessionType === 'Project').length;
+      const seminarCount = teachingCourses.filter(course => course.sessionType === 'Seminar').length;
       
-      // If current active tab has no records, switch to available tab
-      if (activeTeachingTab === 'lecture' && lectureCount === 0 && tutorialCount > 0) {
-        setActiveTeachingTab('tutorial');
-      } else if (activeTeachingTab === 'tutorial' && tutorialCount === 0 && lectureCount > 0) {
-        setActiveTeachingTab('lecture');
+      const availableTabs = [];
+      if (lectureCount > 0) availableTabs.push('lecture');
+      if (tutorialCount > 0) availableTabs.push('tutorial');
+      if (projectCount > 0) availableTabs.push('project');
+      if (seminarCount > 0) availableTabs.push('seminar');
+      
+      // If current active tab has no records, switch to first available tab
+      const currentTabCounts = {
+        'lecture': lectureCount,
+        'tutorial': tutorialCount,
+        'project': projectCount,
+        'seminar': seminarCount
+      };
+      
+      if (currentTabCounts[activeTeachingTab as keyof typeof currentTabCounts] === 0 && availableTabs.length > 0) {
+        setActiveTeachingTab(availableTabs[0]);
       }
     }
   }, [teachingCourses, activeTeachingTab]);
@@ -2122,6 +2152,32 @@ const Lecturers = () => {
                         <span className="font-bold">{t('sessionType.tutorial')}</span>
                         <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
+                        </div>
+                      </div>
+                    </TabsTrigger>
+                  )}
+                  {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Project').length > 0 && (
+                    <TabsTrigger 
+                      value="project" 
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold">{t('sessionType.project')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                          {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Project').length}
+                        </div>
+                      </div>
+                    </TabsTrigger>
+                  )}
+                  {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Seminar').length > 0 && (
+                    <TabsTrigger 
+                      value="seminar" 
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold">{t('sessionType.seminar')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                          {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Seminar').length}
                         </div>
                       </div>
                     </TabsTrigger>

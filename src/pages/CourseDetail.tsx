@@ -418,7 +418,18 @@ const CourseDetail = () => {
           instructorSessionCounts.set(key, count + 1);
           
           // Store the formatted label
-          const sessionTypeTranslated = detail.session_type === 'Lecture' ? t('sessionType.lecture') : t('sessionType.tutorial');
+          const getSessionTypeTranslated = (sessionType: string) => {
+            switch (sessionType) {
+              case 'Lecture': return t('sessionType.lecture');
+              case 'Tutorial': return t('sessionType.tutorial');
+              case 'Lab': return t('sessionType.lab');
+              case 'Project': return t('sessionType.project');
+              case 'Seminar': return t('sessionType.seminar');
+              default: return sessionType;
+            }
+          };
+          
+          const sessionTypeTranslated = getSessionTypeTranslated(detail.session_type);
           const instructorDisplayName = detail.instructor_name === 'UNKNOWN' 
             ? (language === 'en' ? 'Unknown instructor' : '未知教師')
             : detail.instructor_name;
@@ -444,9 +455,15 @@ const CourseDetail = () => {
         sessionType: key.split('|')[1]
       }))
       .sort((a, b) => {
-        // First sort by session type (Lecture before Tutorial)
+        // First sort by session type (Lecture, Tutorial, Project, Seminar)
         if (a.sessionType !== b.sessionType) {
-          return a.sessionType === 'Lecture' ? -1 : 1;
+          const sessionTypeOrder = ['Lecture', 'Tutorial', 'Project', 'Seminar'];
+          const aIndex = sessionTypeOrder.indexOf(a.sessionType);
+          const bIndex = sessionTypeOrder.indexOf(b.sessionType);
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+          }
+          return a.sessionType.localeCompare(b.sessionType);
         }
         
         // Within same session type, sort by instructor name alphabetically
@@ -822,12 +839,25 @@ const CourseDetail = () => {
     if (teachingInfo && teachingInfo.length > 0) {
       const lectureCount = teachingInfo.filter(info => info.sessionType === 'Lecture').length;
       const tutorialCount = teachingInfo.filter(info => info.sessionType === 'Tutorial').length;
+      const projectCount = teachingInfo.filter(info => info.sessionType === 'Project').length;
+      const seminarCount = teachingInfo.filter(info => info.sessionType === 'Seminar').length;
       
-      // If current active tab has no records, switch to available tab
-      if (activeTeachingTab === 'lecture' && lectureCount === 0 && tutorialCount > 0) {
-        setActiveTeachingTab('tutorial');
-      } else if (activeTeachingTab === 'tutorial' && tutorialCount === 0 && lectureCount > 0) {
-        setActiveTeachingTab('lecture');
+      const availableTabs = [];
+      if (lectureCount > 0) availableTabs.push('lecture');
+      if (tutorialCount > 0) availableTabs.push('tutorial');
+      if (projectCount > 0) availableTabs.push('project');
+      if (seminarCount > 0) availableTabs.push('seminar');
+      
+      // If current active tab has no records, switch to first available tab
+      const currentTabCounts = {
+        'lecture': lectureCount,
+        'tutorial': tutorialCount,
+        'project': projectCount,
+        'seminar': seminarCount
+      };
+      
+      if (currentTabCounts[activeTeachingTab as keyof typeof currentTabCounts] === 0 && availableTabs.length > 0) {
+        setActiveTeachingTab(availableTabs[0]);
       }
     }
   }, [teachingInfo, activeTeachingTab]);
@@ -1273,6 +1303,32 @@ const CourseDetail = () => {
                         </div>
                       </TabsTrigger>
                     )}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Project').length > 0 && (
+                      <TabsTrigger 
+                        value="project" 
+                        className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">{t('sessionType.project')}</span>
+                          <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Project').length}
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    )}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length > 0 && (
+                      <TabsTrigger 
+                        value="seminar" 
+                        className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">{t('sessionType.seminar')}</span>
+                          <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length}
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    )}
                   </TabsList>
 
                   {/* Mobile filters - each filter in its own row */}
@@ -1377,6 +1433,32 @@ const CourseDetail = () => {
                           <span className="font-bold">{t('sessionType.tutorial')}</span>
                           <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                             {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length}
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    )}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Project').length > 0 && (
+                      <TabsTrigger 
+                        value="project" 
+                        className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">{t('sessionType.project')}</span>
+                          <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Project').length}
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    )}
+                    {filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length > 0 && (
+                      <TabsTrigger 
+                        value="seminar" 
+                        className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">{t('sessionType.seminar')}</span>
+                          <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                            {filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length}
                           </div>
                         </div>
                       </TabsTrigger>
@@ -1814,6 +1896,204 @@ const CourseDetail = () => {
                                 </div>
                               );
                             })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="project" className="mt-0">
+                {filteredTeachingInfo.filter(info => info.sessionType === 'Project').length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">{t('pages.courseDetail.noProjectRecords')}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Group by instructor and sort alphabetically */}
+                    {Object.entries(
+                      filteredTeachingInfo
+                        .filter(info => info.sessionType === 'Project')
+                        .reduce((acc, info) => {
+                          const instructorName = info.instructor.name;
+                          if (!acc[instructorName]) {
+                            acc[instructorName] = {
+                              instructor: info.instructor,
+                              terms: []
+                            };
+                          }
+                          acc[instructorName].terms.push(info.term);
+                          return acc;
+                        }, {} as Record<string, { instructor: any; terms: any[] }>)
+                    )
+                    .sort(([a], [b]) => {
+                      const aNameForSort = extractInstructorNameForSorting(a);
+                      const bNameForSort = extractInstructorNameForSorting(b);
+                      return aNameForSort.localeCompare(bNameForSort);
+                    }) // Sort by instructor name alphabetically, ignoring titles
+                    .map(([instructorName, data]) => (
+                      <div key={instructorName} className="p-3 rounded-lg space-y-3">
+                        {/* First row: Instructor name */}
+                        <div className="flex-shrink-0">
+                          {instructorName === 'UNKNOWN' ? (
+                            // For UNKNOWN instructors, display as non-clickable text
+                            <div className="font-medium text-sm text-muted-foreground">
+                              <div className="flex flex-col">
+                                <span>{language === 'zh-TW' ? '未知教師' : language === 'zh-CN' ? '未知教师' : 'Unknown Instructor'}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            // For known instructors, display as clickable link
+                            <a
+                              href={`/instructors/${encodeURIComponent(instructorName)}`}
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  return;
+                                }
+                                e.preventDefault();
+                                navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+                              }}
+                              className="font-medium text-sm text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-200 hover:text-primary/80"
+                            >
+                              <div className="flex flex-col">
+                                <span className="truncate">{instructorName}</span>
+                              </div>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Second row: Terms grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {[...new Set(data.terms.map(term => term.term_code))].sort().map(termCode => {
+                            const term = data.terms.find(t => t.term_code === termCode);
+                            const teachingLanguage = filteredTeachingInfo.find(info => 
+                              info.term.term_code === term.term_code && 
+                              info.instructor.name === instructorName &&
+                              info.sessionType === 'Project'
+                            )?.teachingLanguage;
+                            
+                            return (
+                              <div key={termCode} className="bg-muted/30 hover:bg-muted/50 p-2 rounded border text-center transition-colors duration-200">
+                                <div className="text-xs font-semibold text-foreground">{termCode}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(term.start_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })} - {new Date(term.end_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </div>
+                                {teachingLanguage && (
+                                  <div className="text-xs text-muted-foreground mt-1 font-medium">
+                                    {getTeachingLanguageName(teachingLanguage, t)}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="seminar" className="mt-0">
+                {filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">{t('pages.courseDetail.noSeminarRecords')}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Group by instructor and sort alphabetically */}
+                    {Object.entries(
+                      filteredTeachingInfo
+                        .filter(info => info.sessionType === 'Seminar')
+                        .reduce((acc, info) => {
+                          const instructorName = info.instructor.name;
+                          if (!acc[instructorName]) {
+                            acc[instructorName] = {
+                              instructor: info.instructor,
+                              terms: []
+                            };
+                          }
+                          acc[instructorName].terms.push(info.term);
+                          return acc;
+                        }, {} as Record<string, { instructor: any; terms: any[] }>)
+                    )
+                    .sort(([a], [b]) => {
+                      const aNameForSort = extractInstructorNameForSorting(a);
+                      const bNameForSort = extractInstructorNameForSorting(b);
+                      return aNameForSort.localeCompare(bNameForSort);
+                    }) // Sort by instructor name alphabetically, ignoring titles
+                    .map(([instructorName, data]) => (
+                      <div key={instructorName} className="p-3 rounded-lg space-y-3">
+                        {/* First row: Instructor name */}
+                        <div className="flex-shrink-0">
+                          {instructorName === 'UNKNOWN' ? (
+                            // For UNKNOWN instructors, display as non-clickable text
+                            <div className="font-medium text-sm text-muted-foreground">
+                              <div className="flex flex-col">
+                                <span>{language === 'zh-TW' ? '未知教師' : language === 'zh-CN' ? '未知教师' : 'Unknown Instructor'}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            // For known instructors, display as clickable link
+                            <a
+                              href={`/instructors/${encodeURIComponent(instructorName)}`}
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  return;
+                                }
+                                e.preventDefault();
+                                navigate(`/instructors/${encodeURIComponent(instructorName)}`);
+                              }}
+                              className="font-medium text-sm text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-200 hover:text-primary/80"
+                            >
+                              <div className="flex flex-col">
+                                <span className="truncate">{instructorName}</span>
+                              </div>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Second row: Terms grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {[...new Set(data.terms.map(term => term.term_code))].sort().map(termCode => {
+                            const term = data.terms.find(t => t.term_code === termCode);
+                            const teachingLanguage = filteredTeachingInfo.find(info => 
+                              info.term.term_code === term.term_code && 
+                              info.instructor.name === instructorName &&
+                              info.sessionType === 'Seminar'
+                            )?.teachingLanguage;
+                            
+                            return (
+                              <div key={termCode} className="bg-muted/30 hover:bg-muted/50 p-2 rounded border text-center transition-colors duration-200">
+                                <div className="text-xs font-semibold text-foreground">{termCode}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(term.start_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })} - {new Date(term.end_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </div>
+                                {teachingLanguage && (
+                                  <div className="text-xs text-muted-foreground mt-1 font-medium">
+                                    {getTeachingLanguageName(teachingLanguage, t)}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}

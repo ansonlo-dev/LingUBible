@@ -359,11 +359,13 @@ export default {
   'sessionType.lecture': 'Lecture',
   'sessionType.tutorial': 'Tutorial',
   'sessionType.lab': 'Lab',
+  'sessionType.project': 'Project',
   'sessionType.seminar': 'Seminar',
   // Session types for review cards (same as above for English)
   'sessionTypeBadge.lecture': 'Lecture',
   'sessionTypeBadge.tutorial': 'Tutorial',
   'sessionTypeBadge.lab': 'Lab',
+  'sessionTypeBadge.project': 'Project',
   'sessionTypeBadge.seminar': 'Seminar',
   'sessionTypeBadge.unknown': 'Unknown',
   // Grade and GPA
@@ -490,6 +492,8 @@ export default {
   'pages.courseDetail.filterByTeachingLanguage': 'Teaching Language',
   'pages.courseDetail.noLectureRecords': 'No lecture records found',
   'pages.courseDetail.noTutorialRecords': 'No tutorial records found',
+  'pages.courseDetail.noProjectRecords': 'No project records found',
+  'pages.courseDetail.noSeminarRecords': 'No seminar records found',
   'pages.courseDetail.offerRecords': 'Offer Records',
   'pages.courseDetail.courseInfo': 'Course Info',
   'pages.instructors.title': 'Instructors Catalog',

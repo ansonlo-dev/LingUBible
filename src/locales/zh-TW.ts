@@ -340,11 +340,13 @@ export default {
   'sessionType.lecture': '講課 (Lecture)',
   'sessionType.tutorial': '導修 (Tutorial)',
   'sessionType.lab': '實驗',
+  'sessionType.project': '專題 (Project)',
   'sessionType.seminar': '研討',
   // Session types for review cards (without brackets)
   'sessionTypeBadge.lecture': '講課',
   'sessionTypeBadge.tutorial': '導修',
   'sessionTypeBadge.lab': '實驗',
+  'sessionTypeBadge.project': '專題',
   'sessionTypeBadge.seminar': '研討',
   'sessionTypeBadge.unknown': '未知',
   // Grade and GPA
@@ -490,6 +492,8 @@ export default {
   'pages.courseDetail.filterByTeachingLanguage': '教學語言',
   'pages.courseDetail.noLectureRecords': '沒有找到講座記錄',
   'pages.courseDetail.noTutorialRecords': '沒有找到導修記錄',
+  'pages.courseDetail.noProjectRecords': '沒有找到專題記錄',
+  'pages.courseDetail.noSeminarRecords': '沒有找到研討記錄',
   'pages.courseDetail.offerRecords': '開設記錄',
   'pages.courseDetail.courseInfo': '課程資訊',
   'pages.instructors.title': '教師目錄',
