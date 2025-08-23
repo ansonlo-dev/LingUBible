@@ -1839,7 +1839,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   </div>
                       
                       {/* 右側控制項目 */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {/* N/A Grades Toggle */}
                         {onNAToggleChange && (
                           <button
@@ -1859,6 +1859,65 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               </>
                             )}
                           </button>
+                        )}
+                        
+                        {/* 篩選器 */}
+                        {filterOptions && filterOptions.length > 0 && onFilterChange && (
+                          <div className="flex items-center gap-2 shrink-0">
+                            {filterLabel && (
+                              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                {(() => {
+                                  // Show plural form for all chart types
+                                  // Add (s) for plural in English only
+                                  const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                                  !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                                  return isEnglish ? filterLabel + '(s)' : filterLabel;
+                                })()}:
+                              </span>
+                            )}
+                            <Select 
+                              value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
+                              onValueChange={(value) => onFilterChange(value)}
+                            >
+                              <SelectTrigger className="w-full sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
+                                <SelectValue placeholder={t('common.all')}>
+                                  <div className="w-full overflow-hidden">
+                                    <div className="truncate">
+                                      {(() => {
+                                        const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                                        if (currentValue === 'all') {
+                                          return t('common.all');
+                                        } else {
+                                          const option = filterOptions.find(opt => opt.value === currentValue);
+                                          return option ? option.label : currentValue;
+                                        }
+                                      })()} 
+                                    </div>
+                                  </div>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[450px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                                <SelectItem value="all" textValue={t('common.all')}>
+                                  <div className="flex items-center justify-between w-full min-w-0">
+                                    <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                                    <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                      {Object.values(gradeDistribution).reduce((sum, count) => sum + count, 0)}
+                                    </Badge>
+                                  </div>
+                                </SelectItem>
+                                {filterOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
+                                    <div className="flex items-center justify-between w-full min-w-0">
+                                      <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                        {option.count}
+                                      </Badge>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1910,7 +1969,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </div>
                           
                         {/* 右側控制項目 */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           {/* N/A Grades Toggle */}
                           {onNAToggleChange && (
                             <button
@@ -1930,6 +1989,65 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                                 </>
                               )}
                             </button>
+                          )}
+                          
+                          {/* 篩選器 */}
+                          {filterOptions && filterOptions.length > 0 && onFilterChange && (
+                            <div className="flex items-center gap-2 shrink-0">
+                              {filterLabel && (
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                  {(() => {
+                                    // Show plural form for all chart types
+                                    // Add (s) for plural in English only
+                                    const isEnglish = !filterLabel.includes('課程') && !filterLabel.includes('教師') && 
+                                                    !filterLabel.includes('课程') && !filterLabel.includes('教师');
+                                    return isEnglish ? filterLabel + '(s)' : filterLabel;
+                                  })()}:
+                                </span>
+                              )}
+                              <Select 
+                                value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
+                                onValueChange={(value) => onFilterChange(value)}
+                              >
+                                <SelectTrigger className="w-full sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
+                                  <SelectValue placeholder={t('common.all')}>
+                                    <div className="w-full overflow-hidden">
+                                      <div className="truncate">
+                                        {(() => {
+                                          const currentValue = Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all';
+                                          if (currentValue === 'all') {
+                                            return t('common.all');
+                                          } else {
+                                            const option = filterOptions.find(opt => opt.value === currentValue);
+                                            return option ? option.label : currentValue;
+                                          }
+                                        })()} 
+                                      </div>
+                                    </div>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[450px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                                  <SelectItem value="all" textValue={t('common.all')}>
+                                    <div className="flex items-center justify-between w-full min-w-0">
+                                      <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
+                                      <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                        {Object.values(gradeDistribution).reduce((sum, count) => sum + count, 0)}
+                                      </Badge>
+                                    </div>
+                                  </SelectItem>
+                                  {filterOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value} textValue={option.label} className="pr-12">
+                                      <div className="flex items-center justify-between w-full min-w-0">
+                                        <span className="truncate flex-1 mr-2 min-w-0">{option.label}</span>
+                                        <Badge variant="secondary" className="ml-auto text-xs bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/20 shrink-0">
+                                          {option.count}
+                                        </Badge>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           )}
                         </div>
                       </div>
