@@ -500,46 +500,41 @@ export function getFormattedInstructorName(
   }, 
   language: string
 ): { primary: string; secondary?: string } {
-  const title = instructor.title ? formatInstructorTitle(instructor.title, language) : '';
+  // 主標題：始終顯示英文頭銜+英文姓名（不管界面語言）
+  const englishTitle = instructor.title ? formatInstructorTitle(instructor.title, 'en') : '';
+  const primary = englishTitle ? `${englishTitle} ${instructor.name}` : instructor.name;
+  
+  // 副標題：根據界面語言顯示對應的中文姓名+中文頭銜
+  let secondary: string | undefined;
   
   switch (language) {
-    case 'en':
-      // 英文：顯示英文頭銜+英文姓名
-      return { 
-        primary: title ? `${title} ${instructor.name}` : instructor.name 
-      };
-    
     case 'zh-TW':
-      // 繁體中文：優先顯示中文頭銜+中文姓名，回退到英文
-      if (instructor.name_tc) {
-        return {
-          primary: title ? `${title} ${instructor.name_tc}` : instructor.name_tc,
-          secondary: title ? `${formatInstructorTitle(instructor.title || '', 'en')} ${instructor.name}` : instructor.name
-        };
-      } else {
-        return { 
-          primary: title ? `${title} ${instructor.name}` : instructor.name 
-        };
+      // 繁體中文：如果有繁體中文姓名，顯示中文姓名+中文頭銜
+      if (instructor.name_tc && instructor.title) {
+        const chineseTitle = formatInstructorTitle(instructor.title, 'zh-TW');
+        secondary = `${instructor.name_tc}${chineseTitle}`; // 中文頭銜放在名字後面，沒有空格
+      } else if (instructor.name_tc) {
+        secondary = instructor.name_tc;
       }
+      break;
     
     case 'zh-CN':
-      // 簡體中文：優先顯示中文頭銜+中文姓名，回退到英文
-      if (instructor.name_sc) {
-        return {
-          primary: title ? `${title} ${instructor.name_sc}` : instructor.name_sc,
-          secondary: title ? `${formatInstructorTitle(instructor.title || '', 'en')} ${instructor.name}` : instructor.name
-        };
-      } else {
-        return { 
-          primary: title ? `${title} ${instructor.name}` : instructor.name 
-        };
+      // 簡體中文：如果有簡體中文姓名，顯示中文姓名+中文頭銜
+      if (instructor.name_sc && instructor.title) {
+        const chineseTitle = formatInstructorTitle(instructor.title, 'zh-CN');
+        secondary = `${instructor.name_sc}${chineseTitle}`; // 中文頭銜放在名字後面，沒有空格
+      } else if (instructor.name_sc) {
+        secondary = instructor.name_sc;
       }
+      break;
     
     default:
-      return { 
-        primary: title ? `${title} ${instructor.name}` : instructor.name 
-      };
+      // 英文界面：不顯示中文副標題
+      secondary = undefined;
+      break;
   }
+  
+  return { primary, secondary };
 };
 
 /**
