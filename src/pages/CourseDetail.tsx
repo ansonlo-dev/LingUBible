@@ -1635,7 +1635,7 @@ const CourseDetail = () => {
                                 e.preventDefault();
                                 navigate(`/instructors/${encodeURIComponent(instructorName)}`);
                               }}
-                              className="font-medium text-sm hover:text-primary transition-colors"
+                              className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
                                 <span>{instructorName}</span>
@@ -1869,7 +1869,7 @@ const CourseDetail = () => {
                                 e.preventDefault();
                                 navigate(`/instructors/${encodeURIComponent(instructorName)}`);
                               }}
-                              className="font-medium text-sm hover:text-primary transition-colors"
+                              className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
                                 <span>{instructorName}</span>
@@ -2111,7 +2111,7 @@ const CourseDetail = () => {
                                 e.preventDefault();
                                 navigate(`/instructors/${encodeURIComponent(instructorName)}`);
                               }}
-                              className="font-medium text-sm hover:text-primary transition-colors"
+                              className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
                                 <span>{instructorName}</span>
@@ -2353,7 +2353,7 @@ const CourseDetail = () => {
                                 e.preventDefault();
                                 navigate(`/instructors/${encodeURIComponent(instructorName)}`);
                               }}
-                              className="font-medium text-sm hover:text-primary transition-colors"
+                              className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
                                 <span>{instructorName}</span>
