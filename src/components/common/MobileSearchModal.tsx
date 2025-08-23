@@ -4,7 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
-import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
@@ -883,7 +883,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="space-y-2">
                               {filteredInstructors.map((instructor, index) => {
-                                const instructorName = getInstructorName(instructor, currentLanguage);
+                                const instructorName = getFormattedInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
                                 // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
@@ -1916,7 +1916,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div style={{ marginTop: '0' }}>
                             <div className="space-y-2">
                               {filteredInstructors.map((instructor, index) => {
-                                const instructorName = getInstructorName(instructor, currentLanguage);
+                                const instructorName = getFormattedInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
                                 // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { StarRating } from '@/components/ui/star-rating';
-import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, getFacultiesForMultiDepartment } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode } from '@/utils/dateUtils';
 import { useTheme } from '@/hooks/theme/useTheme';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
@@ -145,11 +145,12 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
 
   // 獲取多語言講師姓名（僅對講師類型）
   const instructorNameInfo = props.type === 'instructor' 
-    ? getInstructorName(
+    ? getFormattedInstructorName(
         { 
           name: props.name, 
           name_tc: props.nameTc, 
-          name_sc: props.nameSc 
+          name_sc: props.nameSc,
+          title: props.title
         }, 
         currentLanguage
       )
@@ -990,22 +991,15 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors duration-200 line-clamp-2">
-                {props.title ? `${props.title} ${props.name}` : props.name}
+                {instructorNameInfo?.primary || props.name}
               </CardTitle>
               <div className="mt-1">
-                {/* 在中文模式下顯示中文名稱 - 只在有中文名稱時顯示 */}
-                {((currentLanguage === 'zh-TW' && props.nameTc) || (currentLanguage === 'zh-CN' && props.nameSc)) && (
+                {/* 顯示備選名稱（通常是英文名稱當主名稱為中文時） */}
+                {instructorNameInfo?.secondary && (
                   <div className="mb-1">
-                    {currentLanguage === 'zh-TW' && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                        {props.nameTc}
-                      </p>
-                    )}
-                    {currentLanguage === 'zh-CN' && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                        {props.nameSc}
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                      {instructorNameInfo.secondary}
+                    </p>
                   </div>
                 )}
                 <div className="flex items-start text-sm text-gray-600 dark:text-muted-foreground">

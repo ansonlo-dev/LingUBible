@@ -1098,7 +1098,8 @@ export class CourseService {
         this.INSTRUCTORS_COLLECTION_ID,
         [
           Query.equal('name', name),
-          Query.limit(1)
+          Query.limit(1),
+          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
         ]
       );
 

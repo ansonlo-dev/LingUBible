@@ -456,6 +456,93 @@ export const getTeachingLanguageName = (code: string, t: any): string => {
 };
 
 /**
+ * 格式化講師頭銜，根據語言添加適當的點號和翻譯
+ * @param title 原始頭銜（如：'Dr', 'Prof', 'Ms', 'Mr'）
+ * @param language 語言設置 ('en', 'zh-TW', 'zh-CN')
+ * @returns 格式化的頭銜
+ */
+export const formatInstructorTitle = (title: string, language: string): string => {
+  if (!title) return '';
+
+  // 中文頭銜對映表
+  const chineseTitleMap: { [key: string]: string } = {
+    'Dr': '博士',
+    'Prof': '教授', 
+    'Ms': '女士',
+    'Mr': '先生',
+    'Mrs': '女士'
+  };
+
+  // 標準化頭銜（移除可能存在的點號）
+  const normalizedTitle = title.replace('.', '');
+
+  if (language === 'zh-TW' || language === 'zh-CN') {
+    // 中文模式：返回中文翻譯
+    return chineseTitleMap[normalizedTitle] || title;
+  } else {
+    // 英文模式：添加點號
+    return `${normalizedTitle}.`;
+  }
+};
+
+/**
+ * 獲取包含格式化頭銜的完整講師姓名
+ * @param instructor 講師對象，包含name, name_tc, name_sc, title
+ * @param language 語言設置
+ * @returns 格式化的完整姓名
+ */
+export function getFormattedInstructorName(
+  instructor: { 
+    name: string; 
+    name_tc?: string; 
+    name_sc?: string; 
+    title?: string;
+  }, 
+  language: string
+): { primary: string; secondary?: string } {
+  const title = instructor.title ? formatInstructorTitle(instructor.title, language) : '';
+  
+  switch (language) {
+    case 'en':
+      // 英文：顯示英文頭銜+英文姓名
+      return { 
+        primary: title ? `${title} ${instructor.name}` : instructor.name 
+      };
+    
+    case 'zh-TW':
+      // 繁體中文：優先顯示中文頭銜+中文姓名，回退到英文
+      if (instructor.name_tc) {
+        return {
+          primary: title ? `${title} ${instructor.name_tc}` : instructor.name_tc,
+          secondary: title ? `${formatInstructorTitle(instructor.title || '', 'en')} ${instructor.name}` : instructor.name
+        };
+      } else {
+        return { 
+          primary: title ? `${title} ${instructor.name}` : instructor.name 
+        };
+      }
+    
+    case 'zh-CN':
+      // 簡體中文：優先顯示中文頭銜+中文姓名，回退到英文
+      if (instructor.name_sc) {
+        return {
+          primary: title ? `${title} ${instructor.name_sc}` : instructor.name_sc,
+          secondary: title ? `${formatInstructorTitle(instructor.title || '', 'en')} ${instructor.name}` : instructor.name
+        };
+      } else {
+        return { 
+          primary: title ? `${title} ${instructor.name}` : instructor.name 
+        };
+      }
+    
+    default:
+      return { 
+        primary: title ? `${title} ${instructor.name}` : instructor.name 
+      };
+  }
+};
+
+/**
  * Get term name with proper translation
  * @param termName - The term name from the database
  * @param t - Translation function

@@ -50,7 +50,7 @@ import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getCurrentTermCode, getCurrentTermName, getTermStatus, isCurrentTerm } from '@/utils/dateUtils';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
-import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName, getFacultiesForMultiDepartment, splitInstructorDepartments } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, translateDepartmentName, getTeachingLanguageName, getTermName, getFacultiesForMultiDepartment, splitInstructorDepartments, getFormattedInstructorName } from '@/utils/textUtils';
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
@@ -1613,14 +1613,27 @@ const Lecturers = () => {
                 <div className="min-w-0 flex-1 overflow-hidden">
                   <CardTitle className="text-2xl truncate flex items-center gap-2">
                     <GraduationCap className="h-7 w-7 text-primary" />
-                    {instructor.name}
+                    {(() => {
+                      const formattedName = getFormattedInstructorName({
+                        name: instructor.name,
+                        name_tc: instructor.name_tc,
+                        name_sc: instructor.name_sc,
+                        title: instructor.title
+                      }, language);
+                      return formattedName.primary;
+                    })()}
                   </CardTitle>
                   {/* 中文講師名稱 - 作為副標題（只在中文模式下顯示） */}
                   {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                    const chineseName = language === 'zh-TW' ? instructor.name_tc : instructor.name_sc;
-                    return chineseName && (
+                    const formattedName = getFormattedInstructorName({
+                      name: instructor.name,
+                      name_tc: instructor.name_tc,
+                      name_sc: instructor.name_sc,
+                      title: instructor.title
+                    }, language);
+                    return formattedName.secondary && (
                       <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
-                        {chineseName}
+                        {formattedName.secondary}
                       </p>
                     );
                   })()}
@@ -1664,14 +1677,27 @@ const Lecturers = () => {
                 <div className="mb-3">
                   <CardTitle className="text-2xl truncate flex items-center gap-2">
                     <GraduationCap className="h-7 w-7 text-primary" />
-                    {instructor.name}
+                    {(() => {
+                      const formattedName = getFormattedInstructorName({
+                        name: instructor.name,
+                        name_tc: instructor.name_tc,
+                        name_sc: instructor.name_sc,
+                        title: instructor.title
+                      }, language);
+                      return formattedName.primary;
+                    })()}
                   </CardTitle>
                   {/* 中文講師名稱 - 作為副標題（只在中文模式下顯示） */}
                   {(language === 'zh-TW' || language === 'zh-CN') && (() => {
-                    const chineseName = language === 'zh-TW' ? instructor.name_tc : instructor.name_sc;
-                    return chineseName && (
+                    const formattedName = getFormattedInstructorName({
+                      name: instructor.name,
+                      name_tc: instructor.name_tc,
+                      name_sc: instructor.name_sc,
+                      title: instructor.title
+                    }, language);
+                    return formattedName.secondary && (
                       <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
-                        {chineseName}
+                        {formattedName.secondary}
                       </p>
                     );
                   })()}
@@ -3214,7 +3240,7 @@ const Lecturers = () => {
                                       {(() => {
                                         const fullInstructor = otherInstructorsMap.get(currentInstructorDetail.instructor_name);
                                         if (fullInstructor) {
-                                          const nameInfo = getInstructorName(fullInstructor, language);
+                                          const nameInfo = getFormattedInstructorName(fullInstructor, language);
                                           return (
                                             <div>
                                               <div>{nameInfo.primary}</div>
@@ -3614,7 +3640,7 @@ const Lecturers = () => {
                                             {(() => {
                                               const fullInstructor = otherInstructorsMap.get(instructor.instructor_name);
                                               if (fullInstructor) {
-                                                const nameInfo = getInstructorName(fullInstructor, language);
+                                                const nameInfo = getFormattedInstructorName(fullInstructor, language);
                                                 return (
                                                   <div>
                                                     <div>{nameInfo.primary}</div>
