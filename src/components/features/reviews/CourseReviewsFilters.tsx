@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { processPluralTranslation, getTeachingLanguageName, extractInstructorNameForSorting } from '@/utils/textUtils';
+import { processPluralTranslation, getTeachingLanguageName, extractInstructorNameForSorting, getSessionTypeTranslation } from '@/utils/textUtils';
 import { isCurrentTerm, getCurrentTermCode } from '@/utils/dateUtils';
 import { sortGradesDescending } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -220,7 +220,7 @@ export function CourseReviewsFilters({
             <MultiSelectDropdown
               options={Object.entries(gradeCounts || {}).map(([grade, count]) => ({
                 value: grade,
-                label: grade === 'N/A' ? t('grade.notApplicable') : 
+                label: grade === 'N/A' ? t('review.notApplicable') : 
                   `${grade}${(() => {
                     switch (grade) {
                       case 'A': return '\u00A0(4.00)';
@@ -308,7 +308,7 @@ export function CourseReviewsFilters({
             <MultiSelectDropdown
               options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
                 value: sessionType,
-                label: sessionType,
+                label: getSessionTypeTranslation(sessionType, t),
                 count: count
               }))}
               selectedValues={filters.selectedSessionTypes}
@@ -423,7 +423,7 @@ export function CourseReviewsFilters({
               <MultiSelectDropdown
                 options={Object.entries(gradeCounts || {}).map(([grade, count]) => ({
                   value: grade,
-                  label: grade === 'N/A' ? t('grade.notApplicable') : 
+                  label: grade === 'N/A' ? t('review.notApplicable') : 
                     `${grade}${(() => {
                       switch (grade) {
                         case 'A': return '\u00A0(4.00)';
@@ -490,7 +490,7 @@ export function CourseReviewsFilters({
               <MultiSelectDropdown
                 options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
                   value: sessionType,
-                  label: sessionType,
+                  label: getSessionTypeTranslation(sessionType, t),
                   count: count
                 }))}
                 selectedValues={filters.selectedSessionTypes}
