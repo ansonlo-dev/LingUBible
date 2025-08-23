@@ -2243,7 +2243,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </Select>
                       ) : (
                         // Multiple selection for stacked chart and box plot
-                        <div className="relative w-full sm:w-auto min-w-0 shrink-0">
+                        <div className="relative w-full sm:min-w-[250px] sm:max-w-[400px] min-w-0 shrink-0">
                           <MultiSelectDropdown
                             options={filterOptions.map((option): SelectOption => ({
                               value: option.value,
@@ -2587,7 +2587,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </Select>
                       ) : (
                         // Multiple selection for stacked chart and box plot
-                        <div className="relative w-full sm:w-auto min-w-0 shrink-0">
+                        <div className="relative w-full sm:min-w-[250px] sm:max-w-[400px] min-w-0 shrink-0">
                           <MultiSelectDropdown
                             options={filterOptions.map((option): SelectOption => ({
                               value: option.value,
