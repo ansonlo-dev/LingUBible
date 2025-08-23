@@ -541,6 +541,7 @@ const Index = () => {
                       averageDifficulty={course.averageDifficulty}
                       averageUsefulness={course.averageUsefulness}
                       averageGPA={course.averageGPA}
+                      averageGPACount={course.averageGPACount}
                       isLoading={false}
                       isFavorited={user ? isFavorited('course', course.course_code) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
@@ -585,6 +586,7 @@ const Index = () => {
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
                       averageGPA={instructor.averageGPA}
+                      averageGPACount={instructor.averageGPACount}
                       isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
                       teachingLanguages={instructor.teachingLanguages || []}
                       currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
@@ -640,6 +642,7 @@ const Index = () => {
                       averageDifficulty={course.averageDifficulty}
                       averageUsefulness={course.averageUsefulness}
                       averageGPA={course.averageGPA}
+                      averageGPACount={course.averageGPACount}
                       isLoading={false}
                       isFavorited={user ? isFavorited('course', course.course_code) : false}
                       onFavoriteToggle={() => handleFavoriteToggle('course', course.course_code)}
@@ -684,6 +687,7 @@ const Index = () => {
                       teachingScore={instructor.teachingScore}
                       gradingFairness={instructor.gradingFairness}
                       averageGPA={instructor.averageGPA}
+                      averageGPACount={instructor.averageGPACount}
                       isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm}
                       teachingLanguages={instructor.teachingLanguages || []}
                       currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}

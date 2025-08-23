@@ -25,6 +25,7 @@ export interface CourseWithStats extends Course {
   averageDifficulty: number;
   averageUsefulness: number;
   averageGPA: number;
+  averageGPACount: number; // 新增：用於計算GPA的評論數量
   teachingLanguages?: string[]; // Teaching language codes from teaching records (chronological order)
   currentTermTeachingLanguage?: string | null; // Current term's teaching language
   serviceLearningTypes?: ('compulsory' | 'optional')[]; // Service learning types from teaching records
@@ -63,6 +64,7 @@ export interface InstructorWithDetailedStats extends Instructor {
   gradingFairness: number;
   isTeachingInCurrentTerm?: boolean;
   averageGPA: number;
+  averageGPACount: number; // 新增：用於計算GPA的評論數量
   teachingLanguages?: string[]; // Teaching language codes from teaching records (chronological order)
   currentTermTeachingLanguage?: string | null; // Current term's teaching language
 }
@@ -507,7 +509,8 @@ export class CourseService {
           averageWorkload: -1,
           averageDifficulty: -1,
           averageUsefulness: -1,
-          averageGPA: 0
+          averageGPA: 0,
+          averageGPACount: 0
         };
 
         result.set(course.course_code, {
@@ -751,7 +754,8 @@ export class CourseService {
           averageWorkload: -1,
           averageDifficulty: -1,
           averageUsefulness: -1,
-          averageGPA: 0
+          averageGPA: 0,
+          averageGPACount: 0
         };
       }
 
@@ -776,6 +780,7 @@ export class CourseService {
       const gradeDistribution = calculateGradeDistributionFromReviews(reviews);
       const gradeStats = calculateGradeStatistics(gradeDistribution);
       const averageGPA = gradeStats.mean || 0;
+      const averageGPACount = gradeStats.validGradeCount || 0;
 
       return {
         reviewCount,
@@ -784,7 +789,8 @@ export class CourseService {
         averageWorkload,
         averageDifficulty,
         averageUsefulness,
-        averageGPA
+        averageGPA,
+        averageGPACount
       };
     } catch (error) {
       console.error('Error fetching course detailed stats:', error);
@@ -795,7 +801,8 @@ export class CourseService {
         averageWorkload: -1,
         averageDifficulty: -1,
         averageUsefulness: -1,
-        averageGPA: 0
+        averageGPA: 0,
+        averageGPACount: 0
       };
     }
   }
@@ -846,7 +853,8 @@ export class CourseService {
           averageWorkload: -1,
           averageDifficulty: -1,
           averageUsefulness: -1,
-          averageGPA: 0
+          averageGPA: 0,
+          averageGPACount: 0
         };
         
         const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
@@ -2091,12 +2099,14 @@ export class CourseService {
         );
         const gradeStats = calculateGradeStatistics(gradeDistribution);
         const averageGPA = gradeStats.mean || 0;
+        const averageGPACount = gradeStats.validGradeCount || 0;
           
         finalInstructorStatsMap.set(instructorName, {
           reviewCount: stats.reviewCount,
           teachingScore,
           gradingFairness,
-          averageGPA
+          averageGPA,
+          averageGPACount
         });
       }
 
@@ -2107,7 +2117,8 @@ export class CourseService {
             reviewCount: 0,
             teachingScore: 0,
             gradingFairness: 0,
-            averageGPA: 0
+            averageGPA: 0,
+            averageGPACount: 0
           };
 
           return {
@@ -2290,12 +2301,14 @@ export class CourseService {
         );
         const gradeStats = calculateGradeStatistics(gradeDistribution);
         const averageGPA = gradeStats.mean || 0;
+        const averageGPACount = gradeStats.validGradeCount || 0;
           
         finalInstructorStatsMap.set(instructorName, {
           reviewCount: stats.reviewCount,
           teachingScore,
           gradingFairness,
-          averageGPA
+          averageGPA,
+          averageGPACount
         });
       }
 
@@ -2306,7 +2319,8 @@ export class CourseService {
             reviewCount: 0,
             teachingScore: 0,
             gradingFairness: 0,
-            averageGPA: 0
+            averageGPA: 0,
+            averageGPACount: 0
           };
 
           return {
@@ -2529,7 +2543,8 @@ export class CourseService {
             averageWorkload: -1,
             averageDifficulty: -1,
             averageUsefulness: -1,
-            averageGPA: 0
+            averageGPA: 0,
+            averageGPACount: 0
           });
           continue;
         }
@@ -2567,6 +2582,7 @@ export class CourseService {
         const gradeDistribution = calculateGradeDistributionFromReviews(reviews);
         const gradeStats = calculateGradeStatistics(gradeDistribution);
         const averageGPA = gradeStats.mean || 0;
+        const averageGPACount = gradeStats.validGradeCount || 0;
 
         courseStatsMap.set(courseCode, {
           reviewCount,
@@ -2575,7 +2591,8 @@ export class CourseService {
           averageWorkload: validWorkloadCount > 0 ? totalWorkload / validWorkloadCount : -1,
           averageDifficulty: validDifficultyCount > 0 ? totalDifficulty / validDifficultyCount : -1,
           averageUsefulness: validUsefulnessCount > 0 ? totalUsefulness / validUsefulnessCount : -1,
-          averageGPA
+          averageGPA,
+          averageGPACount
         });
       }
 
@@ -2645,7 +2662,8 @@ export class CourseService {
           averageWorkload: -1,
           averageDifficulty: -1,
           averageUsefulness: -1,
-          averageGPA: 0
+          averageGPA: 0,
+          averageGPACount: 0
         };
 
         // 獲取教學語言和服務學習數據

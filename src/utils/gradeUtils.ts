@@ -13,6 +13,7 @@ export interface GradeStatistics {
   mean: number | null;
   standardDeviation: number | null;
   totalCount: number;
+  validGradeCount: number; // 新增：有效成績數量（用於GPA計算的評論數量）
   gradeDistribution: Record<string, number>;
 }
 
@@ -176,6 +177,7 @@ export const calculateGradeStatistics = (gradeDistribution: Record<string, numbe
       mean: null,
       standardDeviation: null,
       totalCount: 0,
+      validGradeCount: 0,
       gradeDistribution
     };
   }
@@ -199,6 +201,7 @@ export const calculateGradeStatistics = (gradeDistribution: Record<string, numbe
       mean: null,
       standardDeviation: null,
       totalCount,
+      validGradeCount: 0,
       gradeDistribution
     };
   }
@@ -224,6 +227,7 @@ export const calculateGradeStatistics = (gradeDistribution: Record<string, numbe
     mean,
     standardDeviation,
     totalCount,
+    validGradeCount,
     gradeDistribution
   };
 };

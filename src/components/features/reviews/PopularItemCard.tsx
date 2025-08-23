@@ -32,6 +32,7 @@ interface PopularCourseCardProps {
   averageDifficulty?: number;
   averageUsefulness?: number;
   averageGPA?: number;
+  averageGPACount?: number; // 新增：用於計算GPA的評論數量
   isLoading?: boolean; // Add loading state for course cards
   // 新增：收藏狀態相關props
   isFavorited?: boolean;
@@ -54,6 +55,7 @@ interface PopularInstructorCardProps {
   teachingScore: number;
   gradingFairness: number;
   averageGPA?: number;
+  averageGPACount?: number; // 新增：用於計算GPA的評論數量
   isTeachingInCurrentTerm?: boolean;
   isLoading?: boolean; // Add loading state for instructor cards
   teachingLanguages?: string[]; // Array of teaching language codes in chronological order
@@ -668,7 +670,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   };
 
   // Average GPA Display Component - Eye-catching without background
-  const AverageGPADisplay = ({ gpa, isLoading = false }: { gpa?: number; isLoading?: boolean }) => {
+  const AverageGPADisplay = ({ gpa, gpaCount, isLoading = false }: { gpa?: number; gpaCount?: number; isLoading?: boolean }) => {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center mt-3">
@@ -701,6 +703,11 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
         <span className="text-3xl font-black text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text drop-shadow-sm">
           {formatGPA(gpa)}
         </span>
+        {gpaCount && gpaCount > 0 && (
+          <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            ({gpaCount})
+          </span>
+        )}
       </div>
     );
   };
@@ -882,7 +889,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 </ResponsiveTooltip>
                 
                 {/* Average GPA below offered badge */}
-                <AverageGPADisplay gpa={props.averageGPA} isLoading={courseStatsLoading} />
+                <AverageGPADisplay gpa={props.averageGPA} gpaCount={props.averageGPACount} isLoading={courseStatsLoading} />
               </div>
             </div>
             
@@ -1116,7 +1123,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
               )}
               
               {/* Average GPA below teaching badge */}
-              <AverageGPADisplay gpa={props.averageGPA} isLoading={props.isLoading} />
+              <AverageGPADisplay gpa={props.averageGPA} gpaCount={props.averageGPACount} isLoading={props.isLoading} />
             </div>
           </div>
           
