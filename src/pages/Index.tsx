@@ -455,13 +455,31 @@ const Index = () => {
                     value="courses" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    <span className="font-bold">{t('featured.courses')}</span>
+                    <span className="font-bold flex items-center gap-1">
+                      {t('featured.courses')}
+                      <ResponsiveTooltip
+                        content={t('featured.popularCoursesNote')}
+                        hasClickAction={false}
+                        showCloseButton={false}
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+                      </ResponsiveTooltip>
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="instructors" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    <span className="font-bold">{t('featured.instructors')}</span>
+                    <span className="font-bold flex items-center gap-1">
+                      {t('featured.instructors')}
+                      <ResponsiveTooltip
+                        content={t('featured.popularInstructorsNote')}
+                        hasClickAction={false}
+                        showCloseButton={false}
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+                      </ResponsiveTooltip>
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="topCourses" 

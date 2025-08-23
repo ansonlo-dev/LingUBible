@@ -1690,6 +1690,8 @@ export default {
   'featured.noPopularInstructorsDesc': 'Not enough instructor review data available yet',
   'featured.topCoursesNote': 'Only courses with at least 5 reviews that include grades are shown in this ranking to ensure reliability.',
   'featured.topInstructorsNote': 'Only instructors with at least 5 reviews that include grades are shown in this ranking to ensure reliability.',
+  'featured.popularCoursesNote': 'Courses are ranked by the total number of reviews they have received.',
+  'featured.popularInstructorsNote': 'Instructors are ranked by the total number of reviews they have received.',
   // Additional instructor detail translations
   'instructors.averageTeachingRating': 'Average Teaching Rating',
   'instructors.averageTeaching': 'Teaching',
