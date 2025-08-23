@@ -1541,6 +1541,8 @@ export default {
   'featured.noPopularCoursesDesc': '目前還沒有足夠的課程評論數據',
   'featured.noPopularInstructors': '暫無熱門講師',
   'featured.noPopularInstructorsDesc': '目前還沒有足夠的講師評論數據',
+  'featured.topCoursesNote': '為確保排名可信度，只顯示至少有5個包含成績的評論的課程。',
+  'featured.topInstructorsNote': '為確保排名可信度，只顯示至少有5個包含成績的評論的講師。',
   'featured.viewAllCourses': '查看所有課程',
   'featured.viewAllInstructors': '查看所有講師',
   'featured.mostReviews': '最多評論',

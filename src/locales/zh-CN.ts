@@ -1599,6 +1599,8 @@ export default {
   'featured.noPopularCoursesDesc': '目前还没有足够的课程评论数据',
   'featured.noPopularInstructors': '暂无热门讲师',
   'featured.noPopularInstructorsDesc': '目前还没有足够的讲师评论数据',
+  'featured.topCoursesNote': '为确保排名可信度，只显示至少有5个包含成绩的评论的课程。',
+  'featured.topInstructorsNote': '为确保排名可信度，只显示至少有5个包含成绩的评论的讲师。',
   'featured.viewAllCourses': '查看所有课程',
   'featured.viewAllInstructors': '查看所有讲师',
   'featured.mostReviews': '最多评论',

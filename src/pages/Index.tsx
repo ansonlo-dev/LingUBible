@@ -6,11 +6,12 @@ import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
 import { TechnologyNetworkAnimation } from "@/components/features/animations/TechnologyNetworkAnimation";
 
-import { BookText, Users, Star, TrendingUp, Loader2, UserCheck } from 'lucide-react';
+import { BookText, Users, Star, TrendingUp, Loader2, UserCheck, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMainPageStats } from '@/hooks/useMainPageStats';
@@ -466,13 +467,31 @@ const Index = () => {
                     value="topCourses" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    <span className="font-bold">{t('featured.topCourses')}</span>
+                    <span className="font-bold flex items-center gap-1">
+                      {t('featured.topCourses')}
+                      <ResponsiveTooltip
+                        content={t('featured.topCoursesNote')}
+                        hasClickAction={false}
+                        showCloseButton={false}
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+                      </ResponsiveTooltip>
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="topInstructors" 
                     className="hover:scale-105 hover:shadow-md transition-[transform,box-shadow] duration-200 data-[state=active]:shadow-lg whitespace-nowrap flex-shrink-0 snap-start"
                   >
-                    <span className="font-bold">{t('featured.topInstructors')}</span>
+                    <span className="font-bold flex items-center gap-1">
+                      {t('featured.topInstructors')}
+                      <ResponsiveTooltip
+                        content={t('featured.topInstructorsNote')}
+                        hasClickAction={false}
+                        showCloseButton={false}
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+                      </ResponsiveTooltip>
+                    </span>
                   </TabsTrigger>
                 </TabsList>
                 </div>
