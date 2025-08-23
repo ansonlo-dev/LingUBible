@@ -276,6 +276,8 @@ const InstructorsList = () => {
           instructor.name.toLowerCase().includes(searchTermLower) ||
           (instructor.name_tc && instructor.name_tc.toLowerCase().includes(searchTermLower)) ||
           (instructor.name_sc && instructor.name_sc.toLowerCase().includes(searchTermLower)) ||
+          // 講師昵稱
+          (instructor.nickname && instructor.nickname.toLowerCase().includes(searchTermLower)) ||
           // 電子郵件
           instructor.email.toLowerCase().includes(searchTermLower) ||
           // 部門名稱（所有語言）

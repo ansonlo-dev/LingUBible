@@ -388,6 +388,8 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           instructor.name.toLowerCase().includes(query) ||
           instructor.name_tc?.toLowerCase().includes(query) ||
           instructor.name_sc?.toLowerCase().includes(query) ||
+          // 講師昵稱
+          instructor.nickname?.toLowerCase().includes(query) ||
           // 電子郵件
           instructor.email?.toLowerCase().includes(query) ||
           // 部門名稱（所有語言）

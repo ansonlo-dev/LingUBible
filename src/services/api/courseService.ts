@@ -47,6 +47,7 @@ export interface Instructor {
   name_tc?: string;
   name_sc?: string;
   title?: string;
+  nickname?: string;
   email: string;
   department: string;
   $createdAt: string;
@@ -570,7 +571,7 @@ export class CourseService {
           [
             Query.equal('name', instructorNames),
             Query.limit(instructorNames.length),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department'])
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department'])
           ]
         ),
         // 獲取講師詳細統計
@@ -1099,7 +1100,7 @@ export class CourseService {
         [
           Query.equal('name', name),
           Query.limit(1),
-          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
         ]
       );
 
@@ -2202,7 +2203,7 @@ export class CourseService {
           [
             Query.orderAsc('name'),
             Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
         databases.listDocuments(
