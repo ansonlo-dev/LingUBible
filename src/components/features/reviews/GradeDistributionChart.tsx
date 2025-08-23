@@ -1827,7 +1827,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
               <div className="mb-2 pt-3 px-2 sm:px-0">
                 <div className="flex flex-col gap-2 mb-2">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4 min-h-[2.5rem]" style={{ touchAction: 'pan-y' }}>
                     <div className="flex flex-col gap-2">
                       {/* 圖表類型切換按鈕 */}
                     <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
@@ -1902,7 +1902,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
                   <div className="mb-2 pt-3 px-2 sm:px-0">
                     <div className="flex flex-col gap-2 mb-2">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4 min-h-[2.5rem]" style={{ touchAction: 'pan-y' }}>
                         <div className="flex flex-col gap-2">
                           <div className="text-sm text-muted-foreground">
                             {t('chart.gradeDistribution')}
@@ -1964,7 +1964,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4 min-h-[2.5rem]" style={{ touchAction: 'pan-y' }}>
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
@@ -2023,7 +2023,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             </div>
                 
                 {/* 右側控制項目 */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {/* N/A Grades Toggle */}
                   {onNAToggleChange && (
                     <button
@@ -2065,7 +2065,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                           value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
                           onValueChange={(value) => onFilterChange(value)}
                         >
-                          <SelectTrigger className="w-full sm:max-w-[200px] h-8 min-w-0">
+                          <SelectTrigger className="w-full sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
                             <SelectValue placeholder={t('common.all')}>
                               <div className="w-full overflow-hidden">
                                 <div className="truncate">
@@ -2082,7 +2082,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               </div>
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[300px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                          <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[450px]" position="popper" side="bottom" align="end" sideOffset={8}>
                             <SelectItem value="all" textValue={t('common.all')}>
                               <div className="flex items-center justify-between w-full min-w-0">
                                 <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
@@ -2105,7 +2105,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </Select>
                       ) : (
                         // Multiple selection for stacked chart and box plot
-                        <div className="relative w-full sm:w-auto min-w-0">
+                        <div className="relative w-full sm:w-auto min-w-0 shrink-0">
                           <MultiSelectDropdown
                             options={filterOptions.map((option): SelectOption => ({
                               value: option.value,
@@ -2128,7 +2128,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               }
                             }}
                             placeholder={t('common.all')}
-                            className="w-full sm:max-w-[200px]"
+                            className="w-full sm:min-w-[250px] sm:max-w-[400px]"
                             showCounts={true}
                             maxHeight="max-h-48"
                             totalCount={totalCount}
@@ -2308,7 +2308,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         <div className="relative pt-4 px-0 pb-0 sm:p-4 rounded-xl bg-transparent">
           <div className="mb-2 pt-3 px-2 sm:px-0">
             <div className="flex flex-col gap-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4" style={{ touchAction: 'pan-y' }}>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4 min-h-[2.5rem]" style={{ touchAction: 'pan-y' }}>
                 <div className="flex flex-col gap-2">
                   {/* 圖表類型切換按鈕 */}
               <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
@@ -2367,7 +2367,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             </div>
                 
                 {/* 右側控制項目 */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {/* N/A Grades Toggle */}
                   {onNAToggleChange && (
                     <button
@@ -2409,7 +2409,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                           value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
                           onValueChange={(value) => onFilterChange(value)}
                         >
-                          <SelectTrigger className="w-full sm:max-w-[200px] h-8 min-w-0">
+                          <SelectTrigger className="w-full sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
                             <SelectValue placeholder={t('common.all')}>
                               <div className="w-full overflow-hidden">
                                 <div className="truncate">
@@ -2426,7 +2426,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               </div>
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[300px]" position="popper" side="bottom" align="end" sideOffset={8}>
+                          <SelectContent className="bg-white dark:bg-gray-900 max-w-[90vw] sm:max-w-[450px]" position="popper" side="bottom" align="end" sideOffset={8}>
                             <SelectItem value="all" textValue={t('common.all')}>
                               <div className="flex items-center justify-between w-full min-w-0">
                                 <span className="truncate flex-1 mr-2 min-w-0">{t('common.all')}</span>
@@ -2449,7 +2449,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </Select>
                       ) : (
                         // Multiple selection for stacked chart and box plot
-                        <div className="relative w-full sm:w-auto min-w-0">
+                        <div className="relative w-full sm:w-auto min-w-0 shrink-0">
                           <MultiSelectDropdown
                             options={filterOptions.map((option): SelectOption => ({
                               value: option.value,
@@ -2472,7 +2472,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               }
                             }}
                             placeholder={t('common.all')}
-                            className="w-full sm:max-w-[200px]"
+                            className="w-full sm:min-w-[250px] sm:max-w-[400px]"
                             showCounts={true}
                             maxHeight="max-h-48"
                             totalCount={totalCount}
