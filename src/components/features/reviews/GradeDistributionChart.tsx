@@ -104,16 +104,16 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // Chart type state
   const [chartType, setChartType] = React.useState<ChartType>('bar');
 
-  // Filter N/A grades from distribution if needed
+  // Filter N/A grades from distribution if needed (always filter for box plot)
   const filteredGradeDistribution = React.useMemo(() => {
-    if (showNAGrades) {
+    if (showNAGrades && chartType !== 'boxplot') {
       return gradeDistribution;
     }
     
     const filtered = { ...gradeDistribution };
     delete filtered['N/A'];
     return filtered;
-  }, [gradeDistribution, showNAGrades]);
+  }, [gradeDistribution, showNAGrades, chartType]);
   
   // Cumulative line visibility state
   const [showCumulativeLine, setShowCumulativeLine] = React.useState(true);
@@ -410,7 +410,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     
     // 結合標準成績和實際成績
     const allGrades = [...standardGrades, ...actualGrades];
-    const gradesWithNA = showNAGrades ? [...allGrades, 'N/A'] : allGrades;
+    const gradesWithNA = (showNAGrades && chartType !== 'boxplot') ? [...allGrades, 'N/A'] : allGrades;
     const sortedGrades = sortGradesDescending(gradesWithNA);
 
     // 獲取完整的成績分佈（包含 0 計數的成績），但只包含我們想要顯示的成績
@@ -450,7 +450,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     // If 'all', return overall distribution
     if (instructorValue === 'all') {
       const distribution = calculateGradeDistributionFromReviews(rawReviewData.map(r => ({ course_final_grade: r.review.course_final_grade })));
-      if (applyNAFilter && !showNAGrades) {
+      if (applyNAFilter && (!showNAGrades || chartType === 'boxplot')) {
         const filtered = { ...distribution };
         delete filtered['N/A'];
         return filtered;
@@ -485,7 +485,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       });
       
       const distribution = calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
-      if (applyNAFilter && !showNAGrades) {
+      if (applyNAFilter && (!showNAGrades || chartType === 'boxplot')) {
         const filtered = { ...distribution };
         delete filtered['N/A'];
         return filtered;
@@ -510,7 +510,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       });
       
       const distribution = calculateGradeDistributionFromReviews(filteredReviews.map(r => ({ course_final_grade: r.review.course_final_grade })));
-      if (applyNAFilter && !showNAGrades) {
+      if (applyNAFilter && (!showNAGrades || chartType === 'boxplot')) {
         const filtered = { ...distribution };
         delete filtered['N/A'];
         return filtered;
@@ -1860,8 +1860,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                       
                       {/* 右側控制項目 */}
                       <div className="flex items-center gap-2 shrink-0">
-                        {/* N/A Grades Toggle */}
-                        {onNAToggleChange && (
+                        {/* N/A Grades Toggle - hidden for box plot */}
+                        {onNAToggleChange && chartType !== 'boxplot' && (
                           <button
                             onClick={() => onNAToggleChange(!showNAGrades)}
                             className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
@@ -1990,8 +1990,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                           
                         {/* 右側控制項目 */}
                         <div className="flex items-center gap-2 shrink-0">
-                          {/* N/A Grades Toggle */}
-                          {onNAToggleChange && (
+                          {/* N/A Grades Toggle - hidden for box plot */}
+                          {onNAToggleChange && chartType !== 'boxplot' && (
                             <button
                               onClick={() => onNAToggleChange(!showNAGrades)}
                               className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
@@ -2162,8 +2162,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 
                 {/* 右側控制項目 */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* N/A Grades Toggle */}
-                  {onNAToggleChange && (
+                  {/* N/A Grades Toggle - hidden for box plot */}
+                  {onNAToggleChange && chartType !== 'boxplot' && (
                     <button
                       onClick={() => onNAToggleChange(!showNAGrades)}
                       className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
@@ -2506,8 +2506,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 
                 {/* 右側控制項目 */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* N/A Grades Toggle */}
-                  {onNAToggleChange && (
+                  {/* N/A Grades Toggle - hidden for box plot */}
+                  {onNAToggleChange && chartType !== 'boxplot' && (
                     <button
                       onClick={() => onNAToggleChange(!showNAGrades)}
                       className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
