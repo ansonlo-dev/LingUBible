@@ -752,7 +752,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               ? t('sessionType.tutorial')
               : sessionType;
           
-          displayLabel = `${courseCode}\n(${translatedSessionType})`;
+          // Only show translated session type without English for Chinese languages
+          const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
+            ? translatedSessionType.replace(/ \([^)]+\)$/, '') // Remove English part in parentheses
+            : translatedSessionType;
+          
+          displayLabel = `${courseCode}\n(${sessionTypeDisplay})`;
         } else if (context === 'course' && option.value !== 'all') {
           // For course page, format as "Instructor Name\n(Session Type)"
           const [instructorName, sessionType] = option.value.split('|');
@@ -764,7 +769,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               ? t('sessionType.tutorial')
               : sessionType;
           
-          displayLabel = `${shortenInstructorName(instructorName)}\n(${translatedSessionType})`;
+          // Only show translated session type without English for Chinese languages
+          const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
+            ? translatedSessionType.replace(/ \([^)]+\)$/, '') // Remove English part in parentheses
+            : translatedSessionType;
+          
+          displayLabel = `${shortenInstructorName(instructorName)}\n(${sessionTypeDisplay})`;
         }
         
         return {
@@ -1583,7 +1593,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             ? t('sessionType.tutorial')
             : sessionType;
         
-        displayLabel = `${courseCode}\n(${translatedSessionType})`;
+        // Only show translated session type without English for Chinese languages
+        const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
+          ? translatedSessionType.replace(/ \([^)]+\)$/, '') // Remove English part in parentheses
+          : translatedSessionType;
+        
+        displayLabel = `${courseCode}\n(${sessionTypeDisplay})`;
       } else if (context === 'course' && option.value !== 'all') {
         // For course page, format as "Instructor Name\n(Session Type)"
         const [instructorName, sessionType] = option.value.split('|');
@@ -1595,7 +1610,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             ? t('sessionType.tutorial')
             : sessionType;
         
-        displayLabel = `${shortenInstructorName(instructorName)}\n(${translatedSessionType})`;
+        // Only show translated session type without English for Chinese languages
+        const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
+          ? translatedSessionType.replace(/ \([^)]+\)$/, '') // Remove English part in parentheses
+          : translatedSessionType;
+        
+        displayLabel = `${shortenInstructorName(instructorName)}\n(${sessionTypeDisplay})`;
       }
       
       return {

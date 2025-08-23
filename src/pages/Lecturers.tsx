@@ -934,9 +934,15 @@ const Lecturers = () => {
       .map(([key, data]) => {
         const [courseCode, sessionType] = key.split('|');
         const sessionTypeTranslated = sessionType === 'Lecture' ? t('sessionType.lecture') : t('sessionType.tutorial');
+        
+        // Only show translated session type without English for Chinese languages
+        const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
+          ? sessionTypeTranslated.replace(/ \([^)]+\)$/, '') // Remove English part in parentheses
+          : sessionTypeTranslated;
+        
         return {
           value: key,
-          label: `${courseCode} - ${data.title} (${sessionTypeTranslated})`,
+          label: `${courseCode} - ${data.title} (${sessionTypeDisplay})`,
           count: data.count,
           // Add sorting helpers
           courseCode,

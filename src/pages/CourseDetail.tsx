@@ -422,7 +422,12 @@ const CourseDetail = () => {
           const instructorDisplayName = detail.instructor_name === 'UNKNOWN' 
             ? (language === 'en' ? 'Unknown instructor' : '未知教師')
             : detail.instructor_name;
-          instructorSessionLabels.set(key, `${instructorDisplayName} (${sessionTypeTranslated})`);
+          
+          // Only show translated session type without English for Chinese languages
+          const sessionTypeDisplay = (language === 'zh-TW' || language === 'zh-CN') 
+            ? sessionTypeTranslated.replace(/ \([^)]+\)$/, '') // Remove English part in parentheses
+            : sessionTypeTranslated;
+          instructorSessionLabels.set(key, `${instructorDisplayName} (${sessionTypeDisplay})`);
         });
       } catch (error) {
         console.warn('Failed to parse instructor details:', error);
