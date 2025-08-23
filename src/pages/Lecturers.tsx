@@ -2296,16 +2296,16 @@ const Lecturers = () => {
               </div>
 
               {/* Desktop: Tab switcher and filters in the same row */}
-              <div className="hidden md:flex md:items-center md:justify-between md:gap-2 mb-4">
-                <TabsList className="bg-muted/50 backdrop-blur-sm">
+              <div className="hidden md:flex md:items-start md:gap-4 mb-4">
+                <TabsList className="bg-muted/50 backdrop-blur-sm flex-shrink-0 min-w-0">
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length > 0 && (
                     <TabsTrigger 
                       value="lecture" 
-                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 text-xs px-2 py-1.5"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{t('sessionType.lecture')}</span>
-                        <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold truncate">{t('sessionType.lecture')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Lecture').length}
                         </div>
                       </div>
@@ -2314,11 +2314,11 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length > 0 && (
                     <TabsTrigger 
                       value="tutorial" 
-                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 text-xs px-2 py-1.5"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{t('sessionType.tutorial')}</span>
-                        <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold truncate">{t('sessionType.tutorial')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Tutorial').length}
                         </div>
                       </div>
@@ -2327,11 +2327,11 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Project').length > 0 && (
                     <TabsTrigger 
                       value="project" 
-                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 text-xs px-2 py-1.5"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{t('sessionType.project')}</span>
-                        <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold truncate">{t('sessionType.project')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Project').length}
                         </div>
                       </div>
@@ -2340,11 +2340,11 @@ const Lecturers = () => {
                   {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Seminar').length > 0 && (
                     <TabsTrigger 
                       value="seminar" 
-                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105"
+                      className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 text-xs px-2 py-1.5"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{t('sessionType.seminar')}</span>
-                        <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold truncate">{t('sessionType.seminar')}</span>
+                        <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {filteredTeachingCourses.filter(teaching => teaching.sessionType === 'Seminar').length}
                         </div>
                       </div>
@@ -2353,7 +2353,7 @@ const Lecturers = () => {
                 </TabsList>
 
                 {/* Desktop filters - inline with tab switcher */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3 flex-shrink-0 min-w-0">
                   {/* Term filter */}
                   <div className="flex items-center gap-2 shrink-0">
                     <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
