@@ -2547,7 +2547,7 @@ const Lecturers = () => {
                                     e.preventDefault();
                                     navigate(`/courses/${encodeURIComponent(courseCode)}`);
                                   }}
-                                  className="font-medium text-sm hover:text-primary transition-colors"
+                                  className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                                 >
                                   <div className="flex flex-col">
                                     {/* 課程代碼 - 作為主標題 */}
@@ -2816,7 +2816,7 @@ const Lecturers = () => {
                                     e.preventDefault();
                                     navigate(`/courses/${encodeURIComponent(courseCode)}`);
                                   }}
-                                  className="font-medium text-sm hover:text-primary transition-colors"
+                                  className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                                 >
                                   <div className="flex flex-col">
                                     {/* 課程代碼 - 作為主標題 */}
@@ -3085,7 +3085,7 @@ const Lecturers = () => {
                                     e.preventDefault();
                                     navigate(`/courses/${encodeURIComponent(courseCode)}`);
                                   }}
-                                  className="font-medium text-sm hover:text-primary transition-colors"
+                                  className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                                 >
                                   <div className="flex flex-col">
                                     {/* 課程代碼 - 作為主標題 */}
@@ -3354,7 +3354,7 @@ const Lecturers = () => {
                                     e.preventDefault();
                                     navigate(`/courses/${encodeURIComponent(courseCode)}`);
                                   }}
-                                  className="font-medium text-sm hover:text-primary transition-colors"
+                                  className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                                 >
                                   <div className="flex flex-col">
                                     {/* 課程代碼 - 作為主標題 */}
