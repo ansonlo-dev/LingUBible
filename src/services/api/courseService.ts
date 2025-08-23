@@ -194,7 +194,7 @@ export class CourseService {
   // 性能優化常數
   private static readonly MAX_COURSES_LIMIT = 10000; // 移除限制，允許顯示所有課程
   private static readonly MAX_INSTRUCTORS_LIMIT = 10000; // 移除限制，允許顯示所有講師
-  private static readonly MAX_REVIEWS_LIMIT = 1000; // 從 1500 減少到 1000
+  private static readonly MAX_REVIEWS_LIMIT = 10000; // 從 1500 減少到 1000
   private static readonly MAX_TEACHING_RECORDS_LIMIT = 10000; // 增加限制以確保包含所有教學記錄
   private static readonly MAX_SEARCH_RESULTS = 50; // 新增：搜尋結果限制
 
@@ -231,6 +231,7 @@ export class CourseService {
    */
   static clearCache(): void {
     this.cache.clear();
+    console.log('🗑️ CourseService cache cleared');
   }
 
   /**
@@ -2268,6 +2269,9 @@ export class CourseService {
       const currentTermCode = getCurrentTermCode();
       const cacheKey = `all_instructors_detailed_stats_${currentTermCode}`;
       
+      // 由於修改了 MAX_TEACHING_RECORDS_LIMIT，清除相關快取以載入完整資料
+      this.cache.delete(cacheKey);
+      
       // 檢查緩存
       const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
       if (cached) {
@@ -3428,6 +3432,9 @@ export class CourseService {
   static async getAllTermsInstructorsTeachingBatch(termCodes?: string[]): Promise<Map<string, Set<string>>> {
     try {
       const cacheKey = `all_terms_instructors_teaching_${termCodes?.join('_') || 'all'}`;
+      
+      // 由於修改了 MAX_TEACHING_RECORDS_LIMIT，清除相關快取以載入完整資料
+      this.cache.delete(cacheKey);
       
       // 檢查緩存
       const cached = this.getCached<Map<string, Set<string>>>(cacheKey);
@@ -5680,10 +5687,13 @@ export class CourseService {
    */
   static async getBatchInstructorTeachingLanguages(instructorNames: string[]): Promise<Map<string, string[]>> {
     if (instructorNames.length === 0) {
+      console.log('🔍 getBatchInstructorTeachingLanguages: No instructor names provided');
       return new Map();
     }
 
     try {
+      console.log(`🔍 getBatchInstructorTeachingLanguages: Fetching languages for ${instructorNames.length} instructors`);
+      
       // Fetch all teaching records for the specified instructors
       const response = await databases.listDocuments(
         this.DATABASE_ID,
@@ -5697,6 +5707,16 @@ export class CourseService {
       );
 
       const teachingRecords = response.documents as unknown as TeachingRecord[];
+      console.log(`🔍 getBatchInstructorTeachingLanguages: Found ${teachingRecords.length} teaching records`);
+      
+      // Debug: Show sample of first few records
+      if (teachingRecords.length > 0) {
+        console.log('🔍 Sample teaching records:', teachingRecords.slice(0, 3).map(r => ({
+          instructor: r.instructor_name,
+          language: r.teaching_language,
+          term: r.term_code
+        })));
+      }
       
       // Group records by instructor
       const instructorRecordsMap = new Map<string, TeachingRecord[]>();
@@ -5709,6 +5729,7 @@ export class CourseService {
 
       // Build result map with unique languages in chronological order
       const result = new Map<string, string[]>();
+      let totalLanguagesFound = 0;
       
       instructorNames.forEach(instructorName => {
         const records = instructorRecordsMap.get(instructorName) || [];
@@ -5724,7 +5745,13 @@ export class CourseService {
         });
 
         result.set(instructorName, languageOrder);
+        if (languageOrder.length > 0) {
+          totalLanguagesFound++;
+        }
       });
+
+      console.log(`🔍 getBatchInstructorTeachingLanguages: ${totalLanguagesFound} instructors have language data`);
+      console.log(`🔍 Sample language mapping:`, Array.from(result.entries()).slice(0, 3));
 
       return result;
     } catch (error) {

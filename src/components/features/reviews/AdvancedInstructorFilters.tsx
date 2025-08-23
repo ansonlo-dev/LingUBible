@@ -366,6 +366,8 @@ export function AdvancedInstructorFilters({
 
   // Calculate language counts for instructors
   const languageCounts = useMemo(() => {
+    console.log('🔍 AdvancedInstructorFilters: Calculating language counts for', instructors.length, 'instructors');
+    
     const counts: { [key: string]: number } = {};
     
     // Initialize counts for all 8 teaching language codes in the desired order
@@ -374,9 +376,18 @@ export function AdvancedInstructorFilters({
       counts[code] = 0;
     });
     
+    // Debug: Check how many instructors have teaching languages
+    let instructorsWithLanguages = 0;
+    const sampleLanguages: string[][] = [];
+    
     // Count instructors for each teaching language code
     instructors.forEach(instructor => {
       if (instructor.teachingLanguages && instructor.teachingLanguages.length > 0) {
+        instructorsWithLanguages++;
+        if (sampleLanguages.length < 5) {
+          sampleLanguages.push(instructor.teachingLanguages);
+        }
+        
         instructor.teachingLanguages.forEach(langCode => {
           if (counts.hasOwnProperty(langCode)) {
             counts[langCode]++;
@@ -384,6 +395,10 @@ export function AdvancedInstructorFilters({
         });
       }
     });
+    
+    console.log(`🔍 AdvancedInstructorFilters: ${instructorsWithLanguages} instructors have language data`);
+    console.log(`🔍 Sample teaching languages:`, sampleLanguages);
+    console.log(`🔍 Language counts:`, counts);
     
     return counts;
   }, [instructors]);
