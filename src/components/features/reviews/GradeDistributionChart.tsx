@@ -297,13 +297,14 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
   // Adjust height based on chart type and mobile status
   const getResponsiveHeight = () => {
     if (chartType === 'boxplot') {
-      // For multiple box plots, we need more height
-      return isMobile ? 300 : 350;
+      // For multiple box plots, calculate height based on instructor count with moderate spacing
+      const instructorCount = filterOptions?.length || 1;
+      return isMobile ? Math.max(300, instructorCount * 40) : Math.max(350, instructorCount * 45);
     }
     if (chartType === 'stacked') {
       // For stacked charts with multiple instructors, we need more height
       const instructorCount = filterOptions?.length || 1;
-      return isMobile ? Math.max(250, instructorCount * 35) : Math.max(300, instructorCount * 35);
+      return isMobile ? Math.max(250, instructorCount * 40) : Math.max(300, instructorCount * 40);
     }
     // For bar charts, use same height as stacked/box plot for consistency
     return isMobile ? 300 : 350;
@@ -1549,8 +1550,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       // Use consistent ordering function
       const sortedFilterOptions = getConsistentFilterOrdering();
       
-      // Combine all option with sorted filter options, limit to 10 for readability
-      optionsToProcess = [allOption, ...sortedFilterOptions].slice(0, 10);
+      // Combine all option with sorted filter options
+      optionsToProcess = [allOption, ...sortedFilterOptions];
     } else {
       // Only show the selected options
       optionsToProcess = selectedValues
@@ -1655,8 +1656,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           
           // Only show label if there's meaningful data (at least 1 count and 5% of total)
           if (realCount >= 1 && percentage >= 5) {
-            return `${realCount}\n(${percentage.toFixed(0)}%)`;
-          }
+            return `${realCount} (${percentage.toFixed(0)}%)`;          }
           return '';
         },
         fontSize: 14,
@@ -1729,7 +1729,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       legend: {
         show: true,
         orient: 'horizontal',
-        bottom: (isMobile && isPortrait) ? 25 : (isMobile ? 15 : 8), // Much more space on mobile portrait
+        bottom: (isMobile && isPortrait) ? 35 : (isMobile ? 25 : 18), // More space to avoid overlap with x-axis
         itemGap: isMobile ? 8 : 15,
         itemWidth: isMobile ? 12 : 18,
         itemHeight: isMobile ? 8 : 12,
