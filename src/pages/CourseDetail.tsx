@@ -31,7 +31,7 @@ import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
-import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment } from '@/utils/textUtils';
+import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
@@ -1640,12 +1640,19 @@ const CourseDetail = () => {
                               className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
-                                <span>{instructorName}</span>
-                                {(language === 'zh-TW' || language === 'zh-CN') && (
-                                  <span className="text-xs text-muted-foreground font-normal">
-                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
-                                  </span>
-                                )}
+                                {(() => {
+                                  const formattedName = getFormattedInstructorName(data.instructor, language);
+                                  return (
+                                    <>
+                                      <span>{formattedName.primary}</span>
+                                      {formattedName.secondary && (
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                          {formattedName.secondary}
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </a>
                           )}
@@ -1874,12 +1881,19 @@ const CourseDetail = () => {
                               className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
-                                <span>{instructorName}</span>
-                                {(language === 'zh-TW' || language === 'zh-CN') && (
-                                  <span className="text-xs text-muted-foreground font-normal">
-                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
-                                  </span>
-                                )}
+                                {(() => {
+                                  const formattedName = getFormattedInstructorName(data.instructor, language);
+                                  return (
+                                    <>
+                                      <span>{formattedName.primary}</span>
+                                      {formattedName.secondary && (
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                          {formattedName.secondary}
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </a>
                           )}
@@ -2116,12 +2130,19 @@ const CourseDetail = () => {
                               className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
-                                <span>{instructorName}</span>
-                                {(language === 'zh-TW' || language === 'zh-CN') && (
-                                  <span className="text-xs text-muted-foreground font-normal">
-                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
-                                  </span>
-                                )}
+                                {(() => {
+                                  const formattedName = getFormattedInstructorName(data.instructor, language);
+                                  return (
+                                    <>
+                                      <span>{formattedName.primary}</span>
+                                      {formattedName.secondary && (
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                          {formattedName.secondary}
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </a>
                           )}
@@ -2358,12 +2379,19 @@ const CourseDetail = () => {
                               className="font-medium text-sm hover:text-primary transition-colors inline-block w-fit"
                             >
                               <div className="flex flex-col">
-                                <span>{instructorName}</span>
-                                {(language === 'zh-TW' || language === 'zh-CN') && (
-                                  <span className="text-xs text-muted-foreground font-normal">
-                                    {language === 'zh-TW' ? data.instructor.name_tc : data.instructor.name_sc}
-                                  </span>
-                                )}
+                                {(() => {
+                                  const formattedName = getFormattedInstructorName(data.instructor, language);
+                                  return (
+                                    <>
+                                      <span>{formattedName.primary}</span>
+                                      {formattedName.secondary && (
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                          {formattedName.secondary}
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </a>
                           )}
