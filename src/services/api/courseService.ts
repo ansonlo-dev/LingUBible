@@ -1,7 +1,7 @@
 import { databases } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
-import { calculateGradeStatistics, calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
+import { calculateGradeStatistics, calculateGradeDistributionFromReviews, convertGradeToGPA } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
 import { courseStatsCache, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
 
@@ -3403,6 +3403,8 @@ export class CourseService {
     averageWorkload: number;
     averageDifficulty: number;
     averageUsefulness: number;
+    averageGPA: number;
+    averageGPACount: number;
   }>> {
     try {
       const cacheKey = `batch_course_detailed_stats_${courseCodes.sort().join('_')}`;
@@ -3425,11 +3427,11 @@ export class CourseService {
         [
           Query.equal('course_code', courseCodes),
           Query.limit(this.MAX_REVIEWS_LIMIT),
-          Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness'])
+          Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
         ]
       );
 
-      const allReviews = response.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness'>[];
+      const allReviews = response.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
 
       // 按課程代碼分組評論
       const reviewsByCourse = allReviews.reduce((acc, review) => {
@@ -3449,6 +3451,8 @@ export class CourseService {
         averageWorkload: number;
         averageDifficulty: number;
         averageUsefulness: number;
+        averageGPA: number;
+        averageGPACount: number;
       }>();
 
       for (const courseCode of courseCodes) {
@@ -3462,7 +3466,9 @@ export class CourseService {
             studentCount: 0,
             averageWorkload: -1,
             averageDifficulty: -1,
-            averageUsefulness: -1
+            averageUsefulness: -1,
+            averageGPA: 0,
+            averageGPACount: 0
           });
           continue;
         }
@@ -3472,9 +3478,11 @@ export class CourseService {
         let totalWorkload = 0;
         let totalDifficulty = 0;
         let totalUsefulness = 0;
+        let totalGPA = 0;
         let validWorkloadCount = 0;
         let validDifficultyCount = 0;
         let validUsefulnessCount = 0;
+        let validGPACount = 0;
         const uniqueUsers = new Set<string>();
         
         for (const review of reviews) {
@@ -3493,6 +3501,13 @@ export class CourseService {
             totalUsefulness += review.course_usefulness;
             validUsefulnessCount++;
           }
+          if (review.course_final_grade) {
+            const gradeValue = convertGradeToGPA(review.course_final_grade);
+            if (gradeValue > 0) {
+              totalGPA += gradeValue;
+              validGPACount++;
+            }
+          }
         }
 
         courseStatsMap.set(courseCode, {
@@ -3501,7 +3516,9 @@ export class CourseService {
           studentCount: uniqueUsers.size,
           averageWorkload: validWorkloadCount > 0 ? totalWorkload / validWorkloadCount : -1,
           averageDifficulty: validDifficultyCount > 0 ? totalDifficulty / validDifficultyCount : -1,
-          averageUsefulness: validUsefulnessCount > 0 ? totalUsefulness / validUsefulnessCount : -1
+          averageUsefulness: validUsefulnessCount > 0 ? totalUsefulness / validUsefulnessCount : -1,
+          averageGPA: validGPACount > 0 ? totalGPA / validGPACount : 0,
+          averageGPACount: validGPACount
         });
       }
 
