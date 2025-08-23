@@ -1017,7 +1017,7 @@ export class CourseService {
         [
           Query.orderAsc('name'),
           Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department', '$createdAt', '$updatedAt']) // 包含中文名稱
+          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt']) // 包含中文名稱
         ]
       );
 
@@ -4240,7 +4240,7 @@ export class CourseService {
           [
             Query.equal('name', uniqueValidInstructorNames),
             Query.limit(uniqueValidInstructorNames.length),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department'])
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department'])
           ]
         ) : Promise.resolve({ documents: [] }),
         databases.listDocuments(
