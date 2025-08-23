@@ -797,4 +797,17 @@ export function courseMatchesLanguageFilterRealOnly(
   if (courseLanguages.length === 0) return false;
   
   return courseLanguages.some(langCode => filterLanguages.includes(langCode));
+}
+
+/**
+ * 翻譯授課類型名稱
+ * @param sessionType 授課類型（如：'Lecture', 'Tutorial', 'Project', 'Seminar'）
+ * @param t 翻譯函數
+ * @returns 翻譯後的授課類型名稱
+ */
+export function getSessionTypeTranslation(sessionType: string, t: any): string {
+  if (!sessionType) return sessionType;
+  
+  const normalizedType = sessionType.toLowerCase();
+  return t(`sessionType.${normalizedType}`);
 } 
