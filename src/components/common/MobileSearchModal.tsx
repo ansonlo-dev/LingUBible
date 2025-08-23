@@ -1139,7 +1139,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                             </div>
                             <div className="space-y-2">
                               {popularInstructors.map((instructor) => {
-                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const nameInfo = getFormattedInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
                                 // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
@@ -1394,7 +1394,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                             </div>
                             <div className="space-y-2">
                               {topInstructors.map((instructor) => {
-                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const nameInfo = getFormattedInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
                                 // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
@@ -2164,7 +2164,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="space-y-2">
                               {popularInstructors.map((instructor) => {
-                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const nameInfo = getFormattedInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
                                 // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
@@ -2411,7 +2411,7 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                           <div>
                             <div className="space-y-2">
                               {topInstructors.map((instructor) => {
-                                const nameInfo = getInstructorName(instructor, currentLanguage);
+                                const nameInfo = getFormattedInstructorName(instructor, currentLanguage);
                                 const departmentName = translateDepartmentName(instructor.department, t);
                                 // Use renderFacultyBadges for multi-department support
                                 const instructorUrl = `/instructors/${encodeURIComponent(instructor.name)}`;
