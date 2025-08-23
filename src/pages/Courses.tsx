@@ -703,6 +703,7 @@ const Courses = () => {
                   averageDifficulty={course.averageDifficulty}
                   averageUsefulness={course.averageUsefulness}
                   averageGPA={course.averageGPA}
+                  averageGPACount={course.averageGPACount}
                   isLoading={statsLoading}
                   onTeachingLanguageClick={handleTeachingLanguageClick}
                   onServiceLearningClick={handleServiceLearningClick}

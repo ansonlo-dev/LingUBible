@@ -604,6 +604,7 @@ const InstructorsList = () => {
                     gradingFairness={instructor.gradingFairness}
                     reviewCount={instructor.reviewCount}
                     averageGPA={instructor.averageGPA}
+                    averageGPACount={instructor.averageGPACount}
                     isTeachingInCurrentTerm={instructor.isTeachingInCurrentTerm ?? false}
                     teachingLanguages={instructor.teachingLanguages}
                     currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
