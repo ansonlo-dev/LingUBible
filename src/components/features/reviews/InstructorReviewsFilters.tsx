@@ -492,7 +492,7 @@ export function InstructorReviewsFilters({
               <MultiSelectDropdown
                 options={Object.entries(sessionTypeCounts || {}).map(([sessionType, count]) => ({
                   value: sessionType,
-                  label: sessionType,
+                  label: getSessionTypeTranslation(sessionType, t),
                   count: count
                 }))}
                 selectedValues={filters.selectedSessionTypes}
