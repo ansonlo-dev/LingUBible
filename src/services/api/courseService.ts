@@ -195,7 +195,7 @@ export class CourseService {
   private static readonly MAX_COURSES_LIMIT = 10000; // 移除限制，允許顯示所有課程
   private static readonly MAX_INSTRUCTORS_LIMIT = 10000; // 移除限制，允許顯示所有講師
   private static readonly MAX_REVIEWS_LIMIT = 1000; // 從 1500 減少到 1000
-  private static readonly MAX_TEACHING_RECORDS_LIMIT = 500; // 從 800 減少到 500
+  private static readonly MAX_TEACHING_RECORDS_LIMIT = 10000; // 增加限制以確保包含所有教學記錄
   private static readonly MAX_SEARCH_RESULTS = 50; // 新增：搜尋結果限制
 
   // 簡單的記憶體緩存
