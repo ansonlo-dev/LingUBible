@@ -942,7 +942,7 @@ const Lecturers = () => {
         
         return {
           value: key,
-          label: `${courseCode} - ${data.title} (${sessionTypeDisplay})`,
+          label: `${courseCode} (${sessionTypeDisplay})`,
           count: data.count,
           // Add sorting helpers
           courseCode,
