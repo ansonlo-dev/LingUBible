@@ -41,8 +41,10 @@ export function getCurrentTermName(): string {
 
 /**
  * 將學期代碼轉換為顯示名稱
+ * 支援多語言和不同的學期格式
  */
-export function getTermDisplayName(termCode: string): string {
+export function getTermDisplayName(termCode: string, t?: any): string {
+  // 回退到英文顯示邏輯
   const parts = termCode.split('-');
   if (parts.length !== 2) {
     return termCode; // 如果格式不正確，返回原始代碼
@@ -51,13 +53,19 @@ export function getTermDisplayName(termCode: string): string {
   const year = parts[0];
   const term = parts[1];
   
+  // 統一使用學年格式 (YYYY-YY) 以保持一致性
+  const startYear = parseInt(year);
+  const endYearShort = (startYear + 1).toString().slice(-2);
+  const academicYear = `${year}-${endYearShort}`;
+  
   switch (term) {
     case 'T1':
-      return `${year}/${parseInt(year) + 1} Term 1`;
+      return `${academicYear}, Term 1`;
     case 'T2':
-      return `${year}/${parseInt(year) + 1} Term 2`;
+      return `${academicYear}, Term 2`;
+    case 'S':  // 處理數據庫中的 S 格式
     case 'Summer':
-      return `${year} Summer`;
+      return `${academicYear}, Summer Term`;
     default:
       return termCode;
   }
@@ -92,6 +100,7 @@ export function getTermStatus(termCode: string): 'current' | 'past' | 'future' {
       case 'T2':
         termOrder = 2;
         break;
+      case 'S':  // 處理數據庫中的 S 格式
       case 'Summer':
         termOrder = 3;
         break;

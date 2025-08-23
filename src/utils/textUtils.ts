@@ -562,6 +562,13 @@ export function getTermName(termName: string, t: any): string {
     return yearOnlyMatch[1]; // Extract and display only the year part
   }
   
+  // Handle summer format: YYYY-S (e.g., "2024-S" to "2024 Summer")
+  const summerTermMatch = termName.match(/^(\d{4})-S$/);
+  if (summerTermMatch) {
+    const year = summerTermMatch[1];
+    return t('term.summer', { year });
+  }
+  
   // Handle format: YYYY-T# (e.g., "2017-T1" to "2017-18, Term 1")
   const termCodeMatch = termName.match(/^(\d{4})-T(\d)$/);
   if (termCodeMatch) {

@@ -459,7 +459,7 @@ export function AdvancedCourseFilters({
           <MultiSelectDropdown
             options={availableTerms.map(term => ({
               value: term.term_code,
-              label: getTermDisplayName(term.term_code),
+              label: getTermDisplayName(term.term_code, t),
               count: getTermCounts()[term.term_code] || 0,
               status: isCurrentTerm(term.term_code) ? 'current' : 
                      new Date(term.end_date) < new Date() ? 'past' : 'future'

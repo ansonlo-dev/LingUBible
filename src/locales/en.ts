@@ -764,6 +764,7 @@ export default {
   'filter.clickToFilterByTeachingLanguage': 'Click to filter by teaching language: {language}',
   'term.unknown': 'Unknown term',
   'term.yearOrBefore': '{year} on or before',
+  'term.summer': '{year} Summer',
   'filter.clickToFilterRequirement': 'Click to filter by requirement: {requirement}',
   'filter.clickToFilterBySessionType': 'Click to filter by session type: {type}',
   'filter.clickToFilterByGrade': 'Click to filter by grade: {grade}',
