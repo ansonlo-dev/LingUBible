@@ -1977,18 +1977,10 @@ const Lecturers = () => {
         )}
       </div>
 
-      <Tabs defaultValue="reviews" className="w-full">
+      <Tabs defaultValue="courses" className="w-full">
         {/* Tab Navigation - Attached Design */}
         <div className="attached-tabs-container">
           <TabsList className="attached-tabs-list">
-            <TabsTrigger 
-              value="reviews" 
-              className="attached-tab-trigger"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('review.studentReviews')}</span>
-              <span className="sm:hidden text-xs">{t('common.reviews')}</span>
-            </TabsTrigger>
             <TabsTrigger 
               value="courses" 
               className="attached-tab-trigger"
@@ -1996,6 +1988,14 @@ const Lecturers = () => {
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t('instructors.teachingCourses')}</span>
               <span className="sm:hidden text-xs">{t('common.courses')}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reviews" 
+              className="attached-tab-trigger"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('review.studentReviews')}</span>
+              <span className="sm:hidden text-xs">{t('common.reviews')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="grades" 
@@ -3314,7 +3314,7 @@ const Lecturers = () => {
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-medium text-muted-foreground">{t('instructors.noReviewsTitle')}</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                <p className="text-sm text-muted-foreground">
                   {t('instructors.noReviewsDesc', { name: instructor?.name || '' })}
                 </p>
               </div>
@@ -3329,7 +3329,7 @@ const Lecturers = () => {
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-medium text-muted-foreground">沒有符合篩選條件的評論</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                <p className="text-sm text-muted-foreground">
                   請嘗試調整篩選條件
                 </p>
               </div>
@@ -4477,7 +4477,7 @@ const Lecturers = () => {
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium text-muted-foreground">{t('chart.noGradeData')}</h3>
-                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    <p className="text-sm text-muted-foreground">
                       {t('chart.noGradeDataDescription')}
                     </p>
                   </div>

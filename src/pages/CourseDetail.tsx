@@ -1222,18 +1222,10 @@ const CourseDetail = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="reviews" className="w-full">
+      <Tabs defaultValue="teaching" className="w-full">
         {/* Tab Navigation - Attached Design */}
         <div className="attached-tabs-container">
           <TabsList className="attached-tabs-list">
-            <TabsTrigger 
-              value="reviews" 
-              className="attached-tab-trigger"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('review.studentReviews')}</span>
-              <span className="sm:hidden text-xs">{t('pages.courseDetail.reviewsShort')}</span>
-            </TabsTrigger>
             <TabsTrigger 
               value="teaching" 
               className="attached-tab-trigger"
@@ -1241,6 +1233,14 @@ const CourseDetail = () => {
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t('pages.courseDetail.offerRecords')}</span>
               <span className="sm:hidden text-xs">{t('common.teaching')}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reviews" 
+              className="attached-tab-trigger"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('review.studentReviews')}</span>
+              <span className="sm:hidden text-xs">{t('pages.courseDetail.reviewsShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="grades" 
@@ -2334,7 +2334,7 @@ const CourseDetail = () => {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium text-muted-foreground">{t('chart.noGradeData')}</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  <p className="text-sm text-muted-foreground">
                     {t('chart.noGradeDataDescription')}
                   </p>
                 </div>

@@ -1219,7 +1219,7 @@ export const CourseReviewsList = ({
           </div>
           <div className="space-y-2">
             <h3 className="text-lg font-medium text-muted-foreground">{t('review.noReviewsTitle')}</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            <p className="text-sm text-muted-foreground">
               {t('review.noReviewsDesc', { 
                 courseName: course ? course.course_code : 'This course'
               })}
@@ -1275,7 +1275,7 @@ export const CourseReviewsList = ({
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-medium text-muted-foreground">{t('review.noReviewsTitle')}</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              <p className="text-sm text-muted-foreground">
                 {t('review.noReviewsDesc', { 
                   courseName: course ? course.course_code : 'This course'
                 })}
