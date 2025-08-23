@@ -246,7 +246,20 @@ export class CourseService {
     
     // 也清除 courseStatsCache 中相關的緩存
     courseStatsCache.delete(`course_teaching_info_optimized_${courseCode}`);
-    console.log(`Cleared cache for course: ${courseCode}`);
+    courseStatsCache.delete(`course_teaching_info_${courseCode}`);
+    
+    // 清除其他相關的課程緩存
+    const additionalCacheKeys = [
+      `course_${courseCode}`,
+      `course_reviews_${courseCode}`,
+      `course_stats_${courseCode}`
+    ];
+    additionalCacheKeys.forEach(key => {
+      this.cache.delete(key);
+      courseStatsCache.delete(key);
+    });
+    
+    console.log(`✅ Cleared all cache for course: ${courseCode}, including teaching records cache`);
   }
 
   /**
@@ -936,11 +949,20 @@ export class CourseService {
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
           Query.equal('course_code', courseCode),
-          Query.limit(100)
+          Query.limit(500), // 增加限制數量以避免截斷
+          Query.orderDesc('term_code'), // 添加排序以確保數據一致性
+          Query.orderAsc('session_type') // 按課程類型排序
         ]
       );
 
-      return response.documents as unknown as TeachingRecord[];
+      // 處理教學記錄，將空白 instructor_name 替換為 'UNKNOWN'
+      const teachingRecords = (response.documents as unknown as TeachingRecord[]).map(record => ({
+        ...record,
+        instructor_name: (!record.instructor_name || record.instructor_name.trim() === '') ? 'UNKNOWN' : record.instructor_name
+      }));
+
+      console.log(`📚 獲取課程 ${courseCode} 的教學記錄: ${teachingRecords.length} 筆記錄`);
+      return teachingRecords;
     } catch (error) {
       console.error('Error fetching teaching records:', error);
       throw new Error('Failed to fetch teaching records');
@@ -1173,9 +1195,9 @@ export class CourseService {
       // 並行獲取所有相關的講師和學期信息
       const teachingInfo = await Promise.all(
         teachingRecords.map(async (record) => {
-          // 處理講師：如果講師名稱空白或無效，使用預設的未知講師
+          // 處理講師：如果是 UNKNOWN 或其他找不到的講師，使用預設的未知講師
           let instructor: Instructor | null;
-          if (!record.instructor_name || record.instructor_name.trim() === '') {
+          if (record.instructor_name === 'UNKNOWN') {
             instructor = unknownInstructor;
           } else {
             instructor = await this.getInstructorByName(record.instructor_name);
@@ -4190,12 +4212,13 @@ export class CourseService {
         return [];
       }
 
-      // 獲取所有唯一的講師名稱和學期代碼，過濾掉空白的講師名稱
+      // 獲取所有唯一的講師名稱和學期代碼
       const allInstructorNames = teachingRecords.map(record => record.instructor_name);
-      const uniqueValidInstructorNames = [...new Set(allInstructorNames.filter(name => name && name.trim() !== ''))];
+      // 現在 UNKNOWN 是有效名稱，但不在講師資料庫中，所以只查詢非 UNKNOWN 的講師
+      const uniqueValidInstructorNames = [...new Set(allInstructorNames.filter(name => name && name.trim() !== '' && name !== 'UNKNOWN'))];
       const uniqueTermCodes = [...new Set(teachingRecords.map(record => record.term_code))];
       
-      // 並行批量獲取所有講師和學期信息（只查詢有效的講師名稱）
+      // 並行批量獲取所有講師和學期信息（只查詢有效的講師名稱，排除 UNKNOWN）
       const [instructorsResponse, termsResponse] = await Promise.all([
         uniqueValidInstructorNames.length > 0 ? databases.listDocuments(
           this.DATABASE_ID,
@@ -4246,14 +4269,13 @@ export class CourseService {
       // 組合教學信息
       const teachingInfo = teachingRecords
         .map((record) => {
-          // 處理講師：如果找不到對應講師，檢查是否為空白名稱
+          // 處理講師：如果是 UNKNOWN 或找不到對應講師，使用預設的未知講師
           let instructor = instructorsMap.get(record.instructor_name);
           if (!instructor) {
-            // 如果講師名稱為空白或無效，使用預設的未知講師
-            if (!record.instructor_name || record.instructor_name.trim() === '') {
+            // 如果是 UNKNOWN 或其他找不到的講師名稱，都使用未知講師
+            if (record.instructor_name === 'UNKNOWN') {
               instructor = unknownInstructor;
             } else {
-              // 如果講師名稱不為空但找不到對應記錄，也使用未知講師
               console.warn(`Instructor not found in database: "${record.instructor_name}" for course ${courseCode}`);
               instructor = unknownInstructor;
             }
