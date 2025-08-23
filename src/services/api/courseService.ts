@@ -1,7 +1,7 @@
 import { databases } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
-import { calculateGradeStatistics, calculateGradeDistributionFromReviews, convertGradeToGPA } from '@/utils/gradeUtils';
+import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
 import { courseStatsCache, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
 
@@ -3502,8 +3502,8 @@ export class CourseService {
             validUsefulnessCount++;
           }
           if (review.course_final_grade) {
-            const gradeValue = convertGradeToGPA(review.course_final_grade);
-            if (gradeValue > 0) {
+            const gradeValue = getGPA(review.course_final_grade);
+            if (gradeValue && gradeValue > 0) {
               totalGPA += gradeValue;
               validGPACount++;
             }
