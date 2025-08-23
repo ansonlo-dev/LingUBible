@@ -808,6 +808,15 @@ export function courseMatchesLanguageFilterRealOnly(
 export function getSessionTypeTranslation(sessionType: string, t: any): string {
   if (!sessionType) return sessionType;
   
-  const normalizedType = sessionType.toLowerCase();
+  // 處理常見的授課類型映射
+  const typeMapping: { [key: string]: string } = {
+    'Lecture': 'lecture',
+    'Tutorial': 'tutorial', 
+    'Lab': 'lab',
+    'Project': 'project',
+    'Seminar': 'seminar'
+  };
+  
+  const normalizedType = typeMapping[sessionType] || sessionType.toLowerCase();
   return t(`sessionType.${normalizedType}`);
 } 
