@@ -2269,8 +2269,8 @@ export class CourseService {
       const currentTermCode = getCurrentTermCode();
       const cacheKey = `all_instructors_detailed_stats_${currentTermCode}`;
       
-      // 由於修改了 MAX_TEACHING_RECORDS_LIMIT，清除相關快取以載入完整資料
-      this.cache.delete(cacheKey);
+      // 清除快取以重新載入完整的教學語言資料
+      // this.cache.delete(cacheKey); // 暫時註解避免無限循環
       
       // 檢查緩存
       const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
@@ -2422,6 +2422,8 @@ export class CourseService {
       let currentTermTeachingLanguagesMap = new Map<string, string | null>();
 
       try {
+        console.log('🔍 getAllInstructorsWithDetailedStats: Starting to fetch teaching languages...');
+        
         // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
         const [languagesResult, currentTermResult] = await Promise.allSettled([
           this.getBatchInstructorTeachingLanguages(instructorNames),
@@ -2430,17 +2432,21 @@ export class CourseService {
 
         if (languagesResult.status === 'fulfilled') {
           teachingLanguagesMap = languagesResult.value;
+          console.log('✅ getBatchInstructorTeachingLanguages succeeded, got', teachingLanguagesMap.size, 'entries');
         } else {
-          console.warn('Failed to fetch all instructor teaching languages, continuing without language badges:', languagesResult.reason);
+          console.error('❌ Failed to fetch all instructor teaching languages:', languagesResult.reason);
+          console.warn('Continuing without language badges...');
         }
 
         if (currentTermResult.status === 'fulfilled') {
           currentTermTeachingLanguagesMap = currentTermResult.value;
+          console.log('✅ getBatchInstructorCurrentTermTeachingLanguages succeeded');
         } else {
-          console.warn('Failed to fetch all instructor current term teaching languages, continuing without current term language:', currentTermResult.reason);
+          console.error('❌ Failed to fetch all instructor current term teaching languages:', currentTermResult.reason);
+          console.warn('Continuing without current term language...');
         }
       } catch (error) {
-        console.warn('Error fetching teaching language data for all instructors, continuing without language badges:', error);
+        console.error('❌ Error fetching teaching language data for all instructors:', error);
       }
 
       // 添加教學語言數據到結果中
@@ -3433,8 +3439,8 @@ export class CourseService {
     try {
       const cacheKey = `all_terms_instructors_teaching_${termCodes?.join('_') || 'all'}`;
       
-      // 由於修改了 MAX_TEACHING_RECORDS_LIMIT，清除相關快取以載入完整資料
-      this.cache.delete(cacheKey);
+      // 清除快取以重新載入完整的教學語言資料
+      // this.cache.delete(cacheKey); // 暫時註解避免無限循環
       
       // 檢查緩存
       const cached = this.getCached<Map<string, Set<string>>>(cacheKey);
