@@ -1288,14 +1288,43 @@ const CourseDetail = () => {
               <div className="flex flex-col gap-4 mb-4">
                 {/* Mobile: Tab switcher and filters in separate rows */}
                 <div className="md:hidden">
-                  <TabsList className="bg-muted/50 backdrop-blur-sm w-full mb-4">
+                  {(() => {
+                    // Count available session types
+                    const sessionTypeCounts = {
+                      lecture: filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length,
+                      tutorial: filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length,
+                      project: filteredTeachingInfo.filter(info => info.sessionType === 'Project').length,
+                      seminar: filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length,
+                    };
+                    
+                    const availableSessionTypes = Object.values(sessionTypeCounts).filter(count => count > 0).length;
+                    const shouldUseAbbreviations = availableSessionTypes >= 3;
+                    
+                    // Get session type labels (abbreviated for mobile portrait when 3+ types)
+                    const getSessionTypeLabel = (type: string) => {
+                      if (!shouldUseAbbreviations) {
+                        return t(`sessionType.${type}`);
+                      }
+                      
+                      // Use abbreviations for mobile portrait with 3+ session types
+                      const abbreviations = {
+                        en: { lecture: 'LEC', tutorial: 'TUT', project: 'PRJ', seminar: 'SEM' },
+                        'zh-TW': { lecture: '講課', tutorial: '導修', project: '專題', seminar: '研討' },
+                        'zh-CN': { lecture: '講課', tutorial: '导修', project: '专题', seminar: '研讨' }
+                      };
+                      
+                      return abbreviations[language as keyof typeof abbreviations]?.[type as keyof typeof abbreviations['en']] || t(`sessionType.${type}`);
+                    };
+                    
+                    return (
+                      <TabsList className="bg-muted/50 backdrop-blur-sm w-full mb-4">
                     {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length > 0 && (
                       <TabsTrigger 
                         value="lecture" 
                         className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-bold">{t('sessionType.lecture')}</span>
+                          <span className="font-bold">{getSessionTypeLabel('lecture')}</span>
                           <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                             {filteredTeachingInfo.filter(info => info.sessionType === 'Lecture').length}
                           </div>
@@ -1308,7 +1337,7 @@ const CourseDetail = () => {
                         className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-bold">{t('sessionType.tutorial')}</span>
+                          <span className="font-bold">{getSessionTypeLabel('tutorial')}</span>
                           <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                             {filteredTeachingInfo.filter(info => info.sessionType === 'Tutorial').length}
                           </div>
@@ -1321,7 +1350,7 @@ const CourseDetail = () => {
                         className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-bold">{t('sessionType.project')}</span>
+                          <span className="font-bold">{getSessionTypeLabel('project')}</span>
                           <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                             {filteredTeachingInfo.filter(info => info.sessionType === 'Project').length}
                           </div>
@@ -1334,7 +1363,7 @@ const CourseDetail = () => {
                         className="hover:shadow-md transition-[transform,box-shadow,scale] duration-200 data-[state=active]:shadow-lg hover:scale-105 flex-1"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-bold">{t('sessionType.seminar')}</span>
+                          <span className="font-bold">{getSessionTypeLabel('seminar')}</span>
                           <div className="w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">
                             {filteredTeachingInfo.filter(info => info.sessionType === 'Seminar').length}
                           </div>
