@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { X, BookText as BookOpenIcon, GraduationCap, MessageSquare, Loader2, TrendingUp } from 'lucide-react';
+import { X, BookText as BookOpenIcon, GraduationCap, MessageSquare, Loader2, TrendingUp, Info } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SearchHistory, useSearchHistory } from '@/components/common/SearchHistory';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
 import { BookLoadingAnimation } from '@/components/ui/BookLoadingAnimation';
-import { SimpleTooltip } from '@/components/ui/responsive-tooltip';
+import { SimpleTooltip, ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 interface MobileSearchModalProps {
   isOpen: boolean;
@@ -566,7 +566,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <BookOpenIcon className="h-4 w-4 text-red-600" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.courses')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.courses')}
+                        <ResponsiveTooltip content={t('featured.popularCoursesNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
@@ -580,7 +585,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <GraduationCap className="h-4 w-4 text-red-600" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.instructors')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.instructors')}
+                        <ResponsiveTooltip content={t('featured.popularInstructorsNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
@@ -594,7 +604,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <BookOpenIcon className="h-4 w-4 text-gray-500" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.topCourses')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.topCourses')}
+                        <ResponsiveTooltip content={t('featured.topCoursesNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
@@ -608,7 +623,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <GraduationCap className="h-4 w-4 text-gray-500" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.topInstructors')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.topInstructors')}
+                        <ResponsiveTooltip content={t('featured.topInstructorsNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
@@ -624,7 +644,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <BookOpenIcon className="h-4 w-4 text-red-600" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.courses')}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                          {t('featured.courses')}
+                          <ResponsiveTooltip content={t('featured.popularCoursesNote')}>
+                            <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          </ResponsiveTooltip>
+                        </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
                       </div>
                     </>
@@ -633,7 +658,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <GraduationCap className="h-4 w-4 text-red-600" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.instructors')}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                          {t('featured.instructors')}
+                          <ResponsiveTooltip content={t('featured.popularInstructorsNote')}>
+                            <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          </ResponsiveTooltip>
+                        </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.mostReviews')})</span>
                       </div>
                     </>
@@ -642,7 +672,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <BookOpenIcon className="h-4 w-4 text-gray-500" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topCourses')}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                          {t('featured.topCourses')}
+                          <ResponsiveTooltip content={t('featured.topCoursesNote')}>
+                            <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          </ResponsiveTooltip>
+                        </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
                       </div>
                     </>
@@ -651,7 +686,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                     <>
                       <GraduationCap className="h-4 w-4 text-gray-500" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{t('featured.topInstructors')}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                          {t('featured.topInstructors')}
+                          <ResponsiveTooltip content={t('featured.topInstructorsNote')}>
+                            <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          </ResponsiveTooltip>
+                        </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({t('featured.highestAvgGPA')})</span>
                       </div>
                     </>
@@ -1495,7 +1535,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <BookOpenIcon className="h-4 w-4 text-red-600" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.courses')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.courses')}
+                        <ResponsiveTooltip content={t('featured.popularCoursesNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
@@ -1509,7 +1554,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <GraduationCap className="h-4 w-4 text-red-600" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.instructors')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.instructors')}
+                        <ResponsiveTooltip content={t('featured.popularInstructorsNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.mostReviews')})</span>
                     </div>
                   </button>
@@ -1523,7 +1573,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <BookOpenIcon className="h-4 w-4 text-gray-500" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.topCourses')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.topCourses')}
+                        <ResponsiveTooltip content={t('featured.topCoursesNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
@@ -1537,7 +1592,12 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                   >
                     <GraduationCap className="h-4 w-4 text-gray-500" />
                     <div className={`${isMobileLandscape ? 'flex' : 'hidden sm:flex'} flex-col items-center gap-0`}>
-                      <span>{t('featured.topInstructors')}</span>
+                      <span className="flex items-center gap-1">
+                        {t('featured.topInstructors')}
+                        <ResponsiveTooltip content={t('featured.topInstructorsNote')}>
+                          <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </ResponsiveTooltip>
+                      </span>
                       <span className="text-xs opacity-75">({t('featured.highestAvgGPA')})</span>
                     </div>
                   </button>
