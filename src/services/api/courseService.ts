@@ -1139,14 +1139,34 @@ export class CourseService {
     try {
       const teachingRecords = await this.getCourseTeachingRecords(courseCode);
       
+      // 為空白或無效的講師名稱創建一個預設的講師物件
+      const unknownInstructor: Instructor = {
+        $id: 'unknown-instructor',
+        name: 'UNKNOWN',
+        name_tc: '未知教師',
+        name_sc: '未知教师',
+        title: '',
+        nickname: '',
+        email: '',
+        department: '',
+        $createdAt: new Date().toISOString(),
+        $updatedAt: new Date().toISOString()
+      };
+
       // 並行獲取所有相關的講師和學期信息
       const teachingInfo = await Promise.all(
         teachingRecords.map(async (record) => {
-          const [instructor, term] = await Promise.all([
-            this.getInstructorByName(record.instructor_name),
-            this.getTermByCode(record.term_code)
-          ]);
+          // 處理講師：如果講師名稱空白或無效，使用預設的未知講師
+          let instructor: Instructor | null;
+          if (!record.instructor_name || record.instructor_name.trim() === '') {
+            instructor = unknownInstructor;
+          } else {
+            instructor = await this.getInstructorByName(record.instructor_name);
+          }
+          
+          const term = await this.getTermByCode(record.term_code);
 
+          // 如果找不到學期，跳過此記錄
           if (!instructor || !term) {
             return null;
           }
@@ -4147,21 +4167,22 @@ export class CourseService {
         return [];
       }
 
-      // 獲取所有唯一的講師名稱和學期代碼
-      const uniqueInstructorNames = [...new Set(teachingRecords.map(record => record.instructor_name))];
+      // 獲取所有唯一的講師名稱和學期代碼，過濾掉空白的講師名稱
+      const allInstructorNames = teachingRecords.map(record => record.instructor_name);
+      const uniqueValidInstructorNames = [...new Set(allInstructorNames.filter(name => name && name.trim() !== ''))];
       const uniqueTermCodes = [...new Set(teachingRecords.map(record => record.term_code))];
       
-      // 並行批量獲取所有講師和學期信息
+      // 並行批量獲取所有講師和學期信息（只查詢有效的講師名稱）
       const [instructorsResponse, termsResponse] = await Promise.all([
-        databases.listDocuments(
+        uniqueValidInstructorNames.length > 0 ? databases.listDocuments(
           this.DATABASE_ID,
           this.INSTRUCTORS_COLLECTION_ID,
           [
-            Query.equal('name', uniqueInstructorNames),
-            Query.limit(uniqueInstructorNames.length),
+            Query.equal('name', uniqueValidInstructorNames),
+            Query.limit(uniqueValidInstructorNames.length),
             Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department'])
           ]
-        ),
+        ) : Promise.resolve({ documents: [] }),
         databases.listDocuments(
           this.DATABASE_ID,
           this.TERMS_COLLECTION_ID,
@@ -4181,6 +4202,20 @@ export class CourseService {
         instructorsMap.set(instructor.name, instructor);
       });
       
+      // 為空白或無效的講師名稱創建一個預設的講師物件
+      const unknownInstructor: Instructor = {
+        $id: 'unknown-instructor',
+        name: 'UNKNOWN',
+        name_tc: '未知教師',
+        name_sc: '未知教师',
+        title: '',
+        nickname: '',
+        email: '',
+        department: '',
+        $createdAt: new Date().toISOString(),
+        $updatedAt: new Date().toISOString()
+      };
+      
       (termsResponse.documents as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
@@ -4188,9 +4223,15 @@ export class CourseService {
       // 組合教學信息
       const teachingInfo = teachingRecords
         .map((record) => {
-          const instructor = instructorsMap.get(record.instructor_name);
+          // 處理講師：如果講師名稱空白或無效，使用預設的未知講師
+          let instructor = instructorsMap.get(record.instructor_name);
+          if (!instructor && (!record.instructor_name || record.instructor_name.trim() === '')) {
+            instructor = unknownInstructor;
+          }
+          
           const term = termsMap.get(record.term_code);
 
+          // 如果找不到講師或學期，跳過此記錄
           if (!instructor || !term) {
             return null;
           }
