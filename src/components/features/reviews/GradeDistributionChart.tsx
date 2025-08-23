@@ -1674,7 +1674,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       grid: {
         left: '3%',
         right: '4%',
-        bottom: (isMobile && isPortrait) ? '25%' : '3%', // Much more space for legend on mobile portrait
+        bottom: (isMobile && isPortrait) ? '30%' : '15%', // More space for legend to avoid overlap
         containLabel: true
       },
       xAxis: {
@@ -1729,7 +1729,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
       legend: {
         show: true,
         orient: 'horizontal',
-        bottom: (isMobile && isPortrait) ? 35 : (isMobile ? 25 : 18), // More space to avoid overlap with x-axis
+        bottom: (isMobile && isPortrait) ? 45 : (isMobile ? 35 : 28), // Increased space to avoid overlap with x-axis
         itemGap: isMobile ? 8 : 15,
         itemWidth: isMobile ? 12 : 18,
         itemHeight: isMobile ? 8 : 12,
