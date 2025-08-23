@@ -2394,9 +2394,9 @@ export class CourseService {
       
       const coursesWithStats = await this.getCoursesWithStatsBatch();
       
-      // 按平均GPA排序，優先考慮有GPA數據的課程
+      // 按平均GPA排序，只考慮有足夠GPA數據的課程（至少5個有成績的評論）
       const sortedCourses = coursesWithStats
-        .filter(course => course.averageGPA > 0) // 只顯示有GPA數據的課程
+        .filter(course => course.averageGPA > 0 && course.averageGPACount >= 5) // 只顯示有GPA數據且計算基數>=5的課程
         .sort((a, b) => {
           // 首先按平均GPA排序（降序）
           if (b.averageGPA !== a.averageGPA) {
@@ -2432,9 +2432,9 @@ export class CourseService {
       
       const instructorsWithDetailedStats = await this.getAllInstructorsWithDetailedStats();
       
-      // 按平均GPA排序，優先考慮有GPA數據的講師
+      // 按平均GPA排序，只考慮有足夠GPA數據的講師（至少5個有成績的評論）
       const sortedInstructors = instructorsWithDetailedStats
-        .filter(instructor => instructor.averageGPA > 0) // 只顯示有GPA數據的講師
+        .filter(instructor => instructor.averageGPA > 0 && instructor.averageGPACount >= 5) // 只顯示有GPA數據且計算基數>=5的講師
         .sort((a, b) => {
           // 首先按平均GPA排序（降序）
           if (b.averageGPA !== a.averageGPA) {
