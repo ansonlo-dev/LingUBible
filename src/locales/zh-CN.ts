@@ -350,7 +350,7 @@ export default {
   'sessionType.tutorial': '导修 (Tutorial)',
   'sessionType.lab': '实验',
   'sessionType.project': '专题 (Project)',
-  'sessionType.seminar': '研讨',
+  'sessionType.seminar': '研讨 (Seminar)',
   // Session types for review cards (without brackets)
   'sessionTypeBadge.lecture': '讲课',
   'sessionTypeBadge.tutorial': '导修',
