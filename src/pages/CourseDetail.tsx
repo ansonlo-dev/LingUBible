@@ -1371,6 +1371,8 @@ const CourseDetail = () => {
                       </TabsTrigger>
                     )}
                   </TabsList>
+                    );
+                  })()}
 
                   {/* Mobile filters - each filter in its own row */}
                   <div className="grid grid-cols-1 gap-2">
