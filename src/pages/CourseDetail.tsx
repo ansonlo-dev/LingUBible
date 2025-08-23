@@ -1509,7 +1509,7 @@ const CourseDetail = () => {
                   </TabsList>
 
                   {/* Desktop filters - inline with tab switcher */}
-                  <div className="flex items-start gap-3 flex-shrink-0 min-w-0">
+                  <div className="flex items-start gap-3 flex-shrink-0 min-w-0 ml-auto">
                     {/* 學期篩選器 */}
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
