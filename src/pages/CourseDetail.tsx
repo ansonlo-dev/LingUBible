@@ -1963,38 +1963,118 @@ const CourseDetail = () => {
                           )}
                         </div>
 
-                        {/* Second row: Terms grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {[...new Set(data.terms.map(term => term.term_code))].sort().map(termCode => {
-                            const term = data.terms.find(t => t.term_code === termCode);
-                            const teachingLanguage = filteredTeachingInfo.find(info => 
-                              info.term.term_code === term.term_code && 
-                              info.instructor.name === instructorName &&
-                              info.sessionType === 'Project'
-                            )?.teachingLanguage;
-                            
-                            return (
-                              <div key={termCode} className="bg-muted/30 hover:bg-muted/50 p-2 rounded border text-center transition-colors duration-200">
-                                <div className="text-xs font-semibold text-foreground">{termCode}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {new Date(term.start_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  })} - {new Date(term.end_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  })}
+                        {/* Second row: Terms and Teaching Languages Badges */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {data.terms
+                            .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
+                            .map((term, termIndex) => {
+                              // Find the teaching language for this term and instructor
+                              const teachingLanguage = filteredTeachingInfo.find(info => 
+                                info.term.term_code === term.term_code && 
+                                info.instructor.name === instructorName &&
+                                info.sessionType === 'Project'
+                              )?.teachingLanguage;
+                              
+                              return (
+                                <div key={termIndex} className="flex items-center">
+                                  {/* Combined term and teaching language badge */}
+                                  {teachingLanguage ? (
+                                    <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
+                                      {/* Term part (left side) */}
+                                      <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                        }}
+                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                        onReset={() => resetTermTooltipState(term.term_code)}
+                                      >
+                                        <button
+                                          onClick={(e) => {
+                                            handleTermBadgeClick(term.term_code, e);
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                              return currentValues.includes(term.term_code)
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-background hover:bg-muted';
+                                            })()
+                                          }`}
+                                        >
+                                          {term.name}
+                                        </button>
+                                      </ResponsiveTooltip>
+                                      
+                                      {/* Separator */}
+                                      <div className="w-px bg-border"></div>
+                                      
+                                      {/* Teaching language part (right side) */}
+                                      <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                        }}
+                                        content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
+                                        onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
+                                      >
+                                        <button
+                                          onClick={(e) => {
+                                            handleTeachingLanguageBadgeClick(teachingLanguage, e);
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
+                                            (() => {
+                                              const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
+                                              return isLanguageSelected
+                                                ? 'bg-orange-500 text-orange-50 font-bold'
+                                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
+                                            })()
+                                          }`}
+                                        >
+                                          {teachingLanguage}
+                                        </button>
+                                      </ResponsiveTooltip>
+                                    </div>
+                                  ) : (
+                                    // Fallback to term-only badge if no teaching language
+                                    <ResponsiveTooltip
+                                      ref={(el) => {
+                                        if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                      }}
+                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                      onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                      onReset={() => resetTermTooltipState(term.term_code)}
+                                    >
+                                      <button
+                                        onClick={(e) => {
+                                          handleTermBadgeClick(term.term_code, e);
+                                        }}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground border-primary'
+                                              : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                          })()
+                                        }`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                    </ResponsiveTooltip>
+                                  )}
                                 </div>
-                                {teachingLanguage && (
-                                  <div className="text-xs text-muted-foreground mt-1 font-medium">
-                                    {getTeachingLanguageName(teachingLanguage, t)}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
                         </div>
                       </div>
                     ))}
@@ -2062,38 +2142,118 @@ const CourseDetail = () => {
                           )}
                         </div>
 
-                        {/* Second row: Terms grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {[...new Set(data.terms.map(term => term.term_code))].sort().map(termCode => {
-                            const term = data.terms.find(t => t.term_code === termCode);
-                            const teachingLanguage = filteredTeachingInfo.find(info => 
-                              info.term.term_code === term.term_code && 
-                              info.instructor.name === instructorName &&
-                              info.sessionType === 'Seminar'
-                            )?.teachingLanguage;
-                            
-                            return (
-                              <div key={termCode} className="bg-muted/30 hover:bg-muted/50 p-2 rounded border text-center transition-colors duration-200">
-                                <div className="text-xs font-semibold text-foreground">{termCode}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {new Date(term.start_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  })} - {new Date(term.end_date).toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  })}
+                        {/* Second row: Terms and Teaching Languages Badges */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {data.terms
+                            .sort((a, b) => b.term_code.localeCompare(a.term_code)) // Sort terms by code descending
+                            .map((term, termIndex) => {
+                              // Find the teaching language for this term and instructor
+                              const teachingLanguage = filteredTeachingInfo.find(info => 
+                                info.term.term_code === term.term_code && 
+                                info.instructor.name === instructorName &&
+                                info.sessionType === 'Seminar'
+                              )?.teachingLanguage;
+                              
+                              return (
+                                <div key={termIndex} className="flex items-center">
+                                  {/* Combined term and teaching language badge */}
+                                  {teachingLanguage ? (
+                                    <div className="inline-flex rounded-md border border-border overflow-hidden transition-colors hover:border-primary/50">
+                                      {/* Term part (left side) */}
+                                      <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                        }}
+                                        content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                        onReset={() => resetTermTooltipState(term.term_code)}
+                                      >
+                                        <button
+                                          onClick={(e) => {
+                                            handleTermBadgeClick(term.term_code, e);
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 ${
+                                            (() => {
+                                              const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                              return currentValues.includes(term.term_code)
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-background hover:bg-muted';
+                                            })()
+                                          }`}
+                                        >
+                                          {term.name}
+                                        </button>
+                                      </ResponsiveTooltip>
+                                      
+                                      {/* Separator */}
+                                      <div className="w-px bg-border"></div>
+                                      
+                                      {/* Teaching language part (right side) */}
+                                      <ResponsiveTooltip
+                                        ref={(el) => {
+                                          if (el) tooltipRefs.current[`lang-${teachingLanguage}`] = el;
+                                        }}
+                                        content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
+                                        hasClickAction={true}
+                                        clickActionText={t('tooltip.clickAgainToFilter')}
+                                        open={isMobile ? teachingLanguageTooltipStates[teachingLanguage] || false : undefined}
+                                        onOpenChange={isMobile ? (open) => setTeachingLanguageTooltipStates(prev => ({ ...prev, [teachingLanguage]: open })) : undefined}
+                                        onReset={() => resetTeachingLanguageTooltipState(teachingLanguage)}
+                                      >
+                                        <button
+                                          onClick={(e) => {
+                                            handleTeachingLanguageBadgeClick(teachingLanguage, e);
+                                          }}
+                                          className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
+                                            (() => {
+                                              const currentLanguageValues = Array.isArray(selectedTeachingLanguageFilter) ? selectedTeachingLanguageFilter : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+                                              const isLanguageSelected = currentLanguageValues.includes(teachingLanguage);
+                                              return isLanguageSelected
+                                                ? 'bg-orange-500 text-orange-50 font-bold'
+                                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/20';
+                                            })()
+                                          }`}
+                                        >
+                                          {teachingLanguage}
+                                        </button>
+                                      </ResponsiveTooltip>
+                                    </div>
+                                  ) : (
+                                    // Fallback to term-only badge if no teaching language
+                                    <ResponsiveTooltip
+                                      ref={(el) => {
+                                        if (el) tooltipRefs.current[`term-${term.term_code}`] = el;
+                                      }}
+                                      content={t('filter.clickToFilterByTerm', { term: term.name })}
+                                      hasClickAction={true}
+                                      clickActionText={t('tooltip.clickAgainToFilter')}
+                                      open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
+                                      onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
+                                      onReset={() => resetTermTooltipState(term.term_code)}
+                                    >
+                                      <button
+                                        onClick={(e) => {
+                                          handleTermBadgeClick(term.term_code, e);
+                                        }}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors border ${
+                                          (() => {
+                                            const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
+                                            return currentValues.includes(term.term_code)
+                                              ? 'bg-primary text-primary-foreground border-primary'
+                                              : 'bg-background hover:bg-muted border-border hover:border-primary/50';
+                                          })()
+                                        }`}
+                                      >
+                                        {term.name}
+                                      </button>
+                                    </ResponsiveTooltip>
+                                  )}
                                 </div>
-                                {teachingLanguage && (
-                                  <div className="text-xs text-muted-foreground mt-1 font-medium">
-                                    {getTeachingLanguageName(teachingLanguage, t)}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
                         </div>
                       </div>
                     ))}
