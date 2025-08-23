@@ -860,8 +860,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as course cards */}
                                         {course.averageGPA && course.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(course.averageGPA)}
+                                            {course.averageGPACount && course.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({course.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -942,8 +945,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as instructor cards */}
                                         {instructor.averageGPA && instructor.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(instructor.averageGPA)}
+                                            {instructor.averageGPACount && instructor.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({instructor.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -1104,8 +1110,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as course cards */}
                                         {course.averageGPA && course.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(course.averageGPA)}
+                                            {course.averageGPACount && course.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({course.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -1204,8 +1213,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as instructor cards */}
                                         {instructor.averageGPA && instructor.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(instructor.averageGPA)}
+                                            {instructor.averageGPACount && instructor.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({instructor.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -1353,8 +1365,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as course cards */}
                                         {course.averageGPA && course.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(course.averageGPA)}
+                                            {course.averageGPACount && course.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({course.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -1453,8 +1468,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as instructor cards */}
                                         {instructor.averageGPA && instructor.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(instructor.averageGPA)}
+                                            {instructor.averageGPACount && instructor.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({instructor.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -1875,8 +1893,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as course cards */}
                                         {course.averageGPA && course.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(course.averageGPA)}
+                                            {course.averageGPACount && course.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({course.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -1957,8 +1978,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as instructor cards */}
                                         {instructor.averageGPA && instructor.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(instructor.averageGPA)}
+                                            {instructor.averageGPACount && instructor.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({instructor.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -2115,8 +2139,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as course cards */}
                                         {course.averageGPA && course.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(course.averageGPA)}
+                                            {course.averageGPACount && course.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({course.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -2211,8 +2238,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as instructor cards */}
                                         {instructor.averageGPA && instructor.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(instructor.averageGPA)}
+                                            {instructor.averageGPACount && instructor.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({instructor.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -2356,8 +2386,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as course cards */}
                                         {course.averageGPA && course.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(course.averageGPA)}
+                                            {course.averageGPACount && course.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({course.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
@@ -2452,8 +2485,11 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
                                         </div>
                                         {/* Average GPA with same styling as instructor cards */}
                                         {instructor.averageGPA && instructor.averageGPA > 0 ? (
-                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text">
+                                          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-600 via-red-500 to-red-400 dark:from-red-500 dark:via-red-400 dark:to-red-300 bg-clip-text flex items-baseline">
                                             {formatGPA(instructor.averageGPA)}
+                                            {instructor.averageGPACount && instructor.averageGPACount > 0 && (
+                                              <span className="text-xs text-gray-500 ml-1">({instructor.averageGPACount})</span>
+                                            )}
                                           </span>
                                         ) : (
                                           <span className="text-sm font-bold text-gray-400">N/A</span>
