@@ -599,6 +599,7 @@ const InstructorsList = () => {
                     name={instructor.name}
                     nameTc={instructor.name_tc}
                     nameSc={instructor.name_sc}
+                    title={instructor.title}
                     department={instructor.department}
                     teachingScore={instructor.teachingScore}
                     gradingFairness={instructor.gradingFairness}

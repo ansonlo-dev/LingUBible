@@ -50,6 +50,7 @@ interface PopularInstructorCardProps {
   name: string;
   nameTc?: string;
   nameSc?: string;
+  title?: string;
   department: string;
   reviewCount: number;
   teachingScore: number;
@@ -989,7 +990,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors duration-200 line-clamp-2">
-                {props.name}
+                {props.title ? `${props.title} ${props.name}` : props.name}
               </CardTitle>
               <div className="mt-1">
                 {/* 在中文模式下顯示中文名稱 - 只在有中文名稱時顯示 */}

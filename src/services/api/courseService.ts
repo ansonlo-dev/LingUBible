@@ -46,6 +46,7 @@ export interface Instructor {
   name: string;
   name_tc?: string;
   name_sc?: string;
+  title?: string;
   email: string;
   department: string;
   $createdAt: string;
@@ -2000,7 +2001,7 @@ export class CourseService {
           [
             Query.orderAsc('name'),
             Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department', '$createdAt', '$updatedAt'])
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
         databases.listDocuments(
@@ -2200,7 +2201,7 @@ export class CourseService {
           [
             Query.orderAsc('name'),
             Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department', '$createdAt', '$updatedAt'])
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
         databases.listDocuments(
@@ -2714,7 +2715,7 @@ export class CourseService {
           [
             Query.orderAsc('name'),
             Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'email', 'department', '$createdAt', '$updatedAt'])
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
         databases.listDocuments(

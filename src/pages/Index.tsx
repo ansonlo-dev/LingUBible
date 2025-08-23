@@ -618,6 +618,7 @@ const Index = () => {
                       name={instructor.name}
                       nameTc={instructor.name_tc}
                       nameSc={instructor.name_sc}
+                      title={instructor.title}
                       department={instructor.department}
                       reviewCount={instructor.reviewCount}
                       teachingScore={instructor.teachingScore}
@@ -719,6 +720,7 @@ const Index = () => {
                       name={instructor.name}
                       nameTc={instructor.name_tc}
                       nameSc={instructor.name_sc}
+                      title={instructor.title}
                       department={instructor.department}
                       reviewCount={instructor.reviewCount}
                       teachingScore={instructor.teachingScore}
