@@ -5700,63 +5700,88 @@ export class CourseService {
     try {
       console.log(`🔍 getBatchInstructorTeachingLanguages: Fetching languages for ${instructorNames.length} instructors`);
       
-      // Fetch all teaching records for the specified instructors
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('instructor_name', instructorNames),
-          Query.orderAsc('term_code'), // Chronological order
-          Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-          Query.select(['instructor_name', 'teaching_language', 'term_code'])
-        ]
-      );
-
-      const teachingRecords = response.documents as unknown as TeachingRecord[];
-      console.log(`🔍 getBatchInstructorTeachingLanguages: Found ${teachingRecords.length} teaching records`);
+      const result = new Map<string, string[]>();
       
-      // Debug: Show sample of first few records
-      if (teachingRecords.length > 0) {
-        console.log('🔍 Sample teaching records:', teachingRecords.slice(0, 3).map(r => ({
-          instructor: r.instructor_name,
-          language: r.teaching_language,
-          term: r.term_code
-        })));
+      // Split into batches to avoid URL length limits (max ~50 instructors per batch)
+      const batchSize = 50;
+      const batches = [];
+      
+      for (let i = 0; i < instructorNames.length; i += batchSize) {
+        batches.push(instructorNames.slice(i, i + batchSize));
       }
       
-      // Group records by instructor
-      const instructorRecordsMap = new Map<string, TeachingRecord[]>();
-      teachingRecords.forEach(record => {
-        if (!instructorRecordsMap.has(record.instructor_name)) {
-          instructorRecordsMap.set(record.instructor_name, []);
-        }
-        instructorRecordsMap.get(record.instructor_name)!.push(record);
-      });
-
-      // Build result map with unique languages in chronological order
-      const result = new Map<string, string[]>();
-      let totalLanguagesFound = 0;
+      console.log(`🔍 getBatchInstructorTeachingLanguages: Processing ${batches.length} batches of ${batchSize} instructors each`);
       
-      instructorNames.forEach(instructorName => {
-        const records = instructorRecordsMap.get(instructorName) || [];
+      let totalRecords = 0;
+      let totalInstructorsWithData = 0;
+      
+      // Process each batch
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} instructors`);
         
-        const languageSet = new Set<string>();
-        const languageOrder: string[] = [];
-        
-        records.forEach(record => {
-          if (record.teaching_language && !languageSet.has(record.teaching_language)) {
-            languageSet.add(record.teaching_language);
-            languageOrder.push(record.teaching_language);
+        try {
+          // Fetch all teaching records for this batch of instructors
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.equal('instructor_name', batch),
+              Query.orderAsc('term_code'), // Chronological order
+              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
+              Query.select(['instructor_name', 'teaching_language', 'term_code'])
+            ]
+          );
+
+          const teachingRecords = response.documents as unknown as TeachingRecord[];
+          totalRecords += teachingRecords.length;
+          console.log(`🔍 Batch ${batchIndex + 1}: Found ${teachingRecords.length} teaching records`);
+          
+          // Debug: Show sample of first few records from first batch
+          if (batchIndex === 0 && teachingRecords.length > 0) {
+            console.log('🔍 Sample teaching records:', teachingRecords.slice(0, 3).map(r => ({
+              instructor: r.instructor_name,
+              language: r.teaching_language,
+              term: r.term_code
+            })));
           }
-        });
+          
+          // Group records by instructor
+          const instructorRecordsMap = new Map<string, TeachingRecord[]>();
+          teachingRecords.forEach(record => {
+            if (!instructorRecordsMap.has(record.instructor_name)) {
+              instructorRecordsMap.set(record.instructor_name, []);
+            }
+            instructorRecordsMap.get(record.instructor_name)!.push(record);
+          });
 
-        result.set(instructorName, languageOrder);
-        if (languageOrder.length > 0) {
-          totalLanguagesFound++;
+          // Build result map with unique languages in chronological order
+          batch.forEach(instructorName => {
+            const records = instructorRecordsMap.get(instructorName) || [];
+            
+            const languageSet = new Set<string>();
+            const languageOrder: string[] = [];
+            
+            records.forEach(record => {
+              if (record.teaching_language && !languageSet.has(record.teaching_language)) {
+                languageSet.add(record.teaching_language);
+                languageOrder.push(record.teaching_language);
+              }
+            });
+
+            result.set(instructorName, languageOrder);
+            if (languageOrder.length > 0) {
+              totalInstructorsWithData++;
+            }
+          });
+          
+        } catch (batchError) {
+          console.error(`❌ Error processing batch ${batchIndex + 1}:`, batchError);
         }
-      });
+      }
 
-      console.log(`🔍 getBatchInstructorTeachingLanguages: ${totalLanguagesFound} instructors have language data`);
+      console.log(`🔍 getBatchInstructorTeachingLanguages: Processed ${totalRecords} total records`);
+      console.log(`🔍 getBatchInstructorTeachingLanguages: ${totalInstructorsWithData} instructors have language data`);
       console.log(`🔍 Sample language mapping:`, Array.from(result.entries()).slice(0, 3));
 
       return result;
