@@ -4926,23 +4926,7 @@ export class CourseService {
 
       console.log(`🔍 getBatchCourseTeachingLanguages: Fetching teaching languages for ${courseCodes.length} courses`);
       console.log('📝 First 5 course codes:', courseCodes.slice(0, 5));
-
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('course_code', courseCodes),
-          Query.orderAsc('$createdAt'),
-          Query.select(['course_code', 'teaching_language', '$createdAt']),
-          Query.limit(1000) // Reasonable limit for batch processing
-        ]
-      );
-
-      console.log(`🔍 getBatchCourseTeachingLanguages: Found ${response.documents.length} teaching records`);
-
-      const teachingRecords = response.documents as unknown as (TeachingRecord & { teaching_language: string })[];
       
-      // Group by course code and maintain chronological order
       const courseLanguagesMap = new Map<string, string[]>();
       
       // Initialize maps for each course
@@ -4950,31 +4934,82 @@ export class CourseService {
         courseLanguagesMap.set(courseCode, []);
       });
       
-      // Process records by course
-      const recordsByCourse = new Map<string, (TeachingRecord & { teaching_language: string })[]>();
-      teachingRecords.forEach(record => {
-        if (!recordsByCourse.has(record.course_code)) {
-          recordsByCourse.set(record.course_code, []);
-        }
-        recordsByCourse.get(record.course_code)!.push(record);
-      });
+      // Split into batches to avoid URL length limits (max ~50 courses per batch)
+      const batchSize = 50;
+      const batches = [];
       
-      // Extract unique teaching languages for each course in chronological order
-      recordsByCourse.forEach((records, courseCode) => {
-        const seenLanguages = new Set<string>();
-        const orderedLanguages: string[] = [];
+      for (let i = 0; i < courseCodes.length; i += batchSize) {
+        batches.push(courseCodes.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchCourseTeachingLanguages: Processing ${batches.length} batches of ${batchSize} courses each`);
+      
+      let totalRecords = 0;
+      let totalCoursesWithData = 0;
+      
+      // Process each batch
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing course batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
         
-        records.forEach(record => {
-          if (record.teaching_language && !seenLanguages.has(record.teaching_language)) {
-            seenLanguages.add(record.teaching_language);
-            orderedLanguages.push(record.teaching_language);
-          }
-        });
-        
-        courseLanguagesMap.set(courseCode, orderedLanguages);
-      });
+        try {
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.equal('course_code', batch),
+              Query.orderAsc('$createdAt'),
+              Query.select(['course_code', 'teaching_language', '$createdAt']),
+              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT)
+            ]
+          );
 
-      console.log(`🎯 getBatchCourseTeachingLanguages: Returning ${courseLanguagesMap.size} courses with language data`);
+          const teachingRecords = response.documents as unknown as (TeachingRecord & { teaching_language: string })[];
+          totalRecords += teachingRecords.length;
+          console.log(`🔍 Course batch ${batchIndex + 1}: Found ${teachingRecords.length} teaching records`);
+          
+          // Debug: Show sample of first few records from first batch
+          if (batchIndex === 0 && teachingRecords.length > 0) {
+            console.log('🔍 Sample course teaching records:', teachingRecords.slice(0, 3).map(r => ({
+              course: r.course_code,
+              language: r.teaching_language
+            })));
+          }
+          
+          // Process records by course
+          const recordsByCourse = new Map<string, (TeachingRecord & { teaching_language: string })[]>();
+          teachingRecords.forEach(record => {
+            if (!recordsByCourse.has(record.course_code)) {
+              recordsByCourse.set(record.course_code, []);
+            }
+            recordsByCourse.get(record.course_code)!.push(record);
+          });
+          
+          // Extract unique teaching languages for each course in chronological order
+          recordsByCourse.forEach((records, courseCode) => {
+            const seenLanguages = new Set<string>();
+            const orderedLanguages: string[] = [];
+            
+            records.forEach(record => {
+              if (record.teaching_language && !seenLanguages.has(record.teaching_language)) {
+                seenLanguages.add(record.teaching_language);
+                orderedLanguages.push(record.teaching_language);
+              }
+            });
+            
+            courseLanguagesMap.set(courseCode, orderedLanguages);
+            if (orderedLanguages.length > 0) {
+              totalCoursesWithData++;
+            }
+          });
+          
+        } catch (batchError) {
+          console.error(`❌ Error processing course batch ${batchIndex + 1}:`, batchError);
+        }
+      }
+
+      console.log(`🔍 getBatchCourseTeachingLanguages: Processed ${totalRecords} total records`);
+      console.log(`🎯 getBatchCourseTeachingLanguages: ${totalCoursesWithData} courses have language data`);
       
       // 計算每種語言的課程數量用於調試
       const languageStats = { 'E': 0, 'C': 0, 'P': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
