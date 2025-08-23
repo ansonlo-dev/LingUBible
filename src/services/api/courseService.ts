@@ -233,6 +233,23 @@ export class CourseService {
   }
 
   /**
+   * 清除特定課程的相關緩存
+   */
+  static clearCourseCache(courseCode: string): void {
+    const keysToDelete = [];
+    for (const key of this.cache.keys()) {
+      if (key.includes(courseCode)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => this.cache.delete(key));
+    
+    // 也清除 courseStatsCache 中相關的緩存
+    courseStatsCache.delete(`course_teaching_info_optimized_${courseCode}`);
+    console.log(`Cleared cache for course: ${courseCode}`);
+  }
+
+  /**
    * 🚀 OPTIMIZATION: 高效統計方法 - 只計算數量，不載入完整數據
    * 專為主頁統計設計，避免載入大量不必要的數據
    */
@@ -1162,12 +1179,18 @@ export class CourseService {
             instructor = unknownInstructor;
           } else {
             instructor = await this.getInstructorByName(record.instructor_name);
+            // 如果講師名稱不為空但找不到對應記錄，也使用未知講師
+            if (!instructor) {
+              console.warn(`Instructor not found in database: "${record.instructor_name}" for course ${courseCode}`);
+              instructor = unknownInstructor;
+            }
           }
           
           const term = await this.getTermByCode(record.term_code);
 
           // 如果找不到學期，跳過此記錄
-          if (!instructor || !term) {
+          if (!term) {
+            console.warn(`Term not found: ${record.term_code} for course ${courseCode}`);
             return null;
           }
 
@@ -4223,16 +4246,24 @@ export class CourseService {
       // 組合教學信息
       const teachingInfo = teachingRecords
         .map((record) => {
-          // 處理講師：如果講師名稱空白或無效，使用預設的未知講師
+          // 處理講師：如果找不到對應講師，檢查是否為空白名稱
           let instructor = instructorsMap.get(record.instructor_name);
-          if (!instructor && (!record.instructor_name || record.instructor_name.trim() === '')) {
-            instructor = unknownInstructor;
+          if (!instructor) {
+            // 如果講師名稱為空白或無效，使用預設的未知講師
+            if (!record.instructor_name || record.instructor_name.trim() === '') {
+              instructor = unknownInstructor;
+            } else {
+              // 如果講師名稱不為空但找不到對應記錄，也使用未知講師
+              console.warn(`Instructor not found in database: "${record.instructor_name}" for course ${courseCode}`);
+              instructor = unknownInstructor;
+            }
           }
           
           const term = termsMap.get(record.term_code);
 
-          // 如果找不到講師或學期，跳過此記錄
-          if (!instructor || !term) {
+          // 如果找不到學期，跳過此記錄
+          if (!term) {
+            console.warn(`Term not found: ${record.term_code} for course ${courseCode}`);
             return null;
           }
 
