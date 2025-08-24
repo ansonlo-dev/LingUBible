@@ -499,9 +499,44 @@ export class CourseService {
     }
 
     try {
+      // 🚀 FIXED: 使用分批處理避免URL過長問題
+      console.log(`🔍 getBatchFavoriteCoursesData: Processing ${courseCodes.length} favorite courses`);
+      
+      let coursesArray: Course[] = [];
+      
+      // 分批獲取課程基本信息以避免URL過長
+      const batchSize = 50;
+      const courseBatches = [];
+      for (let i = 0; i < courseCodes.length; i += batchSize) {
+        courseBatches.push(courseCodes.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchFavoriteCoursesData: Processing ${courseBatches.length} course batches`);
+      
+      // 並行處理所有批次
+      const courseBatchPromises = courseBatches.map(batch =>
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.COURSES_COLLECTION_ID,
+          [
+            Query.equal('course_code', batch),
+            Query.limit(batch.length),
+            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
+          ]
+        )
+      );
+      
+      const coursesBatchResults = await Promise.all(courseBatchPromises);
+      
+      // 合併所有批次結果
+      coursesBatchResults.forEach(result => {
+        coursesArray.push(...(result.documents as unknown as Course[]));
+      });
+      
+      console.log(`✅ getBatchFavoriteCoursesData: Loaded ${coursesArray.length} courses from batches`);
+      
       // 並行獲取所有需要的數據
       const [
-        courses,
         statsMap,
         teachingLanguagesMap,
         currentTermLanguagesMap,
@@ -509,16 +544,6 @@ export class CourseService {
         currentTermServiceLearningMap,
         currentTermOfferedCourses
       ] = await Promise.all([
-        // 獲取所有課程基本信息
-        databases.listDocuments(
-          this.DATABASE_ID,
-          this.COURSES_COLLECTION_ID,
-          [
-            Query.equal('course_code', courseCodes),
-            Query.limit(courseCodes.length),
-            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
-          ]
-        ),
         // 獲取所有課程統計
         this.getBatchCourseDetailedStats(courseCodes),
         // 獲取教學語言
@@ -534,7 +559,6 @@ export class CourseService {
       ]);
 
       const result = new Map();
-      const coursesArray = courses.documents as unknown as Course[];
 
       coursesArray.forEach(course => {
         const stats = statsMap.get(course.course_code) || {
@@ -588,25 +612,50 @@ export class CourseService {
     }
 
     try {
+      // 🚀 FIXED: 使用分批處理避免URL過長問題
+      console.log(`🔍 getBatchFavoriteInstructorsData: Processing ${instructorNames.length} favorite instructors`);
+      
+      let instructorsArray: Instructor[] = [];
+      
+      // 分批獲取講師基本信息以避免URL過長
+      const batchSize = 50;
+      const instructorBatches = [];
+      for (let i = 0; i < instructorNames.length; i += batchSize) {
+        instructorBatches.push(instructorNames.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchFavoriteInstructorsData: Processing ${instructorBatches.length} instructor batches`);
+      
+      // 並行處理所有批次
+      const instructorBatchPromises = instructorBatches.map(batch =>
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.INSTRUCTORS_COLLECTION_ID,
+          [
+            Query.equal('name', batch),
+            Query.limit(batch.length),
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department'])
+          ]
+        )
+      );
+      
+      const instructorsBatchResults = await Promise.all(instructorBatchPromises);
+      
+      // 合佶所有批次結果
+      instructorsBatchResults.forEach(result => {
+        instructorsArray.push(...(result.documents as unknown as Instructor[]));
+      });
+      
+      console.log(`✅ getBatchFavoriteInstructorsData: Loaded ${instructorsArray.length} instructors from batches`);
+      
       // 並行獲取所有需要的數據
       const [
-        instructors,
         statsMap,
         instructorsWithGPA,
         teachingLanguagesMap,
         currentTermLanguagesMap,
         currentTermTeachingInstructors
       ] = await Promise.all([
-        // 獲取所有講師基本信息
-        databases.listDocuments(
-          this.DATABASE_ID,
-          this.INSTRUCTORS_COLLECTION_ID,
-          [
-            Query.equal('name', instructorNames),
-            Query.limit(instructorNames.length),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department'])
-          ]
-        ),
         // 獲取講師詳細統計
         this.getBatchInstructorDetailedStats(instructorNames),
         // 獲取包含GPA的講師統計
@@ -622,7 +671,6 @@ export class CourseService {
       ]);
 
       const result = new Map();
-      const instructorsArray = instructors.documents as unknown as Instructor[];
 
       instructorsArray.forEach(instructor => {
         const stats = statsMap.get(instructor.name) || {
@@ -845,12 +893,24 @@ export class CourseService {
   /**
    * 獲取帶統計信息的課程列表
    */
+  /**
+   * 🚀 OPTIMIZED: 獲取所有課程及統計信息 (添加緩存功能以提升重訪性能)
+   */
   static async getCoursesWithStats(): Promise<CourseWithStats[]> {
     try {
-      console.log('🚀 getCoursesWithStats: Starting to load courses with complete data');
+      const currentTermCode = getCurrentTermCode();
+      const cacheKey = `courses_with_complete_stats_${currentTermCode}`;
+      
+      // 檢查緩存
+      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      if (cached) {
+        console.log('✅ getCoursesWithStats: Returning cached data for fast loading');
+        return cached;
+      }
+      
+      console.log('🚀 getCoursesWithStats: Starting to load courses with complete data (cache miss)');
       
       const courses = await this.getAllCourses();
-      const currentTermCode = getCurrentTermCode();
       const courseCodes = courses.map(course => course.course_code);
       
       console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
@@ -913,6 +973,10 @@ export class CourseService {
       console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
         c.teachingLanguages && c.teachingLanguages.length > 0
       )?.course_code || 'none found');
+      
+      // 🚀 緩存結果以提升重訪性能 (匹配講師頁面的緩存策略)
+      this.setCached(cacheKey, coursesWithStats, 10 * 60 * 1000); // 10分鐘緩存
+      console.log('✅ getCoursesWithStats: Results cached for fast revisits');
 
       return coursesWithStats;
     } catch (error) {
@@ -1766,18 +1830,47 @@ export class CourseService {
         return new Map();
       }
 
-      // 一次性獲取所有相關的投票記錄，只選擇必要欄位
-      const votesResponse = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.REVIEW_VOTES_COLLECTION_ID,
-        [
-          Query.equal('review_id', reviewIds),
-          Query.limit(5000), // 增加限制以獲取更多投票記錄
-          Query.select(['review_id', 'vote_type']) // 只選擇必要的欄位
-        ]
-      );
-
-      const votes = votesResponse.documents as unknown as ReviewVote[];
+      // 🚀 FIXED: 使用分批處理避免URL過長問題
+      console.log(`🔍 getBatchReviewVoteStats: Processing ${reviewIds.length} review IDs for vote stats`);
+      
+      let votes: ReviewVote[] = [];
+      
+      // 分批獲取投票記錄以避免URL過長
+      const batchSize = 50;
+      const batches = [];
+      for (let i = 0; i < reviewIds.length; i += batchSize) {
+        batches.push(reviewIds.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchReviewVoteStats: Processing ${batches.length} batches`);
+      
+      // 逐批處理以控制併發
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing review vote batch ${batchIndex + 1}/${batches.length} with ${batch.length} reviews`);
+        
+        try {
+          const votesResponse = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.REVIEW_VOTES_COLLECTION_ID,
+            [
+              Query.equal('review_id', batch),
+              Query.limit(5000),
+              Query.select(['review_id', 'vote_type'])
+            ]
+          );
+          
+          const batchVotes = votesResponse.documents as unknown as ReviewVote[];
+          votes.push(...batchVotes);
+          
+          console.log(`🔍 Review vote batch ${batchIndex + 1}: Found ${batchVotes.length} votes`);
+        } catch (batchError) {
+          console.error(`❌ Error processing review vote batch ${batchIndex + 1}:`, batchError);
+          // Continue with other batches even if one fails
+        }
+      }
+      
+      console.log(`✅ getBatchReviewVoteStats: Processed ${votes.length} total votes across ${batches.length} batches`);
       
       // 按評論ID分組統計投票
       const voteStatsMap = new Map<string, { upvotes: number; downvotes: number }>();
@@ -1825,19 +1918,50 @@ export class CourseService {
         return emptyVotesMap;
       }
 
-      // 一次性獲取用戶對所有評論的投票記錄，只選擇必要欄位
-      const userVotesResponse = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.REVIEW_VOTES_COLLECTION_ID,
-        [
-          Query.equal('review_id', reviewIds),
-          Query.equal('user_id', userId),
-          Query.limit(1000),
-          Query.select(['review_id', 'vote_type']) // 只選擇必要的欄位
-        ]
-      );
+      // 🚀 FIXED: 使用分批處理避免URL過長問題
+      console.log(`🔍 getBatchUserVotesForReviews: Processing ${reviewIds.length} review IDs for user votes`);
+      
+      let allUserVotes: ReviewVote[] = [];
+      
+      // 分批獲取用戶投票記錄以避免URL過長
+      const batchSize = 50;
+      const batches = [];
+      for (let i = 0; i < reviewIds.length; i += batchSize) {
+        batches.push(reviewIds.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchUserVotesForReviews: Processing ${batches.length} batches`);
+      
+      // 逐批處理以控制併發
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing user vote batch ${batchIndex + 1}/${batches.length} with ${batch.length} reviews`);
+        
+        try {
+          const userVotesResponse = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.REVIEW_VOTES_COLLECTION_ID,
+            [
+              Query.equal('review_id', batch),
+              Query.equal('user_id', userId),
+              Query.limit(1000),
+              Query.select(['review_id', 'vote_type'])
+            ]
+          );
+          
+          const batchUserVotes = userVotesResponse.documents as unknown as ReviewVote[];
+          allUserVotes.push(...batchUserVotes);
+          
+          console.log(`🔍 User vote batch ${batchIndex + 1}: Found ${batchUserVotes.length} votes`);
+        } catch (batchError) {
+          console.error(`❌ Error processing user vote batch ${batchIndex + 1}:`, batchError);
+          // Continue with other batches even if one fails
+        }
+      }
+      
+      console.log(`✅ getBatchUserVotesForReviews: Processed ${allUserVotes.length} total user votes across ${batches.length} batches`);
 
-      const userVotes = userVotesResponse.documents as unknown as ReviewVote[];
+      const userVotes = allUserVotes;
       
       // 創建投票狀態映射
       const userVotesMap = new Map<string, 'up' | 'down' | null>();
@@ -3515,18 +3639,47 @@ export class CourseService {
         return new Map();
       }
 
-      // 獲取這些課程的所有評論
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.REVIEWS_COLLECTION_ID,
-        [
-          Query.equal('course_code', courseCodes),
-          Query.limit(this.MAX_REVIEWS_LIMIT),
-          Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
-        ]
-      );
-
-      const allReviews = response.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
+      // 🚀 FIXED: 使用分批處理避免URL過長問題
+      console.log(`🔍 getBatchCourseDetailedStats: Processing ${courseCodes.length} courses for detailed stats`);
+      
+      let allReviews: Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[] = [];
+      
+      // 分批獲取評論以避免URL過長
+      const batchSize = 50;
+      const batches = [];
+      for (let i = 0; i < courseCodes.length; i += batchSize) {
+        batches.push(courseCodes.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchCourseDetailedStats: Processing ${batches.length} batches for reviews`);
+      
+      // 並行處理所有批次
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing course stats batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
+        
+        try {
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.REVIEWS_COLLECTION_ID,
+            [
+              Query.equal('course_code', batch),
+              Query.limit(this.MAX_REVIEWS_LIMIT),
+              Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
+            ]
+          );
+          
+          const batchReviews = response.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
+          allReviews.push(...batchReviews);
+          
+          console.log(`🔍 Course stats batch ${batchIndex + 1}: Found ${batchReviews.length} reviews`);
+        } catch (batchError) {
+          console.error(`❌ Error processing course stats batch ${batchIndex + 1}:`, batchError);
+          // Continue with other batches even if one fails
+        }
+      }
+      
+      console.log(`✅ getBatchCourseDetailedStats: Processed ${allReviews.length} total reviews across ${batches.length} batches`);
 
       // 按課程代碼分組評論
       const reviewsByCourse = allReviews.reduce((acc, review) => {
