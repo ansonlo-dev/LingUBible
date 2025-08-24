@@ -160,6 +160,12 @@ const Index = () => {
         setPopularLoading(false);
         
         console.log('✅ All landing page content loaded successfully');
+        console.log('📊 Data loaded:', {
+          popularCourses: popularCourses.length,
+          popularInstructors: popularInstructors.length,
+          topCourses: topCourses.length,
+          topInstructors: topInstructors.length
+        });
 
       } catch (error) {
         console.error('Error loading landing page content:', error);
