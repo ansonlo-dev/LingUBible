@@ -2994,8 +2994,8 @@ export class CourseService {
         console.log(`🔍 getTopInstructorsByGPAOptimized: ${withGPA.length} instructors have sufficient GPA data`);
       }
       
-      // 按GPA重新排序，只考慮有足夠GPA數據的講師
-      let sortedInstructors = popularInstructors
+      // 按GPA重新排序，嚴格要求至少5個非N/A評分記錄
+      const sortedInstructors = popularInstructors
         .filter(instructor => instructor.averageGPA > 0 && instructor.averageGPACount >= 5)
         .sort((a, b) => {
           // 首先按平均GPA排序（降序）
@@ -3004,43 +3004,15 @@ export class CourseService {
           }
           // GPA相同時按評論數排序
           return b.reviewCount - a.reviewCount;
+        })
+        .slice(0, Math.max(limit, 20));
+
+      if (import.meta.env.DEV) {
+        console.log(`✅ getTopInstructorsByGPAOptimized: Found ${sortedInstructors.length} instructors with 5+ non-N/A grades`);
+        sortedInstructors.forEach((instructor, index) => {
+          console.log(`  ${index + 1}. ${instructor.name} - GPA: ${instructor.averageGPA?.toFixed(2)}, Count: ${instructor.averageGPACount}`);
         });
-      
-      // 🚀 後備方案：如果沒有足夠的講師有5個以上GPA記錄，降低要求到3個
-      if (sortedInstructors.length < limit) {
-        if (import.meta.env.DEV) {
-          console.log(`🔄 getTopInstructorsByGPAOptimized: Not enough instructors with 5+ GPA records, trying with 3+`);
-        }
-        sortedInstructors = popularInstructors
-          .filter(instructor => instructor.averageGPA > 0 && instructor.averageGPACount >= 3)
-          .sort((a, b) => {
-            // 首先按平均GPA排序（降序）
-            if (b.averageGPA !== a.averageGPA) {
-              return b.averageGPA - a.averageGPA;
-            }
-            // GPA相同時按評論數排序
-            return b.reviewCount - a.reviewCount;
-          });
       }
-      
-      // 🚀 最終後備方案：如果還是不夠，使用所有有GPA數據的講師
-      if (sortedInstructors.length < limit) {
-        if (import.meta.env.DEV) {
-          console.log(`🔄 getTopInstructorsByGPAOptimized: Still not enough, using all instructors with GPA data`);
-        }
-        sortedInstructors = popularInstructors
-          .filter(instructor => instructor.averageGPA > 0)
-          .sort((a, b) => {
-            // 首先按平均GPA排序（降序）
-            if (b.averageGPA !== a.averageGPA) {
-              return b.averageGPA - a.averageGPA;
-            }
-            // GPA相同時按評論數排序
-            return b.reviewCount - a.reviewCount;
-          });
-      }
-      
-      sortedInstructors = sortedInstructors.slice(0, Math.max(limit, 20));
 
       // 🚀 使用雙層緩存
       this.setPersistentCached(
