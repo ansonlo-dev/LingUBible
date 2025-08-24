@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, type Term } from '@/services/api/courseService';
 import { translateDepartmentName, processPluralTranslation, getTeachingLanguageName } from '@/utils/textUtils';
@@ -91,6 +91,9 @@ export function AdvancedInstructorFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termInstructorsMap, setTermInstructorsMap] = useState<Map<string, Set<string>>>(new Map());
+  
+  // 🚀 使用 deferred value 來讓計算不阻塞 UI
+  const deferredInstructors = useDeferredValue(instructors);
 
   // Load available terms
   useEffect(() => {
@@ -286,17 +289,25 @@ export function AdvancedInstructorFilters({
     };
   };
 
-  // Calculate counts for each filter option - memoized
+  // 🚀 優化：記憶化部門計數計算，使用 deferred 數據
   const departmentCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
-    instructors.forEach(instructor => {
+    
+    if (deferredInstructors.length === 0) {
+      return counts;
+    }
+    
+    console.log(`🔍 AdvancedInstructorFilters: Processing ${deferredInstructors.length} instructors for department counts...`);
+    
+    deferredInstructors.forEach(instructor => {
       if (instructor.department) {
         counts[instructor.department] = (counts[instructor.department] || 0) + 1;
       }
     });
-
+    
+    console.log(`📊 AdvancedInstructorFilters department counts result:`, counts);
     return counts;
-  }, [instructors]);
+  }, [deferredInstructors]);
 
   // Group departments by faculty
   const getGroupedDepartments = () => {
@@ -342,8 +353,15 @@ export function AdvancedInstructorFilters({
     return grouped;
   };
 
+  // 🚀 優化：記憶化學期計數計算，使用 deferred 數據  
   const termCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
+    
+    if (deferredInstructors.length === 0 || availableTerms.length === 0) {
+      return counts;
+    }
+    
+    console.log(`🔍 AdvancedInstructorFilters: Processing ${deferredInstructors.length} instructors for term counts...`);
     
     availableTerms.forEach(term => {
       // Get the actual instructors teaching in this term
@@ -351,7 +369,7 @@ export function AdvancedInstructorFilters({
       
       // Count how many of the current filtered instructors are teaching in this term
       let count = 0;
-      instructors.forEach(instructor => {
+      deferredInstructors.forEach(instructor => {
         if (instructorsTeachingInTerm.has(instructor.name)) {
           count++;
         }
@@ -360,14 +378,12 @@ export function AdvancedInstructorFilters({
       counts[term.term_code] = count;
     });
     
-
+    console.log(`📊 AdvancedInstructorFilters term counts result:`, counts);
     return counts;
-  }, [instructors, availableTerms, termInstructorsMap]);
+  }, [deferredInstructors, availableTerms, termInstructorsMap]);
 
-  // Calculate language counts for instructors
+  // 🚀 優化：記憶化語言計數計算，使用 deferred 數據
   const languageCounts = useMemo(() => {
-    console.log('🔍 AdvancedInstructorFilters: Calculating language counts for', instructors.length, 'instructors');
-    
     const counts: { [key: string]: number } = {};
     
     // Initialize counts for all 8 teaching language codes in the desired order
@@ -376,12 +392,17 @@ export function AdvancedInstructorFilters({
       counts[code] = 0;
     });
     
-    // Debug: Check how many instructors have teaching languages
+    if (deferredInstructors.length === 0) {
+      return counts;
+    }
+    
+    console.log(`🔍 AdvancedInstructorFilters: Processing ${deferredInstructors.length} instructors for language counts...`);
+    
+    // Count instructors for each teaching language code using deferred data
     let instructorsWithLanguages = 0;
     const sampleLanguages: string[][] = [];
     
-    // Count instructors for each teaching language code
-    instructors.forEach(instructor => {
+    deferredInstructors.forEach((instructor, index) => {
       if (instructor.teachingLanguages && instructor.teachingLanguages.length > 0) {
         instructorsWithLanguages++;
         if (sampleLanguages.length < 5) {
@@ -396,15 +417,14 @@ export function AdvancedInstructorFilters({
       }
     });
     
-    console.log(`🔍 AdvancedInstructorFilters: ${instructorsWithLanguages} instructors have language data`);
-    console.log(`🔍 Sample teaching languages:`, sampleLanguages);
-    console.log(`🔍 Language counts:`, counts);
+    console.log(`📊 AdvancedInstructorFilters language counts result:`, counts);
+    console.log(`📈 Instructors with language data: ${instructorsWithLanguages}`);
     
     return counts;
-  }, [instructors]);
+  }, [deferredInstructors]);
 
-  // Helper function to get ordered language options
-  const getOrderedLanguageOptions = () => {
+  // 🚀 優化：記憶化語言選項，使用已計算的語言計數
+  const getOrderedLanguageOptions = useMemo(() => {
     const orderedCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
     
     return orderedCodes.map(langCode => ({
@@ -412,7 +432,7 @@ export function AdvancedInstructorFilters({
       label: `${langCode} - ${mapLanguageCode(langCode, t)}`,
       count: languageCounts[langCode] || 0
     }));
-  };
+  }, [languageCounts, t]);
 
   // Helper function to determine if labels should be bold based on language
   const getLabelClassName = () => {
@@ -560,7 +580,7 @@ export function AdvancedInstructorFilters({
             {t('filter.teachingLanguage')}
           </label>
           <MultiSelectDropdown
-            options={getOrderedLanguageOptions()}
+            options={getOrderedLanguageOptions}
             selectedValues={filters.teachingLanguage}
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}

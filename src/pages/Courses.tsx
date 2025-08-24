@@ -77,14 +77,14 @@ const Courses = () => {
   // 使用防抖來優化搜尋性能
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
   
-  // 使用優化的 hook 來管理課程數據
+  // 使用優化的 hook 來管理課程數據 - 啟用漸進式載入以快速顯示卡片
   const { 
     courses, 
     loading, 
     statsLoading, 
     error 
   } = useCoursesWithStats({ 
-    enableProgressiveLoading: false // 停用漸進式載入以避免統計資料衝突
+    enableProgressiveLoading: true // 啟用漸進式載入以優先顯示卡片
   });
 
   // Debug: 監測數據載入狀況
@@ -643,12 +643,22 @@ const Courses = () => {
           />
         </div>
 
-        {/* 載入狀態指示器 */}
-        {(statsLoading || shouldShowLoadingForTermFilter) && (
+        {/* 載入狀態指示器 - 只在學期篩選時阻擋顯示，統計載入不阻擋卡片 */}
+        {shouldShowLoadingForTermFilter && (
           <div className="text-center mt-4">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {shouldShowLoadingForTermFilter ? t('filter.checkingTerm') : t('common.loadingStats')}
+              {t('filter.checkingTerm')}
+            </div>
+          </div>
+        )}
+        
+        {/* 統計載入指示器 - 不阻擋卡片顯示 */}
+        {statsLoading && !shouldShowLoadingForTermFilter && (
+          <div className="text-center mt-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('common.loadingStats')}
             </div>
           </div>
         )}

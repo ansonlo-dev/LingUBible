@@ -2,7 +2,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode, getTermDisplayName, isCurrentTerm } from '@/utils/dateUtils';
 import { CourseService, Term } from '@/services/api/courseService';
 import { processPluralTranslation, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useDeferredValue, useMemo, startTransition } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   X,
@@ -113,6 +113,10 @@ export function AdvancedCourseFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
+  
+  // 🚀 使用 deferred value 來讓計算不阻塞 UI
+  const deferredCourses = useDeferredValue(courses);
+  const [isCountsLoading, setIsCountsLoading] = useState(false);
 
   // Load available terms
   useEffect(() => {
@@ -209,7 +213,8 @@ export function AdvancedCourseFilters({
     return counts;
   };
 
-  const getLanguageCounts = () => {
+  // 🚀 優化：記憶化語言計數計算，使用 deferred 數據
+  const languageCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
     
     // Initialize counts for all 8 teaching language codes in the desired order
@@ -218,25 +223,21 @@ export function AdvancedCourseFilters({
       counts[code] = 0;
     });
     
-    console.log(`🔍 getLanguageCounts: Processing ${courses.length} courses (real data only)...`);
+    if (deferredCourses.length === 0) {
+      return counts;
+    }
+    
+    console.log(`🔍 Language counts: Processing ${deferredCourses.length} courses (real data only)...`);
     
     // Count courses for each teaching language code using only real database data
     let coursesWithRealData = 0;
     
-    courses.forEach((course, index) => {
+    deferredCourses.forEach((course, index) => {
       // Get teaching languages from real database data only
       const courseLanguages = getCourseTeachingLanguagesRealOnly(course);
       
       if (courseLanguages.length > 0) {
         coursesWithRealData++;
-        
-        // Debug log for first few courses
-        if (index < 3) {
-          console.log(`🔍 Course ${course.course_code}:`, {
-            realData: course.teachingLanguages,
-            finalLanguages: courseLanguages
-          });
-        }
         
         // Count each language for this course
         courseLanguages.forEach(langCode => {
@@ -251,11 +252,10 @@ export function AdvancedCourseFilters({
     console.log(`📈 Courses with real language data: ${coursesWithRealData}`);
     
     return counts;
-  };
+  }, [deferredCourses]);
 
-  // Helper function to get ordered language options
-  const getOrderedLanguageOptions = () => {
-    const languageCounts = getLanguageCounts();
+  // 🚀 優化：記憶化語言選項，使用已計算的語言計數
+  const getOrderedLanguageOptions = useMemo(() => {
     const orderedCodes = ['E', 'C', 'P', '1', '2', '3', '4', '5'];
     
     return orderedCodes.map(langCode => ({
@@ -263,9 +263,10 @@ export function AdvancedCourseFilters({
       label: `${langCode} - ${mapLanguageCode(langCode, t)}`,
       count: languageCounts[langCode] || 0
     }));
-  };
+  }, [languageCounts, t]);
 
-  const getServiceLearningCounts = () => {
+  // 🚀 優化：記憶化服務學習計數計算，使用 deferred 數據
+  const serviceLearningCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
     
     // Initialize counts for service learning types
@@ -274,22 +275,19 @@ export function AdvancedCourseFilters({
       counts[type] = 0;
     });
     
-    console.log(`🔍 getServiceLearningCounts: Processing ${courses.length} courses...`);
+    if (deferredCourses.length === 0) {
+      return counts;
+    }
+    
+    console.log(`🔍 Service learning counts: Processing ${deferredCourses.length} courses...`);
     
     // Count courses for each service learning type
     let coursesWithServiceData = 0;
     
-    courses.forEach((course, index) => {
+    deferredCourses.forEach((course, index) => {
       if (course.serviceLearningTypes && course.serviceLearningTypes.length > 0) {
         // Course has service learning data
         coursesWithServiceData++;
-        
-        // Debug log for first few courses
-        if (index < 3) {
-          console.log(`🔍 Course ${course.course_code}:`, {
-            serviceLearningTypes: course.serviceLearningTypes
-          });
-        }
         
         course.serviceLearningTypes.forEach(type => {
           if (counts.hasOwnProperty(type)) {
@@ -306,11 +304,10 @@ export function AdvancedCourseFilters({
     console.log(`📈 Courses with service learning data: ${coursesWithServiceData}`);
     
     return counts;
-  };
+  }, [deferredCourses]);
 
-  // Helper function to get ordered service learning options
-  const getOrderedServiceLearningOptions = () => {
-    const serviceLearningCounts = getServiceLearningCounts();
+  // 🚀 優化：記憶化服務學習選項，使用已計算的服務學習計數
+  const getOrderedServiceLearningOptions = useMemo(() => {
     const orderedTypes = ['none', 'optional', 'compulsory'];
     
     return orderedTypes.map(type => ({
@@ -320,7 +317,7 @@ export function AdvancedCourseFilters({
              t('review.compulsory'),
       count: serviceLearningCounts[type] || 0
     }));
-  };
+  }, [serviceLearningCounts, t]);
 
   const getTermCounts = () => {
     const counts: { [key: string]: number } = {};
@@ -468,7 +465,7 @@ export function AdvancedCourseFilters({
             {t('filter.teachingLanguage')}
           </label>
           <MultiSelectDropdown
-            options={getOrderedLanguageOptions()}
+            options={getOrderedLanguageOptions}
             selectedValues={filters.teachingLanguage}
             onSelectionChange={(values) => updateFilters({ teachingLanguage: values })}
             placeholder={t('filter.allLanguages')}
@@ -484,7 +481,7 @@ export function AdvancedCourseFilters({
             {t('features.serviceLearning')}
           </label>
           <MultiSelectDropdown
-            options={getOrderedServiceLearningOptions()}
+            options={getOrderedServiceLearningOptions}
             selectedValues={filters.serviceLearning}
             onSelectionChange={(values) => updateFilters({ serviceLearning: values })}
             placeholder={t('filter.allServiceLearning')}

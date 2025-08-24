@@ -560,12 +560,22 @@ const InstructorsList = () => {
           />
         </div>
 
-        {/* 載入狀態指示器 */}
-        {(loading || shouldShowLoadingForTermFilter) && (
+        {/* 載入狀態指示器 - 優先顯示卡片 */}
+        {shouldShowLoadingForTermFilter && (
           <div className="text-center mt-4">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {shouldShowLoadingForTermFilter ? t('filter.checkingTerm') : t('common.loading')}
+              {t('filter.checkingTerm')}
+            </div>
+          </div>
+        )}
+        
+        {/* 基本載入指示器 - 不阻擋卡片顯示 */}
+        {loading && !shouldShowLoadingForTermFilter && (
+          <div className="text-center mt-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('common.loading')}
             </div>
           </div>
         )}
