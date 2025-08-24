@@ -2434,10 +2434,7 @@ export class CourseService {
         })
         .filter((instructor): instructor is InstructorWithDetailedStats => instructor !== null)
         .sort((a, b) => {
-          // 按教學評分排序
-          if (b.teachingScore !== a.teachingScore) {
-            return b.teachingScore - a.teachingScore;
-          }
+          // 熱門教師按評論數排序（不是教學評分）
           return b.reviewCount - a.reviewCount;
         });
 
@@ -2482,6 +2479,23 @@ export class CourseService {
 
       if (import.meta.env.DEV) {
         console.log(`✅ getPopularInstructorsWithDetailedStatsOptimized: Processed ${reviews.length} reviews, cached ${finalResult.length} instructors`);
+        
+        // 檢查 HUI Ting Yan 是否在結果中
+        const huiTingYan = finalResult.find(i => i.name.includes('HUI') && i.name.includes('Ting'));
+        if (huiTingYan) {
+          console.log(`🔍 HUI Ting Yan in popular instructors:`, {
+            name: huiTingYan.name,
+            reviewCount: huiTingYan.reviewCount,
+            averageGPA: huiTingYan.averageGPA,
+            averageGPACount: huiTingYan.averageGPACount,
+            teachingScore: huiTingYan.teachingScore,
+            gradingFairness: huiTingYan.gradingFairness
+          });
+        } else {
+          console.log(`❌ HUI Ting Yan not found in getPopularInstructorsWithDetailedStatsOptimized result`);
+          // 顯示所有講師的名字以便調試
+          console.log('🔍 All instructor names:', finalResult.map(i => i.name));
+        }
       }
       return finalResult.slice(0, limit);
     } catch (error) {
@@ -2599,6 +2613,7 @@ export class CourseService {
         teachingScore: number;
         gradingFairness: number;
         averageGPA: number;
+        averageGPACount: number;
       }>();
       
       for (const [instructorName, stats] of instructorStatsMap) {
@@ -2645,11 +2660,7 @@ export class CourseService {
         })
         .filter(instructor => instructor.reviewCount > 0) // 只顯示有評論的講師
         .sort((a, b) => {
-          // 首先按教學評分排序
-          if (b.teachingScore !== a.teachingScore) {
-            return b.teachingScore - a.teachingScore;
-          }
-          // 教學評分相同時按評論數排序
+          // 熱門教師按評論數排序（不是教學評分）
           return b.reviewCount - a.reviewCount;
         });
 
@@ -2811,6 +2822,7 @@ export class CourseService {
         teachingScore: number;
         gradingFairness: number;
         averageGPA: number;
+        averageGPACount: number;
       }>();
       
       for (const [instructorName, stats] of instructorStatsMap) {
@@ -2990,8 +3002,23 @@ export class CourseService {
       
       if (import.meta.env.DEV) {
         console.log(`🔍 getTopInstructorsByGPAOptimized: Got ${popularInstructors.length} popular instructors`);
+        
+        // 詳細調試：檢查所有講師的GPA數據
+        console.log('🔍 All instructors GPA data:');
+        popularInstructors.forEach((instructor, index) => {
+          console.log(`  ${index + 1}. ${instructor.name} - GPA: ${instructor.averageGPA}, Count: ${instructor.averageGPACount}, Reviews: ${instructor.reviewCount}`);
+        });
+        
         const withGPA = popularInstructors.filter(i => i.averageGPA > 0 && i.averageGPACount >= 5);
-        console.log(`🔍 getTopInstructorsByGPAOptimized: ${withGPA.length} instructors have sufficient GPA data`);
+        console.log(`🔍 getTopInstructorsByGPAOptimized: ${withGPA.length} instructors have sufficient GPA data (≥5)`);
+        
+        // 檢查 HUI Ting Yan 是否在列表中
+        const huiTingYan = popularInstructors.find(i => i.name.includes('HUI') && i.name.includes('Ting'));
+        if (huiTingYan) {
+          console.log(`🔍 Found HUI Ting Yan:`, huiTingYan);
+        } else {
+          console.log(`❌ HUI Ting Yan not found in popular instructors list`);
+        }
       }
       
       // 按GPA重新排序，嚴格要求至少5個非N/A評分記錄
