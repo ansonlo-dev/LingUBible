@@ -193,11 +193,11 @@ export class CourseService {
   private static readonly TERMS_COLLECTION_ID = 'terms';
 
   // 性能優化常數
-  private static readonly MAX_COURSES_LIMIT = 10000; // 移除限制，允許顯示所有課程
-  private static readonly MAX_INSTRUCTORS_LIMIT = 10000; // 移除限制，允許顯示所有講師
-  private static readonly MAX_REVIEWS_LIMIT = 10000; // 從 1500 減少到 1000
+  private static readonly MAX_COURSES_LIMIT = 2000; // 移除限制，允許顯示所有課程
+  private static readonly MAX_INSTRUCTORS_LIMIT = 1000; // 移除限制，允許顯示所有講師
+  private static readonly MAX_REVIEWS_LIMIT = 5000; // 從 1500 減少到 1000
   private static readonly MAX_TEACHING_RECORDS_LIMIT = 10000; // 增加限制以確保包含所有教學記錄
-  private static readonly MAX_SEARCH_RESULTS = 50; // 新增：搜尋結果限制
+  private static readonly MAX_SEARCH_RESULTS = 100; // 新增：搜尋結果限制
 
   // 簡單的記憶體緩存
   private static cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
@@ -576,8 +576,8 @@ export class CourseService {
       
       let coursesArray: Course[] = [];
       
-      // 分批獲取課程基本信息以避免URL過長
-      const batchSize = 50;
+      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
+      const batchSize = 200;
       const courseBatches = [];
       for (let i = 0; i < courseCodes.length; i += batchSize) {
         courseBatches.push(courseCodes.slice(i, i + batchSize));
@@ -689,8 +689,8 @@ export class CourseService {
       
       let instructorsArray: Instructor[] = [];
       
-      // 分批獲取講師基本信息以避免URL過長
-      const batchSize = 50;
+      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
+      const batchSize = 200;
       const instructorBatches = [];
       for (let i = 0; i < instructorNames.length; i += batchSize) {
         instructorBatches.push(instructorNames.slice(i, i + batchSize));
@@ -1907,8 +1907,8 @@ export class CourseService {
       
       let votes: ReviewVote[] = [];
       
-      // 分批獲取投票記錄以避免URL過長
-      const batchSize = 50;
+      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
+      const batchSize = 200;
       const batches = [];
       for (let i = 0; i < reviewIds.length; i += batchSize) {
         batches.push(reviewIds.slice(i, i + batchSize));
@@ -1916,31 +1916,32 @@ export class CourseService {
       
       console.log(`🔍 getBatchReviewVoteStats: Processing ${batches.length} batches`);
       
-      // 逐批處理以控制併發
-      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-        const batch = batches[batchIndex];
-        console.log(`🔍 Processing review vote batch ${batchIndex + 1}/${batches.length} with ${batch.length} reviews`);
-        
-        try {
-          const votesResponse = await databases.listDocuments(
-            this.DATABASE_ID,
-            this.REVIEW_VOTES_COLLECTION_ID,
-            [
-              Query.equal('review_id', batch),
-              Query.limit(5000),
-              Query.select(['review_id', 'vote_type'])
-            ]
-          );
-          
+      // 🚀 ULTRA PERFORMANCE: 真正的並行處理所有批次以大幅提升速度
+      const batchPromises = batches.map((batch, batchIndex) =>
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.REVIEW_VOTES_COLLECTION_ID,
+          [
+            Query.equal('review_id', batch),
+            Query.limit(5000),
+            Query.select(['review_id', 'vote_type'])
+          ]
+        ).then(votesResponse => {
           const batchVotes = votesResponse.documents as unknown as ReviewVote[];
-          votes.push(...batchVotes);
-          
           console.log(`🔍 Review vote batch ${batchIndex + 1}: Found ${batchVotes.length} votes`);
-        } catch (batchError) {
+          return batchVotes;
+        }).catch(batchError => {
           console.error(`❌ Error processing review vote batch ${batchIndex + 1}:`, batchError);
-          // Continue with other batches even if one fails
-        }
-      }
+          return [] as ReviewVote[];
+        })
+      );
+
+      const batchResults = await Promise.all(batchPromises);
+      
+      // 合併所有批次結果
+      batchResults.forEach(batchVotes => {
+        votes.push(...batchVotes);
+      });
       
       console.log(`✅ getBatchReviewVoteStats: Processed ${votes.length} total votes across ${batches.length} batches`);
       
@@ -1995,8 +1996,8 @@ export class CourseService {
       
       let allUserVotes: ReviewVote[] = [];
       
-      // 分批獲取用戶投票記錄以避免URL過長
-      const batchSize = 50;
+      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
+      const batchSize = 200;
       const batches = [];
       for (let i = 0; i < reviewIds.length; i += batchSize) {
         batches.push(reviewIds.slice(i, i + batchSize));
@@ -2004,32 +2005,33 @@ export class CourseService {
       
       console.log(`🔍 getBatchUserVotesForReviews: Processing ${batches.length} batches`);
       
-      // 逐批處理以控制併發
-      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-        const batch = batches[batchIndex];
-        console.log(`🔍 Processing user vote batch ${batchIndex + 1}/${batches.length} with ${batch.length} reviews`);
-        
-        try {
-          const userVotesResponse = await databases.listDocuments(
-            this.DATABASE_ID,
-            this.REVIEW_VOTES_COLLECTION_ID,
-            [
-              Query.equal('review_id', batch),
-              Query.equal('user_id', userId),
-              Query.limit(1000),
-              Query.select(['review_id', 'vote_type'])
-            ]
-          );
-          
+      // 🚀 ULTRA PERFORMANCE: 真正的並行處理所有批次以大幅提升速度
+      const batchPromises = batches.map((batch, batchIndex) =>
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.REVIEW_VOTES_COLLECTION_ID,
+          [
+            Query.equal('review_id', batch),
+            Query.equal('user_id', userId),
+            Query.limit(1000),
+            Query.select(['review_id', 'vote_type'])
+          ]
+        ).then(userVotesResponse => {
           const batchUserVotes = userVotesResponse.documents as unknown as ReviewVote[];
-          allUserVotes.push(...batchUserVotes);
-          
           console.log(`🔍 User vote batch ${batchIndex + 1}: Found ${batchUserVotes.length} votes`);
-        } catch (batchError) {
+          return batchUserVotes;
+        }).catch(batchError => {
           console.error(`❌ Error processing user vote batch ${batchIndex + 1}:`, batchError);
-          // Continue with other batches even if one fails
-        }
-      }
+          return [] as ReviewVote[];
+        })
+      );
+
+      const batchResults = await Promise.all(batchPromises);
+      
+      // 合併所有批次結果
+      batchResults.forEach(batchUserVotes => {
+        allUserVotes.push(...batchUserVotes);
+      });
       
       console.log(`✅ getBatchUserVotesForReviews: Processed ${allUserVotes.length} total user votes across ${batches.length} batches`);
 
@@ -4001,8 +4003,8 @@ export class CourseService {
       
       let allReviews: Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[] = [];
       
-      // 分批獲取評論以避免URL過長
-      const batchSize = 50;
+      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
+      const batchSize = 200;
       const batches = [];
       for (let i = 0; i < courseCodes.length; i += batchSize) {
         batches.push(courseCodes.slice(i, i + batchSize));
@@ -4010,31 +4012,32 @@ export class CourseService {
       
       console.log(`🔍 getBatchCourseDetailedStats: Processing ${batches.length} batches for reviews`);
       
-      // 並行處理所有批次
-      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-        const batch = batches[batchIndex];
-        console.log(`🔍 Processing course stats batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
-        
-        try {
-          const response = await databases.listDocuments(
-            this.DATABASE_ID,
-            this.REVIEWS_COLLECTION_ID,
-            [
-              Query.equal('course_code', batch),
-              Query.limit(this.MAX_REVIEWS_LIMIT),
-              Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
-            ]
-          );
-          
+      // 🚀 ULTRA PERFORMANCE: 真正的並行處理所有批次
+      const batchPromises = batches.map((batch, batchIndex) => 
+        databases.listDocuments(
+          this.DATABASE_ID,
+          this.REVIEWS_COLLECTION_ID,
+          [
+            Query.equal('course_code', batch),
+            Query.limit(this.MAX_REVIEWS_LIMIT),
+            Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
+          ]
+        ).then(response => {
           const batchReviews = response.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
-          allReviews.push(...batchReviews);
-          
           console.log(`🔍 Course stats batch ${batchIndex + 1}: Found ${batchReviews.length} reviews`);
-        } catch (batchError) {
+          return batchReviews;
+        }).catch(batchError => {
           console.error(`❌ Error processing course stats batch ${batchIndex + 1}:`, batchError);
-          // Continue with other batches even if one fails
-        }
-      }
+          return [] as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
+        })
+      );
+
+      const batchResults = await Promise.all(batchPromises);
+      
+      // 合併所有批次結果
+      batchResults.forEach(batchReviews => {
+        allReviews.push(...batchReviews);
+      });
       
       console.log(`✅ getBatchCourseDetailedStats: Processed ${allReviews.length} total reviews across ${batches.length} batches`);
 
@@ -5248,7 +5251,7 @@ export class CourseService {
       });
       
       // 🚀 FIX: Split into batches to avoid URL length limits (max ~50 courses per batch)
-      const batchSize = 50;
+      const batchSize = 200;
       const batches = [];
       
       for (let i = 0; i < courseCodes.length; i += batchSize) {
@@ -5324,7 +5327,7 @@ export class CourseService {
       });
       
       // Split into batches to avoid URL length limits (max ~50 courses per batch)
-      const batchSize = 50;
+      const batchSize = 200;
       const batches = [];
       
       for (let i = 0; i < courseCodes.length; i += batchSize) {
@@ -5455,7 +5458,7 @@ export class CourseService {
       });
       
       // 🚀 FIX: Split into batches to avoid URL length limits (max ~50 courses per batch)
-      const batchSize = 50;
+      const batchSize = 200;
       const batches = [];
       
       for (let i = 0; i < courseCodes.length; i += batchSize) {
@@ -5567,7 +5570,7 @@ export class CourseService {
       });
       
       // Split into batches to avoid URL length limits (max ~50 courses per batch)
-      const batchSize = 50;
+      const batchSize = 200;
       const batches = [];
       
       for (let i = 0; i < courseCodes.length; i += batchSize) {
@@ -6370,7 +6373,7 @@ export class CourseService {
       const result = new Map<string, string[]>();
       
       // Split into batches to avoid URL length limits (max ~50 instructors per batch)
-      const batchSize = 50;
+      const batchSize = 200;
       const batches = [];
       
       for (let i = 0; i < instructorNames.length; i += batchSize) {
