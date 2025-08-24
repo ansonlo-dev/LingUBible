@@ -4,6 +4,7 @@ import { getCurrentTermCode } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
 import { courseStatsCache, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
+import { persistentCache, PERSISTENT_CACHE_KEYS, PERSISTENT_CACHE_TTL } from '@/utils/persistentCache';
 
 export interface Course {
   $id: string;
@@ -227,6 +228,46 @@ export class CourseService {
   }
 
   /**
+   * Enhanced cache methods for landing page data with persistent storage
+   * 增強的雙層緩存方法：記憶體緩存（快速存取）+ 持久化緩存（跨會話保存）
+   */
+  private static getPersistentCached<T>(key: string): T | null {
+    // 首先嘗試記憶體緩存（最快）
+    const memoryResult = this.getCached<T>(key);
+    if (memoryResult) {
+      console.log(`🚀 Memory cache HIT: ${key}`);
+      return memoryResult;
+    }
+
+    // 記憶體緩存未命中，嘗試持久化緩存
+    const persistentResult = persistentCache.get<T>(key);
+    if (persistentResult) {
+      console.log(`💾 Persistent cache HIT: ${key}`);
+      // 將持久化緩存的數據也存入記憶體緩存，提高後續存取速度
+      this.setCached(key, persistentResult, 5 * 60 * 1000); // 5分鐘記憶體緩存
+      return persistentResult;
+    }
+
+    console.log(`❌ Cache MISS: ${key}`);
+    return null;
+  }
+
+  private static setPersistentCached<T>(
+    key: string, 
+    data: T, 
+    memoryTTL: number = this.DEFAULT_CACHE_TTL,
+    persistentTTL: number = PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA
+  ): void {
+    // 設定記憶體緩存（較短TTL，重啟後會丟失）
+    this.setCached(key, data, memoryTTL);
+    
+    // 設定持久化緩存（較長TTL，關閉瀏覽器後仍保存）
+    persistentCache.set(key, data, persistentTTL);
+    
+    console.log(`💾 Cached data: ${key} (Memory: ${Math.round(memoryTTL/1000/60)}min, Persistent: ${Math.round(persistentTTL/1000/60)}min)`);
+  }
+
+  /**
    * 清除緩存
    */
   static clearCache(): void {
@@ -435,6 +476,7 @@ export class CourseService {
   }
 
   // 批量獲取主頁統計（最優化）
+  // 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
   static async getMainPageStatsOptimized(): Promise<{
     coursesWithReviewsCount: number;
     instructorsWithReviewsCount: number;
@@ -445,6 +487,25 @@ export class CourseService {
     instructorsWithReviewsLast30Days: number;
   }> {
     try {
+      const cacheKey = PERSISTENT_CACHE_KEYS.MAIN_PAGE_STATS;
+      
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<{
+        coursesWithReviewsCount: number;
+        instructorsWithReviewsCount: number;
+        instructorsCount: number;
+        reviewsCount: number;
+        reviewsLast30Days: number;
+        coursesWithReviewsLast30Days: number;
+        instructorsWithReviewsLast30Days: number;
+      }>(cacheKey);
+      
+      if (cached) {
+        console.log('✅ getMainPageStatsOptimized: Returning cached data for fast loading');
+        return cached;
+      }
+
+      console.log('🔄 getMainPageStatsOptimized: Loading fresh data...');
       // 並行執行所有統計查詢
       const [
         coursesWithReviewsCount,
@@ -460,13 +521,24 @@ export class CourseService {
         this.getRecentActivityStats()
       ]);
 
-      return {
+      const result = {
         coursesWithReviewsCount,
         instructorsWithReviewsCount,
         instructorsCount,
         reviewsCount,
         ...recentActivityStats
       };
+
+      // 🚀 使用雙層緩存，確保跨會話保存
+      this.setPersistentCached(
+        cacheKey, 
+        result, 
+        5 * 60 * 1000, // 記憶體緩存5分鐘
+        PERSISTENT_CACHE_TTL.STATS_DATA // 持久化緩存15分鐘
+      );
+
+      console.log('✅ getMainPageStatsOptimized: Cached stats for instant future loading');
+      return result;
     } catch (error) {
       console.error('Error getting optimized main page stats:', error);
       throw error;
@@ -2129,17 +2201,20 @@ export class CourseService {
 
   /**
    * 獲取熱門課程（按評分和評論數排序，限制數量）
+   * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getPopularCourses(limit: number = 6): Promise<CourseWithStats[]> {
     try {
-      const cacheKey = `popular_courses_${limit}`;
+      const cacheKey = PERSISTENT_CACHE_KEYS.POPULAR_COURSES;
       
-      // 檢查緩存
-      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
       if (cached) {
-        return cached;
+        console.log('✅ getPopularCourses: Returning cached data for fast loading');
+        return cached.slice(0, limit); // 確保不超過請求的數量
       }
       
+      console.log('🔄 getPopularCourses: Loading fresh data...');
       const coursesWithStats = await this.getCoursesWithStatsBatch();
       
       // 按評論數排序，優先考慮有評論的課程
@@ -2153,12 +2228,18 @@ export class CourseService {
           // 評論數相同時按評分排序
           return b.averageRating - a.averageRating;
         })
-        .slice(0, limit); // 限制數量
+        .slice(0, Math.max(limit, 20)); // 多緩存一些數據以應對不同limit請求
 
-      // 緩存結果（較短的緩存時間，因為熱門課程可能變化較快）
-      this.setCached(cacheKey, sortedCourses, 2 * 60 * 1000); // 2分鐘緩存
+      // 🚀 使用雙層緩存，確保跨會話保存
+      this.setPersistentCached(
+        cacheKey, 
+        sortedCourses, 
+        5 * 60 * 1000, // 記憶體緩存5分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
       
-      return sortedCourses;
+      console.log(`✅ getPopularCourses: Cached ${sortedCourses.length} courses for instant future loading`);
+      return sortedCourses.slice(0, limit); // 返回請求的數量
     } catch (error) {
       console.error('Error fetching popular courses:', error);
       throw new Error('Failed to fetch popular courses');
@@ -2194,9 +2275,20 @@ export class CourseService {
 
   /**
    * 獲取熱門講師的詳細統計信息（教學評分和評分滿意度性）
+   * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getPopularInstructorsWithDetailedStats(limit: number = 6): Promise<InstructorWithDetailedStats[]> {
     try {
+      const cacheKey = PERSISTENT_CACHE_KEYS.POPULAR_INSTRUCTORS;
+      
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<InstructorWithDetailedStats[]>(cacheKey);
+      if (cached) {
+        console.log('✅ getPopularInstructorsWithDetailedStats: Returning cached data for fast loading');
+        return cached.slice(0, limit); // 確保不超過請求的數量
+      }
+
+      console.log('🔄 getPopularInstructorsWithDetailedStats: Loading fresh data...');
       const currentTermCode = getCurrentTermCode();
       
       // 並行獲取講師、評論和教學記錄數據
@@ -2371,14 +2463,23 @@ export class CourseService {
         console.warn('Error fetching teaching language data for popular instructors, continuing without language badges:', error);
       }
 
-      // 添加教學語言數據到結果中並限制數量
-      const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
+      // 添加教學語言數據到結果中，多緩存一些數據以應對不同limit請求
+      const allInstructorsWithLanguages = instructorsWithDetailedStats.map(instructor => ({
         ...instructor,
         teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
         currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
-      })).slice(0, limit); // 限制數量
+      })).slice(0, Math.max(limit, 20)); // 多緩存一些數據以應對不同limit請求
 
-      return finalInstructorsWithDetailedStats;
+      // 🚀 使用雙層緩存，確保跨會話保存
+      this.setPersistentCached(
+        cacheKey, 
+        allInstructorsWithLanguages, 
+        10 * 60 * 1000, // 記憶體緩存10分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
+
+      console.log(`✅ getPopularInstructorsWithDetailedStats: Cached ${allInstructorsWithLanguages.length} instructors for instant future loading`);
+      return allInstructorsWithLanguages.slice(0, limit); // 返回請求的數量
     } catch (error) {
       console.error('Error fetching popular instructors with detailed stats:', error);
       throw new Error('Failed to fetch popular instructors with detailed statistics');
@@ -2597,17 +2698,20 @@ export class CourseService {
 
   /**
    * 獲取平均GPA最高的課程
+   * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getTopCoursesByGPA(limit: number = 6): Promise<CourseWithStats[]> {
     try {
-      const cacheKey = `top_courses_gpa_${limit}`;
+      const cacheKey = PERSISTENT_CACHE_KEYS.TOP_COURSES_BY_GPA;
       
-      // 檢查緩存
-      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
       if (cached) {
-        return cached;
+        console.log('✅ getTopCoursesByGPA: Returning cached data for fast loading');
+        return cached.slice(0, limit); // 確保不超過請求的數量
       }
       
+      console.log('🔄 getTopCoursesByGPA: Loading fresh data...');
       const coursesWithStats = await this.getCoursesWithStatsBatch();
       
       // 按平均GPA排序，只考慮有足夠GPA數據的課程（至少5個有成績的評論）
@@ -2621,12 +2725,18 @@ export class CourseService {
           // GPA相同時按評論數排序
           return b.reviewCount - a.reviewCount;
         })
-        .slice(0, limit); // 限制數量
+        .slice(0, Math.max(limit, 20)); // 多緩存一些數據以應對不同limit請求
 
-      // 緩存結果
-      this.setCached(cacheKey, sortedCourses, 2 * 60 * 1000); // 2分鐘緩存
+      // 🚀 使用雙層緩存，確保跨會話保存
+      this.setPersistentCached(
+        cacheKey, 
+        sortedCourses, 
+        5 * 60 * 1000, // 記憶體緩存5分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
       
-      return sortedCourses;
+      console.log(`✅ getTopCoursesByGPA: Cached ${sortedCourses.length} courses for instant future loading`);
+      return sortedCourses.slice(0, limit); // 返回請求的數量
     } catch (error) {
       console.error('Error fetching top courses by GPA:', error);
       throw new Error('Failed to fetch top courses by GPA');
@@ -2635,17 +2745,20 @@ export class CourseService {
 
   /**
    * 獲取平均GPA最高的講師
+   * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getTopInstructorsByGPA(limit: number = 6): Promise<InstructorWithDetailedStats[]> {
     try {
-      const cacheKey = `top_instructors_gpa_${limit}`;
+      const cacheKey = PERSISTENT_CACHE_KEYS.TOP_INSTRUCTORS_BY_GPA;
       
-      // 檢查緩存
-      const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<InstructorWithDetailedStats[]>(cacheKey);
       if (cached) {
-        return cached;
+        console.log('✅ getTopInstructorsByGPA: Returning cached data for fast loading');
+        return cached.slice(0, limit); // 確保不超過請求的數量
       }
       
+      console.log('🔄 getTopInstructorsByGPA: Loading fresh data...');
       const instructorsWithDetailedStats = await this.getAllInstructorsWithDetailedStats();
       
       // 按平均GPA排序，只考慮有足夠GPA數據的講師（至少5個有成績的評論）
@@ -2659,12 +2772,18 @@ export class CourseService {
           // GPA相同時按評論數排序
           return b.reviewCount - a.reviewCount;
         })
-        .slice(0, limit); // 限制數量
+        .slice(0, Math.max(limit, 20)); // 多緩存一些數據以應對不同limit請求
 
-      // 緩存結果
-      this.setCached(cacheKey, sortedInstructors, 2 * 60 * 1000); // 2分鐘緩存
+      // 🚀 使用雙層緩存，確保跨會話保存
+      this.setPersistentCached(
+        cacheKey, 
+        sortedInstructors, 
+        10 * 60 * 1000, // 記憶體緩存10分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
       
-      return sortedInstructors;
+      console.log(`✅ getTopInstructorsByGPA: Cached ${sortedInstructors.length} instructors for instant future loading`);
+      return sortedInstructors.slice(0, limit); // 返回請求的數量
     } catch (error) {
       console.error('Error fetching top instructors by GPA:', error);
       throw new Error('Failed to fetch top instructors by GPA');
