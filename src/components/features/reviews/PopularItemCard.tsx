@@ -91,7 +91,6 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const [serviceLearningTooltipOpen, setServiceLearningTooltipOpen] = useState(false);
   const [departmentTooltipOpen, setDepartmentTooltipOpen] = useState(false);
   const [teachingBadgeTooltipOpen, setTeachingBadgeTooltipOpen] = useState(false);
-  const [offeredBadgeTooltipOpen, setOfferedBadgeTooltipOpen] = useState(false);
   const [notTeachingBadgeTooltipOpen, setNotTeachingBadgeTooltipOpen] = useState(false);
   // StatBox tooltip states
   const [statBoxTooltipOpen, setStatBoxTooltipOpen] = useState<{[key: string]: boolean}>({});
@@ -99,7 +98,6 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const serviceLearningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const departmentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const teachingBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const offeredBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const notTeachingBadgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const statBoxTimeoutRefs = useRef<{[key: string]: NodeJS.Timeout | null}>({});
   
@@ -117,9 +115,6 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       }
       if (teachingBadgeTimeoutRef.current) {
         clearTimeout(teachingBadgeTimeoutRef.current);
-      }
-      if (offeredBadgeTimeoutRef.current) {
-        clearTimeout(offeredBadgeTimeoutRef.current);
       }
       if (notTeachingBadgeTimeoutRef.current) {
         clearTimeout(notTeachingBadgeTimeoutRef.current);
@@ -161,22 +156,6 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     // The browser will handle it naturally through the <a> tag
   };
 
-  const handleOfferedBadgeClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    e.preventDefault(); // Prevent link navigation
-    
-    if (props.enableTwoTapMode) {
-      // Catalog pages: navigate to courses with filter
-      const currentTerm = getCurrentTermCode();
-      const searchParams = new URLSearchParams();
-      searchParams.set('offeredTerm', currentTerm);
-      navigate(`/courses?${searchParams.toString()}`);
-    } else if (isMobile) {
-      // Main page mobile: show tooltip only
-      setOfferedBadgeTooltipOpen(true);
-    }
-    // Desktop main page: do nothing (hover tooltip handles this)
-  };
 
   const handleTeachingBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -373,13 +352,6 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
     }
   };
 
-  const resetOfferedBadgeState = () => {
-    setOfferedBadgeTooltipOpen(false);
-    if (offeredBadgeTimeoutRef.current) {
-      clearTimeout(offeredBadgeTimeoutRef.current);
-      offeredBadgeTimeoutRef.current = null;
-    }
-  };
 
   const resetNotTeachingBadgeState = () => {
     setNotTeachingBadgeTooltipOpen(false);
@@ -861,40 +833,8 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                 </div>
               </div>
               
-              {/* 開設狀態徽章和平均GPA */}
+              {/* 平均GPA */}
               <div className="flex flex-col items-end">
-                <ResponsiveTooltip 
-                  content={props.isOfferedInCurrentTerm ? `${t('offered.yes')} - ${currentTermName}` : `${t('offered.no')} - ${currentTermName}`}
-                  hasClickAction={false}
-                  showCloseButton={true}
-                  onReset={resetOfferedBadgeState}
-                  open={isMobile ? offeredBadgeTooltipOpen : undefined}
-                  onOpenChange={isMobile ? setOfferedBadgeTooltipOpen : undefined}
-                >
-                  <Badge 
-                    variant={props.isOfferedInCurrentTerm ? "default" : "secondary"}
-                    className={`text-xs font-medium flex-shrink-0 transition-all duration-200 ${
-                      props.isOfferedInCurrentTerm 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 cursor-help hover:bg-green-200 dark:hover:bg-green-900/40 hover:scale-105' 
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-help'
-                    }`}
-                    onClick={handleOfferedBadgeClick}
-                  >
-                    {props.isOfferedInCurrentTerm ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        {t('offered.yes')}
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-3 w-3 mr-1" />
-                        {t('offered.no')}
-                      </>
-                    )}
-                  </Badge>
-                </ResponsiveTooltip>
-                
-                {/* Average GPA below offered badge */}
                 <AverageGPADisplay gpa={props.averageGPA} gpaCount={props.averageGPACount} isLoading={courseStatsLoading} />
               </div>
             </div>
