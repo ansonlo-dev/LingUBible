@@ -86,7 +86,12 @@ const Favorites = () => {
       const favorites = await FavoritesService.getUserFavorites('course');
       const courseCodes = favorites.map((favorite: UserFavorite) => favorite.item_id);
       
-      // 使用批量API獲取所有課程數據
+      if (courseCodes.length === 0) {
+        setFavoriteCourses([]);
+        return;
+      }
+      
+      // 🚀 優化：使用批量API獲取所有收藏課程數據
       const coursesDataMap = await CourseService.getBatchFavoriteCoursesData(courseCodes);
       
       const results = courseCodes.map(courseCode => {
@@ -126,32 +131,29 @@ const Favorites = () => {
     try {
       setInstructorsLoading(true);
       const favorites = await FavoritesService.getUserFavorites('instructor');
-      const instructorPromises = favorites.map(async (favorite: UserFavorite) => {
-        const instructorData = await CourseService.getInstructorByName(favorite.item_id);
+      const instructorNames = favorites.map((favorite: UserFavorite) => favorite.item_id);
+      
+      // 🚀 超級優化：使用批量API一次性獲取所有收藏講師數據
+      const instructorsDataMap = await CourseService.getBatchFavoriteInstructorsData(instructorNames);
+      
+      const results = instructorNames.map(instructorName => {
+        const instructorData = instructorsDataMap.get(instructorName);
         if (instructorData) {
-          // 獲取講師統計數據
-          const stats = await CourseService.getInstructorDetailedStatsOptimized(instructorData.name);
-          
-          // 獲取講師詳細統計包含GPA
-          const allInstructorsWithStats = await CourseService.getAllInstructorsWithDetailedStats();
-          const instructorWithGPA = allInstructorsWithStats.find(inst => inst.name === instructorData.name);
-          
           return {
-            name: instructorData.name,
-            name_tc: instructorData.name_tc,
-            name_sc: instructorData.name_sc,
-            department: instructorData.department,
-            review_count: stats.reviewCount || 0,
-            average_teaching_score: stats.teachingScore || 0,
-            average_grading_fairness: stats.gradingFairness || 0,
-            average_gpa: instructorWithGPA?.averageGPA || 0,
-            is_teaching_in_current_term: await CourseService.isInstructorTeachingInTerm(instructorData.name, getCurrentTermCode()),
+            name: instructorData.instructor.name,
+            name_tc: instructorData.instructor.name_tc,
+            name_sc: instructorData.instructor.name_sc,
+            department: instructorData.instructor.department,
+            review_count: instructorData.stats.reviewCount || 0,
+            average_teaching_score: instructorData.stats.teachingScore || 0,
+            average_grading_fairness: instructorData.stats.gradingFairness || 0,
+            average_gpa: instructorData.stats.averageGPA || 0,
+            is_teaching_in_current_term: instructorData.isTeachingInCurrentTerm,
           };
         }
         return null;
       });
 
-      const results = await Promise.all(instructorPromises);
       setFavoriteInstructors(results.filter(Boolean) as FavoriteInstructor[]);
     } catch (error) {
       console.error('Error loading favorite instructors:', error);

@@ -247,36 +247,58 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
         try {
           console.log('🔍 SearchModal: Loading from GlobalDataManager...');
           
-          // 🚀 超級優化：從全域數據管理器載入，無重複API調用
-          const [
-            allCoursesData,
-            allInstructorsData,
-            coursesData,
-            instructorsData,
-            topCoursesData,
-            topInstructorsData
-          ] = await Promise.all([
-            globalDataManager.getAllCourses(),
-            globalDataManager.getAllInstructors(),
-            globalDataManager.getPopularCourses(),
-            globalDataManager.getPopularInstructors(),
-            globalDataManager.getTopCourses(),
-            globalDataManager.getTopInstructors()
-          ]);
+          // 🚀 步驟1：立即載入已有的核心數據，無需等待
+          if (globalDataManager.isDataLoaded()) {
+            console.log('⚡ SearchModal: Loading already cached core data instantly...');
+            const [
+              coursesData,
+              instructorsData,
+              topCoursesData,
+              topInstructorsData
+            ] = await Promise.all([
+              globalDataManager.getPopularCourses(),
+              globalDataManager.getPopularInstructors(),
+              globalDataManager.getTopCourses(),
+              globalDataManager.getTopInstructors()
+            ]);
+            
+            // 立即設置核心數據，讓搜索建議立即可用
+            setPopularCourses(coursesData);
+            setPopularInstructors(instructorsData);
+            setTopCourses(topCoursesData);
+            setTopInstructors(topInstructorsData);
+            
+            // 暫時使用核心數據作為搜索數據源
+            setAllCourses([...coursesData, ...topCoursesData]);
+            setAllInstructors([...instructorsData, ...topInstructorsData]);
+            
+            setLoading(false);
+            setIsInitialized(true);
+            
+            console.log('⚡ SearchModal: Core data displayed instantly!');
+          }
           
-          // 如果數據已經載入過，這些調用會立即返回！
-          setAllCourses(allCoursesData);
-          setAllInstructors(allInstructorsData);
-          setPopularCourses(coursesData);
-          setPopularInstructors(instructorsData);
-          setTopCourses(topCoursesData);
-          setTopInstructors(topInstructorsData);
-          
-          console.log('✅ SearchModal: All data loaded instantly from GlobalDataManager');
+          // 🚀 步驟2：在背景載入完整數據集（不阻塞UI）
+          console.log('📚 SearchModal: Loading full dataset in background...');
+          setTimeout(async () => {
+            try {
+              const [allCoursesData, allInstructorsData] = await Promise.all([
+                globalDataManager.getAllCourses(),
+                globalDataManager.getAllInstructors()
+              ]);
+              
+              // 更新為完整數據集
+              setAllCourses(allCoursesData);
+              setAllInstructors(allInstructorsData);
+              
+              console.log('✅ SearchModal: Full dataset loaded in background');
+            } catch (error) {
+              console.error('Error loading full dataset:', error);
+            }
+          }, 100); // 微小延遲，確保UI已渲染
           
         } catch (error) {
           console.error('Error loading search data:', error);
-        } finally {
           setLoading(false);
           setIsInitialized(true);
         }
