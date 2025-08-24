@@ -566,7 +566,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {popularCourses.map((course) => (
+                  {popularCourses.slice(0, 6).map((course) => (
                     <PopularItemCard
                       key={course.$id}
                       type="course"
@@ -619,7 +619,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {popularInstructors.map((instructor) => (
+                  {popularInstructors.slice(0, 6).map((instructor) => (
                     <PopularItemCard
                       key={instructor.$id}
                       type="instructor"
@@ -668,7 +668,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {topCourses.map((course) => (
+                  {topCourses.slice(0, 6).map((course) => (
                     <PopularItemCard
                       key={course.$id}
                       type="course"
@@ -721,7 +721,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {topInstructors.map((instructor) => (
+                  {topInstructors.slice(0, 6).map((instructor) => (
                     <PopularItemCard
                       key={instructor.$id}
                       type="instructor"
