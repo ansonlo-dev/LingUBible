@@ -3040,33 +3040,54 @@ export class CourseService {
         console.log('🔄 getTopInstructorsByGPAOptimized: Loading fresh data...');
       }
       
-      // 🚀 超級優化：重用熱門講師數據，避免重複查詢
-      const popularInstructors = await this.getPopularInstructorsWithDetailedStatsOptimized(50); // 獲取更多數據用於排序
+      // 🚀 智能混合策略：優先檢查熱門講師，不足時擴展到全部講師
+      const popularInstructors = await this.getPopularInstructorsWithDetailedStatsOptimized(50);
+      
+      // 先檢查熱門講師中有多少符合條件的
+      const popularWithGPA = popularInstructors.filter(i => i.averageGPA > 0 && i.averageGPACount >= 5);
+      
+      let instructorsToProcess: InstructorWithDetailedStats[];
+      
+      if (popularWithGPA.length >= limit) {
+        // 如果熱門講師中有足夠的符合條件講師，直接使用（快速路徑）
+        console.log(`🚀 Fast path: Found ${popularWithGPA.length} qualifying instructors in popular set`);
+        instructorsToProcess = popularInstructors;
+      } else {
+        // 否則擴展到全部講師（確保找到所有符合條件的，如HUI Ting Yan）
+        console.log(`🔍 Comprehensive search: Only ${popularWithGPA.length} qualifying instructors in popular set, searching all instructors`);
+        instructorsToProcess = await this.getAllInstructorsWithDetailedStats();
+      }
       
       if (import.meta.env.DEV) {
-        console.log(`🔍 getTopInstructorsByGPAOptimized: Got ${popularInstructors.length} popular instructors`);
+        console.log(`🔍 getTopInstructorsByGPAOptimized: Processing ${instructorsToProcess.length} instructors`);
         
-        // 詳細調試：檢查所有講師的GPA數據
-        console.log('🔍 All instructors GPA data:');
-        popularInstructors.forEach((instructor, index) => {
+        // 詳細調試：檢查講師的GPA數據
+        console.log('🔍 Instructors GPA data (showing first 10):');
+        instructorsToProcess.slice(0, 10).forEach((instructor, index) => {
           console.log(`  ${index + 1}. ${instructor.name} - GPA: ${instructor.averageGPA}, Count: ${instructor.averageGPACount}, Reviews: ${instructor.reviewCount}`);
         });
         
-        const withGPA = popularInstructors.filter(i => i.averageGPA > 0 && i.averageGPACount >= 5);
+        const withGPA = instructorsToProcess.filter(i => i.averageGPA > 0 && i.averageGPACount >= 5);
         console.log(`🔍 getTopInstructorsByGPAOptimized: ${withGPA.length} instructors have sufficient GPA data (≥5)`);
         
         // 檢查 HUI Ting Yan 是否在列表中
-        const huiTingYan = popularInstructors.find(i => i.name.includes('HUI') && i.name.includes('Ting'));
+        const huiTingYan = instructorsToProcess.find(i => i.name.includes('HUI') && i.name.includes('Ting'));
         if (huiTingYan) {
           console.log(`🔍 Found HUI Ting Yan:`, huiTingYan);
         } else {
-          console.log(`❌ HUI Ting Yan not found in popular instructors list`);
+          console.log(`❌ HUI Ting Yan not found in processed instructors list`);
         }
       }
       
       // 按GPA重新排序，嚴格要求至少5個非N/A評分記錄
-      const sortedInstructors = popularInstructors
-        .filter(instructor => instructor.averageGPA > 0 && instructor.averageGPACount >= 5)
+      const sortedInstructors = instructorsToProcess
+        .filter(instructor => {
+          const hasValidGPA = instructor.averageGPA > 0 && instructor.averageGPACount >= 5;
+          if (import.meta.env.DEV && hasValidGPA) {
+            console.log(`✅ Instructor with ≥5 GPA records: ${instructor.name} (${instructor.averageGPACount} records, GPA: ${instructor.averageGPA})`);
+          }
+          return hasValidGPA;
+        })
         .sort((a, b) => {
           // 首先按平均GPA排序（降序）
           if (b.averageGPA !== a.averageGPA) {
@@ -3093,7 +3114,7 @@ export class CourseService {
       );
       
       if (import.meta.env.DEV) {
-        console.log(`✅ getTopInstructorsByGPAOptimized: Reused popular instructors data, cached ${sortedInstructors.length} instructors`);
+        console.log(`✅ getTopInstructorsByGPAOptimized: Used hybrid strategy, cached ${sortedInstructors.length} instructors with ≥5 GPA records`);
       }
       return sortedInstructors.slice(0, limit);
     } catch (error) {
