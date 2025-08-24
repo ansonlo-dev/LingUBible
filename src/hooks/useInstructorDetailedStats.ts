@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CourseService } from '@/services/api/courseService';
+import { globalDataManager } from '@/utils/globalDataManager';
 
 interface InstructorDetailedStats {
   reviewCount: number;
@@ -27,8 +28,8 @@ export function useInstructorDetailedStats(instructorName: string) {
         setLoading(true);
         setError(null);
         
-        // 獲取講師的詳細統計信息 - 使用優化版本重用緩存
-        const instructorsWithStats = await CourseService.getPopularInstructorsWithDetailedStatsOptimized(100);
+        // 🚀 使用全域數據管理器獲取講師數據 - 重用已載入的數據
+        const instructorsWithStats = await globalDataManager.getAllInstructors();
         const instructorStats = instructorsWithStats.find(instructor => instructor.name === instructorName);
         
         if (instructorStats) {

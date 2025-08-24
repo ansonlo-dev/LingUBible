@@ -2251,7 +2251,8 @@ export class CourseService {
       if (import.meta.env.DEV) {
         console.log('🔄 getPopularCourses: Loading fresh data...');
       }
-      const coursesWithStats = await this.getCoursesWithStatsBatch();
+      // 🚀 超級優化：重用 getCoursesWithStats 的持久化緩存，避免重複查詢
+      const coursesWithStats = await this.getCoursesWithStats();
       
       // 按評論數排序，優先考慮有評論的課程
       const sortedCourses = coursesWithStats
@@ -2984,7 +2985,8 @@ export class CourseService {
       if (import.meta.env.DEV) {
         console.log('🔄 getTopCoursesByGPA: Loading fresh data...');
       }
-      const coursesWithStats = await this.getCoursesWithStatsBatch();
+      // 🚀 超級優化：重用 getCoursesWithStats 的持久化緩存，避免重複查詢
+      const coursesWithStats = await this.getCoursesWithStats();
       
       // 按平均GPA排序，只考慮有足夠GPA數據的課程（至少5個有成績的評論）
       const sortedCourses = coursesWithStats
@@ -4103,12 +4105,21 @@ export class CourseService {
     averageGPACount: number;
   }>> {
     try {
-      const cacheKey = `batch_course_detailed_stats_${courseCodes.sort().join('_')}`;
+      // 🚀 超級優化：使用持久化緩存避免重複計算
+      const cacheKey = `batch_course_detailed_stats_v2`;
       
-      // 檢查緩存
-      const cached = this.getCached<Map<string, any>>(cacheKey);
+      // 首先檢查持久化緩存
+      const cached = this.getPersistentCached<Map<string, any>>(cacheKey);
       if (cached) {
-        return cached;
+        console.log('✅ getBatchCourseDetailedStats: Using persistent cache');
+        // 只返回請求的課程數據
+        const result = new Map<string, any>();
+        for (const courseCode of courseCodes) {
+          if (cached.has(courseCode)) {
+            result.set(courseCode, cached.get(courseCode));
+          }
+        }
+        return result;
       }
 
       // 如果沒有課程代碼，返回空結果
@@ -4248,10 +4259,20 @@ export class CourseService {
         });
       }
 
-      // 緩存結果
-      this.setCached(cacheKey, courseStatsMap, 3 * 60 * 1000); // 3分鐘緩存（評分數據變化較頻繁）
+      // 🚀 持久化緩存結果，避免重複計算
+      this.setPersistentCached(cacheKey, courseStatsMap, 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA); // 30分鐘內存，15分鐘持久化
       
-      return courseStatsMap;
+      console.log(`✅ getBatchCourseDetailedStats: Cached ${courseStatsMap.size} course statistics`);
+      
+      // 只返回請求的課程數據
+      const result = new Map<string, any>();
+      for (const courseCode of courseCodes) {
+        if (courseStatsMap.has(courseCode)) {
+          result.set(courseCode, courseStatsMap.get(courseCode));
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching batch course detailed stats:', error);
       return new Map();
@@ -4268,12 +4289,21 @@ export class CourseService {
     gradingFairness: number;
   }>> {
     try {
-      const cacheKey = `batch_instructor_detailed_stats_${instructorNames.sort().join('_')}`;
+      // 🚀 超級優化：使用持久化緩存避免重複計算
+      const cacheKey = `batch_instructor_detailed_stats_v2`;
       
-      // 檢查緩存
-      const cached = this.getCached<Map<string, any>>(cacheKey);
+      // 首先檢查持久化緩存
+      const cached = this.getPersistentCached<Map<string, any>>(cacheKey);
       if (cached) {
-        return cached;
+        console.log('✅ getBatchInstructorDetailedStats: Using persistent cache');
+        // 只返回請求的講師數據
+        const result = new Map<string, any>();
+        for (const instructorName of instructorNames) {
+          if (cached.has(instructorName)) {
+            result.set(instructorName, cached.get(instructorName));
+          }
+        }
+        return result;
       }
 
       // 如果沒有講師名稱，返回空結果
@@ -4362,10 +4392,20 @@ export class CourseService {
         });
       }
 
-      // 緩存結果
-      this.setCached(cacheKey, finalStatsMap, 3 * 60 * 1000); // 3分鐘緩存
+      // 🚀 持久化緩存結果，避免重複計算
+      this.setPersistentCached(cacheKey, finalStatsMap, 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA); // 30分鐘內存，15分鐘持久化
       
-      return finalStatsMap;
+      console.log(`✅ getBatchInstructorDetailedStats: Cached ${finalStatsMap.size} instructor statistics`);
+      
+      // 只返回請求的講師數據
+      const result = new Map<string, any>();
+      for (const instructorName of instructorNames) {
+        if (finalStatsMap.has(instructorName)) {
+          result.set(instructorName, finalStatsMap.get(instructorName));
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching batch instructor detailed stats:', error);
       return new Map();

@@ -4,6 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
+import { globalDataManager } from '@/utils/globalDataManager';
 import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -244,39 +245,35 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       
       const loadData = async () => {
         try {
-          // 採用分階段載入減少API併發壓力
-          // 第一階段：載入搜索必須的基礎數據
-          const [allCoursesData, allInstructorsData] = await Promise.all([
-            CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
-            CourseService.getAllInstructorsWithDetailedStats(), // 獲取所有講師用於搜索
+          console.log('🔍 SearchModal: Loading from GlobalDataManager...');
+          
+          // 🚀 超級優化：從全域數據管理器載入，無重複API調用
+          const [
+            allCoursesData,
+            allInstructorsData,
+            coursesData,
+            instructorsData,
+            topCoursesData,
+            topInstructorsData
+          ] = await Promise.all([
+            globalDataManager.getAllCourses(),
+            globalDataManager.getAllInstructors(),
+            globalDataManager.getPopularCourses(),
+            globalDataManager.getPopularInstructors(),
+            globalDataManager.getTopCourses(),
+            globalDataManager.getTopInstructors()
           ]);
           
+          // 如果數據已經載入過，這些調用會立即返回！
           setAllCourses(allCoursesData);
           setAllInstructors(allInstructorsData);
-          
-          // 短暫延遲避免API過載
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // 第二階段：載入熱門項目（用戶經常訪問）- 使用優化版本重用著陸頁面緩存
-          const [coursesData, instructorsData] = await Promise.all([
-            CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
-            CourseService.getPopularInstructorsWithDetailedStatsOptimized(20), // 🚀 優化版本：重用著陸頁面的持久化緩存
-          ]);
-          
           setPopularCourses(coursesData);
           setPopularInstructors(instructorsData);
-          
-          // 短暫延遲避免API過載
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // 第三階段：載入最佳項目（較少使用的標籤）- 使用優化版本重用著陸頁面緩存
-          const [topCoursesData, topInstructorsData] = await Promise.all([
-            CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
-            CourseService.getTopInstructorsByGPAOptimized(20) // 🚀 優化版本：重用著陸頁面的持久化緩存
-          ]);
-          
           setTopCourses(topCoursesData);
           setTopInstructors(topInstructorsData);
+          
+          console.log('✅ SearchModal: All data loaded instantly from GlobalDataManager');
+          
         } catch (error) {
           console.error('Error loading search data:', error);
         } finally {

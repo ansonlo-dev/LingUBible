@@ -1,9 +1,9 @@
 /**
  * 預加載器：在應用啟動時預載入關鍵數據
- * 🚀 超級優化：提供接近即時的用戶體驗
+ * 🚀 超級優化：使用全域數據管理器提供真正的即時載入
  */
 
-import { CourseService } from '@/services/api/courseService';
+import { globalDataManager } from './globalDataManager';
 
 class DataPreloader {
   private static instance: DataPreloader;
@@ -18,8 +18,8 @@ class DataPreloader {
   }
 
   /**
-   * 開始預載入關鍵數據
-   * 在用戶還沒訪問著陸頁面之前就開始載入
+   * 開始預載入所有數據
+   * 在用戶還沒訪問任何頁面之前就完成所有數據載入
    */
   startPreloading(): Promise<void> {
     if (this.preloadPromise) {
@@ -27,43 +27,22 @@ class DataPreloader {
     }
 
     this.isPreloading = true;
-    console.log('🚀 DataPreloader: Starting critical data preloading...');
+    console.log('🚀 DataPreloader: Starting comprehensive data preloading...');
 
-    this.preloadPromise = this.preloadCriticalData();
+    this.preloadPromise = this.preloadAllData();
     return this.preloadPromise;
   }
 
-  private async preloadCriticalData(): Promise<void> {
+  private async preloadAllData(): Promise<void> {
     try {
-      // 預載入最關鍵的數據 - 這些是著陸頁面必需的
-      await Promise.allSettled([
-        // 預載入熱門課程數據（用戶最關心）
-        CourseService.getPopularCourses(20),
-        // 預載入熱門講師數據（用戶次要關心）
-        CourseService.getPopularInstructorsWithDetailedStatsOptimized(20),
-      ]);
-
-      console.log('✅ DataPreloader: Critical data preloaded successfully');
-
-      // 延遲載入次要數據，不阻塞關鍵路徑
-      setTimeout(async () => {
-        try {
-          await Promise.allSettled([
-            CourseService.getTopCoursesByGPA(20),
-            CourseService.getTopInstructorsByGPAOptimized(20),
-            // 預載入完整課程數據供目錄頁面使用
-            CourseService.getCoursesWithStats(),
-            // 預載入完整講師數據供目錄頁面使用
-            CourseService.getAllInstructorsWithDetailedStats(),
-          ]);
-          console.log('✅ DataPreloader: Secondary data preloaded successfully');
-        } catch (error) {
-          console.warn('DataPreloader: Secondary data preloading failed (non-critical):', error);
-        }
-      }, 2000); // 2秒後載入次要數據
+      // 🚀 使用全域數據管理器載入所有數據
+      // 這會分階段載入所有數據，確保用戶訪問任何頁面都是即時的
+      await globalDataManager.loadAllData();
+      
+      console.log('✅ DataPreloader: All data preloaded successfully via GlobalDataManager');
 
     } catch (error) {
-      console.error('DataPreloader: Critical data preloading failed:', error);
+      console.error('DataPreloader: Data preloading failed:', error);
     } finally {
       this.isPreloading = false;
     }
@@ -73,7 +52,14 @@ class DataPreloader {
    * 檢查是否正在預載入
    */
   isPreloadingActive(): boolean {
-    return this.isPreloading;
+    return this.isPreloading || globalDataManager.isDataLoading();
+  }
+
+  /**
+   * 檢查數據是否已載入
+   */
+  isDataLoaded(): boolean {
+    return globalDataManager.isDataLoaded();
   }
 
   /**
@@ -83,6 +69,13 @@ class DataPreloader {
     if (this.preloadPromise) {
       await this.preloadPromise;
     }
+  }
+
+  /**
+   * 獲取載入進度
+   */
+  getLoadingProgress() {
+    return globalDataManager.getLoadingProgress();
   }
 }
 

@@ -18,6 +18,7 @@ import { useMainPageStats } from '@/hooks/useMainPageStats';
 import { Link, useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
 import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
+import { globalDataManager } from '@/utils/globalDataManager';
 import { translateDepartmentName } from '@/utils/textUtils';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
@@ -136,36 +137,48 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [user, refreshUser]);
 
-  // 🚀 超級優化：智能並行載入策略，大幅縮短首次載入時間
+  // 🚀 超級優化：使用全域數據管理器，避免重複載入
   useEffect(() => {
     const loadContentOptimized = async () => {
       try {
         setPopularLoading(true);
         setPopularError(null);
 
-        // 🚀 策略優化：檢查是否有緩存，決定載入策略
-        console.log('🚀 Loading all content in parallel for optimal speed...');
-        const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
-          CourseService.getPopularCourses(),
-          CourseService.getPopularInstructorsWithDetailedStatsOptimized(),
-          CourseService.getTopCoursesByGPA(),
-          CourseService.getTopInstructorsByGPAOptimized()
+        console.log('🚀 Loading from GlobalDataManager...');
+        
+        // 🚀 使用全域數據管理器 - 只載入一次，所有地方重用
+        const [popularCourses, popularInstructors] = await Promise.all([
+          globalDataManager.getPopularCourses(),
+          globalDataManager.getPopularInstructors()
         ]);
-
-        // 一次性設置所有數據，避免多次重渲染
+        
+        // 立即顯示核心內容
         setPopularCourses(popularCourses);
         setPopularInstructors(popularInstructors);
-        setTopCourses(topCourses);
-        setTopInstructors(topInstructors);
+        
+        console.log('✅ Core content loaded from GlobalDataManager');
+        
+        // 載入次要內容（如果尚未載入則會觸發載入，如果已載入則立即返回）
+        setTimeout(async () => {
+          try {
+            const [topCourses, topInstructors] = await Promise.all([
+              globalDataManager.getTopCourses(),
+              globalDataManager.getTopInstructors()
+            ]);
+            
+            setTopCourses(topCourses);
+            setTopInstructors(topInstructors);
+            
+            console.log('✅ Additional content loaded from GlobalDataManager');
+          } catch (error) {
+            console.warn('Non-critical: Failed to load additional content:', error);
+          }
+        }, 50); // 更短延遲，因為可能已經緩存了
+
+        // 核心內容載入完成，立即隱藏載入指示器
         setPopularLoading(false);
         
-        console.log('✅ All landing page content loaded successfully');
-        console.log('📊 Data loaded:', {
-          popularCourses: popularCourses.length,
-          popularInstructors: popularInstructors.length,
-          topCourses: topCourses.length,
-          topInstructors: topInstructors.length
-        });
+        console.log('✅ Landing page loaded using GlobalDataManager');
 
       } catch (error) {
         console.error('Error loading landing page content:', error);
