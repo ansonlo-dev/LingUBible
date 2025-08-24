@@ -147,7 +147,7 @@ const Index = () => {
         console.log('🚀 Loading popular content first...');
         const [popularCourses, popularInstructors] = await Promise.all([
           CourseService.getPopularCourses(),
-          CourseService.getPopularInstructorsWithDetailedStats()
+          CourseService.getPopularInstructorsWithDetailedStatsOptimized() // 🚀 使用優化版本，大幅提升載入速度
         ]);
 
         setPopularCourses(popularCourses);
@@ -160,7 +160,7 @@ const Index = () => {
             console.log('🚀 Loading top content in background...');
             const [topCourses, topInstructors] = await Promise.all([
               CourseService.getTopCoursesByGPA(),
-              CourseService.getTopInstructorsByGPA()
+              CourseService.getTopInstructorsByGPAOptimized() // 🚀 使用優化版本，重用已載入的講師數據
             ]);
 
             setTopCourses(topCourses);

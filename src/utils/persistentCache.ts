@@ -196,13 +196,18 @@ class PersistentCache {
 // Export singleton instance
 export const persistentCache = new PersistentCache();
 
-// Landing page specific cache keys
+// Persistent cache keys for all pages
 export const PERSISTENT_CACHE_KEYS = {
+  // Landing page
   POPULAR_COURSES: 'landing_popular_courses',
   POPULAR_INSTRUCTORS: 'landing_popular_instructors', 
   TOP_COURSES_BY_GPA: 'landing_top_courses_gpa',
   TOP_INSTRUCTORS_BY_GPA: 'landing_top_instructors_gpa',
   MAIN_PAGE_STATS: 'landing_main_page_stats',
+  // Catalog pages
+  ALL_COURSES_WITH_STATS: 'catalog_all_courses_with_stats',
+  ALL_INSTRUCTORS_WITH_DETAILED_STATS: 'catalog_all_instructors_detailed_stats',
+  COURSES_WITH_STATS_BATCH: 'catalog_courses_with_stats_batch',
 } as const;
 
 // Cache TTL for landing page data (longer TTL since this data changes less frequently)
