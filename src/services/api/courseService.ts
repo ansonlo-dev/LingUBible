@@ -4710,7 +4710,7 @@ export class CourseService {
   }
 
   /**
-   * 批量獲取多個課程在當前學期的教學語言
+   * 🚀 FIXED: 批量獲取多個課程在當前學期的教學語言 (使用分批處理避免URL過長)
    */
   static async getBatchCourseCurrentTermTeachingLanguages(courseCodes: string[]): Promise<Map<string, string | null>> {
     try {
@@ -4724,32 +4724,63 @@ export class CourseService {
       }
 
       if (courseCodes.length === 0) {
+        console.log('🔍 getBatchCourseCurrentTermTeachingLanguages: No course codes provided');
         return new Map();
       }
 
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('course_code', courseCodes),
-          Query.equal('term_code', currentTermCode),
-          Query.select(['course_code', 'teaching_language']),
-          Query.limit(courseCodes.length)
-        ]
-      );
-
+      console.log(`🔍 getBatchCourseCurrentTermTeachingLanguages: Fetching current term teaching languages for ${courseCodes.length} courses`);
+      
       const teachingLanguagesMap = new Map<string, string | null>();
       
       // 初始化所有課程為 null
       courseCodes.forEach(courseCode => {
         teachingLanguagesMap.set(courseCode, null);
       });
+      
+      // 🚀 FIX: Split into batches to avoid URL length limits (max ~50 courses per batch)
+      const batchSize = 50;
+      const batches = [];
+      
+      for (let i = 0; i < courseCodes.length; i += batchSize) {
+        batches.push(courseCodes.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchCourseCurrentTermTeachingLanguages: Processing ${batches.length} batches of ${batchSize} courses each`);
+      
+      let totalRecords = 0;
+      
+      // Process each batch
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing current term teaching language batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
+        
+        try {
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.equal('course_code', batch),
+              Query.equal('term_code', currentTermCode),
+              Query.select(['course_code', 'teaching_language']),
+              Query.limit(batch.length)
+            ]
+          );
 
-      // 填入找到的教學語言
-      response.documents.forEach((doc: any) => {
-        const record = doc as unknown as TeachingRecord;
-        teachingLanguagesMap.set(record.course_code, record.teaching_language);
-      });
+          totalRecords += response.documents.length;
+          console.log(`🔍 Current term teaching language batch ${batchIndex + 1}: Found ${response.documents.length} records`);
+          
+          // 填入找到的教學語言
+          response.documents.forEach((doc: any) => {
+            const record = doc as unknown as TeachingRecord;
+            teachingLanguagesMap.set(record.course_code, record.teaching_language);
+          });
+        } catch (batchError) {
+          console.error(`❌ Error processing current term teaching language batch ${batchIndex + 1}:`, batchError);
+          // Continue with other batches even if one fails
+        }
+      }
+      
+      console.log(`✅ getBatchCourseCurrentTermTeachingLanguages: Processed ${totalRecords} total records across ${batches.length} batches`);
 
       // 緩存結果
       this.setCached(cacheKey, teachingLanguagesMap, 5 * 60 * 1000); // 5分鐘緩存
@@ -4885,6 +4916,9 @@ export class CourseService {
   /**
    * 批量獲取當前學期課程的服務學習類型
    */
+  /**
+   * 🚀 FIXED: 批量獲取多個課程在當前學期的服務學習類型 (使用分批處理避免URL過長)
+   */
   static async getBatchCourseCurrentTermServiceLearning(courseCodes: string[]): Promise<Map<string, ('compulsory' | 'optional') | null>> {
     try {
       const currentTermCode = getCurrentTermCode();
@@ -4897,34 +4931,65 @@ export class CourseService {
       }
 
       if (courseCodes.length === 0) {
+        console.log('🔍 getBatchCourseCurrentTermServiceLearning: No course codes provided');
         return new Map();
       }
 
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('course_code', courseCodes),
-          Query.equal('term_code', currentTermCode),
-          Query.select(['course_code', 'service_learning']),
-          Query.limit(courseCodes.length)
-        ]
-      );
-
+      console.log(`🔍 getBatchCourseCurrentTermServiceLearning: Fetching current term service learning for ${courseCodes.length} courses`);
+      
       const serviceLearningMap = new Map<string, ('compulsory' | 'optional') | null>();
       
       // 初始化所有課程為 null
       courseCodes.forEach(courseCode => {
         serviceLearningMap.set(courseCode, null);
       });
+      
+      // 🚀 FIX: Split into batches to avoid URL length limits (max ~50 courses per batch)
+      const batchSize = 50;
+      const batches = [];
+      
+      for (let i = 0; i < courseCodes.length; i += batchSize) {
+        batches.push(courseCodes.slice(i, i + batchSize));
+      }
+      
+      console.log(`🔍 getBatchCourseCurrentTermServiceLearning: Processing ${batches.length} batches of ${batchSize} courses each`);
+      
+      let totalRecords = 0;
+      
+      // Process each batch
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        console.log(`🔍 Processing current term service learning batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
+        
+        try {
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.equal('course_code', batch),
+              Query.equal('term_code', currentTermCode),
+              Query.select(['course_code', 'service_learning']),
+              Query.limit(batch.length)
+            ]
+          );
 
-      // 填入找到的服務學習類型
-      response.documents.forEach((doc: any) => {
-        const record = doc as unknown as TeachingRecord;
-        if (record.service_learning === 'compulsory' || record.service_learning === 'optional') {
-          serviceLearningMap.set(record.course_code, record.service_learning as 'compulsory' | 'optional');
+          totalRecords += response.documents.length;
+          console.log(`🔍 Current term service learning batch ${batchIndex + 1}: Found ${response.documents.length} records`);
+          
+          // 填入找到的服務學習類型
+          response.documents.forEach((doc: any) => {
+            const record = doc as unknown as TeachingRecord;
+            if (record.service_learning === 'compulsory' || record.service_learning === 'optional') {
+              serviceLearningMap.set(record.course_code, record.service_learning as 'compulsory' | 'optional');
+            }
+          });
+        } catch (batchError) {
+          console.error(`❌ Error processing current term service learning batch ${batchIndex + 1}:`, batchError);
+          // Continue with other batches even if one fails
         }
-      });
+      }
+      
+      console.log(`✅ getBatchCourseCurrentTermServiceLearning: Processed ${totalRecords} total records across ${batches.length} batches`);
 
       // 緩存結果
       this.setCached(cacheKey, serviceLearningMap, 5 * 60 * 1000); // 5分鐘緩存
