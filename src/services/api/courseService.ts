@@ -193,9 +193,14 @@ export class CourseService {
   private static readonly TERMS_COLLECTION_ID = 'terms';
 
   // 性能優化常數
-  private static readonly MAX_COURSES_LIMIT = 2000; // 移除限制，允許顯示所有課程
-  private static readonly MAX_INSTRUCTORS_LIMIT = 1000; // 移除限制，允許顯示所有講師
-  private static readonly MAX_REVIEWS_LIMIT = 5000; // 從 1500 減少到 1000
+  private static readonly MAX_COURSES_LIMIT = 2000; // 完整數據集限制
+  private static readonly MAX_INSTRUCTORS_LIMIT = 1000; // 完整數據集限制
+  private static readonly MAX_REVIEWS_LIMIT = 5000; // 完整數據集限制
+  
+  // 🚀 新增：著陸頁面專用輕量級限制
+  private static readonly LANDING_PAGE_COURSES_LIMIT = 300; // 著陸頁面只需300個課程
+  private static readonly LANDING_PAGE_INSTRUCTORS_LIMIT = 200; // 著陸頁面只需200個講師
+  private static readonly LANDING_PAGE_REVIEWS_LIMIT = 1000; // 著陸頁面只需1000個評論
   private static readonly MAX_TEACHING_RECORDS_LIMIT = 10000; // 增加限制以確保包含所有教學記錄
   private static readonly MAX_SEARCH_RESULTS = 100; // 新增：搜尋結果限制
 
@@ -1097,7 +1102,8 @@ export class CourseService {
         this.COURSES_COLLECTION_ID,
         [
           Query.equal('course_code', courseCode),
-          Query.limit(1)
+          Query.limit(1),
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'credits', '$createdAt', '$updatedAt']) // 🚀 排除大型描述欄位
         ]
       );
 
@@ -2252,13 +2258,13 @@ export class CourseService {
         console.log('🚀 getPopularCoursesLightweight: Loading only essential data for landing page');
       }
 
-      // 🚀 關鍵優化：只獲取前200個課程而不是2000個
+      // 🚀 關鍵優化：只獲取著陸頁面需要的課程數量
       const response = await databases.listDocuments(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
           Query.orderAsc('course_code'),
-          Query.limit(200), // 從2000減少到200，減少90%數據量
+          Query.limit(this.LANDING_PAGE_COURSES_LIMIT), // 著陸頁面專用限制
           Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
         ]
       );
@@ -2436,7 +2442,7 @@ export class CourseService {
         this.REVIEWS_COLLECTION_ID,
         [
           Query.orderDesc('$createdAt'),
-          Query.limit(5000), // 減少到5000個最新評論，足夠找到熱門講師
+          Query.limit(this.LANDING_PAGE_REVIEWS_LIMIT), // 著陸頁面專用輕量級限制
           Query.select(['instructor_details', 'course_final_grade'])
         ]
       );
@@ -3082,13 +3088,13 @@ export class CourseService {
         console.log('🚀 getTopCoursesByGPALightweight: Loading only essential data for landing page');
       }
 
-      // 🚀 關鍵優化：只獲取前200個課程而不是2000個
+      // 🚀 關鍵優化：只獲取著陸頁面需要的課程數量  
       const response = await databases.listDocuments(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
           Query.orderAsc('course_code'),
-          Query.limit(200), // 從2000減少到200，減少90%數據量
+          Query.limit(this.LANDING_PAGE_COURSES_LIMIT), // 著陸頁面專用限制
           Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
         ]
       );
