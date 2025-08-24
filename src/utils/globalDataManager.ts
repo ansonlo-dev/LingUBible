@@ -57,9 +57,9 @@ class GlobalDataManager {
       console.log('🎯 Loading only essential data for instant landing page...');
       
       const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
-        CourseService.getPopularCourses(20),
+        CourseService.getPopularCoursesLightweight(20),
         CourseService.getPopularInstructorsWithDetailedStatsOptimized(20),
-        CourseService.getTopCoursesByGPA(20),
+        CourseService.getTopCoursesByGPALightweight(20),
         CourseService.getTopInstructorsByGPAOptimized(20)
       ]);
       

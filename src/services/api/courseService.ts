@@ -2232,7 +2232,103 @@ export class CourseService {
   }
 
   /**
-   * 獲取熱門課程（按評分和評論數排序，限制數量）
+   * 獲取熱門課程（著陸頁面優化版 - 輕量級）
+   * 🚀 超級優化：只處理200個課程而非2000個，大幅提升載入速度
+   */
+  static async getPopularCoursesLightweight(limit: number = 20): Promise<CourseWithStats[]> {
+    try {
+      const cacheKey = `${PERSISTENT_CACHE_KEYS.POPULAR_COURSES}_lightweight_${limit}`;
+      
+      // 檢查緩存
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
+      if (cached) {
+        if (import.meta.env.DEV) {
+          console.log('✅ getPopularCoursesLightweight: Returning cached data');
+        }
+        return cached;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log('🚀 getPopularCoursesLightweight: Loading only essential data for landing page');
+      }
+
+      // 🚀 關鍵優化：只獲取前200個課程而不是2000個
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.COURSES_COLLECTION_ID,
+        [
+          Query.orderAsc('course_code'),
+          Query.limit(200), // 從2000減少到200，減少90%數據量
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
+        ]
+      );
+      
+      const courses = response.documents as unknown as Course[];
+      const courseCodes = courses.map(course => course.course_code);
+      
+      if (import.meta.env.DEV) {
+        console.log(`📚 Loaded ${courses.length} courses for lightweight processing`);
+      }
+
+      // 🚀 關鍵優化：只計算統計數據，跳過教學語言等額外查詢
+      const statsMap = await this.getBatchCourseDetailedStats(courseCodes);
+      
+      const coursesWithStats = courses.map(course => {
+        const stats = statsMap.get(course.course_code) || {
+          reviewCount: 0,
+          averageRating: 0,
+          studentCount: 0,
+          averageWorkload: -1,
+          averageDifficulty: -1,
+          averageUsefulness: -1,
+          averageGPA: 0,
+          averageGPACount: 0
+        };
+        
+        return {
+          ...course,
+          ...stats,
+          // 著陸頁面不需要的欄位設為默認值，避免額外查詢
+          teachingLanguages: [],
+          currentTermTeachingLanguage: null,
+          serviceLearningTypes: [],
+          currentTermServiceLearning: null,
+          isOfferedInCurrentTerm: false
+        };
+      });
+
+      // 按評論數排序並返回前N個
+      const popularCourses = coursesWithStats
+        .filter(course => course.reviewCount > 0)
+        .sort((a, b) => {
+          if (b.reviewCount !== a.reviewCount) {
+            return b.reviewCount - a.reviewCount;
+          }
+          return b.averageRating - a.averageRating;
+        })
+        .slice(0, limit);
+
+      // 緩存結果
+      this.setPersistentCached(
+        cacheKey,
+        popularCourses,
+        10 * 60 * 1000, // 記憶體緩存10分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
+
+      if (import.meta.env.DEV) {
+        console.log(`✅ getPopularCoursesLightweight: Loaded ${popularCourses.length} popular courses`);
+      }
+
+      return popularCourses;
+    } catch (error) {
+      console.error('Error in getPopularCoursesLightweight:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 獲取熱門課程（完整版 - 用於搜索和目錄頁面）
    * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getPopularCourses(limit: number = 6): Promise<CourseWithStats[]> {
@@ -2966,7 +3062,103 @@ export class CourseService {
   }
 
   /**
-   * 獲取平均GPA最高的課程
+   * 獲取平均GPA最高的課程（著陸頁面優化版 - 輕量級）
+   * 🚀 超級優化：只處理200個課程而非2000個，大幅提升載入速度
+   */
+  static async getTopCoursesByGPALightweight(limit: number = 20): Promise<CourseWithStats[]> {
+    try {
+      const cacheKey = `${PERSISTENT_CACHE_KEYS.TOP_COURSES_BY_GPA}_lightweight_${limit}`;
+      
+      // 檢查緩存
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
+      if (cached) {
+        if (import.meta.env.DEV) {
+          console.log('✅ getTopCoursesByGPALightweight: Returning cached data');
+        }
+        return cached;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log('🚀 getTopCoursesByGPALightweight: Loading only essential data for landing page');
+      }
+
+      // 🚀 關鍵優化：只獲取前200個課程而不是2000個
+      const response = await databases.listDocuments(
+        this.DATABASE_ID,
+        this.COURSES_COLLECTION_ID,
+        [
+          Query.orderAsc('course_code'),
+          Query.limit(200), // 從2000減少到200，減少90%數據量
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
+        ]
+      );
+      
+      const courses = response.documents as unknown as Course[];
+      const courseCodes = courses.map(course => course.course_code);
+      
+      if (import.meta.env.DEV) {
+        console.log(`📚 Loaded ${courses.length} courses for lightweight GPA processing`);
+      }
+
+      // 🚀 關鍵優化：只計算統計數據，跳過額外查詢
+      const statsMap = await this.getBatchCourseDetailedStats(courseCodes);
+      
+      const coursesWithStats = courses.map(course => {
+        const stats = statsMap.get(course.course_code) || {
+          reviewCount: 0,
+          averageRating: 0,
+          studentCount: 0,
+          averageWorkload: -1,
+          averageDifficulty: -1,
+          averageUsefulness: -1,
+          averageGPA: 0,
+          averageGPACount: 0
+        };
+        
+        return {
+          ...course,
+          ...stats,
+          // 著陸頁面不需要的欄位設為默認值
+          teachingLanguages: [],
+          currentTermTeachingLanguage: null,
+          serviceLearningTypes: [],
+          currentTermServiceLearning: null,
+          isOfferedInCurrentTerm: false
+        };
+      });
+
+      // 按平均GPA排序，只考慮有足夠GPA數據的課程
+      const topCourses = coursesWithStats
+        .filter(course => course.averageGPA > 0 && course.averageGPACount >= 5)
+        .sort((a, b) => {
+          if (b.averageGPA !== a.averageGPA) {
+            return b.averageGPA - a.averageGPA;
+          }
+          return b.averageGPACount - a.averageGPACount;
+        })
+        .slice(0, limit);
+
+      // 緩存結果
+      this.setPersistentCached(
+        cacheKey,
+        topCourses,
+        10 * 60 * 1000, // 記憶體緩存10分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
+
+      if (import.meta.env.DEV) {
+        console.log(`✅ getTopCoursesByGPALightweight: Loaded ${topCourses.length} top GPA courses`);
+      }
+
+      return topCourses;
+    } catch (error) {
+      console.error('Error in getTopCoursesByGPALightweight:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 獲取平均GPA最高的課程（完整版 - 用於搜索和目錄頁面）
    * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getTopCoursesByGPA(limit: number = 6): Promise<CourseWithStats[]> {
