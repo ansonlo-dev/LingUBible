@@ -970,10 +970,11 @@ export class CourseService {
    */
   static async getCoursesWithStats(): Promise<CourseWithStats[]> {
     try {
-      const cacheKey = PERSISTENT_CACHE_KEYS.ALL_COURSES_WITH_STATS;
+      const currentTermCode = getCurrentTermCode();
+      const cacheKey = `courses_with_complete_stats_${currentTermCode}`;
       
-      // 🚀 檢查雙層緩存（記憶體 → 持久化）
-      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
+      // 🚀 檢查緩存
+      const cached = this.getCached<CourseWithStats[]>(cacheKey);
       if (cached) {
         console.log('✅ getCoursesWithStats: Returning cached data for fast loading');
         return cached;
@@ -1045,15 +1046,10 @@ export class CourseService {
         c.teachingLanguages && c.teachingLanguages.length > 0
       )?.course_code || 'none found');
       
-      // 🚀 使用雙層緩存，確保跨會話保存
-      this.setPersistentCached(
-        cacheKey, 
-        coursesWithStats, 
-        10 * 60 * 1000, // 記憶體緩存10分鐘
-        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
-      );
-      
-      console.log(`✅ getCoursesWithStats: Cached ${coursesWithStats.length} courses for instant future loading`);
+      // 🚀 緩存結果以提升重訪性能 (匹配講師頁面的緩存策略)
+      this.setCached(cacheKey, coursesWithStats, 10 * 60 * 1000); // 10分鐘緩存
+      console.log('✅ getCoursesWithStats: Results cached for fast revisits');
+
       return coursesWithStats;
     } catch (error) {
       console.error('Error fetching courses with stats:', error);
@@ -2686,17 +2682,15 @@ export class CourseService {
    */
   static async getAllInstructorsWithDetailedStats(): Promise<InstructorWithDetailedStats[]> {
     try {
-      const cacheKey = PERSISTENT_CACHE_KEYS.ALL_INSTRUCTORS_WITH_DETAILED_STATS;
+      const currentTermCode = getCurrentTermCode();
+      const cacheKey = `all_instructors_detailed_stats_${currentTermCode}`;
       
-      // 🚀 檢查雙層緩存（記憶體 → 持久化）
-      const cached = this.getPersistentCached<InstructorWithDetailedStats[]>(cacheKey);
+      // 檢查緩存
+      const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
       if (cached) {
         console.log('✅ getAllInstructorsWithDetailedStats: Returning cached data for fast loading');
         return cached;
       }
-
-      console.log('🔄 getAllInstructorsWithDetailedStats: Loading fresh data...');
-      const currentTermCode = getCurrentTermCode();
       
       // 並行獲取講師、評論和當前學期教學記錄數據
       const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
@@ -2881,15 +2875,9 @@ export class CourseService {
         return aNameForSort.localeCompare(bNameForSort);
       });
 
-      // 🚀 使用雙層緩存，確保跨會話保存
-      this.setPersistentCached(
-        cacheKey, 
-        finalInstructorsWithDetailedStats, 
-        10 * 60 * 1000, // 記憶體緩存10分鐘
-        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
-      );
+      // 緩存結果 - 講師統計數據相對穩定，使用較長緩存時間
+      this.setCached(cacheKey, finalInstructorsWithDetailedStats, 10 * 60 * 1000); // 10分鐘緩存
       
-      console.log(`✅ getAllInstructorsWithDetailedStats: Cached ${finalInstructorsWithDetailedStats.length} instructors for instant future loading`);
       return finalInstructorsWithDetailedStats;
     } catch (error) {
       console.error('Error fetching all instructors with detailed stats:', error);
