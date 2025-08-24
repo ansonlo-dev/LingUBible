@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { StatsCard } from "@/components/features/reviews/StatsCard";
 import { PopularItemCard } from "@/components/features/reviews/PopularItemCard";
+import { LandingPageCardSkeleton } from "@/components/features/reviews/LandingPageCardSkeleton";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
@@ -546,12 +547,7 @@ const Index = () => {
 
             <TabsContent value="courses" className="space-y-6">
               {popularLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-muted-foreground">{t('common.loading')}</p>
-                  </div>
-                </div>
+                <LandingPageCardSkeleton type="course" count={6} />
               ) : popularError ? (
                 <div className="text-center py-12">
                   <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -599,12 +595,7 @@ const Index = () => {
 
             <TabsContent value="instructors" className="space-y-6">
               {popularLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-muted-foreground">{t('common.loading')}</p>
-                  </div>
-                </div>
+                <LandingPageCardSkeleton type="instructor" count={6} />
               ) : popularError ? (
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -648,12 +639,7 @@ const Index = () => {
 
             <TabsContent value="topCourses" className="space-y-6">
               {popularLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-muted-foreground">{t('common.loading')}</p>
-                  </div>
-                </div>
+                <LandingPageCardSkeleton type="course" count={6} />
               ) : popularError ? (
                 <div className="text-center py-12">
                   <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -701,12 +687,7 @@ const Index = () => {
 
             <TabsContent value="topInstructors" className="space-y-6">
               {popularLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-muted-foreground">{t('common.loading')}</p>
-                  </div>
-                </div>
+                <LandingPageCardSkeleton type="instructor" count={6} />
               ) : popularError ? (
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
