@@ -257,10 +257,10 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           // 短暫延遲避免API過載
           await new Promise(resolve => setTimeout(resolve, 100));
           
-          // 第二階段：載入熱門項目（用戶經常訪問）
+          // 第二階段：載入熱門項目（用戶經常訪問）- 使用優化版本重用著陸頁面緩存
           const [coursesData, instructorsData] = await Promise.all([
             CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
-            CourseService.getPopularInstructorsWithDetailedStats(20), // 獲取前20個熱門講師，提供更多建議選項
+            CourseService.getPopularInstructorsWithDetailedStatsOptimized(20), // 🚀 優化版本：重用著陸頁面的持久化緩存
           ]);
           
           setPopularCourses(coursesData);
@@ -269,10 +269,10 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
           // 短暫延遲避免API過載
           await new Promise(resolve => setTimeout(resolve, 100));
           
-          // 第三階段：載入最佳項目（較少使用的標籤）
+          // 第三階段：載入最佳項目（較少使用的標籤）- 使用優化版本重用著陸頁面緩存
           const [topCoursesData, topInstructorsData] = await Promise.all([
             CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
-            CourseService.getTopInstructorsByGPA(20) // 獲取前20個最佳教師，提供更多建議選項
+            CourseService.getTopInstructorsByGPAOptimized(20) // 🚀 優化版本：重用著陸頁面的持久化緩存
           ]);
           
           setTopCourses(topCoursesData);

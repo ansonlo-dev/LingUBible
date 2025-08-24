@@ -27,8 +27,8 @@ export function useInstructorDetailedStats(instructorName: string) {
         setLoading(true);
         setError(null);
         
-        // 獲取講師的詳細統計信息
-        const instructorsWithStats = await CourseService.getPopularInstructorsWithDetailedStats(100);
+        // 獲取講師的詳細統計信息 - 使用優化版本重用緩存
+        const instructorsWithStats = await CourseService.getPopularInstructorsWithDetailedStatsOptimized(100);
         const instructorStats = instructorsWithStats.find(instructor => instructor.name === instructorName);
         
         if (instructorStats) {
