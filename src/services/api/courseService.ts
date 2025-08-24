@@ -978,26 +978,32 @@ export class CourseService {
    * 獲取帶統計信息的課程列表
    */
   /**
-   * 🚀 OPTIMIZED: 獲取所有課程及統計信息 (添加緩存功能以提升重訪性能)
+   * 🚀 OPTIMIZED: 獲取所有課程及統計信息 (使用雙層緩存提升重訪性能)
    */
   static async getCoursesWithStats(): Promise<CourseWithStats[]> {
     try {
-      const currentTermCode = getCurrentTermCode();
-      const cacheKey = `courses_with_complete_stats_${currentTermCode}`;
+      const cacheKey = PERSISTENT_CACHE_KEYS.ALL_COURSES_WITH_STATS;
       
-      // 🚀 檢查緩存
-      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
       if (cached) {
-        console.log('✅ getCoursesWithStats: Returning cached data for fast loading');
+        if (import.meta.env.DEV) {
+          console.log('✅ getCoursesWithStats: Returning cached data for fast loading');
+        }
         return cached;
       }
       
-      console.log('🚀 getCoursesWithStats: Starting to load courses with complete data (cache miss)');
+      if (import.meta.env.DEV) {
+        console.log('🚀 getCoursesWithStats: Starting to load courses with complete data (cache miss)');
+      }
       
+      const currentTermCode = getCurrentTermCode();
       const courses = await this.getAllCourses();
       const courseCodes = courses.map(course => course.course_code);
       
-      console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
+      if (import.meta.env.DEV) {
+        console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
+      }
       
       // 並行獲取所有必要的數據
       const [
@@ -1020,8 +1026,10 @@ export class CourseService {
         this.getCoursesOfferedInTermBatch(currentTermCode, courseCodes)
       ]);
 
-      console.log('✅ All batch data loaded successfully');
-      console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
+      if (import.meta.env.DEV) {
+        console.log('✅ All batch data loaded successfully');
+        console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
+      }
       
       // 組合所有數據
       const coursesWithStats = courses.map(course => {
@@ -1053,14 +1061,24 @@ export class CourseService {
         };
       });
 
-      console.log('🎉 getCoursesWithStats: Completed successfully');
-      console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
-        c.teachingLanguages && c.teachingLanguages.length > 0
-      )?.course_code || 'none found');
+      if (import.meta.env.DEV) {
+        console.log('🎉 getCoursesWithStats: Completed successfully');
+        console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
+          c.teachingLanguages && c.teachingLanguages.length > 0
+        )?.course_code || 'none found');
+      }
       
-      // 🚀 緩存結果以提升重訪性能 (匹配講師頁面的緩存策略)
-      this.setCached(cacheKey, coursesWithStats, 10 * 60 * 1000); // 10分鐘緩存
-      console.log('✅ getCoursesWithStats: Results cached for fast revisits');
+      // 🚀 使用雙層緩存提升重訪性能 (匹配著陸頁面的緩存策略)
+      this.setPersistentCached(
+        cacheKey, 
+        coursesWithStats, 
+        10 * 60 * 1000, // 記憶體緩存10分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ getCoursesWithStats: Results cached with dual-layer strategy for fast revisits');
+      }
 
       return coursesWithStats;
     } catch (error) {
