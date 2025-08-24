@@ -2734,18 +2734,26 @@ export class CourseService {
 
   /**
    * 獲取所有講師的詳細統計信息（用於講師列表頁面）
+   * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
   static async getAllInstructorsWithDetailedStats(): Promise<InstructorWithDetailedStats[]> {
     try {
-      const currentTermCode = getCurrentTermCode();
-      const cacheKey = `all_instructors_detailed_stats_${currentTermCode}`;
+      const cacheKey = PERSISTENT_CACHE_KEYS.ALL_INSTRUCTORS_WITH_DETAILED_STATS;
       
-      // 檢查緩存
-      const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
+      // 🚀 檢查雙層緩存（記憶體 → 持久化）
+      const cached = this.getPersistentCached<InstructorWithDetailedStats[]>(cacheKey);
       if (cached) {
-        console.log('✅ getAllInstructorsWithDetailedStats: Returning cached data for fast loading');
+        if (import.meta.env.DEV) {
+          console.log('✅ getAllInstructorsWithDetailedStats: Returning cached data for fast loading');
+        }
         return cached;
       }
+      
+      if (import.meta.env.DEV) {
+        console.log('🔄 getAllInstructorsWithDetailedStats: Loading fresh data...');
+      }
+      
+      const currentTermCode = getCurrentTermCode();
       
       // 並行獲取講師、評論和當前學期教學記錄數據
       const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
@@ -2892,7 +2900,9 @@ export class CourseService {
       let currentTermTeachingLanguagesMap = new Map<string, string | null>();
 
       try {
-        console.log('🔍 getAllInstructorsWithDetailedStats: Starting to fetch teaching languages...');
+        if (import.meta.env.DEV) {
+          console.log('🔍 getAllInstructorsWithDetailedStats: Starting to fetch teaching languages...');
+        }
         
         // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
         const [languagesResult, currentTermResult] = await Promise.allSettled([
@@ -2902,7 +2912,9 @@ export class CourseService {
 
         if (languagesResult.status === 'fulfilled') {
           teachingLanguagesMap = languagesResult.value;
-          console.log('✅ getBatchInstructorTeachingLanguages succeeded, got', teachingLanguagesMap.size, 'entries');
+          if (import.meta.env.DEV) {
+            console.log('✅ getBatchInstructorTeachingLanguages succeeded, got', teachingLanguagesMap.size, 'entries');
+          }
         } else {
           console.error('❌ Failed to fetch all instructor teaching languages:', languagesResult.reason);
           console.warn('Continuing without language badges...');
@@ -2910,7 +2922,9 @@ export class CourseService {
 
         if (currentTermResult.status === 'fulfilled') {
           currentTermTeachingLanguagesMap = currentTermResult.value;
-          console.log('✅ getBatchInstructorCurrentTermTeachingLanguages succeeded');
+          if (import.meta.env.DEV) {
+            console.log('✅ getBatchInstructorCurrentTermTeachingLanguages succeeded');
+          }
         } else {
           console.error('❌ Failed to fetch all instructor current term teaching languages:', currentTermResult.reason);
           console.warn('Continuing without current term language...');
@@ -2931,8 +2945,17 @@ export class CourseService {
         return aNameForSort.localeCompare(bNameForSort);
       });
 
-      // 緩存結果 - 講師統計數據相對穩定，使用較長緩存時間
-      this.setCached(cacheKey, finalInstructorsWithDetailedStats, 10 * 60 * 1000); // 10分鐘緩存
+      // 🚀 使用雙層緩存提升重訪性能 (匹配著陸頁面和課程目錄的緩存策略)
+      this.setPersistentCached(
+        cacheKey, 
+        finalInstructorsWithDetailedStats, 
+        10 * 60 * 1000, // 記憶體緩存10分鐘
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+      );
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ getAllInstructorsWithDetailedStats: Results cached with dual-layer strategy for fast revisits');
+      }
       
       return finalInstructorsWithDetailedStats;
     } catch (error) {
