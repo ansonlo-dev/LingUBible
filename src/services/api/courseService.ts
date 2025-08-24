@@ -3893,11 +3893,75 @@ export class CourseService {
         Query.select(['course_code'])
       ];
 
-      // 如果提供了特定課程代碼，則只查詢這些課程
+      // 🚀 修復：如果有特定課程代碼且數量太多，分批查詢避免URL過長
       if (courseCodes && courseCodes.length > 0) {
-        queries.push(Query.equal('course_code', courseCodes));
+        const BATCH_SIZE = 50; // 限制每批查詢的課程數量
+        
+        if (courseCodes.length <= BATCH_SIZE) {
+          // 小批量，直接查詢
+          queries.push(Query.equal('course_code', courseCodes));
+          
+          const response = await databases.listDocuments(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            queries
+          );
+          
+          const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+          const offeredCourses = new Set(teachingRecords.map(record => record.course_code.toLowerCase()));
+          
+          this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000);
+          return offeredCourses;
+        } else {
+          // 大批量，分批處理
+          console.log(`📊 Processing ${courseCodes.length} courses in batches for term ${termCode}`);
+          
+          let allOfferedCourses = new Set<string>();
+          const batches = [];
+          
+          for (let i = 0; i < courseCodes.length; i += BATCH_SIZE) {
+            batches.push(courseCodes.slice(i, i + BATCH_SIZE));
+          }
+
+          const batchPromises = batches.map(async (batch, index) => {
+            try {
+              const batchQueries = [
+                Query.equal('term_code', termCode),
+                Query.equal('course_code', batch),
+                Query.limit(TERM_QUERY_LIMIT),
+                Query.select(['course_code'])
+              ];
+
+              const response = await databases.listDocuments(
+                this.DATABASE_ID,
+                this.TEACHING_RECORDS_COLLECTION_ID,
+                batchQueries
+              );
+
+              const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+              console.log(`✅ Term batch ${index + 1}/${batches.length}: Found ${teachingRecords.length} records`);
+              
+              return teachingRecords.map(record => record.course_code.toLowerCase());
+            } catch (error) {
+              console.error(`❌ Error in term batch ${index + 1}:`, error);
+              return [];
+            }
+          });
+
+          const batchResults = await Promise.all(batchPromises);
+          
+          batchResults.forEach(batchCourses => {
+            batchCourses.forEach(course => allOfferedCourses.add(course));
+          });
+
+          console.log(`✅ Term ${termCode}: Processed ${batches.length} batches, found ${allOfferedCourses.size} offered courses`);
+          
+          this.setCached(cacheKey, allOfferedCourses, 10 * 60 * 1000);
+          return allOfferedCourses;
+        }
       }
 
+      // 沒有特定課程代碼，查詢所有課程
       const response = await databases.listDocuments(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
@@ -6660,36 +6724,84 @@ export class CourseService {
 
     try {
       const currentTermCode = getCurrentTermCode();
-      
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('term_code', currentTermCode),
-          Query.equal('instructor_name', instructorNames),
-          Query.limit(200),
-          Query.select(['instructor_name', 'teaching_language'])
-        ]
-      );
-
-      const teachingRecords = response.documents as unknown as TeachingRecord[];
-      
-      // Build result map - use the first teaching language found for each instructor in current term
+      const BATCH_SIZE = 50; // 🚀 限制每批查詢的講師數量，避免URL過長
       const result = new Map<string, string | null>();
       
-      // Initialize all instructors with null
+      // 初始化所有講師為 null
       instructorNames.forEach(name => {
         result.set(name, null);
       });
-      
-      // Fill in actual values from teaching records
-      teachingRecords.forEach(record => {
-        if (record.teaching_language && !result.get(record.instructor_name)) {
-          result.set(record.instructor_name, record.teaching_language);
-        }
-      });
 
-      return result;
+      // 🚀 分批處理避免URL過長
+      if (instructorNames.length <= BATCH_SIZE) {
+        // 小批量，直接查詢
+        const response = await databases.listDocuments(
+          this.DATABASE_ID,
+          this.TEACHING_RECORDS_COLLECTION_ID,
+          [
+            Query.equal('term_code', currentTermCode),
+            Query.equal('instructor_name', instructorNames),
+            Query.limit(200),
+            Query.select(['instructor_name', 'teaching_language'])
+          ]
+        );
+
+        const teachingRecords = response.documents as unknown as TeachingRecord[];
+        
+        teachingRecords.forEach(record => {
+          if (record.teaching_language && !result.get(record.instructor_name)) {
+            result.set(record.instructor_name, record.teaching_language);
+          }
+        });
+        
+        return result;
+      } else {
+        // 大批量，分批處理
+        console.log(`📊 Processing ${instructorNames.length} instructors in batches for current term teaching languages`);
+        
+        const batches = [];
+        for (let i = 0; i < instructorNames.length; i += BATCH_SIZE) {
+          batches.push(instructorNames.slice(i, i + BATCH_SIZE));
+        }
+
+        const batchPromises = batches.map(async (batch, index) => {
+          try {
+            const response = await databases.listDocuments(
+              this.DATABASE_ID,
+              this.TEACHING_RECORDS_COLLECTION_ID,
+              [
+                Query.equal('term_code', currentTermCode),
+                Query.equal('instructor_name', batch),
+                Query.limit(200),
+                Query.select(['instructor_name', 'teaching_language'])
+              ]
+            );
+
+            const teachingRecords = response.documents as unknown as TeachingRecord[];
+            console.log(`✅ Instructor current term batch ${index + 1}/${batches.length}: Found ${teachingRecords.length} records`);
+            
+            return teachingRecords;
+          } catch (error) {
+            console.error(`❌ Error in instructor current term batch ${index + 1}:`, error);
+            return [];
+          }
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        
+        // 合併所有批次結果
+        batchResults.forEach(teachingRecords => {
+          teachingRecords.forEach(record => {
+            if (record.teaching_language && !result.get(record.instructor_name)) {
+              result.set(record.instructor_name, record.teaching_language);
+            }
+          });
+        });
+
+        console.log(`✅ Processed ${batches.length} instructor current term batches`);
+        return result;
+      }
+
     } catch (error) {
       console.error('Error fetching batch instructor current term teaching languages:', error);
       return new Map();
