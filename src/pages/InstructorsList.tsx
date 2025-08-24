@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { CourseService } from '@/services/api/courseService';
+import { globalDataManager } from '@/utils/globalDataManager';
 import { 
   InstructorWithDetailedStats
 } from '@/services/api/courseService';
@@ -118,14 +119,54 @@ const InstructorsList = () => {
         setLoading(true);
         setError(null);
         
-        // 載入所有講師的詳細統計信息
-        const instructorsWithDetailedStats = await CourseService.getAllInstructorsWithDetailedStats();
-        setInstructors(instructorsWithDetailedStats);
+        // 🚀 步驟1：檢查globalDataManager是否已載入數據，如有則立即顯示
+        if (globalDataManager.isDataLoaded()) {
+          console.log('⚡ InstructorsList: Using cached data from globalDataManager for instant display');
+          
+          try {
+            // 從globalDataManager獲取已載入的核心數據
+            const [popularInstructors, topInstructors] = await Promise.all([
+              globalDataManager.getPopularInstructors(),
+              globalDataManager.getTopInstructors()
+            ]);
+            
+            // 合併並去重核心數據作為初始顯示
+            const coreInstructorsMap = new Map<string, InstructorWithDetailedStats>();
+            [...popularInstructors, ...topInstructors].forEach(instructor => {
+              coreInstructorsMap.set(instructor.name, instructor);
+            });
+            
+            const coreInstructors = Array.from(coreInstructorsMap.values());
+            
+            setInstructors(coreInstructors);
+            setLoading(false);
+            
+            console.log(`⚡ InstructorsList: Displayed ${coreInstructors.length} cached instructors instantly`);
+          } catch (error) {
+            console.error('Error loading cached instructor data, fallback to full loading:', error);
+          }
+        }
+        
+        // 🚀 步驟2：背景載入完整數據集（不阻塞UI）
+        setTimeout(async () => {
+          try {
+            console.log('📚 InstructorsList: Loading full instructor dataset in background...');
+            const instructorsWithDetailedStats = await CourseService.getAllInstructorsWithDetailedStats();
+            setInstructors(instructorsWithDetailedStats);
+            
+            console.log(`✅ InstructorsList: Full instructor dataset loaded (${instructorsWithDetailedStats.length} instructors)`);
+          } catch (error) {
+            console.error('Error loading full instructors dataset:', error);
+            if (instructors.length === 0) { // 只有在沒有任何數據時才設置錯誤
+              setError(t('common.error'));
+              setLoading(false);
+            }
+          }
+        }, 100); // 微小延遲確保UI已渲染
         
       } catch (error) {
         console.error('Error loading instructors:', error);
         setError(t('common.error'));
-      } finally {
         setLoading(false);
       }
     };
