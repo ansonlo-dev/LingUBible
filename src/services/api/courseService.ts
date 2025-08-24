@@ -3046,6 +3046,9 @@ export class CourseService {
         console.log('✅ getCoursesWithStatsBatch: Returning persistent cached data for instant search');
         return cached;
       }
+
+      // 🔧 緊急修復：添加遺失的 currentTermCode 變數
+      const currentTermCode = getCurrentTermCode();
       
       // 並行獲取所有數據，使用最小化的欄位選擇
       const [coursesResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
