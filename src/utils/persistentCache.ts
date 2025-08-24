@@ -32,7 +32,10 @@ class PersistentCache {
       const storageKey = this.getStorageKey(key);
       localStorage.setItem(storageKey, JSON.stringify(entry));
       
-      console.log(`🏪 Persistent cache SET: ${key} (TTL: ${Math.round(ttl / 1000 / 60)}min)`);
+      // 只在開發模式顯示詳細日誌
+      if (import.meta.env.DEV) {
+        console.log(`🏪 Persistent cache SET: ${key} (TTL: ${Math.round(ttl / 1000 / 60)}min)`);
+      }
     } catch (error) {
       console.warn('Failed to set persistent cache:', error);
       // 如果 localStorage 滿了或其他錯誤，靜默處理
@@ -57,7 +60,9 @@ class PersistentCache {
       
       // 版本檢查 - 如果版本不匹配，清除舊數據
       if (entry.version !== this.version) {
-        console.log(`🔄 Cache version mismatch for ${key}, clearing old cache`);
+        if (import.meta.env.DEV) {
+          console.log(`🔄 Cache version mismatch for ${key}, clearing old cache`);
+        }
         this.delete(key);
         return null;
       }
@@ -66,12 +71,17 @@ class PersistentCache {
       const isExpired = now - entry.timestamp > entry.ttl;
       
       if (isExpired) {
-        console.log(`⏰ Cache expired for ${key}, removing`);
+        if (import.meta.env.DEV) {
+          console.log(`⏰ Cache expired for ${key}, removing`);
+        }
         this.delete(key);
         return null;
       }
 
-      console.log(`✅ Persistent cache HIT: ${key}`);
+      // 只在開發模式顯示詳細日誌
+      if (import.meta.env.DEV) {
+        console.log(`✅ Persistent cache HIT: ${key}`);
+      }
       return entry.data;
     } catch (error) {
       console.warn(`Failed to get persistent cache for ${key}:`, error);
@@ -97,7 +107,9 @@ class PersistentCache {
     try {
       const storageKey = this.getStorageKey(key);
       localStorage.removeItem(storageKey);
-      console.log(`🗑️ Persistent cache DELETED: ${key}`);
+      if (import.meta.env.DEV) {
+        console.log(`🗑️ Persistent cache DELETED: ${key}`);
+      }
     } catch (error) {
       console.warn(`Failed to delete persistent cache for ${key}:`, error);
     }
@@ -117,7 +129,9 @@ class PersistentCache {
       }
       
       keys.forEach(key => localStorage.removeItem(key));
-      console.log(`🧹 Cleared ${keys.length} persistent cache entries`);
+      if (import.meta.env.DEV) {
+        console.log(`🧹 Cleared ${keys.length} persistent cache entries`);
+      }
     } catch (error) {
       console.warn('Failed to clear persistent cache:', error);
     }
@@ -156,7 +170,9 @@ class PersistentCache {
       keysToRemove.forEach(key => localStorage.removeItem(key));
       
       if (keysToRemove.length > 0) {
-        console.log(`🧹 Cleaned up ${keysToRemove.length} expired/invalid cache entries`);
+        if (import.meta.env.DEV) {
+          console.log(`🧹 Cleaned up ${keysToRemove.length} expired/invalid cache entries`);
+        }
       }
     } catch (error) {
       console.warn('Failed to cleanup persistent cache:', error);

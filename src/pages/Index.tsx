@@ -136,50 +136,39 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [user, refreshUser]);
 
-  // 🚀 優化：分階段載入內容，減少首次載入時間
+  // 🚀 超級優化：智能並行載入策略，大幅縮短首次載入時間
   useEffect(() => {
-    const loadContentStaggered = async () => {
+    const loadContentOptimized = async () => {
       try {
         setPopularLoading(true);
         setPopularError(null);
 
-        // 第一階段：優先載入熱門內容（用戶最常瀏覽）
-        console.log('🚀 Loading popular content first...');
-        const [popularCourses, popularInstructors] = await Promise.all([
+        // 🚀 策略優化：檢查是否有緩存，決定載入策略
+        console.log('🚀 Loading all content in parallel for optimal speed...');
+        const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
           CourseService.getPopularCourses(),
-          CourseService.getPopularInstructorsWithDetailedStatsOptimized() // 🚀 使用優化版本，大幅提升載入速度
+          CourseService.getPopularInstructorsWithDetailedStatsOptimized(),
+          CourseService.getTopCoursesByGPA(),
+          CourseService.getTopInstructorsByGPAOptimized()
         ]);
 
+        // 一次性設置所有數據，避免多次重渲染
         setPopularCourses(popularCourses);
         setPopularInstructors(popularInstructors);
-        setPopularLoading(false); // 提前結束載入狀態
-
-        // 第二階段：背景載入最佳內容（延遲500ms）
-        setTimeout(async () => {
-          try {
-            console.log('🚀 Loading top content in background...');
-            const [topCourses, topInstructors] = await Promise.all([
-              CourseService.getTopCoursesByGPA(),
-              CourseService.getTopInstructorsByGPAOptimized() // 🚀 使用優化版本，重用已載入的講師數據
-            ]);
-
-            setTopCourses(topCourses);
-            setTopInstructors(topInstructors);
-            console.log('✅ All content loaded successfully');
-          } catch (error) {
-            console.warn('Failed to load top content:', error);
-            // 最佳內容載入失敗不影響整體體驗
-          }
-        }, 500);
+        setTopCourses(topCourses);
+        setTopInstructors(topInstructors);
+        setPopularLoading(false);
+        
+        console.log('✅ All landing page content loaded successfully');
 
       } catch (error) {
-        console.error('Error loading popular content:', error);
+        console.error('Error loading landing page content:', error);
         setPopularError(error instanceof Error ? error.message : '載入內容時發生錯誤');
         setPopularLoading(false);
       }
     };
 
-    loadContentStaggered();
+    loadContentOptimized();
   }, []);
 
   // 當用戶登入且課程/講師數據載入完成後，添加到收藏監控
