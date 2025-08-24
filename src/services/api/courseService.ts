@@ -970,13 +970,13 @@ export class CourseService {
    */
   static async getCoursesWithStats(): Promise<CourseWithStats[]> {
     try {
-      const currentTermCode = getCurrentTermCode();
-      const cacheKey = `courses_with_complete_stats_${currentTermCode}`;
+      // 🚀 ULTRA CACHE: 使用持久化緩存確保重新訪問時立即載入
+      const cacheKey = PERSISTENT_CACHE_KEYS.ALL_COURSES_WITH_STATS;
       
-      // 🚀 檢查緩存
-      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      // 檢查雙層緩存（記憶體 + 持久化）
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
       if (cached) {
-        console.log('✅ getCoursesWithStats: Returning cached data for fast loading');
+        console.log('✅ getCoursesWithStats: Returning persistent cached data for instant loading');
         return cached;
       }
       
@@ -1047,8 +1047,9 @@ export class CourseService {
       )?.course_code || 'none found');
       
       // 🚀 緩存結果以提升重訪性能 (匹配講師頁面的緩存策略)
-      this.setCached(cacheKey, coursesWithStats, 10 * 60 * 1000); // 10分鐘緩存
-      console.log('✅ getCoursesWithStats: Results cached for fast revisits');
+      // 🚀 ULTRA CACHE: 保存到雙層緩存（記憶體 + 持久化）
+      this.setPersistentCached(cacheKey, coursesWithStats, PERSISTENT_CACHE_TTL.STATS_DATA);
+      console.log('✅ getCoursesWithStats: Results cached persistently for instant revisits');
 
       return coursesWithStats;
     } catch (error) {
@@ -2684,13 +2685,13 @@ export class CourseService {
    */
   static async getAllInstructorsWithDetailedStats(): Promise<InstructorWithDetailedStats[]> {
     try {
-      const currentTermCode = getCurrentTermCode();
-      const cacheKey = `all_instructors_detailed_stats_${currentTermCode}`;
+      // 🚀 ULTRA CACHE: 使用持久化緩存確保講師目錄重新訪問時立即載入
+      const cacheKey = PERSISTENT_CACHE_KEYS.ALL_INSTRUCTORS_WITH_DETAILED_STATS;
       
-      // 檢查緩存
-      const cached = this.getCached<InstructorWithDetailedStats[]>(cacheKey);
+      // 檢查雙層緩存（記憶體 + 持久化）
+      const cached = this.getPersistentCached<InstructorWithDetailedStats[]>(cacheKey);
       if (cached) {
-        console.log('✅ getAllInstructorsWithDetailedStats: Returning cached data for fast loading');
+        console.log('✅ getAllInstructorsWithDetailedStats: Returning persistent cached data for instant loading');
         return cached;
       }
       
@@ -2877,8 +2878,8 @@ export class CourseService {
         return aNameForSort.localeCompare(bNameForSort);
       });
 
-      // 緩存結果 - 講師統計數據相對穩定，使用較長緩存時間
-      this.setCached(cacheKey, finalInstructorsWithDetailedStats, 10 * 60 * 1000); // 10分鐘緩存
+      // 🚀 ULTRA CACHE: 保存到雙層緩存（記憶體 + 持久化）讓講師目錄重新訪問時立即載入
+      this.setPersistentCached(cacheKey, finalInstructorsWithDetailedStats, PERSISTENT_CACHE_TTL.STATS_DATA);
       
       return finalInstructorsWithDetailedStats;
     } catch (error) {
@@ -3036,12 +3037,13 @@ export class CourseService {
    */
   static async getCoursesWithStatsBatch(): Promise<CourseWithStats[]> {
     try {
-      const currentTermCode = getCurrentTermCode();
-      const cacheKey = `courses_with_stats_batch_${currentTermCode}`;
+      // 🚀 ULTRA CACHE: 使用持久化緩存確保搜尋結果重新訪問時立即載入
+      const cacheKey = PERSISTENT_CACHE_KEYS.COURSES_WITH_STATS_BATCH;
       
-      // 檢查緩存
-      const cached = this.getCached<CourseWithStats[]>(cacheKey);
+      // 檢查雙層緩存（記憶體 + 持久化）
+      const cached = this.getPersistentCached<CourseWithStats[]>(cacheKey);
       if (cached) {
+        console.log('✅ getCoursesWithStatsBatch: Returning persistent cached data for instant search');
         return cached;
       }
       
@@ -3265,8 +3267,8 @@ export class CourseService {
         return courseWithStats;
       });
 
-      // 緩存結果 - 課程統計數據相對穩定，使用較長緩存時間
-      this.setCached(cacheKey, coursesWithStats, 10 * 60 * 1000); // 10分鐘緩存
+      // 🚀 ULTRA CACHE: 保存到雙層緩存（記憶體 + 持久化）讓搜尋結果重新訪問時立即載入
+      this.setPersistentCached(cacheKey, coursesWithStats, PERSISTENT_CACHE_TTL.STATS_DATA);
       
       return coursesWithStats;
     } catch (error) {
