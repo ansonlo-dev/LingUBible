@@ -31,7 +31,7 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
       setError(null);
       
       if (enableProgressiveLoading) {
-        // 🚀 步驟1：檢查globalDataManager是否已載入數據，如有則立即顯示
+        // 🚀 步驟1：檢查globalDataManager是否已載入數據，如有則立即顯示（無需進度條）
         if (globalDataManager.isDataLoaded()) {
           console.log('⚡ useCoursesWithStats: Using cached data from globalDataManager for instant display');
           
@@ -49,13 +49,29 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
             });
             
             const coreCourses = Array.from(coreCoursesMap.values());
-            
             setCourses(coreCourses);
-            setLoading(false);
+            setLoading(false); // 立即結束載入，不顯示進度條
             
             console.log(`⚡ useCoursesWithStats: Displayed ${coreCourses.length} cached courses instantly`);
+            
           } catch (error) {
             console.error('Error loading cached data, fallback to full loading:', error);
+          }
+        } else {
+          // globalDataManager沒有緩存數據，需要載入完整數據並顯示進度條
+          console.log('📚 useCoursesWithStats: No cached data, loading full dataset with progress...');
+          
+          try {
+            const coursesWithStats = await CourseService.getCoursesWithStats();
+            setCourses(coursesWithStats);
+            setLoading(false);
+            
+            console.log(`⚡ useCoursesWithStats: Loaded ${coursesWithStats.length} courses`);
+            
+          } catch (error) {
+            console.error('Error loading courses when no cache:', error);
+            setError('Failed to load courses');
+            setLoading(false);
           }
         }
         
@@ -80,9 +96,18 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
         
       } else {
         // 直接載入完整數據
-        const coursesWithStats = await CourseService.getCoursesWithStats();
-        setCourses(coursesWithStats);
-        setLoading(false);
+        try {
+          const coursesWithStats = await CourseService.getCoursesWithStats();
+          setCourses(coursesWithStats);
+          setLoading(false);
+          
+          console.log(`⚡ useCoursesWithStats: Loaded ${coursesWithStats.length} courses`);
+          
+        } catch (error) {
+          console.error('Error loading courses directly:', error);
+          setError('Failed to load courses');
+          setLoading(false);
+        }
       }
     } catch (err) {
       console.error('Error loading courses:', err);

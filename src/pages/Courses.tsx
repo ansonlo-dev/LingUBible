@@ -11,6 +11,7 @@ import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { LoadingProgress } from '@/components/ui/loading-progress';
 import { translateDepartmentName, getCourseTeachingLanguagesRealOnly } from '@/utils/textUtils';
 
 
@@ -582,12 +583,13 @@ const Courses = () => {
           {/* 頁面標題 */}
           <HeaderSection />
 
-          {/* 載入指示器 */}
-          <div className="text-center mt-4">
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t('common.loading')}
-            </div>
+          {/* 專業進度條 - 使用智能階段文字 */}
+          <div className="max-w-md mx-auto mt-6">
+            <LoadingProgress
+              isLoading={loading}
+              variant="gradient"
+              className="mb-4"
+            />
           </div>
 
           {/* 課程卡片骨架 */}
