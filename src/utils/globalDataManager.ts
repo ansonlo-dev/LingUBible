@@ -32,7 +32,7 @@ class GlobalDataManager {
   }
 
   /**
-   * 載入所有核心數據（只執行一次）
+   * 載入核心數據（只執行一次）- 著陸頁面立即需要的
    */
   async loadAllData(): Promise<void> {
     // 如果已經載入或正在載入，返回現有 Promise
@@ -45,55 +45,40 @@ class GlobalDataManager {
     }
 
     this.isLoading = true;
-    console.log('🚀 GlobalDataManager: Starting one-time data loading...');
+    console.log('🚀 GlobalDataManager: Starting smart data loading...');
 
-    this.loadPromise = this.performDataLoading();
+    this.loadPromise = this.performSmartDataLoading();
     return this.loadPromise;
   }
 
-  private async performDataLoading(): Promise<void> {
+  private async performSmartDataLoading(): Promise<void> {
     try {
-      // 🚀 階段1：載入最核心的數據（著陸頁面需要的）
-      const [popularCourses, popularInstructors] = await Promise.all([
-        CourseService.getPopularCourses(),
-        CourseService.getPopularInstructorsWithDetailedStatsOptimized()
+      // 🚀 智能載入：只載入著陸頁面立即需要的核心數據
+      console.log('🎯 Loading only essential data for instant landing page...');
+      
+      const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
+        CourseService.getPopularCourses(20),
+        CourseService.getPopularInstructorsWithDetailedStatsOptimized(20),
+        CourseService.getTopCoursesByGPA(20),
+        CourseService.getTopInstructorsByGPAOptimized(20)
       ]);
       
       this.popularCourses = popularCourses;
       this.popularInstructors = popularInstructors;
-      
-      console.log('✅ Stage 1: Core data loaded');
-
-      // 🚀 階段2：載入次要數據（頂級課程和講師）
-      const [topCourses, topInstructors] = await Promise.all([
-        CourseService.getTopCoursesByGPA(),
-        CourseService.getTopInstructorsByGPAOptimized()
-      ]);
-      
       this.topCourses = topCourses;
       this.topInstructors = topInstructors;
       
-      console.log('✅ Stage 2: Top items loaded');
-
-      // 🚀 階段3：載入完整數據集（搜索功能需要）
-      const [allCourses, allInstructors] = await Promise.all([
-        CourseService.getCoursesWithStats(),
-        CourseService.getAllInstructorsWithDetailedStats()
-      ]);
+      console.log('✅ Essential data loaded for instant display');
       
-      this.allCourses = allCourses;
-      this.allInstructors = allInstructors;
-      
-      console.log('✅ Stage 3: Complete dataset loaded');
+      // 🚀 延遲載入完整數據集（只有當搜索或目錄頁面需要時才載入）
+      // 不在這裡載入，改為按需載入
       
       this.isLoaded = true;
-      console.log('🎯 GlobalDataManager: All data loaded successfully!', {
+      console.log('🎯 GlobalDataManager: Essential data loaded successfully!', {
         popularCourses: this.popularCourses.length,
         popularInstructors: this.popularInstructors.length,
         topCourses: this.topCourses.length,
-        topInstructors: this.topInstructors.length,
-        allCourses: this.allCourses.length,
-        allInstructors: this.allInstructors.length
+        topInstructors: this.topInstructors.length
       });
       
     } catch (error) {
@@ -104,6 +89,30 @@ class GlobalDataManager {
     } finally {
       this.isLoading = false;
     }
+  }
+
+  /**
+   * 按需載入完整數據集（搜索和目錄頁面需要）
+   */
+  private async loadFullDataSet(): Promise<void> {
+    if (this.allCourses.length > 0 && this.allInstructors.length > 0) {
+      return; // 已經載入
+    }
+
+    console.log('📚 Loading full dataset for search and catalog...');
+    
+    const [allCourses, allInstructors] = await Promise.all([
+      CourseService.getCoursesWithStats(),
+      CourseService.getAllInstructorsWithDetailedStats()
+    ]);
+    
+    this.allCourses = allCourses;
+    this.allInstructors = allInstructors;
+    
+    console.log('✅ Full dataset loaded', {
+      allCourses: this.allCourses.length,
+      allInstructors: this.allInstructors.length
+    });
   }
 
   /**
@@ -131,11 +140,13 @@ class GlobalDataManager {
 
   async getAllCourses(): Promise<CourseWithStats[]> {
     await this.ensureDataLoaded();
+    await this.loadFullDataSet(); // 🚀 按需載入完整數據集
     return [...this.allCourses];
   }
 
   async getAllInstructors(): Promise<InstructorWithDetailedStats[]> {
     await this.ensureDataLoaded();
+    await this.loadFullDataSet(); // 🚀 按需載入完整數據集
     return [...this.allInstructors];
   }
 
@@ -167,17 +178,13 @@ class GlobalDataManager {
    */
   getLoadingProgress(): { stage: number; total: number; description: string } {
     if (this.isLoaded) {
-      return { stage: 3, total: 3, description: '載入完成' };
-    }
-    
-    if (this.popularCourses.length > 0 && this.popularInstructors.length > 0) {
-      if (this.topCourses.length > 0 && this.topInstructors.length > 0) {
-        return { stage: 3, total: 3, description: '載入完整數據集...' };
+      if (this.allCourses.length > 0 && this.allInstructors.length > 0) {
+        return { stage: 2, total: 2, description: '完整數據集已載入' };
       }
-      return { stage: 2, total: 3, description: '載入頂級項目...' };
+      return { stage: 1, total: 2, description: '核心數據已載入' };
     }
     
-    return { stage: 1, total: 3, description: '載入核心數據...' };
+    return { stage: 0, total: 2, description: '載入核心數據...' };
   }
 
   /**

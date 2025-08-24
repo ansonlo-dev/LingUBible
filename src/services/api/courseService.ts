@@ -4196,8 +4196,8 @@ export class CourseService {
       
       let allReviews: Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[] = [];
       
-      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
-      const batchSize = 200;
+      // 🚀 修復：減少批次大小避免URL過長問題
+      const batchSize = 50;
       const batches = [];
       for (let i = 0; i < courseCodes.length; i += batchSize) {
         batches.push(courseCodes.slice(i, i + batchSize));
