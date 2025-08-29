@@ -1,4 +1,4 @@
-import { Client, Databases, Functions } from 'appwrite';
+import { Client, TablesDB, Functions } from 'appwrite';
 
 interface RegisteredUsersStats {
   totalRegisteredUsers: number;
@@ -10,7 +10,7 @@ interface RegisteredUsersStats {
 class RegisteredUsersService {
   private static instance: RegisteredUsersService;
   private client: Client;
-  private databases: Databases;
+  private tablesDB: TablesDB;
   private functions: Functions;
   private cachedStats: RegisteredUsersStats | null = null;
   private lastCacheTime: number = 0;
@@ -36,7 +36,7 @@ class RegisteredUsersService {
         .setProject(projectId);
     }
 
-    this.databases = new Databases(this.client);
+    this.tablesDB = new TablesDB(this.client);
     this.functions = new Functions(this.client);
     console.log('RegisteredUsersService 初始化完成');
   }
@@ -122,11 +122,11 @@ class RegisteredUsersService {
     try {
       console.log('從緩存數據庫獲取用戶統計...');
       
-      const cacheResponse = await this.databases.getDocument(
-        this.DATABASE_ID,
-        'user-stats-cache',
-        'latest-stats'
-      );
+      const cacheResponse = await this.tablesDB.getRow({
+        databaseId: this.DATABASE_ID,
+        tableId: 'user-stats-cache',
+        rowId: 'latest-stats'
+      });
       
       return {
         totalRegisteredUsers: cacheResponse.totalRegisteredUsers || 0,
@@ -180,11 +180,11 @@ class RegisteredUsersService {
   private async getTotalRegisteredUsersFromDatabase(): Promise<number> {
     try {
       // 從 logged-users 集合獲取所有已註冊用戶
-      const loggedUsers = await this.databases.listDocuments(
-        this.DATABASE_ID,
-        'logged-users',
-        [] // 不設置查詢條件，獲取所有用戶
-      );
+      const loggedUsers = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: 'logged-users',
+        queries: [] // 不設置查詢條件，獲取所有用戶
+      });
 
       console.log(`從 logged-users 集合獲取到 ${loggedUsers.total} 個已註冊用戶`);
       return loggedUsers.total || 0;
@@ -193,11 +193,11 @@ class RegisteredUsersService {
       
       // 如果 logged-users 集合失敗，嘗試從 user-stats 集合獲取
       try {
-        const statsResponse = await this.databases.listDocuments(
-          this.DATABASE_ID,
-          'user-stats',
-          []
-        );
+        const statsResponse = await this.tablesDB.listRows({
+          databaseId: this.DATABASE_ID,
+          tableId: 'user-stats',
+          queries: []
+        });
 
         if (statsResponse.documents.length > 0) {
           const latestStats = statsResponse.documents[0];

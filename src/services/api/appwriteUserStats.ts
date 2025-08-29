@@ -1,4 +1,4 @@
-import { Client, Databases, Functions, ID, Query } from 'appwrite';
+import { Client, TablesDB, Functions, ID, Query } from 'appwrite';
 import { Permission, Role } from 'appwrite';
 
 interface UserStats {
@@ -24,7 +24,7 @@ interface UserSession {
 class AppwriteUserStatsService {
   private static instance: AppwriteUserStatsService;
   private client: Client;
-  private databases: Databases;
+  private tablesDB: TablesDB;
   private functions: Functions;
   private activeSessions: Map<string, string> = new Map(); // userId -> sessionId
   private pingIntervals: Map<string, NodeJS.Timeout> = new Map(); // sessionId -> interval
@@ -45,7 +45,7 @@ class AppwriteUserStatsService {
       .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
       .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
-    this.databases = new Databases(this.client);
+    this.tablesDB = new TablesDB(this.client);
     this.functions = new Functions(this.client);
 
     // 初始化 Web Worker
@@ -86,7 +86,7 @@ class AppwriteUserStatsService {
       console.log('AppwriteUserStats: 用戶登入', { userId, sessionId });
 
       // 檢查是否已有活躍的用戶會話
-      const existingUserSessions = await this.databases.listDocuments(
+      const existingUserSessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [
@@ -99,7 +99,7 @@ class AppwriteUserStatsService {
       if (existingUserSessions.documents.length > 0) {
         // 更新現有用戶會話
         const existingSession = existingUserSessions.documents[0];
-        await this.databases.updateDocument(
+        await this.tablesDB.updateRow(
           this.DATABASE_ID,
           this.SESSIONS_COLLECTION_ID,
           existingSession.$id,
@@ -128,7 +128,7 @@ class AppwriteUserStatsService {
       }
 
       // 檢查是否有訪客會話需要轉換
-      const visitorSessions = await this.databases.listDocuments(
+      const visitorSessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [
@@ -147,7 +147,7 @@ class AppwriteUserStatsService {
 
         if (currentDeviceVisitorSession) {
           // 轉換當前設備的訪客會話為用戶會話
-          await this.databases.updateDocument(
+          await this.tablesDB.updateRow(
             this.DATABASE_ID,
             this.SESSIONS_COLLECTION_ID,
             currentDeviceVisitorSession.$id,
@@ -189,7 +189,7 @@ class AppwriteUserStatsService {
         isVisitor: false
       };
 
-      await this.databases.createDocument(
+      await this.tablesDB.createRow(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         ID.unique(),
@@ -236,7 +236,7 @@ class AppwriteUserStatsService {
       }
 
       // 查找並刪除會話
-      const sessions = await this.databases.listDocuments(
+      const sessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [Query.equal('sessionId', targetSessionId)]
@@ -245,11 +245,11 @@ class AppwriteUserStatsService {
       if (sessions.documents.length > 0) {
         const session = sessions.documents[0] as unknown as UserSession;
         
-        await this.databases.deleteDocument(
-          this.DATABASE_ID,
-          this.SESSIONS_COLLECTION_ID,
-          sessions.documents[0].$id
-        );
+        await this.tablesDB.deleteRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.SESSIONS_COLLECTION_ID,
+          rowId: sessions.documents[0].$id
+        });
 
         // 清理會話映射
         this.activeSessions.delete(session.userId);
@@ -272,14 +272,14 @@ class AppwriteUserStatsService {
         return false;
       }
 
-      const sessions = await this.databases.listDocuments(
+      const sessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [Query.equal('sessionId', sessionId)]
       );
 
       if (sessions.documents.length > 0) {
-        await this.databases.updateDocument(
+        await this.tablesDB.updateRow(
           this.DATABASE_ID,
           this.SESSIONS_COLLECTION_ID,
           sessions.documents[0].$id,
@@ -364,7 +364,7 @@ class AppwriteUserStatsService {
       const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       
       // 獲取活躍會話
-      const activeSessions = await this.databases.listDocuments(
+      const activeSessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [Query.greaterThan('lastPing', cutoffTime)]
@@ -387,7 +387,7 @@ class AppwriteUserStatsService {
       // 獲取總用戶數（這需要訪問用戶集合的權限）
       let totalUsers = 0;
       try {
-        const users = await this.databases.listDocuments(
+        const users = await this.tablesDB.listRows(
           this.DATABASE_ID,
           'users', // 假設用戶集合名稱
           [Query.limit(1)]
@@ -429,7 +429,7 @@ class AppwriteUserStatsService {
     try {
       const expiredTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       
-      const expiredSessions = await this.databases.listDocuments(
+      const expiredSessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [Query.lessThan('lastPing', expiredTime)]
@@ -437,11 +437,11 @@ class AppwriteUserStatsService {
 
       // 批量刪除過期會話
       const deletePromises = expiredSessions.documents.map(session =>
-        this.databases.deleteDocument(
-          this.DATABASE_ID,
-          this.SESSIONS_COLLECTION_ID,
-          session.$id
-        )
+        this.tablesDB.deleteRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.SESSIONS_COLLECTION_ID,
+          rowId: session.$id
+        })
       );
 
       await Promise.all(deletePromises);
@@ -509,7 +509,7 @@ class AppwriteUserStatsService {
 
       updates.lastUpdated = new Date().toISOString();
 
-      await this.databases.updateDocument(
+      await this.tablesDB.updateRow(
         this.DATABASE_ID,
         this.STATS_COLLECTION_ID,
         statsDoc.$id,
@@ -524,7 +524,7 @@ class AppwriteUserStatsService {
   // 獲取或創建統計文檔
   private async getOrCreateStatsDocument(): Promise<any> {
     try {
-      const stats = await this.databases.listDocuments(
+      const stats = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.STATS_COLLECTION_ID
       );
@@ -534,7 +534,7 @@ class AppwriteUserStatsService {
       }
 
       // 創建新的統計文檔
-      return await this.databases.createDocument(
+      return await this.tablesDB.createRow(
         this.DATABASE_ID,
         this.STATS_COLLECTION_ID,
         ID.unique(),
@@ -555,7 +555,7 @@ class AppwriteUserStatsService {
   // 檢查用戶是否之前登入過
   private async hasUserLoggedInBefore(userId: string): Promise<boolean> {
     try {
-      const users = await this.databases.listDocuments(
+      const users = await this.tablesDB.listRows(
         this.DATABASE_ID,
         'logged-users',
         [Query.equal('userId', userId)]
@@ -570,7 +570,7 @@ class AppwriteUserStatsService {
   // 標記用戶已登入過
   private async markUserAsLoggedIn(userId: string): Promise<void> {
     try {
-      await this.databases.createDocument(
+      await this.tablesDB.createRow(
         this.DATABASE_ID,
         'logged-users',
         ID.unique(),
@@ -816,7 +816,7 @@ class AppwriteUserStatsService {
   
       
       // 首先檢查是否已有當前設備的活躍訪客會話
-      const existingVisitorSessions = await this.databases.listDocuments(
+      const existingVisitorSessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [
@@ -833,7 +833,7 @@ class AppwriteUserStatsService {
       if (currentDeviceSession) {
         // 重用現有會話，更新 ping 時間
         const now = new Date().toISOString();
-        await this.databases.updateDocument(
+        await this.tablesDB.updateRow(
           this.DATABASE_ID,
           this.SESSIONS_COLLECTION_ID,
           currentDeviceSession.$id,
@@ -865,7 +865,7 @@ class AppwriteUserStatsService {
         ipAddress: await this.getClientIP()
       };
       
-      const session = await this.databases.createDocument(
+      const session = await this.tablesDB.createRow(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         ID.unique(),
@@ -895,7 +895,7 @@ class AppwriteUserStatsService {
       const now = new Date().toISOString();
       
       // 查找訪客會話
-      const sessions = await this.databases.listDocuments(
+      const sessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [Query.equal('sessionId', visitorSessionId)]
@@ -906,7 +906,7 @@ class AppwriteUserStatsService {
         
         if (session.isVisitor) {
           // 轉換為用戶會話
-          await this.databases.updateDocument(
+          await this.tablesDB.updateRow(
             this.DATABASE_ID,
             this.SESSIONS_COLLECTION_ID,
             session.$id!,
@@ -944,7 +944,7 @@ class AppwriteUserStatsService {
       const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       const currentDeviceInfo = this.getDeviceInfo();
       
-      const visitorSessions = await this.databases.listDocuments(
+      const visitorSessions = await this.tablesDB.listRows(
         this.DATABASE_ID,
         this.SESSIONS_COLLECTION_ID,
         [
@@ -959,11 +959,11 @@ class AppwriteUserStatsService {
       );
 
       const deletePromises = currentDeviceVisitorSessions.map(session =>
-        this.databases.deleteDocument(
-          this.DATABASE_ID,
-          this.SESSIONS_COLLECTION_ID,
-          session.$id
-        )
+        this.tablesDB.deleteRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.SESSIONS_COLLECTION_ID,
+          rowId: session.$id
+        })
       );
 
       await Promise.all(deletePromises);

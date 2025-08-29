@@ -1,4 +1,4 @@
-import { databases, account } from '@/lib/appwrite';
+import { tablesDB, account } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 
 export interface UserFavorite {
@@ -118,14 +118,14 @@ export class FavoritesService {
         return cached;
       }
 
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.COLLECTION_ID,
-        [
+      const response = await tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.COLLECTION_ID,
+        queries: [
           Query.equal('user_id', userId),
           Query.limit(1000)
         ]
-      );
+      });
       
       const favorites = new Set<string>();
       response.documents.forEach(doc => {
@@ -171,17 +171,17 @@ export class FavoritesService {
       // 樂觀更新緩存
       favoritesCache.set(type, itemId, userId, true);
       
-      const favorite = await databases.createDocument(
-        this.DATABASE_ID,
-        this.COLLECTION_ID,
-        ID.unique(),
-        {
+      const favorite = await tablesDB.createRow({
+        databaseId: this.DATABASE_ID,
+        tableId: this.COLLECTION_ID,
+        rowId: ID.unique(),
+        data: {
           user_id: userId,
           type: type,
           item_id: itemId,
           created_at: new Date().toISOString()
         }
-      );
+      });
       
       return favorite as unknown as UserFavorite;
     } catch (error: any) {
@@ -225,23 +225,23 @@ export class FavoritesService {
       favoritesCache.set(type, itemId, userId, false);
       
       // 查找現有的收藏記錄
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.COLLECTION_ID,
-        [
+      const response = await tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.COLLECTION_ID,
+        queries: [
           Query.equal('user_id', userId),
           Query.equal('type', type),
           Query.equal('item_id', itemId),
           Query.limit(1)
         ]
-      );
+      });
       
       if (response.documents.length > 0) {
-        await databases.deleteDocument(
-          this.DATABASE_ID,
-          this.COLLECTION_ID,
-          response.documents[0].$id
-        );
+        await tablesDB.deleteRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.COLLECTION_ID,
+          rowId: response.documents[0].$id
+        });
       }
     } catch (error) {
       // 如果失敗，回滾緩存
@@ -275,16 +275,16 @@ export class FavoritesService {
       }
 
       // 最後才查詢數據庫
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.COLLECTION_ID,
-        [
+      const response = await tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.COLLECTION_ID,
+        queries: [
           Query.equal('user_id', userId),
           Query.equal('type', type),
           Query.equal('item_id', itemId),
           Query.limit(1)
         ]
-      );
+      });
       
       const isFavorited = response.documents.length > 0;
       favoritesCache.set(type, itemId, userId, isFavorited);
@@ -312,11 +312,11 @@ export class FavoritesService {
         queries.push(Query.equal('type', type));
       }
       
-      const response = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.COLLECTION_ID,
-        queries
-      );
+      const response = await tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.COLLECTION_ID,
+        queries: queries
+      });
       
       return response.documents as unknown as UserFavorite[];
     } catch (error) {

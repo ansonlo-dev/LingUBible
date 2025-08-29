@@ -1,4 +1,4 @@
-import { databases, ID } from '@/lib/appwrite';
+import { tablesDB, ID } from '@/lib/appwrite';
 import { CustomAvatar } from "@/utils/ui/avatarUtils";
 import { Query } from 'appwrite';
 
@@ -18,13 +18,13 @@ class AvatarService {
   // 獲取用戶的自定義頭像
   async getUserAvatar(userId: string): Promise<CustomAvatar | null> {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
+      const response = await tablesDB.listRows({
+        databaseId: DATABASE_ID,
+        tableId: COLLECTION_ID,
+        queries: [
           Query.equal('userId', userId)
         ]
-      );
+      });
 
       if (response.documents.length > 0) {
         const doc = response.documents[0] as unknown as UserAvatarDocument;
@@ -51,40 +51,40 @@ class AvatarService {
 
       if (existing) {
         // 更新現有記錄
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [
+        const response = await tablesDB.listRows({
+          databaseId: DATABASE_ID,
+          tableId: COLLECTION_ID,
+          queries: [
             Query.equal('userId', userId)
           ]
-        );
+        });
 
         if (response.documents.length > 0) {
-          await databases.updateDocument(
-            DATABASE_ID,
-            COLLECTION_ID,
-            response.documents[0].$id,
-            {
+          await tablesDB.updateRow({
+            databaseId: DATABASE_ID,
+            tableId: COLLECTION_ID,
+            rowId: response.documents[0].$id,
+            data: {
               animal: avatar.animal,
               backgroundIndex: avatar.backgroundIndex,
               updatedAt: now
             }
-          );
+          });
         }
       } else {
         // 創建新記錄
-        await databases.createDocument(
-          DATABASE_ID,
-          COLLECTION_ID,
-          ID.unique(),
-          {
+        await tablesDB.createRow({
+          databaseId: DATABASE_ID,
+          tableId: COLLECTION_ID,
+          rowId: ID.unique(),
+          data: {
             userId,
             animal: avatar.animal,
             backgroundIndex: avatar.backgroundIndex,
             createdAt: now,
             updatedAt: now
           }
-        );
+        });
       }
 
       return true;
@@ -97,20 +97,20 @@ class AvatarService {
   // 刪除用戶的自定義頭像
   async deleteUserAvatar(userId: string): Promise<boolean> {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
+      const response = await tablesDB.listRows({
+        databaseId: DATABASE_ID,
+        tableId: COLLECTION_ID,
+        queries: [
           Query.equal('userId', userId)
         ]
-      );
+      });
 
       if (response.documents.length > 0) {
-        await databases.deleteDocument(
-          DATABASE_ID,
-          COLLECTION_ID,
-          response.documents[0].$id
-        );
+        await tablesDB.deleteRow({
+          databaseId: DATABASE_ID,
+          tableId: COLLECTION_ID,
+          rowId: response.documents[0].$id
+        });
       }
 
       return true;
@@ -127,13 +127,13 @@ class AvatarService {
     popularBackgrounds: { backgroundIndex: number; count: number }[];
   }> {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
+      const response = await tablesDB.listRows({
+        databaseId: DATABASE_ID,
+        tableId: COLLECTION_ID,
+        queries: [
           Query.limit(100)
         ]
-      );
+      });
 
       const docs = response.documents as unknown as UserAvatarDocument[];
       
