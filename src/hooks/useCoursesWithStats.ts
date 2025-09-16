@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { CourseService, CourseWithStats } from '@/services/api/courseService';
-import { globalDataManager } from '@/utils/globalDataManager';
 
 interface UseCoursesWithStatsOptions {
   enableProgressiveLoading?: boolean;
@@ -31,83 +30,49 @@ export function useCoursesWithStats(options: UseCoursesWithStatsOptions = {}): U
       setError(null);
       
       if (enableProgressiveLoading) {
-        // 🚀 步驟1：檢查globalDataManager是否已載入數據，如有則立即顯示（無需進度條）
-        if (globalDataManager.isDataLoaded()) {
-          console.log('⚡ useCoursesWithStats: Using cached data from globalDataManager for instant display');
-          
-          try {
-            // 從globalDataManager獲取已載入的核心數據
-            const [popularCourses, topCourses] = await Promise.all([
-              globalDataManager.getPopularCourses(),
-              globalDataManager.getTopCourses()
-            ]);
-            
-            // 合併並去重核心數據作為初始顯示
-            const coreCoursesMap = new Map<string, CourseWithStats>();
-            [...popularCourses, ...topCourses].forEach(course => {
-              coreCoursesMap.set(course.course_code, course);
-            });
-            
-            const coreCourses = Array.from(coreCoursesMap.values());
-            setCourses(coreCourses);
-            setLoading(false); // 立即結束載入，不顯示進度條
-            
-            console.log(`⚡ useCoursesWithStats: Displayed ${coreCourses.length} cached courses instantly`);
-            
-          } catch (error) {
-            console.error('Error loading cached data, fallback to full loading:', error);
-          }
-        } else {
-          // globalDataManager沒有緩存數據，需要載入完整數據並顯示進度條
-          console.log('📚 useCoursesWithStats: No cached data, loading full dataset with progress...');
-          
-          try {
-            const coursesWithStats = await CourseService.getCoursesWithStats();
-            setCourses(coursesWithStats);
-            setLoading(false);
-            
-            console.log(`⚡ useCoursesWithStats: Loaded ${coursesWithStats.length} courses`);
-            
-          } catch (error) {
-            console.error('Error loading courses when no cache:', error);
-            setError('Failed to load courses');
-            setLoading(false);
-          }
-        }
-        
-        // 🚀 步驟2：背景載入完整數據集（不阻塞UI）
+        // 優化的漸進式載入：直接載入完整數據，先顯示基本欄位
         setStatsLoading(true);
         
-        setTimeout(async () => {
-          try {
-            console.log('📚 useCoursesWithStats: Loading full dataset in background...');
-            const coursesWithStats = await CourseService.getCoursesWithStats();
-            
-            setCourses(coursesWithStats);
-            setStatsLoading(false);
-            
-            console.log(`✅ useCoursesWithStats: Full dataset loaded (${coursesWithStats.length} courses)`);
-          } catch (error) {
-            console.error('Error loading full courses dataset:', error);
-            setError('Failed to load courses');
-            setStatsLoading(false);
-          }
-        }, 100); // 微小延遲確保UI已渲染
-        
-      } else {
-        // 直接載入完整數據
         try {
           const coursesWithStats = await CourseService.getCoursesWithStats();
-          setCourses(coursesWithStats);
+          
+          // 先顯示基本課程信息（重置統計信息）
+          const coursesWithEmptyStats: CourseWithStats[] = coursesWithStats.map(course => ({
+            ...course,
+            reviewCount: 0,
+            averageRating: 0,
+            studentCount: 0,
+            averageWorkload: -1,
+            averageDifficulty: -1,
+            averageUsefulness: -1,
+            averageGPA: 0,
+            isOfferedInCurrentTerm: course.isOfferedInCurrentTerm, // 保留此信息
+            teachingLanguages: course.teachingLanguages, // 保留教學語言數據
+            currentTermTeachingLanguage: course.currentTermTeachingLanguage, // 保留當前學期教學語言
+            serviceLearningTypes: course.serviceLearningTypes, // 保留服務學習類型
+            currentTermServiceLearning: course.currentTermServiceLearning // 保留當前學期服務學習
+          }));
+          
+          setCourses(coursesWithEmptyStats);
           setLoading(false);
           
-          console.log(`⚡ useCoursesWithStats: Loaded ${coursesWithStats.length} courses`);
+          // 短暫延遲後顯示完整統計信息，創造漸進式載入體驗
+          setTimeout(() => {
+            setCourses(coursesWithStats);
+            setStatsLoading(false);
+          }, 300);
           
         } catch (error) {
-          console.error('Error loading courses directly:', error);
+          console.error('Error loading courses:', error);
           setError('Failed to load courses');
           setLoading(false);
+          setStatsLoading(false);
         }
+      } else {
+        // 直接載入完整數據
+        const coursesWithStats = await CourseService.getCoursesWithStats();
+        setCourses(coursesWithStats);
+        setLoading(false);
       }
     } catch (err) {
       console.error('Error loading courses:', err);

@@ -4,7 +4,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useNavigate } from 'react-router-dom';
 import { CourseService, CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
-import { globalDataManager } from '@/utils/globalDataManager';
 import { getCourseTitle, getInstructorName, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { formatGPA } from '@/utils/gradeUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -245,60 +244,42 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       
       const loadData = async () => {
         try {
-          console.log('🔍 SearchModal: Loading from GlobalDataManager...');
+          // 採用分階段載入減少API併發壓力
+          // 第一階段：載入搜索必須的基礎數據
+          const [allCoursesData, allInstructorsData] = await Promise.all([
+            CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
+            CourseService.getAllInstructorsWithDetailedStats(), // 獲取所有講師用於搜索
+          ]);
           
-          // 🚀 步驟1：立即載入已有的核心數據，無需等待
-          if (globalDataManager.isDataLoaded()) {
-            console.log('⚡ SearchModal: Loading already cached core data instantly...');
-            const [
-              coursesData,
-              instructorsData,
-              topCoursesData,
-              topInstructorsData
-            ] = await Promise.all([
-              globalDataManager.getPopularCourses(),
-              globalDataManager.getPopularInstructors(),
-              globalDataManager.getTopCourses(),
-              globalDataManager.getTopInstructors()
-            ]);
-            
-            // 立即設置核心數據，讓搜索建議立即可用
-            setPopularCourses(coursesData);
-            setPopularInstructors(instructorsData);
-            setTopCourses(topCoursesData);
-            setTopInstructors(topInstructorsData);
-            
-            // 暫時使用核心數據作為搜索數據源
-            setAllCourses([...coursesData, ...topCoursesData]);
-            setAllInstructors([...instructorsData, ...topInstructorsData]);
-            
-            setLoading(false);
-            setIsInitialized(true);
-            
-            console.log('⚡ SearchModal: Core data displayed instantly!');
-          }
+          setAllCourses(allCoursesData);
+          setAllInstructors(allInstructorsData);
           
-          // 🚀 步驟2：在背景載入完整數據集（不阻塞UI）
-          console.log('📚 SearchModal: Loading full dataset in background...');
-          setTimeout(async () => {
-            try {
-              const [allCoursesData, allInstructorsData] = await Promise.all([
-                globalDataManager.getAllCourses(),
-                globalDataManager.getAllInstructors()
-              ]);
-              
-              // 更新為完整數據集
-              setAllCourses(allCoursesData);
-              setAllInstructors(allInstructorsData);
-              
-              console.log('✅ SearchModal: Full dataset loaded in background');
-            } catch (error) {
-              console.error('Error loading full dataset:', error);
-            }
-          }, 100); // 微小延遲，確保UI已渲染
+          // 短暫延遲避免API過載
+          await new Promise(resolve => setTimeout(resolve, 100));
           
+          // 第二階段：載入熱門項目（用戶經常訪問）- 使用優化版本重用著陸頁面緩存
+          const [coursesData, instructorsData] = await Promise.all([
+            CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
+            CourseService.getPopularInstructorsWithDetailedStatsOptimized(20), // 🚀 優化版本：重用著陸頁面的持久化緩存
+          ]);
+          
+          setPopularCourses(coursesData);
+          setPopularInstructors(instructorsData);
+          
+          // 短暫延遲避免API過載
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // 第三階段：載入最佳項目（較少使用的標籤）- 使用優化版本重用著陸頁面緩存
+          const [topCoursesData, topInstructorsData] = await Promise.all([
+            CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
+            CourseService.getTopInstructorsByGPAOptimized(20) // 🚀 優化版本：重用著陸頁面的持久化緩存
+          ]);
+          
+          setTopCourses(topCoursesData);
+          setTopInstructors(topInstructorsData);
         } catch (error) {
           console.error('Error loading search data:', error);
+        } finally {
           setLoading(false);
           setIsInitialized(true);
         }

@@ -1,4 +1,4 @@
-import { databases } from '@/lib/appwrite';
+import { tablesDB } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA } from '@/utils/gradeUtils';
@@ -207,6 +207,7 @@ export class CourseService {
   // 簡單的記憶體緩存
   private static cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
   private static readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5分鐘緩存
+  private static inFlightRequests = new Map<string, Promise<any>>();
 
   /**
    * 緩存輔助方法
@@ -230,6 +231,23 @@ export class CourseService {
       timestamp: Date.now(),
       ttl
     });
+  }
+
+  /**
+   * 去重同一時間的請求，避免多個元件同時載入時重複打 API
+   */
+  private static runWithInFlightDedup<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const existing = this.inFlightRequests.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const promise = fetcher().finally(() => {
+      this.inFlightRequests.delete(key);
+    });
+
+    this.inFlightRequests.set(key, promise);
+    return promise;
   }
 
   /**
@@ -283,6 +301,7 @@ export class CourseService {
    */
   static clearCache(): void {
     this.cache.clear();
+    this.inFlightRequests.clear();
     console.log('🗑️ CourseService cache cleared');
   }
 
@@ -330,18 +349,18 @@ export class CourseService {
 
     try {
       // 獲取所有評論的課程代碼
-      const reviews = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.REVIEWS_COLLECTION_ID,
-        [
+      const reviews = await tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.REVIEWS_COLLECTION_ID,
+        queries: [
           Query.orderDesc('$createdAt'),
           Query.limit(2000),
           Query.select(['course_code'])
         ]
-      );
+      });
 
       // 統計唯一課程數量
-      const uniqueCourses = new Set(reviews.documents.map((review: any) => review.course_code));
+      const uniqueCourses = new Set(reviews.rows.map((review: any) => review.course_code));
       const count = uniqueCourses.size;
 
       this.setCached(cacheKey, count, 5 * 60 * 1000); // 5分鐘緩存
@@ -360,19 +379,19 @@ export class CourseService {
 
     try {
       // 獲取所有評論的講師詳情
-      const reviews = await databases.listDocuments(
-        this.DATABASE_ID,
-        this.REVIEWS_COLLECTION_ID,
-        [
+      const reviews = await tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.REVIEWS_COLLECTION_ID,
+        queries: [
           Query.orderDesc('$createdAt'),
           Query.limit(2000),
           Query.select(['instructor_details'])
         ]
-      );
+      });
 
       // 統計唯一講師數量
       const uniqueInstructors = new Set<string>();
-      reviews.documents.forEach((review: any) => {
+      reviews.rows.forEach((review: any) => {
         try {
           const instructorDetails = JSON.parse(review.instructor_details);
           instructorDetails.forEach((detail: any) => {
@@ -399,7 +418,7 @@ export class CourseService {
     if (cached !== null) return cached;
 
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -438,7 +457,7 @@ export class CourseService {
       const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
 
       // 獲取過去30天的評論
-      const recentReviews = await databases.listDocuments(
+      const recentReviews = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -449,13 +468,13 @@ export class CourseService {
         ]
       );
 
-      const reviewsLast30Days = recentReviews.documents.length;
+      const reviewsLast30Days = recentReviews.rows.length;
 
       // 計算30天內新增有評論的課程
       const coursesWithReviewsInLast30Days = new Set<string>();
       const instructorsWithReviewsInLast30Days = new Set<string>();
 
-      recentReviews.documents.forEach((review: any) => {
+      recentReviews.rows.forEach((review: any) => {
         coursesWithReviewsInLast30Days.add(review.course_code);
         
         try {
@@ -604,7 +623,7 @@ export class CourseService {
       
       // 並行處理所有批次
       const courseBatchPromises = courseBatches.map(batch =>
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.COURSES_COLLECTION_ID,
           [
@@ -619,7 +638,7 @@ export class CourseService {
       
       // 合併所有批次結果
       coursesBatchResults.forEach(result => {
-        coursesArray.push(...(result.documents as unknown as Course[]));
+        coursesArray.push(...(result.rows as unknown as Course[]));
       });
       
       console.log(`✅ getBatchFavoriteCoursesData: Loaded ${coursesArray.length} courses from batches`);
@@ -717,7 +736,7 @@ export class CourseService {
       
       // 並行處理所有批次
       const instructorBatchPromises = instructorBatches.map(batch =>
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.INSTRUCTORS_COLLECTION_ID,
           [
@@ -732,7 +751,7 @@ export class CourseService {
       
       // 合佶所有批次結果
       instructorsBatchResults.forEach(result => {
-        instructorsArray.push(...(result.documents as unknown as Instructor[]));
+        instructorsArray.push(...(result.rows as unknown as Instructor[]));
       });
       
       console.log(`✅ getBatchFavoriteInstructorsData: Loaded ${instructorsArray.length} instructors from batches`);
@@ -793,7 +812,7 @@ export class CourseService {
    */
   static async getAllCourses(): Promise<Course[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
@@ -803,7 +822,7 @@ export class CourseService {
         ]
       );
       
-      return response.documents as unknown as Course[];
+      return response.rows as unknown as Course[];
     } catch (error) {
       console.error('Error fetching courses:', error);
       throw new Error('Failed to fetch courses');
@@ -820,7 +839,7 @@ export class CourseService {
         return [];
       }
 
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
@@ -830,7 +849,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents as unknown as Course[];
+      return response.rows as unknown as Course[];
     } catch (error) {
       console.error('Error searching courses:', error);
       // 移除回退邏輯，避免載入所有數據（Appwrite 官方建議）
@@ -848,7 +867,7 @@ export class CourseService {
     studentCount: number;
   }> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -858,7 +877,7 @@ export class CourseService {
         ]
       );
 
-      const reviews = response.documents;
+      const reviews = response.rows;
       const reviewCount = reviews.length;
       
       if (reviewCount === 0) {
@@ -905,7 +924,7 @@ export class CourseService {
     averageGPA: number;
   }> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -915,7 +934,7 @@ export class CourseService {
         ]
       );
 
-      const reviews = response.documents as unknown as Review[];
+      const reviews = response.rows as unknown as Review[];
       const reviewCount = reviews.length;
       
       if (reviewCount === 0) {
@@ -998,94 +1017,96 @@ export class CourseService {
         return cached;
       }
       
-      if (import.meta.env.DEV) {
-        console.log('🚀 getCoursesWithStats: Starting to load courses with complete data (cache miss)');
-      }
-      
-      const currentTermCode = getCurrentTermCode();
-      const courses = await this.getAllCourses();
-      const courseCodes = courses.map(course => course.course_code);
-      
-      if (import.meta.env.DEV) {
-        console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
-      }
-      
-      // 並行獲取所有必要的數據
-      const [
-        statsMap,
-        teachingLanguagesMap,
-        currentTermLanguagesMap,
-        serviceLearningTypesMap,
-        currentTermServiceLearningMap,
-        currentTermOfferedCourses
-      ] = await Promise.all([
-        // 獲取統計數據的Map
-        this.getBatchCourseDetailedStats(courseCodes),
-        // 獲取教學語言數據
-        this.getBatchCourseTeachingLanguages(courseCodes),
-        this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
-        // 獲取服務學習數據  
-        this.getBatchCourseServiceLearning(courseCodes),
-        this.getBatchCourseCurrentTermServiceLearning(courseCodes),
-        // 獲取當前學期開設狀態
-        this.getCoursesOfferedInTermBatch(currentTermCode, courseCodes)
-      ]);
+      return this.runWithInFlightDedup(cacheKey, async () => {
+        if (import.meta.env.DEV) {
+          console.log('🚀 getCoursesWithStats: Starting to load courses with complete data (cache miss)');
+        }
+        
+        const currentTermCode = getCurrentTermCode();
+        const courses = await this.getAllCourses();
+        const courseCodes = courses.map(course => course.course_code);
+        
+        if (import.meta.env.DEV) {
+          console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
+        }
+        
+        // 並行獲取所有必要的數據
+        const [
+          statsMap,
+          teachingLanguagesMap,
+          currentTermLanguagesMap,
+          serviceLearningTypesMap,
+          currentTermServiceLearningMap,
+          currentTermOfferedCourses
+        ] = await Promise.all([
+          // 獲取統計數據的Map
+          this.getBatchCourseDetailedStats(courseCodes),
+          // 獲取教學語言數據
+          this.getBatchCourseTeachingLanguages(courseCodes),
+          this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
+          // 獲取服務學習數據  
+          this.getBatchCourseServiceLearning(courseCodes),
+          this.getBatchCourseCurrentTermServiceLearning(courseCodes),
+          // 獲取當前學期開設狀態
+          this.getCoursesOfferedInTermBatch(currentTermCode, courseCodes)
+        ]);
 
-      if (import.meta.env.DEV) {
-        console.log('✅ All batch data loaded successfully');
-        console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
-      }
-      
-      // 組合所有數據
-      const coursesWithStats = courses.map(course => {
-        const stats = statsMap.get(course.course_code) || {
-          reviewCount: 0,
-          averageRating: 0,
-          studentCount: 0,
-          averageWorkload: -1,
-          averageDifficulty: -1,
-          averageUsefulness: -1,
-          averageGPA: 0,
-          averageGPACount: 0
-        };
+        if (import.meta.env.DEV) {
+          console.log('✅ All batch data loaded successfully');
+          console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
+        }
         
-        const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
-        const currentTermTeachingLanguage = currentTermLanguagesMap.get(course.course_code) || null;
-        const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
-        const currentTermServiceLearning = currentTermServiceLearningMap.get(course.course_code) || null;
-        const isOfferedInCurrentTerm = currentTermOfferedCourses.has(course.course_code);
+        // 組合所有數據
+        const coursesWithStats = courses.map(course => {
+          const stats = statsMap.get(course.course_code) || {
+            reviewCount: 0,
+            averageRating: 0,
+            studentCount: 0,
+            averageWorkload: -1,
+            averageDifficulty: -1,
+            averageUsefulness: -1,
+            averageGPA: 0,
+            averageGPACount: 0
+          };
+          
+          const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
+          const currentTermTeachingLanguage = currentTermLanguagesMap.get(course.course_code) || null;
+          const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
+          const currentTermServiceLearning = currentTermServiceLearningMap.get(course.course_code) || null;
+          const isOfferedInCurrentTerm = currentTermOfferedCourses.has(course.course_code);
+          
+          return {
+            ...course,
+            ...stats,
+            teachingLanguages,
+            currentTermTeachingLanguage,
+            serviceLearningTypes,
+            currentTermServiceLearning,
+            isOfferedInCurrentTerm
+          };
+        });
+
+        if (import.meta.env.DEV) {
+          console.log('🎉 getCoursesWithStats: Completed successfully');
+          console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
+            c.teachingLanguages && c.teachingLanguages.length > 0
+          )?.course_code || 'none found');
+        }
         
-        return {
-          ...course,
-          ...stats,
-          teachingLanguages,
-          currentTermTeachingLanguage,
-          serviceLearningTypes,
-          currentTermServiceLearning,
-          isOfferedInCurrentTerm
-        };
+        // 🚀 使用雙層緩存提升重訪性能 (匹配著陸頁面的緩存策略)
+        this.setPersistentCached(
+          cacheKey, 
+          coursesWithStats, 
+          10 * 60 * 1000, // 記憶體緩存10分鐘
+          PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+        );
+        
+        if (import.meta.env.DEV) {
+          console.log('✅ getCoursesWithStats: Results cached with dual-layer strategy for fast revisits');
+        }
+
+        return coursesWithStats;
       });
-
-      if (import.meta.env.DEV) {
-        console.log('🎉 getCoursesWithStats: Completed successfully');
-        console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
-          c.teachingLanguages && c.teachingLanguages.length > 0
-        )?.course_code || 'none found');
-      }
-      
-      // 🚀 使用雙層緩存提升重訪性能 (匹配著陸頁面的緩存策略)
-      this.setPersistentCached(
-        cacheKey, 
-        coursesWithStats, 
-        10 * 60 * 1000, // 記憶體緩存10分鐘
-        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
-      );
-      
-      if (import.meta.env.DEV) {
-        console.log('✅ getCoursesWithStats: Results cached with dual-layer strategy for fast revisits');
-      }
-
-      return coursesWithStats;
     } catch (error) {
       console.error('Error fetching courses with stats:', error);
       throw new Error('Failed to fetch courses with statistics');
@@ -1097,7 +1118,7 @@ export class CourseService {
    */
   static async getCourseByCode(courseCode: string): Promise<Course | null> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
@@ -1107,7 +1128,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents.length > 0 ? response.documents[0] as unknown as Course : null;
+      return response.rows.length > 0 ? response.rows[0] as unknown as Course : null;
     } catch (error) {
       console.error('Error fetching course by code:', error);
       return null;
@@ -1128,7 +1149,7 @@ export class CourseService {
         return cached;
       }
 
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -1140,7 +1161,7 @@ export class CourseService {
       );
 
       // 處理教學記錄，將空白 instructor_name 替換為 'UNKNOWN'
-      const teachingRecords = (response.documents as unknown as TeachingRecord[]).map(record => ({
+      const teachingRecords = (response.rows as unknown as TeachingRecord[]).map(record => ({
         ...record,
         instructor_name: (!record.instructor_name || record.instructor_name.trim() === '') ? 'UNKNOWN' : record.instructor_name
       }));
@@ -1161,7 +1182,7 @@ export class CourseService {
    */
   static async isCourseOfferedInTerm(courseCode: string, termCode: string): Promise<boolean> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -1171,7 +1192,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents.length > 0;
+      return response.rows.length > 0;
     } catch (error) {
       console.error('Error checking course offering:', error);
       return false;
@@ -1184,7 +1205,7 @@ export class CourseService {
    */
   static async getAllInstructors(): Promise<Instructor[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.INSTRUCTORS_COLLECTION_ID,
         [
@@ -1194,7 +1215,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents as unknown as Instructor[];
+      return response.rows as unknown as Instructor[];
     } catch (error) {
       console.error('Error fetching instructors:', error);
       throw new Error('Failed to fetch instructors');
@@ -1213,7 +1234,7 @@ export class CourseService {
     try {
       // 並行獲取教學記錄和評論，使用更精確的查詢
       const [teachingRecords, reviewsResponse] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TEACHING_RECORDS_COLLECTION_ID,
           [
@@ -1222,7 +1243,7 @@ export class CourseService {
             Query.select(['course_code']) // 只需要課程代碼來計算數量
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEWS_COLLECTION_ID,
           [
@@ -1235,13 +1256,13 @@ export class CourseService {
 
       // 計算課程數（去重）
       const uniqueCourses = new Set(
-        (teachingRecords.documents as unknown as TeachingRecord[])
+        (teachingRecords.rows as unknown as TeachingRecord[])
           .map(record => record.course_code)
       );
       const courseCount = uniqueCourses.size;
 
       // 過濾包含該講師的評論並計算統計
-      const allReviews = reviewsResponse.documents as unknown as Review[];
+      const allReviews = reviewsResponse.rows as unknown as Review[];
       const instructorReviews = allReviews.filter(review => {
         try {
           const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
@@ -1320,7 +1341,7 @@ export class CourseService {
    */
   static async getInstructorByName(name: string): Promise<Instructor | null> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.INSTRUCTORS_COLLECTION_ID,
         [
@@ -1330,7 +1351,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents.length > 0 ? response.documents[0] as unknown as Instructor : null;
+      return response.rows.length > 0 ? response.rows[0] as unknown as Instructor : null;
     } catch (error) {
       console.error('Error fetching instructor by name:', error);
       return null;
@@ -1342,7 +1363,7 @@ export class CourseService {
    */
   static async getTermByCode(termCode: string): Promise<Term | null> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TERMS_COLLECTION_ID,
         [
@@ -1351,7 +1372,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents.length > 0 ? response.documents[0] as unknown as Term : null;
+      return response.rows.length > 0 ? response.rows[0] as unknown as Term : null;
     } catch (error) {
       console.error('Error fetching term by code:', error);
       return null;
@@ -1425,7 +1446,7 @@ export class CourseService {
    */
   static async getInstructorTeachingRecords(instructorName: string): Promise<TeachingRecord[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -1434,7 +1455,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents as unknown as TeachingRecord[];
+      return response.rows as unknown as TeachingRecord[];
     } catch (error) {
       console.error('Error fetching instructor teaching records:', error);
       throw new Error('Failed to fetch instructor teaching records');
@@ -1516,7 +1537,7 @@ export class CourseService {
         throw new Error(errorMessage);
       }
 
-      const response = await databases.createDocument(
+      const response = await tablesDB.createRow(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         'unique()', // 讓 Appwrite 自動生成 ID
@@ -1535,7 +1556,7 @@ export class CourseService {
    */
   static async getAllTerms(): Promise<Term[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TERMS_COLLECTION_ID,
         [
@@ -1544,7 +1565,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents as unknown as Term[];
+      return response.rows as unknown as Term[];
     } catch (error) {
       console.error('Error fetching terms:', error);
       throw new Error('Failed to fetch terms');
@@ -1571,13 +1592,13 @@ export class CourseService {
         queries.push(Query.equal('review_language', language));
       }
       
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         queries
       );
 
-      const reviews = response.documents as unknown as Review[];
+      const reviews = response.rows as unknown as Review[];
       
       // 並行獲取學期信息
       const reviewsWithInfo = await Promise.all(
@@ -1632,13 +1653,13 @@ export class CourseService {
         queries.push(Query.equal('review_language', language));
       }
       
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         queries
       );
 
-      const allReviews = response.documents as unknown as Review[];
+      const allReviews = response.rows as unknown as Review[];
       
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
@@ -1799,7 +1820,7 @@ export class CourseService {
    */
   static async getReviewVoteStats(reviewId: string): Promise<{ upvotes: number; downvotes: number }> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEW_VOTES_COLLECTION_ID,
         [
@@ -1809,7 +1830,7 @@ export class CourseService {
         ]
       );
 
-      const votes = response.documents as unknown as ReviewVote[];
+      const votes = response.rows as unknown as ReviewVote[];
       const upvotes = votes.filter(vote => vote.vote_type === 'up').length;
       const downvotes = votes.filter(vote => vote.vote_type === 'down').length;
 
@@ -1826,7 +1847,7 @@ export class CourseService {
    */
   static async getUserVoteForReview(reviewId: string, userId: string): Promise<'up' | 'down' | null> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEW_VOTES_COLLECTION_ID,
         [
@@ -1837,8 +1858,8 @@ export class CourseService {
         ]
       );
 
-      if (response.documents.length > 0) {
-        const vote = response.documents[0] as unknown as ReviewVote;
+      if (response.rows.length > 0) {
+        const vote = response.rows[0] as unknown as ReviewVote;
         return vote.vote_type;
       }
 
@@ -1855,7 +1876,7 @@ export class CourseService {
   static async voteOnReview(reviewId: string, userId: string, voteType: 'up' | 'down'): Promise<void> {
     try {
       // 檢查用戶是否已經投票
-      const existingVoteResponse = await databases.listDocuments(
+      const existingVoteResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEW_VOTES_COLLECTION_ID,
         [
@@ -1865,11 +1886,11 @@ export class CourseService {
         ]
       );
 
-      if (existingVoteResponse.documents.length > 0) {
+      if (existingVoteResponse.rows.length > 0) {
         // 更新現有投票
-        const existingVote = existingVoteResponse.documents[0] as unknown as ReviewVote;
+        const existingVote = existingVoteResponse.rows[0] as unknown as ReviewVote;
         if (existingVote.vote_type !== voteType) {
-          await databases.updateDocument(
+          await tablesDB.updateRow(
             this.DATABASE_ID,
             this.REVIEW_VOTES_COLLECTION_ID,
             existingVote.$id,
@@ -1881,7 +1902,7 @@ export class CourseService {
         }
       } else {
         // 創建新投票
-        await databases.createDocument(
+        await tablesDB.createRow(
           this.DATABASE_ID,
           this.REVIEW_VOTES_COLLECTION_ID,
           'unique()',
@@ -1904,7 +1925,7 @@ export class CourseService {
    */
   static async removeVoteFromReview(reviewId: string, userId: string): Promise<void> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEW_VOTES_COLLECTION_ID,
         [
@@ -1914,9 +1935,9 @@ export class CourseService {
         ]
       );
 
-      if (response.documents.length > 0) {
-        const vote = response.documents[0] as unknown as ReviewVote;
-        await databases.deleteDocument(
+      if (response.rows.length > 0) {
+        const vote = response.rows[0] as unknown as ReviewVote;
+        await tablesDB.deleteRow(
           this.DATABASE_ID,
           this.REVIEW_VOTES_COLLECTION_ID,
           vote.$id
@@ -1954,7 +1975,7 @@ export class CourseService {
       
       // 🚀 ULTRA PERFORMANCE: 真正的並行處理所有批次以大幅提升速度
       const batchPromises = batches.map((batch, batchIndex) =>
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEW_VOTES_COLLECTION_ID,
           [
@@ -1963,7 +1984,7 @@ export class CourseService {
             Query.select(['review_id', 'vote_type'])
           ]
         ).then(votesResponse => {
-          const batchVotes = votesResponse.documents as unknown as ReviewVote[];
+          const batchVotes = votesResponse.rows as unknown as ReviewVote[];
           console.log(`🔍 Review vote batch ${batchIndex + 1}: Found ${batchVotes.length} votes`);
           return batchVotes;
         }).catch(batchError => {
@@ -2043,7 +2064,7 @@ export class CourseService {
       
       // 🚀 ULTRA PERFORMANCE: 真正的並行處理所有批次以大幅提升速度
       const batchPromises = batches.map((batch, batchIndex) =>
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEW_VOTES_COLLECTION_ID,
           [
@@ -2053,7 +2074,7 @@ export class CourseService {
             Query.select(['review_id', 'vote_type'])
           ]
         ).then(userVotesResponse => {
-          const batchUserVotes = userVotesResponse.documents as unknown as ReviewVote[];
+          const batchUserVotes = userVotesResponse.rows as unknown as ReviewVote[];
           console.log(`🔍 User vote batch ${batchIndex + 1}: Found ${batchUserVotes.length} votes`);
           return batchUserVotes;
         }).catch(batchError => {
@@ -2104,7 +2125,7 @@ export class CourseService {
    */
   static async getUserReviews(userId: string): Promise<(CourseReviewInfo & { upvotes: number; downvotes: number })[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -2118,7 +2139,7 @@ export class CourseService {
         ]
       );
 
-      const reviews = response.documents as unknown as Review[];
+      const reviews = response.rows as unknown as Review[];
 
       // 並行獲取每個評論的相關信息和投票統計
       const reviewsWithInfo = await Promise.all(
@@ -2167,7 +2188,7 @@ export class CourseService {
   static async deleteReview(reviewId: string): Promise<void> {
     try {
       // 首先刪除相關的投票記錄，只選擇 ID 欄位
-      const votesResponse = await databases.listDocuments(
+      const votesResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEW_VOTES_COLLECTION_ID,
         [
@@ -2179,8 +2200,8 @@ export class CourseService {
 
       // 並行刪除所有投票記錄
       await Promise.all(
-        votesResponse.documents.map(vote =>
-          databases.deleteDocument(
+        votesResponse.rows.map(vote =>
+          tablesDB.deleteRow(
             this.DATABASE_ID,
             this.REVIEW_VOTES_COLLECTION_ID,
             vote.$id
@@ -2189,7 +2210,7 @@ export class CourseService {
       );
 
       // 然後刪除評論本身
-      await databases.deleteDocument(
+      await tablesDB.deleteRow(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         reviewId
@@ -2205,7 +2226,7 @@ export class CourseService {
    */
   static async updateReview(reviewId: string, reviewData: Partial<Omit<Review, '$id' | '$createdAt' | '$updatedAt' | 'user_id'>>): Promise<Review> {
     try {
-      const response = await databases.updateDocument(
+      const response = await tablesDB.updateRow(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         reviewId,
@@ -2224,7 +2245,7 @@ export class CourseService {
    */
   static async getReviewById(reviewId: string): Promise<Review | null> {
     try {
-      const response = await databases.getDocument(
+      const response = await tablesDB.getRow(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         reviewId
@@ -2259,7 +2280,7 @@ export class CourseService {
       }
 
       // 🚀 關鍵優化：只獲取著陸頁面需要的課程數量
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
@@ -2269,7 +2290,7 @@ export class CourseService {
         ]
       );
       
-      const courses = response.documents as unknown as Course[];
+      const courses = response.rows as unknown as Course[];
       const courseCodes = courses.map(course => course.course_code);
       
       if (import.meta.env.DEV) {
@@ -2437,7 +2458,7 @@ export class CourseService {
       const currentTermCode = getCurrentTermCode();
       
       // 🚀 優化1: 只載入必要的評論數據（減少數據量）
-      const reviewsResponse = await databases.listDocuments(
+      const reviewsResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -2447,7 +2468,7 @@ export class CourseService {
         ]
       );
 
-      const reviews = reviewsResponse.documents as unknown as Review[];
+      const reviews = reviewsResponse.rows as unknown as Review[];
       
       // 🚀 優化2: 從評論中快速統計講師數據，無需載入所有講師
       const instructorStatsMap = new Map<string, {
@@ -2494,7 +2515,7 @@ export class CourseService {
         .map(([name, _]) => name);
 
       // 🚀 優化4: 只載入需要的講師基本信息
-      const instructorsResponse = await databases.listDocuments(
+      const instructorsResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.INSTRUCTORS_COLLECTION_ID,
         [
@@ -2503,10 +2524,10 @@ export class CourseService {
         ]
       );
 
-      const instructors = instructorsResponse.documents as unknown as Instructor[];
+      const instructors = instructorsResponse.rows as unknown as Instructor[];
 
       // 載入當前學期教學記錄（小數據量）
-      const teachingRecordsResponse = await databases.listDocuments(
+      const teachingRecordsResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -2517,7 +2538,7 @@ export class CourseService {
       );
 
       const currentTermInstructors = new Set(
-        teachingRecordsResponse.documents.map((record: any) => record.instructor_name)
+        teachingRecordsResponse.rows.map((record: any) => record.instructor_name)
       );
 
       // 計算最終統計並組合數據
@@ -2645,7 +2666,7 @@ export class CourseService {
       
       // 並行獲取講師、評論和教學記錄數據
       const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.INSTRUCTORS_COLLECTION_ID,
           [
@@ -2654,7 +2675,7 @@ export class CourseService {
             Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEWS_COLLECTION_ID,
           [
@@ -2663,7 +2684,7 @@ export class CourseService {
             Query.select(['instructor_details', 'course_final_grade'])
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TEACHING_RECORDS_COLLECTION_ID,
           [
@@ -2674,9 +2695,9 @@ export class CourseService {
         )
       ]);
 
-      const instructors = instructorsResponse.documents as unknown as Instructor[];
-      const allReviews = reviewsResponse.documents as unknown as Review[];
-      const currentTermTeachingRecords = teachingRecordsResponse.documents as unknown as TeachingRecord[];
+      const instructors = instructorsResponse.rows as unknown as Instructor[];
+      const allReviews = reviewsResponse.rows as unknown as Review[];
+      const currentTermTeachingRecords = teachingRecordsResponse.rows as unknown as TeachingRecord[];
       
       // 創建當前學期教學的講師集合
       const currentTermInstructors = new Set(currentTermTeachingRecords.map(record => record.instructor_name));
@@ -2852,215 +2873,194 @@ export class CourseService {
         return cached;
       }
       
-      if (import.meta.env.DEV) {
-        console.log('🔄 getAllInstructorsWithDetailedStats: Loading fresh data...');
-      }
-      
-      const currentTermCode = getCurrentTermCode();
-      
-      // 並行獲取講師、評論和當前學期教學記錄數據
-      const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
-        databases.listDocuments(
-          this.DATABASE_ID,
-          this.INSTRUCTORS_COLLECTION_ID,
-          [
-            Query.orderAsc('name'),
-            Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
-          ]
-        ),
-        databases.listDocuments(
-          this.DATABASE_ID,
-          this.REVIEWS_COLLECTION_ID,
-          [
-            Query.orderDesc('$createdAt'),
-            Query.limit(this.MAX_REVIEWS_LIMIT),
-            Query.select(['instructor_details', 'course_final_grade'])
-          ]
-        ),
-        databases.listDocuments(
-          this.DATABASE_ID,
-          this.TEACHING_RECORDS_COLLECTION_ID,
-          [
-            Query.equal('term_code', currentTermCode),
-            Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-            Query.select(['instructor_name'])
-          ]
-        )
-      ]);
-
-      const instructors = instructorsResponse.documents as unknown as Instructor[];
-      const allReviews = reviewsResponse.documents as unknown as Review[];
-      const currentTermTeachingRecords = teachingRecordsResponse.documents as unknown as Pick<TeachingRecord, 'instructor_name'>[];
-
-      // 創建當前學期教學講師的 Set
-      const instructorsTeachingInCurrentTerm = new Set(
-        currentTermTeachingRecords.map(record => record.instructor_name)
-      );
-
-      // 創建講師統計映射
-      const instructorStatsMap = new Map<string, {
-        reviewCount: number;
-        teachingScores: number[];
-        gradingScores: number[];
-        grades: string[];
-      }>();
-
-      // 處理每個評論中的講師詳情
-      for (const review of allReviews) {
-        try {
-          const instructorDetails = JSON.parse(review.instructor_details) as InstructorDetail[];
-          
-          for (const detail of instructorDetails) {
-            const instructorName = detail.instructor_name;
-            
-            if (!instructorStatsMap.has(instructorName)) {
-              instructorStatsMap.set(instructorName, {
-                reviewCount: 0,
-                teachingScores: [],
-                gradingScores: [],
-                grades: []
-              });
-            }
-            
-            const stats = instructorStatsMap.get(instructorName)!;
-            stats.reviewCount++;
-            
-            // 收集有效評分 (> 0)，排除 N/A (-1) 和未評分 (0)
-            if (detail.teaching > 0) {
-              stats.teachingScores.push(detail.teaching);
-            }
-            if (detail.grading && detail.grading > 0) {
-              stats.gradingScores.push(detail.grading);
-            }
-            
-            // 收集成績用於 GPA 計算
-            if (review.course_final_grade) {
-              stats.grades.push(review.course_final_grade);
-            }
-          }
-        } catch (error) {
-          // 跳過無效的 JSON 數據
-          continue;
-        }
-      }
-
-      // 計算平均值，排除 N/A 值
-      const finalInstructorStatsMap = new Map<string, {
-        reviewCount: number;
-        teachingScore: number;
-        gradingFairness: number;
-        averageGPA: number;
-        averageGPACount: number;
-      }>();
-      
-      for (const [instructorName, stats] of instructorStatsMap) {
-        const teachingScore = stats.teachingScores.length > 0 
-          ? stats.teachingScores.reduce((sum, score) => sum + score, 0) / stats.teachingScores.length 
-          : 0;
-        const gradingFairness = stats.gradingScores.length > 0 
-          ? stats.gradingScores.reduce((sum, score) => sum + score, 0) / stats.gradingScores.length 
-          : 0;
-          
-        // 計算平均 GPA
-        const gradeDistribution = calculateGradeDistributionFromReviews(
-          stats.grades.map(grade => ({ course_final_grade: grade }))
-        );
-        const gradeStats = calculateGradeStatistics(gradeDistribution);
-        const averageGPA = gradeStats.mean || 0;
-        const averageGPACount = gradeStats.validGradeCount || 0;
-          
-        finalInstructorStatsMap.set(instructorName, {
-          reviewCount: stats.reviewCount,
-          teachingScore,
-          gradingFairness,
-          averageGPA,
-          averageGPACount
-        });
-      }
-
-      // 組合講師和統計信息 - 包含所有講師，不過濾
-      const instructorsWithDetailedStats: InstructorWithDetailedStats[] = instructors
-        .map(instructor => {
-          const stats = finalInstructorStatsMap.get(instructor.name) || {
-            reviewCount: 0,
-            teachingScore: 0,
-            gradingFairness: 0,
-            averageGPA: 0,
-            averageGPACount: 0
-          };
-
-          return {
-            ...instructor,
-            ...stats,
-            isTeachingInCurrentTerm: instructorsTeachingInCurrentTerm.has(instructor.name)
-          };
-        });
-
-      // 獲取所有講師的教學語言數據（帶錯誤處理的優雅降級）
-      const instructorNames = instructors.map(instructor => instructor.name);
-      let teachingLanguagesMap = new Map<string, string[]>();
-      let currentTermTeachingLanguagesMap = new Map<string, string | null>();
-
-      try {
+      return this.runWithInFlightDedup(cacheKey, async () => {
         if (import.meta.env.DEV) {
-          console.log('🔍 getAllInstructorsWithDetailedStats: Starting to fetch teaching languages...');
+          console.log('🔄 getAllInstructorsWithDetailedStats: Loading fresh data...');
         }
         
-        // 嘗試獲取教學語言數據，但如果失敗則繼續正常流程
-        const [languagesResult, currentTermResult] = await Promise.allSettled([
-          this.getBatchInstructorTeachingLanguages(instructorNames),
-          this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
+        const currentTermCode = getCurrentTermCode();
+        
+        const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.INSTRUCTORS_COLLECTION_ID,
+            [
+              Query.orderAsc('name'),
+              Query.limit(this.MAX_INSTRUCTORS_LIMIT),
+              Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
+            ]
+          ),
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.REVIEWS_COLLECTION_ID,
+            [
+              Query.orderDesc('$createdAt'),
+              Query.limit(this.MAX_REVIEWS_LIMIT),
+              Query.select(['instructor_details', 'course_final_grade'])
+            ]
+          ),
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.equal('term_code', currentTermCode),
+              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
+              Query.select(['instructor_name'])
+            ]
+          )
         ]);
 
-        if (languagesResult.status === 'fulfilled') {
-          teachingLanguagesMap = languagesResult.value;
-          if (import.meta.env.DEV) {
-            console.log('✅ getBatchInstructorTeachingLanguages succeeded, got', teachingLanguagesMap.size, 'entries');
+        const instructors = instructorsResponse.rows as unknown as Instructor[];
+        const allReviews = reviewsResponse.rows as unknown as Review[];
+        const currentTermTeachingRecords = teachingRecordsResponse.rows as unknown as Pick<TeachingRecord, 'instructor_name'>[];
+
+        const instructorsTeachingInCurrentTerm = new Set(
+          currentTermTeachingRecords.map(record => record.instructor_name)
+        );
+
+        const instructorStatsMap = new Map<string, {
+          reviewCount: number;
+          teachingScores: number[];
+          gradingScores: number[];
+          grades: string[];
+        }>();
+
+        for (const review of allReviews) {
+          try {
+            const instructorDetails = JSON.parse(review.instructor_details) as InstructorDetail[];
+            
+            for (const detail of instructorDetails) {
+              const instructorName = detail.instructor_name;
+              
+              if (!instructorStatsMap.has(instructorName)) {
+                instructorStatsMap.set(instructorName, {
+                  reviewCount: 0,
+                  teachingScores: [],
+                  gradingScores: [],
+                  grades: []
+                });
+              }
+              
+              const stats = instructorStatsMap.get(instructorName)!;
+              stats.reviewCount++;
+              
+              if (detail.teaching > 0) {
+                stats.teachingScores.push(detail.teaching);
+              }
+              if (detail.grading && detail.grading > 0) {
+                stats.gradingScores.push(detail.grading);
+              }
+              
+              if (review.course_final_grade) {
+                stats.grades.push(review.course_final_grade);
+              }
+            }
+          } catch {
+            continue;
           }
-        } else {
-          console.error('❌ Failed to fetch all instructor teaching languages:', languagesResult.reason);
-          console.warn('Continuing without language badges...');
         }
 
-        if (currentTermResult.status === 'fulfilled') {
-          currentTermTeachingLanguagesMap = currentTermResult.value;
-          if (import.meta.env.DEV) {
-            console.log('✅ getBatchInstructorCurrentTermTeachingLanguages succeeded');
-          }
-        } else {
-          console.error('❌ Failed to fetch all instructor current term teaching languages:', currentTermResult.reason);
-          console.warn('Continuing without current term language...');
-        }
-      } catch (error) {
-        console.error('❌ Error fetching teaching language data for all instructors:', error);
-      }
+        const finalInstructorStatsMap = new Map<string, {
+          reviewCount: number;
+          teachingScore: number;
+          gradingFairness: number;
+          averageGPA: number;
+          averageGPACount: number;
+        }>();
+        
+        for (const [instructorName, stats] of instructorStatsMap) {
+          const teachingScore = stats.teachingScores.length > 0 
+            ? stats.teachingScores.reduce((sum, score) => sum + score, 0) / stats.teachingScores.length 
+            : 0;
+          const gradingFairness = stats.gradingScores.length > 0 
+            ? stats.gradingScores.reduce((sum, score) => sum + score, 0) / stats.gradingScores.length 
+            : 0;
 
-      // 添加教學語言數據到結果中
-      const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
-        ...instructor,
-        teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
-        currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
-      })).sort((a, b) => {
-        // 首先按名字排序（字母順序），忽略職稱
-        const aNameForSort = extractInstructorNameForSorting(a.name);
-        const bNameForSort = extractInstructorNameForSorting(b.name);
-        return aNameForSort.localeCompare(bNameForSort);
+          const gradeDistribution = calculateGradeDistributionFromReviews(
+            stats.grades.map(grade => ({ course_final_grade: grade }))
+          );
+          const gradeStats = calculateGradeStatistics(gradeDistribution);
+          const averageGPA = gradeStats.mean || 0;
+          const averageGPACount = gradeStats.validGradeCount || 0;
+
+          finalInstructorStatsMap.set(instructorName, {
+            reviewCount: stats.reviewCount,
+            teachingScore,
+            gradingFairness,
+            averageGPA,
+            averageGPACount
+          });
+        }
+
+        const instructorsWithDetailedStats: InstructorWithDetailedStats[] = instructors
+          .map(instructor => {
+            const stats = finalInstructorStatsMap.get(instructor.name) || {
+              reviewCount: 0,
+              teachingScore: 0,
+              gradingFairness: 0,
+              averageGPA: 0,
+              averageGPACount: 0
+            };
+
+            return {
+              ...instructor,
+              ...stats,
+              isTeachingInCurrentTerm: instructorsTeachingInCurrentTerm.has(instructor.name)
+            };
+          });
+
+        const instructorNames = instructors.map(instructor => instructor.name);
+        let teachingLanguagesMap = new Map<string, string[]>();
+        let currentTermTeachingLanguagesMap = new Map<string, string | null>();
+
+        try {
+          if (import.meta.env.DEV) {
+            console.log('🔍 getAllInstructorsWithDetailedStats: Starting to fetch teaching languages...');
+          }
+
+          const [languagesResult, currentTermResult] = await Promise.allSettled([
+            this.getBatchInstructorTeachingLanguages(instructorNames),
+            this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
+          ]);
+
+          if (languagesResult.status === 'fulfilled') {
+            teachingLanguagesMap = languagesResult.value;
+          } else {
+            console.warn('❌ Failed to fetch all instructor teaching languages:', languagesResult.reason);
+          }
+
+          if (currentTermResult.status === 'fulfilled') {
+            currentTermTeachingLanguagesMap = currentTermResult.value;
+          } else {
+            console.warn('❌ Failed to fetch all instructor current term teaching languages:', currentTermResult.reason);
+          }
+        } catch (error) {
+          console.error('❌ Error fetching teaching language data for all instructors:', error);
+        }
+
+        const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
+          ...instructor,
+          teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
+          currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
+        })).sort((a, b) => {
+          const aNameForSort = extractInstructorNameForSorting(a.name);
+          const bNameForSort = extractInstructorNameForSorting(b.name);
+          return aNameForSort.localeCompare(bNameForSort);
+        });
+
+        this.setPersistentCached(
+          cacheKey, 
+          finalInstructorsWithDetailedStats, 
+          10 * 60 * 1000,
+          PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA
+        );
+        
+        if (import.meta.env.DEV) {
+          console.log('✅ getAllInstructorsWithDetailedStats: Results cached with dual-layer strategy for fast revisits');
+        }
+        
+        return finalInstructorsWithDetailedStats;
       });
-
-      // 🚀 使用雙層緩存提升重訪性能 (匹配著陸頁面和課程目錄的緩存策略)
-      this.setPersistentCached(
-        cacheKey, 
-        finalInstructorsWithDetailedStats, 
-        10 * 60 * 1000, // 記憶體緩存10分鐘
-        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
-      );
-      
-      if (import.meta.env.DEV) {
-        console.log('✅ getAllInstructorsWithDetailedStats: Results cached with dual-layer strategy for fast revisits');
-      }
-      
-      return finalInstructorsWithDetailedStats;
     } catch (error) {
       console.error('Error fetching all instructors with detailed stats:', error);
       throw new Error('Failed to fetch all instructors with detailed statistics');
@@ -3089,7 +3089,7 @@ export class CourseService {
       }
 
       // 🚀 關鍵優化：只獲取著陸頁面需要的課程數量  
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
         [
@@ -3099,7 +3099,7 @@ export class CourseService {
         ]
       );
       
-      const courses = response.documents as unknown as Course[];
+      const courses = response.rows as unknown as Course[];
       const courseCodes = courses.map(course => course.course_code);
       
       if (import.meta.env.DEV) {
@@ -3385,7 +3385,7 @@ export class CourseService {
       
       // 並行獲取所有數據，使用最小化的欄位選擇
       const [coursesResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.COURSES_COLLECTION_ID,
           [
@@ -3394,7 +3394,7 @@ export class CourseService {
             Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEWS_COLLECTION_ID,
           [
@@ -3403,7 +3403,7 @@ export class CourseService {
             Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade']) // 選擇統計需要的所有評分欄位
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TEACHING_RECORDS_COLLECTION_ID,
           [
@@ -3414,9 +3414,9 @@ export class CourseService {
         )
       ]);
 
-      const courses = coursesResponse.documents as unknown as Course[];
-      const allReviews = reviewsResponse.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
-      const currentTermTeachingRecords = teachingRecordsResponse.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+      const courses = coursesResponse.rows as unknown as Course[];
+      const allReviews = reviewsResponse.rows as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
+      const currentTermTeachingRecords = teachingRecordsResponse.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
 
       // 使用 Set 快速查找當前學期開設的課程
       const coursesOfferedInCurrentTerm = new Set(
@@ -3622,7 +3622,7 @@ export class CourseService {
     try {
       // 並行獲取講師、教學記錄和評論，使用精確的欄位選擇
       const [instructorsResponse, teachingRecordsResponse, reviewsResponse] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.INSTRUCTORS_COLLECTION_ID,
           [
@@ -3631,7 +3631,7 @@ export class CourseService {
             Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department', '$createdAt', '$updatedAt'])
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TEACHING_RECORDS_COLLECTION_ID,
           [
@@ -3639,7 +3639,7 @@ export class CourseService {
             Query.select(['instructor_name', 'course_code']) // 只選擇需要的欄位
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEWS_COLLECTION_ID,
           [
@@ -3650,9 +3650,9 @@ export class CourseService {
         )
       ]);
 
-      const instructors = instructorsResponse.documents as unknown as Instructor[];
-      const allTeachingRecords = teachingRecordsResponse.documents as unknown as TeachingRecord[];
-      const allReviews = reviewsResponse.documents as unknown as Review[];
+      const instructors = instructorsResponse.rows as unknown as Instructor[];
+      const allTeachingRecords = teachingRecordsResponse.rows as unknown as TeachingRecord[];
+      const allReviews = reviewsResponse.rows as unknown as Review[];
 
       // 創建講師統計映射
       const instructorStatsMap = new Map<string, {
@@ -3859,7 +3859,7 @@ export class CourseService {
       console.log(`🔄 Starting username update for user ${userId} to "${newUsername}"`);
       
       // 獲取該用戶的所有評論
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -3870,33 +3870,33 @@ export class CourseService {
         ]
       );
 
-      console.log(`📋 Found ${response.documents.length} non-anonymous reviews for user ${userId}`);
+      console.log(`📋 Found ${response.rows.length} non-anonymous reviews for user ${userId}`);
       
-      if (response.documents.length === 0) {
+      if (response.rows.length === 0) {
         console.log('ℹ️ No non-anonymous reviews found to update');
         return;
       }
 
       // 顯示找到的評論信息
-      response.documents.forEach((review, index) => {
+      response.rows.forEach((review, index) => {
         console.log(`📝 Review ${index + 1}: ID=${review.$id}, Course=${review.course_code}, CurrentUsername="${review.username}", IsAnon=${review.is_anon}`);
       });
 
       // 批量更新所有評論的用戶名
       // 首先獲取完整的評論數據，然後只更新用戶名
-      const updatePromises = response.documents.map(async (review) => {
+      const updatePromises = response.rows.map(async (review) => {
         console.log(`🔄 Updating review ${review.$id} from "${review.username}" to "${newUsername}"`);
         
         try {
           // 獲取完整的評論文檔
-          const fullReview = await databases.getDocument(
+          const fullReview = await tablesDB.getRow(
             this.DATABASE_ID,
             this.REVIEWS_COLLECTION_ID,
             review.$id
           );
           
           // 更新用戶名，保持其他所有字段不變
-          return await databases.updateDocument(
+          return await tablesDB.updateRow(
             this.DATABASE_ID,
             this.REVIEWS_COLLECTION_ID,
             review.$id,
@@ -3945,7 +3945,7 @@ export class CourseService {
     
     try {
       // 首先查看用戶的所有評論（包括匿名的）
-      const allReviewsResponse = await databases.listDocuments(
+      const allReviewsResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -3955,8 +3955,8 @@ export class CourseService {
         ]
       );
       
-      console.log(`📊 Total reviews for user: ${allReviewsResponse.documents.length}`);
-      allReviewsResponse.documents.forEach((review, index) => {
+      console.log(`📊 Total reviews for user: ${allReviewsResponse.rows.length}`);
+      allReviewsResponse.rows.forEach((review, index) => {
         console.log(`📝 All Review ${index + 1}: ID=${review.$id}, Course=${review.course_code}, Username="${review.username}", IsAnon=${review.is_anon}`);
       });
       
@@ -3988,7 +3988,7 @@ export class CourseService {
   static async getInstructorReviews(instructorName: string): Promise<InstructorReviewInfo[]> {
     try {
       // 使用更精確的查詢，減少需要處理的數據量
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -3997,7 +3997,7 @@ export class CourseService {
         ]
       );
 
-      const allReviews = response.documents as unknown as Review[];
+      const allReviews = response.rows as unknown as Review[];
       
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
@@ -4120,13 +4120,13 @@ export class CourseService {
           // 小批量，直接查詢
           queries.push(Query.equal('course_code', courseCodes));
           
-          const response = await databases.listDocuments(
+          const response = await tablesDB.listRows(
             this.DATABASE_ID,
             this.TEACHING_RECORDS_COLLECTION_ID,
             queries
           );
           
-          const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+          const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
           const offeredCourses = new Set(teachingRecords.map(record => record.course_code.toLowerCase()));
           
           this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000);
@@ -4151,13 +4151,13 @@ export class CourseService {
                 Query.select(['course_code'])
               ];
 
-              const response = await databases.listDocuments(
+              const response = await tablesDB.listRows(
                 this.DATABASE_ID,
                 this.TEACHING_RECORDS_COLLECTION_ID,
                 batchQueries
               );
 
-              const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+              const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
               console.log(`✅ Term batch ${index + 1}/${batches.length}: Found ${teachingRecords.length} records`);
               
               return teachingRecords.map(record => record.course_code.toLowerCase());
@@ -4181,13 +4181,13 @@ export class CourseService {
       }
 
       // 沒有特定課程代碼，查詢所有課程
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         queries
       );
 
-      const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'course_code'>[];
+      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
       
       // 🐛 FIX: Convert course codes to lowercase to handle case sensitivity issues
       // Teaching records may have uppercase suffixes (e.g., "CHI4342A") while courses database has lowercase (e.g., "CHI4342a")
@@ -4245,13 +4245,13 @@ export class CourseService {
         queries.push(Query.equal('instructor_name', instructorNames));
       }
 
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         queries
       );
 
-      const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'instructor_name'>[];
+      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'instructor_name'>[];
       const teachingInstructors = new Set(teachingRecords.map(record => record.instructor_name));
 
       // 緩存結果（較長時間，因為學期數據相對穩定）
@@ -4289,13 +4289,13 @@ export class CourseService {
         queries.push(Query.equal('term_code', termCodes));
       }
 
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         queries
       );
 
-      const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'term_code' | 'course_code'>[];
+      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'term_code' | 'course_code'>[];
       
       // 按學期分組課程
       const termCoursesMap = new Map<string, Set<string>>();
@@ -4345,13 +4345,13 @@ export class CourseService {
         queries.push(Query.equal('term_code', termCodes));
       }
 
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         queries
       );
 
-      const teachingRecords = response.documents as unknown as Pick<TeachingRecord, 'term_code' | 'instructor_name'>[];
+      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'term_code' | 'instructor_name'>[];
       
       // 按學期分組講師
       const termInstructorsMap = new Map<string, Set<string>>();
@@ -4426,7 +4426,7 @@ export class CourseService {
       
       // 🚀 ULTRA PERFORMANCE: 真正的並行處理所有批次
       const batchPromises = batches.map((batch, batchIndex) => 
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEWS_COLLECTION_ID,
           [
@@ -4435,7 +4435,7 @@ export class CourseService {
             Query.select(['course_code', 'user_id', 'course_workload', 'course_difficulties', 'course_usefulness', 'course_final_grade'])
           ]
         ).then(response => {
-          const batchReviews = response.documents as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
+          const batchReviews = response.rows as unknown as Pick<Review, 'course_code' | 'user_id' | 'course_workload' | 'course_difficulties' | 'course_usefulness' | 'course_final_grade'>[];
           console.log(`🔍 Course stats batch ${batchIndex + 1}: Found ${batchReviews.length} reviews`);
           return batchReviews;
         }).catch(batchError => {
@@ -4595,7 +4595,7 @@ export class CourseService {
       }
 
       // 獲取所有評論（包含講師詳情）
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -4605,7 +4605,7 @@ export class CourseService {
         ]
       );
 
-      const allReviews = response.documents as unknown as Pick<Review, 'instructor_details'>[];
+      const allReviews = response.rows as unknown as Pick<Review, 'instructor_details'>[];
 
       // 創建講師統計映射
       const instructorStatsMap = new Map<string, {
@@ -4801,7 +4801,7 @@ export class CourseService {
       
       // 並行批量獲取所有課程和學期信息
       const [coursesResponse, termsResponse] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.COURSES_COLLECTION_ID,
           [
@@ -4810,7 +4810,7 @@ export class CourseService {
             Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TERMS_COLLECTION_ID,
           [
@@ -4825,11 +4825,11 @@ export class CourseService {
       const coursesMap = new Map<string, Course>();
       const termsMap = new Map<string, Term>();
       
-      (coursesResponse.documents as unknown as Course[]).forEach(course => {
+      (coursesResponse.rows as unknown as Course[]).forEach(course => {
         coursesMap.set(course.course_code, course);
       });
       
-      (termsResponse.documents as unknown as Term[]).forEach(term => {
+      (termsResponse.rows as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
 
@@ -4970,7 +4970,7 @@ export class CourseService {
       }
 
       // 獲取所有評論，使用優化的查詢
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -4982,7 +4982,7 @@ export class CourseService {
         ]
       );
 
-      const allReviews = response.documents as unknown as Review[];
+      const allReviews = response.rows as unknown as Review[];
       
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
@@ -5004,7 +5004,7 @@ export class CourseService {
       
       // 並行批量獲取所有課程和學期信息
       const [coursesResponse, termsResponse] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.COURSES_COLLECTION_ID,
           [
@@ -5013,7 +5013,7 @@ export class CourseService {
             Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
           ]
         ),
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TERMS_COLLECTION_ID,
           [
@@ -5028,11 +5028,11 @@ export class CourseService {
       const coursesMap = new Map<string, Course>();
       const termsMap = new Map<string, Term>();
       
-      (coursesResponse.documents as unknown as Course[]).forEach(course => {
+      (coursesResponse.rows as unknown as Course[]).forEach(course => {
         coursesMap.set(course.course_code, course);
       });
       
-      (termsResponse.documents as unknown as Term[]).forEach(term => {
+      (termsResponse.rows as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
 
@@ -5201,7 +5201,7 @@ export class CourseService {
       
       // 並行批量獲取所有講師和學期信息（只查詢有效的講師名稱，排除 UNKNOWN）
       const [instructorsResponse, termsResponse] = await Promise.all([
-        uniqueValidInstructorNames.length > 0 ? databases.listDocuments(
+        uniqueValidInstructorNames.length > 0 ? tablesDB.listRows(
           this.DATABASE_ID,
           this.INSTRUCTORS_COLLECTION_ID,
           [
@@ -5209,8 +5209,8 @@ export class CourseService {
             Query.limit(uniqueValidInstructorNames.length),
             Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department'])
           ]
-        ) : Promise.resolve({ documents: [] }),
-        databases.listDocuments(
+        ) : Promise.resolve({ rows: [] }),
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TERMS_COLLECTION_ID,
           [
@@ -5225,7 +5225,7 @@ export class CourseService {
       const instructorsMap = new Map<string, Instructor>();
       const termsMap = new Map<string, Term>();
       
-      (instructorsResponse.documents as unknown as Instructor[]).forEach(instructor => {
+      (instructorsResponse.rows as unknown as Instructor[]).forEach(instructor => {
         instructorsMap.set(instructor.name, instructor);
       });
       
@@ -5243,7 +5243,7 @@ export class CourseService {
         $updatedAt: new Date().toISOString()
       };
       
-      (termsResponse.documents as unknown as Term[]).forEach(term => {
+      (termsResponse.rows as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
 
@@ -5345,13 +5345,13 @@ export class CourseService {
       }
       
       // 獲取評論
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         queries
       );
 
-      const reviews = response.documents as unknown as Review[];
+      const reviews = response.rows as unknown as Review[];
       
       if (reviews.length === 0) {
         return [];
@@ -5363,7 +5363,7 @@ export class CourseService {
       
       // 並行批量獲取學期信息、投票統計和用戶投票
       const [termsResponse, voteStatsMap, userVotesMap] = await Promise.all([
-        databases.listDocuments(
+        tablesDB.listRows(
           this.DATABASE_ID,
           this.TERMS_COLLECTION_ID,
           [
@@ -5378,7 +5378,7 @@ export class CourseService {
 
       // 創建學期查找映射
       const termsMap = new Map<string, Term>();
-      (termsResponse.documents as unknown as Term[]).forEach(term => {
+      (termsResponse.rows as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
 
@@ -5508,7 +5508,7 @@ export class CourseService {
   }> {
     try {
       // First check: Maximum 7 reviews per term limit
-      const termReviewsResponse = await databases.listDocuments(
+      const termReviewsResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -5519,7 +5519,7 @@ export class CourseService {
         ]
       );
 
-      const termReviews = termReviewsResponse.documents as unknown as Review[];
+      const termReviews = termReviewsResponse.rows as unknown as Review[];
       
       // If user already has 7 reviews in this term, they cannot submit more
       if (termReviews.length >= 7) {
@@ -5533,7 +5533,7 @@ export class CourseService {
 
       // Second check: Per-course limit (existing logic)
       // Get all reviews by this user for this specific course
-      const courseReviewsResponse = await databases.listDocuments(
+      const courseReviewsResponse = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -5545,7 +5545,7 @@ export class CourseService {
         ]
       );
 
-      const existingReviews = courseReviewsResponse.documents as unknown as Review[];
+      const existingReviews = courseReviewsResponse.rows as unknown as Review[];
       
       // If no existing reviews for this course, user can submit
       if (existingReviews.length === 0) {
@@ -5616,7 +5616,7 @@ export class CourseService {
    */
   static async getUserReviewsForCourse(userId: string, courseCode: string): Promise<Review[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.REVIEWS_COLLECTION_ID,
         [
@@ -5627,7 +5627,7 @@ export class CourseService {
         ]
       );
 
-      return response.documents as unknown as Review[];
+      return response.rows as unknown as Review[];
     } catch (error) {
       console.error('Error fetching user reviews for course:', error);
       return [];
@@ -5640,7 +5640,7 @@ export class CourseService {
   static async getCourseCurrentTermTeachingLanguage(courseCode: string): Promise<string | null> {
     try {
       const currentTermCode = getCurrentTermCode();
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -5651,8 +5651,8 @@ export class CourseService {
         ]
       );
 
-      if (response.documents.length > 0) {
-        const record = response.documents[0] as unknown as TeachingRecord;
+      if (response.rows.length > 0) {
+        const record = response.rows[0] as unknown as TeachingRecord;
         return record.teaching_language;
       }
 
@@ -5709,7 +5709,7 @@ export class CourseService {
         console.log(`🔍 Processing current term teaching language batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
         
         try {
-          const response = await databases.listDocuments(
+          const response = await tablesDB.listRows(
             this.DATABASE_ID,
             this.TEACHING_RECORDS_COLLECTION_ID,
             [
@@ -5720,11 +5720,11 @@ export class CourseService {
             ]
           );
 
-          totalRecords += response.documents.length;
-          console.log(`🔍 Current term teaching language batch ${batchIndex + 1}: Found ${response.documents.length} records`);
+          totalRecords += response.rows.length;
+          console.log(`🔍 Current term teaching language batch ${batchIndex + 1}: Found ${response.rows.length} records`);
           
           // 填入找到的教學語言
-          response.documents.forEach((doc: any) => {
+          response.rows.forEach((doc: any) => {
             const record = doc as unknown as TeachingRecord;
             teachingLanguagesMap.set(record.course_code, record.teaching_language);
           });
@@ -5786,7 +5786,7 @@ export class CourseService {
         console.log(`🔍 Processing service learning batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
         
         try {
-          const response = await databases.listDocuments(
+          const response = await tablesDB.listRows(
             this.DATABASE_ID,
             this.TEACHING_RECORDS_COLLECTION_ID,
             [
@@ -5797,7 +5797,7 @@ export class CourseService {
             ]
           );
 
-          const teachingRecords = response.documents as unknown as (TeachingRecord & { service_learning: string | null })[];
+          const teachingRecords = response.rows as unknown as (TeachingRecord & { service_learning: string | null })[];
           totalRecords += teachingRecords.length;
           
           // Process records by course
@@ -5916,7 +5916,7 @@ export class CourseService {
         console.log(`🔍 Processing current term service learning batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
         
         try {
-          const response = await databases.listDocuments(
+          const response = await tablesDB.listRows(
             this.DATABASE_ID,
             this.TEACHING_RECORDS_COLLECTION_ID,
             [
@@ -5927,11 +5927,11 @@ export class CourseService {
             ]
           );
 
-          totalRecords += response.documents.length;
-          console.log(`🔍 Current term service learning batch ${batchIndex + 1}: Found ${response.documents.length} records`);
+          totalRecords += response.rows.length;
+          console.log(`🔍 Current term service learning batch ${batchIndex + 1}: Found ${response.rows.length} records`);
           
           // 填入找到的服務學習類型
-          response.documents.forEach((doc: any) => {
+          response.rows.forEach((doc: any) => {
             const record = doc as unknown as TeachingRecord;
             if (record.service_learning === 'compulsory' || record.service_learning === 'optional') {
               serviceLearningMap.set(record.course_code, record.service_learning as 'compulsory' | 'optional');
@@ -5960,7 +5960,7 @@ export class CourseService {
    */
   static async getCourseTeachingLanguages(courseCode: string): Promise<string[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -5970,7 +5970,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      const teachingRecords = response.rows as unknown as TeachingRecord[];
       
       // Extract unique teaching languages while preserving chronological order
       const seenLanguages = new Set<string>();
@@ -6029,7 +6029,7 @@ export class CourseService {
         console.log(`🔍 Processing course batch ${batchIndex + 1}/${batches.length} with ${batch.length} courses`);
         
         try {
-          const response = await databases.listDocuments(
+          const response = await tablesDB.listRows(
             this.DATABASE_ID,
             this.TEACHING_RECORDS_COLLECTION_ID,
             [
@@ -6040,7 +6040,7 @@ export class CourseService {
             ]
           );
 
-          const teachingRecords = response.documents as unknown as (TeachingRecord & { teaching_language: string })[];
+          const teachingRecords = response.rows as unknown as (TeachingRecord & { teaching_language: string })[];
           totalRecords += teachingRecords.length;
           console.log(`🔍 Course batch ${batchIndex + 1}: Found ${teachingRecords.length} teaching records`);
           
@@ -6128,7 +6128,7 @@ export class CourseService {
     sessionType: string
   ): Promise<string | null> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6141,8 +6141,8 @@ export class CourseService {
         ]
       );
 
-      if (response.documents.length > 0) {
-        const record = response.documents[0] as unknown as TeachingRecord;
+      if (response.rows.length > 0) {
+        const record = response.rows[0] as unknown as TeachingRecord;
         return record.teaching_language;
       }
 
@@ -6178,7 +6178,7 @@ export class CourseService {
       console.log('🔄 Loading teaching records from database...');
       
       // Load all teaching records in one query
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6187,7 +6187,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as Array<{
+      const teachingRecords = response.rows as unknown as Array<{
         course_code: string;
         teaching_language: string;
         term_code: string;
@@ -6524,7 +6524,7 @@ export class CourseService {
   static async getTeachingLanguageStatistics(): Promise<{ [key: string]: number }> {
     try {
       // Get all unique teaching language records
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6533,7 +6533,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as Array<{
+      const teachingRecords = response.rows as unknown as Array<{
         course_code: string;
         teaching_language: string;
       }>;
@@ -6595,7 +6595,7 @@ export class CourseService {
   static async getOfferedTermStatistics(): Promise<{ [key: string]: number }> {
     try {
       // Get all unique term records
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6604,7 +6604,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as Array<{
+      const teachingRecords = response.rows as unknown as Array<{
         course_code: string;
         term_code: string;
       }>;
@@ -6646,7 +6646,7 @@ export class CourseService {
   static async getServiceLearningStatistics(): Promise<{ [key: string]: number }> {
     try {
       // Get all unique service learning records
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6655,7 +6655,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as Array<{
+      const teachingRecords = response.rows as unknown as Array<{
         course_code: string;
         service_learning: string | null;
       }>;
@@ -6725,7 +6725,7 @@ export class CourseService {
       const uniqueSessionTypes = [...new Set(instructorDetails.map(detail => detail.sessionType))];
 
       // Query all relevant teaching records
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6738,7 +6738,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      const teachingRecords = response.rows as unknown as TeachingRecord[];
       
       // Create a map for quick lookup by composite key
       const recordsMap = new Map<string, string>();
@@ -6768,7 +6768,7 @@ export class CourseService {
    */
   static async getInstructorTeachingLanguages(instructorName: string): Promise<string[]> {
     try {
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6779,7 +6779,7 @@ export class CourseService {
         ]
       );
 
-      const teachingRecords = response.documents as unknown as TeachingRecord[];
+      const teachingRecords = response.rows as unknown as TeachingRecord[];
       
       // Get unique teaching languages in chronological order
       const languageSet = new Set<string>();
@@ -6833,7 +6833,7 @@ export class CourseService {
         
         try {
           // Fetch all teaching records for this batch of instructors
-          const response = await databases.listDocuments(
+          const response = await tablesDB.listRows(
             this.DATABASE_ID,
             this.TEACHING_RECORDS_COLLECTION_ID,
             [
@@ -6844,7 +6844,7 @@ export class CourseService {
             ]
           );
 
-          const teachingRecords = response.documents as unknown as TeachingRecord[];
+          const teachingRecords = response.rows as unknown as TeachingRecord[];
           totalRecords += teachingRecords.length;
           console.log(`🔍 Batch ${batchIndex + 1}: Found ${teachingRecords.length} teaching records`);
           
@@ -6910,7 +6910,7 @@ export class CourseService {
     try {
       const currentTermCode = getCurrentTermCode();
       
-      const response = await databases.listDocuments(
+      const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
         [
@@ -6921,11 +6921,11 @@ export class CourseService {
         ]
       );
 
-      if (response.documents.length === 0) {
+      if (response.rows.length === 0) {
         return null;
       }
 
-      const teachingRecord = response.documents[0] as unknown as TeachingRecord;
+      const teachingRecord = response.rows[0] as unknown as TeachingRecord;
       return teachingRecord.teaching_language || null;
     } catch (error) {
       console.error('Error fetching instructor current term teaching language:', error);
@@ -6954,7 +6954,7 @@ export class CourseService {
       // 🚀 分批處理避免URL過長
       if (instructorNames.length <= BATCH_SIZE) {
         // 小批量，直接查詢
-        const response = await databases.listDocuments(
+        const response = await tablesDB.listRows(
           this.DATABASE_ID,
           this.TEACHING_RECORDS_COLLECTION_ID,
           [
@@ -6965,7 +6965,7 @@ export class CourseService {
           ]
         );
 
-        const teachingRecords = response.documents as unknown as TeachingRecord[];
+        const teachingRecords = response.rows as unknown as TeachingRecord[];
         
         teachingRecords.forEach(record => {
           if (record.teaching_language && !result.get(record.instructor_name)) {
@@ -6985,7 +6985,7 @@ export class CourseService {
 
         const batchPromises = batches.map(async (batch, index) => {
           try {
-            const response = await databases.listDocuments(
+            const response = await tablesDB.listRows(
               this.DATABASE_ID,
               this.TEACHING_RECORDS_COLLECTION_ID,
               [
@@ -6996,7 +6996,7 @@ export class CourseService {
               ]
             );
 
-            const teachingRecords = response.documents as unknown as TeachingRecord[];
+            const teachingRecords = response.rows as unknown as TeachingRecord[];
             console.log(`✅ Instructor current term batch ${index + 1}/${batches.length}: Found ${teachingRecords.length} records`);
             
             return teachingRecords;

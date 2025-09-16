@@ -1,96 +1,43 @@
 /**
  * Simple in-memory cache with TTL (Time To Live) support
  */
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number; // Time to live in milliseconds
-}
-
 class MemoryCache {
-  private cache = new Map<string, CacheEntry<any>>();
-
   /**
-   * Set a value in cache with TTL
-   * @param key Cache key
-   * @param value Value to cache
-   * @param ttl Time to live in milliseconds (default: 5 minutes)
+   * Cache disabled: storing values is now a no-op to avoid extra background refreshes.
    */
-  set<T>(key: string, value: T, ttl: number = 5 * 60 * 1000): void {
-    const entry: CacheEntry<T> = {
-      data: value,
-      timestamp: Date.now(),
-      ttl
-    };
-    this.cache.set(key, entry);
+  set<T>(_key: string, _value: T, _ttl: number = 5 * 60 * 1000): void {
+    // no-op
   }
 
   /**
-   * Get a value from cache
-   * @param key Cache key
-   * @returns Cached value or null if not found/expired
+   * Always return null so callers fall back to live queries.
    */
-  get<T>(key: string): T | null {
-    const entry = this.cache.get(key);
-    if (!entry) {
-      return null;
-    }
-
-    const now = Date.now();
-    const isExpired = now - entry.timestamp > entry.ttl;
-    
-    if (isExpired) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return entry.data;
+  get<T>(_key: string): T | null {
+    return null;
   }
 
-  /**
-   * Check if a key exists and is not expired
-   * @param key Cache key
-   */
-  has(key: string): boolean {
-    return this.get(key) !== null;
+  has(_key: string): boolean {
+    return false;
   }
 
-  /**
-   * Delete a specific key from cache
-   * @param key Cache key
-   */
-  delete(key: string): void {
-    this.cache.delete(key);
+  delete(_key: string): void {
+    // no-op
   }
 
-  /**
-   * Clear all cache entries
-   */
   clear(): void {
-    this.cache.clear();
+    // no-op
   }
 
-  /**
-   * Get cache size
-   */
   size(): number {
-    return this.cache.size;
+    return 0;
   }
 
-  /**
-   * Clean up expired entries
-   */
   cleanup(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
-      if (now - entry.timestamp > entry.ttl) {
-        this.cache.delete(key);
-      }
-    }
+    // no-op
   }
 }
 
-// Export singleton instance
+// Export singleton instance (now effectively disabled)
 export const courseStatsCache = new MemoryCache();
 
 // Cache keys constants

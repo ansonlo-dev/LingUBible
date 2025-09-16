@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StatsCard } from "@/components/features/reviews/StatsCard";
 import { PopularItemCard } from "@/components/features/reviews/PopularItemCard";
-import { LandingPageCardSkeleton } from "@/components/features/reviews/LandingPageCardSkeleton";
-import { LoadingProgress } from "@/components/ui/loading-progress";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
@@ -20,7 +18,6 @@ import { useMainPageStats } from '@/hooks/useMainPageStats';
 import { Link, useNavigate } from 'react-router-dom';
 import { CourseService } from '@/services/api/courseService';
 import { CourseWithStats, InstructorWithDetailedStats } from '@/services/api/courseService';
-import { globalDataManager } from '@/utils/globalDataManager';
 import { translateDepartmentName } from '@/utils/textUtils';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
@@ -139,48 +136,36 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [user, refreshUser]);
 
-  // 🚀 超級優化：使用全域數據管理器，避免重複載入
+  // 🚀 超級優化：智能並行載入策略，大幅縮短首次載入時間
   useEffect(() => {
     const loadContentOptimized = async () => {
       try {
         setPopularLoading(true);
         setPopularError(null);
 
-        console.log('🚀 Loading from GlobalDataManager...');
-        
-        // 🚀 使用全域數據管理器 - 只載入一次，所有地方重用
-        const [popularCourses, popularInstructors] = await Promise.all([
-          globalDataManager.getPopularCourses(),
-          globalDataManager.getPopularInstructors()
+        // 🚀 策略優化：檢查是否有緩存，決定載入策略
+        console.log('🚀 Loading all content in parallel for optimal speed...');
+        const [popularCourses, popularInstructors, topCourses, topInstructors] = await Promise.all([
+          CourseService.getPopularCourses(),
+          CourseService.getPopularInstructorsWithDetailedStatsOptimized(),
+          CourseService.getTopCoursesByGPA(),
+          CourseService.getTopInstructorsByGPAOptimized()
         ]);
-        
-        // 立即顯示核心內容
+
+        // 一次性設置所有數據，避免多次重渲染
         setPopularCourses(popularCourses);
         setPopularInstructors(popularInstructors);
-        
-        console.log('✅ Core content loaded from GlobalDataManager');
-        
-        // 載入次要內容（如果尚未載入則會觸發載入，如果已載入則立即返回）
-        setTimeout(async () => {
-          try {
-            const [topCourses, topInstructors] = await Promise.all([
-              globalDataManager.getTopCourses(),
-              globalDataManager.getTopInstructors()
-            ]);
-            
-            setTopCourses(topCourses);
-            setTopInstructors(topInstructors);
-            
-            console.log('✅ Additional content loaded from GlobalDataManager');
-          } catch (error) {
-            console.warn('Non-critical: Failed to load additional content:', error);
-          }
-        }, 50); // 更短延遲，因為可能已經緩存了
-
-        // 核心內容載入完成，立即隱藏載入指示器
+        setTopCourses(topCourses);
+        setTopInstructors(topInstructors);
         setPopularLoading(false);
         
-        console.log('✅ Landing page loaded using GlobalDataManager');
+        console.log('✅ All landing page content loaded successfully');
+        console.log('📊 Data loaded:', {
+          popularCourses: popularCourses.length,
+          popularInstructors: popularInstructors.length,
+          topCourses: topCourses.length,
+          topInstructors: topInstructors.length
+        });
 
       } catch (error) {
         console.error('Error loading landing page content:', error);
@@ -548,16 +533,12 @@ const Index = () => {
 
             <TabsContent value="courses" className="space-y-6">
               {popularLoading ? (
-                <>
-                  <div className="max-w-md mx-auto mb-6">
-                    <LoadingProgress
-                      isLoading={popularLoading}
-                      variant="gradient"
-                      className="mb-4"
-                    />
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
                   </div>
-                  <LandingPageCardSkeleton type="course" count={6} />
-                </>
+                </div>
               ) : popularError ? (
                 <div className="text-center py-12">
                   <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -572,7 +553,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {popularCourses.slice(0, 6).map((course) => (
+                  {popularCourses.map((course) => (
                     <PopularItemCard
                       key={course.$id}
                       type="course"
@@ -605,16 +586,12 @@ const Index = () => {
 
             <TabsContent value="instructors" className="space-y-6">
               {popularLoading ? (
-                <>
-                  <div className="max-w-md mx-auto mb-6">
-                    <LoadingProgress
-                      isLoading={popularLoading}
-                      variant="gradient"
-                      className="mb-4"
-                    />
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
                   </div>
-                  <LandingPageCardSkeleton type="instructor" count={6} />
-                </>
+                </div>
               ) : popularError ? (
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -629,7 +606,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {popularInstructors.slice(0, 6).map((instructor) => (
+                  {popularInstructors.map((instructor) => (
                     <PopularItemCard
                       key={instructor.$id}
                       type="instructor"
@@ -658,16 +635,12 @@ const Index = () => {
 
             <TabsContent value="topCourses" className="space-y-6">
               {popularLoading ? (
-                <>
-                  <div className="max-w-md mx-auto mb-6">
-                    <LoadingProgress
-                      isLoading={popularLoading}
-                      variant="gradient"
-                      className="mb-4"
-                    />
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
                   </div>
-                  <LandingPageCardSkeleton type="course" count={6} />
-                </>
+                </div>
               ) : popularError ? (
                 <div className="text-center py-12">
                   <BookText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -682,7 +655,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {topCourses.slice(0, 6).map((course) => (
+                  {topCourses.map((course) => (
                     <PopularItemCard
                       key={course.$id}
                       type="course"
@@ -715,16 +688,12 @@ const Index = () => {
 
             <TabsContent value="topInstructors" className="space-y-6">
               {popularLoading ? (
-                <>
-                  <div className="max-w-md mx-auto mb-6">
-                    <LoadingProgress
-                      isLoading={popularLoading}
-                      variant="gradient"
-                      className="mb-4"
-                    />
+                <div className="flex justify-center items-center py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
                   </div>
-                  <LandingPageCardSkeleton type="instructor" count={6} />
-                </>
+                </div>
               ) : popularError ? (
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -739,7 +708,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                  {topInstructors.slice(0, 6).map((instructor) => (
+                  {topInstructors.map((instructor) => (
                     <PopularItemCard
                       key={instructor.$id}
                       type="instructor"
