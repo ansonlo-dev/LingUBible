@@ -9,7 +9,7 @@ export interface OAuthLinkResult {
 
 // 檢查郵箱是否為學生郵箱
 const isStudentEmail = (email: string): boolean => {
-  return email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
+  return email && (email.endsWith('@ln.hk'));
 };
 
 // Google OAuth 郵箱預檢查
@@ -117,7 +117,7 @@ export const oauthService = {
     try {
       // 🚨 SECURITY: Enhanced warning for OAuth login
       console.warn('🚨 SECURITY NOTICE: Google OAuth login will create account immediately');
-      console.warn('⚠️ Google 登入提醒：只有 @ln.hk 或 @ln.edu.hk 郵箱的學生才能使用此功能');
+      console.warn('⚠️ Google 登入提醒：只有 @ln.hk 郵箱的學生才能使用此功能');
       console.warn('⚠️ 非學生郵箱創建的帳戶將被系統自動刪除');
       console.warn('🛡️ Backend validation will immediately delete non-student accounts');
       

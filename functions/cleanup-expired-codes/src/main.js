@@ -18,7 +18,7 @@ export default async ({ req, res, log, error }) => {
   // Check if email is a student email
   const isStudentEmail = (email) => {
     if (!email || typeof email !== 'string') return false;
-    return email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk');
+    return email.endsWith('@ln.hk');
   };
 
   // Safe JSON parsing for Bun

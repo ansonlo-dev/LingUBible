@@ -26,8 +26,8 @@ class AvatarService {
         ]
       });
 
-      if (response.documents.length > 0) {
-        const doc = response.documents[0] as unknown as UserAvatarDocument;
+      if (response.rows.length > 0) {
+        const doc = response.rows[0] as unknown as UserAvatarDocument;
         return {
           animal: doc.animal,
           backgroundIndex: doc.backgroundIndex,
@@ -59,11 +59,11 @@ class AvatarService {
           ]
         });
 
-        if (response.documents.length > 0) {
+        if (response.rows.length > 0) {
           await tablesDB.updateRow({
             databaseId: DATABASE_ID,
             tableId: COLLECTION_ID,
-            rowId: response.documents[0].$id,
+            rowId: response.rows[0].$id,
             data: {
               animal: avatar.animal,
               backgroundIndex: avatar.backgroundIndex,
@@ -105,11 +105,11 @@ class AvatarService {
         ]
       });
 
-      if (response.documents.length > 0) {
+      if (response.rows.length > 0) {
         await tablesDB.deleteRow({
           databaseId: DATABASE_ID,
           tableId: COLLECTION_ID,
-          rowId: response.documents[0].$id
+          rowId: response.rows[0].$id
         });
       }
 
@@ -135,7 +135,7 @@ class AvatarService {
         ]
       });
 
-      const docs = response.documents as unknown as UserAvatarDocument[];
+      const docs = response.rows as unknown as UserAvatarDocument[];
       
       // 統計動物使用頻率
       const animalCounts: { [key: string]: number } = {};

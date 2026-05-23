@@ -199,8 +199,8 @@ class RegisteredUsersService {
           queries: []
         });
 
-        if (statsResponse.documents.length > 0) {
-          const latestStats = statsResponse.documents[0];
+        if (statsResponse.rows.length > 0) {
+          const latestStats = statsResponse.rows[0];
           return latestStats.totalUsers || 0;
         }
       } catch (statsError) {

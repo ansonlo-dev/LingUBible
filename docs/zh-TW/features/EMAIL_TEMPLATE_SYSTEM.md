@@ -177,7 +177,7 @@ curl -X POST https://fra.cloud.appwrite.io/v1/functions/send-verification/execut
   -H "Content-Type: application/json" \
   -H "X-Appwrite-Project: lingubible" \
   -d '{
-    "body": "{\"action\":\"send\",\"email\":\"test@ln.edu.hk\",\"language\":\"zh-TW\"}", 
+    "body": "{\"action\":\"send\",\"email\":\"test@ln.hk\",\"language\":\"zh-TW\"}", 
     "async": false, 
     "method": "POST"
   }'

@@ -86,28 +86,28 @@ class AppwriteUserStatsService {
       console.log('AppwriteUserStats: 用戶登入', { userId, sessionId });
 
       // 檢查是否已有活躍的用戶會話
-      const existingUserSessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [
+      const existingUserSessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [
           Query.equal('userId', userId),
           Query.equal('isVisitor', false),
           Query.greaterThan('lastPing', new Date(Date.now() - this.SESSION_TIMEOUT).toISOString())
         ]
-      );
+      });
 
-      if (existingUserSessions.documents.length > 0) {
+      if (existingUserSessions.rows.length > 0) {
         // 更新現有用戶會話
-        const existingSession = existingUserSessions.documents[0];
-        await this.tablesDB.updateRow(
-          this.DATABASE_ID,
-          this.SESSIONS_COLLECTION_ID,
-          existingSession.$id,
-          {
+        const existingSession = existingUserSessions.rows[0];
+        await this.tablesDB.updateRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.SESSIONS_COLLECTION_ID,
+          rowId: existingSession.$id,
+          data: {
             lastPing: now,
             sessionId: sessionId
           }
-        );
+        });
         
         // 停止舊的 ping 系統
         const oldSessionId = this.activeSessions.get(userId);
@@ -128,43 +128,43 @@ class AppwriteUserStatsService {
       }
 
       // 檢查是否有訪客會話需要轉換
-      const visitorSessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [
+      const visitorSessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [
           Query.equal('isVisitor', true),
           Query.greaterThan('lastPing', new Date(Date.now() - this.SESSION_TIMEOUT).toISOString())
         ]
-      );
+      });
 
-      if (visitorSessions.documents.length > 0) {
+      if (visitorSessions.rows.length > 0) {
         const currentDeviceInfo = this.getDeviceInfo();
         
         // 查找當前設備的訪客會話
-        const currentDeviceVisitorSession = visitorSessions.documents.find(
+        const currentDeviceVisitorSession = visitorSessions.rows.find(
           session => session.deviceInfo === currentDeviceInfo
         );
 
         if (currentDeviceVisitorSession) {
           // 轉換當前設備的訪客會話為用戶會話
-          await this.tablesDB.updateRow(
-            this.DATABASE_ID,
-            this.SESSIONS_COLLECTION_ID,
-            currentDeviceVisitorSession.$id,
-            {
+          await this.tablesDB.updateRow({
+            databaseId: this.DATABASE_ID,
+            tableId: this.SESSIONS_COLLECTION_ID,
+            rowId: currentDeviceVisitorSession.$id,
+            data: {
               userId: userId,
               isVisitor: false,
               loginTime: now,
               lastPing: now,
               sessionId: sessionId
             },
-            [
+            permissions: [
               // 更新文檔級權限
               Permission.read(Role.user(userId)),
               Permission.update(Role.user(userId)),
               Permission.delete(Role.user(userId))
             ]
-          );
+          });
 
           // 更新會話映射
           this.activeSessions.set(userId, sessionId);
@@ -189,18 +189,18 @@ class AppwriteUserStatsService {
         isVisitor: false
       };
 
-      await this.tablesDB.createRow(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        ID.unique(),
-        sessionData,
-        [
+      await this.tablesDB.createRow({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        rowId: ID.unique(),
+        data: sessionData,
+        permissions: [
           // 文檔級權限：只有創建者可以訪問
           Permission.read(Role.user(userId)),
           Permission.update(Role.user(userId)),
           Permission.delete(Role.user(userId))
         ]
-      );
+      });
 
       // 更新會話映射
       this.activeSessions.set(userId, sessionId);
@@ -236,19 +236,19 @@ class AppwriteUserStatsService {
       }
 
       // 查找並刪除會話
-      const sessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [Query.equal('sessionId', targetSessionId)]
-      );
+      const sessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [Query.equal('sessionId', targetSessionId)]
+      });
 
-      if (sessions.documents.length > 0) {
-        const session = sessions.documents[0] as unknown as UserSession;
+      if (sessions.rows.length > 0) {
+        const session = sessions.rows[0] as unknown as UserSession;
         
         await this.tablesDB.deleteRow({
           databaseId: this.DATABASE_ID,
           tableId: this.SESSIONS_COLLECTION_ID,
-          rowId: sessions.documents[0].$id
+          rowId: sessions.rows[0].$id
         });
 
         // 清理會話映射
@@ -272,21 +272,21 @@ class AppwriteUserStatsService {
         return false;
       }
 
-      const sessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [Query.equal('sessionId', sessionId)]
-      );
+      const sessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [Query.equal('sessionId', sessionId)]
+      });
 
-      if (sessions.documents.length > 0) {
-        await this.tablesDB.updateRow(
-          this.DATABASE_ID,
-          this.SESSIONS_COLLECTION_ID,
-          sessions.documents[0].$id,
-          {
+      if (sessions.rows.length > 0) {
+        await this.tablesDB.updateRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.SESSIONS_COLLECTION_ID,
+          rowId: sessions.rows[0].$id,
+          data: {
             lastPing: new Date().toISOString()
           }
-        );
+        });
 
         console.log(`Ping 發送成功 - 會話: ${sessionId}`);
         return true;
@@ -364,19 +364,19 @@ class AppwriteUserStatsService {
       const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       
       // 獲取活躍會話
-      const activeSessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [Query.greaterThan('lastPing', cutoffTime)]
-      );
+      const activeSessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [Query.greaterThan('lastPing', cutoffTime)]
+      });
       
-      console.log('AppwriteUserStats: 活躍會話', activeSessions.documents);
+      console.log('AppwriteUserStats: 活躍會話', activeSessions.rows);
       
       // 分別計算用戶和訪客
       let onlineUsers = 0;
       let onlineVisitors = 0;
       
-      activeSessions.documents.forEach(session => {
+      activeSessions.rows.forEach(session => {
         if (session.isVisitor) {
           onlineVisitors++;
         } else {
@@ -387,11 +387,11 @@ class AppwriteUserStatsService {
       // 獲取總用戶數（這需要訪問用戶集合的權限）
       let totalUsers = 0;
       try {
-        const users = await this.tablesDB.listRows(
-          this.DATABASE_ID,
-          'users', // 假設用戶集合名稱
-          [Query.limit(1)]
-        );
+        const users = await this.tablesDB.listRows({
+          databaseId: this.DATABASE_ID,
+          tableId: 'users', // 假設用戶集合名稱
+          queries: [Query.limit(1)]
+        });
         totalUsers = users.total;
       } catch (error) {
         console.warn('無法獲取總用戶數:', error);
@@ -429,14 +429,14 @@ class AppwriteUserStatsService {
     try {
       const expiredTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       
-      const expiredSessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [Query.lessThan('lastPing', expiredTime)]
-      );
+      const expiredSessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [Query.lessThan('lastPing', expiredTime)]
+      });
 
       // 批量刪除過期會話
-      const deletePromises = expiredSessions.documents.map(session =>
+      const deletePromises = expiredSessions.rows.map(session =>
         this.tablesDB.deleteRow({
           databaseId: this.DATABASE_ID,
           tableId: this.SESSIONS_COLLECTION_ID,
@@ -446,8 +446,8 @@ class AppwriteUserStatsService {
 
       await Promise.all(deletePromises);
 
-      if (expiredSessions.documents.length > 0) {
-        console.log(`🧹 清理了 ${expiredSessions.documents.length} 個過期會話`);
+      if (expiredSessions.rows.length > 0) {
+        console.log(`🧹 清理了 ${expiredSessions.rows.length} 個過期會話`);
       }
 
     } catch (error) {
@@ -509,12 +509,12 @@ class AppwriteUserStatsService {
 
       updates.lastUpdated = new Date().toISOString();
 
-      await this.tablesDB.updateRow(
-        this.DATABASE_ID,
-        this.STATS_COLLECTION_ID,
-        statsDoc.$id,
-        updates
-      );
+      await this.tablesDB.updateRow({
+        databaseId: this.DATABASE_ID,
+        tableId: this.STATS_COLLECTION_ID,
+        rowId: statsDoc.$id,
+        data: updates
+      });
 
     } catch (error) {
       console.error('更新統計數據失敗:', error);
@@ -524,27 +524,27 @@ class AppwriteUserStatsService {
   // 獲取或創建統計文檔
   private async getOrCreateStatsDocument(): Promise<any> {
     try {
-      const stats = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.STATS_COLLECTION_ID
-      );
+      const stats = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.STATS_COLLECTION_ID
+      });
 
-      if (stats.documents.length > 0) {
-        return stats.documents[0];
+      if (stats.rows.length > 0) {
+        return stats.rows[0];
       }
 
       // 創建新的統計文檔
-      return await this.tablesDB.createRow(
-        this.DATABASE_ID,
-        this.STATS_COLLECTION_ID,
-        ID.unique(),
-        {
+      return await this.tablesDB.createRow({
+        databaseId: this.DATABASE_ID,
+        tableId: this.STATS_COLLECTION_ID,
+        rowId: ID.unique(),
+        data: {
           totalUsers: 0,
           todayLogins: 0,
           thisMonthLogins: 0,
           lastUpdated: new Date().toISOString()
         }
-      );
+      });
 
     } catch (error) {
       console.error('獲取統計文檔失敗:', error);
@@ -555,13 +555,13 @@ class AppwriteUserStatsService {
   // 檢查用戶是否之前登入過
   private async hasUserLoggedInBefore(userId: string): Promise<boolean> {
     try {
-      const users = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        'logged-users',
-        [Query.equal('userId', userId)]
-      );
+      const users = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: 'logged-users',
+        queries: [Query.equal('userId', userId)]
+      });
 
-      return users.documents.length > 0;
+      return users.rows.length > 0;
     } catch (error) {
       return false;
     }
@@ -570,15 +570,15 @@ class AppwriteUserStatsService {
   // 標記用戶已登入過
   private async markUserAsLoggedIn(userId: string): Promise<void> {
     try {
-      await this.tablesDB.createRow(
-        this.DATABASE_ID,
-        'logged-users',
-        ID.unique(),
-        {
+      await this.tablesDB.createRow({
+        databaseId: this.DATABASE_ID,
+        tableId: 'logged-users',
+        rowId: ID.unique(),
+        data: {
           userId,
           firstLogin: new Date().toISOString()
         }
-      );
+      });
     } catch (error) {
       console.error('標記用戶失敗:', error);
     }
@@ -816,31 +816,31 @@ class AppwriteUserStatsService {
   
       
       // 首先檢查是否已有當前設備的活躍訪客會話
-      const existingVisitorSessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [
+      const existingVisitorSessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [
           Query.equal('isVisitor', true),
           Query.greaterThan('lastPing', cutoffTime)
         ]
-      );
+      });
 
       // 查找當前設備的活躍訪客會話
-      const currentDeviceSession = existingVisitorSessions.documents.find(
+      const currentDeviceSession = existingVisitorSessions.rows.find(
         session => session.deviceInfo === currentDeviceInfo
       );
 
       if (currentDeviceSession) {
         // 重用現有會話，更新 ping 時間
         const now = new Date().toISOString();
-        await this.tablesDB.updateRow(
-          this.DATABASE_ID,
-          this.SESSIONS_COLLECTION_ID,
-          currentDeviceSession.$id,
-          {
+        await this.tablesDB.updateRow({
+          databaseId: this.DATABASE_ID,
+          tableId: this.SESSIONS_COLLECTION_ID,
+          rowId: currentDeviceSession.$id,
+          data: {
             lastPing: now
           }
-        );
+        });
 
         // 開始 ping 系統
         this.startPingForSession(currentDeviceSession.sessionId);
@@ -865,18 +865,18 @@ class AppwriteUserStatsService {
         ipAddress: await this.getClientIP()
       };
       
-      const session = await this.tablesDB.createRow(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        ID.unique(),
-        sessionData,
-        [
+      const session = await this.tablesDB.createRow({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        rowId: ID.unique(),
+        data: sessionData,
+        permissions: [
           // 文檔級權限：允許任何人讀取和更新訪客會話
           Permission.read(Role.any()),
           Permission.update(Role.any()),
           Permission.delete(Role.any())
         ]
-      );
+      });
       
       // 開始 ping 系統
       this.startPingForSession(sessionId);
@@ -895,27 +895,27 @@ class AppwriteUserStatsService {
       const now = new Date().toISOString();
       
       // 查找訪客會話
-      const sessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [Query.equal('sessionId', visitorSessionId)]
-      );
+      const sessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [Query.equal('sessionId', visitorSessionId)]
+      });
 
-      if (sessions.documents.length > 0) {
-        const session = sessions.documents[0] as unknown as UserSession;
+      if (sessions.rows.length > 0) {
+        const session = sessions.rows[0] as unknown as UserSession;
         
         if (session.isVisitor) {
           // 轉換為用戶會話
-          await this.tablesDB.updateRow(
-            this.DATABASE_ID,
-            this.SESSIONS_COLLECTION_ID,
-            session.$id!,
-            {
+          await this.tablesDB.updateRow({
+            databaseId: this.DATABASE_ID,
+            tableId: this.SESSIONS_COLLECTION_ID,
+            rowId: session.$id!,
+            data: {
               userId: userId,
               isVisitor: false,
               lastPing: now
             }
-          );
+          });
 
           // 更新會話映射
           this.activeSessions.set(userId, visitorSessionId);
@@ -944,17 +944,17 @@ class AppwriteUserStatsService {
       const cutoffTime = new Date(Date.now() - this.SESSION_TIMEOUT).toISOString();
       const currentDeviceInfo = this.getDeviceInfo();
       
-      const visitorSessions = await this.tablesDB.listRows(
-        this.DATABASE_ID,
-        this.SESSIONS_COLLECTION_ID,
-        [
+      const visitorSessions = await this.tablesDB.listRows({
+        databaseId: this.DATABASE_ID,
+        tableId: this.SESSIONS_COLLECTION_ID,
+        queries: [
           Query.equal('isVisitor', true),
           Query.greaterThan('lastPing', cutoffTime)
         ]
-      );
+      });
 
       // 只刪除當前設備的訪客會話
-      const currentDeviceVisitorSessions = visitorSessions.documents.filter(
+      const currentDeviceVisitorSessions = visitorSessions.rows.filter(
         session => session.deviceInfo === currentDeviceInfo
       );
 

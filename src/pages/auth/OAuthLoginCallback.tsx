@@ -99,7 +99,7 @@ export default function OAuthLoginCallback() {
             
             // 檢查郵箱是否為學生郵箱
             const email = existingUser.email;
-            const isStudentEmail = email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
+            const isStudentEmail = email && (email.endsWith('@ln.hk'));
             
                          if (!isStudentEmail) {
                console.error('❌ 現有會話不是學生郵箱:', email);
@@ -225,7 +225,7 @@ export default function OAuthLoginCallback() {
           
           // 檢查郵箱是否為學生郵箱
           const email = currentUser.email;
-          const isStudentEmail = email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
+          const isStudentEmail = email && (email.endsWith('@ln.hk'));
           
           console.log('🔍 OAuth 登入郵箱檢查:', { email, isStudentEmail });
           

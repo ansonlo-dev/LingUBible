@@ -12,7 +12,7 @@ export default async ({ req, res, log, error }) => {
 
   // Student email validation function
   const isStudentEmail = (email) => {
-    return email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
+    return email && (email.endsWith('@ln.hk'));
   };
 
   try {

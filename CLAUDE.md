@@ -1,417 +1,66 @@
-# Task Master AI - Claude Code Integration Guide
+# CLAUDE.md
 
-## Essential Commands
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-### Core Workflow Commands
+## Project
 
-```bash
-# Project Setup
-task-master init                                    # Initialize Task Master in current project
-task-master parse-prd .taskmaster/docs/prd.txt      # Generate tasks from PRD document
-task-master models --setup                        # Configure AI models interactively
+LingUBible (嶺南大學課程評價平台) — a course & lecturer review platform for Lingnan University students. React 18 + TypeScript SPA, Vite 7 build, Tailwind + shadcn/ui, Appwrite as the backend (BaaS), deployed to Cloudflare Workers/Pages (lingubible.com).
 
-# Daily Development Workflow
-task-master list                                   # Show all tasks with status
-task-master next                                   # Get next available task to work on
-task-master show <id>                             # View detailed task information (e.g., task-master show 1.2)
-task-master set-status --id=<id> --status=done    # Mark task complete
+## Commands
 
-# Task Management
-task-master add-task --prompt="description" --research        # Add new task with AI assistance
-task-master expand --id=<id> --research --force              # Break task into subtasks
-task-master update-task --id=<id> --prompt="changes"         # Update specific task
-task-master update --from=<id> --prompt="changes"            # Update multiple tasks from ID onwards
-task-master update-subtask --id=<id> --prompt="notes"        # Add implementation notes to subtask
-
-# Analysis & Planning
-task-master analyze-complexity --research          # Analyze task complexity
-task-master complexity-report                      # View complexity analysis
-task-master expand --all --research               # Expand all eligible tasks
-
-# Dependencies & Organization
-task-master add-dependency --id=<id> --depends-on=<id>       # Add task dependency
-task-master move --from=<id> --to=<id>                       # Reorganize task hierarchy
-task-master validate-dependencies                            # Check for dependency issues
-task-master generate                                         # Update task markdown files (usually auto-called)
-```
-
-## Key Files & Project Structure
-
-### Core Files
-
-- `.taskmaster/tasks/tasks.json` - Main task data file (auto-managed)
-- `.taskmaster/config.json` - AI model configuration (use `task-master models` to modify)
-- `.taskmaster/docs/prd.txt` - Product Requirements Document for parsing
-- `.taskmaster/tasks/*.txt` - Individual task files (auto-generated from tasks.json)
-- `.env` - API keys for CLI usage
-
-### Claude Code Integration Files
-
-- `CLAUDE.md` - Auto-loaded context for Claude Code (this file)
-- `.claude/settings.json` - Claude Code tool allowlist and preferences
-- `.claude/commands/` - Custom slash commands for repeated workflows
-- `.mcp.json` - MCP server configuration (project-specific)
-
-### Directory Structure
-
-```
-project/
-├── .taskmaster/
-│   ├── tasks/              # Task files directory
-│   │   ├── tasks.json      # Main task database
-│   │   ├── task-1.md      # Individual task files
-│   │   └── task-2.md
-│   ├── docs/              # Documentation directory
-│   │   ├── prd.txt        # Product requirements
-│   ├── reports/           # Analysis reports directory
-│   │   └── task-complexity-report.json
-│   ├── templates/         # Template files
-│   │   └── example_prd.txt  # Example PRD template
-│   └── config.json        # AI models & settings
-├── .claude/
-│   ├── settings.json      # Claude Code configuration
-│   └── commands/         # Custom slash commands
-├── .env                  # API keys
-├── .mcp.json            # MCP configuration
-└── CLAUDE.md            # This file - auto-loaded by Claude Code
-```
-
-## MCP Integration
-
-Task Master provides an MCP server that Claude Code can connect to. Configure in `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "task-master-ai": {
-      "command": "npx",
-      "args": ["-y", "--package=task-master-ai", "task-master-ai"],
-      "env": {
-        "ANTHROPIC_API_KEY": "your_key_here",
-        "PERPLEXITY_API_KEY": "your_key_here",
-        "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
-        "GOOGLE_API_KEY": "GOOGLE_API_KEY_HERE",
-        "XAI_API_KEY": "XAI_API_KEY_HERE",
-        "OPENROUTER_API_KEY": "OPENROUTER_API_KEY_HERE",
-        "MISTRAL_API_KEY": "MISTRAL_API_KEY_HERE",
-        "AZURE_OPENAI_API_KEY": "AZURE_OPENAI_API_KEY_HERE",
-        "OLLAMA_API_KEY": "OLLAMA_API_KEY_HERE"
-      }
-    }
-  }
-}
-```
-
-### Essential MCP Tools
-
-```javascript
-help; // = shows available taskmaster commands
-// Project setup
-initialize_project; // = task-master init
-parse_prd; // = task-master parse-prd
-
-// Daily workflow
-get_tasks; // = task-master list
-next_task; // = task-master next
-get_task; // = task-master show <id>
-set_task_status; // = task-master set-status
-
-// Task management
-add_task; // = task-master add-task
-expand_task; // = task-master expand
-update_task; // = task-master update-task
-update_subtask; // = task-master update-subtask
-update; // = task-master update
-
-// Analysis
-analyze_project_complexity; // = task-master analyze-complexity
-complexity_report; // = task-master complexity-report
-```
-
-## Claude Code Workflow Integration
-
-### Standard Development Workflow
-
-#### 1. Project Initialization
+This project uses **Bun** (not npm). The CLI enforces this via `bun run ensure:bun-only`.
 
 ```bash
-# Initialize Task Master
-task-master init
-
-# Create or obtain PRD, then parse it
-task-master parse-prd .taskmaster/docs/prd.txt
-
-# Analyze complexity and expand tasks
-task-master analyze-complexity --research
-task-master expand --all --research
+bun install               # install deps
+bun run dev               # dev server on :8080 (--host already in the script)
+bun run build             # production build (copies public/index.html → root, skips font processing)
+bun run preview           # serve the built bundle
+bun run lint              # eslint
+bun run refactor:check    # = build + success echo; the de-facto "did I break it" check
 ```
 
-If tasks already exist, another PRD can be parsed (with new information only!) using parse-prd with --append flag. This will add the generated tasks to the existing list of tasks..
+There is **no automated test suite**. Verify changes by building (`bun run refactor:check`) and manually exercising critical flows (auth, review submission, localized views) in the dev server.
 
-#### 2. Daily Development Loop
+Build variants worth knowing: `build:cf-fast` is what Cloudflare runs (see `wrangler.toml`); `build:fast` / `SKIP_FONT_PROCESSING=true` skip the LXGW WenKai font subsetting step. Font tooling lives behind `bun run fonts:*` (e.g. `fonts:rebuild`).
+
+### Deployment
 
 ```bash
-# Start each session
-task-master next                           # Find next available task
-task-master show <id>                     # Review task details
-
-# During implementation, check in code context into the tasks and subtasks
-task-master update-subtask --id=<id> --prompt="implementation notes..."
-
-# Complete tasks
-task-master set-status --id=<id> --status=done
+bun run deploy:staging       # Cloudflare Workers staging (lingubible-staging)
+bun run deploy:production    # Cloudflare Workers production (lingubible.com)
+./deploy-functions-simple.sh # Appwrite cloud functions (deployed independently of the frontend)
 ```
 
-#### 3. Multi-Claude Workflows
+## Architecture
 
-For complex projects, use multiple Claude Code sessions:
+### Frontend shell (`src/App.tsx`)
+Provider nesting (outer → inner): `QueryClientProvider` → `TooltipProvider` → `LanguageProvider` → `RecaptchaProvider` → `AuthProvider`. Routing is React Router with **two layout modes**: auth pages (`/login`, `/register`, `/oauth/*`, …) render standalone; everything else renders inside the main layout (sidebar + header + footer) via a nested `<Routes>`. Theme is applied imperatively to `documentElement` *before* React renders to avoid a flash (see `initializeTheme` in App.tsx and the `theme` object in `src/lib/utils.ts`). There is substantial custom mobile handling (swipe-to-open sidebar, overlay mode, `useEnhancedResponsive`).
 
-```bash
-# Terminal 1: Main implementation
-cd project && claude
+### Data layer — `src/services/api/courseService.ts`
+**This 7000-line static-method `CourseService` class is the heart of the app.** Nearly all domain data (courses, instructors, reviews, review votes, teaching records, terms) flows through it. Domain TypeScript interfaces (`Course`, `Instructor`, `Review`, `TeachingRecord`, `Term`, `InstructorDetail`, `*WithStats`, …) are defined at the top of this file. Custom hooks in `src/hooks/` wrap it for components (`useCoursesWithStats`, `useInstructorsWithStats`, `useCourseDetailOptimized`, etc.; "Optimized" / landing-page variants fetch lighter slices).
 
-# Terminal 2: Testing and validation
-cd project-test-worktree && claude
+### Appwrite backend
+Client setup in `src/lib/appwrite.ts` exports `account`, `databases`, and `tablesDB`. The codebase is **migrating from the legacy Databases API to the newer TablesDB API** (recent commits) — prefer `tablesDB` for new data access. Main database id is `lingubible` with collections `courses`, `reviews`, `review_votes`, `teaching_records`, `instructors`, `terms`. Separate databases (declared in `appwrite.json`): `user-stats-db`, `verification_system` (`verification_codes`, `password_resets`). `appwrite.json` is the source of truth for project/function/collection config.
 
-# Terminal 3: Documentation updates
-cd project-docs-worktree && claude
-```
+### ⚠️ Caching is intentionally disabled
+`src/utils/cache.ts` and `src/utils/persistentCache.ts` are **deliberate no-op stubs**. They were neutered because their background refreshes were exhausting the Appwrite free-plan request quota; the app now falls back to live queries every time. The key constants and method signatures are kept only for API compatibility. **Do not "re-enable" or reintroduce caching here without understanding the quota constraint.** React Query is mounted (`QueryClientProvider`) but most fetching goes through `CourseService` + hooks rather than query keys.
 
-### Custom Slash Commands
+### Cloud functions (`functions/`)
+Appwrite serverless functions, each a self-contained Bun project (`bun-1.1` runtime, own `package.json` / `bun.lock` / `node_modules`, entry `src/main.js`): `send-verification-email`, `cleanup-expired-codes` (cron `0 */6 * * *`), `get-user-stats`, `handle-review-vote`, `user-validation`. They deploy separately from the frontend.
 
-Create `.claude/commands/taskmaster-next.md`:
+### Auth & student verification
+`AuthContext` (`src/contexts/AuthContext.tsx`) wraps `authService`. Registration is gated to Lingnan emails (`@ln.hk`) — see `src/config/devMode.ts`. **Dev mode** (`VITE_DEV_MODE=true`) allows any email and can bypass password strength (`VITE_DEV_BYPASS_PASSWORD=true`); never enable in production. Google OAuth is supported. A periodic timer in AuthContext calls the `cleanup-expired-codes` function to purge non-student sessions.
 
-```markdown
-Find the next available Task Master task and show its details.
+### Internationalization
+Three languages: `en`, `zh-TW`, `zh-CN`. `LanguageContext` + `src/locales/index.ts` dynamically import and cache `src/locales/{lang}.ts` (lazy-loaded as a separate `locale` build chunk). Use `t('key', params)` from `useLanguage()`. Language is stored in a cookie; URL `?lang=` is handled by `useLanguageFromUrl`. Domain data carries multilingual fields via `_tc` (Traditional Chinese) and `_sc` (Simplified Chinese) suffixes (e.g. `course_title_tc`, `name_sc`). Keep translation keys in sync across all three locale files.
 
-Steps:
+## Conventions
 
-1. Run `task-master next` to get the next task
-2. If a task is available, run `task-master show <id>` for full details
-3. Provide a summary of what needs to be implemented
-4. Suggest the first implementation step
-```
+- **`@/` is the path alias for `src/`** (configured in `tsconfig.json` and `vite.config.ts`).
+- TypeScript is intentionally loose: `strictNullChecks`, `noImplicitAny`, `noUnusedLocals` are **off**, and `any` is allowed. ESLint (`eslint.config.js`) has nearly every rule disabled. **Match the existing relaxed style; do not re-enable strict checks** as part of unrelated work.
+- Functional components in `.tsx`, 2-space indentation, PascalCase components, camelCase variables/functions.
+- Commit messages follow an emoji-prefix + Traditional Chinese summary style (e.g. `🚀 完成前 4 個檔案的 TablesDB API 遷移`, `⚡️ 重構資料載入以降低 Appwrite 請求`).
 
-Create `.claude/commands/taskmaster-complete.md`:
+## Task Master (optional tooling)
 
-```markdown
-Complete a Task Master task: $ARGUMENTS
-
-Steps:
-
-1. Review the current task with `task-master show $ARGUMENTS`
-2. Verify all implementation is complete
-3. Run any tests related to this task
-4. Mark as complete: `task-master set-status --id=$ARGUMENTS --status=done`
-5. Show the next available task with `task-master next`
-```
-
-## Tool Allowlist Recommendations
-
-Add to `.claude/settings.json`:
-
-```json
-{
-  "allowedTools": [
-    "Edit",
-    "Bash(task-master *)",
-    "Bash(git commit:*)",
-    "Bash(git add:*)",
-    "Bash(npm run *)",
-    "mcp__task_master_ai__*"
-  ]
-}
-```
-
-## Configuration & Setup
-
-### API Keys Required
-
-At least **one** of these API keys must be configured:
-
-- `ANTHROPIC_API_KEY` (Claude models) - **Recommended**
-- `PERPLEXITY_API_KEY` (Research features) - **Highly recommended**
-- `OPENAI_API_KEY` (GPT models)
-- `GOOGLE_API_KEY` (Gemini models)
-- `MISTRAL_API_KEY` (Mistral models)
-- `OPENROUTER_API_KEY` (Multiple models)
-- `XAI_API_KEY` (Grok models)
-
-An API key is required for any provider used across any of the 3 roles defined in the `models` command.
-
-### Model Configuration
-
-```bash
-# Interactive setup (recommended)
-task-master models --setup
-
-# Set specific models
-task-master models --set-main claude-3-5-sonnet-20241022
-task-master models --set-research perplexity-llama-3.1-sonar-large-128k-online
-task-master models --set-fallback gpt-4o-mini
-```
-
-## Task Structure & IDs
-
-### Task ID Format
-
-- Main tasks: `1`, `2`, `3`, etc.
-- Subtasks: `1.1`, `1.2`, `2.1`, etc.
-- Sub-subtasks: `1.1.1`, `1.1.2`, etc.
-
-### Task Status Values
-
-- `pending` - Ready to work on
-- `in-progress` - Currently being worked on
-- `done` - Completed and verified
-- `deferred` - Postponed
-- `cancelled` - No longer needed
-- `blocked` - Waiting on external factors
-
-### Task Fields
-
-```json
-{
-  "id": "1.2",
-  "title": "Implement user authentication",
-  "description": "Set up JWT-based auth system",
-  "status": "pending",
-  "priority": "high",
-  "dependencies": ["1.1"],
-  "details": "Use bcrypt for hashing, JWT for tokens...",
-  "testStrategy": "Unit tests for auth functions, integration tests for login flow",
-  "subtasks": []
-}
-```
-
-## Claude Code Best Practices with Task Master
-
-### Context Management
-
-- Use `/clear` between different tasks to maintain focus
-- This CLAUDE.md file is automatically loaded for context
-- Use `task-master show <id>` to pull specific task context when needed
-
-### Iterative Implementation
-
-1. `task-master show <subtask-id>` - Understand requirements
-2. Explore codebase and plan implementation
-3. `task-master update-subtask --id=<id> --prompt="detailed plan"` - Log plan
-4. `task-master set-status --id=<id> --status=in-progress` - Start work
-5. Implement code following logged plan
-6. `task-master update-subtask --id=<id> --prompt="what worked/didn't work"` - Log progress
-7. `task-master set-status --id=<id> --status=done` - Complete task
-
-### Complex Workflows with Checklists
-
-For large migrations or multi-step processes:
-
-1. Create a markdown PRD file describing the new changes: `touch task-migration-checklist.md` (prds can be .txt or .md)
-2. Use Taskmaster to parse the new prd with `task-master parse-prd --append` (also available in MCP)
-3. Use Taskmaster to expand the newly generated tasks into subtasks. Consdier using `analyze-complexity` with the correct --to and --from IDs (the new ids) to identify the ideal subtask amounts for each task. Then expand them.
-4. Work through items systematically, checking them off as completed
-5. Use `task-master update-subtask` to log progress on each task/subtask and/or updating/researching them before/during implementation if getting stuck
-
-### Git Integration
-
-Task Master works well with `gh` CLI:
-
-```bash
-# Create PR for completed task
-gh pr create --title "Complete task 1.2: User authentication" --body "Implements JWT auth system as specified in task 1.2"
-
-# Reference task in commits
-git commit -m "feat: implement JWT auth (task 1.2)"
-```
-
-### Parallel Development with Git Worktrees
-
-```bash
-# Create worktrees for parallel task development
-git worktree add ../project-auth feature/auth-system
-git worktree add ../project-api feature/api-refactor
-
-# Run Claude Code in each worktree
-cd ../project-auth && claude    # Terminal 1: Auth work
-cd ../project-api && claude     # Terminal 2: API work
-```
-
-## Troubleshooting
-
-### AI Commands Failing
-
-```bash
-# Check API keys are configured
-cat .env                           # For CLI usage
-
-# Verify model configuration
-task-master models
-
-# Test with different model
-task-master models --set-fallback gpt-4o-mini
-```
-
-### MCP Connection Issues
-
-- Check `.mcp.json` configuration
-- Verify Node.js installation
-- Use `--mcp-debug` flag when starting Claude Code
-- Use CLI as fallback if MCP unavailable
-
-### Task File Sync Issues
-
-```bash
-# Regenerate task files from tasks.json
-task-master generate
-
-# Fix dependency issues
-task-master fix-dependencies
-```
-
-DO NOT RE-INITIALIZE. That will not do anything beyond re-adding the same Taskmaster core files.
-
-## Important Notes
-
-### AI-Powered Operations
-
-These commands make AI calls and may take up to a minute:
-
-- `parse_prd` / `task-master parse-prd`
-- `analyze_project_complexity` / `task-master analyze-complexity`
-- `expand_task` / `task-master expand`
-- `expand_all` / `task-master expand --all`
-- `add_task` / `task-master add-task`
-- `update` / `task-master update`
-- `update_task` / `task-master update-task`
-- `update_subtask` / `task-master update-subtask`
-
-### File Management
-
-- Never manually edit `tasks.json` - use commands instead
-- Never manually edit `.taskmaster/config.json` - use `task-master models`
-- Task markdown files in `tasks/` are auto-generated
-- Run `task-master generate` after manual changes to tasks.json
-
-### Claude Code Session Management
-
-- Use `/clear` frequently to maintain focused context
-- Create custom slash commands for repeated Task Master workflows
-- Configure tool allowlist to streamline permissions
-- Use headless mode for automation: `claude -p "task-master next"`
-
-### Multi-Task Updates
-
-- Use `update --from=<id>` to update multiple future tasks
-- Use `update-task --id=<id>` for single task updates
-- Use `update-subtask --id=<id>` for implementation logging
-
-### Research Mode
-
-- Add `--research` flag for research-based AI enhancement
-- Requires a research model API key like Perplexity (`PERPLEXITY_API_KEY`) in environment
-- Provides more informed task creation and updates
-- Recommended for complex technical tasks
-
----
-
-_This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._
+This repo has Task Master AI configured (`.taskmaster/`, `.mcp.json`, and rules under `.cursor/rules/taskmaster/`). It's an optional agentic task-planning workflow, not required for normal development. If you need it, the full command / MCP reference lives in `.cursor/rules/taskmaster/dev_workflow.mdc` and `taskmaster.mdc`. Never hand-edit `.taskmaster/tasks/tasks.json` or `.taskmaster/config.json` — use the `task-master` CLI / MCP tools.

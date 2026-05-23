@@ -40,7 +40,7 @@ VITE_DEV_MODE=false
 ### 3. 註冊郵件限制
 
 當 `VITE_DEV_MODE=false` 時：
-- 只允許 `@ln.edu.hk` 和 `@ln.hk` 郵件地址註冊
+- 只允許 `@ln.hk` 郵件地址註冊
 - 禁用一次性郵件和測試郵件地址
 
 當 `VITE_DEV_MODE=true` 時：

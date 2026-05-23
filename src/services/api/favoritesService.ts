@@ -128,7 +128,7 @@ export class FavoritesService {
       });
       
       const favorites = new Set<string>();
-      response.documents.forEach(doc => {
+      response.rows.forEach(doc => {
         favorites.add(`${doc.type}_${doc.item_id}`);
       });
       
@@ -236,11 +236,11 @@ export class FavoritesService {
         ]
       });
       
-      if (response.documents.length > 0) {
+      if (response.rows.length > 0) {
         await tablesDB.deleteRow({
           databaseId: this.DATABASE_ID,
           tableId: this.COLLECTION_ID,
-          rowId: response.documents[0].$id
+          rowId: response.rows[0].$id
         });
       }
     } catch (error) {
@@ -286,7 +286,7 @@ export class FavoritesService {
         ]
       });
       
-      const isFavorited = response.documents.length > 0;
+      const isFavorited = response.rows.length > 0;
       favoritesCache.set(type, itemId, userId, isFavorited);
       return isFavorited;
     } catch (error) {
@@ -318,7 +318,7 @@ export class FavoritesService {
         queries: queries
       });
       
-      return response.documents as unknown as UserFavorite[];
+      return response.rows as unknown as UserFavorite[];
     } catch (error) {
       console.error('Error getting user favorites:', error);
       throw new Error('Failed to get favorites');
