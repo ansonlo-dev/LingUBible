@@ -160,24 +160,6 @@
     ],
     "sites": [
         {
-            "$id": "LingUBible",
-            "name": "LingUBible_old",
-            "path": "sites/lingubible-old",
-            "framework": "react",
-            "logging": true,
-            "timeout": 30,
-            "buildRuntime": "node-22",
-            "adapter": "static",
-            "installCommand": "bun install",
-            "buildCommand": "bun run build",
-            "outputDirectory": "dist",
-            "fallbackFile": "",
-            "startCommand": "bash helpers/server.sh",
-            "buildSpecification": "s-4vcpu-4gb",
-            "runtimeSpecification": "s-4vcpu-4gb",
-            "deploymentRetention": 0
-        },
-        {
             "$id": "6a1097400037a55f6472",
             "name": "LingUBible",
             "framework": "react",
