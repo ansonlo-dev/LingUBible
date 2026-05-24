@@ -109,7 +109,41 @@ export default function OAuthCallback() {
         
         if (isAccountLinkingCallback) {
           console.log('這是帳戶連結回調');
-          
+
+          // 完成 OAuth Token 交換：消費 userId + secret 才會真正連結 Google 身份。
+          // createOAuth2Token 只會把 userId/secret 帶回此 URL，必須呼叫 createSession 來兌換，
+          // 否則身份永遠不會被連結（先前缺少這步，導致回調顯示成功但實際未連結）。
+          const linkUserId = searchParams.get('userId');
+          const linkSecret = searchParams.get('secret');
+          if (linkUserId && linkSecret) {
+            try {
+              console.log('🔗 交換 OAuth token 以連結 Google 身份...');
+              await account.createSession(linkUserId, linkSecret);
+              console.log('✅ OAuth session 已建立，Google 身份已連結');
+            } catch (sessionError: any) {
+              console.error('❌ 建立 OAuth session 失敗:', sessionError);
+              const alreadyLinked = sessionError?.code === 409 ||
+                sessionError?.type === 'user_already_exists' ||
+                (sessionError?.message && (sessionError.message.includes('already') || sessionError.message.includes('exists')));
+
+              setStatus('error');
+              setMessage(alreadyLinked ? t('oauth.accountAlreadyLinkedToAnother') : (sessionError?.message || t('oauth.callbackError')));
+
+              if (!toastShownRef.current) {
+                toastShownRef.current = true;
+                toast({
+                  variant: "destructive",
+                  title: alreadyLinked ? t('oauth.accountAlreadyLinked') : t('oauth.linkFailed'),
+                  description: alreadyLinked ? t('oauth.accountAlreadyLinkedToAnother') : (sessionError?.message || t('oauth.callbackError')),
+                  duration: 5000,
+                });
+              }
+
+              setTimeout(() => navigate('/settings'), 3000);
+              return;
+            }
+          }
+
           // 首先嘗試檢查用戶登入狀態
           let currentUser;
           try {
