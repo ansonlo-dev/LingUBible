@@ -246,7 +246,7 @@ export default function OAuthLoginCallback() {
               // Step 2: Call user-validation function for immediate account deletion
               try {
                 console.log('🗑️ [STEP 2] 調用 user-validation 函數進行緊急帳戶刪除...');
-                const validationResponse = await fetch(`https://fra.cloud.appwrite.io/v1/functions/user-validation/executions`, {
+                const validationResponse = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/user-validation/executions`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -278,7 +278,7 @@ export default function OAuthLoginCallback() {
               // Step 3: Also call cleanup function as backup
               try {
                 console.log('🗑️ [STEP 3] 調用 cleanup 函數作為備份清理...');
-                const cleanupResponse = await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
+                const cleanupResponse = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

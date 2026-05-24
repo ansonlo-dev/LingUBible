@@ -22,8 +22,8 @@
 
 ```bash
 # Appwrite 配置
-VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
-VITE_APPWRITE_PROJECT_ID=lingubible
+VITE_APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1
+VITE_APPWRITE_PROJECT_ID=6a1097400037a55f6472
 
 # 其他可选配置（如果有的话）
 VITE_APP_ENV=production

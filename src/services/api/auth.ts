@@ -203,7 +203,7 @@ export const authService = {
             console.log('🔄 發送密碼重設郵件:', email, '語言:', language, '主題:', theme);
             
             // 調用後端 API 發送密碼重設郵件
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+            const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -296,7 +296,7 @@ export const authService = {
             console.log('🔍 驗證密碼重設 token:', { userId: userId.substring(0, 8) + '...' });
             
             // 調用後端 API 驗證 token
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+            const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -365,7 +365,7 @@ export const authService = {
             console.log('🔄 完成自定義密碼重設:', { userId: userId.substring(0, 8) + '...' });
             
             // 調用後端 API 完成密碼重設
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+            const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -515,7 +515,7 @@ export const authService = {
             console.log('🔍 檢查用戶名可用性:', username);
             
             // 調用後端 API 檢查用戶名
-            const response = await fetch(`https://fra.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+            const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

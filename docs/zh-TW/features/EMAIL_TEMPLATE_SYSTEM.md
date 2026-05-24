@@ -173,7 +173,7 @@ import('./functions/send-verification-email/src/email-template.js').then(module 
 ### API 測試
 
 ```bash
-curl -X POST https://fra.cloud.appwrite.io/v1/functions/send-verification/executions \
+curl -X POST https://sgp.cloud.appwrite.io/v1/functions/send-verification/executions \
   -H "Content-Type: application/json" \
   -H "X-Appwrite-Project: lingubible" \
   -d '{

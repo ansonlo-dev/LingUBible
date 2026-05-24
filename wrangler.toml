@@ -4,7 +4,7 @@ compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [build]
-command = "VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=lingubible bun run build:cf-fast"
+command = "VITE_APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1 VITE_APPWRITE_PROJECT_ID=6a1097400037a55f6472 bun run build:cf-fast"
 cwd = ""
 watch_dir = "src"
 

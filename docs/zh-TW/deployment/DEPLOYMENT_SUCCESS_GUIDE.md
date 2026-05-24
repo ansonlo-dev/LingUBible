@@ -81,7 +81,7 @@ functions/
 
 **設置 GitHub Secrets**:
 ```
-APPWRITE_ENDPOINT: https://fra.cloud.appwrite.io/v1
+APPWRITE_ENDPOINT: https://sgp.cloud.appwrite.io/v1
 APPWRITE_EMAIL: [您的郵箱]
 APPWRITE_PASSWORD: [您的密碼]
 ```

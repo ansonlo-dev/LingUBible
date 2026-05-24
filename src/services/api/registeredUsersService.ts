@@ -28,7 +28,7 @@ class RegisteredUsersService {
       
       // 使用預設配置
       this.client = new Client()
-        .setEndpoint('https://fra.cloud.appwrite.io/v1')
+        .setEndpoint('https://sgp.cloud.appwrite.io/v1')
         .setProject('lingubible');
     } else {
       this.client = new Client()

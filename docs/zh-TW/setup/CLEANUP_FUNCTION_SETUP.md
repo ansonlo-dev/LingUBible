@@ -114,7 +114,7 @@ export default defineConfig({
 ```
 APPWRITE_API_KEY: [您的 Appwrite API Key]
 APPWRITE_PROJECT_ID: [您的 Appwrite 專案 ID]
-APPWRITE_ENDPOINT: https://fra.cloud.appwrite.io/v1
+APPWRITE_ENDPOINT: https://sgp.cloud.appwrite.io/v1
 ```
 
 ### 6. 安裝 Wrangler CLI
@@ -184,7 +184,7 @@ bun run dev
 ```
 APPWRITE_API_KEY=your_api_key_here
 APPWRITE_PROJECT_ID=your_project_id_here
-APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
+APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1
 ```
 
 ## 🔍 故障排除

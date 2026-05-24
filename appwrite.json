@@ -1,6 +1,7 @@
 {
-    "projectId": "lingubible",
+    "projectId": "6a1097400037a55f6472",
     "projectName": "LingUBible",
+    "endpoint": "https://sgp.cloud.appwrite.io/v1",
     "settings": {
         "services": {
             "account": true,
@@ -16,21 +17,25 @@
             "graphql": true,
             "messaging": true
         },
+        "protocols": {
+            "rest": true,
+            "graphql": true,
+            "websocket": true
+        },
         "auth": {
             "methods": {
-                "jwt": true,
-                "phone": true,
-                "invites": true,
-                "anonymous": true,
-                "email-otp": true,
-                "magic-url": true,
-                "email-password": true,
-                "oauth2-google": true
+                "jwt": false,
+                "phone": false,
+                "invites": false,
+                "anonymous": false,
+                "email-otp": false,
+                "magic-url": false,
+                "email-password": true
             },
             "security": {
                 "duration": 31536000,
                 "limit": 0,
-                "sessionsLimit": 10,
+                "sessionsLimit": 0,
                 "passwordHistory": 0,
                 "passwordDictionary": false,
                 "personalDataCheck": false,
@@ -41,14 +46,50 @@
     },
     "functions": [
         {
+            "$id": "cleanup-expired-codes",
+            "name": "cleanup-expired-codes",
+            "runtime": "bun-1.1",
+            "path": "functions/cleanup-expired-codes",
+            "entrypoint": "src/main.js",
+            "execute": [],
+            "enabled": true,
+            "logging": true,
+            "events": [
+                "users.*.create",
+                "users.*.sessions.*.create"
+            ],
+            "schedule": "",
+            "timeout": 60,
+            "commands": "",
+            "scopes": [
+                "users.read",
+                "users.write",
+                "databases.read",
+                "databases.write",
+                "collections.read",
+                "collections.write",
+                "documents.read",
+                "documents.write"
+            ],
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
+            "deploymentRetention": 0
+        },
+        {
             "$id": "send-verification-email",
+            "name": "send-verification-email",
+            "runtime": "bun-1.1",
+            "path": "functions/send-verification-email",
+            "entrypoint": "src/main.js",
             "execute": [
                 "any"
             ],
-            "name": "send-verification-email",
             "enabled": true,
             "logging": true,
-            "runtime": "bun-1.1",
+            "events": [],
+            "schedule": "",
+            "timeout": 60,
+            "commands": "bun install",
             "scopes": [
                 "users.read",
                 "users.write",
@@ -63,365 +104,171 @@
                 "documents.read",
                 "documents.write"
             ],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.js",
-            "commands": "bun install",
-            "specification": "s-4vcpu-4gb",
-            "path": "functions/send-verification-email"
-        },
-        {
-            "$id": "cleanup-expired-codes",
-            "execute": [
-                "any"
-            ],
-            "name": "cleanup-expired-codes",
-            "enabled": true,
-            "logging": true,
-            "runtime": "bun-1.1",
-            "scopes": [
-                "users.read",
-                "users.write",
-                "databases.read",
-                "databases.write",
-                "collections.read",
-                "collections.write",
-                "documents.read",
-                "documents.write"
-            ],
-            "events": [],
-            "schedule": "0 */6 * * *",
-            "timeout": 30,
-            "entrypoint": "src/main.js",
-            "commands": "bun install",
-            "specification": "s-4vcpu-4gb",
-            "path": "functions/cleanup-expired-codes"
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
+            "deploymentRetention": 0
         },
         {
             "$id": "get-user-stats",
+            "name": "get-user-stats",
+            "runtime": "bun-1.1",
+            "path": "functions/get-user-stats",
+            "entrypoint": "src/main.js",
             "execute": [
                 "any"
             ],
-            "name": "get-user-stats",
             "enabled": true,
             "logging": true,
-            "runtime": "bun-1.1",
+            "events": [],
+            "schedule": "",
+            "timeout": 60,
+            "commands": "bun install",
             "scopes": [
                 "users.read",
                 "databases.read",
                 "databases.write"
             ],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
+            "deploymentRetention": 0
+        },
+        {
+            "$id": "user-validation",
+            "name": "user-validation",
+            "runtime": "bun-1.1",
+            "path": "functions/user-validation",
             "entrypoint": "src/main.js",
-            "commands": "bun install",
-            "specification": "s-4vcpu-4gb",
-            "path": "functions/get-user-stats"
+            "execute": [
+                "any"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [
+                "users.*.create"
+            ],
+            "schedule": "",
+            "timeout": 60,
+            "commands": "",
+            "scopes": [
+                "users.read",
+                "users.write"
+            ],
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
+            "deploymentRetention": 0
         }
     ],
-    "databases": [
+    "sites": [
         {
-            "$id": "student_comments",
-            "name": "student_comments",
-            "enabled": true
+            "$id": "LingUBible",
+            "name": "LingUBible_old",
+            "path": "sites/lingubible-old",
+            "framework": "react",
+            "logging": true,
+            "timeout": 30,
+            "buildRuntime": "node-22",
+            "adapter": "static",
+            "installCommand": "bun install",
+            "buildCommand": "bun run build",
+            "outputDirectory": "dist",
+            "fallbackFile": "",
+            "startCommand": "bash helpers/server.sh",
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
+            "deploymentRetention": 0
         },
+        {
+            "$id": "6a1097400037a55f6472",
+            "name": "LingUBible",
+            "framework": "react",
+            "adapter": "static",
+            "buildRuntime": "node-22",
+            "installCommand": "npm install",
+            "buildCommand": "npm run build",
+            "outputDirectory": "./dist",
+            "fallbackFile": "index.html",
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
+            "deploymentRetention": 0,
+            "timeout": 30,
+            "logging": true,
+            "path": "sites/lingubible-sgp"
+        }
+    ],
+    "tablesDB": [
         {
             "$id": "verification_system",
             "name": "verification_system",
-            "enabled": true,
-            "backup": {
-                "enabled": true,
-                "frequency": "daily",
-                "retention": 7
-            }
+            "enabled": true
         },
         {
-            "databaseId": "user-stats-db",
+            "$id": "lingubible",
+            "name": "Lingubible Database",
+            "enabled": true
+        },
+        {
+            "$id": "user-stats-db",
             "name": "User Statistics Database",
-            "collections": [
-                {
-                    "collectionId": "user-sessions",
-                    "name": "User Sessions",
-                    "permissions": [
-                        "read(\"any\")",
-                        "create(\"any\")",
-                        "update(\"any\")",
-                        "delete(\"any\")"
-                    ],
-                    "documentSecurity": true,
-                    "enabled": true,
-                    "attributes": [
-                        {
-                            "key": "userId",
-                            "type": "string",
-                            "status": "available",
-                            "error": "",
-                            "required": false,
-                            "array": false,
-                            "size": 255,
-                            "default": null
-                        },
-                        {
-                            "key": "sessionId",
-                            "type": "string",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "size": 255,
-                            "default": null
-                        },
-                        {
-                            "key": "loginTime",
-                            "type": "datetime",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "default": null,
-                            "format": "datetime"
-                        },
-                        {
-                            "key": "lastPing",
-                            "type": "datetime",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "default": null,
-                            "format": "datetime"
-                        },
-                        {
-                            "key": "deviceInfo",
-                            "type": "string",
-                            "status": "available",
-                            "error": "",
-                            "required": false,
-                            "array": false,
-                            "size": 1000,
-                            "default": null
-                        },
-                        {
-                            "key": "ipAddress",
-                            "type": "string",
-                            "status": "available",
-                            "error": "",
-                            "required": false,
-                            "array": false,
-                            "size": 45,
-                            "default": null
-                        },
-                        {
-                            "key": "isVisitor",
-                            "type": "boolean",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "default": false
-                        }
-                    ],
-                    "indexes": [
-                        {
-                            "key": "userId_index",
-                            "type": "key",
-                            "status": "available",
-                            "error": "",
-                            "attributes": [
-                                "userId"
-                            ],
-                            "orders": [
-                                "ASC"
-                            ]
-                        },
-                        {
-                            "key": "sessionId_index",
-                            "type": "key",
-                            "status": "available",
-                            "error": "",
-                            "attributes": [
-                                "sessionId"
-                            ],
-                            "orders": [
-                                "ASC"
-                            ]
-                        },
-                        {
-                            "key": "lastPing_index",
-                            "type": "key",
-                            "status": "available",
-                            "error": "",
-                            "attributes": [
-                                "lastPing"
-                            ],
-                            "orders": [
-                                "DESC"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "collectionId": "user-stats",
-                    "name": "User Statistics",
-                    "permissions": [
-                        "read(\"users\")",
-                        "create(\"users\")",
-                        "update(\"users\")",
-                        "delete(\"users\")"
-                    ],
-                    "documentSecurity": true,
-                    "enabled": true,
-                    "attributes": [
-                        {
-                            "key": "totalUsers",
-                            "type": "integer",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "min": 0,
-                            "max": 2147483647,
-                            "default": 0
-                        },
-                        {
-                            "key": "todayLogins",
-                            "type": "integer",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "min": 0,
-                            "max": 2147483647,
-                            "default": 0
-                        },
-                        {
-                            "key": "thisMonthLogins",
-                            "type": "integer",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "min": 0,
-                            "max": 2147483647,
-                            "default": 0
-                        },
-                        {
-                            "key": "lastUpdated",
-                            "type": "datetime",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "default": null,
-                            "format": "datetime"
-                        }
-                    ],
-                    "indexes": []
-                },
-                {
-                    "collectionId": "logged-users",
-                    "name": "Logged Users",
-                    "permissions": [
-                        "read(\"users\")",
-                        "create(\"users\")",
-                        "update(\"users\")",
-                        "delete(\"users\")"
-                    ],
-                    "documentSecurity": true,
-                    "enabled": true,
-                    "attributes": [
-                        {
-                            "key": "userId",
-                            "type": "string",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "size": 255,
-                            "default": null
-                        },
-                        {
-                            "key": "firstLogin",
-                            "type": "datetime",
-                            "status": "available",
-                            "error": "",
-                            "required": true,
-                            "array": false,
-                            "default": null,
-                            "format": "datetime"
-                        }
-                    ],
-                    "indexes": [
-                        {
-                            "key": "userId_unique",
-                            "type": "unique",
-                            "status": "available",
-                            "error": "",
-                            "attributes": [
-                                "userId"
-                            ],
-                            "orders": [
-                                "ASC"
-                            ]
-                        }
-                    ]
-                }
-            ]
+            "enabled": true
+        },
+        {
+            "$id": "favorites",
+            "name": "Favorites Database",
+            "enabled": true
         }
     ],
-    "collections": [
+    "tables": [
         {
             "$id": "verification_codes",
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "verification_system",
             "name": "verification_codes",
             "enabled": true,
-            "documentSecurity": true,
-            "$permissions": [
-                "create(\"any\")",
-                "read(\"users\")",
-                "update(\"users\")",
-                "delete(\"users\")"
-            ],
-            "attributes": [
+            "rowSecurity": true,
+            "columns": [
                 {
                     "key": "email",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "code",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 6
+                    "size": 6,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "expiresAt",
                     "type": "datetime",
-                    "status": "available",
                     "required": true,
-                    "array": false
+                    "array": false,
+                    "default": null,
+                    "format": ""
                 },
                 {
                     "key": "attempts",
                     "type": "integer",
-                    "status": "available",
                     "required": false,
                     "array": false,
+                    "default": 0,
                     "min": 0,
-                    "max": 10,
-                    "default": 0
+                    "max": 10
                 },
                 {
                     "key": "isVerified",
                     "type": "boolean",
-                    "status": "available",
                     "required": false,
                     "array": false,
                     "default": false
@@ -429,20 +276,20 @@
                 {
                     "key": "ipAddress",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
                     "size": 45,
-                    "default": null
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "userAgent",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
                     "size": 500,
-                    "default": null
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": [
@@ -450,112 +297,110 @@
                     "key": "email_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "email"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 },
                 {
                     "key": "expires_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "expiresAt"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 }
             ]
         },
         {
             "$id": "password_resets",
+            "$permissions": [],
             "databaseId": "verification_system",
             "name": "password_resets",
             "enabled": true,
-            "documentSecurity": true,
-            "$permissions": [
-                "create(\"any\")",
-                "read(\"users\")",
-                "update(\"users\")",
-                "delete(\"users\")"
-            ],
-            "attributes": [
-                {
-                    "key": "userId",
-                    "type": "string",
-                    "status": "available",
-                    "required": true,
-                    "array": false,
-                    "size": 255
-                },
+            "rowSecurity": false,
+            "columns": [
                 {
                     "key": "email",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "token",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "expiresAt",
                     "type": "datetime",
-                    "status": "available",
                     "required": true,
-                    "array": false
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "userAgent",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 500,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userdAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
                 },
                 {
                     "key": "used",
                     "type": "boolean",
-                    "status": "available",
                     "required": false,
                     "array": false,
                     "default": false
                 },
                 {
-                    "key": "usedAt",
-                    "type": "datetime",
-                    "status": "available",
-                    "required": false,
-                    "array": false,
-                    "default": null
-                },
-                {
                     "key": "usedIp",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
                     "size": 45,
-                    "default": null
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "ipAddress",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
                     "size": 45,
-                    "default": null
-                },
-                {
-                    "key": "userAgent",
-                    "type": "string",
-                    "status": "available",
-                    "required": false,
-                    "array": false,
-                    "size": 500,
-                    "default": null
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": [
@@ -563,58 +408,1057 @@
                     "key": "userId_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "userId"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 },
                 {
                     "key": "email_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "email"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 },
                 {
                     "key": "token_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "token"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 },
                 {
                     "key": "expires_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "expiresAt"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 },
                 {
                     "key": "used_index",
                     "type": "key",
                     "status": "available",
-                    "attributes": [
+                    "columns": [
                         "used"
                     ],
                     "orders": [
-                        "ASC"
+                        "asc"
                     ]
                 }
             ]
+        },
+        {
+            "$id": "user_avatars",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "User Avatars",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "animal",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 10,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "backgroundIndex",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "createdAt_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "createdAt"
+                    ],
+                    "orders": [
+                        "desc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "courses",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "Courses",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "course_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_title",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_title_tc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_title_sc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "department",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 500,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "credits",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": "3",
+                    "encrypt": false
+                },
+                {
+                    "key": "course_description",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 65536,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_description_tc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 65536,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_description_sc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 65536,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_prerequisites",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_corequisites",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_exclusions",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_exemption_requirements",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "course_title_search",
+                    "type": "fulltext",
+                    "status": "available",
+                    "columns": [
+                        "course_title"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "course_code_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "course_code"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "department_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "department"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "instructors",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "Instructors",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "department",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": "Faculty",
+                    "encrypt": false
+                },
+                {
+                    "key": "name_tc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name_sc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "title",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "nickname",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "terms",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "Terms",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "term_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "start_date",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "end_date",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "teaching_records",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "Teaching Records",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "course_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "term_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "instructor_name",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "session_type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "service_learning",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "teaching_language",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "E",
+                        "C",
+                        "P",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5"
+                    ]
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "reviews",
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "Reviews",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "is_anon",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "username",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "term_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_final_grade",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_comments",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 2000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "submitted_at",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "instructor_details",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "review_language",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 10,
+                    "default": "en",
+                    "encrypt": false
+                },
+                {
+                    "key": "course_workload",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1,
+                    "max": 5
+                },
+                {
+                    "key": "course_difficulties",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1,
+                    "max": 5
+                },
+                {
+                    "key": "course_usefulness",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1,
+                    "max": 5
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "course_code_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "course_code"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "review_votes",
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "Review Votes",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "review_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "vote_type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "up",
+                        "down"
+                    ]
+                },
+                {
+                    "key": "voted_at",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "user-sessions",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "user-stats-db",
+            "name": "User Sessions",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "sessionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "loginTime",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "lastPing",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "deviceInfo",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "ipAddress",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 45,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "isVisitor",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "sessionId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "sessionId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "lastPing_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "lastPing"
+                    ],
+                    "orders": [
+                        "desc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "user-stats",
+            "$permissions": [
+                "read(\"users\")",
+                "create(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "databaseId": "user-stats-db",
+            "name": "User Statistics",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "lastUpdated",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "totalUsers",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "todayLogins",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "thisMonthLogins",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "logged-users",
+            "$permissions": [
+                "read(\"users\")",
+                "create(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "databaseId": "user-stats-db",
+            "name": "Logged Users",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "firstLogin",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "user-stats-cache",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "user-stats-db",
+            "name": "User Stats Cache",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "totalRegisteredUsers",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "verifiedUsers",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "lastUpdated",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "user_favorites",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "databaseId": "favorites",
+            "name": "User Favorites",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "created_at",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "course",
+                        "instructor"
+                    ]
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "item_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "user_type_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "type"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "user_item_unique_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "type",
+                        "item_id"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc",
+                        "asc"
+                    ]
+                }
+            ]
+        }
+    ],
+    "buckets": [
+        {
+            "$id": "68a4fd8400200a207b70",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "fileSecurity": true,
+            "name": "csv",
+            "enabled": true,
+            "maximumFileSize": 5000000000,
+            "allowedFileExtensions": [],
+            "compression": "none",
+            "encryption": true,
+            "antivirus": true
+        },
+        {
+            "$id": "68a8d754001ea4bc89c1",
+            "$permissions": [],
+            "fileSecurity": false,
+            "name": "PDF",
+            "enabled": true,
+            "maximumFileSize": 5000000000,
+            "allowedFileExtensions": [],
+            "compression": "none",
+            "encryption": true,
+            "antivirus": true
         }
     ]
 }

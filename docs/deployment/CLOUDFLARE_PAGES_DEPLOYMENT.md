@@ -22,8 +22,8 @@ Set the following environment variables in Cloudflare Pages:
 
 ```bash
 # Appwrite Configuration
-VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
-VITE_APPWRITE_PROJECT_ID=lingubible
+VITE_APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1
+VITE_APPWRITE_PROJECT_ID=6a1097400037a55f6472
 
 # Other Optional Configurations (if any)
 VITE_APP_ENV=production

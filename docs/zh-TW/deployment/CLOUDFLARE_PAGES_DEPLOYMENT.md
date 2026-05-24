@@ -61,8 +61,8 @@
 
 ```bash
 # 🔑 Appwrite 基本配置（必需）
-VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
-VITE_APPWRITE_PROJECT_ID=lingubible
+VITE_APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1
+VITE_APPWRITE_PROJECT_ID=6a1097400037a55f6472
 
 # 🔐 API 密鑰配置（用於後端功能）
 APPWRITE_API_KEY=your_appwrite_api_key_here

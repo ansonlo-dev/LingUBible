@@ -4,7 +4,7 @@ import { Client, Databases, Users, Query } from 'node-appwrite';
 export default async ({ req, res, log, error }) => {
   // Initialize Appwrite client
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://fra.cloud.appwrite.io/v1')
+    .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1')
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID || 'lingubible')
     .setKey(process.env.APPWRITE_API_KEY);
 
@@ -18,7 +18,7 @@ export default async ({ req, res, log, error }) => {
   // Check if email is a student email
   const isStudentEmail = (email) => {
     if (!email || typeof email !== 'string') return false;
-    return email.endsWith('@ln.hk');
+    return email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk');
   };
 
   // Safe JSON parsing for Bun

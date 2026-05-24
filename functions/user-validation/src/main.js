@@ -4,7 +4,7 @@ import { Client, Users } from 'node-appwrite';
 export default async ({ req, res, log, error }) => {
   // Initialize Appwrite client
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://fra.cloud.appwrite.io/v1')
+    .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1')
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID || 'lingubible')
     .setKey(process.env.APPWRITE_API_KEY);
 
@@ -12,7 +12,7 @@ export default async ({ req, res, log, error }) => {
 
   // Student email validation function
   const isStudentEmail = (email) => {
-    return email && (email.endsWith('@ln.hk'));
+    return email && (email.endsWith('@ln.hk') || email.endsWith('@ln.edu.hk'));
   };
 
   try {

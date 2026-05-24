@@ -247,7 +247,7 @@ export const oauthService = {
         
         // 調用清理函數
         try {
-          await fetch(`https://fra.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
+          await fetch(`https://sgp.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
