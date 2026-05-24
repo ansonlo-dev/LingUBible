@@ -352,7 +352,7 @@
                     "encrypt": false
                 },
                 {
-                    "key": "userdAt",
+                    "key": "usedAt",
                     "type": "datetime",
                     "required": false,
                     "array": false,
