@@ -43,8 +43,8 @@ export default async ({ req, res, log, error }) => {
 
     // 初始化 Appwrite 客戶端
     const client = new Client()
-      .setEndpoint('https://sgp.cloud.appwrite.io/v1')
-      .setProject('lingubible')
+      .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1')
+      .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
       .setKey(process.env.APPWRITE_API_KEY);
 
     const databases = new Databases(client);
