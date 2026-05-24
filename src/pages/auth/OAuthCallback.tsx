@@ -66,11 +66,14 @@ export default function OAuthCallback() {
           return;
         }
 
+        // 檢查當前路徑，確定這是帳戶連結操作
+        const isAccountLinkingCallback = window.location.pathname === '/oauth/callback';
+
         // 檢查是否有 OAuth 成功的跡象
         const urlParams = new URLSearchParams(window.location.search);
-        const hasOAuthParams = urlParams.has('code') || urlParams.has('state') || 
+        const hasOAuthParams = urlParams.has('code') || urlParams.has('state') ||
                               searchParams.get('userId') || searchParams.get('secret');
-        
+
         console.log('OAuth 參數檢查:', {
           hasCode: urlParams.has('code'),
           hasState: urlParams.has('state'),
@@ -78,8 +81,10 @@ export default function OAuthCallback() {
           hasSecret: !!searchParams.get('secret'),
           allParams: Object.fromEntries(urlParams.entries())
         });
-        
-        if (!hasOAuthParams) {
+
+        // 注意：createOAuth2Session 連結成功時可能不會帶任何 query 參數（session 寫進 cookie），
+        // 因此連結回調不要求一定要有 OAuth 參數，改為直接驗證身份是否已連結。
+        if (!hasOAuthParams && !isAccountLinkingCallback) {
           // 沒有 OAuth 參數，可能是直接訪問這個頁面
           setStatus('error');
           setMessage(t('oauth.invalidCallback'));
@@ -103,46 +108,9 @@ export default function OAuthCallback() {
         // 等待一下讓 Appwrite 處理 OAuth 連結
         console.log('等待 Appwrite 處理 OAuth 連結...');
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // 檢查當前路徑，確定這是帳戶連結操作
-        const isAccountLinkingCallback = window.location.pathname === '/oauth/callback';
-        
+
         if (isAccountLinkingCallback) {
           console.log('這是帳戶連結回調');
-
-          // 完成 OAuth Token 交換：消費 userId + secret 才會真正連結 Google 身份。
-          // createOAuth2Token 只會把 userId/secret 帶回此 URL，必須呼叫 createSession 來兌換，
-          // 否則身份永遠不會被連結（先前缺少這步，導致回調顯示成功但實際未連結）。
-          const linkUserId = searchParams.get('userId');
-          const linkSecret = searchParams.get('secret');
-          if (linkUserId && linkSecret) {
-            try {
-              console.log('🔗 交換 OAuth token 以連結 Google 身份...');
-              await account.createSession(linkUserId, linkSecret);
-              console.log('✅ OAuth session 已建立，Google 身份已連結');
-            } catch (sessionError: any) {
-              console.error('❌ 建立 OAuth session 失敗:', sessionError);
-              const alreadyLinked = sessionError?.code === 409 ||
-                sessionError?.type === 'user_already_exists' ||
-                (sessionError?.message && (sessionError.message.includes('already') || sessionError.message.includes('exists')));
-
-              setStatus('error');
-              setMessage(alreadyLinked ? t('oauth.accountAlreadyLinkedToAnother') : (sessionError?.message || t('oauth.callbackError')));
-
-              if (!toastShownRef.current) {
-                toastShownRef.current = true;
-                toast({
-                  variant: "destructive",
-                  title: alreadyLinked ? t('oauth.accountAlreadyLinked') : t('oauth.linkFailed'),
-                  description: alreadyLinked ? t('oauth.accountAlreadyLinkedToAnother') : (sessionError?.message || t('oauth.callbackError')),
-                  duration: 5000,
-                });
-              }
-
-              setTimeout(() => navigate('/settings'), 3000);
-              return;
-            }
-          }
 
           // 首先嘗試檢查用戶登入狀態
           let currentUser;
@@ -393,17 +361,38 @@ export default function OAuthCallback() {
           }
           
           console.log('最終連結狀態:', isLinked);
-          
-          // 如果檢測到連結成功或假設連結成功
+
+          if (!isLinked) {
+            // 身份未連結成功（例如該 Google 帳號已連結到其他帳戶，或流程被取消）
+            console.warn('連結未成功，顯示錯誤');
+            setStatus('error');
+            setMessage(t('oauth.linkError'));
+
+            if (!toastShownRef.current) {
+              toastShownRef.current = true;
+              toast({
+                variant: "destructive",
+                title: t('oauth.linkFailed'),
+                description: t('oauth.linkError'),
+                duration: 5000,
+              });
+            }
+
+            setTimeout(() => {
+              navigate('/settings');
+            }, 3000);
+            return;
+          }
+
           setStatus('success');
           setMessage(t('oauth.linkSuccess'));
-          
+
           // 設置成功標記，讓設置頁面知道連結成功
           localStorage.setItem('googleLinkSuccess', 'true');
-          
+
           // 設置 OAuth 特定的會話標記，防止被自動登出
           sessionStorage.setItem('oauthSession', 'true');
-          
+
           if (!toastShownRef.current) {
             toastShownRef.current = true;
             toast({
@@ -413,7 +402,7 @@ export default function OAuthCallback() {
               duration: 5000,
             });
           }
-          
+
           setTimeout(() => {
             navigate('/settings');
           }, 2000);

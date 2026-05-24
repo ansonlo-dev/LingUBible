@@ -33,8 +33,10 @@ export const oauthService = {
    */
   async linkGoogleAccount(): Promise<void> {
     try {
-      // 對於帳戶連結，我們需要使用 createOAuth2Token
-      // 這會返回 token 和 userId 參數到回調 URL
+      // 帳戶連結必須使用 createOAuth2Session：當使用者已登入時，Appwrite 會自動
+      // 把新的 Google 身份連結到目前帳戶（見 Appwrite Identities 文件）。
+      // 不能用 createOAuth2Token + createSession，因為在已有 session 的情況下
+      // createSession 會報「Creation of a session is prohibited when a session is active」。
       const redirectUrl = `${window.location.origin}/oauth/callback`;
       
       // 檢查用戶是否已登入（但不要因為權限錯誤而失敗）
@@ -58,16 +60,16 @@ export const oauthService = {
       }
       
       console.log('開始 Google 帳戶連結流程...');
-      
-      // 使用 createOAuth2Token 來連結帳戶
+
+      // 使用 createOAuth2Session 連結帳戶：已登入時會把身份掛到現有帳戶。
       // 這個方法會觸發瀏覽器重定向，所以後續代碼可能不會執行
-      await account.createOAuth2Token(
+      await account.createOAuth2Session(
         OAuthProvider.Google,
         redirectUrl,
         redirectUrl // failure URL 也使用相同的 URL，在回調中處理錯誤
       );
-      
-      console.log('OAuth2Token 創建成功，應該已經重定向...');
+
+      console.log('OAuth2Session 創建成功，應該已經重定向...');
     } catch (error: any) {
       console.error('Google 帳戶連結失敗:', error);
       
