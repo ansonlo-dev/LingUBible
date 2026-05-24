@@ -25,10 +25,9 @@ Build variants worth knowing: `build:fast` / `SKIP_FONT_PROCESSING=true` skip th
 
 ### Deployment
 
-The frontend is hosted on **Appwrite Sites** (configured under `sites` in `appwrite.json`); it builds via `bun run build` and is published either through the Appwrite git integration or the CLI.
+The frontend is hosted on **Appwrite Sites** and **auto-deploys via the Appwrite ↔ GitHub git integration**: pushing to `main` triggers an Appwrite build (`bun run build`, output `dist`). There is no manual frontend deploy command — just push. Cloud functions deploy separately:
 
 ```bash
-bun run deploy:sites         # push the site to Appwrite Sites (appwrite push sites)
 bun run deploy:functions     # Appwrite cloud functions (deploy-functions-simple.sh)
 ./deploy-functions-simple.sh # same, invoked directly
 ```

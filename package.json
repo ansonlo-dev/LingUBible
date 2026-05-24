@@ -21,7 +21,6 @@
     "analyze:bundle": "echo '📊 Bundle analysis complete. Check dist/ for output.'",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy:sites": "appwrite push sites",
     "deploy:functions": "bash deploy-functions-simple.sh",
     "performance:test": "echo '🚀 Running performance tests...' && bun run build && echo '✅ Performance test completed'",
     "performance:lighthouse": "echo '💡 Run: lighthouse http://localhost:8080 --output=html --output-path=./performance-report.html'",
