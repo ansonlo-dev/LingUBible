@@ -10,7 +10,6 @@ export default defineConfig(({ command, mode }) => {
   const isDevelopment = mode === 'development';
   const isBuild = command === 'build';
   const skipMinify = process.env.VITE_SKIP_MINIFY === 'true';
-  const isCloudflare = process.env.CF_PAGES === '1' || process.env.CLOUDFLARE_ENV;
 
   return {
     root: '.',
@@ -59,8 +58,7 @@ export default defineConfig(({ command, mode }) => {
           if (id.includes('fonts/LXGWWenKai') && id.includes('.ttf')) return true;
           return false;
         },
-        // Cloudflare 環境下使用更保守的並行設定
-        maxParallelFileOps: isCloudflare ? 8 : 16,
+        maxParallelFileOps: 16,
         output: {
           // 嚴格的分塊策略 - 確保 React 完整性
           manualChunks: isProduction ? (id) => {
@@ -92,15 +90,14 @@ export default defineConfig(({ command, mode }) => {
       },
       // 極致性能設定
       chunkSizeWarningLimit: 2000, // 增加限制以減少警告
-      reportCompressedSize: isBuild && !isCloudflare, // Cloudflare 環境跳過大小報告以加速
+      reportCompressedSize: isBuild,
       cssCodeSplit: false, // 單一 CSS 檔案更快
       assetsInlineLimit: 8192, // 更多小檔案內聯
       write: true,
       emptyOutDir: true,
       assetsDir: 'assets',
       copyPublicDir: true,
-      // 建置時啟用清單以顯示詳細資訊（Cloudflare 環境跳過以加速）
-      manifest: isBuild && !isCloudflare,
+      manifest: isBuild,
       ssrManifest: false,
     },
     optimizeDeps: {

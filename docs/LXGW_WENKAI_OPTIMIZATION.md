@@ -267,22 +267,9 @@ location ~* \.(woff2|woff|ttf|otf)$ {
 }
 ```
 
-### Cloudflare Pages 配置
+### Appwrite Sites 配置
 
-```toml
-# wrangler.toml
-[build]
-command = "npm run build"
-cwd = "."
-watch_dir = "src"
-
-[[build.environment_variables]]
-name = "FONT_OPTIMIZATION"
-value = "true"
-
-[build.upload]
-format = "service-worker"
-```
+Appwrite Sites 透過 `appwrite.json` 中的 `sites` 設定建置（`buildCommand: bun run build`，輸出目錄 `dist`），字型快取標頭可在 Appwrite Sites 的 headers 設定中配置。
 
 ## 📈 效能測試
 

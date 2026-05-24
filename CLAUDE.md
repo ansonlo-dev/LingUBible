@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-LingUBible (嶺南大學課程評價平台) — a course & lecturer review platform for Lingnan University students. React 18 + TypeScript SPA, Vite 7 build, Tailwind + shadcn/ui, Appwrite as the backend (BaaS), deployed to Cloudflare Workers/Pages (lingubible.com).
+LingUBible (嶺南大學課程評價平台) — a course & lecturer review platform for Lingnan University students. React 18 + TypeScript SPA, Vite 7 build, Tailwind + shadcn/ui, Appwrite as the backend (BaaS), deployed to Appwrite Sites (lingubible.com).
 
 ## Commands
 
@@ -21,14 +21,16 @@ bun run refactor:check    # = build + success echo; the de-facto "did I break it
 
 There is **no automated test suite**. Verify changes by building (`bun run refactor:check`) and manually exercising critical flows (auth, review submission, localized views) in the dev server.
 
-Build variants worth knowing: `build:cf-fast` is what Cloudflare runs (see `wrangler.toml`); `build:fast` / `SKIP_FONT_PROCESSING=true` skip the LXGW WenKai font subsetting step. Font tooling lives behind `bun run fonts:*` (e.g. `fonts:rebuild`).
+Build variants worth knowing: `build:fast` / `SKIP_FONT_PROCESSING=true` skip the LXGW WenKai font subsetting step. Font tooling lives behind `bun run fonts:*` (e.g. `fonts:rebuild`). Appwrite Sites runs `bun run build` (per the site config in `appwrite.json`).
 
 ### Deployment
 
+The frontend is hosted on **Appwrite Sites** (configured under `sites` in `appwrite.json`); it builds via `bun run build` and is published either through the Appwrite git integration or the CLI.
+
 ```bash
-bun run deploy:staging       # Cloudflare Workers staging (lingubible-staging)
-bun run deploy:production    # Cloudflare Workers production (lingubible.com)
-./deploy-functions-simple.sh # Appwrite cloud functions (deployed independently of the frontend)
+bun run deploy:sites         # push the site to Appwrite Sites (appwrite push sites)
+bun run deploy:functions     # Appwrite cloud functions (deploy-functions-simple.sh)
+./deploy-functions-simple.sh # same, invoked directly
 ```
 
 ## Architecture

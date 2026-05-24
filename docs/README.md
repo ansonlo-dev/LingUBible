@@ -21,7 +21,6 @@ Welcome to the LingUBible project documentation! This folder contains comprehens
 - [ENVIRONMENT_VARIABLES_SETUP.md](./setup/ENVIRONMENT_VARIABLES_SETUP.md) - 環境變數配置
 - [AUTO_VERIFICATION_SETUP.md](./setup/AUTO_VERIFICATION_SETUP.md) - 自動驗證系統設置
 - [STUDENT_EMAIL_VERIFICATION_SETUP.md](./setup/STUDENT_EMAIL_VERIFICATION_SETUP.md) - 學生郵箱驗證設置
-- [CLEANUP_FUNCTION_SETUP.md](./setup/CLEANUP_FUNCTION_SETUP.md) - 清理功能設置
 
 ### ⚡ [features/](./features/) - 功能說明
 系統功能和特性的詳細說明：
@@ -37,7 +36,6 @@ Welcome to the LingUBible project documentation! This folder contains comprehens
 專案部署相關文檔：
 - [APPWRITE_GIT_DEPLOYMENT_GUIDE.md](./deployment/APPWRITE_GIT_DEPLOYMENT_GUIDE.md) - Appwrite Git 部署指南
 - [DEPLOYMENT_SUCCESS_GUIDE.md](./deployment/DEPLOYMENT_SUCCESS_GUIDE.md) - 部署成功指南
-- [CLOUDFLARE_PAGES_DEPLOYMENT.md](./deployment/CLOUDFLARE_PAGES_DEPLOYMENT.md) - Cloudflare Pages 部署指南
 
 ### 🧪 [testing/](./testing/) - 測試文檔
 測試相關文檔和工具：
@@ -64,7 +62,6 @@ Welcome to the LingUBible project documentation! This folder contains comprehens
 ### 部署上線
 1. 參考 [APPWRITE_GIT_DEPLOYMENT_GUIDE.md](./deployment/APPWRITE_GIT_DEPLOYMENT_GUIDE.md)
 2. 檢查 [DEPLOYMENT_SUCCESS_GUIDE.md](./deployment/DEPLOYMENT_SUCCESS_GUIDE.md)
-3. Cloudflare Pages 部署：[CLOUDFLARE_PAGES_DEPLOYMENT.md](./deployment/CLOUDFLARE_PAGES_DEPLOYMENT.md)
 
 ---
 

@@ -42,7 +42,6 @@
 | 檔案名 | 描述 | 更新時間 |
 |--------|------|----------|
 | [EMAIL_TEMPLATE_SYSTEM.md](./EMAIL_TEMPLATE_SYSTEM.md) | 郵件模板系統 | 2025-06-05 |
-| [CLEANUP_FUNCTION_SETUP.md](./CLEANUP_FUNCTION_SETUP.md) | 清理功能設置 | 2025-06-05 |
 | [appwrite-collections.md](./appwrite-collections.md) | Appwrite 資料庫集合 | 2025-06-05 |
 
 ## 🔍 快速查找

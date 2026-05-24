@@ -1,6 +1,6 @@
 # LingUBible Project Notes
 
-This repo is a Vite + React + TypeScript web client. The bulk of the app lives under `src/`, split into feature-driven folders (`components/`, `pages/`, `hooks/`, `services/`, `utils/`). Automation scripts sit in `scripts/` (Node) and `tools/scripts/` (Bun). Static assets are in `public/` and Cloudflare/Appwrite configurations live beside the root config files (e.g. `wrangler.toml`, `appwrite.json`).
+This repo is a Vite + React + TypeScript web client. The bulk of the app lives under `src/`, split into feature-driven folders (`components/`, `pages/`, `hooks/`, `services/`, `utils/`). Automation scripts sit in `scripts/` (Node) and `tools/scripts/` (Bun). Static assets are in `public/` and Appwrite configuration lives beside the root config files (e.g. `appwrite.json`).
 
 ## Data Fetching Architecture
 
