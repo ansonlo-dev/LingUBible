@@ -112,7 +112,7 @@ export function ContactForm() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Appwrite-Project': 'lingubible',
+            'X-Appwrite-Project': '6a1097400037a55f6472',
           },
           body: JSON.stringify({
             body: JSON.stringify({

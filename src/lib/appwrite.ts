@@ -3,7 +3,7 @@ import { Client, Account, Databases, TablesDB, ID } from 'appwrite';
 // 使用環境變量來管理不同環境的端點
 // 現在使用已驗證的自定義域名，這將消除 localStorage 警告
 const APPWRITE_ENDPOINT = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://api.lingubible.com/v1';
-const APPWRITE_PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID || 'lingubible';
+const APPWRITE_PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID || '6a1097400037a55f6472';
 
 const client = new Client()
     .setEndpoint(APPWRITE_ENDPOINT)
