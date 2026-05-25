@@ -49,7 +49,7 @@ export function useMainPageStats() {
           instructorsWithReviewsLast30Days: optimizedStats.instructorsWithReviewsLast30Days,
           reviewsCount: optimizedStats.reviewsCount,
           reviewsLast30Days: optimizedStats.reviewsLast30Days,
-          verifiedStudentsCount: registeredUsersStats.verifiedUsers,
+          verifiedStudentsCount: registeredUsersStats.totalRegisteredUsers,
           verifiedStudentsLast30Days: registeredUsersStats.newUsersLast30Days
         });
 
@@ -57,7 +57,7 @@ export function useMainPageStats() {
           coursesWithReviews: optimizedStats.coursesWithReviewsCount,
           instructorsWithReviews: optimizedStats.instructorsWithReviewsCount,
           totalReviews: optimizedStats.reviewsCount,
-          verifiedStudentsCount: registeredUsersStats.verifiedUsers,
+          verifiedStudentsCount: registeredUsersStats.totalRegisteredUsers,
           verifiedStudentsLast30Days: registeredUsersStats.newUsersLast30Days
         });
 
