@@ -28,7 +28,7 @@ class RegisteredUsersService {
       
       // 使用預設配置
       this.client = new Client()
-        .setEndpoint('https://sgp.cloud.appwrite.io/v1')
+        .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://appwrite.lingubible.com/v1')
         .setProject('6a1097400037a55f6472');
     } else {
       this.client = new Client()

@@ -20,7 +20,7 @@
         ".npm"
       ],
       "variables": {
-        "APPWRITE_FUNCTION_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",
+        "APPWRITE_FUNCTION_ENDPOINT": "https://appwrite.lingubible.com/v1",
         "APPWRITE_FUNCTION_PROJECT_ID": "lingubible"
       }
     }

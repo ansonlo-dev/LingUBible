@@ -108,7 +108,7 @@ export function ContactForm() {
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超時
 
       try {
-        const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+        const response = await fetch(`${import.meta.env.VITE_APPWRITE_ENDPOINT}/functions/send-verification-email/executions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

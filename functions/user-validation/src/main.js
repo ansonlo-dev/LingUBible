@@ -4,7 +4,7 @@ import { Client, Users } from 'node-appwrite';
 export default async ({ req, res, log, error }) => {
   // Initialize Appwrite client
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1')
+    .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://appwrite.lingubible.com/v1')
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
     .setKey(process.env.APPWRITE_API_KEY);
 

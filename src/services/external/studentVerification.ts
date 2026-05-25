@@ -59,7 +59,7 @@ class StudentVerificationService {
       console.log('📦 準備發送的數據:', requestData);
       
       // 調用 Appwrite Function
-      const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+      const response = await fetch(`${import.meta.env.VITE_APPWRITE_ENDPOINT}/functions/send-verification-email/executions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -320,7 +320,7 @@ class StudentVerificationService {
       console.log('📦 準備創建帳戶的數據:', { ...requestData, password: '***' });
       
       // 調用 Appwrite Function
-      const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/send-verification-email/executions`, {
+      const response = await fetch(`${import.meta.env.VITE_APPWRITE_ENDPOINT}/functions/send-verification-email/executions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,7 +2,7 @@
 // 這是一個 Appwrite 函數，用於獲取用戶統計
 module.exports = async ({ req, res, log, error }) => {
   try {
-    const endpoint = process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1';
+    const endpoint = process.env.APPWRITE_FUNCTION_ENDPOINT || 'https://appwrite.lingubible.com/v1';
     const projectId = process.env.APPWRITE_FUNCTION_PROJECT_ID;
     const apiKey = process.env.APPWRITE_API_KEY;
 

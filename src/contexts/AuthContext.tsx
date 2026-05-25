@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const cleanupInterval = setInterval(async () => {
             try {
                 // 調用清理函數
-                const response = await fetch(`https://sgp.cloud.appwrite.io/v1/functions/cleanup-expired-codes/executions`, {
+                const response = await fetch(`${import.meta.env.VITE_APPWRITE_ENDPOINT}/functions/cleanup-expired-codes/executions`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

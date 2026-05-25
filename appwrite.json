@@ -1,7 +1,7 @@
 {
     "projectId": "6a1097400037a55f6472",
     "projectName": "LingUBible",
-    "endpoint": "https://sgp.cloud.appwrite.io/v1",
+    "endpoint": "https://appwrite.lingubible.com/v1",
     "settings": {
         "services": {
             "account": true,

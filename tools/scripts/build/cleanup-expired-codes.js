@@ -11,7 +11,7 @@ async function cleanupExpiredCodes() {
 
     // 初始化 Appwrite 客戶端
     const client = new Client()
-      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1')
+      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://appwrite.lingubible.com/v1')
       .setProject(process.env.APPWRITE_PROJECT_ID || '6a1097400037a55f6472')
       .setKey(process.env.APPWRITE_API_KEY);
 
