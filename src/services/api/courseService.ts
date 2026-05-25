@@ -1,4 +1,4 @@
-import { tablesDB } from '@/lib/appwrite';
+import { tablesDB, functions } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA } from '@/utils/gradeUtils';
@@ -16,6 +16,15 @@ export interface Course {
   credits?: string;
   $createdAt: string;
   $updatedAt: string;
+  // 反正規化統計（由 recompute-course-stats 函數寫入，避免列表頁全表讀 reviews）
+  stats_review_count?: number;
+  stats_avg_rating?: number;
+  stats_student_count?: number;
+  stats_avg_workload?: number;
+  stats_avg_difficulty?: number;
+  stats_avg_usefulness?: number;
+  stats_avg_gpa?: number;
+  stats_avg_gpa_count?: number;
 }
 
 export interface CourseWithStats extends Course {
@@ -818,15 +827,42 @@ export class CourseService {
         [
           Query.orderAsc('course_code'),
           Query.limit(this.MAX_COURSES_LIMIT),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt',
+            'stats_review_count', 'stats_avg_rating', 'stats_student_count', 'stats_avg_workload', 'stats_avg_difficulty', 'stats_avg_usefulness', 'stats_avg_gpa', 'stats_avg_gpa_count'])
         ]
       );
-      
+
       return response.rows as unknown as Course[];
     } catch (error) {
       console.error('Error fetching courses:', error);
       throw new Error('Failed to fetch courses');
     }
+  }
+
+  /**
+   * 從 course 文件的反正規化欄位讀取統計（取代列表頁對 reviews 的全表掃描）
+   * 未回填的課程（stats_* 為 undefined）回傳預設空統計
+   */
+  private static extractDenormalizedStats(course: Course): {
+    reviewCount: number;
+    averageRating: number;
+    studentCount: number;
+    averageWorkload: number;
+    averageDifficulty: number;
+    averageUsefulness: number;
+    averageGPA: number;
+    averageGPACount: number;
+  } {
+    return {
+      reviewCount: course.stats_review_count ?? 0,
+      averageRating: course.stats_avg_rating ?? 0,
+      studentCount: course.stats_student_count ?? 0,
+      averageWorkload: course.stats_avg_workload ?? -1,
+      averageDifficulty: course.stats_avg_difficulty ?? -1,
+      averageUsefulness: course.stats_avg_usefulness ?? -1,
+      averageGPA: course.stats_avg_gpa ?? 0,
+      averageGPACount: course.stats_avg_gpa_count ?? 0
+    };
   }
 
   /**
@@ -1031,20 +1067,18 @@ export class CourseService {
         }
         
         // 並行獲取所有必要的數據
+        // 統計已反正規化到 course 文件，不再查詢 reviews（大幅減少讀取）
         const [
-          statsMap,
           teachingLanguagesMap,
           currentTermLanguagesMap,
           serviceLearningTypesMap,
           currentTermServiceLearningMap,
           currentTermOfferedCourses
         ] = await Promise.all([
-          // 獲取統計數據的Map
-          this.getBatchCourseDetailedStats(courseCodes),
           // 獲取教學語言數據
           this.getBatchCourseTeachingLanguages(courseCodes),
           this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
-          // 獲取服務學習數據  
+          // 獲取服務學習數據
           this.getBatchCourseServiceLearning(courseCodes),
           this.getBatchCourseCurrentTermServiceLearning(courseCodes),
           // 獲取當前學期開設狀態
@@ -1055,20 +1089,11 @@ export class CourseService {
           console.log('✅ All batch data loaded successfully');
           console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
         }
-        
+
         // 組合所有數據
         const coursesWithStats = courses.map(course => {
-          const stats = statsMap.get(course.course_code) || {
-            reviewCount: 0,
-            averageRating: 0,
-            studentCount: 0,
-            averageWorkload: -1,
-            averageDifficulty: -1,
-            averageUsefulness: -1,
-            averageGPA: 0,
-            averageGPACount: 0
-          };
-          
+          const stats = this.extractDenormalizedStats(course);
+
           const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
           const currentTermTeachingLanguage = currentTermLanguagesMap.get(course.course_code) || null;
           const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
@@ -1512,6 +1537,17 @@ export class CourseService {
   /**
    * 創建新的評論
    */
+  /**
+   * 觸發後端重算指定課程的反正規化統計（fire-and-forget，不阻塞主流程）
+   * 統計值寫入 courses 表的 stats_* 欄位，由 recompute-course-stats 函數以 API key 執行
+   */
+  private static triggerCourseStatsRecompute(courseCode: string): void {
+    if (!courseCode) return;
+    functions
+      .createExecution('recompute-course-stats', JSON.stringify({ courseCode }), true)
+      .catch(err => console.error('觸發課程統計重算失敗:', err));
+  }
+
   static async createReview(reviewData: Omit<Review, '$id' | '$createdAt' | '$updatedAt'>): Promise<Review> {
     try {
       // Check if user can submit a review for this course
@@ -1543,6 +1579,9 @@ export class CourseService {
         'unique()', // 讓 Appwrite 自動生成 ID
         reviewData
       );
+
+      // 重算該課程的反正規化統計（非阻塞）
+      this.triggerCourseStatsRecompute(reviewData.course_code);
 
       return response as unknown as Review;
     } catch (error) {
@@ -2187,6 +2226,20 @@ export class CourseService {
    */
   static async deleteReview(reviewId: string): Promise<void> {
     try {
+      // 刪除前先取得 course_code，供刪除後重算統計使用
+      let courseCodeToRecompute: string | null = null;
+      try {
+        const review = await tablesDB.getRow(
+          this.DATABASE_ID,
+          this.REVIEWS_COLLECTION_ID,
+          reviewId,
+          [Query.select(['course_code'])]
+        );
+        courseCodeToRecompute = (review as unknown as Review).course_code;
+      } catch {
+        // 取不到也不阻止刪除；每日 cron 會補正統計
+      }
+
       // 首先刪除相關的投票記錄，只選擇 ID 欄位
       const votesResponse = await tablesDB.listRows(
         this.DATABASE_ID,
@@ -2215,6 +2268,11 @@ export class CourseService {
         this.REVIEWS_COLLECTION_ID,
         reviewId
       );
+
+      // 重算該課程的反正規化統計（非阻塞）
+      if (courseCodeToRecompute) {
+        this.triggerCourseStatsRecompute(courseCodeToRecompute);
+      }
     } catch (error) {
       console.error('Error deleting review:', error);
       throw new Error('Failed to delete review');
@@ -2232,6 +2290,9 @@ export class CourseService {
         reviewId,
         reviewData
       );
+
+      // 重算該課程的反正規化統計（非阻塞）。course_code 取自更新後的完整文件
+      this.triggerCourseStatsRecompute((response as unknown as Review).course_code);
 
       return response as unknown as Review;
     } catch (error) {

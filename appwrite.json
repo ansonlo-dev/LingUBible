@@ -156,6 +156,29 @@
             "buildSpecification": "s-4vcpu-4gb",
             "runtimeSpecification": "s-4vcpu-4gb",
             "deploymentRetention": 0
+        },
+        {
+            "$id": "recompute-course-stats",
+            "name": "recompute-course-stats",
+            "runtime": "bun-1.1",
+            "path": "functions/recompute-course-stats",
+            "entrypoint": "src/main.js",
+            "execute": [
+                "any"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [],
+            "schedule": "0 3 * * *",
+            "timeout": 300,
+            "commands": "bun install",
+            "scopes": [
+                "databases.read",
+                "databases.write"
+            ],
+            "buildSpecification": "s-1vcpu-512mb",
+            "runtimeSpecification": "s-1vcpu-512mb",
+            "deploymentRetention": 0
         }
     ],
     "sites": [
@@ -651,6 +674,78 @@
                     "size": 200,
                     "default": null,
                     "encrypt": false
+                },
+                {
+                    "key": "stats_review_count",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "stats_avg_rating",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": 0
+                },
+                {
+                    "key": "stats_student_count",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "stats_avg_workload",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": -1
+                },
+                {
+                    "key": "stats_avg_difficulty",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": -1
+                },
+                {
+                    "key": "stats_avg_usefulness",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": -1
+                },
+                {
+                    "key": "stats_avg_gpa",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": 0
+                },
+                {
+                    "key": "stats_avg_gpa_count",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
                 }
             ],
             "indexes": [

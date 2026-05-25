@@ -18,5 +18,8 @@ echo "✅ get-user-stats deployed"
 appwrite functions create-deployment --function-id=user-validation --code=functions/user-validation --activate=true
 echo "✅ user-validation deployed"
 
+appwrite functions create-deployment --function-id=recompute-course-stats --code=functions/recompute-course-stats --activate=true
+echo "✅ recompute-course-stats deployed"
+
 echo "🎉 All functions deployed successfully!"
 echo "📊 Check status with: appwrite functions list" 
