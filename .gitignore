@@ -44,8 +44,9 @@ node_modules/
 dist/
 .turbo/
 
-# Font processing cache
+# Font processing cache (TTF files are large and not needed for web serving - browsers use woff2)
 temp-fonts/
+public/fonts/*.ttf
 public/fonts/optimized/*.ttf
 
 # Package manager lockfiles (using Bun)
