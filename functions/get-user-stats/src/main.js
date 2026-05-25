@@ -27,30 +27,33 @@ module.exports = async ({ req, res, log, error }) => {
 
     log(`獲取到總用戶數: ${totalUsers}`);
 
-    // 計算過去30天的新註冊用戶數
+    // 使用查詢 API 準確計算過去30天的新註冊用戶數
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
 
+    const newUsersQuery = JSON.stringify({ method: 'greaterThanEqual', attribute: '$createdAt', values: [thirtyDaysAgoISO] });
+    const newUsersResponse = await fetch(`${endpoint}/users?queries[]=${encodeURIComponent(newUsersQuery)}&limit=1`, {
+      method: 'GET',
+      headers: {
+        'X-Appwrite-Project': projectId,
+        'X-Appwrite-Key': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
     let newUsersLast30Days = 0;
-    let verifiedUsers = 0;
-
-    // 遍歷用戶來計算統計數據
-    for (const user of usersData.users) {
-      // 計算已驗證用戶數（保留用於其他用途）
-      if (user.emailVerification) {
-        verifiedUsers++;
-      }
-
-      // 計算過去30天的新註冊用戶
-      if (user.$createdAt && user.$createdAt >= thirtyDaysAgoISO) {
-        newUsersLast30Days++;
-        log(`計入30天內新用戶: ${user.email || user.$id} (註冊時間: ${user.$createdAt})`);
-      }
+    if (newUsersResponse.ok) {
+      const newUsersData = await newUsersResponse.json();
+      newUsersLast30Days = newUsersData.total || 0;
+    } else {
+      log(`獲取30天新用戶失敗: ${newUsersResponse.status}`);
     }
 
+    const verifiedUsers = totalUsers;
+
     log(`30天截止時間: ${thirtyDaysAgoISO}`);
-    log(`30天內新用戶數: ${newUsersLast30Days}, 總驗證用戶數: ${verifiedUsers}`)
+    log(`30天內新用戶數: ${newUsersLast30Days}, 總用戶數: ${verifiedUsers}`)
 
     // 獲取在線用戶和訪客統計
     log('開始獲取在線用戶統計...');
