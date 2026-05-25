@@ -45,8 +45,8 @@ let lastFetchTime = 0;
 let isCurrentlyFetching = false;
 let globalIntervalId: NodeJS.Timeout | null = null;
 let instanceCount = 0; // 追蹤實例數量
-const CACHE_DURATION = 2 * 60 * 1000; // 2分鐘緩存（減少緩存時間確保數據及時更新）
-const UPDATE_INTERVAL = 2 * 60 * 1000; // 2分鐘更新間隔（大幅減少）
+const CACHE_DURATION = 30 * 60 * 1000; // 30分鐘緩存
+const UPDATE_INTERVAL = 30 * 60 * 1000; // 30分鐘更新間隔
 const EVENT_THROTTLE_TIME = 10 * 1000; // 事件節流：10秒內最多處理一次
 
 // 事件節流
@@ -257,11 +257,11 @@ export function useUserStats() {
       updateStats(false, false); // 不強制更新，不顯示載入
     }
 
-    // 只在第一個實例中設置定時器（生產環境）
+    // 定期背景更新（30分鐘一次，只在第一個實例設置）
     if (!globalIntervalId && instanceIdRef.current === 1) {
       globalIntervalId = setInterval(() => {
-        updateStats(false, false); // 定期更新也不顯示載入狀態
-      }, UPDATE_INTERVAL); // 2分鐘更新一次，大幅減少頻率
+        updateStats(false, false);
+      }, UPDATE_INTERVAL);
     }
 
     // 監聽統計更新事件（節流處理）

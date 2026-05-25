@@ -4,7 +4,6 @@ import { toast } from '@/hooks/use-toast';
 import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/hooks/useLanguage';
-import AppwriteUserStatsService from '@/services/api/appwriteUserStats';
 import { oauthService } from '@/services/api/oauth';
 
 interface AuthContextType {
@@ -51,7 +50,6 @@ export const useAuth = () => {
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
-    const [userSessionId, setUserSessionId] = useState<string | null>(null); // 存儲當前用戶的 sessionId
     const [isCheckingUser, setIsCheckingUser] = useState(false); // 防止重複調用
     const [isRefreshingUser, setIsRefreshingUser] = useState(false); // 防止 refreshUser 重複調用
     const hasInitialized = useRef(false); // 追蹤是否已經初始化
@@ -145,7 +143,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             
             setUser(null);
-            setUserSessionId(null);
         };
         
         try {
@@ -255,7 +252,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         localStorage.removeItem('rememberMe');
                         localStorage.removeItem('savedEmail');
                         setUser(null);
-                        setUserSessionId(null);
                         return null;
                     }
                 } else {
@@ -348,13 +344,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 console.log('❌ checkUser: 沒有有效會話或用戶，設置為 null');
                 setUser(null);
-                setUserSessionId(null);
                 return null;
             }
         } catch (error) {
             console.error('檢查用戶狀態失敗:', error);
             setUser(null);
-            setUserSessionId(null);
             return null;
         } finally {
             setLoading(false);
@@ -362,7 +356,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (outerError) {
             console.error('checkUser 執行失敗:', outerError);
             setUser(null);
-            setUserSessionId(null);
             setLoading(false);
             return null;
         } finally {
@@ -380,20 +373,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const currentUser = await checkUser();
             console.log('✅ checkUser 完成，返回用戶:', currentUser?.email);
             
-            // 異步處理統計記錄和頭像獲取，不阻塞登入流程
+            // 頭像預載 - 異步執行，不阻塞登入流程
             if (currentUser?.$id) {
-                // 統計記錄 - 異步執行，不等待結果
-                const userStatsService = AppwriteUserStatsService.getInstance();
-                userStatsService.userLogin(currentUser.$id).then((sessionId) => {
-                    console.log('用戶統計: 登入記錄成功，會話 ID:', sessionId);
-                    // 存儲 sessionId
-                    setUserSessionId(sessionId);
-                    // 觸發統計數據更新事件，讓 UI 立即刷新
-                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
-                }).catch((error) => {
-                    console.error('用戶統計: 登入記錄失敗', error);
-                });
-                
                 // 頭像獲取 - 異步執行，不等待結果
                 avatarService.getUserAvatar(currentUser.$id).then((customAvatar) => {
                     // 頭像獲取成功，但不需要立即顯示
@@ -423,20 +404,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await authService.createAccount(email, password, name, recaptchaToken);
             const currentUser = await checkUser();
-            
-            // 異步處理統計記錄，不阻塞註冊流程
-            if (currentUser?.$id) {
-                const userStatsService = AppwriteUserStatsService.getInstance();
-                userStatsService.userLogin(currentUser.$id).then((sessionId) => {
-                    console.log('用戶統計: 註冊記錄成功，會話 ID:', sessionId);
-                    // 存儲 sessionId
-                    setUserSessionId(sessionId);
-                    // 觸發統計數據更新事件，讓 UI 立即刷新
-                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
-                }).catch((error) => {
-                    console.error('用戶統計: 註冊記錄失敗', error);
-                });
-            }
             
             // 立即顯示註冊成功 toast，使用傳入的用戶名
             const username = name || email?.split('@')[0] || t('common.user');
@@ -482,33 +449,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const currentUser = user;
             const username = getUserDisplayName(currentUser, t);
             
-            // 處理統計記錄，確保立即更新
-            if (currentUser?.$id && userSessionId) {
-                const userStatsService = AppwriteUserStatsService.getInstance();
-                try {
-                    // 等待登出操作完成
-                    await userStatsService.userLogout(userSessionId);
-                    console.log('用戶統計: 登出記錄成功');
-                    
-                    // 立即觸發統計數據更新事件
-                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
-                    
-                    // 額外的延遲觸發，確保數據庫同步完成
-                    setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent('userStatsUpdated'));
-                        console.log('用戶統計: 延遲更新觸發');
-                    }, 500);
-                    
-                } catch (error) {
-                    console.error('用戶統計: 登出記錄失敗', error);
-                    // 即使失敗也觸發更新，讓系統自我修正
-                    window.dispatchEvent(new CustomEvent('userStatsUpdated'));
-                }
-            }
-            
             await authService.logout();
             setUser(null);
-            setUserSessionId(null); // 清除 sessionId
             
             // 立即顯示登出成功 toast
             toast({
@@ -542,7 +484,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // 只有在確實沒有會話時才清空用戶狀態
                 if (!currentUserBackup) {
                     setUser(null);
-                    setUserSessionId(null);
                 }
                 return;
             }
@@ -595,7 +536,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!hasLocalSession) {
                     console.log('沒有本地會話，清空用戶狀態');
                     setUser(null);
-                    setUserSessionId(null);
                 } else {
                     console.log('檢測到本地會話存在，保持當前用戶狀態');
                     // 保持當前用戶狀態，避免意外登出
@@ -608,7 +548,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!hasLocalSession) {
                 console.log('沒有本地會話，清空用戶狀態');
                 setUser(null);
-                setUserSessionId(null);
             } else {
                 console.log('檢測到本地會話存在，保持當前用戶狀態以避免意外登出');
             }

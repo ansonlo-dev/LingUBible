@@ -51,8 +51,6 @@ import { theme } from '@/lib/utils';
 import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
 import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
-import { usePingSystem } from '@/hooks/usePingSystem';
-import { useVisitorSession } from '@/hooks/useVisitorSession';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { initializeScrollbarCompensation } from '@/utils/ui/scrollbarCompensation';
@@ -140,16 +138,6 @@ const AppContent = () => {
   
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  // 初始化訪客會話（如果用戶未登入）
-  useVisitorSession();
-
-  // 啟動 ping 系統來追蹤用戶在線狀態
-  usePingSystem({
-    enabled: true,
-    pingInterval: 45 * 1000, // 每 45 秒 ping 一次，與本地統計服務同步
-    activityEvents: ['click', 'keydown', 'scroll', 'mousemove', 'touchstart']
-  });
 
   useEffect(() => {
     // 獲取當前主題模式和實際主題

@@ -1,6 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
 import { Github, ExternalLink, RefreshCw } from 'lucide-react';
-import { UserStatsDisplay } from '@/components/user/UserStatsDisplay';
 import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';
 import { FooterKofiButton } from '@/components/common/KofiWidget';
 import { Link } from 'react-router-dom';
@@ -71,10 +70,6 @@ export function Footer() {
                 </ResponsiveTooltip>
               </div>
               
-              {/* User Stats */}
-              <div className="border-l pl-4" style={{ borderLeftColor: 'rgb(var(--border))' }}>
-                <UserStatsDisplay variant="compact" />
-              </div>
             </div>
             
             {/* Center - Built with love */}
@@ -188,7 +183,6 @@ export function Footer() {
               </div>
               
               <div className="flex items-center space-x-4">
-                <UserStatsDisplay variant="compact" />
                 <FooterKofiButton />
                 <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
                 {releaseUrl ? (
@@ -273,7 +267,6 @@ export function Footer() {
         <div className="md:hidden flex flex-col space-y-3">
           {/* User Stats and OpenStatus Badge - Mobile */}
           <div className="flex justify-between items-center py-2">
-            <UserStatsDisplay variant="compact" />
             <div className="flex items-center space-x-2">
               <FooterKofiButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
