@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
-import * as echarts from 'echarts';
 import type { ECharts } from 'echarts';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useTheme } from '@/hooks/theme/useTheme';
