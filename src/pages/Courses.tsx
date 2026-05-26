@@ -146,46 +146,36 @@ const Courses = () => {
           });
           
           console.log('✅ Basic instructor mapping initialized with', instructorMap.size, 'entries');
-          
-          // 在後台漸進式建立完整的講師-課程映射
+
+          // 🚀 在後台用「單次掃描」建立完整的講師-課程映射（取代全學期掃描 + 50 次 N+1 查詢）
           setTimeout(async () => {
             try {
-              console.log('🔄 Building comprehensive instructor-course mapping in background...');
-              const allTermsInstructorsMap = await CourseService.getAllTermsInstructorsTeachingBatch();
-              
-              // 限制同時處理的講師數量以避免性能問題
-              const uniqueInstructors = Array.from(new Set(
-                Array.from(allTermsInstructorsMap.values()).flatMap(names => Array.from(names))
-              )).slice(0, 50); // 限制處理前50位講師
-              
-              for (const instructorName of uniqueInstructors) {
-                try {
-                  const teachingRecords = await CourseService.getInstructorTeachingRecords(instructorName);
-                  const instructor = allInstructors.find(inst => inst.name === instructorName);
-                  
-                  // 為所有名稱添加課程映射
-                  const nameKeys = [
-                    instructorName.toLowerCase(),
-                    instructor?.name_tc?.toLowerCase(),
-                    instructor?.name_sc?.toLowerCase()
-                  ].filter(Boolean) as string[];
-                  
-                  teachingRecords.forEach(record => {
-                    nameKeys.forEach(nameKey => {
-                      instructorMap.get(nameKey)?.add(record.course_code);
-                    });
-                  });
-                } catch (error) {
-                  // 靜默處理錯誤，不影響主要功能
-                }
-              }
-              
-              console.log('✅ Background instructor mapping completed');
+              console.log('🔄 Building comprehensive instructor-course mapping (single scan)...');
+              const nameToCourses = await CourseService.getInstructorCourseCodesMap();
+
+              // 為所有講師的所有名稱變體填入課程集合
+              allInstructors.forEach(instructor => {
+                const courses = nameToCourses.get(instructor.name);
+                if (!courses || courses.size === 0) return;
+                const nameKeys = [
+                  instructor.name?.toLowerCase(),
+                  instructor.name_tc?.toLowerCase(),
+                  instructor.name_sc?.toLowerCase()
+                ].filter(Boolean) as string[];
+                nameKeys.forEach(nameKey => {
+                  const existing = instructorMap.get(nameKey) || new Set<string>();
+                  courses.forEach(c => existing.add(c));
+                  instructorMap.set(nameKey, existing);
+                });
+              });
+
+              setInstructorCourseMap(new Map(instructorMap));
+              console.log('✅ Background instructor mapping completed (single scan, all instructors)');
             } catch (error) {
               console.warn('Background instructor mapping failed:', error);
             }
           }, 2000); // 2秒後開始後台處理
-          
+
         } catch (error) {
           console.warn('Failed to initialize instructor mapping:', error);
           console.log('✅ Using empty instructor mapping');

@@ -94,6 +94,17 @@ export interface TeachingRecord {
   $updatedAt: string;
 }
 
+// 共享 teaching_records 快取使用的精簡欄位型別
+export interface TeachingRawRecord {
+  $id: string;
+  course_code: string;
+  term_code: string;
+  instructor_name: string;
+  teaching_language: string;
+  service_learning: string | null;
+  $createdAt: string;
+}
+
 export interface Term {
   $id: string;
   term_code: string;
@@ -1035,6 +1046,74 @@ export class CourseService {
   }
 
   /**
+   * 🚀 單次掃描 teaching_records，一次算出列表頁需要的全部教學衍生資料，
+   * 取代原本 5 個各自掃描 teaching_records 的方法（每次刷新省下數萬次讀取）。
+   * 回傳：各課所有教學語言、當前學期教學語言、服務學習類型、當前學期服務學習、當前學期開設集合。
+   */
+  private static async getBatchCourseTeachingDataConsolidated(courseCodes: string[], currentTermCode: string): Promise<{
+    teachingLanguages: Map<string, string[]>;
+    currentTermTeachingLanguage: Map<string, string | null>;
+    serviceLearning: Map<string, ('compulsory' | 'optional')[]>;
+    currentTermServiceLearning: Map<string, ('compulsory' | 'optional') | null>;
+    offeredInCurrentTerm: Set<string>;
+  }> {
+    const teachingLanguages = new Map<string, string[]>();
+    const currentTermTeachingLanguage = new Map<string, string | null>();
+    const serviceLearning = new Map<string, ('compulsory' | 'optional')[]>();
+    const currentTermServiceLearning = new Map<string, ('compulsory' | 'optional') | null>();
+    const offeredInCurrentTerm = new Set<string>();
+
+    // 只保留請求的課程（courseCodes 為空時不過濾）
+    const courseSet = courseCodes.length > 0 ? new Set(courseCodes) : null;
+    courseCodes.forEach(c => {
+      teachingLanguages.set(c, []);
+      currentTermTeachingLanguage.set(c, null);
+      serviceLearning.set(c, []);
+      currentTermServiceLearning.set(c, null);
+    });
+
+    const seenLang = new Map<string, Set<string>>();
+    const seenSL = new Map<string, Set<string>>();
+
+    const rows = await this.getAllTeachingRecordsRaw(); // 已按 $createdAt 升序
+    for (const r of rows) {
+      const cc = r.course_code;
+      if (!cc || (courseSet && !courseSet.has(cc))) continue;
+
+      // 所有學期：教學語言（依時間順序去重）
+      if (r.teaching_language) {
+        if (!teachingLanguages.has(cc)) teachingLanguages.set(cc, []);
+        if (!seenLang.has(cc)) seenLang.set(cc, new Set());
+        if (!seenLang.get(cc)!.has(r.teaching_language)) {
+          seenLang.get(cc)!.add(r.teaching_language);
+          teachingLanguages.get(cc)!.push(r.teaching_language);
+        }
+      }
+
+      // 所有學期：服務學習類型（依時間順序去重）
+      if (r.service_learning === 'compulsory' || r.service_learning === 'optional') {
+        if (!serviceLearning.has(cc)) serviceLearning.set(cc, []);
+        if (!seenSL.has(cc)) seenSL.set(cc, new Set());
+        if (!seenSL.get(cc)!.has(r.service_learning)) {
+          seenSL.get(cc)!.add(r.service_learning);
+          serviceLearning.get(cc)!.push(r.service_learning as 'compulsory' | 'optional');
+        }
+      }
+
+      // 當前學期欄位（rows 已按 $createdAt 升序，後寫入者為最新）
+      if (r.term_code === currentTermCode) {
+        offeredInCurrentTerm.add(cc);
+        if (r.teaching_language) currentTermTeachingLanguage.set(cc, r.teaching_language);
+        if (r.service_learning === 'compulsory' || r.service_learning === 'optional') {
+          currentTermServiceLearning.set(cc, r.service_learning as 'compulsory' | 'optional');
+        }
+      }
+    }
+
+    return { teachingLanguages, currentTermTeachingLanguage, serviceLearning, currentTermServiceLearning, offeredInCurrentTerm };
+  }
+
+  /**
    * 獲取帶統計信息的課程列表
    */
   /**
@@ -1066,27 +1145,17 @@ export class CourseService {
           console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
         }
         
-        // 並行獲取所有必要的數據
-        // 統計已反正規化到 course 文件，不再查詢 reviews（大幅減少讀取）
-        const [
-          teachingLanguagesMap,
-          currentTermLanguagesMap,
-          serviceLearningTypesMap,
-          currentTermServiceLearningMap,
-          currentTermOfferedCourses
-        ] = await Promise.all([
-          // 獲取教學語言數據
-          this.getBatchCourseTeachingLanguages(courseCodes),
-          this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
-          // 獲取服務學習數據
-          this.getBatchCourseServiceLearning(courseCodes),
-          this.getBatchCourseCurrentTermServiceLearning(courseCodes),
-          // 獲取當前學期開設狀態
-          this.getCoursesOfferedInTermBatch(currentTermCode, courseCodes)
-        ]);
+        // 🚀 單次掃描 teaching_records 取得所有教學衍生資料（取代原本 5 次掃描）
+        // 統計已反正規化到 course 文件，亦不再查詢 reviews
+        const teachingData = await this.getBatchCourseTeachingDataConsolidated(courseCodes, currentTermCode);
+        const teachingLanguagesMap = teachingData.teachingLanguages;
+        const currentTermLanguagesMap = teachingData.currentTermTeachingLanguage;
+        const serviceLearningTypesMap = teachingData.serviceLearning;
+        const currentTermServiceLearningMap = teachingData.currentTermServiceLearning;
+        const currentTermOfferedCourses = teachingData.offeredInCurrentTerm;
 
         if (import.meta.env.DEV) {
-          console.log('✅ All batch data loaded successfully');
+          console.log('✅ Teaching data loaded via single consolidated scan');
           console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
         }
 
@@ -2918,6 +2987,50 @@ export class CourseService {
   }
 
   /**
+   * 🚀 單次掃描 teaching_records，一次算出講師列表頁需要的教學衍生資料，
+   * 取代原本「當前學期 teaching 讀取 + 全部教學語言掃描 + 當前學期語言掃描」三次讀取。
+   */
+  private static async getBatchInstructorTeachingDataConsolidated(instructorNames: string[], currentTermCode: string): Promise<{
+    teachingLanguages: Map<string, string[]>;
+    currentTermTeachingLanguage: Map<string, string | null>;
+    teachingInCurrentTerm: Set<string>;
+  }> {
+    const teachingLanguages = new Map<string, string[]>();
+    const currentTermTeachingLanguage = new Map<string, string | null>();
+    const teachingInCurrentTerm = new Set<string>();
+
+    const nameSet = instructorNames.length > 0 ? new Set(instructorNames) : null;
+    instructorNames.forEach(n => {
+      teachingLanguages.set(n, []);
+      currentTermTeachingLanguage.set(n, null);
+    });
+
+    const seenLang = new Map<string, Set<string>>();
+
+    const rows = await this.getAllTeachingRecordsRaw(); // 已按 $createdAt 升序
+    for (const r of rows) {
+      const name = r.instructor_name;
+      if (!name || (nameSet && !nameSet.has(name))) continue;
+
+      if (r.teaching_language) {
+        if (!teachingLanguages.has(name)) teachingLanguages.set(name, []);
+        if (!seenLang.has(name)) seenLang.set(name, new Set());
+        if (!seenLang.get(name)!.has(r.teaching_language)) {
+          seenLang.get(name)!.add(r.teaching_language);
+          teachingLanguages.get(name)!.push(r.teaching_language);
+        }
+      }
+
+      if (r.term_code === currentTermCode) {
+        teachingInCurrentTerm.add(name);
+        if (r.teaching_language) currentTermTeachingLanguage.set(name, r.teaching_language);
+      }
+    }
+
+    return { teachingLanguages, currentTermTeachingLanguage, teachingInCurrentTerm };
+  }
+
+  /**
    * 獲取所有講師的詳細統計信息（用於講師列表頁面）
    * 🚀 優化：使用雙層緩存（記憶體 + 持久化）提供即時載入體驗
    */
@@ -2941,7 +3054,8 @@ export class CourseService {
         
         const currentTermCode = getCurrentTermCode();
         
-        const [instructorsResponse, reviewsResponse, teachingRecordsResponse] = await Promise.all([
+        // 教學資料（語言、當前學期）改由下方單次掃描取得，這裡不再讀 teaching_records
+        const [instructorsResponse, reviewsResponse] = await Promise.all([
           tablesDB.listRows(
             this.DATABASE_ID,
             this.INSTRUCTORS_COLLECTION_ID,
@@ -2959,25 +3073,11 @@ export class CourseService {
               Query.limit(this.MAX_REVIEWS_LIMIT),
               Query.select(['instructor_details', 'course_final_grade'])
             ]
-          ),
-          tablesDB.listRows(
-            this.DATABASE_ID,
-            this.TEACHING_RECORDS_COLLECTION_ID,
-            [
-              Query.equal('term_code', currentTermCode),
-              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-              Query.select(['instructor_name'])
-            ]
           )
         ]);
 
         const instructors = instructorsResponse.rows as unknown as Instructor[];
         const allReviews = reviewsResponse.rows as unknown as Review[];
-        const currentTermTeachingRecords = teachingRecordsResponse.rows as unknown as Pick<TeachingRecord, 'instructor_name'>[];
-
-        const instructorsTeachingInCurrentTerm = new Set(
-          currentTermTeachingRecords.map(record => record.instructor_name)
-        );
 
         const instructorStatsMap = new Map<string, {
           reviewCount: number;
@@ -3053,57 +3153,29 @@ export class CourseService {
           });
         }
 
-        const instructorsWithDetailedStats: InstructorWithDetailedStats[] = instructors
-          .map(instructor => {
-            const stats = finalInstructorStatsMap.get(instructor.name) || {
-              reviewCount: 0,
-              teachingScore: 0,
-              gradingFairness: 0,
-              averageGPA: 0,
-              averageGPACount: 0
-            };
-
-            return {
-              ...instructor,
-              ...stats,
-              isTeachingInCurrentTerm: instructorsTeachingInCurrentTerm.has(instructor.name)
-            };
-          });
-
+        // 🚀 單次掃描 teaching_records 取得教學語言、當前學期語言、當前學期任教集合
         const instructorNames = instructors.map(instructor => instructor.name);
-        let teachingLanguagesMap = new Map<string, string[]>();
-        let currentTermTeachingLanguagesMap = new Map<string, string | null>();
+        const teachingData = await this.getBatchInstructorTeachingDataConsolidated(instructorNames, currentTermCode);
+        const teachingLanguagesMap = teachingData.teachingLanguages;
+        const currentTermTeachingLanguagesMap = teachingData.currentTermTeachingLanguage;
+        const instructorsTeachingInCurrentTerm = teachingData.teachingInCurrentTerm;
 
-        try {
-          if (import.meta.env.DEV) {
-            console.log('🔍 getAllInstructorsWithDetailedStats: Starting to fetch teaching languages...');
-          }
-
-          const [languagesResult, currentTermResult] = await Promise.allSettled([
-            this.getBatchInstructorTeachingLanguages(instructorNames),
-            this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames)
-          ]);
-
-          if (languagesResult.status === 'fulfilled') {
-            teachingLanguagesMap = languagesResult.value;
-          } else {
-            console.warn('❌ Failed to fetch all instructor teaching languages:', languagesResult.reason);
-          }
-
-          if (currentTermResult.status === 'fulfilled') {
-            currentTermTeachingLanguagesMap = currentTermResult.value;
-          } else {
-            console.warn('❌ Failed to fetch all instructor current term teaching languages:', currentTermResult.reason);
-          }
-        } catch (error) {
-          console.error('❌ Error fetching teaching language data for all instructors:', error);
-        }
-
-        const finalInstructorsWithDetailedStats = instructorsWithDetailedStats.map(instructor => ({
-          ...instructor,
-          teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
-          currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
-        })).sort((a, b) => {
+        const finalInstructorsWithDetailedStats = instructors.map(instructor => {
+          const stats = finalInstructorStatsMap.get(instructor.name) || {
+            reviewCount: 0,
+            teachingScore: 0,
+            gradingFairness: 0,
+            averageGPA: 0,
+            averageGPACount: 0
+          };
+          return {
+            ...instructor,
+            ...stats,
+            isTeachingInCurrentTerm: instructorsTeachingInCurrentTerm.has(instructor.name),
+            teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
+            currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
+          };
+        }).sort((a, b) => {
           const aNameForSort = extractInstructorNameForSorting(a.name);
           const bNameForSort = extractInstructorNameForSorting(b.name);
           return aNameForSort.localeCompare(bNameForSort);
@@ -4382,6 +4454,66 @@ export class CourseService {
    * 獲取所有學期的講師教學狀態（超級優化版本）
    * 一次性獲取所有學期的教學記錄，支持多個學期的批量查詢
    */
+  /**
+   * 🚀 共享的 teaching_records 原始資料（被動記憶體快取，無背景刷新）。
+   * 同一次頁面載入中，多個衍生方法（課程教學語言、講師教學語言、學期講師、講師課程對照）
+   * 都改讀這份快取，使 teaching_records 每次載入只掃描一次（而非 3~5 次）。
+   * 注意：純被動 TTL，不使用任何 setInterval / 背景刷新，重新整理頁面即清空。
+   */
+  private static teachingRecordsRawCache: { data: TeachingRawRecord[]; expiry: number } | null = null;
+  private static teachingRecordsRawInflight: Promise<TeachingRawRecord[]> | null = null;
+  private static readonly TEACHING_RAW_TTL = 3 * 60 * 1000; // 3 分鐘被動快取
+
+  static async getAllTeachingRecordsRaw(): Promise<TeachingRawRecord[]> {
+    const now = Date.now();
+    if (this.teachingRecordsRawCache && this.teachingRecordsRawCache.expiry > now) {
+      return this.teachingRecordsRawCache.data;
+    }
+    if (this.teachingRecordsRawInflight) return this.teachingRecordsRawInflight;
+
+    this.teachingRecordsRawInflight = (async () => {
+      try {
+        const all: TeachingRawRecord[] = [];
+        const PAGE = 1000;
+        let cursor: string | null = null;
+        while (true) {
+          const queries = [
+            Query.orderAsc('$createdAt'),
+            Query.limit(PAGE),
+            Query.select(['course_code', 'term_code', 'teaching_language', 'service_learning', 'instructor_name', '$createdAt'])
+          ];
+          if (cursor) queries.push(Query.cursorAfter(cursor));
+          const res = await tablesDB.listRows(this.DATABASE_ID, this.TEACHING_RECORDS_COLLECTION_ID, queries);
+          const rows = res.rows as unknown as TeachingRawRecord[];
+          all.push(...rows);
+          if (rows.length < PAGE) break;
+          cursor = (rows[rows.length - 1] as any).$id;
+        }
+        this.teachingRecordsRawCache = { data: all, expiry: Date.now() + this.TEACHING_RAW_TTL };
+        return all;
+      } finally {
+        this.teachingRecordsRawInflight = null;
+      }
+    })();
+
+    return this.teachingRecordsRawInflight;
+  }
+
+  /**
+   * 🚀 單次掃描 teaching_records 建立「講師姓名 → 任教課程代碼集合」對照表。
+   * 取代課程頁原本「全學期掃描 + 逐位講師 N+1 查詢」的做法，且涵蓋全部講師而非僅前 50 位。
+   */
+  static async getInstructorCourseCodesMap(): Promise<Map<string, Set<string>>> {
+    const map = new Map<string, Set<string>>();
+    const rows = await this.getAllTeachingRecordsRaw();
+    for (const r of rows) {
+      if (!r.instructor_name || !r.course_code) continue;
+      if (!map.has(r.instructor_name)) map.set(r.instructor_name, new Set());
+      map.get(r.instructor_name)!.add(r.course_code);
+    }
+    return map;
+  }
+
   static async getAllTermsInstructorsTeachingBatch(termCodes?: string[]): Promise<Map<string, Set<string>>> {
     try {
       const cacheKey = `all_terms_instructors_teaching_${termCodes?.join('_') || 'all'}`;
@@ -4395,29 +4527,16 @@ export class CourseService {
         return cached;
       }
 
-      // 獲取教學記錄
-      const queries = [
-        Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-        Query.select(['term_code', 'instructor_name'])
-      ];
+      // 🚀 改讀共享的 teaching_records 快取（每次載入只掃描一次）
+      const allRecords = await this.getAllTeachingRecordsRaw();
+      const termFilter = termCodes && termCodes.length > 0 ? new Set(termCodes) : null;
 
-      // 如果提供了特定學期代碼，則只查詢這些學期
-      if (termCodes && termCodes.length > 0) {
-        queries.push(Query.equal('term_code', termCodes));
-      }
-
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        queries
-      );
-
-      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'term_code' | 'instructor_name'>[];
-      
       // 按學期分組講師
       const termInstructorsMap = new Map<string, Set<string>>();
-      
-      for (const record of teachingRecords) {
+
+      for (const record of allRecords) {
+        if (!record.term_code || !record.instructor_name) continue;
+        if (termFilter && !termFilter.has(record.term_code)) continue;
         if (!termInstructorsMap.has(record.term_code)) {
           termInstructorsMap.set(record.term_code, new Set());
         }
