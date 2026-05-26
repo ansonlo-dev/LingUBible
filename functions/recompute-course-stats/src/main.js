@@ -110,11 +110,13 @@ async function recomputeOne(databases, courseCode, log) {
 }
 
 // 回填全部課程：一次讀完所有評論分組，再逐一更新課程
-async function recomputeAll(databases, log) {
+// diag 物件用於在 response 中回報每個階段的進度（runtime 的 log 不一定會被捕捉）
+async function recomputeAll(databases, log, diag) {
   // 讀取所有評論並依 course_code 分組
   const reviewsByCourse = new Map();
   let cursor = null;
   let totalReviews = 0;
+  diag.stage = 'reading_reviews';
   while (true) {
     const queries = [
       Query.limit(PAGE_LIMIT),
@@ -130,9 +132,10 @@ async function recomputeAll(databases, log) {
     if (res.documents.length < PAGE_LIMIT) break;
     cursor = res.documents[res.documents.length - 1].$id;
   }
-  log(`回填：讀取 ${totalReviews} 則評論，涵蓋 ${reviewsByCourse.size} 門課`);
+  diag.totalReviews = totalReviews;
 
   // 讀取所有課程（$id + course_code）
+  diag.stage = 'reading_courses';
   const courses = [];
   cursor = null;
   while (true) {
@@ -143,17 +146,25 @@ async function recomputeAll(databases, log) {
     if (res.documents.length < PAGE_LIMIT) break;
     cursor = res.documents[res.documents.length - 1].$id;
   }
-  log(`回填：共 ${courses.length} 門課程`);
+  diag.totalCourses = courses.length;
 
+  diag.stage = 'updating';
   let updated = 0;
+  let failed = 0;
+  const sampleErrors = [];
   for (const course of courses) {
     const reviews = reviewsByCourse.get(course.course_code) || [];
     const stats = computeStats(reviews);
-    await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION_ID, course.$id, stats);
-    updated++;
+    try {
+      await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION_ID, course.$id, stats);
+      updated++;
+    } catch (e) {
+      failed++;
+      if (sampleErrors.length < 5) sampleErrors.push(`${course.course_code}(${course.$id}): ${e.message}`);
+    }
   }
-  log(`回填完成：更新 ${updated} 門課程`);
-  return { updated, totalCourses: courses.length, totalReviews };
+  diag.stage = 'done';
+  return { updated, failed, totalCourses: courses.length, totalReviews, sampleErrors };
 }
 
 export default async ({ req, res, log, error }) => {
@@ -164,6 +175,7 @@ export default async ({ req, res, log, error }) => {
 
   const databases = new Databases(client);
 
+  const diag = { stage: 'start' };
   try {
     let body = {};
     try { body = JSON.parse(req.body || '{}'); } catch { body = {}; }
@@ -172,7 +184,7 @@ export default async ({ req, res, log, error }) => {
     const courseCode = body.courseCode || body.course_code;
 
     if (body.all === true) {
-      const result = await recomputeAll(databases, log);
+      const result = await recomputeAll(databases, log, diag);
       return res.json({ success: true, mode: 'all', ...result });
     }
 
@@ -183,7 +195,7 @@ export default async ({ req, res, log, error }) => {
 
     return res.json({ success: false, error: '需要 courseCode 或 all:true' }, 400);
   } catch (err) {
-    error(`重算課程統計失敗: ${err.message}`);
-    return res.json({ success: false, error: err.message }, 500);
+    error(`重算課程統計失敗 (stage=${diag.stage}): ${err.message}`);
+    return res.json({ success: false, error: err.message, diag }, 500);
   }
 };
