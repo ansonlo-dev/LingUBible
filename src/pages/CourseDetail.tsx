@@ -387,6 +387,7 @@ const CourseDetail = () => {
   // 篩選狀態
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
+  const [activeMainTab, setActiveMainTab] = useState<string>('overview');
   const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
   const [selectedServiceLearningFilter, setSelectedServiceLearningFilter] = useState<string[]>([]);
 
@@ -1224,36 +1225,68 @@ const CourseDetail = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="teaching" className="w-full">
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
         {/* Tab Navigation - Attached Design */}
         <div className="attached-tabs-container">
           <TabsList className="attached-tabs-list">
-            <TabsTrigger 
-              value="teaching" 
+            <TabsTrigger
+              value="overview"
+              className="attached-tab-trigger"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('pages.courseDetail.overview')}</span>
+              {activeMainTab === 'overview' && <span className="sm:hidden text-xs">{t('pages.courseDetail.overview')}</span>}
+            </TabsTrigger>
+            <TabsTrigger
+              value="teaching"
               className="attached-tab-trigger"
             >
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t('pages.courseDetail.offerRecords')}</span>
-              <span className="sm:hidden text-xs">{t('common.teaching')}</span>
+              {activeMainTab === 'teaching' && <span className="sm:hidden text-xs">{t('common.teaching')}</span>}
             </TabsTrigger>
-            <TabsTrigger 
-              value="reviews" 
+            <TabsTrigger
+              value="reviews"
               className="attached-tab-trigger"
             >
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">{t('review.studentReviews')}</span>
-              <span className="sm:hidden text-xs">{t('pages.courseDetail.reviewsShort')}</span>
+              {activeMainTab === 'reviews' && <span className="sm:hidden text-xs">{t('pages.courseDetail.reviewsShort')}</span>}
             </TabsTrigger>
-            <TabsTrigger 
-              value="grades" 
+            <TabsTrigger
+              value="grades"
               className="attached-tab-trigger"
             >
               <Info className="h-4 w-4" />
               <span className="hidden sm:inline">{t('chart.gradeDistribution')}</span>
-              <span className="sm:hidden text-xs">{t('common.grades')}</span>
+              {activeMainTab === 'grades' && <span className="sm:hidden text-xs">{t('common.grades')}</span>}
             </TabsTrigger>
           </TabsList>
         </div>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="attached-tab-content mt-0">
+          <div className="p-6">
+            {(() => {
+              const description = language === 'zh-TW'
+                ? (course.course_description_tc || course.course_description)
+                : language === 'zh-CN'
+                  ? (course.course_description_sc || course.course_description)
+                  : course.course_description;
+
+              return description ? (
+                <p className="text-base leading-relaxed text-foreground whitespace-pre-line">
+                  {description}
+                </p>
+              ) : (
+                <div className="text-center py-8">
+                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
+                </div>
+              );
+            })()}
+          </div>
+        </TabsContent>
 
         {/* Student Reviews Tab */}
         <TabsContent value="reviews" className="attached-tab-content mt-0">

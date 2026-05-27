@@ -494,6 +494,8 @@ export default {
   'pages.courseDetail.noTutorialRecords': '没有找到导修记录',
   'pages.courseDetail.noProjectRecords': '没有找到专题记录',
   'pages.courseDetail.noSeminarRecords': '没有找到研讨记录',
+  'pages.courseDetail.overview': '概览',
+  'pages.courseDetail.noDescription': '暂无课程简介',
   'pages.courseDetail.offerRecords': '开设记录',
   'pages.courseDetail.courseInfo': '课程资讯',
   'pages.instructors.title': '教师目录',

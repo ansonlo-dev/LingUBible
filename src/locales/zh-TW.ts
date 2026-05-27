@@ -493,6 +493,8 @@ export default {
   'pages.courseDetail.noTutorialRecords': '沒有找到導修記錄',
   'pages.courseDetail.noProjectRecords': '沒有找到專題記錄',
   'pages.courseDetail.noSeminarRecords': '沒有找到研討記錄',
+  'pages.courseDetail.overview': '概覽',
+  'pages.courseDetail.noDescription': '暫無課程簡介',
   'pages.courseDetail.offerRecords': '開設記錄',
   'pages.courseDetail.courseInfo': '課程資訊',
   'pages.instructors.title': '教師目錄',

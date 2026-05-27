@@ -493,6 +493,8 @@ export default {
   'pages.courseDetail.noTutorialRecords': 'No tutorial records found',
   'pages.courseDetail.noProjectRecords': 'No project records found',
   'pages.courseDetail.noSeminarRecords': 'No seminar records found',
+  'pages.courseDetail.overview': 'Overview',
+  'pages.courseDetail.noDescription': 'No course description available',
   'pages.courseDetail.offerRecords': 'Offer Records',
   'pages.courseDetail.courseInfo': 'Course Info',
   'pages.instructors.title': 'Instructors Catalog',

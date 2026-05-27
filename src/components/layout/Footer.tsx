@@ -169,7 +169,7 @@ export function Footer() {
         {/* Mobile Layout */}
         <div className="md:hidden flex flex-col space-y-3">
           {/* User Stats and OpenStatus Badge - Mobile */}
-          <div className="flex justify-between items-center py-2">
+          <div className="flex justify-center items-center py-2">
             <div className="flex items-center space-x-2">
               <FooterKofiButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />

@@ -12,6 +12,9 @@ export interface Course {
   course_title: string;
   course_title_tc?: string;
   course_title_sc?: string;
+  course_description?: string;
+  course_description_tc?: string;
+  course_description_sc?: string;
   department: string;
   credits?: string;
   $createdAt: string;
@@ -1270,7 +1273,7 @@ export class CourseService {
         [
           Query.equal('course_code', courseCode),
           Query.limit(1),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'credits', '$createdAt', '$updatedAt']) // 🚀 排除大型描述欄位
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'department', 'credits', '$createdAt', '$updatedAt'])
         ]
       );
 
