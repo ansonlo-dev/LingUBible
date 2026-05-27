@@ -31,7 +31,7 @@ export const isValidEmailForRegistration = (email) => {
   const emailLower = email.toLowerCase();
   
   // 學生郵件格式檢查
-  const validStudentEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const validStudentEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.hk)$/;
   const isStudentEmailResult = validStudentEmailPattern.test(emailLower);
   
   // 如果是學生郵件，直接返回 true
@@ -52,7 +52,7 @@ export const isValidEmailForRegistration = (email) => {
 // 檢查是否為學生郵件
 export const isStudentEmail = (email) => {
   const emailLower = email.toLowerCase();
-  const validStudentEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.edu\.hk|ln\.hk)$/;
+  const validStudentEmailPattern = /^[a-zA-Z0-9._%+-]+@(ln\.hk)$/;
   return validStudentEmailPattern.test(emailLower);
 };
 
