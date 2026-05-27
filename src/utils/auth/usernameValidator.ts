@@ -42,7 +42,7 @@ const adminRelatedWords = [
   'guest', 'guests', 'user', 'users',
   'null', 'undefined', 'none', 'empty',
   // 品牌相關
-  'lingubible', 'ln', 'hk', 'lingnan',
+  'lingubible', 'hk',
   // 常見變體
   'webmaster', 'postmaster', 'hostmaster'
 ];
@@ -53,7 +53,7 @@ const filter = new Filter({
   // 添加管理員相關的禁用詞彙
   englishList: adminRelatedWords,
   chineseList: [
-    '管理員', '管理者', '系統', '測試', '客服', '官方', '嶺南', '嶺大',
+    '管理員', '管理者', '系統', '測試', '客服', '官方',
     '版主', '助理', '老師', '教授', '校長', '主任',
     // 添加粵語髒話到中文列表
     ...cantoneseSwearWords
@@ -69,7 +69,7 @@ export interface UsernameValidationResult {
 
 export class UsernameValidator {
   private static readonly MIN_LENGTH = 2;
-  private static readonly MAX_LENGTH = 10; // 擴展到10個字符
+  private static readonly MAX_LENGTH = 20;
   
   /**
    * 檢查用戶名是否包含管理員相關詞彙（不區分大小寫）
