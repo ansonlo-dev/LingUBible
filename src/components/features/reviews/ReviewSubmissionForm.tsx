@@ -588,32 +588,28 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return new Map(termCodes.map(code => [code, termsCache.get(code)!]));
     }
 
-    // Load uncached terms in parallel
-    const termsData = await Promise.all(
-      uncachedTerms.map(async (termCode) => {
-        try {
-          const term = await CourseService.getTermByCode(termCode);
-          return { termCode, term };
-        } catch (error) {
-          console.error(`Error loading term ${termCode}:`, error);
-          return { termCode, term: null };
-        }
-      })
-    );
+    // Single batched IN query instead of one request per term
+    let fetchedTerms: Term[] = [];
+    try {
+      fetchedTerms = await CourseService.getTermsByCodes(uncachedTerms);
+    } catch (error) {
+      console.error('Error batch loading terms:', error);
+    }
+    const fetchedMap = new Map(fetchedTerms.map(term => [term.term_code, term]));
 
     // Update cache with newly loaded terms
     setTermsCache(prev => {
       const newCache = new Map(prev);
-      termsData.forEach(({ termCode, term }) => {
-        if (term) {
-          newCache.set(termCode, term);
-        }
-      });
+      fetchedMap.forEach((term, code) => newCache.set(code, term));
       return newCache;
     });
 
     // Return all requested terms (cached + newly loaded)
-    return new Map(termCodes.map(code => [code, termsCache.get(code) || termsData.find(t => t.termCode === code)?.term]).filter(([_, term]) => term !== null && term !== undefined) as [string, Term][]);
+    return new Map(
+      termCodes
+        .map(code => [code, termsCache.get(code) || fetchedMap.get(code)] as [string, Term | undefined])
+        .filter(([, term]) => term !== null && term !== undefined) as [string, Term][]
+    );
   }, [termsCache]);
 
   // Performance optimization: Batch load instructors with caching
@@ -624,32 +620,28 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return new Map(instructorNames.map(name => [name, instructorsCache.get(name)!]));
     }
 
-    // Load uncached instructors in parallel
-    const instructorsData = await Promise.all(
-      uncachedInstructors.map(async (name) => {
-        try {
-          const instructor = await CourseService.getInstructorByName(name);
-          return { name, instructor };
-        } catch (error) {
-          console.warn(`Failed to fetch instructor info for ${name}:`, error);
-          return { name, instructor: null };
-        }
-      })
-    );
+    // Single batched IN query instead of one request per instructor
+    let fetchedInstructors: Instructor[] = [];
+    try {
+      fetchedInstructors = await CourseService.getInstructorsByNames(uncachedInstructors);
+    } catch (error) {
+      console.warn('Failed to batch fetch instructor info:', error);
+    }
+    const fetchedMap = new Map(fetchedInstructors.map(instructor => [instructor.name, instructor]));
 
     // Update cache with newly loaded instructors
     setInstructorsCache(prev => {
       const newCache = new Map(prev);
-      instructorsData.forEach(({ name, instructor }) => {
-        if (instructor) {
-          newCache.set(name, instructor);
-        }
-      });
+      fetchedMap.forEach((instructor, name) => newCache.set(name, instructor));
       return newCache;
     });
 
     // Return all requested instructors (cached + newly loaded)
-    return new Map(instructorNames.map(name => [name, instructorsCache.get(name) || instructorsData.find(i => i.name === name)?.instructor]).filter(([_, instructor]) => instructor !== null && instructor !== undefined) as [string, Instructor][]);
+    return new Map(
+      instructorNames
+        .map(name => [name, instructorsCache.get(name) || fetchedMap.get(name)] as [string, Instructor | undefined])
+        .filter(([, instructor]) => instructor !== null && instructor !== undefined) as [string, Instructor][]
+    );
   }, [instructorsCache]);
 
   // Performance optimization: Cache instructor teaching records
@@ -671,32 +663,28 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return new Map(courseCodes.map(code => [code, coursesCache.get(code)!]));
     }
 
-    // Load uncached courses in parallel
-    const coursesData = await Promise.all(
-      uncachedCourses.map(async (courseCode) => {
-        try {
-          const course = await CourseService.getCourseByCode(courseCode);
-          return { courseCode, course };
-        } catch (error) {
-          console.error(`Error loading course ${courseCode}:`, error);
-          return { courseCode, course: null };
-        }
-      })
-    );
+    // Single batched IN query instead of one request per course
+    let fetchedCourses: Course[] = [];
+    try {
+      fetchedCourses = await CourseService.getCoursesByCodes(uncachedCourses);
+    } catch (error) {
+      console.error('Error batch loading courses:', error);
+    }
+    const fetchedMap = new Map(fetchedCourses.map(course => [course.course_code, course]));
 
     // Update cache with newly loaded courses
     setCoursesCache(prev => {
       const newCache = new Map(prev);
-      coursesData.forEach(({ courseCode, course }) => {
-        if (course) {
-          newCache.set(courseCode, course);
-        }
-      });
+      fetchedMap.forEach((course, code) => newCache.set(code, course));
       return newCache;
     });
 
     // Return all requested courses (cached + newly loaded)
-    return new Map(courseCodes.map(code => [code, coursesCache.get(code) || coursesData.find(c => c.courseCode === code)?.course]).filter(([_, course]) => course !== null && course !== undefined) as [string, Course][]);
+    return new Map(
+      courseCodes
+        .map(code => [code, coursesCache.get(code) || fetchedMap.get(code)] as [string, Course | undefined])
+        .filter(([, course]) => course !== null && course !== undefined) as [string, Course][]
+    );
   }, [coursesCache]);
 
 

@@ -1285,6 +1285,42 @@ export class CourseService {
   }
 
   /**
+   * 批量依課程代碼獲取課程，使用單一 IN 查詢取代逐筆查詢
+   * 僅選擇需要的欄位，並分批避免 URL 過長
+   */
+  static async getCoursesByCodes(courseCodes: string[]): Promise<Course[]> {
+    try {
+      const uniqueCodes = [...new Set(courseCodes)].filter(Boolean);
+      if (uniqueCodes.length === 0) return [];
+
+      const CHUNK_SIZE = 100;
+      const chunks: string[][] = [];
+      for (let i = 0; i < uniqueCodes.length; i += CHUNK_SIZE) {
+        chunks.push(uniqueCodes.slice(i, i + CHUNK_SIZE));
+      }
+
+      const responses = await Promise.all(
+        chunks.map(chunk =>
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.COURSES_COLLECTION_ID,
+            [
+              Query.equal('course_code', chunk),
+              Query.limit(chunk.length),
+              Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'department', 'credits', '$createdAt', '$updatedAt'])
+            ]
+          )
+        )
+      );
+
+      return responses.flatMap(res => res.rows as unknown as Course[]);
+    } catch (error) {
+      console.error('Error fetching courses by codes:', error);
+      return [];
+    }
+  }
+
+  /**
    * 獲取課程的教學記錄
    */
   static async getCourseTeachingRecords(courseCode: string): Promise<TeachingRecord[]> {
@@ -1337,7 +1373,8 @@ export class CourseService {
         [
           Query.equal('course_code', courseCode),
           Query.equal('term_code', termCode),
-          Query.limit(1)
+          Query.limit(1),
+          Query.select(['$id']) // 僅檢查是否存在，無需取回整列
         ]
       );
 
@@ -1508,6 +1545,41 @@ export class CourseService {
   }
 
   /**
+   * 批量依講師姓名獲取講師，使用單一 IN 查詢取代逐筆查詢
+   */
+  static async getInstructorsByNames(names: string[]): Promise<Instructor[]> {
+    try {
+      const uniqueNames = [...new Set(names)].filter(Boolean);
+      if (uniqueNames.length === 0) return [];
+
+      const CHUNK_SIZE = 100;
+      const chunks: string[][] = [];
+      for (let i = 0; i < uniqueNames.length; i += CHUNK_SIZE) {
+        chunks.push(uniqueNames.slice(i, i + CHUNK_SIZE));
+      }
+
+      const responses = await Promise.all(
+        chunks.map(chunk =>
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.INSTRUCTORS_COLLECTION_ID,
+            [
+              Query.equal('name', chunk),
+              Query.limit(chunk.length),
+              Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
+            ]
+          )
+        )
+      );
+
+      return responses.flatMap(res => res.rows as unknown as Instructor[]);
+    } catch (error) {
+      console.error('Error fetching instructors by names:', error);
+      return [];
+    }
+  }
+
+  /**
    * 根據學期代碼獲取學期信息
    */
   static async getTermByCode(termCode: string): Promise<Term | null> {
@@ -1525,6 +1597,41 @@ export class CourseService {
     } catch (error) {
       console.error('Error fetching term by code:', error);
       return null;
+    }
+  }
+
+  /**
+   * 批量依學期代碼獲取學期，使用單一 IN 查詢取代逐筆查詢
+   */
+  static async getTermsByCodes(termCodes: string[]): Promise<Term[]> {
+    try {
+      const uniqueCodes = [...new Set(termCodes)].filter(Boolean);
+      if (uniqueCodes.length === 0) return [];
+
+      const CHUNK_SIZE = 100;
+      const chunks: string[][] = [];
+      for (let i = 0; i < uniqueCodes.length; i += CHUNK_SIZE) {
+        chunks.push(uniqueCodes.slice(i, i + CHUNK_SIZE));
+      }
+
+      const responses = await Promise.all(
+        chunks.map(chunk =>
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.TERMS_COLLECTION_ID,
+            [
+              Query.equal('term_code', chunk),
+              Query.limit(chunk.length),
+              Query.select(['$id', 'term_code', 'name', 'start_date', 'end_date', '$createdAt', '$updatedAt'])
+            ]
+          )
+        )
+      );
+
+      return responses.flatMap(res => res.rows as unknown as Term[]);
+    } catch (error) {
+      console.error('Error fetching terms by codes:', error);
+      return [];
     }
   }
 
@@ -3853,8 +3960,17 @@ export class CourseService {
    */
   static async isInstructorTeachingInTerm(instructorName: string, termCode: string): Promise<boolean> {
     try {
-      const teachingCourses = await this.getInstructorTeachingCourses(instructorName);
-      return teachingCourses.some(course => course.term.term_code === termCode);
+      const response = await tablesDB.listRows(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('instructor_name', instructorName),
+          Query.equal('term_code', termCode),
+          Query.limit(1),
+          Query.select(['$id']) // 僅檢查是否存在，無需取回整列或全部教學課程
+        ]
+      );
+      return response.rows.length > 0;
     } catch (error) {
       console.error('Error checking if instructor is teaching in term:', error);
       return false;
