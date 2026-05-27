@@ -1411,7 +1411,7 @@ export default {
   'review.notApplicable': '不适用',
   'review.gradeNotApplicableOrPreferNotToSay': '不适用或不愿透露',
   'review.notRated': '未评分',
-  'review.gradeNotApplicable': '此课程没有具体的成绩可以换算成绩点。',
+  'review.gradeNotApplicable': '此课程没有具体的成绩可以换算成绩点',
   'review.fillAllFields': '请填写所有字段',
   'review.preSelectedInstructorRequired': '从讲师页面进入时，您必须在评论中包含 {instructor}',
   'review.cannotDeselectPreSelectedInstructor': '从讲师页面进入时，您无法取消选择 {instructor}',

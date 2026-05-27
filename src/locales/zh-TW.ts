@@ -1354,7 +1354,7 @@ export default {
   'review.notApplicable': '不適用',
   'review.gradeNotApplicableOrPreferNotToSay': '不適用或不願透露',
   'review.notRated': '未評分',
-  'review.gradeNotApplicable': '此課程沒有具體的成績可以換算成績點。',
+  'review.gradeNotApplicable': '此課程沒有具體的成績可以換算成績點',
   'review.fillAllFields': '請填寫所有欄位',
   'review.preSelectedInstructorRequired': '從講師頁面進入時，您必須在評論中包含 {instructor}',
   'review.cannotDeselectPreSelectedInstructor': '從講師頁面進入時，您無法取消選擇 {instructor}',
