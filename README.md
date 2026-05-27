@@ -533,7 +533,7 @@ This project adheres to the open source spirit and is committed to:
 This project is licensed under the [MIT License](LICENSE)
 
 ```
-Copyright (c) 2025 LingUBible
+Copyright (c) 2026 LingUBible
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

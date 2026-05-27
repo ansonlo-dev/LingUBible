@@ -53,7 +53,7 @@ export function Footer() {
                     MIT
                   </a>
                 </ResponsiveTooltip>
-                <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
+                <span className="text-xs text-gray-600 dark:text-muted-foreground">2026 LingUBible</span>
               </div>
               
               {/* Social Icons */}
@@ -165,7 +165,7 @@ export function Footer() {
                       MIT
                     </a>
                   </ResponsiveTooltip>
-                  <span className="text-xs text-gray-600 dark:text-muted-foreground">2025 LingUBible</span>
+                  <span className="text-xs text-gray-600 dark:text-muted-foreground">2026 LingUBible</span>
                 </div>
                 
                 <div className="flex items-center space-x-2">
@@ -373,7 +373,7 @@ export function Footer() {
                 </a>
               </ResponsiveTooltip>
                              <span className="text-xs text-gray-600 dark:text-muted-foreground">
-                 2025 LingUBible
+                 2026 LingUBible
                </span>
             </div>
             
