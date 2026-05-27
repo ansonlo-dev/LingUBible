@@ -283,8 +283,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
         )}
 
         {/* 導航選單 */}
-        <nav className="flex-1 p-4 md:py-4 md:px-2">
-          <div className="space-y-8">
+        <nav className={`flex-1 p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : 'md:py-4'}`}>
+          <div className={!shouldShowText ? 'space-y-3' : 'space-y-8'}>
             {navigationGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
                 {/* 分組標題 - 只在有標題且顯示文字時顯示 */}
@@ -295,22 +295,23 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                     </h3>
                   </div>
                 )}
-                
+
                 {/* 分組項目 */}
-                <ul className="space-y-2">
+                <ul className={!shouldShowText ? 'space-y-1' : 'space-y-2'}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isExternalOrHash = item.href.startsWith('#');
-                    
+                    const itemPy = !shouldShowText ? 'py-1.5' : 'py-2';
+
                     return (
                       <li key={item.name}>
                         {isExternalOrHash ? (
                           <a
                             href={item.href}
                             className={`
-                              flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                              ${item.current 
-                                ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                              flex items-center gap-3 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              ${item.current
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                               }
                             `}
@@ -324,9 +325,9 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <Link
                             to={item.href}
                             className={`
-                              flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                              ${item.current 
-                                ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                              flex items-center gap-3 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              ${item.current
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                               }
                             `}
@@ -341,10 +342,10 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                     );
                   })}
                 </ul>
-                
+
                 {/* 分組分隔線 - 只在摺疊狀態且不是最後一個分組時顯示 */}
                 {!shouldShowText && groupIndex < navigationGroups.length - 1 && (
-                  <div className="mt-6 flex justify-center">
+                  <div className="mt-2 flex justify-center">
                     <div className="w-8 h-0.5 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
                   </div>
                 )}
@@ -399,7 +400,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
         </nav>
 
         {/* 底部設置區域 - 始終顯示語言和主題切換 */}
-        <div className="p-4 md:py-4 md:px-2">
+        <div className={`p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : 'md:py-4'}`}>
           {shouldShowText ? (
             <div className="space-y-1">
               {/* 語言切換器 - 始終顯示 */}

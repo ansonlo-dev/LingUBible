@@ -578,19 +578,16 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       
       {/* Search Modal Content */}
       {isDesktopMode ? (
-        <div 
-          className={isLargeDesktop ? "fixed inset-0 flex items-center justify-center p-4" : "fixed inset-0 flex items-center justify-center"}
+        <div
+          className="fixed inset-0 flex items-center justify-center"
           key={`desktop-modal-${isSidebarCollapsed}-${isIPadDevice}`} // Force re-render when sidebar or device type changes
           style={{
-            ...(isLargeDesktop ? {} : {
-              // iPad-specific positioning that adapts to sidebar
-              paddingLeft: `${modalLeftPosition}rem`,
-              paddingRight: '1rem',
-              paddingTop: '1rem',
-              paddingBottom: '1rem',
-              transition: 'padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' // Smooth transition when sidebar toggles
-            }),
-            zIndex: 9999, // Standard z-index
+            paddingLeft: isSidebarCollapsed ? '4rem' : '11rem',
+            paddingRight: '1rem',
+            paddingTop: '1rem',
+            paddingBottom: '1rem',
+            transition: 'padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            zIndex: 9999,
             pointerEvents: 'auto'
           }}
           onClick={handleBackdropClick}
