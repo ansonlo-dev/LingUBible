@@ -2649,191 +2649,26 @@ export class CourseService {
       }
 
       if (import.meta.env.DEV) {
-        console.log('🔄 getPopularInstructorsWithDetailedStatsOptimized: Loading fresh data with optimized queries...');
-      }
-      const currentTermCode = getCurrentTermCode();
-      
-      // 🚀 優化1: 只載入必要的評論數據（減少數據量）
-      const reviewsResponse = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.REVIEWS_COLLECTION_ID,
-        [
-          Query.orderDesc('$createdAt'),
-          Query.limit(this.LANDING_PAGE_REVIEWS_LIMIT), // 著陸頁面專用輕量級限制
-          Query.select(['instructor_details', 'course_final_grade'])
-        ]
-      );
-
-      const reviews = reviewsResponse.rows as unknown as Review[];
-      
-      // 🚀 優化2: 從評論中快速統計講師數據，無需載入所有講師
-      const instructorStatsMap = new Map<string, {
-        reviewCount: number;
-        teachingScores: number[];
-        gradingScores: number[];
-        grades: string[];
-      }>();
-
-      // 快速處理評論，統計熱門講師
-      for (const review of reviews) {
-        try {
-          const instructorDetails = JSON.parse(review.instructor_details) as InstructorDetail[];
-          
-          for (const detail of instructorDetails) {
-            const instructorName = detail.instructor_name;
-            
-            if (!instructorStatsMap.has(instructorName)) {
-              instructorStatsMap.set(instructorName, {
-                reviewCount: 0,
-                teachingScores: [],
-                gradingScores: [],
-                grades: []
-              });
-            }
-            
-            const stats = instructorStatsMap.get(instructorName)!;
-            stats.reviewCount++;
-            
-            if (detail.teaching > 0) stats.teachingScores.push(detail.teaching);
-            if (detail.grading && detail.grading > 0) stats.gradingScores.push(detail.grading);
-            if (review.course_final_grade) stats.grades.push(review.course_final_grade);
-          }
-        } catch (error) {
-          continue; // 跳過無效數據
-        }
+        console.log('🔄 getPopularInstructorsWithDetailedStatsOptimized: Deriving from denormalized instructor stats (0 reviews scan)...');
       }
 
-      // 🚀 優化3: 找出評論數最多的講師（前限制數量的3倍，確保有足夠選擇）
-      const topInstructorNames = Array.from(instructorStatsMap.entries())
-        .filter(([_, stats]) => stats.reviewCount >= 3) // 至少3個評論
-        .sort((a, b) => b[1].reviewCount - a[1].reviewCount)
-        .slice(0, limit * 3) // 取前面更多的講師，確保有足夠數據
-        .map(([name, _]) => name);
+      // 🚀 統計已反正規化到 instructors 表，直接從 getAllInstructorsWithDetailedStats
+      // （0 次 reviews 掃描）推導：熱門講師 = 至少 3 則評論、按評論數降序。
+      const allInstructors = await this.getAllInstructorsWithDetailedStats();
+      const finalResult = [...allInstructors]
+        .filter(instructor => instructor.reviewCount >= 3)
+        .sort((a, b) => b.reviewCount - a.reviewCount)
+        .slice(0, Math.max(limit, 20));
 
-      // 🚀 優化4: 只載入需要的講師基本信息
-      const instructorsResponse = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.INSTRUCTORS_COLLECTION_ID,
-        [
-          Query.equal('name', topInstructorNames),
-          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'email', 'department'])
-        ]
-      );
-
-      const instructors = instructorsResponse.rows as unknown as Instructor[];
-
-      // 載入當前學期教學記錄（小數據量）
-      const teachingRecordsResponse = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('term_code', currentTermCode),
-          Query.equal('instructor_name', topInstructorNames),
-          Query.select(['instructor_name'])
-        ]
-      );
-
-      const currentTermInstructors = new Set(
-        teachingRecordsResponse.rows.map((record: any) => record.instructor_name)
-      );
-
-      // 計算最終統計並組合數據
-      const instructorsWithDetailedStats: InstructorWithDetailedStats[] = instructors
-        .map(instructor => {
-          const stats = instructorStatsMap.get(instructor.name);
-          if (!stats) return null;
-
-          const teachingScore = stats.teachingScores.length > 0 
-            ? stats.teachingScores.reduce((sum, score) => sum + score, 0) / stats.teachingScores.length 
-            : 0;
-          const gradingFairness = stats.gradingScores.length > 0 
-            ? stats.gradingScores.reduce((sum, score) => sum + score, 0) / stats.gradingScores.length 
-            : 0;
-
-          // 計算平均 GPA
-          const gradeDistribution = calculateGradeDistributionFromReviews(
-            stats.grades.map(grade => ({ course_final_grade: grade }))
-          );
-          const gradeStats = calculateGradeStatistics(gradeDistribution);
-          const averageGPA = gradeStats.mean || 0;
-          const averageGPACount = gradeStats.validGradeCount || 0;
-
-          return {
-            ...instructor,
-            reviewCount: stats.reviewCount,
-            teachingScore,
-            gradingFairness,
-            averageGPA,
-            averageGPACount,
-            isTeachingInCurrentTerm: currentTermInstructors.has(instructor.name),
-            teachingLanguages: [], // 將在後面批量載入
-            currentTermTeachingLanguage: null
-          };
-        })
-        .filter((instructor): instructor is InstructorWithDetailedStats => instructor !== null)
-        .sort((a, b) => {
-          // 熱門教師按評論數排序（不是教學評分）
-          return b.reviewCount - a.reviewCount;
-        });
-
-      // 🚀 優化5: 只為結果中的講師載入教學語言（小數據量）
-      const resultInstructorNames = instructorsWithDetailedStats.slice(0, Math.max(limit, 20)).map(i => i.name);
-      
-      let teachingLanguagesMap = new Map<string, string[]>();
-      let currentTermTeachingLanguagesMap = new Map<string, string | null>();
-
-      try {
-        const [languagesResult, currentTermResult] = await Promise.allSettled([
-          this.getBatchInstructorTeachingLanguages(resultInstructorNames),
-          this.getBatchInstructorCurrentTermTeachingLanguages(resultInstructorNames)
-        ]);
-
-        if (languagesResult.status === 'fulfilled') {
-          teachingLanguagesMap = languagesResult.value;
-        }
-        if (currentTermResult.status === 'fulfilled') {
-          currentTermTeachingLanguagesMap = currentTermResult.value;
-        }
-      } catch (error) {
-        console.warn('Failed to fetch teaching languages for optimized popular instructors:', error);
-      }
-
-      // 最終結果：添加教學語言並限制數量
-      const finalResult = instructorsWithDetailedStats
-        .slice(0, Math.max(limit, 20))
-        .map(instructor => ({
-          ...instructor,
-          teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
-          currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
-        }));
-
-      // 🚀 使用雙層緩存
       this.setPersistentCached(
-        cacheKey, 
-        finalResult, 
-        10 * 60 * 1000, // 記憶體緩存10分鐘
-        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+        cacheKey,
+        finalResult,
+        10 * 60 * 1000,
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA
       );
 
       if (import.meta.env.DEV) {
-        console.log(`✅ getPopularInstructorsWithDetailedStatsOptimized: Processed ${reviews.length} reviews, cached ${finalResult.length} instructors`);
-        
-        // 檢查 HUI Ting Yan 是否在結果中
-        const huiTingYan = finalResult.find(i => i.name.includes('HUI') && i.name.includes('Ting'));
-        if (huiTingYan) {
-          console.log(`🔍 HUI Ting Yan in popular instructors:`, {
-            name: huiTingYan.name,
-            reviewCount: huiTingYan.reviewCount,
-            averageGPA: huiTingYan.averageGPA,
-            averageGPACount: huiTingYan.averageGPACount,
-            teachingScore: huiTingYan.teachingScore,
-            gradingFairness: huiTingYan.gradingFairness
-          });
-        } else {
-          console.log(`❌ HUI Ting Yan not found in getPopularInstructorsWithDetailedStatsOptimized result`);
-          // 顯示所有講師的名字以便調試
-          console.log('🔍 All instructor names:', finalResult.map(i => i.name));
-        }
+        console.log(`✅ getPopularInstructorsWithDetailedStatsOptimized: Derived ${finalResult.length} instructors from denormalized stats`);
       }
       return finalResult.slice(0, limit);
     } catch (error) {
@@ -3330,84 +3165,30 @@ export class CourseService {
       }
       
       if (import.meta.env.DEV) {
-        console.log('🔄 getTopInstructorsByGPAOptimized: Loading fresh data...');
+        console.log('🔄 getTopInstructorsByGPAOptimized: Deriving from denormalized instructor stats (0 reviews scan)...');
       }
-      
-      // 🚀 智能混合策略：優先檢查熱門講師，不足時擴展到全部講師
-      const popularInstructors = await this.getPopularInstructorsWithDetailedStatsOptimized(50);
-      
-      // 先檢查熱門講師中有多少符合條件的
-      const popularWithGPA = popularInstructors.filter(i => i.averageGPA > 0 && i.averageGPACount >= 5);
-      
-      let instructorsToProcess: InstructorWithDetailedStats[];
-      
-      if (popularWithGPA.length >= limit) {
-        // 如果熱門講師中有足夠的符合條件講師，直接使用（快速路徑）
-        console.log(`🚀 Fast path: Found ${popularWithGPA.length} qualifying instructors in popular set`);
-        instructorsToProcess = popularInstructors;
-      } else {
-        // 否則擴展到全部講師（確保找到所有符合條件的，如HUI Ting Yan）
-        console.log(`🔍 Comprehensive search: Only ${popularWithGPA.length} qualifying instructors in popular set, searching all instructors`);
-        instructorsToProcess = await this.getAllInstructorsWithDetailedStats();
-      }
-      
-      if (import.meta.env.DEV) {
-        console.log(`🔍 getTopInstructorsByGPAOptimized: Processing ${instructorsToProcess.length} instructors`);
-        
-        // 詳細調試：檢查講師的GPA數據
-        console.log('🔍 Instructors GPA data (showing first 10):');
-        instructorsToProcess.slice(0, 10).forEach((instructor, index) => {
-          console.log(`  ${index + 1}. ${instructor.name} - GPA: ${instructor.averageGPA}, Count: ${instructor.averageGPACount}, Reviews: ${instructor.reviewCount}`);
-        });
-        
-        const withGPA = instructorsToProcess.filter(i => i.averageGPA > 0 && i.averageGPACount >= 5);
-        console.log(`🔍 getTopInstructorsByGPAOptimized: ${withGPA.length} instructors have sufficient GPA data (≥5)`);
-        
-        // 檢查 HUI Ting Yan 是否在列表中
-        const huiTingYan = instructorsToProcess.find(i => i.name.includes('HUI') && i.name.includes('Ting'));
-        if (huiTingYan) {
-          console.log(`🔍 Found HUI Ting Yan:`, huiTingYan);
-        } else {
-          console.log(`❌ HUI Ting Yan not found in processed instructors list`);
-        }
-      }
-      
-      // 按GPA重新排序，嚴格要求至少5個非N/A評分記錄
-      const sortedInstructors = instructorsToProcess
-        .filter(instructor => {
-          const hasValidGPA = instructor.averageGPA > 0 && instructor.averageGPACount >= 5;
-          if (import.meta.env.DEV && hasValidGPA) {
-            console.log(`✅ Instructor with ≥5 GPA records: ${instructor.name} (${instructor.averageGPACount} records, GPA: ${instructor.averageGPA})`);
-          }
-          return hasValidGPA;
-        })
-        .sort((a, b) => {
-          // 首先按平均GPA排序（降序）
-          if (b.averageGPA !== a.averageGPA) {
-            return b.averageGPA - a.averageGPA;
-          }
-          // GPA相同時按評論數排序
-          return b.reviewCount - a.reviewCount;
-        })
+
+      // 🚀 統計已反正規化到 instructors 表，直接從 getAllInstructorsWithDetailedStats
+      // （0 次 reviews 掃描）推導：GPA 最高講師 = 至少 5 筆有效成績、按 GPA 降序。
+      const allInstructors = await this.getAllInstructorsWithDetailedStats();
+      const sortedInstructors = [...allInstructors]
+        .filter(instructor => instructor.averageGPA > 0 && instructor.averageGPACount >= 5)
+        .sort((a, b) =>
+          b.averageGPA !== a.averageGPA
+            ? b.averageGPA - a.averageGPA
+            : b.reviewCount - a.reviewCount
+        )
         .slice(0, Math.max(limit, 20));
 
-      if (import.meta.env.DEV) {
-        console.log(`✅ getTopInstructorsByGPAOptimized: Found ${sortedInstructors.length} instructors with 5+ non-N/A grades`);
-        sortedInstructors.forEach((instructor, index) => {
-          console.log(`  ${index + 1}. ${instructor.name} - GPA: ${instructor.averageGPA?.toFixed(2)}, Count: ${instructor.averageGPACount}`);
-        });
-      }
-
-      // 🚀 使用雙層緩存
       this.setPersistentCached(
-        cacheKey, 
-        sortedInstructors, 
-        10 * 60 * 1000, // 記憶體緩存10分鐘
-        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化緩存30分鐘
+        cacheKey,
+        sortedInstructors,
+        10 * 60 * 1000,
+        PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA
       );
-      
+
       if (import.meta.env.DEV) {
-        console.log(`✅ getTopInstructorsByGPAOptimized: Used hybrid strategy, cached ${sortedInstructors.length} instructors with ≥5 GPA records`);
+        console.log(`✅ getTopInstructorsByGPAOptimized: Derived ${sortedInstructors.length} instructors with ≥5 GPA records`);
       }
       return sortedInstructors.slice(0, limit);
     } catch (error) {
