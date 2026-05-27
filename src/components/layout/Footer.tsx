@@ -1,35 +1,12 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { Github, ExternalLink, RefreshCw } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';
 import { FooterKofiButton } from '@/components/common/KofiWidget';
 import { Link } from 'react-router-dom';
-import { getFormattedVersion, getVersionStatus } from '@/utils/version';
-import { useLatestVersion } from '@/hooks/useVersion';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 export function Footer() {
   const { t, language } = useLanguage();
-  const localVersion = getFormattedVersion(t('footer.beta'));
-  const localVersionStatus = getVersionStatus();
-  
-  // 嘗試從 GitHub 獲取最新版本，如果失敗則使用本地版本
-  const { latestVersion, isLoading, error } = useLatestVersion();
-  
-  // 決定要顯示的版本資訊，並處理翻譯
-  const formatVersionWithTranslation = (versionInfo: typeof latestVersion) => {
-    if (!versionInfo) return localVersion;
-    
-    // 如果是 beta 版本，替換 "Beta" 為翻譯文字
-    if (versionInfo.status === 'beta' && versionInfo.formattedVersion.startsWith('Beta ')) {
-      return versionInfo.formattedVersion.replace('Beta ', `${t('footer.beta')} `);
-    }
-    
-    return versionInfo.formattedVersion;
-  };
-  
-  const version = formatVersionWithTranslation(latestVersion) || localVersion;
-  const versionStatus = latestVersion?.status || localVersionStatus;
-  const releaseUrl = latestVersion?.releaseUrl;
 
   return (
     <footer className="bg-background">
@@ -95,43 +72,6 @@ export function Footer() {
             <div className="flex items-center space-x-6 text-sm">
               <FooterKofiButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
-              {releaseUrl ? (
-                <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
-                  <a
-                    href={releaseUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 cursor-help ${
-                      versionStatus === 'beta' 
-                        ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
-                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                    }`}
-                  >
-                    {isLoading ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <ExternalLink className="h-3 w-3" />
-                    )}
-                    {version}
-                  </a>
-                </ResponsiveTooltip>
-              ) : (
-                <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium cursor-help ${
-                    versionStatus === 'beta' 
-                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
-                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
-                  }`}>
-                    {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
-                    {version}
-                    {error && (
-                      <ResponsiveTooltip content={t('footer.versionError', { error })}>
-                        <span className="text-xs opacity-60 cursor-help">*</span>
-                      </ResponsiveTooltip>
-                    )}
-                  </span>
-                </ResponsiveTooltip>
-              )}
               <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.faq')}
               </Link>
@@ -185,43 +125,6 @@ export function Footer() {
               <div className="flex items-center space-x-4">
                 <FooterKofiButton />
                 <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
-                {releaseUrl ? (
-                  <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
-                    <a
-                      href={releaseUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 cursor-help ${
-                        versionStatus === 'beta' 
-                          ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
-                          : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                      }`}
-                    >
-                      {isLoading ? (
-                        <RefreshCw className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <ExternalLink className="h-3 w-3" />
-                      )}
-                      {version}
-                    </a>
-                  </ResponsiveTooltip>
-                ) : (
-                  <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium cursor-help ${
-                      versionStatus === 'beta' 
-                        ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
-                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
-                    }`}>
-                      {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
-                      {version}
-                      {error && (
-                        <ResponsiveTooltip content={t('footer.versionError', { error })}>
-                          <span className="text-xs opacity-60 cursor-help">*</span>
-                        </ResponsiveTooltip>
-                      )}
-                    </span>
-                  </ResponsiveTooltip>
-                )}
               </div>
             </div>
             
@@ -271,47 +174,6 @@ export function Footer() {
               <FooterKofiButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
             </div>
-          </div>
-          
-          {/* Status badges row */}
-          <div className="flex justify-center items-center space-x-3">
-            {releaseUrl ? (
-              <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
-                <a
-                  href={releaseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium transition-all hover:scale-105 cursor-help ${
-                    versionStatus === 'beta' 
-                      ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
-                      : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                  }`}
-                >
-                  {isLoading ? (
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-3 w-3" />
-                  )}
-                  {version}
-                </a>
-              </ResponsiveTooltip>
-            ) : (
-              <ResponsiveTooltip content={t('footer.versionTooltip', { version })}>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium cursor-help ${
-                  versionStatus === 'beta' 
-                    ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' 
-                    : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
-                }`}>
-                  {isLoading && <RefreshCw className="h-3 w-3 animate-spin" />}
-                  {version}
-                  {error && (
-                    <ResponsiveTooltip content={t('footer.versionError', { error })}>
-                      <span className="text-xs opacity-60 cursor-help">*</span>
-                    </ResponsiveTooltip>
-                  )}
-                </span>
-              </ResponsiveTooltip>
-            )}
           </div>
           
           {/* Navigation Links - Mobile */}
