@@ -2158,8 +2158,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         course_usefulness: usefulness,
         course_final_grade: grade,
         course_comments: courseComments,
-        has_service_learning: false, // Deprecated: service learning is now per instructor
-        service_learning_description: undefined, // Deprecated: service learning is now per instructor
         submitted_at: new Date().toISOString(),
         instructor_details: JSON.stringify(instructorDetails),
         review_language: reviewLanguage,
@@ -2227,6 +2225,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Navigate back to course detail page
         navigate(`/courses/${selectedCourse}`);
       }
+      return true;
     } catch (error) {
       console.error('❌ Error submitting review:', error);
       toast({
@@ -2234,6 +2233,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         description: t('review.submitError'),
         variant: 'destructive',
       });
+      return false;
     } finally {
       console.log('🏁 Setting submitting to false');
       setSubmitting(false);
@@ -2256,14 +2256,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   const handleConfirmSubmit = async () => {
     try {
-      await handleSubmit();
-      // Show celebration effect after successful submission
+      const success = await handleSubmit();
       setShowSubmitConfirm(false);
-      setShowCelebration(true);
-      // Hide celebration after 2.5 seconds
-      setTimeout(() => {
-        setShowCelebration(false);
-      }, 2500);
+      // Only show celebration effect after a genuinely successful submission
+      if (success) {
+        setShowCelebration(true);
+        // Hide celebration after 2.5 seconds
+        setTimeout(() => {
+          setShowCelebration(false);
+        }, 2500);
+      }
     } catch (error) {
       // If submission fails, just close the dialog
       setShowSubmitConfirm(false);
