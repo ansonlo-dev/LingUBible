@@ -29,7 +29,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { CourseService } from '@/services/api/courseService';
 import type { CourseReviewInfo, InstructorDetail, Instructor, Course } from '@/services/api/courseService';
@@ -126,6 +125,7 @@ const MyReviews = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Mobile tap states for two-tap functionality
   const [mobileTapStates, setMobileTapStates] = useState<{[key: string]: boolean}>({});
@@ -983,23 +983,27 @@ const MyReviews = () => {
                           </ResponsiveTooltip>
                         </div>
                         <div>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <ResponsiveTooltip content={t('common.delete')}>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={deletingReviewId === reviewInfo.review.$id}
-                                  className="h-8 w-8 p-0 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 dark:hover:border-red-600 cursor-help"
-                                >
-                                {deletingReviewId === reviewInfo.review.$id ? (
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-3 w-3" />
-                                )}
-                                </Button>
-                              </ResponsiveTooltip>
-                            </AlertDialogTrigger>
+                          <AlertDialog
+                            open={deleteConfirmId === reviewInfo.review.$id}
+                            onOpenChange={(open) => {
+                              if (!open) setDeleteConfirmId(null);
+                            }}
+                          >
+                            <ResponsiveTooltip content={t('common.delete')}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={deletingReviewId === reviewInfo.review.$id}
+                                onClick={() => setDeleteConfirmId(reviewInfo.review.$id)}
+                                className="h-8 w-8 p-0 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 dark:hover:border-red-600 cursor-help"
+                              >
+                              {deletingReviewId === reviewInfo.review.$id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                              </Button>
+                            </ResponsiveTooltip>
                             <AlertDialogContent className="bg-white dark:bg-gray-900">
                               <AlertDialogHeader>
                                 <AlertDialogTitle className="flex items-center gap-2">
@@ -1013,7 +1017,10 @@ const MyReviews = () => {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDeleteReview(reviewInfo.review.$id)}
+                                  onClick={() => {
+                                    setDeleteConfirmId(null);
+                                    handleDeleteReview(reviewInfo.review.$id);
+                                  }}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   {t('common.delete')}
