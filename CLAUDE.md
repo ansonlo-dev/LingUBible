@@ -43,8 +43,12 @@ Provider nesting (outer → inner): `QueryClientProvider` → `TooltipProvider` 
 ### Appwrite backend
 Client setup in `src/lib/appwrite.ts` exports `account`, `databases`, and `tablesDB`. The codebase is **migrating from the legacy Databases API to the newer TablesDB API** (recent commits) — prefer `tablesDB` for new data access. Main database id is `lingubible` with collections `courses`, `reviews`, `review_votes`, `teaching_records`, `instructors`, `terms`. Separate databases (declared in `appwrite.json`): `user-stats-db`, `verification_system` (`verification_codes`, `password_resets`). `appwrite.json` is the source of truth for project/function/collection config.
 
-### ⚠️ Caching is intentionally disabled
-`src/utils/cache.ts` and `src/utils/persistentCache.ts` are **deliberate no-op stubs**. They were neutered because their background refreshes were exhausting the Appwrite free-plan request quota; the app now falls back to live queries every time. The key constants and method signatures are kept only for API compatibility. **Do not "re-enable" or reintroduce caching here without understanding the quota constraint.** React Query is mounted (`QueryClientProvider`) but most fetching goes through `CourseService` + hooks rather than query keys.
+### ⚠️ Caching is PASSIVE only (no background refresh)
+The original quota exhaustion came from **background refresh loops (setInterval polling)**, not from caching itself. Caching is now active but strictly **passive**: entries are populated on demand and served until their TTL expires, then the next caller re-fetches live. **Never reintroduce any `setInterval` / background refresh / polling that re-fetches into the cache** — that is the specific thing that blew the free-plan request quota.
+- `src/utils/cache.ts` (`courseStatsCache`): passive two-layer (in-memory + localStorage write-through) TTL cache. Backs the heavy aggregate reads (`ALL_TEACHING_RECORDS` and the teaching-language / offered-term / service-learning stats).
+- `src/utils/persistentCache.ts` (`persistentCache`): passive localStorage TTL cache for slow-changing landing/catalog aggregates (6h TTL).
+- `CourseService` internal `this.cache` + `getCached`/`setCached`: passive in-memory TTL map; `getPersistentCached`/`setPersistentCached` layer it with `persistentCache`. Teaching records / terms are cached here because they change only on data import, not on user actions.
+React Query is mounted (`QueryClientProvider`) but most fetching goes through `CourseService` + hooks rather than query keys.
 
 ### Cloud functions (`functions/`)
 Appwrite serverless functions, each a self-contained Bun project (`bun-1.1` runtime, own `package.json` / `bun.lock` / `node_modules`, entry `src/main.js`): `send-verification-email`, `cleanup-expired-codes` (cron `0 */6 * * *`), `get-user-stats`, `handle-review-vote`, `user-validation`. They deploy separately from the frontend.

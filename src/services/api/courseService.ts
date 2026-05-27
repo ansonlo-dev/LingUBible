@@ -1584,6 +1584,14 @@ export class CourseService {
    */
   static async getTermByCode(termCode: string): Promise<Term | null> {
     try {
+      const cacheKey = `term_${termCode}`;
+
+      // 學期資料極穩定，被動 TTL 快取可省下大量重複讀取
+      const cached = this.getCached<Term | null>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+
       const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TERMS_COLLECTION_ID,
@@ -1593,7 +1601,11 @@ export class CourseService {
         ]
       );
 
-      return response.rows.length > 0 ? response.rows[0] as unknown as Term : null;
+      const term = response.rows.length > 0 ? response.rows[0] as unknown as Term : null;
+      if (term) {
+        this.setCached(cacheKey, term, 30 * 60 * 1000); // 30 分鐘快取
+      }
+      return term;
     } catch (error) {
       console.error('Error fetching term by code:', error);
       return null;
@@ -1702,6 +1714,14 @@ export class CourseService {
    */
   static async getInstructorTeachingRecords(instructorName: string): Promise<TeachingRecord[]> {
     try {
+      const cacheKey = `instructor_teaching_records_${instructorName}`;
+
+      // 被動 TTL 快取：教學記錄變動極少（僅資料匯入時），快取可大幅減少讀取
+      const cached = this.getCached<TeachingRecord[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TEACHING_RECORDS_COLLECTION_ID,
@@ -1711,7 +1731,9 @@ export class CourseService {
         ]
       );
 
-      return response.rows as unknown as TeachingRecord[];
+      const teachingRecords = response.rows as unknown as TeachingRecord[];
+      this.setCached(cacheKey, teachingRecords, 10 * 60 * 1000); // 10 分鐘快取
+      return teachingRecords;
     } catch (error) {
       console.error('Error fetching instructor teaching records:', error);
       throw new Error('Failed to fetch instructor teaching records');
@@ -1821,6 +1843,9 @@ export class CourseService {
         'unique()', // 讓 Appwrite 自動生成 ID
         reviewData
       );
+
+      // 清除該課程相關快取，讓新評論立即顯示
+      this.clearCourseCache(reviewData.course_code);
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）
       this.triggerCourseStatsRecompute(reviewData.course_code);
@@ -2512,6 +2537,11 @@ export class CourseService {
         reviewId
       );
 
+      // 清除該課程相關快取，讓刪除立即反映
+      if (courseCodeToRecompute) {
+        this.clearCourseCache(courseCodeToRecompute);
+      }
+
       // 重算該課程與全部講師的反正規化統計（非阻塞）
       if (courseCodeToRecompute) {
         this.triggerCourseStatsRecompute(courseCodeToRecompute);
@@ -2534,6 +2564,9 @@ export class CourseService {
         reviewId,
         reviewData
       );
+
+      // 清除該課程相關快取，讓更新立即反映
+      this.clearCourseCache((response as unknown as Review).course_code);
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）。course_code 取自更新後的完整文件
       this.triggerCourseStatsRecompute((response as unknown as Review).course_code);
