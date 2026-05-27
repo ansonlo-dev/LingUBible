@@ -88,12 +88,60 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [popularCourses, setPopularCourses] = useState<CourseWithStats[]>([]);
-  const [popularInstructors, setPopularInstructors] = useState<InstructorWithDetailedStats[]>([]);
   const [allCourses, setAllCourses] = useState<CourseWithStats[]>([]);
   const [allInstructors, setAllInstructors] = useState<InstructorWithDetailedStats[]>([]);
-  const [topCourses, setTopCourses] = useState<CourseWithStats[]>([]);
-  const [topInstructors, setTopInstructors] = useState<InstructorWithDetailedStats[]>([]);
+
+  // 🚀 熱門/最佳項目全部由已載入的 allCourses / allInstructors 在記憶體推導，
+  // 排序邏輯與後端 getPopularCourses / getTopCoursesByGPA /
+  // getPopularInstructorsWithDetailedStatsOptimized / getTopInstructorsByGPAOptimized 保持一致，
+  // 避免重複的資料庫查詢。
+  const popularCourses = useMemo(
+    () =>
+      [...allCourses]
+        .filter(course => course.reviewCount > 0)
+        .sort((a, b) =>
+          b.reviewCount !== a.reviewCount
+            ? b.reviewCount - a.reviewCount
+            : b.averageRating - a.averageRating
+        )
+        .slice(0, 20),
+    [allCourses]
+  );
+
+  const topCourses = useMemo(
+    () =>
+      [...allCourses]
+        .filter(course => course.averageGPA > 0 && course.averageGPACount >= 5)
+        .sort((a, b) =>
+          b.averageGPA !== a.averageGPA
+            ? b.averageGPA - a.averageGPA
+            : b.reviewCount - a.reviewCount
+        )
+        .slice(0, 20),
+    [allCourses]
+  );
+
+  const popularInstructors = useMemo(
+    () =>
+      [...allInstructors]
+        .filter(instructor => instructor.reviewCount >= 3)
+        .sort((a, b) => b.reviewCount - a.reviewCount)
+        .slice(0, 20),
+    [allInstructors]
+  );
+
+  const topInstructors = useMemo(
+    () =>
+      [...allInstructors]
+        .filter(instructor => instructor.averageGPA > 0 && instructor.averageGPACount >= 5)
+        .sort((a, b) =>
+          b.averageGPA !== a.averageGPA
+            ? b.averageGPA - a.averageGPA
+            : b.reviewCount - a.reviewCount
+        )
+        .slice(0, 20),
+    [allInstructors]
+  );
   const [activeTab, setActiveTab] = useState<'courses' | 'instructors' | 'topCourses' | 'topInstructors'>('courses'); // Updated tab state
   const [searchActiveTab, setSearchActiveTab] = useState<'courses' | 'instructors'>('courses'); // Tab for search results
   const inputRef = useRef<HTMLInputElement>(null);
@@ -244,39 +292,16 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
       
       const loadData = async () => {
         try {
-          // 採用分階段載入減少API併發壓力
-          // 第一階段：載入搜索必須的基礎數據
+          // 🚀 只需 2 個有快取的來源：課程統計已反正規化（0 次 reviews 掃描），
+          // 講師統計來自單一快取查詢。熱門/最佳項目全部在記憶體推導（見下方 useMemo），
+          // 不再額外呼叫 getPopularCourses / getTopCoursesByGPA / 兩個講師 optimized 方法。
           const [allCoursesData, allInstructorsData] = await Promise.all([
-            CourseService.getCoursesWithStatsBatch(), // 獲取所有課程用於搜索
-            CourseService.getAllInstructorsWithDetailedStats(), // 獲取所有講師用於搜索
+            CourseService.getCoursesWithStats(), // 反正規化來源，含教學語言/服務學習欄位
+            CourseService.getAllInstructorsWithDetailedStats(),
           ]);
-          
+
           setAllCourses(allCoursesData);
           setAllInstructors(allInstructorsData);
-          
-          // 短暫延遲避免API過載
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // 第二階段：載入熱門項目（用戶經常訪問）- 使用優化版本重用著陸頁面緩存
-          const [coursesData, instructorsData] = await Promise.all([
-            CourseService.getPopularCourses(20), // 獲取前20個熱門課程，提供更多建議選項
-            CourseService.getPopularInstructorsWithDetailedStatsOptimized(20), // 🚀 優化版本：重用著陸頁面的持久化緩存
-          ]);
-          
-          setPopularCourses(coursesData);
-          setPopularInstructors(instructorsData);
-          
-          // 短暫延遲避免API過載
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // 第三階段：載入最佳項目（較少使用的標籤）- 使用優化版本重用著陸頁面緩存
-          const [topCoursesData, topInstructorsData] = await Promise.all([
-            CourseService.getTopCoursesByGPA(20), // 獲取前20個最佳課程，提供更多建議選項
-            CourseService.getTopInstructorsByGPAOptimized(20) // 🚀 優化版本：重用著陸頁面的持久化緩存
-          ]);
-          
-          setTopCourses(topCoursesData);
-          setTopInstructors(topInstructorsData);
         } catch (error) {
           console.error('Error loading search data:', error);
         } finally {
