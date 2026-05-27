@@ -34,15 +34,15 @@ export async function sendVerificationCode(requestData, context) {
     if (!isValidEmailForRegistration(email)) {
       log('❌ 郵件格式驗證失敗:', email, '開發模式:', DEV_MODE.enabled);
       const errorMessages = {
-        'en': DEV_MODE.enabled 
+        'en': DEV_MODE.enabled
           ? 'Please enter a valid email address format'
-          : 'Only @ln.hk or @ln.edu.hk email addresses can register',
-        'zh-TW': DEV_MODE.enabled 
+          : 'Only @ln.hk email addresses can register',
+        'zh-TW': DEV_MODE.enabled
           ? '請輸入有效的郵件地址格式'
-          : '只有 @ln.hk 或 @ln.edu.hk 郵件地址的嶺南人才能註冊',
-        'zh-CN': DEV_MODE.enabled 
+          : '只有 @ln.hk 郵件地址的嶺南人才能註冊',
+        'zh-CN': DEV_MODE.enabled
           ? '请输入有效的邮件地址格式'
-          : '只有 @ln.hk 或 @ln.edu.hk 邮件地址的学生才能注册'
+          : '只有 @ln.hk 邮件地址的学生才能注册'
       };
       return res.json({
         success: false,
