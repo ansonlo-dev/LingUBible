@@ -134,7 +134,9 @@ export const useCourseDetailOptimized = (
     };
 
     loadCourseData();
-  }, [courseCode, userId, language, currentTermCode]);
+    // 注意：不要把 language 加入依賴。課程資料含多語欄位（_tc/_sc），
+    // 切換網站語言時無需重新查詢資料庫，否則每次切換語言都會觸發整頁約 7 次 Appwrite 讀取。
+  }, [courseCode, userId, currentTermCode]);
 
   return {
     data,

@@ -105,8 +105,10 @@ export const PERSISTENT_CACHE_KEYS = {
 } as const;
 
 export const PERSISTENT_CACHE_TTL = {
-  LANDING_PAGE_DATA: 30 * 60 * 1000,
-  STATS_DATA: 15 * 60 * 1000,
+  // 著陸頁熱門/高分列表、課程目錄等聚合資料變動緩慢（評論以小時/天累積），
+  // 拉長 TTL 可大幅減少 Appwrite 讀取。詳情頁為即時查詢，不受此影響。
+  LANDING_PAGE_DATA: 6 * 60 * 60 * 1000, // 6 小時
+  STATS_DATA: 6 * 60 * 60 * 1000, // 6 小時
 } as const;
 
 // Run a one-time cleanup on startup to evict expired entries without blocking
