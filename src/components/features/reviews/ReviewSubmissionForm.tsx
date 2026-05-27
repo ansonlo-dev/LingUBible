@@ -2273,6 +2273,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   };
 
   const handleConfirmMainExit = () => {
+    // When editing an existing review, always return to the My Reviews page
+    if (isEditMode) {
+      navigate('/my-reviews');
+      return;
+    }
     // Navigate to origin page based on originPage state
     if (originPage === 'instructor' && preSelectedInstructor) {
       // Go back to instructor page

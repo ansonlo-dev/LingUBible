@@ -2,9 +2,29 @@ import React, { useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
+const BETA_NOTICE_EXPANDED_KEY = 'betaNoticeExpanded';
+
 export const BetaNotice: React.FC = () => {
   const { t } = useLanguage();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(BETA_NOTICE_EXPANDED_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleExpanded = () => {
+    setIsExpanded(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(BETA_NOTICE_EXPANDED_KEY, String(next));
+      } catch {
+        // Ignore storage errors (e.g. private mode)
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
@@ -40,7 +60,7 @@ export const BetaNotice: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={toggleExpanded}
             className="flex-shrink-0 p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
             aria-label={isExpanded ? t('beta.notice.collapse') : t('beta.notice.expand')}
           >
