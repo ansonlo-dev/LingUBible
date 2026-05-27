@@ -3,6 +3,7 @@ import { Client, Databases, Query } from 'node-appwrite';
 const DATABASE_ID = 'lingubible';
 const REVIEWS_COLLECTION_ID = 'reviews';
 const COURSES_COLLECTION_ID = 'courses';
+const TEACHING_RECORDS_COLLECTION_ID = 'teaching_records';
 const PAGE_LIMIT = 1000;
 
 // 標準香港大學成績對 GPA 對照表，與前端 src/utils/gradeUtils.ts 保持一致
@@ -17,6 +18,16 @@ function getGPA(grade) {
   if (!grade) return null;
   const g = String(grade).trim().toUpperCase();
   return g in GRADE_TO_GPA ? GRADE_TO_GPA[g] : null;
+}
+
+// 與前端 dateUtils.ts getCurrentTermCode() 保持相同邏輯
+function getCurrentTermCode() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  if (month >= 9 && month <= 12) return `${year}-T1`;
+  if (month >= 1 && month <= 5) return `${year - 1}-T2`;
+  return `${year}-Summer`;
 }
 
 // 空統計（無評論時），與前端 getBatchCourseDetailedStats 的 0 值對齊
@@ -67,6 +78,45 @@ function computeStats(reviews) {
   };
 }
 
+// 從一組教學記錄計算教學語言 / 服務學習反正規化欄位
+function computeTeachingFields(teachingRows, currentTermCode) {
+  const seenLang = new Set();
+  const seenSL = new Set();
+  const langList = [];
+  const slList = [];
+  let currentLang = null;
+  let currentSL = null;
+
+  // rows 已按 $createdAt 升序，後寫入者為最新
+  for (const r of teachingRows) {
+    if (r.teaching_language && !seenLang.has(r.teaching_language)) {
+      seenLang.add(r.teaching_language);
+      langList.push(r.teaching_language);
+    }
+    if ((r.service_learning === 'compulsory' || r.service_learning === 'optional') && !seenSL.has(r.service_learning)) {
+      seenSL.add(r.service_learning);
+      slList.push(r.service_learning);
+    }
+    if (r.term_code === currentTermCode) {
+      if (r.teaching_language) currentLang = r.teaching_language;
+      if (r.service_learning === 'compulsory' || r.service_learning === 'optional') currentSL = r.service_learning;
+    }
+  }
+
+  let offeredInCurrentTerm = false;
+  for (const r of teachingRows) {
+    if (r.term_code === currentTermCode) { offeredInCurrentTerm = true; break; }
+  }
+
+  return {
+    teaching_languages: JSON.stringify(langList),
+    current_term_teaching_language: currentLang,
+    service_learning_types: JSON.stringify(slList),
+    current_term_service_learning: currentSL,
+    current_term_offered: offeredInCurrentTerm,
+  };
+}
+
 // 讀取單一課程的所有評論（分頁，只取統計需要的欄位）
 async function fetchReviewsForCourse(databases, courseCode) {
   const reviews = [];
@@ -86,6 +136,26 @@ async function fetchReviewsForCourse(databases, courseCode) {
   return reviews;
 }
 
+// 讀取單一課程的所有教學記錄（分頁）
+async function fetchTeachingRecordsForCourse(databases, courseCode) {
+  const rows = [];
+  let cursor = null;
+  while (true) {
+    const queries = [
+      Query.equal('course_code', courseCode),
+      Query.orderAsc('$createdAt'),
+      Query.limit(PAGE_LIMIT),
+      Query.select(['course_code', 'term_code', 'teaching_language', 'service_learning'])
+    ];
+    if (cursor) queries.push(Query.cursorAfter(cursor));
+    const res = await databases.listDocuments(DATABASE_ID, TEACHING_RECORDS_COLLECTION_ID, queries);
+    rows.push(...res.documents);
+    if (res.documents.length < PAGE_LIMIT) break;
+    cursor = res.documents[res.documents.length - 1].$id;
+  }
+  return rows;
+}
+
 // 找出課程的 $id（courses 以 course_code 索引，但主鍵是 $id）
 async function findCourseRowId(databases, courseCode) {
   const res = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION_ID, [
@@ -97,21 +167,27 @@ async function findCourseRowId(databases, courseCode) {
 }
 
 async function recomputeOne(databases, courseCode, log) {
-  const reviews = await fetchReviewsForCourse(databases, courseCode);
+  const currentTermCode = getCurrentTermCode();
+  const [reviews, teachingRows] = await Promise.all([
+    fetchReviewsForCourse(databases, courseCode),
+    fetchTeachingRecordsForCourse(databases, courseCode),
+  ]);
   const stats = computeStats(reviews);
+  const teachingFields = computeTeachingFields(teachingRows, currentTermCode);
   const rowId = await findCourseRowId(databases, courseCode);
   if (!rowId) {
     log(`找不到課程 ${courseCode}，略過`);
     return { courseCode, updated: false };
   }
-  await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION_ID, rowId, stats);
-  log(`已更新 ${courseCode}: ${stats.stats_review_count} 則評論`);
+  await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION_ID, rowId, { ...stats, ...teachingFields });
+  log(`已更新 ${courseCode}: ${stats.stats_review_count} 則評論，語言=${teachingFields.teaching_languages}`);
   return { courseCode, updated: true, stats };
 }
 
-// 回填全部課程：一次讀完所有評論分組，再逐一更新課程
-// diag 物件用於在 response 中回報每個階段的進度（runtime 的 log 不一定會被捕捉）
+// 回填全部課程：一次讀完所有評論與教學記錄分組，再逐一更新課程
 async function recomputeAll(databases, log, diag) {
+  const currentTermCode = getCurrentTermCode();
+
   // 讀取所有評論並依 course_code 分組
   const reviewsByCourse = new Map();
   let cursor = null;
@@ -134,6 +210,29 @@ async function recomputeAll(databases, log, diag) {
   }
   diag.totalReviews = totalReviews;
 
+  // 讀取所有教學記錄並依 course_code 分組（升序以確保最後寫入的為最新）
+  diag.stage = 'reading_teaching_records';
+  const teachingByCourse = new Map();
+  cursor = null;
+  let totalTeaching = 0;
+  while (true) {
+    const queries = [
+      Query.orderAsc('$createdAt'),
+      Query.limit(PAGE_LIMIT),
+      Query.select(['course_code', 'term_code', 'teaching_language', 'service_learning'])
+    ];
+    if (cursor) queries.push(Query.cursorAfter(cursor));
+    const res = await databases.listDocuments(DATABASE_ID, TEACHING_RECORDS_COLLECTION_ID, queries);
+    for (const r of res.documents) {
+      if (!teachingByCourse.has(r.course_code)) teachingByCourse.set(r.course_code, []);
+      teachingByCourse.get(r.course_code).push(r);
+    }
+    totalTeaching += res.documents.length;
+    if (res.documents.length < PAGE_LIMIT) break;
+    cursor = res.documents[res.documents.length - 1].$id;
+  }
+  diag.totalTeaching = totalTeaching;
+
   // 讀取所有課程（$id + course_code）
   diag.stage = 'reading_courses';
   const courses = [];
@@ -154,9 +253,11 @@ async function recomputeAll(databases, log, diag) {
   const sampleErrors = [];
   for (const course of courses) {
     const reviews = reviewsByCourse.get(course.course_code) || [];
+    const teachingRows = teachingByCourse.get(course.course_code) || [];
     const stats = computeStats(reviews);
+    const teachingFields = computeTeachingFields(teachingRows, currentTermCode);
     try {
-      await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION_ID, course.$id, stats);
+      await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION_ID, course.$id, { ...stats, ...teachingFields });
       updated++;
     } catch (e) {
       failed++;
@@ -164,7 +265,7 @@ async function recomputeAll(databases, log, diag) {
     }
   }
   diag.stage = 'done';
-  return { updated, failed, totalCourses: courses.length, totalReviews, sampleErrors };
+  return { updated, failed, totalCourses: courses.length, totalReviews, totalTeaching, sampleErrors };
 }
 
 export default async ({ req, res, log, error }) => {

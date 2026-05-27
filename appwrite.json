@@ -746,6 +746,49 @@
                     "min": 0,
                     "max": 9223372036854775807,
                     "default": 0
+                },
+                {
+                    "key": "teaching_languages",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 500,
+                    "default": "[]",
+                    "encrypt": false
+                },
+                {
+                    "key": "current_term_teaching_language",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "service_learning_types",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": "[]",
+                    "encrypt": false
+                },
+                {
+                    "key": "current_term_service_learning",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "current_term_offered",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": false
                 }
             ],
             "indexes": [

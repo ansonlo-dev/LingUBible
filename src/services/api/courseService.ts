@@ -25,6 +25,12 @@ export interface Course {
   stats_avg_usefulness?: number;
   stats_avg_gpa?: number;
   stats_avg_gpa_count?: number;
+  // 反正規化教學衍生欄位（由 recompute-course-stats 函數寫入，避免列表頁掃描 teaching_records）
+  teaching_languages?: string; // JSON string, e.g. '["English","Cantonese"]'
+  current_term_teaching_language?: string | null;
+  service_learning_types?: string; // JSON string, e.g. '["compulsory"]'
+  current_term_service_learning?: string | null;
+  current_term_offered?: boolean;
 }
 
 export interface CourseWithStats extends Course {
@@ -839,7 +845,8 @@ export class CourseService {
           Query.orderAsc('course_code'),
           Query.limit(this.MAX_COURSES_LIMIT),
           Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt',
-            'stats_review_count', 'stats_avg_rating', 'stats_student_count', 'stats_avg_workload', 'stats_avg_difficulty', 'stats_avg_usefulness', 'stats_avg_gpa', 'stats_avg_gpa_count'])
+            'stats_review_count', 'stats_avg_rating', 'stats_student_count', 'stats_avg_workload', 'stats_avg_difficulty', 'stats_avg_usefulness', 'stats_avg_gpa', 'stats_avg_gpa_count',
+            'teaching_languages', 'current_term_teaching_language', 'service_learning_types', 'current_term_service_learning', 'current_term_offered'])
         ]
       );
 
@@ -873,6 +880,32 @@ export class CourseService {
       averageUsefulness: course.stats_avg_usefulness ?? -1,
       averageGPA: course.stats_avg_gpa ?? 0,
       averageGPACount: course.stats_avg_gpa_count ?? 0
+    };
+  }
+
+  /**
+   * 從 course 文件的反正規化教學欄位讀取教學語言 / 服務學習（取代列表頁掃描 teaching_records）
+   * 未回填的課程（teaching_languages 為 undefined/null）回傳空陣列
+   */
+  private static extractDenormalizedTeachingData(course: Course): {
+    teachingLanguages: string[];
+    currentTermTeachingLanguage: string | null;
+    serviceLearningTypes: ('compulsory' | 'optional')[];
+    currentTermServiceLearning: ('compulsory' | 'optional') | null;
+  } {
+    let teachingLanguages: string[] = [];
+    let serviceLearningTypes: ('compulsory' | 'optional')[] = [];
+    try {
+      if (course.teaching_languages) teachingLanguages = JSON.parse(course.teaching_languages);
+    } catch {}
+    try {
+      if (course.service_learning_types) serviceLearningTypes = JSON.parse(course.service_learning_types);
+    } catch {}
+    return {
+      teachingLanguages,
+      currentTermTeachingLanguage: course.current_term_teaching_language ?? null,
+      serviceLearningTypes,
+      currentTermServiceLearning: (course.current_term_service_learning as ('compulsory' | 'optional') | null) ?? null,
     };
   }
 
@@ -1139,52 +1172,32 @@ export class CourseService {
         
         const currentTermCode = getCurrentTermCode();
         const courses = await this.getAllCourses();
-        const courseCodes = courses.map(course => course.course_code);
-        
-        if (import.meta.env.DEV) {
-          console.log(`📚 Loaded ${courses.length} courses, fetching additional data...`);
-        }
-        
-        // 🚀 單次掃描 teaching_records 取得所有教學衍生資料（取代原本 5 次掃描）
-        // 統計已反正規化到 course 文件，亦不再查詢 reviews
-        const teachingData = await this.getBatchCourseTeachingDataConsolidated(courseCodes, currentTermCode);
-        const teachingLanguagesMap = teachingData.teachingLanguages;
-        const currentTermLanguagesMap = teachingData.currentTermTeachingLanguage;
-        const serviceLearningTypesMap = teachingData.serviceLearning;
-        const currentTermServiceLearningMap = teachingData.currentTermServiceLearning;
-        const currentTermOfferedCourses = teachingData.offeredInCurrentTerm;
 
         if (import.meta.env.DEV) {
-          console.log('✅ Teaching data loaded via single consolidated scan');
-          console.log(`📊 Teaching languages map size: ${teachingLanguagesMap.size}`);
+          console.log(`📚 Loaded ${courses.length} courses; reading denormalized stats + teaching fields from course docs`);
         }
 
-        // 組合所有數據
+        // 🚀 教學語言 / 服務學習已反正規化到 course 文件（同 stats_*），不再掃描 teaching_records
+        // 統計與教學衍生資料全由 recompute-course-stats 函數寫入
         const coursesWithStats = courses.map(course => {
           const stats = this.extractDenormalizedStats(course);
+          const teaching = this.extractDenormalizedTeachingData(course);
+          // current_term_offered 由函數精確計算；若尚未回填則預設 false
+          const isOfferedInCurrentTerm = course.current_term_offered ?? false;
 
-          const teachingLanguages = teachingLanguagesMap.get(course.course_code) || [];
-          const currentTermTeachingLanguage = currentTermLanguagesMap.get(course.course_code) || null;
-          const serviceLearningTypes = serviceLearningTypesMap.get(course.course_code) || [];
-          const currentTermServiceLearning = currentTermServiceLearningMap.get(course.course_code) || null;
-          const isOfferedInCurrentTerm = currentTermOfferedCourses.has(course.course_code);
-          
           return {
             ...course,
             ...stats,
-            teachingLanguages,
-            currentTermTeachingLanguage,
-            serviceLearningTypes,
-            currentTermServiceLearning,
+            teachingLanguages: teaching.teachingLanguages,
+            currentTermTeachingLanguage: teaching.currentTermTeachingLanguage,
+            serviceLearningTypes: teaching.serviceLearningTypes,
+            currentTermServiceLearning: teaching.currentTermServiceLearning,
             isOfferedInCurrentTerm
           };
         });
 
         if (import.meta.env.DEV) {
-          console.log('🎉 getCoursesWithStats: Completed successfully');
-          console.log(`📝 Sample course with teaching languages:`, coursesWithStats.find(c => 
-            c.teachingLanguages && c.teachingLanguages.length > 0
-          )?.course_code || 'none found');
+          console.log('🎉 getCoursesWithStats: Completed successfully (0 teaching_records reads)');
         }
         
         // 🚀 使用雙層緩存提升重訪性能 (匹配著陸頁面的緩存策略)

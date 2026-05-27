@@ -1,43 +1,98 @@
 /**
- * Persistent cache disabled: this module now acts as a simple no-op helper so
- * the application falls back to live Appwrite queries every time. Keeping the
- * interface avoids large refactors while eliminating the background cache
- * refreshes that were exhausting the free plan quota.
+ * Passive localStorage cache with TTL — no background refresh, no setInterval.
+ * Reads return null if the entry is expired; callers treat that as a cache miss
+ * and re-fetch live data. This avoids the quota exhaustion that led to the
+ * original no-op stub (background refreshes were firing every 2 minutes).
  */
 
+interface CacheEntry<T> {
+  value: T;
+  expiry: number; // absolute ms timestamp
+}
+
+const PREFIX = 'lbu_cache_';
+
 class PersistentCache {
-  set<T>(_key: string, _value: T, _ttl: number = 30 * 60 * 1000): void {
-    // no-op
+  set<T>(key: string, value: T, ttl: number = 30 * 60 * 1000): void {
+    try {
+      const entry: CacheEntry<T> = { value, expiry: Date.now() + ttl };
+      localStorage.setItem(PREFIX + key, JSON.stringify(entry));
+    } catch {
+      // localStorage might be full or unavailable (private browsing) — silently skip
+    }
   }
 
-  get<T>(_key: string): T | null {
-    return null;
+  get<T>(key: string): T | null {
+    try {
+      const raw = localStorage.getItem(PREFIX + key);
+      if (!raw) return null;
+      const entry: CacheEntry<T> = JSON.parse(raw);
+      if (Date.now() > entry.expiry) {
+        localStorage.removeItem(PREFIX + key);
+        return null;
+      }
+      return entry.value;
+    } catch {
+      return null;
+    }
   }
 
-  has(_key: string): boolean {
-    return false;
+  has(key: string): boolean {
+    return this.get(key) !== null;
   }
 
-  delete(_key: string): void {
-    // no-op
+  delete(key: string): void {
+    try {
+      localStorage.removeItem(PREFIX + key);
+    } catch {}
   }
 
   clear(): void {
-    // no-op
+    try {
+      const toRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(PREFIX)) toRemove.push(k);
+      }
+      toRemove.forEach(k => localStorage.removeItem(k));
+    } catch {}
   }
 
   cleanup(): void {
-    // no-op
+    try {
+      const now = Date.now();
+      const toRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith(PREFIX)) continue;
+        try {
+          const entry = JSON.parse(localStorage.getItem(k) || '{}');
+          if (entry.expiry && now > entry.expiry) toRemove.push(k);
+        } catch {
+          toRemove.push(k);
+        }
+      }
+      toRemove.forEach(k => localStorage.removeItem(k));
+    } catch {}
   }
 
   getStats(): { totalEntries: number; totalSize: number } {
-    return { totalEntries: 0, totalSize: 0 };
+    let totalEntries = 0;
+    let totalSize = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith(PREFIX)) continue;
+        totalEntries++;
+        totalSize += (localStorage.getItem(k) || '').length * 2; // UTF-16 bytes approx
+      }
+    } catch {}
+    return { totalEntries, totalSize };
   }
 }
 
 export const persistentCache = new PersistentCache();
 
-// Persistent cache keys are retained for compatibility with existing API
 export const PERSISTENT_CACHE_KEYS = {
   POPULAR_COURSES: 'landing_popular_courses',
   POPULAR_INSTRUCTORS: 'landing_popular_instructors',
@@ -54,8 +109,7 @@ export const PERSISTENT_CACHE_TTL = {
   STATS_DATA: 15 * 60 * 1000,
 } as const;
 
-// Cleanup hooks are no longer required now that caching is disabled, but keep
-// the structure intact to avoid runtime errors where they used to be invoked.
+// Run a one-time cleanup on startup to evict expired entries without blocking
 if (typeof window !== 'undefined') {
-  // no scheduled cleanup needed when nothing is stored
+  setTimeout(() => persistentCache.cleanup(), 5000);
 }
