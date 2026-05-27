@@ -498,7 +498,7 @@ export default {
   'pages.courseDetail.pastExamPapersShort': '試題',
   'pages.courseDetail.examPapersSignUpTitle': '註冊以查看歷屆試題',
   'pages.courseDetail.examPapersSignUpDescription': '歷屆試題屬受限資料，僅供已驗證的嶺南大學學生查看。請使用您的嶺南電郵註冊以取得存取權限。',
-  'pages.courseDetail.noExamPapers': '暫無歷屆試題。',
+  'pages.courseDetail.noExamPapers': '暫無歷屆試題',
   'pages.courseDetail.noDescription': '暫無課程簡介',
   'pages.courseDetail.offerRecords': '開設記錄',
   'pages.courseDetail.courseInfo': '課程資訊',

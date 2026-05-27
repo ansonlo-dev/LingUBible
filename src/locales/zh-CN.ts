@@ -499,7 +499,7 @@ export default {
   'pages.courseDetail.pastExamPapersShort': '试题',
   'pages.courseDetail.examPapersSignUpTitle': '注册以查看历届试题',
   'pages.courseDetail.examPapersSignUpDescription': '历届试题属受限资料，仅供已验证的岭南大学学生查看。请使用您的岭南电邮注册以获取访问权限。',
-  'pages.courseDetail.noExamPapers': '暂无历届试题。',
+  'pages.courseDetail.noExamPapers': '暂无历届试题',
   'pages.courseDetail.noDescription': '暂无课程简介',
   'pages.courseDetail.offerRecords': '开设记录',
   'pages.courseDetail.courseInfo': '课程资讯',
