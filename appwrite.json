@@ -899,6 +899,76 @@
                     "size": 100,
                     "default": null,
                     "encrypt": false
+                },
+                {
+                    "key": "stats_review_count",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "stats_avg_gpa",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": 0
+                },
+                {
+                    "key": "stats_avg_gpa_count",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "stats_teaching_score",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": 0
+                },
+                {
+                    "key": "stats_grading_fairness",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1,
+                    "max": 5,
+                    "default": 0
+                },
+                {
+                    "key": "teaching_languages",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 500,
+                    "default": "[]",
+                    "encrypt": false
+                },
+                {
+                    "key": "current_term_teaching_language",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "is_teaching_in_current_term",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": false
                 }
             ],
             "indexes": []

@@ -69,6 +69,15 @@ export interface Instructor {
   department: string;
   $createdAt: string;
   $updatedAt: string;
+  // 反正規化統計（由 recompute-course-stats 函數寫入，避免列表頁掃描 reviews）
+  stats_review_count?: number;
+  stats_avg_gpa?: number;
+  stats_avg_gpa_count?: number;
+  stats_teaching_score?: number;
+  stats_grading_fairness?: number;
+  teaching_languages?: string; // JSON string
+  current_term_teaching_language?: string | null;
+  is_teaching_in_current_term?: boolean;
 }
 
 export interface InstructorWithStats extends Instructor {
@@ -910,6 +919,36 @@ export class CourseService {
   }
 
   /**
+   * 從 instructor 文件的反正規化欄位讀取講師統計與教學語言
+   * （取代列表頁掃描全部 reviews）。未回填者回傳預設空統計。
+   */
+  private static extractDenormalizedInstructorStats(instructor: Instructor): {
+    reviewCount: number;
+    teachingScore: number;
+    gradingFairness: number;
+    averageGPA: number;
+    averageGPACount: number;
+    isTeachingInCurrentTerm: boolean;
+    teachingLanguages: string[];
+    currentTermTeachingLanguage: string | null;
+  } {
+    let teachingLanguages: string[] = [];
+    try {
+      if (instructor.teaching_languages) teachingLanguages = JSON.parse(instructor.teaching_languages);
+    } catch {}
+    return {
+      reviewCount: instructor.stats_review_count ?? 0,
+      teachingScore: instructor.stats_teaching_score ?? 0,
+      gradingFairness: instructor.stats_grading_fairness ?? 0,
+      averageGPA: instructor.stats_avg_gpa ?? 0,
+      averageGPACount: instructor.stats_avg_gpa_count ?? 0,
+      isTeachingInCurrentTerm: instructor.is_teaching_in_current_term ?? false,
+      teachingLanguages,
+      currentTermTeachingLanguage: instructor.current_term_teaching_language ?? null,
+    };
+  }
+
+  /**
    * 搜尋課程（優化版本）
    * 使用更精確的查詢和限制，移除回退邏輯以避免載入所有數據
    */
@@ -1630,6 +1669,17 @@ export class CourseService {
       .catch(err => console.error('觸發課程統計重算失敗:', err));
   }
 
+  /**
+   * 觸發後端重算全部講師的反正規化統計（fire-and-forget）
+   * 講師統計嵌在 reviews 的 instructor_details 中，無法按講師增量查詢，
+   * 故評論異動時做一次全量重算（評論異動頻率低，成本可接受）。
+   */
+  private static triggerInstructorStatsRecompute(): void {
+    functions
+      .createExecution('recompute-course-stats', JSON.stringify({ instructors: true }), true)
+      .catch(err => console.error('觸發講師統計重算失敗:', err));
+  }
+
   static async createReview(reviewData: Omit<Review, '$id' | '$createdAt' | '$updatedAt'>): Promise<Review> {
     try {
       // Check if user can submit a review for this course
@@ -1662,8 +1712,9 @@ export class CourseService {
         reviewData
       );
 
-      // 重算該課程的反正規化統計（非阻塞）
+      // 重算該課程與全部講師的反正規化統計（非阻塞）
       this.triggerCourseStatsRecompute(reviewData.course_code);
+      this.triggerInstructorStatsRecompute();
 
       return response as unknown as Review;
     } catch (error) {
@@ -2351,10 +2402,11 @@ export class CourseService {
         reviewId
       );
 
-      // 重算該課程的反正規化統計（非阻塞）
+      // 重算該課程與全部講師的反正規化統計（非阻塞）
       if (courseCodeToRecompute) {
         this.triggerCourseStatsRecompute(courseCodeToRecompute);
       }
+      this.triggerInstructorStatsRecompute();
     } catch (error) {
       console.error('Error deleting review:', error);
       throw new Error('Failed to delete review');
@@ -2373,8 +2425,9 @@ export class CourseService {
         reviewData
       );
 
-      // 重算該課程的反正規化統計（非阻塞）。course_code 取自更新後的完整文件
+      // 重算該課程與全部講師的反正規化統計（非阻塞）。course_code 取自更新後的完整文件
       this.triggerCourseStatsRecompute((response as unknown as Review).course_code);
+      this.triggerInstructorStatsRecompute();
 
       return response as unknown as Review;
     } catch (error) {
@@ -3062,149 +3115,45 @@ export class CourseService {
       
       return this.runWithInFlightDedup(cacheKey, async () => {
         if (import.meta.env.DEV) {
-          console.log('🔄 getAllInstructorsWithDetailedStats: Loading fresh data...');
+          console.log('🔄 getAllInstructorsWithDetailedStats: Loading from denormalized columns (0 reviews scan)...');
         }
-        
-        const currentTermCode = getCurrentTermCode();
-        
-        // 教學資料（語言、當前學期）改由下方單次掃描取得，這裡不再讀 teaching_records
-        const [instructorsResponse, reviewsResponse] = await Promise.all([
-          tablesDB.listRows(
-            this.DATABASE_ID,
-            this.INSTRUCTORS_COLLECTION_ID,
-            [
-              Query.orderAsc('name'),
-              Query.limit(this.MAX_INSTRUCTORS_LIMIT),
-              Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
-            ]
-          ),
-          tablesDB.listRows(
-            this.DATABASE_ID,
-            this.REVIEWS_COLLECTION_ID,
-            [
-              Query.orderDesc('$createdAt'),
-              Query.limit(this.MAX_REVIEWS_LIMIT),
-              Query.select(['instructor_details', 'course_final_grade'])
-            ]
-          )
-        ]);
+
+        // 🚀 統計與教學語言已反正規化到 instructors 表（同 courses 的 stats_*），
+        // 不再掃描全部 reviews 或 teaching_records，僅讀講師列表本身。
+        const instructorsResponse = await tablesDB.listRows(
+          this.DATABASE_ID,
+          this.INSTRUCTORS_COLLECTION_ID,
+          [
+            Query.orderAsc('name'),
+            Query.limit(this.MAX_INSTRUCTORS_LIMIT),
+            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt',
+              'stats_review_count', 'stats_avg_gpa', 'stats_avg_gpa_count', 'stats_teaching_score', 'stats_grading_fairness',
+              'teaching_languages', 'current_term_teaching_language', 'is_teaching_in_current_term'])
+          ]
+        );
 
         const instructors = instructorsResponse.rows as unknown as Instructor[];
-        const allReviews = reviewsResponse.rows as unknown as Review[];
 
-        const instructorStatsMap = new Map<string, {
-          reviewCount: number;
-          teachingScores: number[];
-          gradingScores: number[];
-          grades: string[];
-        }>();
-
-        for (const review of allReviews) {
-          try {
-            const instructorDetails = JSON.parse(review.instructor_details) as InstructorDetail[];
-            
-            for (const detail of instructorDetails) {
-              const instructorName = detail.instructor_name;
-              
-              if (!instructorStatsMap.has(instructorName)) {
-                instructorStatsMap.set(instructorName, {
-                  reviewCount: 0,
-                  teachingScores: [],
-                  gradingScores: [],
-                  grades: []
-                });
-              }
-              
-              const stats = instructorStatsMap.get(instructorName)!;
-              stats.reviewCount++;
-              
-              if (detail.teaching > 0) {
-                stats.teachingScores.push(detail.teaching);
-              }
-              if (detail.grading && detail.grading > 0) {
-                stats.gradingScores.push(detail.grading);
-              }
-              
-              if (review.course_final_grade) {
-                stats.grades.push(review.course_final_grade);
-              }
-            }
-          } catch {
-            continue;
-          }
-        }
-
-        const finalInstructorStatsMap = new Map<string, {
-          reviewCount: number;
-          teachingScore: number;
-          gradingFairness: number;
-          averageGPA: number;
-          averageGPACount: number;
-        }>();
-        
-        for (const [instructorName, stats] of instructorStatsMap) {
-          const teachingScore = stats.teachingScores.length > 0 
-            ? stats.teachingScores.reduce((sum, score) => sum + score, 0) / stats.teachingScores.length 
-            : 0;
-          const gradingFairness = stats.gradingScores.length > 0 
-            ? stats.gradingScores.reduce((sum, score) => sum + score, 0) / stats.gradingScores.length 
-            : 0;
-
-          const gradeDistribution = calculateGradeDistributionFromReviews(
-            stats.grades.map(grade => ({ course_final_grade: grade }))
-          );
-          const gradeStats = calculateGradeStatistics(gradeDistribution);
-          const averageGPA = gradeStats.mean || 0;
-          const averageGPACount = gradeStats.validGradeCount || 0;
-
-          finalInstructorStatsMap.set(instructorName, {
-            reviewCount: stats.reviewCount,
-            teachingScore,
-            gradingFairness,
-            averageGPA,
-            averageGPACount
-          });
-        }
-
-        // 🚀 單次掃描 teaching_records 取得教學語言、當前學期語言、當前學期任教集合
-        const instructorNames = instructors.map(instructor => instructor.name);
-        const teachingData = await this.getBatchInstructorTeachingDataConsolidated(instructorNames, currentTermCode);
-        const teachingLanguagesMap = teachingData.teachingLanguages;
-        const currentTermTeachingLanguagesMap = teachingData.currentTermTeachingLanguage;
-        const instructorsTeachingInCurrentTerm = teachingData.teachingInCurrentTerm;
-
-        const finalInstructorsWithDetailedStats = instructors.map(instructor => {
-          const stats = finalInstructorStatsMap.get(instructor.name) || {
-            reviewCount: 0,
-            teachingScore: 0,
-            gradingFairness: 0,
-            averageGPA: 0,
-            averageGPACount: 0
-          };
-          return {
-            ...instructor,
-            ...stats,
-            isTeachingInCurrentTerm: instructorsTeachingInCurrentTerm.has(instructor.name),
-            teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
-            currentTermTeachingLanguage: currentTermTeachingLanguagesMap.get(instructor.name) || null
-          };
-        }).sort((a, b) => {
+        const finalInstructorsWithDetailedStats = instructors.map(instructor => ({
+          ...instructor,
+          ...this.extractDenormalizedInstructorStats(instructor)
+        })).sort((a, b) => {
           const aNameForSort = extractInstructorNameForSorting(a.name);
           const bNameForSort = extractInstructorNameForSorting(b.name);
           return aNameForSort.localeCompare(bNameForSort);
         });
 
         this.setPersistentCached(
-          cacheKey, 
-          finalInstructorsWithDetailedStats, 
+          cacheKey,
+          finalInstructorsWithDetailedStats,
           10 * 60 * 1000,
           PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA
         );
-        
+
         if (import.meta.env.DEV) {
           console.log('✅ getAllInstructorsWithDetailedStats: Results cached with dual-layer strategy for fast revisits');
         }
-        
+
         return finalInstructorsWithDetailedStats;
       });
     } catch (error) {
