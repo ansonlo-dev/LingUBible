@@ -146,6 +146,80 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
   const isNotApplicable = rating === -1;
   const isNotRated = rating === null;
 
+  const renderStarRow = () => (
+    <div
+      className={cn(
+        "flex items-center gap-1 flex-shrink-0",
+        isNotApplicable && "opacity-40 pointer-events-none"
+      )}
+      onMouseLeave={() => setHoveredRating(null)}
+    >
+      {[1, 2, 3, 4, 5].map((starValue) => {
+        const halfFilled = starValue - 0.5 <= displayRating && !isNotApplicable;
+        const fullFilled = starValue <= displayRating && !isNotApplicable;
+        const isLast = starValue === 5;
+        return (
+          <div key={starValue} className="relative">
+            {/* Half star (left side) */}
+            <button
+              type="button"
+              onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
+              onMouseEnter={() => setHoveredRating(starValue - 0.5)}
+              className="absolute left-0 top-0 w-3 h-6 transition-all hover:scale-110 focus:outline-none outline-none border-none rounded-l z-10"
+              style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
+              disabled={isNotApplicable}
+            >
+              <Star
+                className={cn(
+                  "h-6 w-6 transition-colors",
+                  halfFilled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400 dark:text-gray-500'
+                )}
+                style={{
+                  clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
+                  stroke: halfFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
+                  strokeWidth: 'var(--star-stroke-width, 1px)'
+                }}
+              />
+            </button>
+
+            {/* Full star */}
+            <button
+              type="button"
+              onClick={() => onRatingChange(rating === starValue ? null : starValue)}
+              onMouseEnter={() => setHoveredRating(starValue)}
+              className={cn(
+                "transition-all hover:scale-110 focus:outline-none outline-none border-none rounded",
+                isLast && "pr-4"
+              )}
+              style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
+              disabled={isNotApplicable}
+            >
+              <Star
+                className={cn(
+                  "h-6 w-6 transition-colors",
+                  fullFilled
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : halfFilled
+                    ? 'text-yellow-400'
+                    : 'text-gray-400 dark:text-gray-500'
+                )}
+                style={{
+                  fill: fullFilled
+                    ? 'currentColor'
+                    : halfFilled
+                    ? 'url(#half-fill)'
+                    : 'none',
+                  stroke: fullFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
+                  strokeWidth: 'var(--star-stroke-width, 1px)'
+                }}
+              />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="space-y-1">
       {/* Desktop: Label, N/A, Stars, and Description on same line */}
@@ -171,94 +245,8 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
         </Button>
         
         {/* Star Rating with Hover Effects */}
-        <div 
-          className={cn(
-            "flex items-center gap-1 flex-shrink-0",
-            isNotApplicable && "opacity-40 pointer-events-none"
-          )}
-          onMouseLeave={() => setHoveredRating(null)}
-        >
-          {/* 0 star button - easy to click */}
-          <button
-            type="button"
-            onClick={() => onRatingChange(rating === 0 ? null : 0)}
-            onMouseEnter={() => setHoveredRating(0)}
-            className={cn(
-              "h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none flex items-center justify-center text-xs font-bold mr-1",
-              rating === 0
-                ? "bg-red-500 border-red-500 text-white"
-                : "border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
-            )}
-            disabled={isNotApplicable}
-          >
-            0
-          </button>
-          
-          {[1, 2, 3, 4, 5].map((starValue) => (
-            <div key={starValue} className="relative">
-              {/* Half star (left side) */}
-              <button
-                type="button"
-                onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
-                onMouseEnter={() => setHoveredRating(starValue - 0.5)}
-                className="absolute left-0 top-0 w-3 h-6 transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded-l z-10"
-                style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
-                disabled={isNotApplicable}
-              >
-                <Star
-                  className={`h-6 w-6 transition-colors ${
-                    isNotApplicable
-                      ? 'text-gray-500 dark:text-gray-600'
-                      : starValue - 0.5 <= displayRating
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'dark:text-gray-600'
-                  }`}
-                  style={{
-                    color: starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
-                    clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
-                    stroke: 'var(--star-stroke, #000000)',
-                    strokeWidth: 'var(--star-stroke-width, 1px)'
-                  }}
-                />
-              </button>
-              
-              {/* Full star */}
-              <button
-                type="button"
-                onClick={() => onRatingChange(rating === starValue ? null : starValue)}
-                onMouseEnter={() => setHoveredRating(starValue)}
-                className="transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded"
-                style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
-                disabled={isNotApplicable}
-              >
-                <Star
-                  className={`h-6 w-6 transition-colors ${
-                    isNotApplicable
-                      ? 'text-gray-500 dark:text-gray-600'
-                      : starValue <= displayRating
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : starValue - 0.5 <= displayRating
-                      ? 'text-yellow-400'
-                      : 'dark:text-gray-600'
-                  }`}
-                  style={{
-                    color: starValue <= displayRating || starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
-                    fill: isNotApplicable 
-                      ? 'none'
-                      : starValue <= displayRating 
-                      ? 'currentColor' 
-                      : starValue - 0.5 <= displayRating 
-                      ? 'url(#half-fill)' 
-                      : 'none',
-                    stroke: 'var(--star-stroke, #000000)',
-                    strokeWidth: 'var(--star-stroke-width, 1px)'
-                  }}
-                />
-              </button>
-            </div>
-          ))}
-        </div>
-        
+        {renderStarRow()}
+
         {/* Description on same line for desktop */}
         <div className="flex-1 min-w-0">
           <span className="text-sm text-muted-foreground">
@@ -292,96 +280,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
           </Button>
           
           {/* Star Rating with Hover Effects */}
-          <div 
-            className={cn(
-              "flex items-center gap-1",
-              isNotApplicable && "opacity-40 pointer-events-none"
-            )}
-            onMouseLeave={() => setHoveredRating(null)}
-          >
-            {/* 0 star button - easy to click */}
-            <button
-              type="button"
-              onClick={() => onRatingChange(rating === 0 ? null : 0)}
-              onMouseEnter={() => setHoveredRating(0)}
-              className={cn(
-                "h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none flex items-center justify-center text-xs font-bold mr-1",
-                rating === 0
-                  ? "bg-red-500 border-red-500 text-white"
-                  : "border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-red-500 dark:hover:text-red-400"
-              )}
-              disabled={isNotApplicable}
-            >
-              0
-            </button>
-            
-            {[1, 2, 3, 4, 5].map((starValue) => (
-              <div key={starValue} className="relative">
-                {/* Half star (left side) */}
-                <button
-                  type="button"
-                  onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
-                  onMouseEnter={() => setHoveredRating(starValue - 0.5)}
-                  className="absolute left-0 top-0 w-3 h-6 transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded-l z-10"
-                  style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
-                  disabled={isNotApplicable}
-                >
-                  <Star
-                    className={`h-6 w-6 transition-colors ${
-                      isNotApplicable
-                        ? 'text-gray-500 dark:text-gray-600'
-                        : starValue - 0.5 <= displayRating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'dark:text-gray-600'
-                    }`}
-                    style={{
-                      color: starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
-                      clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
-                      stroke: 'var(--star-stroke, #000000)',
-                      strokeWidth: 'var(--star-stroke-width, 1px)'
-                    }}
-                  />
-                </button>
-                
-                {/* Full star */}
-                <button
-                  type="button"
-                  onClick={() => onRatingChange(rating === starValue ? null : starValue)}
-                  onMouseEnter={() => setHoveredRating(starValue)}
-                  className="transition-all hover:scale-110 focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus:ring-offset-0 outline-none border-none rounded"
-                  style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
-                  disabled={isNotApplicable}
-                >
-                  <Star
-                    className={`h-6 w-6 transition-colors ${
-                      isNotApplicable
-                        ? 'text-gray-500 dark:text-gray-600'
-                        : starValue <= displayRating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : starValue - 0.5 <= displayRating
-                        ? 'text-yellow-400'
-                        : 'dark:text-gray-600'
-                    }`}
-                    style={{
-                      color: starValue <= displayRating || starValue - 0.5 <= displayRating || isNotApplicable ? undefined : '#777777',
-                      fill: isNotApplicable 
-                        ? 'none'
-                        : starValue <= displayRating 
-                        ? 'currentColor' 
-                        : starValue - 0.5 <= displayRating 
-                        ? 'url(#half-fill)' 
-                        : 'none',
-                      stroke: 'var(--star-stroke, #000000)',
-                      strokeWidth: 'var(--star-stroke-width, 1px)'
-                    }}
-                  />
-                </button>
-              </div>
-            ))}
-          </div>
-          
+          {renderStarRow()}
         </div>
-        
+
         {/* Mobile: Description on new line */}
         <div className="text-sm text-muted-foreground">
           {isNotRated ? t('review.rating.notRated') : 
@@ -2717,7 +2618,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             : "border-border hover:bg-accent hover:text-accent-foreground"
                         )}
                       >
-                        {t('review.notApplicable')}
+                        {t('review.gradeNotApplicableOrPreferNotToSay')}
                       </Button>
                       <Select value={grade === '-1' ? '' : grade} onValueChange={setGrade} disabled={grade === '-1'}>
                         <SelectTrigger className={cn("w-[180px]", grade === '-1' && "opacity-50 cursor-not-allowed")}>

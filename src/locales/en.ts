@@ -1429,6 +1429,7 @@ export default {
   'review.reviewNotFound': 'Review not found',
   'review.loadReviewError': 'Failed to load review data',
   'review.notApplicable': 'N/A',
+  'review.gradeNotApplicableOrPreferNotToSay': 'N/A or Prefer not to say',
   'review.notRated': 'Not Rated',
   'review.gradeNotApplicable': 'This course does not have a specific grade that can be converted to grade points.',
   'review.rating.0': 'Very Terrible',

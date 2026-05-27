@@ -1409,6 +1409,7 @@ export default {
   'review.cons': '缺点',
   'review.replies': '回复',
   'review.notApplicable': '不适用',
+  'review.gradeNotApplicableOrPreferNotToSay': '不适用或不愿透露',
   'review.notRated': '未评分',
   'review.gradeNotApplicable': '此课程没有具体的成绩可以换算成绩点。',
   'review.fillAllFields': '请填写所有字段',

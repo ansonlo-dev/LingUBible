@@ -1352,6 +1352,7 @@ export default {
   'review.cons': '缺點',
   'review.replies': '回覆',
   'review.notApplicable': '不適用',
+  'review.gradeNotApplicableOrPreferNotToSay': '不適用或不願透露',
   'review.notRated': '未評分',
   'review.gradeNotApplicable': '此課程沒有具體的成績可以換算成績點。',
   'review.fillAllFields': '請填寫所有欄位',
