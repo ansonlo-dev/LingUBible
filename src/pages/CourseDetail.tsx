@@ -23,7 +23,9 @@ import {
   Info,
   CalendarDays,
   BookOpen,
-  BookText
+  BookText,
+  FileText,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -1260,6 +1262,14 @@ const CourseDetail = () => {
               <Info className="h-4 w-4" />
               <span className="hidden sm:inline">{t('chart.gradeDistribution')}</span>
               {activeMainTab === 'grades' && <span className="sm:hidden text-xs">{t('common.grades')}</span>}
+            </TabsTrigger>
+            <TabsTrigger
+              value="exams"
+              className="attached-tab-trigger"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('pages.courseDetail.pastExamPapers')}</span>
+              {activeMainTab === 'exams' && <span className="sm:hidden text-xs">{t('pages.courseDetail.pastExamPapersShort')}</span>}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -2663,6 +2673,46 @@ const CourseDetail = () => {
                   <p className="text-sm text-muted-foreground">
                     {t('chart.noGradeDataDescription')}
                   </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Past Exam Papers Tab */}
+        <TabsContent value="exams" className="attached-tab-content mt-0">
+          <div className="p-6">
+            {user ? (
+              <div className="text-center py-12 space-y-4">
+                <div className="flex justify-center">
+                  <div className="p-4 bg-muted/50 rounded-full">
+                    <FileText className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t('pages.courseDetail.noExamPapers')}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-12 space-y-4">
+                <div className="flex justify-center">
+                  <div className="p-4 bg-muted/50 rounded-full">
+                    <Lock className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                </div>
+                <div className="space-y-2 max-w-md mx-auto">
+                  <h3 className="text-lg font-medium">{t('pages.courseDetail.examPapersSignUpTitle')}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t('pages.courseDetail.examPapersSignUpDescription')}
+                  </p>
+                </div>
+                <div className="flex justify-center gap-3 pt-2">
+                  <Button onClick={() => navigate('/register')}>
+                    {t('auth.signUp')}
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/login')}>
+                    {t('auth.login')}
+                  </Button>
                 </div>
               </div>
             )}
