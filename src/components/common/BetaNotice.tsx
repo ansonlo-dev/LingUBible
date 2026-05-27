@@ -23,6 +23,18 @@ export const BetaNotice: React.FC = () => {
                   <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
                     {t('beta.notice.message')}
                   </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+                    {t('beta.notice.spreadsheetPrompt')}{' '}
+                    <a
+                      href="https://docs.google.com/spreadsheets/d/1PU1l6cZNeSbuSS880MRxl48gNmW3ds5ysWzk3Zmsv-0/edit?usp=sharing"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
+                    >
+                      {t('beta.notice.spreadsheetLinkText')}
+                    </a>
+                    {t('beta.notice.spreadsheetSuffix')}
+                  </p>
                 </div>
               )}
             </div>
