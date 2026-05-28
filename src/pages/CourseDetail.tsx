@@ -1441,15 +1441,14 @@ const CourseDetail = () => {
                 {/* Action buttons - desktop/tablet only inline */}
                 <div className="shrink-0 flex items-center gap-2">
                   {syllabusFileId && (
-                    <Button variant="outline" size="lg" className="h-10" asChild>
+                    <Button variant="outline" className="h-10 px-3" asChild>
                       <a
                         href={storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFileId })}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="h-4 w-4 mr-1.5" />
                         {t('pages.courseDetail.viewSyllabus')}
-                        <ExternalLink className="h-3.5 w-3.5 ml-1.5 opacity-70" />
                       </a>
                     </Button>
                   )}
