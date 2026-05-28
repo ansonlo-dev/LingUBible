@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
@@ -639,6 +641,9 @@ const CourseDetail = () => {
   const [examPapersYearFilter, setExamPapersYearFilter] = useState<string[]>([]);
   const [examPapersInstructorFilter, setExamPapersInstructorFilter] = useState<string[]>([]);
   const [examPapersCurrentPage, setExamPapersCurrentPage] = useState<number>(1);
+  // Multi-select for bulk download of past exam papers.
+  const [selectedExamPaperIds, setSelectedExamPaperIds] = useState<Set<string>>(new Set());
+  const [examPapersDownloading, setExamPapersDownloading] = useState<boolean>(false);
   const EXAM_PAPERS_PAGE_SIZE = 12;
   // Latest course syllabus PDF (bucket: course_syllabus). Filenames are prefixed
   // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
@@ -811,6 +816,87 @@ const CourseDetail = () => {
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
+
+  // ---- Past exam papers: bulk-download selection -------------------------
+  const selectedExamPaperCount = selectedExamPaperIds.size;
+  const allExamPapersSelected =
+    filteredExamPapers.length > 0 && selectedExamPaperCount === filteredExamPapers.length;
+  const someExamPapersSelected = selectedExamPaperCount > 0 && !allExamPapersSelected;
+
+  const toggleExamPaperSelection = (id: string) => {
+    setSelectedExamPaperIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllExamPapers = () => {
+    setSelectedExamPaperIds(prev =>
+      prev.size === filteredExamPapers.length ? new Set() : new Set(filteredExamPapers.map(p => p.id))
+    );
+  };
+
+  const triggerBrowserDownload = (href: string, filename: string) => {
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const handleDownloadSelectedExamPapers = async () => {
+    if (examPapersDownloading) return;
+    const selected = filteredExamPapers.filter(p => selectedExamPaperIds.has(p.id));
+    if (selected.length === 0) return;
+
+    setExamPapersDownloading(true);
+    try {
+      // Single file: stream straight to the browser, no zip needed.
+      if (selected.length === 1) {
+        const url = storage.getFileDownload({ bucketId: 'past_exam_papers', fileId: selected[0].id });
+        triggerBrowserDownload(url.toString(), selected[0].name);
+        return;
+      }
+
+      // Multiple files: fetch each blob and bundle into a single zip.
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      const usedNames = new Set<string>();
+      await Promise.all(selected.map(async paper => {
+        const url = storage.getFileDownload({ bucketId: 'past_exam_papers', fileId: paper.id }).toString();
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) throw new Error(`Failed to fetch ${paper.name} (${res.status})`);
+        const blob = await res.blob();
+        // De-dupe filenames so a collision doesn't drop a file from the archive.
+        let name = paper.name;
+        let counter = 1;
+        while (usedNames.has(name)) {
+          const dot = paper.name.lastIndexOf('.');
+          name = dot > 0
+            ? `${paper.name.slice(0, dot)} (${counter})${paper.name.slice(dot)}`
+            : `${paper.name} (${counter})`;
+          counter++;
+        }
+        usedNames.add(name);
+        zip.file(name, blob);
+      }));
+      const content = await zip.generateAsync({ type: 'blob' });
+      const objectUrl = URL.createObjectURL(content);
+      triggerBrowserDownload(objectUrl, `${course.course_code}_past_exam_papers.zip`);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error('Failed to download selected exam papers', err);
+      toast({
+        title: t('pages.courseDetail.examPapersDownloadFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setExamPapersDownloading(false);
+    }
+  };
 
   // Generate filter options for grade distribution chart (instructors)
   const gradeChartFilterOptions = React.useMemo(() => {
@@ -1402,9 +1488,11 @@ const CourseDetail = () => {
     return () => { cancelled = true; };
   }, [examPapers, teachingInstructorByName, filenameInstructorsByName]);
 
-  // Reset to the first page whenever the filter / sort changes the list.
+  // Reset to the first page (and clear the bulk-download selection) whenever the
+  // filter / sort changes the list, so a hidden paper can't stay selected.
   useEffect(() => {
     setExamPapersCurrentPage(1);
+    setSelectedExamPaperIds(new Set());
   }, [examPapersSort, examPapersYearFilter, examPapersInstructorFilter, examPapers]);
 
   if (loading) {
@@ -3325,11 +3413,42 @@ const CourseDetail = () => {
                         />
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {t('pages.courseDetail.examPapersResultCount', {
-                        filtered: filteredExamPapers.length,
-                        total: examPapers.length,
-                      })}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {filteredExamPapers.length > 0 && (
+                          <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                            <Checkbox
+                              checked={allExamPapersSelected ? true : someExamPapersSelected ? 'indeterminate' : false}
+                              onCheckedChange={toggleSelectAllExamPapers}
+                              aria-label={t('pages.courseDetail.examPapersSelectAll')}
+                            />
+                            <span className="text-sm">{t('pages.courseDetail.examPapersSelectAll')}</span>
+                          </label>
+                        )}
+                        <span className="text-xs text-muted-foreground truncate">
+                          {selectedExamPaperCount > 0
+                            ? t('pages.courseDetail.examPapersSelectedCount', { count: selectedExamPaperCount })
+                            : t('pages.courseDetail.examPapersResultCount', {
+                                filtered: filteredExamPapers.length,
+                                total: examPapers.length,
+                              })}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="h-8 shrink-0"
+                        disabled={selectedExamPaperCount === 0 || examPapersDownloading}
+                        onClick={handleDownloadSelectedExamPapers}
+                      >
+                        {examPapersDownloading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
+                        {examPapersDownloading
+                          ? t('pages.courseDetail.examPapersDownloading')
+                          : t('pages.courseDetail.examPapersDownloadSelected', { count: selectedExamPaperCount })}
+                      </Button>
                     </div>
                   </div>
 
@@ -3356,13 +3475,23 @@ const CourseDetail = () => {
                         const termLabel = paper.term?.label || t('pages.courseDetail.examPaperTermFallback');
                         const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
                         const viewUrl = storage.getFileView({ bucketId: 'past_exam_papers', fileId: paper.id });
-                        const downloadUrl = storage.getFileDownload({ bucketId: 'past_exam_papers', fileId: paper.id });
+                        const isSelected = selectedExamPaperIds.has(paper.id);
                         return (
                           <div
                             key={paper.id}
-                            className="flex flex-col gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-sm hover:shadow-md hover:bg-muted/40 transition-all min-w-0"
+                            className={`flex flex-col gap-2 p-3 rounded-lg border shadow-sm hover:shadow-md transition-all min-w-0 ${
+                              isSelected
+                                ? 'bg-primary/5 border-primary ring-1 ring-primary'
+                                : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-muted/40'
+                            }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleExamPaperSelection(paper.id)}
+                                aria-label={termLabel}
+                                className="shrink-0"
+                              />
                               <div className="p-2 bg-muted/50 rounded-md shrink-0">
                                 <FileText className="h-5 w-5 text-muted-foreground" />
                               </div>
@@ -3382,11 +3511,6 @@ const CourseDetail = () => {
                                   onClick={() => openDocumentInNewTab(viewUrl, paper.name)}
                                 >
                                   <ExternalLink className="h-4 w-4" />
-                                </Button>
-                                <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperDownloadFile')}>
-                                  <a href={downloadUrl} aria-label={t('pages.courseDetail.examPaperDownloadFile')}>
-                                    <Download className="h-4 w-4" />
-                                  </a>
                                 </Button>
                               </div>
                             </div>
