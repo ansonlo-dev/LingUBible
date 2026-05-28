@@ -1626,7 +1626,7 @@ const CourseDetail = () => {
                   : course.course_description;
 
               return description ? (
-                <p className="text-base leading-relaxed text-foreground whitespace-pre-line">
+                <p className="text-base leading-relaxed text-foreground whitespace-pre-line text-justify hyphens-auto">
                   {description}
                 </p>
               ) : (
