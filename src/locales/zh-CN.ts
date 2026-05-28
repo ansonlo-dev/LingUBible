@@ -508,6 +508,7 @@ export default {
   'pages.courseDetail.examPapersSortNewest': '由新到旧',
   'pages.courseDetail.examPapersSortOldest': '由旧到新',
   'pages.courseDetail.examPapersFilterYearPlaceholder': '按学年筛选',
+  'pages.courseDetail.examPapersFilterInstructorPlaceholder': '按讲师筛选',
   'pages.courseDetail.examPapersYearUnknown': '其他',
   'pages.courseDetail.examPapersResultCount': '显示 {filtered} / {total} 份',
   'pages.courseDetail.examPapersNoMatch': '没有符合当前筛选条件的试题',

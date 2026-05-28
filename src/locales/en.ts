@@ -507,6 +507,7 @@ export default {
   'pages.courseDetail.examPapersSortNewest': 'Newest first',
   'pages.courseDetail.examPapersSortOldest': 'Oldest first',
   'pages.courseDetail.examPapersFilterYearPlaceholder': 'Filter by year',
+  'pages.courseDetail.examPapersFilterInstructorPlaceholder': 'Filter by instructor',
   'pages.courseDetail.examPapersYearUnknown': 'Other',
   'pages.courseDetail.examPapersResultCount': 'Showing {filtered} of {total}',
   'pages.courseDetail.examPapersNoMatch': 'No exam papers match the current filter',

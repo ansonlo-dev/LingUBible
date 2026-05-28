@@ -34,7 +34,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo } from '@/services/api/courseService';
+import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo, type Instructor } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
@@ -202,6 +202,7 @@ type ExamPaperTermInfo = {
   academicYear: string;     // e.g. "2024-25"
   termSortKey: number;      // larger = newer (used for sorting)
   label: string;            // localized human label
+  termCodes: string[];      // candidate DB term_codes for joining (e.g. ["2024-T2"])
 };
 
 const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): ExamPaperTermInfo | null => {
@@ -216,11 +217,22 @@ const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): Exam
   let term: '1' | '2' | 'S';
   let termRank: number;
   let termLabel: string;
+  let termCodes: string[];
   switch (termDigit) {
-    case '1': term = '1'; termRank = 1; termLabel = 'Term 1'; break;
-    case '2': term = '2'; termRank = 2; termLabel = 'Term 2'; break;
+    case '1':
+      term = '1'; termRank = 1; termLabel = 'Term 1';
+      termCodes = [`${startYear}-T1`];
+      break;
+    case '2':
+      term = '2'; termRank = 2; termLabel = 'Term 2';
+      termCodes = [`${startYear}-T2`];
+      break;
     case '0':
-    case '3': term = 'S'; termRank = 3; termLabel = 'Summer Term'; break;
+    case '3':
+      term = 'S'; termRank = 3; termLabel = 'Summer Term';
+      // The DB has been seen using either "-S" or "-Summer" for summer terms.
+      termCodes = [`${startYear}-S`, `${startYear}-Summer`];
+      break;
     default: return null;
   }
   const academicYear = `${startYear}-${endYearShort}`;
@@ -231,6 +243,7 @@ const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): Exam
     academicYear,
     termSortKey: startYear * 10 + termRank,
     label: `${academicYear}, ${termLabel}`,
+    termCodes,
   };
 };
 
@@ -466,6 +479,43 @@ const CourseDetail = () => {
   const [examPapersLoaded, setExamPapersLoaded] = useState<boolean>(false);
   const [examPapersSort, setExamPapersSort] = useState<'newest' | 'oldest'>('newest');
   const [examPapersYearFilter, setExamPapersYearFilter] = useState<string[]>([]);
+  const [examPapersInstructorFilter, setExamPapersInstructorFilter] = useState<string[]>([]);
+
+  // Lecture-only instructor index built from teachingInfo (which is already
+  // loaded by useCourseDetailOptimized — no extra teaching_records reads).
+  // Map: term_code -> unique Instructor[] who taught lectures in that term.
+  const lectureInstructorsByTermCode = React.useMemo(() => {
+    const map = new Map<string, Instructor[]>();
+    if (!teachingInfo) return map;
+    teachingInfo.forEach(info => {
+      if (info.sessionType !== 'Lecture') return;
+      if (!info.instructor || info.instructor.name === 'UNKNOWN') return;
+      const list = map.get(info.term.term_code) || [];
+      if (!list.some(i => i.name === info.instructor.name)) {
+        list.push(info.instructor);
+        map.set(info.term.term_code, list);
+      }
+    });
+    return map;
+  }, [teachingInfo]);
+
+  // Enrich each paper with the lecture instructors taught in its term.
+  type EnrichedExamPaper = ExamPaper & { lectureInstructors: Instructor[] };
+  const enrichedExamPapers = React.useMemo<EnrichedExamPaper[]>(() => {
+    return examPapers.map(p => {
+      let lectureInstructors: Instructor[] = [];
+      if (p.term) {
+        for (const code of p.term.termCodes) {
+          const hit = lectureInstructorsByTermCode.get(code);
+          if (hit && hit.length > 0) {
+            lectureInstructors = hit;
+            break;
+          }
+        }
+      }
+      return { ...p, lectureInstructors };
+    });
+  }, [examPapers, lectureInstructorsByTermCode]);
 
   // Year filter options for past exam papers — derived from parsed term info.
   // The synthetic value '__unknown__' groups files whose names can't be parsed.
@@ -494,12 +544,44 @@ const CourseDetail = () => {
     return years;
   }, [examPapers, t]);
 
+  // Instructor filter options — only instructors who actually have at least
+  // one paper attached, sorted by the existing "last name first" rule.
+  const examPapersInstructorOptions = React.useMemo<SelectOption[]>(() => {
+    const counts = new Map<string, { instructor: Instructor; count: number }>();
+    enrichedExamPapers.forEach(p => {
+      p.lectureInstructors.forEach(ins => {
+        const entry = counts.get(ins.name);
+        if (entry) entry.count += 1;
+        else counts.set(ins.name, { instructor: ins, count: 1 });
+      });
+    });
+    return Array.from(counts.values())
+      .sort((a, b) => extractInstructorNameForSorting(a.instructor.name)
+        .localeCompare(extractInstructorNameForSorting(b.instructor.name)))
+      .map(({ instructor, count }) => {
+        const formatted = getFormattedInstructorName(instructor, language);
+        return {
+          value: instructor.name,
+          label: formatted.secondary ? `${formatted.primary} · ${formatted.secondary}` : formatted.primary,
+          count,
+        };
+      });
+  }, [enrichedExamPapers, language]);
+
   // Filtered + sorted list applied to the rendered grid.
-  const filteredExamPapers = React.useMemo(() => {
-    const filterSet = new Set(examPapersYearFilter);
-    const filtered = filterSet.size === 0
-      ? examPapers
-      : examPapers.filter(p => filterSet.has(p.term ? String(p.term.startYear) : UNKNOWN_YEAR_KEY));
+  const filteredExamPapers = React.useMemo<EnrichedExamPaper[]>(() => {
+    const yearSet = new Set(examPapersYearFilter);
+    const instructorSet = new Set(examPapersInstructorFilter);
+    const filtered = enrichedExamPapers.filter(p => {
+      if (yearSet.size > 0) {
+        const key = p.term ? String(p.term.startYear) : UNKNOWN_YEAR_KEY;
+        if (!yearSet.has(key)) return false;
+      }
+      if (instructorSet.size > 0) {
+        if (!p.lectureInstructors.some(i => instructorSet.has(i.name))) return false;
+      }
+      return true;
+    });
     const dir = examPapersSort === 'newest' ? -1 : 1;
     return [...filtered].sort((a, b) => {
       // Files without a parseable term always sink to the bottom so the toolbar
@@ -512,7 +594,7 @@ const CourseDetail = () => {
       }
       return a.name.localeCompare(b.name);
     });
-  }, [examPapers, examPapersSort, examPapersYearFilter]);
+  }, [enrichedExamPapers, examPapersSort, examPapersYearFilter, examPapersInstructorFilter]);
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -2860,11 +2942,11 @@ const CourseDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Toolbar: sort + year filter + result count */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex flex-col sm:flex-row gap-3 sm:flex-1 min-w-0">
+                  {/* Toolbar: sort + year filter + instructor filter + result count */}
+                  <div className="flex flex-col gap-3">
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                       <Select value={examPapersSort} onValueChange={v => setExamPapersSort(v as 'newest' | 'oldest')}>
-                        <SelectTrigger className="w-full sm:w-48" aria-label={t('pages.courseDetail.examPapersSortLabel')}>
+                        <SelectTrigger aria-label={t('pages.courseDetail.examPapersSortLabel')}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -2877,11 +2959,19 @@ const CourseDetail = () => {
                         selectedValues={examPapersYearFilter}
                         onSelectionChange={setExamPapersYearFilter}
                         placeholder={t('pages.courseDetail.examPapersFilterYearPlaceholder')}
-                        className="w-full sm:w-64"
                         totalCount={examPapers.length}
                       />
+                      {examPapersInstructorOptions.length > 0 && (
+                        <MultiSelectDropdown
+                          options={examPapersInstructorOptions}
+                          selectedValues={examPapersInstructorFilter}
+                          onSelectionChange={setExamPapersInstructorFilter}
+                          placeholder={t('pages.courseDetail.examPapersFilterInstructorPlaceholder')}
+                          totalCount={examPapers.length}
+                        />
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground sm:ml-auto sm:shrink-0">
+                    <div className="text-xs text-muted-foreground">
                       {t('pages.courseDetail.examPapersResultCount', {
                         filtered: filteredExamPapers.length,
                         total: examPapers.length,
@@ -2910,29 +3000,53 @@ const CourseDetail = () => {
                         return (
                           <div
                             key={paper.id}
-                            className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/40 transition-colors min-w-0"
+                            className="flex flex-col gap-2 p-3 border rounded-lg bg-card hover:bg-muted/40 transition-colors min-w-0"
                           >
-                            <div className="p-2 bg-muted/50 rounded-md shrink-0">
-                              <FileText className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate">{termLabel}</div>
-                              <div className="text-xs text-muted-foreground truncate">
-                                {sizeLabel || paper.name}
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="p-2 bg-muted/50 rounded-md shrink-0">
+                                <FileText className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm truncate">{termLabel}</div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {sizeLabel || paper.name}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperViewFile')}>
+                                  <a href={viewUrl} target="_blank" rel="noopener noreferrer" aria-label={t('pages.courseDetail.examPaperViewFile')}>
+                                    <ExternalLink className="h-4 w-4" />
+                                  </a>
+                                </Button>
+                                <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperDownloadFile')}>
+                                  <a href={downloadUrl} aria-label={t('pages.courseDetail.examPaperDownloadFile')}>
+                                    <Download className="h-4 w-4" />
+                                  </a>
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperViewFile')}>
-                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" aria-label={t('pages.courseDetail.examPaperViewFile')}>
-                                  <ExternalLink className="h-4 w-4" />
-                                </a>
-                              </Button>
-                              <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperDownloadFile')}>
-                                <a href={downloadUrl} aria-label={t('pages.courseDetail.examPaperDownloadFile')}>
-                                  <Download className="h-4 w-4" />
-                                </a>
-                              </Button>
-                            </div>
+                            {paper.lectureInstructors.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1.5 pl-1">
+                                <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {paper.lectureInstructors.map(ins => {
+                                  const formatted = getFormattedInstructorName(ins, language);
+                                  const label = formatted.secondary
+                                    ? `${formatted.primary} · ${formatted.secondary}`
+                                    : formatted.primary;
+                                  return (
+                                    <Badge
+                                      key={ins.name}
+                                      variant="secondary"
+                                      className="text-xs font-normal cursor-pointer hover:bg-secondary/80"
+                                      onClick={() => navigate(`/instructors/${encodeURIComponent(ins.name)}`)}
+                                      title={label}
+                                    >
+                                      {formatted.primary}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

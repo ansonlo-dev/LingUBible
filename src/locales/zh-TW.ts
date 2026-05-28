@@ -507,6 +507,7 @@ export default {
   'pages.courseDetail.examPapersSortNewest': '由新至舊',
   'pages.courseDetail.examPapersSortOldest': '由舊至新',
   'pages.courseDetail.examPapersFilterYearPlaceholder': '依學年篩選',
+  'pages.courseDetail.examPapersFilterInstructorPlaceholder': '依講師篩選',
   'pages.courseDetail.examPapersYearUnknown': '其他',
   'pages.courseDetail.examPapersResultCount': '顯示 {filtered} / {total} 份',
   'pages.courseDetail.examPapersNoMatch': '沒有符合目前篩選條件的試題',
