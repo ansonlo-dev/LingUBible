@@ -3470,7 +3470,7 @@ const CourseDetail = () => {
                     const pagePapers = filteredExamPapers.slice(startIdx, startIdx + EXAM_PAPERS_PAGE_SIZE);
                     return (
                     <>
-                    <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                       {pagePapers.map(paper => {
                         const termLabel = paper.term?.label || t('pages.courseDetail.examPaperTermFallback');
                         const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
@@ -3485,15 +3485,15 @@ const CourseDetail = () => {
                                 : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-muted/40'
                             }`}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               <Checkbox
                                 checked={isSelected}
                                 onCheckedChange={() => toggleExamPaperSelection(paper.id)}
                                 aria-label={termLabel}
                                 className="shrink-0"
                               />
-                              <div className="p-2 bg-muted/50 rounded-md shrink-0">
-                                <FileText className="h-5 w-5 text-muted-foreground" />
+                              <div className="p-1.5 bg-muted/50 rounded-md shrink-0">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm truncate">{termLabel}</div>
