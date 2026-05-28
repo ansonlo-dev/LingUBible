@@ -486,8 +486,9 @@ const CourseDetail = () => {
   // Map: term_code -> unique Instructor[] who taught lectures in that term.
   const lectureInstructorsByTermCode = React.useMemo(() => {
     const map = new Map<string, Instructor[]>();
-    if (!teachingInfo) return map;
-    teachingInfo.forEach(info => {
+    const rows = data?.teachingInfo;
+    if (!rows) return map;
+    rows.forEach(info => {
       if (info.sessionType !== 'Lecture') return;
       if (!info.instructor || info.instructor.name === 'UNKNOWN') return;
       const list = map.get(info.term.term_code) || [];
@@ -497,7 +498,7 @@ const CourseDetail = () => {
       }
     });
     return map;
-  }, [teachingInfo]);
+  }, [data?.teachingInfo]);
 
   // Enrich each paper with the lecture instructors taught in its term.
   type EnrichedExamPaper = ExamPaper & { lectureInstructors: Instructor[] };
