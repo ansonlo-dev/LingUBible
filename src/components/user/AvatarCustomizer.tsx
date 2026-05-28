@@ -200,7 +200,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
         position: (isLandscape || viewportDimensions.width < 640) ? 'fixed' : undefined
       }}>
         <div className="flex flex-col h-full min-h-0 avatar-customizer-content">
-          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-6 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-6' : ''}`} style={{
+          <DialogHeader className={`flex-shrink-0 ${isLandscape ? 'p-2 pb-1' : 'p-3 sm:p-4 pb-1'} ${!isLandscape && viewportDimensions.width < 640 ? 'pt-6' : ''}`} style={{
             paddingTop: isLandscape 
               ? `${Math.max(16, (viewportDimensions.height - viewportDimensions.availableHeight) + 8)}px` 
               : undefined
@@ -359,11 +359,11 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
           ) : (
             // 豎屏模式：原有佈局
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="p-3 sm:p-6 pb-0">
-                <div className="space-y-3 sm:space-y-6 max-w-4xl mx-auto">
+              <div className="p-3 sm:p-4 pb-0">
+                <div className="space-y-3 sm:space-y-3 max-w-4xl mx-auto">
                   {/* 預覽區域 */}
-                  <div className="flex items-center justify-center p-3 sm:p-5 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl">
-                    <div className="text-center space-y-2 sm:space-y-3">
+                  <div className="flex items-center justify-center p-3 sm:p-3 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl">
+                    <div className="text-center space-y-2 sm:space-y-2">
                       <SmartAvatar
                         userId={user.$id}
                         customAvatar={{
@@ -377,7 +377,7 @@ export function AvatarCustomizer({ children }: AvatarCustomizerProps) {
                           size: 'lg',
                           context: 'profile'
                         }}
-                        className="mx-auto w-16 h-16 sm:w-24 sm:h-24 [&_span[role='img']]:text-4xl sm:[&_span[role='img']]:text-6xl"
+                        className="mx-auto w-16 h-16 sm:w-20 sm:h-20 [&_span[role='img']]:text-4xl sm:[&_span[role='img']]:text-5xl"
                       />
                       <div>
                         <p className="font-semibold text-foreground text-sm sm:text-base">{t('avatar.preview')}</p>
