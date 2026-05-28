@@ -4466,15 +4466,21 @@ export class CourseService {
       // 🚀 超級優化：使用持久化緩存避免重複計算
       const cacheKey = `batch_course_detailed_stats_v2`;
       
-      // 首先檢查持久化緩存
-      const cached = this.getPersistentCached<Map<string, any>>(cacheKey);
-      if (cached) {
+      // 首先檢查持久化緩存。注意：Map 經 JSON.stringify 後會變成 "{}"，
+      // 因此 persistent layer 永遠以 plain object 回傳；memory layer 可能仍是 Map
+      // (舊版本快取資料)。兩種型態都要能讀回；空殼則視為 miss 重新抓取。
+      const cached = this.getPersistentCached<Record<string, any> | Map<string, any>>(cacheKey);
+      const cachedSize = cached
+        ? (cached instanceof Map ? cached.size : Object.keys(cached).length)
+        : 0;
+      if (cached && cachedSize > 0) {
         console.log('✅ getBatchCourseDetailedStats: Using persistent cache');
-        // 只返回請求的課程數據
+        const lookup = (k: string) => (cached instanceof Map ? cached.get(k) : cached[k]);
+        const has = (k: string) => (cached instanceof Map ? cached.has(k) : Object.prototype.hasOwnProperty.call(cached, k));
         const result = new Map<string, any>();
         for (const courseCode of courseCodes) {
-          if (cached.has(courseCode)) {
-            result.set(courseCode, cached.get(courseCode));
+          if (has(courseCode)) {
+            result.set(courseCode, lookup(courseCode));
           }
         }
         return result;
@@ -4617,8 +4623,10 @@ export class CourseService {
         });
       }
 
-      // 🚀 持久化緩存結果，避免重複計算
-      this.setPersistentCached(cacheKey, courseStatsMap, 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA); // 30分鐘內存，15分鐘持久化
+      // 🚀 持久化緩存結果，避免重複計算。
+      // Map 無法被 JSON.stringify 序列化（會變成 "{}"），改存 plain object，
+      // 讀取端會以 hasOwnProperty / 索引方式取值。
+      this.setPersistentCached(cacheKey, Object.fromEntries(courseStatsMap), 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA); // 30分鐘內存，15分鐘持久化
       
       console.log(`✅ getBatchCourseDetailedStats: Cached ${courseStatsMap.size} course statistics`);
       
@@ -4650,15 +4658,21 @@ export class CourseService {
       // 🚀 超級優化：使用持久化緩存避免重複計算
       const cacheKey = `batch_instructor_detailed_stats_v2`;
       
-      // 首先檢查持久化緩存
-      const cached = this.getPersistentCached<Map<string, any>>(cacheKey);
-      if (cached) {
+      // 首先檢查持久化緩存。Map 經 JSON.stringify 後會空掉，
+      // 因此 persistent layer 回傳 plain object；memory layer 可能仍為 Map。
+      // 空殼快取視為 miss 重新抓取。
+      const cached = this.getPersistentCached<Record<string, any> | Map<string, any>>(cacheKey);
+      const cachedSize = cached
+        ? (cached instanceof Map ? cached.size : Object.keys(cached).length)
+        : 0;
+      if (cached && cachedSize > 0) {
         console.log('✅ getBatchInstructorDetailedStats: Using persistent cache');
-        // 只返回請求的講師數據
+        const lookup = (k: string) => (cached instanceof Map ? cached.get(k) : cached[k]);
+        const has = (k: string) => (cached instanceof Map ? cached.has(k) : Object.prototype.hasOwnProperty.call(cached, k));
         const result = new Map<string, any>();
         for (const instructorName of instructorNames) {
-          if (cached.has(instructorName)) {
-            result.set(instructorName, cached.get(instructorName));
+          if (has(instructorName)) {
+            result.set(instructorName, lookup(instructorName));
           }
         }
         return result;
@@ -4750,8 +4764,9 @@ export class CourseService {
         });
       }
 
-      // 🚀 持久化緩存結果，避免重複計算
-      this.setPersistentCached(cacheKey, finalStatsMap, 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA); // 30分鐘內存，15分鐘持久化
+      // 🚀 持久化緩存結果，避免重複計算。
+      // Map 無法被 JSON.stringify 序列化，改存 plain object。
+      this.setPersistentCached(cacheKey, Object.fromEntries(finalStatsMap), 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA); // 30分鐘內存，15分鐘持久化
       
       console.log(`✅ getBatchInstructorDetailedStats: Cached ${finalStatsMap.size} instructor statistics`);
       

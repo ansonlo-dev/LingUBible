@@ -74,11 +74,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         window.addEventListener('forceUserUpdate', handleForceUserUpdate as EventListener);
-        
-        // 設置定期清理非學生用戶的定時器（每5分鐘執行一次）
+
+        return () => {
+            window.removeEventListener('forceUserUpdate', handleForceUserUpdate as EventListener);
+        };
+    }, []);
+
+    // 定期清理非學生用戶的定時器（每 5 分鐘執行一次）。
+    // 拆成獨立 effect 並依賴 user：訪客時不執行（避免無謂的 401），
+    // 登入後自動啟動，登出時自動清掉。
+    useEffect(() => {
+        if (!user) return;
+
+        const userId = user.$id;
+        const email = user.email;
+
         const cleanupInterval = setInterval(async () => {
             try {
-                // 調用清理函數
                 const response = await fetch(`${import.meta.env.VITE_APPWRITE_ENDPOINT}/functions/cleanup-expired-codes/executions`, {
                     method: 'POST',
                     headers: {
@@ -88,15 +100,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     body: JSON.stringify({
                         body: JSON.stringify({
                             action: 'immediate_cleanup',
-                            userId: user?.$id,
-                            email: user?.email,
+                            userId,
+                            email,
                             reason: 'non_student_email_session_cleanup'
                         }),
                         async: false,
                         method: 'POST'
                     }),
                 });
-                
+
                 if (response.ok) {
                     const result = await response.json();
                     console.log('定期清理執行成功:', result);
@@ -106,14 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch (error) {
                 console.error('定期清理調用失敗:', error);
             }
-        }, 5 * 60 * 1000); // 5分鐘
+        }, 5 * 60 * 1000);
 
-        // 清理定時器和事件監聽器
-        return () => {
-            clearInterval(cleanupInterval);
-            window.removeEventListener('forceUserUpdate', handleForceUserUpdate as EventListener);
-        };
-    }, []);
+        return () => clearInterval(cleanupInterval);
+    }, [user?.$id, user?.email]);
 
     const checkUser = async (): Promise<AuthUser | null> => {
         // 防止重複調用（本地和全局）
