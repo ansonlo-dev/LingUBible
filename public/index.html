@@ -195,6 +195,28 @@
         });
       })();
     </script>
+
+    <!-- PWA: capture install prompt early & register service worker -->
+    <script>
+      (function () {
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__pwaDeferredPrompt = e;
+          window.dispatchEvent(new CustomEvent('pwainstallable'));
+        });
+        window.addEventListener('appinstalled', function () {
+          window.__pwaDeferredPrompt = null;
+          window.dispatchEvent(new CustomEvent('pwainstalled'));
+        });
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {
+              /* ignore registration failures */
+            });
+          });
+        }
+      })();
+    </script>
   </head>
 
   <body>

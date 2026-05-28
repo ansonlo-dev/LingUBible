@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 const BETA_NOTICE_EXPANDED_KEY = 'betaNoticeExpanded';
@@ -37,25 +37,25 @@ export const BetaNotice: React.FC = () => {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 <span className="font-semibold">{t('beta.notice.title')}</span>
+                <span className="mx-2 text-amber-600 dark:text-amber-400">·</span>
+                <span className="font-normal text-amber-700 dark:text-amber-300">
+                  {t('beta.notice.spreadsheetPrompt')}{' '}
+                  <a
+                    href="https://docs.google.com/spreadsheets/d/1PU1l6cZNeSbuSS880MRxl48gNmW3ds5ysWzk3Zmsv-0/edit?usp=sharing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md bg-amber-200/70 dark:bg-amber-700/40 px-1.5 py-0.5 font-semibold text-amber-900 dark:text-amber-100 underline decoration-amber-700/60 dark:decoration-amber-300/60 underline-offset-2 ring-1 ring-amber-400/60 dark:ring-amber-500/40 hover:bg-amber-300/80 dark:hover:bg-amber-600/50 hover:ring-amber-500 transition-colors"
+                  >
+                    {t('beta.notice.spreadsheetLinkText')}
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+                  </a>
+                  {t('beta.notice.spreadsheetSuffix')}
+                </span>
               </p>
               {isExpanded && (
-                <div className="mt-1 space-y-2">
-                  <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
-                    {t('beta.notice.message')}
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
-                    {t('beta.notice.spreadsheetPrompt')}{' '}
-                    <a
-                      href="https://docs.google.com/spreadsheets/d/1PU1l6cZNeSbuSS880MRxl48gNmW3ds5ysWzk3Zmsv-0/edit?usp=sharing"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
-                    >
-                      {t('beta.notice.spreadsheetLinkText')}
-                    </a>
-                    {t('beta.notice.spreadsheetSuffix')}
-                  </p>
-                </div>
+                <p className="mt-1 text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+                  {t('beta.notice.message')}
+                </p>
               )}
             </div>
           </div>

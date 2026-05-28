@@ -12,6 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
 import { BetaNotice } from "@/components/common/BetaNotice";
+import { PWAInstallPrompt } from "@/components/common/PWAInstallPrompt";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import SmartFontLoader from "@/components/common/SmartFontLoader";
@@ -724,6 +725,7 @@ const App = () => {
               <AppContent />
               <Toaster />
               <CookieConsent />
+              <PWAInstallPrompt />
               {/* <DevModeIndicator /> */}
             </AuthProvider>
           </RecaptchaProvider>

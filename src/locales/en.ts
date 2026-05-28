@@ -44,6 +44,11 @@ export default {
   'beta.notice.dismiss': 'I understand',
   'beta.notice.expand': 'Expand notice',
   'beta.notice.collapse': 'Collapse notice',
+  'pwa.install.title': 'Install LingUBible',
+  'pwa.install.description': 'Add to home screen for quick access',
+  'pwa.install.install': 'Install',
+  'pwa.install.notNow': 'Not now',
+  'pwa.install.dismiss': 'Dismiss',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理
