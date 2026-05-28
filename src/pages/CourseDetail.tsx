@@ -606,6 +606,10 @@ const CourseDetail = () => {
   const [examPapersInstructorFilter, setExamPapersInstructorFilter] = useState<string[]>([]);
   const [examPapersCurrentPage, setExamPapersCurrentPage] = useState<number>(1);
   const EXAM_PAPERS_PAGE_SIZE = 12;
+  // Latest course syllabus PDF (bucket: course_syllabus). Filenames are prefixed
+  // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
+  // we surface the largest suffix (most recent version). Open to all visitors.
+  const [syllabusFileId, setSyllabusFileId] = useState<string | null>(null);
   // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
   // per-section files). Seeded by a single batched query so we never query the
   // instructors collection per-paper.
@@ -1238,6 +1242,50 @@ const CourseDetail = () => {
     }
   }, [teachingInfo, activeTeachingTab]);
 
+  // Resolve the latest course syllabus PDF for the header button.
+  // Bucket: course_syllabus; filenames look like CDS2004-202601.pdf — among all
+  // files for this course we pick the one with the largest numeric suffix.
+  // Public (no login required).
+  useEffect(() => {
+    const courseCode = course?.course_code;
+    if (!courseCode) return;
+
+    let cancelled = false;
+    setSyllabusFileId(null);
+
+    (async () => {
+      try {
+        const prefix = courseCode.toLowerCase();
+        const res = await storage.listFiles({
+          bucketId: 'course_syllabus',
+          search: courseCode,
+          queries: [Query.limit(100)],
+        });
+        if (cancelled) return;
+
+        let best: { id: string; suffix: number } | null = null;
+        for (const f of res.files || []) {
+          const name = f.name.toLowerCase();
+          if (!name.startsWith(prefix)) continue;
+          // Extract the trailing numeric suffix (e.g. 202601 from cds2004-202601.pdf)
+          const match = name.replace(/\.[^.]+$/, '').match(/(\d+)\s*$/);
+          const suffix = match ? parseInt(match[1], 10) : -1;
+          if (!best || suffix > best.suffix) {
+            best = { id: f.$id, suffix };
+          }
+        }
+        if (!cancelled) setSyllabusFileId(best?.id ?? null);
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Failed to load course syllabus', err);
+          setSyllabusFileId(null);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [course?.course_code]);
+
   // Lazy-load past exam papers when the user opens the exams tab.
   // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
   // `storage.listFiles` caps each response at 100 rows, so paginate until empty
@@ -1384,6 +1432,19 @@ const CourseDetail = () => {
                 </CardTitle>
                 {/* Action buttons - desktop/tablet only inline */}
                 <div className="shrink-0 flex items-center gap-2">
+                  {syllabusFileId && (
+                    <Button variant="outline" size="lg" className="h-10" asChild>
+                      <a
+                        href={storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFileId })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        {t('pages.courseDetail.viewSyllabus')}
+                        <ExternalLink className="h-3.5 w-3.5 ml-1.5 opacity-70" />
+                      </a>
+                    </Button>
+                  )}
                   <FavoriteButton
                     type="course"
                     itemId={course.course_code}
@@ -1467,6 +1528,19 @@ const CourseDetail = () => {
             
             {/* Action buttons - mobile only, separate row (excluding back button) */}
             <div className="md:hidden flex flex-col gap-2 mb-4">
+              {syllabusFileId && (
+                <Button variant="outline" size="lg" className="h-10 w-full" asChild>
+                  <a
+                    href={storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFileId })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {t('pages.courseDetail.viewSyllabus')}
+                    <ExternalLink className="h-3.5 w-3.5 ml-1.5 opacity-70" />
+                  </a>
+                </Button>
+              )}
               <div className="flex flex-row gap-2">
                 <div className="flex-1">
                   <FavoriteButton
@@ -1479,7 +1553,7 @@ const CourseDetail = () => {
                   />
                 </div>
                 <div className="flex-1">
-                  <Button 
+                  <Button
                     className="h-10 gradient-primary hover:opacity-90 text-white w-full"
                     onClick={() => navigate(`/write-review/${course.course_code}`)}
                   >
