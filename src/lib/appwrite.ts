@@ -1,4 +1,4 @@
-import { Client, Account, Databases, TablesDB, Functions, ID } from 'appwrite';
+import { Client, Account, Databases, TablesDB, Functions, Storage, ID } from 'appwrite';
 
 // 使用環境變量來管理不同環境的端點
 // 現在使用已驗證的自定義域名，這將消除 localStorage 警告
@@ -27,6 +27,7 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const tablesDB = new TablesDB(client);
 export const functions = new Functions(client);
+export const storage = new Storage(client);
 
 export { ID };
 export { client }; 

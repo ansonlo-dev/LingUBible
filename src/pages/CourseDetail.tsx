@@ -25,8 +25,11 @@ import {
   BookOpen,
   BookText,
   FileText,
+  Download,
+  ExternalLink,
   Lock
 } from 'lucide-react';
+import { storage } from '@/lib/appwrite';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
@@ -186,6 +189,36 @@ const extractRawDepartmentName = (department: string): string => {
   };
   
   return translatedToRawMapping[department] || department;
+};
+
+// Parse the term-code suffix used in past-exam-paper filenames such as
+// "CDS2004_24252.pdf" → "2024-25, Term 2". Returns null if the filename
+// (excluding the course-code prefix and extension) is not a recognized
+// 5-digit YYYYT code.
+const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): string | null => {
+  const dot = fileName.lastIndexOf('.');
+  const stem = dot > 0 ? fileName.slice(0, dot) : fileName;
+  const suffix = stem.slice(coursePrefixLen + 1); // +1 to skip the underscore
+  const match = /^(\d{2})(\d{2})([0-9])$/.exec(suffix);
+  if (!match) return null;
+  const startYear = `20${match[1]}`;
+  const endYearShort = match[2];
+  const term = match[3];
+  const academicYear = `${startYear}-${endYearShort}`;
+  switch (term) {
+    case '1': return `${academicYear}, Term 1`;
+    case '2': return `${academicYear}, Term 2`;
+    case '0':
+    case '3': return `${academicYear}, Summer Term`;
+    default: return null;
+  }
+};
+
+const formatExamPaperSize = (bytes: number): string => {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 const CourseDetail = () => {
@@ -399,6 +432,12 @@ const CourseDetail = () => {
   
   // N/A grades toggle state
   const [showNAGrades, setShowNAGrades] = useState<boolean>(true);
+
+  // Past exam papers state (lazy-loaded when the tab is opened)
+  const [examPapers, setExamPapers] = useState<Array<{ id: string; name: string; sizeOriginal: number }>>([]);
+  const [examPapersLoading, setExamPapersLoading] = useState<boolean>(false);
+  const [examPapersError, setExamPapersError] = useState<string | null>(null);
+  const [examPapersLoaded, setExamPapersLoaded] = useState<boolean>(false);
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -866,6 +905,39 @@ const CourseDetail = () => {
       }
     }
   }, [teachingInfo, activeTeachingTab]);
+
+  // Lazy-load past exam papers when the user opens the exams tab.
+  // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
+  useEffect(() => {
+    if (!user || activeMainTab !== 'exams' || !course?.course_code || examPapersLoaded) return;
+
+    const courseCode = course.course_code;
+    let cancelled = false;
+    setExamPapersLoading(true);
+    setExamPapersError(null);
+
+    storage.listFiles({ bucketId: 'past_exam_papers', search: courseCode })
+      .then(res => {
+        if (cancelled) return;
+        const prefix = `${courseCode.toLowerCase()}_`;
+        const matched = (res.files || [])
+          .filter(f => f.name.toLowerCase().startsWith(prefix))
+          .map(f => ({ id: f.$id, name: f.name, sizeOriginal: f.sizeOriginal }))
+          .sort((a, b) => b.name.localeCompare(a.name));
+        setExamPapers(matched);
+        setExamPapersLoaded(true);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.error('Failed to load past exam papers', err);
+        setExamPapersError(t('pages.courseDetail.examPapersLoadFailed'));
+      })
+      .finally(() => {
+        if (!cancelled) setExamPapersLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [user, activeMainTab, course?.course_code, examPapersLoaded, t]);
 
   if (loading) {
     return (
@@ -2683,16 +2755,71 @@ const CourseDetail = () => {
         <TabsContent value="exams" className="attached-tab-content mt-0">
           <div className="p-6">
             {user ? (
-              <div className="text-center py-12 space-y-4">
-                <div className="flex justify-center">
-                  <div className="p-4 bg-muted/50 rounded-full">
-                    <FileText className="h-12 w-12 text-muted-foreground" />
-                  </div>
+              examPapersLoading && !examPapersLoaded ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {t('pages.courseDetail.noExamPapers')}
-                </p>
-              </div>
+              ) : examPapersError ? (
+                <div className="text-center py-12 space-y-4">
+                  <div className="flex justify-center">
+                    <div className="p-4 bg-muted/50 rounded-full">
+                      <AlertCircle className="h-12 w-12 text-destructive" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{examPapersError}</p>
+                </div>
+              ) : examPapers.length === 0 ? (
+                <div className="text-center py-12 space-y-4">
+                  <div className="flex justify-center">
+                    <div className="p-4 bg-muted/50 rounded-full">
+                      <FileText className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('pages.courseDetail.noExamPapers')}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {examPapers.map(paper => {
+                    const termLabel = parseExamPaperTermCode(paper.name, course.course_code.length)
+                      || t('pages.courseDetail.examPaperTermFallback');
+                    const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
+                    const viewUrl = storage.getFileView({ bucketId: 'past_exam_papers', fileId: paper.id });
+                    const downloadUrl = storage.getFileDownload({ bucketId: 'past_exam_papers', fileId: paper.id });
+                    return (
+                      <div
+                        key={paper.id}
+                        className="flex items-center gap-4 p-4 border rounded-lg bg-card hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="p-2 bg-muted/50 rounded-md shrink-0">
+                          <FileText className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{termLabel}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {paper.name}{sizeLabel ? ` · ${sizeLabel}` : ''}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button asChild size="sm" variant="outline">
+                            <a href={viewUrl} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">{t('pages.courseDetail.examPaperViewFile')}</span>
+                            </a>
+                          </Button>
+                          <Button asChild size="sm">
+                            <a href={downloadUrl}>
+                              <Download className="h-4 w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">{t('pages.courseDetail.examPaperDownloadFile')}</span>
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
             ) : (
               <div className="text-center py-12 space-y-4">
                 <div className="flex justify-center">
