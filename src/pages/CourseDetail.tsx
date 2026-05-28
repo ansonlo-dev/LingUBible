@@ -192,26 +192,46 @@ const extractRawDepartmentName = (department: string): string => {
 };
 
 // Parse the term-code suffix used in past-exam-paper filenames such as
-// "CDS2004_24252.pdf" → "2024-25, Term 2". Returns null if the filename
-// (excluding the course-code prefix and extension) is not a recognized
-// 5-digit YYYYT code.
-const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): string | null => {
+// "CDS2004_24252.pdf" → { startYear: 2024, term: '2', ... }. Returns null
+// when the filename (excluding the course-code prefix and extension) is
+// not a recognized 5-digit YYYYT code.
+type ExamPaperTermInfo = {
+  startYear: number;        // e.g. 2024
+  endYearShort: string;     // e.g. "25"
+  term: '1' | '2' | 'S';    // term 1, term 2, or summer
+  academicYear: string;     // e.g. "2024-25"
+  termSortKey: number;      // larger = newer (used for sorting)
+  label: string;            // localized human label
+};
+
+const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): ExamPaperTermInfo | null => {
   const dot = fileName.lastIndexOf('.');
   const stem = dot > 0 ? fileName.slice(0, dot) : fileName;
   const suffix = stem.slice(coursePrefixLen + 1); // +1 to skip the underscore
   const match = /^(\d{2})(\d{2})([0-9])$/.exec(suffix);
   if (!match) return null;
-  const startYear = `20${match[1]}`;
+  const startYear = 2000 + parseInt(match[1], 10);
   const endYearShort = match[2];
-  const term = match[3];
-  const academicYear = `${startYear}-${endYearShort}`;
-  switch (term) {
-    case '1': return `${academicYear}, Term 1`;
-    case '2': return `${academicYear}, Term 2`;
+  const termDigit = match[3];
+  let term: '1' | '2' | 'S';
+  let termRank: number;
+  let termLabel: string;
+  switch (termDigit) {
+    case '1': term = '1'; termRank = 1; termLabel = 'Term 1'; break;
+    case '2': term = '2'; termRank = 2; termLabel = 'Term 2'; break;
     case '0':
-    case '3': return `${academicYear}, Summer Term`;
+    case '3': term = 'S'; termRank = 3; termLabel = 'Summer Term'; break;
     default: return null;
   }
+  const academicYear = `${startYear}-${endYearShort}`;
+  return {
+    startYear,
+    endYearShort,
+    term,
+    academicYear,
+    termSortKey: startYear * 10 + termRank,
+    label: `${academicYear}, ${termLabel}`,
+  };
 };
 
 const formatExamPaperSize = (bytes: number): string => {
@@ -434,10 +454,65 @@ const CourseDetail = () => {
   const [showNAGrades, setShowNAGrades] = useState<boolean>(true);
 
   // Past exam papers state (lazy-loaded when the tab is opened)
-  const [examPapers, setExamPapers] = useState<Array<{ id: string; name: string; sizeOriginal: number }>>([]);
+  type ExamPaper = {
+    id: string;
+    name: string;
+    sizeOriginal: number;
+    term: ExamPaperTermInfo | null;
+  };
+  const [examPapers, setExamPapers] = useState<ExamPaper[]>([]);
   const [examPapersLoading, setExamPapersLoading] = useState<boolean>(false);
   const [examPapersError, setExamPapersError] = useState<string | null>(null);
   const [examPapersLoaded, setExamPapersLoaded] = useState<boolean>(false);
+  const [examPapersSort, setExamPapersSort] = useState<'newest' | 'oldest'>('newest');
+  const [examPapersYearFilter, setExamPapersYearFilter] = useState<string[]>([]);
+
+  // Year filter options for past exam papers — derived from parsed term info.
+  // The synthetic value '__unknown__' groups files whose names can't be parsed.
+  const UNKNOWN_YEAR_KEY = '__unknown__';
+  const examPapersYearOptions = React.useMemo<SelectOption[]>(() => {
+    const counts = new Map<string, number>();
+    let unknownCount = 0;
+    examPapers.forEach(p => {
+      if (p.term) {
+        const key = String(p.term.startYear);
+        counts.set(key, (counts.get(key) || 0) + 1);
+      } else {
+        unknownCount += 1;
+      }
+    });
+    const years = Array.from(counts.entries())
+      .sort((a, b) => parseInt(b[0], 10) - parseInt(a[0], 10))
+      .map(([startYearStr, count]) => {
+        const startYear = parseInt(startYearStr, 10);
+        const endYearShort = String((startYear + 1) % 100).padStart(2, '0');
+        return { value: startYearStr, label: `${startYear}-${endYearShort}`, count };
+      });
+    if (unknownCount > 0) {
+      years.push({ value: UNKNOWN_YEAR_KEY, label: t('pages.courseDetail.examPapersYearUnknown'), count: unknownCount });
+    }
+    return years;
+  }, [examPapers, t]);
+
+  // Filtered + sorted list applied to the rendered grid.
+  const filteredExamPapers = React.useMemo(() => {
+    const filterSet = new Set(examPapersYearFilter);
+    const filtered = filterSet.size === 0
+      ? examPapers
+      : examPapers.filter(p => filterSet.has(p.term ? String(p.term.startYear) : UNKNOWN_YEAR_KEY));
+    const dir = examPapersSort === 'newest' ? -1 : 1;
+    return [...filtered].sort((a, b) => {
+      // Files without a parseable term always sink to the bottom so the toolbar
+      // sort still makes intuitive sense for the dated majority.
+      if (!a.term && !b.term) return a.name.localeCompare(b.name);
+      if (!a.term) return 1;
+      if (!b.term) return -1;
+      if (a.term.termSortKey !== b.term.termSortKey) {
+        return dir * (a.term.termSortKey - b.term.termSortKey);
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [examPapers, examPapersSort, examPapersYearFilter]);
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -920,10 +995,14 @@ const CourseDetail = () => {
       .then(res => {
         if (cancelled) return;
         const prefix = `${courseCode.toLowerCase()}_`;
-        const matched = (res.files || [])
+        const matched: ExamPaper[] = (res.files || [])
           .filter(f => f.name.toLowerCase().startsWith(prefix))
-          .map(f => ({ id: f.$id, name: f.name, sizeOriginal: f.sizeOriginal }))
-          .sort((a, b) => b.name.localeCompare(a.name));
+          .map(f => ({
+            id: f.$id,
+            name: f.name,
+            sizeOriginal: f.sizeOriginal,
+            term: parseExamPaperTermCode(f.name, courseCode.length),
+          }));
         setExamPapers(matched);
         setExamPapersLoaded(true);
       })
@@ -2780,44 +2859,85 @@ const CourseDetail = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {examPapers.map(paper => {
-                    const termLabel = parseExamPaperTermCode(paper.name, course.course_code.length)
-                      || t('pages.courseDetail.examPaperTermFallback');
-                    const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
-                    const viewUrl = storage.getFileView({ bucketId: 'past_exam_papers', fileId: paper.id });
-                    const downloadUrl = storage.getFileDownload({ bucketId: 'past_exam_papers', fileId: paper.id });
-                    return (
-                      <div
-                        key={paper.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg bg-card hover:bg-muted/40 transition-colors"
-                      >
-                        <div className="p-2 bg-muted/50 rounded-md shrink-0">
-                          <FileText className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{termLabel}</div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {paper.name}{sizeLabel ? ` · ${sizeLabel}` : ''}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Button asChild size="sm" variant="outline">
-                            <a href={viewUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 sm:mr-1" />
-                              <span className="hidden sm:inline">{t('pages.courseDetail.examPaperViewFile')}</span>
-                            </a>
-                          </Button>
-                          <Button asChild size="sm">
-                            <a href={downloadUrl}>
-                              <Download className="h-4 w-4 sm:mr-1" />
-                              <span className="hidden sm:inline">{t('pages.courseDetail.examPaperDownloadFile')}</span>
-                            </a>
-                          </Button>
+                <div className="space-y-4">
+                  {/* Toolbar: sort + year filter + result count */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:flex-1 min-w-0">
+                      <Select value={examPapersSort} onValueChange={v => setExamPapersSort(v as 'newest' | 'oldest')}>
+                        <SelectTrigger className="w-full sm:w-48" aria-label={t('pages.courseDetail.examPapersSortLabel')}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="newest">{t('pages.courseDetail.examPapersSortNewest')}</SelectItem>
+                          <SelectItem value="oldest">{t('pages.courseDetail.examPapersSortOldest')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <MultiSelectDropdown
+                        options={examPapersYearOptions}
+                        selectedValues={examPapersYearFilter}
+                        onSelectionChange={setExamPapersYearFilter}
+                        placeholder={t('pages.courseDetail.examPapersFilterYearPlaceholder')}
+                        className="w-full sm:w-64"
+                        totalCount={examPapers.length}
+                      />
+                    </div>
+                    <div className="text-xs text-muted-foreground sm:ml-auto sm:shrink-0">
+                      {t('pages.courseDetail.examPapersResultCount', {
+                        filtered: filteredExamPapers.length,
+                        total: examPapers.length,
+                      })}
+                    </div>
+                  </div>
+
+                  {filteredExamPapers.length === 0 ? (
+                    <div className="text-center py-12 space-y-4">
+                      <div className="flex justify-center">
+                        <div className="p-4 bg-muted/50 rounded-full">
+                          <FileText className="h-12 w-12 text-muted-foreground" />
                         </div>
                       </div>
-                    );
-                  })}
+                      <p className="text-sm text-muted-foreground">
+                        {t('pages.courseDetail.examPapersNoMatch')}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                      {filteredExamPapers.map(paper => {
+                        const termLabel = paper.term?.label || t('pages.courseDetail.examPaperTermFallback');
+                        const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
+                        const viewUrl = storage.getFileView({ bucketId: 'past_exam_papers', fileId: paper.id });
+                        const downloadUrl = storage.getFileDownload({ bucketId: 'past_exam_papers', fileId: paper.id });
+                        return (
+                          <div
+                            key={paper.id}
+                            className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/40 transition-colors min-w-0"
+                          >
+                            <div className="p-2 bg-muted/50 rounded-md shrink-0">
+                              <FileText className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{termLabel}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {sizeLabel || paper.name}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperViewFile')}>
+                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" aria-label={t('pages.courseDetail.examPaperViewFile')}>
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperDownloadFile')}>
+                                <a href={downloadUrl} aria-label={t('pages.courseDetail.examPaperDownloadFile')}>
+                                  <Download className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             ) : (
