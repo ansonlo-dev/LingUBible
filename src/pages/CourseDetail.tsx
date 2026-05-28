@@ -2947,7 +2947,7 @@ const CourseDetail = () => {
                   <div className="flex flex-col gap-3">
                     <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                       <Select value={examPapersSort} onValueChange={v => setExamPapersSort(v as 'newest' | 'oldest')}>
-                        <SelectTrigger aria-label={t('pages.courseDetail.examPapersSortLabel')}>
+                        <SelectTrigger className="h-8" aria-label={t('pages.courseDetail.examPapersSortLabel')}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

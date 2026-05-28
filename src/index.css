@@ -860,6 +860,20 @@ div[style*="position: fixed"][style*="right: 14px"] {
     box-shadow: none !important;
     align-items: flex-end !important;
     justify-content: flex-start !important; /* Left align the tabs */
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
+    flex-wrap: nowrap !important;
+  }
+
+  .attached-tabs-list::-webkit-scrollbar {
+    display: none !important; /* Chrome/Safari */
+  }
+
+  /* Keep each tab at its natural width so the row scrolls instead of squeezing */
+  .attached-tab-trigger {
+    flex-shrink: 0 !important;
   }
 
   .attached-tab-trigger {
