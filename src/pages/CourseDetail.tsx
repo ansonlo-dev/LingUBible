@@ -269,28 +269,35 @@ const formatExamPaperSize = (bytes: number): string => {
 
 // Open a PDF (syllabus / exam paper) in a new tab whose title is the document
 // name. Appwrite's `/view` URL has no filename in its path, so a plain link
-// would title the tab "view"; we wrap the file in a tiny same-origin page that
-// sets <title> and embeds the PDF full-screen. Falls back to a direct open if
-// the popup is blocked.
+// would title the tab "view"; we wrap the file in a tiny page that sets <title>
+// and embeds the PDF full-screen.
+//
+// The wrapper HTML is served as a Blob URL and the tab is navigated straight to
+// it. Doing a real navigation (rather than `window.open('', …)` + document.write
+// into a blank tab) avoids the popup-blocker heuristic that otherwise parks the
+// tab behind a "click to open" prompt — so the document now opens instantly.
 const openDocumentInNewTab = (url: string | URL, title: string) => {
   const href = url.toString();
-  const win = window.open('', '_blank');
-  if (!win) {
-    window.open(href, '_blank', 'noopener,noreferrer');
-    return;
-  }
   const safeTitle = title.replace(/[<>&"]/g, c => (
     { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string
   ));
-  win.document.write(
+  const html =
     `<!DOCTYPE html><html><head><meta charset="utf-8">` +
     `<title>${safeTitle}</title>` +
     `<meta name="viewport" content="width=device-width, initial-scale=1">` +
     `<style>html,body{margin:0;padding:0;height:100%;background:#525659}` +
     `iframe{border:0;width:100%;height:100%;display:block}</style></head>` +
-    `<body><iframe src="${href}" title="${safeTitle}"></iframe></body></html>`
-  );
-  win.document.close();
+    `<body><iframe src="${href}" title="${safeTitle}"></iframe></body></html>`;
+  const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const win = window.open(blobUrl, '_blank');
+  if (!win) {
+    // Popup blocked — fall back to opening the document directly.
+    URL.revokeObjectURL(blobUrl);
+    window.open(href, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  // Release the blob once the new tab has had time to load it.
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 };
 
 const COURSE_CODE_REGEX = /\b[A-Z]{3}\d{4}\b/g;
