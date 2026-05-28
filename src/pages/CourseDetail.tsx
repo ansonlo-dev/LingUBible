@@ -265,6 +265,32 @@ const formatExamPaperSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+// Open a PDF (syllabus / exam paper) in a new tab whose title is the document
+// name. Appwrite's `/view` URL has no filename in its path, so a plain link
+// would title the tab "view"; we wrap the file in a tiny same-origin page that
+// sets <title> and embeds the PDF full-screen. Falls back to a direct open if
+// the popup is blocked.
+const openDocumentInNewTab = (url: string | URL, title: string) => {
+  const href = url.toString();
+  const win = window.open('', '_blank');
+  if (!win) {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const safeTitle = title.replace(/[<>&"]/g, c => (
+    { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string
+  ));
+  win.document.write(
+    `<!DOCTYPE html><html><head><meta charset="utf-8">` +
+    `<title>${safeTitle}</title>` +
+    `<meta name="viewport" content="width=device-width, initial-scale=1">` +
+    `<style>html,body{margin:0;padding:0;height:100%;background:#525659}` +
+    `iframe{border:0;width:100%;height:100%;display:block}</style></head>` +
+    `<body><iframe src="${href}" title="${safeTitle}"></iframe></body></html>`
+  );
+  win.document.close();
+};
+
 const COURSE_CODE_REGEX = /\b[A-Z]{3}\d{4}\b/g;
 
 // Normalise separators between course codes so they read cleanly:
@@ -617,7 +643,7 @@ const CourseDetail = () => {
   // Latest course syllabus PDF (bucket: course_syllabus). Filenames are prefixed
   // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
   // we surface the largest suffix (most recent version). Open to all visitors.
-  const [syllabusFileId, setSyllabusFileId] = useState<string | null>(null);
+  const [syllabusFile, setSyllabusFile] = useState<{ id: string; name: string } | null>(null);
   // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
   // per-section files). Seeded by a single batched query so we never query the
   // instructors collection per-paper.
@@ -1259,7 +1285,7 @@ const CourseDetail = () => {
     if (!courseCode) return;
 
     let cancelled = false;
-    setSyllabusFileId(null);
+    setSyllabusFile(null);
 
     (async () => {
       try {
@@ -1271,7 +1297,7 @@ const CourseDetail = () => {
         });
         if (cancelled) return;
 
-        let best: { id: string; suffix: number } | null = null;
+        let best: { id: string; name: string; suffix: number } | null = null;
         for (const f of res.files || []) {
           const name = f.name.toLowerCase();
           if (!name.startsWith(prefix)) continue;
@@ -1279,14 +1305,14 @@ const CourseDetail = () => {
           const match = name.replace(/\.[^.]+$/, '').match(/(\d+)\s*$/);
           const suffix = match ? parseInt(match[1], 10) : -1;
           if (!best || suffix > best.suffix) {
-            best = { id: f.$id, suffix };
+            best = { id: f.$id, name: f.name, suffix };
           }
         }
-        if (!cancelled) setSyllabusFileId(best?.id ?? null);
+        if (!cancelled) setSyllabusFile(best ? { id: best.id, name: best.name } : null);
       } catch (err) {
         if (!cancelled) {
           console.error('Failed to load course syllabus', err);
-          setSyllabusFileId(null);
+          setSyllabusFile(null);
         }
       }
     })();
@@ -1440,16 +1466,17 @@ const CourseDetail = () => {
                 </CardTitle>
                 {/* Action buttons - desktop/tablet only inline */}
                 <div className="shrink-0 flex items-center gap-2">
-                  {syllabusFileId && (
-                    <Button variant="outline" className="h-10 px-3" asChild>
-                      <a
-                        href={storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFileId })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FileText className="h-4 w-4 mr-1.5" />
-                        {t('pages.courseDetail.viewSyllabus')}
-                      </a>
+                  {syllabusFile && (
+                    <Button
+                      variant="outline"
+                      className="h-10 px-3"
+                      onClick={() => openDocumentInNewTab(
+                        storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
+                        syllabusFile.name,
+                      )}
+                    >
+                      <FileText className="h-4 w-4 mr-1.5" />
+                      {t('pages.courseDetail.viewSyllabus')}
                     </Button>
                   )}
                   <FavoriteButton
@@ -1535,17 +1562,19 @@ const CourseDetail = () => {
             
             {/* Action buttons - mobile only, separate row (excluding back button) */}
             <div className="md:hidden flex flex-col gap-2 mb-4">
-              {syllabusFileId && (
-                <Button variant="outline" size="lg" className="h-10 w-full" asChild>
-                  <a
-                    href={storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFileId })}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    {t('pages.courseDetail.viewSyllabus')}
-                    <ExternalLink className="h-3.5 w-3.5 ml-1.5 opacity-70" />
-                  </a>
+              {syllabusFile && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-10 w-full"
+                  onClick={() => openDocumentInNewTab(
+                    storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
+                    syllabusFile.name,
+                  )}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  {t('pages.courseDetail.viewSyllabus')}
+                  <ExternalLink className="h-3.5 w-3.5 ml-1.5 opacity-70" />
                 </Button>
               )}
               <div className="flex flex-row gap-2">
@@ -3344,10 +3373,15 @@ const CourseDetail = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
-                                <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperViewFile')}>
-                                  <a href={viewUrl} target="_blank" rel="noopener noreferrer" aria-label={t('pages.courseDetail.examPaperViewFile')}>
-                                    <ExternalLink className="h-4 w-4" />
-                                  </a>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  title={t('pages.courseDetail.examPaperViewFile')}
+                                  aria-label={t('pages.courseDetail.examPaperViewFile')}
+                                  onClick={() => openDocumentInNewTab(viewUrl, paper.name)}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
                                 </Button>
                                 <Button asChild size="icon" variant="ghost" className="h-8 w-8" title={t('pages.courseDetail.examPaperDownloadFile')}>
                                   <a href={downloadUrl} aria-label={t('pages.courseDetail.examPaperDownloadFile')}>
