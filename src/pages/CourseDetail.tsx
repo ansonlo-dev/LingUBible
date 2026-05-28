@@ -1420,7 +1420,7 @@ const CourseDetail = () => {
             {/* Course info section with buttons */}
             <div className="mb-4">
               {/* Desktop/Tablet: Course code and buttons in same row */}
-              <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-2">
+              <div className="hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-2 mb-2">
                 <CardTitle className="text-2xl font-mono flex items-center gap-2 min-w-0">
                   <BookText className="h-7 w-7 text-primary" />
                   {course.course_code}
