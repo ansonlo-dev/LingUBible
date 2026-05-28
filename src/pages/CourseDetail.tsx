@@ -484,6 +484,18 @@ const CourseDetail = () => {
   // Lecture-only instructor index built from teachingInfo (which is already
   // loaded by useCourseDetailOptimized — no extra teaching_records reads).
   // Map: term_code -> unique Instructor[] who taught lectures in that term.
+  // Unique instructors from teaching records — fed to CourseReviewsList so it
+  // doesn't have to re-query the instructors collection for names already loaded.
+  const courseTeachingInstructors = React.useMemo<Instructor[]>(() => {
+    const seen = new Map<string, Instructor>();
+    (data?.teachingInfo || []).forEach(info => {
+      if (info.instructor?.name && info.instructor.name !== 'UNKNOWN') {
+        seen.set(info.instructor.name, info.instructor);
+      }
+    });
+    return Array.from(seen.values());
+  }, [data?.teachingInfo]);
+
   const lectureInstructorsByTermCode = React.useMemo(() => {
     const map = new Map<string, Instructor[]>();
     const rows = data?.teachingInfo;
@@ -1535,7 +1547,7 @@ const CourseDetail = () => {
         {/* Student Reviews Tab */}
         <TabsContent value="reviews" className="attached-tab-content mt-0">
           <div id="student-reviews" className="p-6 space-y-4">
-            <CourseReviewsList 
+            <CourseReviewsList
               reviews={allReviews || []}
               allReviews={allReviews || []}
               loading={reviewsLoading}
@@ -1543,6 +1555,7 @@ const CourseDetail = () => {
               course={course}
               hideHeader={true}
               onToggleServiceLearning={handleServiceLearningToggle}
+              preloadedInstructors={courseTeachingInstructors}
             />
           </div>
         </TabsContent>

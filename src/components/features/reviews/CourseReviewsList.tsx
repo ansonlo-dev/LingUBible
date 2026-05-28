@@ -46,6 +46,7 @@ interface CourseReviewsListProps {
   externalGradeFilter?: string; // External grade to filter by
   currentInstructorName?: string; // Current instructor name to disable hover effects for same instructor
   course?: Course; // Course information for no reviews message
+  preloadedInstructors?: Instructor[]; // Already-fetched instructors (e.g. from teachingInfo) — skip re-querying these
 }
 
 interface ExpandedReviews {
@@ -63,7 +64,8 @@ export const CourseReviewsList = ({
   hideHeader = false,
   externalGradeFilter,
   currentInstructorName,
-  course
+  course,
+  preloadedInstructors,
 }: CourseReviewsListProps) => {
 
   const { t: tContext, language: siteLanguage } = useLanguage();
@@ -245,11 +247,14 @@ export const CourseReviewsList = ({
     reading: 'all'
   });
 
-  // 獲取講師完整信息
+  // 獲取講師完整信息：
+  // 1) 先用 preloadedInstructors（呼叫端通常已從 teachingInfo 拿到）填入映射 —
+  //    這些講師資料已存在於記憶體，不需再讀 instructors collection
+  // 2) 剩下沒涵蓋的姓名才以單次 IN 查詢補抓（取代逐一 getInstructorByName 的 N+1）
   useEffect(() => {
     const fetchInstructorsInfo = async () => {
       if (!allReviews) return;
-      
+
       const instructorNames = new Set<string>();
       allReviews.forEach(reviewInfo => {
         reviewInfo.instructorDetails.forEach(instructorDetail => {
@@ -258,25 +263,29 @@ export const CourseReviewsList = ({
       });
 
       const newInstructorsMap = new Map<string, Instructor>();
-      
-      // 並行獲取所有講師信息
-      const promises = Array.from(instructorNames).map(async (name) => {
-        try {
-          const instructor = await CourseService.getInstructorByName(name);
-          if (instructor) {
-            newInstructorsMap.set(name, instructor);
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch instructor info for ${name}:`, error);
-        }
+      preloadedInstructors?.forEach(ins => {
+        if (ins?.name) newInstructorsMap.set(ins.name, ins);
       });
 
-      await Promise.all(promises);
-      setInstructorsMap(newInstructorsMap);
+      const missing = Array.from(instructorNames).filter(name => !newInstructorsMap.has(name));
+
+      if (missing.length === 0) {
+        setInstructorsMap(newInstructorsMap);
+        return;
+      }
+
+      try {
+        const instructors = await CourseService.getInstructorsByNames(missing);
+        instructors.forEach(ins => newInstructorsMap.set(ins.name, ins));
+        setInstructorsMap(newInstructorsMap);
+      } catch (error) {
+        console.warn('Failed to batch fetch instructor info:', error);
+        setInstructorsMap(newInstructorsMap);
+      }
     };
 
     fetchInstructorsInfo();
-  }, [allReviews]);
+  }, [allReviews, preloadedInstructors]);
 
   // 計算各語言的評論數量
   const languageCounts = useMemo(() => {

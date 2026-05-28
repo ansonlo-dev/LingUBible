@@ -73,28 +73,16 @@ export const useCourseDetailOptimized = (
 
         const startTime = Date.now();
 
-        // 並行載入所有數據（包括新增的課程開設狀態和詳細統計）
-        const baseDataPromise = Promise.all([
+        // 並行載入：課程主檔、教學記錄（含講師、學期）、評論（含投票）。
+        // 統計值與「當前學期開設與否」皆可從這三組資料推導，
+        // 不需另外打 getCourseStats / getCourseDetailedStatsOptimized /
+        // isCourseOfferedInTerm 以及第二次的 reviews 查詢 —— 每次省下 ~3
+        // 份 reviews 掃描（每份最多 300~500 列）與 1 份 teaching_records 查詢。
+        const [courseData, teachingInfoData, reviewsData] = await Promise.all([
           CourseService.getCourseByCode(courseCode),
-          CourseService.getCourseStats(courseCode),
           CourseService.getCourseTeachingInfoOptimized(courseCode),
-          CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId), // 所有評論（不自動過濾語言）
-          CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId), // 所有評論（用於圖表）
-          CourseService.getCourseDetailedStatsOptimized(courseCode)
+          CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId),
         ]);
-
-        // 只有提供了 currentTermCode 時才檢查課程開設狀態
-        const offerCheckPromise = currentTermCode 
-          ? CourseService.isCourseOfferedInTerm(courseCode, currentTermCode)
-          : Promise.resolve(false);
-
-        const [baseResults, isOfferedData] = await Promise.all([
-          baseDataPromise, 
-          offerCheckPromise
-        ]);
-        
-        // 安全地解構結果
-        const [courseData, statsData, teachingInfoData, reviewsData, allReviewsData, detailedStatsData] = baseResults;
 
         const loadTime = Date.now() - startTime;
         console.log(`Optimized course detail data loaded in ${loadTime}ms for:`, courseCode);
@@ -104,22 +92,40 @@ export const useCourseDetailOptimized = (
           return;
         }
 
+        // 從評論集合衍生統計值（N/A 值在 DB 編碼為 -1，需排除）
+        const rawReviews = reviewsData.map(r => r.review);
+        const reviewCount = rawReviews.length;
+        const validWorkload = rawReviews.filter(r => r.course_workload > 0);
+        const validDifficulty = rawReviews.filter(r => r.course_difficulties > 0);
+        const validUsefulness = rawReviews.filter(r => r.course_usefulness > 0);
+        const sum = (arr: { course_workload?: number; course_difficulties?: number; course_usefulness?: number }[], key: 'course_workload' | 'course_difficulties' | 'course_usefulness') =>
+          arr.reduce((acc, r) => acc + ((r[key] as number) || 0), 0);
+        const averageWorkload = validWorkload.length > 0 ? sum(validWorkload, 'course_workload') / validWorkload.length : -1;
+        const averageDifficulty = validDifficulty.length > 0 ? sum(validDifficulty, 'course_difficulties') / validDifficulty.length : -1;
+        const averageUsefulness = validUsefulness.length > 0 ? sum(validUsefulness, 'course_usefulness') / validUsefulness.length : -1;
+        const averageRating = averageUsefulness > 0 ? averageUsefulness : 0; // 與 getCourseDetailedStats 一致：使用實用性作為總體評分
+
+        // 從教學記錄推導「課程在指定當前學期是否開設」
+        const isOfferedInCurrentTerm = currentTermCode
+          ? teachingInfoData.some(info => info.term.term_code === currentTermCode)
+          : false;
+
         // 一次性更新所有數據
         setData({
           course: courseData,
           courseStats: {
-            averageRating: statsData.averageRating,
-            reviewCount: statsData.reviewCount
+            averageRating,
+            reviewCount,
           },
           teachingInfo: teachingInfoData,
           reviews: reviewsData,
-          allReviewsForChart: allReviewsData,
-          isOfferedInCurrentTerm: isOfferedData,
+          allReviewsForChart: reviewsData,
+          isOfferedInCurrentTerm,
           detailedStats: {
-            averageWorkload: detailedStatsData.averageWorkload,
-            averageDifficulty: detailedStatsData.averageDifficulty,
-            averageUsefulness: detailedStatsData.averageUsefulness
-          }
+            averageWorkload,
+            averageDifficulty,
+            averageUsefulness,
+          },
         });
 
       } catch (error) {
