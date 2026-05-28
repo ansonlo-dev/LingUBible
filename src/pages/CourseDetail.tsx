@@ -269,15 +269,28 @@ const formatExamPaperSize = (bytes: number): string => {
 
 // Open a PDF (syllabus / exam paper) in a new tab whose title is the document
 // name. Appwrite's `/view` URL has no filename in its path, so a plain link
-// would title the tab "view"; we wrap the file in a tiny page that sets <title>
-// and embeds the PDF full-screen.
+// would title the tab "view"; on desktop we wrap the file in a tiny page that
+// sets <title> and embeds the PDF full-screen.
 //
 // The wrapper HTML is served as a Blob URL and the tab is navigated straight to
 // it. Doing a real navigation (rather than `window.open('', …)` + document.write
 // into a blank tab) avoids the popup-blocker heuristic that otherwise parks the
-// tab behind a "click to open" prompt — so the document now opens instantly.
+// tab behind a "click to open" prompt — so the document opens instantly.
+//
+// Mobile browsers (iOS Safari / Android Chrome) treat opening a `blob:` URL in a
+// new tab as an untrusted popup and still require an extra tap, and they barely
+// surface tab titles anyway — so there we just open the file URL directly, which
+// hands off to the native PDF viewer instantly.
 const openDocumentInNewTab = (url: string | URL, title: string) => {
   const href = url.toString();
+  const ua = navigator.userAgent;
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+    (('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth < 768);
+  if (isMobile) {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    return;
+  }
   const safeTitle = title.replace(/[<>&"]/g, c => (
     { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string
   ));
