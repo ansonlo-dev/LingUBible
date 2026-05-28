@@ -30,6 +30,7 @@ import {
   Lock
 } from 'lucide-react';
 import { storage } from '@/lib/appwrite';
+import { Query } from 'appwrite';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
