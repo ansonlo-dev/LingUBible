@@ -36,6 +36,7 @@ import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo, type Instructor } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
+import { Pagination } from '@/components/features/reviews/Pagination';
 import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
@@ -203,17 +204,21 @@ type ExamPaperTermInfo = {
   termSortKey: number;      // larger = newer (used for sorting)
   label: string;            // localized human label
   termCodes: string[];      // candidate DB term_codes for joining (e.g. ["2024-T2"])
+  instructorNameFromFile?: string; // optional name encoded after the term code
 };
 
 const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): ExamPaperTermInfo | null => {
   const dot = fileName.lastIndexOf('.');
   const stem = dot > 0 ? fileName.slice(0, dot) : fileName;
   const suffix = stem.slice(coursePrefixLen + 1); // +1 to skip the underscore
-  const match = /^(\d{2})(\d{2})([0-9])$/.exec(suffix);
+  // Accept either "YYYYT" or "YYYYT_<instructor name>" (the latter is used by
+  // courses like CCC8011 that have many parallel sections in one term).
+  const match = /^(\d{2})(\d{2})([0-9])(?:_(.+))?$/.exec(suffix);
   if (!match) return null;
   const startYear = 2000 + parseInt(match[1], 10);
   const endYearShort = match[2];
   const termDigit = match[3];
+  const instructorNameFromFile = match[4]?.trim() || undefined;
   let term: '1' | '2' | 'S';
   let termRank: number;
   let termLabel: string;
@@ -244,6 +249,7 @@ const parseExamPaperTermCode = (fileName: string, coursePrefixLen: number): Exam
     termSortKey: startYear * 10 + termRank,
     label: `${academicYear}, ${termLabel}`,
     termCodes,
+    instructorNameFromFile,
   };
 };
 
@@ -480,6 +486,12 @@ const CourseDetail = () => {
   const [examPapersSort, setExamPapersSort] = useState<'newest' | 'oldest'>('newest');
   const [examPapersYearFilter, setExamPapersYearFilter] = useState<string[]>([]);
   const [examPapersInstructorFilter, setExamPapersInstructorFilter] = useState<string[]>([]);
+  const [examPapersCurrentPage, setExamPapersCurrentPage] = useState<number>(1);
+  const EXAM_PAPERS_PAGE_SIZE = 12;
+  // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
+  // per-section files). Seeded by a single batched query so we never query the
+  // instructors collection per-paper.
+  const [filenameInstructorsByName, setFilenameInstructorsByName] = useState<Map<string, Instructor>>(new Map());
 
   // Lecture-only instructor index built from teachingInfo (which is already
   // loaded by useCourseDetailOptimized — no extra teaching_records reads).
@@ -512,10 +524,42 @@ const CourseDetail = () => {
     return map;
   }, [data?.teachingInfo]);
 
-  // Enrich each paper with the lecture instructors taught in its term.
+  // Quick lookup: instructor name → Instructor (drawn from teaching records).
+  const teachingInstructorByName = React.useMemo(() => {
+    const map = new Map<string, Instructor>();
+    (data?.teachingInfo || []).forEach(info => {
+      if (info.instructor?.name && info.instructor.name !== 'UNKNOWN') {
+        map.set(info.instructor.name, info.instructor);
+      }
+    });
+    return map;
+  }, [data?.teachingInfo]);
+
+  // Build a "shell" Instructor record for filename-encoded names that aren't
+  // in the DB at all — keeps the badge renderable without extra fetches.
+  const makeShellInstructor = React.useCallback((name: string): Instructor => ({
+    $id: `shell:${name}`,
+    name,
+    email: '',
+    department: '',
+    $createdAt: '',
+    $updatedAt: '',
+  }), []);
+
+  // Enrich each paper with its lecture instructor(s). Prefer the name encoded
+  // in the filename (one-to-one mapping for multi-section courses like CCC8011);
+  // fall back to all term lecturers from teaching records.
   type EnrichedExamPaper = ExamPaper & { lectureInstructors: Instructor[] };
   const enrichedExamPapers = React.useMemo<EnrichedExamPaper[]>(() => {
     return examPapers.map(p => {
+      const fromFile = p.term?.instructorNameFromFile;
+      if (fromFile) {
+        const resolved =
+          teachingInstructorByName.get(fromFile) ||
+          filenameInstructorsByName.get(fromFile) ||
+          makeShellInstructor(fromFile);
+        return { ...p, lectureInstructors: [resolved] };
+      }
       let lectureInstructors: Instructor[] = [];
       if (p.term) {
         for (const code of p.term.termCodes) {
@@ -528,7 +572,7 @@ const CourseDetail = () => {
       }
       return { ...p, lectureInstructors };
     });
-  }, [examPapers, lectureInstructorsByTermCode]);
+  }, [examPapers, lectureInstructorsByTermCode, teachingInstructorByName, filenameInstructorsByName, makeShellInstructor]);
 
   // Year filter options for past exam papers — derived from parsed term info.
   // The synthetic value '__unknown__' groups files whose names can't be parsed.
@@ -1078,6 +1122,8 @@ const CourseDetail = () => {
 
   // Lazy-load past exam papers when the user opens the exams tab.
   // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
+  // `storage.listFiles` caps each response at 100 rows, so paginate until empty
+  // to capture every paper (CCC8011 has 130+).
   useEffect(() => {
     if (!user || activeMainTab !== 'exams' || !course?.course_code || examPapersLoaded) return;
 
@@ -1086,32 +1132,80 @@ const CourseDetail = () => {
     setExamPapersLoading(true);
     setExamPapersError(null);
 
-    storage.listFiles({ bucketId: 'past_exam_papers', search: courseCode })
-      .then(res => {
-        if (cancelled) return;
+    const PAGE_SIZE = 100;
+    const SAFETY_CAP = 5000;
+
+    (async () => {
+      try {
         const prefix = `${courseCode.toLowerCase()}_`;
-        const matched: ExamPaper[] = (res.files || [])
-          .filter(f => f.name.toLowerCase().startsWith(prefix))
-          .map(f => ({
-            id: f.$id,
-            name: f.name,
-            sizeOriginal: f.sizeOriginal,
-            term: parseExamPaperTermCode(f.name, courseCode.length),
-          }));
-        setExamPapers(matched);
+        const collected: ExamPaper[] = [];
+        let offset = 0;
+        while (offset < SAFETY_CAP) {
+          const res = await storage.listFiles({
+            bucketId: 'past_exam_papers',
+            search: courseCode,
+            queries: [Query.limit(PAGE_SIZE), Query.offset(offset)],
+          });
+          if (cancelled) return;
+          const files = res.files || [];
+          for (const f of files) {
+            if (!f.name.toLowerCase().startsWith(prefix)) continue;
+            collected.push({
+              id: f.$id,
+              name: f.name,
+              sizeOriginal: f.sizeOriginal,
+              term: parseExamPaperTermCode(f.name, courseCode.length),
+            });
+          }
+          if (files.length < PAGE_SIZE) break;
+          offset += PAGE_SIZE;
+        }
+        if (cancelled) return;
+        setExamPapers(collected);
         setExamPapersLoaded(true);
-      })
-      .catch(err => {
+      } catch (err) {
         if (cancelled) return;
         console.error('Failed to load past exam papers', err);
         setExamPapersError(t('pages.courseDetail.examPapersLoadFailed'));
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setExamPapersLoading(false);
-      });
+      }
+    })();
 
     return () => { cancelled = true; };
   }, [user, activeMainTab, course?.course_code, examPapersLoaded, t]);
+
+  // Resolve filename-encoded instructor names that aren't already in
+  // teachingInfo, with a single batched query to the instructors collection.
+  useEffect(() => {
+    if (examPapers.length === 0) return;
+    const needed = new Set<string>();
+    examPapers.forEach(p => {
+      const name = p.term?.instructorNameFromFile;
+      if (!name) return;
+      if (teachingInstructorByName.has(name)) return;
+      if (filenameInstructorsByName.has(name)) return;
+      needed.add(name);
+    });
+    if (needed.size === 0) return;
+    let cancelled = false;
+    CourseService.getInstructorsByNames(Array.from(needed))
+      .then(rows => {
+        if (cancelled || rows.length === 0) return;
+        setFilenameInstructorsByName(prev => {
+          const next = new Map(prev);
+          rows.forEach(r => next.set(r.name, r));
+          return next;
+        });
+      })
+      .catch(err => console.error('Failed to resolve filename instructors', err));
+    return () => { cancelled = true; };
+  }, [examPapers, teachingInstructorByName, filenameInstructorsByName]);
+
+  // Reset to the first page whenever the filter / sort changes the list.
+  useEffect(() => {
+    setExamPapersCurrentPage(1);
+  }, [examPapersSort, examPapersYearFilter, examPapersInstructorFilter, examPapers]);
 
   if (loading) {
     return (
@@ -3004,9 +3098,15 @@ const CourseDetail = () => {
                         {t('pages.courseDetail.examPapersNoMatch')}
                       </p>
                     </div>
-                  ) : (
+                  ) : (() => {
+                    const totalPages = Math.max(1, Math.ceil(filteredExamPapers.length / EXAM_PAPERS_PAGE_SIZE));
+                    const currentPage = Math.min(examPapersCurrentPage, totalPages);
+                    const startIdx = (currentPage - 1) * EXAM_PAPERS_PAGE_SIZE;
+                    const pagePapers = filteredExamPapers.slice(startIdx, startIdx + EXAM_PAPERS_PAGE_SIZE);
+                    return (
+                    <>
                     <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                      {filteredExamPapers.map(paper => {
+                      {pagePapers.map(paper => {
                         const termLabel = paper.term?.label || t('pages.courseDetail.examPaperTermFallback');
                         const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
                         const viewUrl = storage.getFileView({ bucketId: 'past_exam_papers', fileId: paper.id });
@@ -3047,12 +3147,13 @@ const CourseDetail = () => {
                                   const label = formatted.secondary
                                     ? `${formatted.primary} · ${formatted.secondary}`
                                     : formatted.primary;
+                                  const isShell = ins.$id.startsWith('shell:');
                                   return (
                                     <Badge
                                       key={ins.name}
                                       variant="outline"
-                                      className="text-xs font-normal cursor-pointer bg-background border-gray-300 dark:border-gray-600 text-foreground hover:bg-muted hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-                                      onClick={() => navigate(`/instructors/${encodeURIComponent(ins.name)}`)}
+                                      className={`text-xs font-normal bg-background border-gray-300 dark:border-gray-600 text-foreground transition-colors ${isShell ? '' : 'cursor-pointer hover:bg-muted hover:border-gray-400 dark:hover:border-gray-500'}`}
+                                      onClick={isShell ? undefined : () => navigate(`/instructors/${encodeURIComponent(ins.name)}`)}
                                       title={label}
                                     >
                                       {formatted.primary}
@@ -3065,7 +3166,18 @@ const CourseDetail = () => {
                         );
                       })}
                     </div>
-                  )}
+                    {totalPages > 1 && (
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setExamPapersCurrentPage}
+                        itemsPerPage={EXAM_PAPERS_PAGE_SIZE}
+                        totalItems={filteredExamPapers.length}
+                      />
+                    )}
+                    </>
+                    );
+                  })()}
                 </div>
               )
             ) : (
