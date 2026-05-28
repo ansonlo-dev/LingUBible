@@ -1184,7 +1184,7 @@ export default {
   'faq.signupRequiredQuestion': '我需要注册才能查看评论吗？',
   'faq.signupRequiredAnswer': '不需要，查看评论不需要注册，但要发表评论，用户必须使用有效的岭南大学电子邮件地址注册。',
   'faq.websiteFreeQuestion': '这个网站是免费的吗？',
-  'faq.websiteFreeAnswer': '这个网站是非营利且无广告的，网站提供的所有服务都是免费的。不过，如果您想支持这个项目，可以点击页脚的赞助按钮来帮助我承担部分运营成本。任何帮助都非常感谢。',
+  'faq.websiteFreeAnswer': '本网站提供的所有服务均为免费。不过，如果您想支持这个项目，可以点击页脚的赞助按钮来帮助我承担部分运营成本。任何帮助都非常感谢。',
   // FAQ Section Categories
   'faq.section.account': '账户与注册',
   'faq.section.navigation': '导航与使用', 

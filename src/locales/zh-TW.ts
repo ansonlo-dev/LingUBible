@@ -1143,7 +1143,7 @@ export default {
   'faq.signupRequiredQuestion': '我需要註冊才能查看評論嗎？',
   'faq.signupRequiredAnswer': '不需要，查看評論不需要註冊，但要發表評論，用戶必須使用有效的嶺南大學電子郵件地址註冊。',
   'faq.websiteFreeQuestion': '這個網站是免費的嗎？',
-  'faq.websiteFreeAnswer': '這個網站是非營利且無廣告的，網站提供的所有服務都是免費的。不過，如果您想支持這個項目，可以點擊頁腳的贊助按鈕來幫助我承擔部分營運成本。任何幫助都非常感謝。',
+  'faq.websiteFreeAnswer': '本網站提供的所有服務均為免費。不過，如果您想支持這個項目，可以點擊頁腳的贊助按鈕來幫助我承擔部分營運成本。任何幫助都非常感謝。',
   // FAQ Section Categories
   'faq.section.account': '帳戶與註冊',
   'faq.section.navigation': '導航與使用', 
