@@ -27,7 +27,7 @@ interface ResponsiveTooltipProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
+export const ResponsiveTooltip = React.forwardRef<HTMLElement, ResponsiveTooltipProps>(({
   content,
   children,
   side = 'top',
@@ -46,14 +46,23 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
   onReset,
   open,
   onOpenChange,
-}) => {
+}, forwardedRef) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [hasBeenTapped, setHasBeenTapped] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const setTriggerRef = useCallback((el: HTMLElement | null) => {
+    triggerRef.current = el;
+    if (typeof forwardedRef === 'function') {
+      forwardedRef(el);
+    } else if (forwardedRef) {
+      (forwardedRef as React.MutableRefObject<HTMLElement | null>).current = el;
+    }
+  }, [forwardedRef]);
   
   // Use controlled mode if open and onOpenChange are provided, otherwise use internal state
   const isControlled = open !== undefined && onOpenChange !== undefined;
@@ -253,7 +262,7 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
         >
           <TooltipTrigger asChild={asChild} className={className}>
             {React.cloneElement(children as React.ReactElement, {
-              ref: triggerRef,
+              ref: setTriggerRef,
               onClick: (e: React.MouseEvent) => {
                 // Get the original onClick handler
                 const originalOnClick = (children as React.ReactElement).props?.onClick;
@@ -304,7 +313,9 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
     <TooltipProvider>
       <Tooltip delayDuration={delayDuration}>
         <TooltipTrigger asChild={asChild} className={className}>
-          {children}
+          {React.isValidElement(children)
+            ? React.cloneElement(children as React.ReactElement, { ref: setTriggerRef })
+            : children}
         </TooltipTrigger>
         <TooltipContent
           side={side}
@@ -320,7 +331,9 @@ export const ResponsiveTooltip: React.FC<ResponsiveTooltipProps> = ({
       </Tooltip>
     </TooltipProvider>
   );
-};
+});
+
+ResponsiveTooltip.displayName = 'ResponsiveTooltip';
 
 // Helper component for simple text tooltips with title attribute fallback
 interface SimpleTooltipProps {

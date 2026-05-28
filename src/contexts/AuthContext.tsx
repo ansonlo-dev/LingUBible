@@ -5,6 +5,8 @@ import { getAvatarContent } from "@/utils/ui/avatarUtils";
 import { avatarService } from "@/services/api/avatar";
 import { useLanguage } from '@/hooks/useLanguage';
 import { oauthService } from '@/services/api/oauth';
+import { functions } from '@/lib/appwrite';
+import { ExecutionMethod } from 'appwrite';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -91,30 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const cleanupInterval = setInterval(async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_APPWRITE_ENDPOINT}/functions/cleanup-expired-codes/executions`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Appwrite-Project': '6a1097400037a55f6472',
-                    },
-                    body: JSON.stringify({
-                        body: JSON.stringify({
-                            action: 'immediate_cleanup',
-                            userId,
-                            email,
-                            reason: 'non_student_email_session_cleanup'
-                        }),
-                        async: false,
-                        method: 'POST'
+                const result = await functions.createExecution(
+                    'cleanup-expired-codes',
+                    JSON.stringify({
+                        action: 'immediate_cleanup',
+                        userId,
+                        email,
+                        reason: 'non_student_email_session_cleanup'
                     }),
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('定期清理執行成功:', result);
-                } else {
-                    console.error('定期清理執行失敗:', response.status);
-                }
+                    false,
+                    '/',
+                    ExecutionMethod.POST
+                );
+                console.log('定期清理執行成功:', result);
             } catch (error) {
                 console.error('定期清理調用失敗:', error);
             }
