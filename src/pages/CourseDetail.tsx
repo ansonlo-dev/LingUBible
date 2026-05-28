@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,11 @@ import {
   FileText,
   Download,
   ExternalLink,
-  Lock
+  Lock,
+  ListChecks,
+  Layers,
+  Ban,
+  ShieldCheck
 } from 'lucide-react';
 import { storage } from '@/lib/appwrite';
 import { Query } from 'appwrite';
@@ -259,6 +263,119 @@ const formatExamPaperSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const COURSE_CODE_REGEX = /\b[A-Z]{3}\d{4}\b/g;
+
+const renderTextWithCourseLinks = (
+  text: string,
+  currentCourseCode?: string,
+): React.ReactNode[] => {
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  COURSE_CODE_REGEX.lastIndex = 0;
+  while ((match = COURSE_CODE_REGEX.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+    const code = match[0];
+    if (currentCourseCode && code === currentCourseCode) {
+      nodes.push(
+        <span key={`code-${key++}`} className="font-mono font-semibold text-muted-foreground">
+          {code}
+        </span>,
+      );
+    } else {
+      nodes.push(
+        <Link
+          key={`code-${key++}`}
+          to={`/courses/${code}`}
+          className="font-mono font-semibold text-primary hover:underline underline-offset-2 transition-colors"
+        >
+          {code}
+        </Link>,
+      );
+    }
+    lastIndex = match.index + code.length;
+  }
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+  return nodes;
+};
+
+interface CourseRequirementsSectionProps {
+  course: Course;
+  t: (key: string, params?: Record<string, any>) => string;
+}
+
+const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t }) => {
+  const items: Array<{
+    key: string;
+    label: string;
+    value: string;
+    icon: React.ReactNode;
+    accent: string;
+  }> = [
+    {
+      key: 'prerequisites',
+      label: t('pages.courseDetail.prerequisites'),
+      value: course.course_prerequisites?.trim() || '',
+      icon: <ListChecks className="h-4 w-4" />,
+      accent: 'text-blue-600 dark:text-blue-400 bg-blue-500/10',
+    },
+    {
+      key: 'corequisites',
+      label: t('pages.courseDetail.corequisites'),
+      value: course.course_corequisites?.trim() || '',
+      icon: <Layers className="h-4 w-4" />,
+      accent: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
+    },
+    {
+      key: 'exclusions',
+      label: t('pages.courseDetail.exclusions'),
+      value: course.course_exclusions?.trim() || '',
+      icon: <Ban className="h-4 w-4" />,
+      accent: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
+    },
+    {
+      key: 'exemptionRequirements',
+      label: t('pages.courseDetail.exemptionRequirements'),
+      value: course.course_exemption_requirements?.trim() || '',
+      icon: <ShieldCheck className="h-4 w-4" />,
+      accent: 'text-amber-600 dark:text-amber-400 bg-amber-500/10',
+    },
+  ].filter(item => item.value);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-6 pt-6 border-t border-border/60">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        {t('pages.courseDetail.requirements')}
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map(item => (
+          <div
+            key={item.key}
+            className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:p-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`flex h-7 w-7 items-center justify-center rounded-md ${item.accent}`}>
+                {item.icon}
+              </span>
+              <span className="text-sm font-semibold text-foreground">{item.label}</span>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line break-words">
+              {renderTextWithCourseLinks(item.value, course.course_code)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const CourseDetail = () => {
@@ -1625,15 +1742,33 @@ const CourseDetail = () => {
                   ? (course.course_description_sc || course.course_description)
                   : course.course_description;
 
-              return description ? (
-                <p className="text-base leading-relaxed text-foreground whitespace-pre-line text-justify hyphens-auto">
-                  {description}
-                </p>
-              ) : (
-                <div className="text-center py-8">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
-                </div>
+              const hasRequirements = Boolean(
+                course.course_prerequisites?.trim() ||
+                course.course_corequisites?.trim() ||
+                course.course_exclusions?.trim() ||
+                course.course_exemption_requirements?.trim()
+              );
+
+              if (!description && !hasRequirements) {
+                return (
+                  <div className="text-center py-8">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  {description ? (
+                    <p className="text-base leading-relaxed text-foreground whitespace-pre-line text-justify hyphens-auto">
+                      {description}
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
+                  )}
+                  <CourseRequirementsSection course={course} t={t} />
+                </>
               );
             })()}
           </div>
