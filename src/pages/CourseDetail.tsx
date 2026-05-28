@@ -267,6 +267,14 @@ const formatExamPaperSize = (bytes: number): string => {
 
 const COURSE_CODE_REGEX = /\b[A-Z]{3}\d{4}\b/g;
 
+// Normalise separators between course codes so they read cleanly:
+//  - "/"  → spaces before & after  (CDS1003/BUS1102 → CDS1003 / BUS1102)
+//  - ","  → space after only       (CDS1003,BUS1102 → CDS1003, BUS1102)
+const formatRequirementSeparators = (text: string): string =>
+  text
+    .replace(/\s*\/\s*/g, ' / ')
+    .replace(/\s*,\s*/g, ', ');
+
 const renderTextWithCourseLinks = (
   text: string,
   currentCourseCode?: string,
@@ -322,28 +330,28 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
     {
       key: 'prerequisites',
       label: t('pages.courseDetail.prerequisites'),
-      value: course.course_prerequisites?.trim() || '',
+      value: formatRequirementSeparators(course.course_prerequisites?.trim() || ''),
       icon: <ListChecks className="h-4 w-4" />,
       accent: 'text-blue-600 dark:text-blue-400 bg-blue-500/10',
     },
     {
       key: 'corequisites',
       label: t('pages.courseDetail.corequisites'),
-      value: course.course_corequisites?.trim() || '',
+      value: formatRequirementSeparators(course.course_corequisites?.trim() || ''),
       icon: <Layers className="h-4 w-4" />,
       accent: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
     },
     {
       key: 'exclusions',
       label: t('pages.courseDetail.exclusions'),
-      value: course.course_exclusions?.trim() || '',
+      value: formatRequirementSeparators(course.course_exclusions?.trim() || ''),
       icon: <Ban className="h-4 w-4" />,
       accent: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
     },
     {
       key: 'exemptionRequirements',
       label: t('pages.courseDetail.exemptionRequirements'),
-      value: course.course_exemption_requirements?.trim() || '',
+      value: formatRequirementSeparators(course.course_exemption_requirements?.trim() || ''),
       icon: <ShieldCheck className="h-4 w-4" />,
       accent: 'text-amber-600 dark:text-amber-400 bg-amber-500/10',
     },
