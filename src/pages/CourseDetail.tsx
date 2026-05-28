@@ -822,6 +822,11 @@ const CourseDetail = () => {
   const allExamPapersSelected =
     filteredExamPapers.length > 0 && selectedExamPaperCount === filteredExamPapers.length;
   const someExamPapersSelected = selectedExamPaperCount > 0 && !allExamPapersSelected;
+  // Total bytes of the currently-selected papers, so users can gauge the download size.
+  const selectedExamPapersSize = filteredExamPapers.reduce(
+    (sum, p) => (selectedExamPaperIds.has(p.id) ? sum + (p.sizeOriginal || 0) : sum),
+    0,
+  );
 
   const toggleExamPaperSelection = (id: string) => {
     setSelectedExamPaperIds(prev => {
@@ -3427,7 +3432,9 @@ const CourseDetail = () => {
                         )}
                         <span className="text-xs text-muted-foreground truncate">
                           {selectedExamPaperCount > 0
-                            ? t('pages.courseDetail.examPapersSelectedCount', { count: selectedExamPaperCount })
+                            ? `${t('pages.courseDetail.examPapersSelectedCount', { count: selectedExamPaperCount })}${
+                                selectedExamPapersSize > 0 ? ` · ${formatExamPaperSize(selectedExamPapersSize)}` : ''
+                              }`
                             : t('pages.courseDetail.examPapersResultCount', {
                                 filtered: filteredExamPapers.length,
                                 total: examPapers.length,
