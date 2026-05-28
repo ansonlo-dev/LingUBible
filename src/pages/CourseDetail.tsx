@@ -3001,7 +3001,7 @@ const CourseDetail = () => {
                         return (
                           <div
                             key={paper.id}
-                            className="flex flex-col gap-2 p-3 border rounded-lg bg-card hover:bg-muted/40 transition-colors min-w-0"
+                            className="flex flex-col gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-sm hover:shadow-md hover:bg-muted/40 transition-all min-w-0"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="p-2 bg-muted/50 rounded-md shrink-0">
@@ -3037,8 +3037,8 @@ const CourseDetail = () => {
                                   return (
                                     <Badge
                                       key={ins.name}
-                                      variant="secondary"
-                                      className="text-xs font-normal cursor-pointer hover:bg-secondary/80"
+                                      variant="outline"
+                                      className="text-xs font-normal cursor-pointer bg-background border-gray-300 dark:border-gray-600 text-foreground hover:bg-muted hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
                                       onClick={() => navigate(`/instructors/${encodeURIComponent(ins.name)}`)}
                                       title={label}
                                     >
