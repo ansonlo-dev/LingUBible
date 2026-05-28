@@ -61,28 +61,38 @@ interface ReviewInfoWithInstructors extends CourseReviewInfo {
   instructorMaps: Map<string, Instructor>;
 }
 
-// CourseTitle component for fetching and displaying course title
-const CourseTitle = React.memo(({ courseCode }: { courseCode: string }) => {
+// CourseTitle: prefers a parent-supplied course (already loaded in the user's
+// review batch) to avoid one Appwrite read per rendered review row. Only falls
+// back to fetching by code when no course is provided.
+const CourseTitle = React.memo(({ courseCode, course: providedCourse }: { courseCode: string; course?: Course }) => {
   const { language, t } = useLanguage();
-  const [course, setCourse] = useState<Course | null>(null);
-  const [loading, setLoading] = useState(true);
-  
+  const [course, setCourse] = useState<Course | null>(providedCourse || null);
+  const [loading, setLoading] = useState(!providedCourse);
+
   useEffect(() => {
+    if (providedCourse) {
+      setCourse(providedCourse);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
     const fetchCourse = async () => {
       try {
         setLoading(true);
         const courseData = await CourseService.getCourseByCode(courseCode);
-        setCourse(courseData);
+        if (!cancelled) setCourse(courseData);
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    
+
     fetchCourse();
-  }, [courseCode]);
-  
+    return () => { cancelled = true; };
+  }, [courseCode, providedCourse]);
+
   if (loading) {
     return (
       <div>
@@ -90,7 +100,7 @@ const CourseTitle = React.memo(({ courseCode }: { courseCode: string }) => {
       </div>
     );
   }
-  
+
   if (!course) {
     return (
       <div>
@@ -98,7 +108,7 @@ const CourseTitle = React.memo(({ courseCode }: { courseCode: string }) => {
       </div>
     );
   }
-  
+
   const courseInfo = getCourseTitle(course, language);
   return (
     <div>
@@ -267,36 +277,37 @@ const MyReviews = () => {
       
       // 獲取用戶評論
       const userReviews = await CourseService.getUserReviews(user.$id);
-      
-      // 為每個評論獲取講師信息和課程信息
-      const reviewsWithInstructors = await Promise.all(
-        userReviews.map(async (reviewInfo) => {
-          const instructorData = new Map<string, Instructor>();
-          
-          // 從 instructor_details 中獲取所有講師名字
-          const instructorNames = reviewInfo.instructorDetails.map(detail => detail.instructor_name);
-          
-          // 並行獲取所有講師的完整信息和課程信息
-          const [courseData] = await Promise.all([
-            // 獲取課程信息
-            CourseService.getCourseByCode(reviewInfo.review.course_code),
-            // 獲取講師信息
-            ...([...new Set(instructorNames)].map(async (name) => {
-              const instructor = await CourseService.getInstructorByName(name);
-              if (instructor) {
-                instructorData.set(name, instructor);
-              }
-            }))
-          ]);
-          
-          return {
-            ...reviewInfo,
-            instructorData,
-            courseData: courseData || undefined
-          };
-        })
-      );
-      
+
+      // 收集所有評論涉及的唯一課程代碼與講師姓名，一次 IN 查詢撈完，
+      // 避免「(評論數 × 講師數) 次單列查詢」的 N+1。
+      const allCourseCodes = Array.from(new Set(userReviews.map(r => r.review.course_code).filter(Boolean)));
+      const allInstructorNames = Array.from(new Set(
+        userReviews.flatMap(r => r.instructorDetails.map(d => d.instructor_name)).filter(Boolean)
+      ));
+
+      const [courses, instructors] = await Promise.all([
+        allCourseCodes.length > 0 ? CourseService.getCoursesByCodes(allCourseCodes) : Promise.resolve([] as Course[]),
+        allInstructorNames.length > 0 ? CourseService.getInstructorsByNames(allInstructorNames) : Promise.resolve([] as Instructor[]),
+      ]);
+
+      const courseByCode = new Map<string, Course>();
+      courses.forEach(c => courseByCode.set(c.course_code, c));
+      const instructorByName = new Map<string, Instructor>();
+      instructors.forEach(i => instructorByName.set(i.name, i));
+
+      const reviewsWithInstructors = userReviews.map(reviewInfo => {
+        const instructorData = new Map<string, Instructor>();
+        new Set(reviewInfo.instructorDetails.map(d => d.instructor_name)).forEach(name => {
+          const ins = instructorByName.get(name);
+          if (ins) instructorData.set(name, ins);
+        });
+        return {
+          ...reviewInfo,
+          instructorData,
+          courseData: courseByCode.get(reviewInfo.review.course_code) || undefined,
+        };
+      });
+
       setReviews(reviewsWithInstructors);
     } catch (err) {
       console.error('Error loading user reviews:', err);
@@ -865,7 +876,7 @@ const MyReviews = () => {
                               }}
                             >
                               <div className="font-bold">{reviewInfo.review.course_code}</div>
-                              <CourseTitle courseCode={reviewInfo.review.course_code} />
+                              <CourseTitle courseCode={reviewInfo.review.course_code} course={reviewInfo.courseData} />
                             </a>
                           </h4>
                         </div>

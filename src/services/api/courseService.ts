@@ -183,6 +183,7 @@ export interface InstructorTeachingCourse {
   course: Course;
   term: Term;
   sessionType: string;
+  teachingLanguage: string; // 來自 teaching_records.teaching_language，避免額外的 batch 查詢
 }
 
 export interface InstructorReviewInfo {
@@ -1775,7 +1776,8 @@ export class CourseService {
         return {
           course,
           term,
-          sessionType: record.session_type
+          sessionType: record.session_type,
+          teachingLanguage: record.teaching_language || ''
         };
       });
 
@@ -1979,14 +1981,25 @@ export class CourseService {
         }
       });
 
-      // 並行獲取學期和課程信息
+      // 批次撈取此講師相關評論的所有學期 / 課程，取代逐筆 getTermByCode +
+      // getCourseByCode 形成的 N+1 查詢；每張 instructor 詳情頁因此省下
+      // 「(評論數) × 2 次」單列讀取，改為 2 次 IN 查詢即可。
+      const uniqueTermCodes = [...new Set(instructorReviews.map(r => r.term_code).filter(Boolean))];
+      const uniqueCourseCodesForReviews = [...new Set(instructorReviews.map(r => r.course_code).filter(Boolean))];
+      const [batchTerms, batchCourses] = await Promise.all([
+        uniqueTermCodes.length > 0 ? this.getTermsByCodes(uniqueTermCodes) : Promise.resolve([] as Term[]),
+        uniqueCourseCodesForReviews.length > 0 ? this.getCoursesByCodes(uniqueCourseCodesForReviews) : Promise.resolve([] as Course[]),
+      ]);
+      const termsByCode = new Map<string, Term>();
+      batchTerms.forEach(term => termsByCode.set(term.term_code, term));
+      const coursesByCode = new Map<string, Course>();
+      batchCourses.forEach(course => coursesByCode.set(course.course_code, course));
+
       const reviewsWithInfo = await Promise.all(
         instructorReviews.map(async (review) => {
-          const [term, course] = await Promise.all([
-            this.getTermByCode(review.term_code),
-            this.getCourseByCode(review.course_code)
-          ]);
-          
+          const term = termsByCode.get(review.term_code) || null;
+          const course = coursesByCode.get(review.course_code) || null;
+
           // Handle missing courses by creating a fallback course object
           let finalCourse = course;
           if (!course) {
@@ -2448,39 +2461,37 @@ export class CourseService {
 
       const reviews = response.rows as unknown as Review[];
 
-      // 並行獲取每個評論的相關信息和投票統計
-      const reviewsWithInfo = await Promise.all(
-        reviews.map(async (review) => {
-          try {
-            const [term, voteStats] = await Promise.all([
-              this.getTermByCode(review.term_code),
-              this.getReviewVoteStats(review.$id)
-            ]);
+      if (reviews.length === 0) return [];
 
-            if (!term) {
-              return null;
-            }
+      // 批次撈取所有相關學期 + 評論投票統計，取代「每筆評論一次 getTermByCode +
+      // 一次 getReviewVoteStats」的 N+1（vote stats 是真的 DB 讀，不是快取）。
+      const uniqueTermCodes = [...new Set(reviews.map(r => r.term_code).filter(Boolean))];
+      const reviewIds = reviews.map(r => r.$id);
+      const [batchTerms, voteStatsMap] = await Promise.all([
+        uniqueTermCodes.length > 0 ? this.getTermsByCodes(uniqueTermCodes) : Promise.resolve([] as Term[]),
+        this.getBatchReviewVoteStats(reviewIds),
+      ]);
+      const termsByCode = new Map<string, Term>();
+      batchTerms.forEach(term => termsByCode.set(term.term_code, term));
 
-            let instructorDetails: InstructorDetail[] = [];
-            try {
-              instructorDetails = JSON.parse(review.instructor_details);
-            } catch (error) {
-              console.error('Error parsing instructor details:', error);
-            }
-
-            return {
-              review,
-              term,
-              instructorDetails,
-              upvotes: voteStats.upvotes,
-              downvotes: voteStats.downvotes
-            };
-          } catch (error) {
-            console.error('Error processing review:', error);
-            return null;
-          }
-        })
-      );
+      const reviewsWithInfo = reviews.map(review => {
+        const term = termsByCode.get(review.term_code);
+        if (!term) return null;
+        let instructorDetails: InstructorDetail[] = [];
+        try {
+          instructorDetails = JSON.parse(review.instructor_details);
+        } catch (error) {
+          console.error('Error parsing instructor details:', error);
+        }
+        const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
+        return {
+          review,
+          term,
+          instructorDetails,
+          upvotes: voteStats.upvotes,
+          downvotes: voteStats.downvotes,
+        };
+      });
 
       return reviewsWithInfo.filter((info): info is NonNullable<typeof info> => info !== null);
     } catch (error) {
@@ -5029,7 +5040,8 @@ export class CourseService {
           return {
             course: finalCourse,
             term: finalTerm,
-            sessionType: record.session_type
+            sessionType: record.session_type,
+            teachingLanguage: record.teaching_language || ''
           };
         })
         .filter((info): info is NonNullable<typeof info> => info !== null)

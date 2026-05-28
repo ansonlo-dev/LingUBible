@@ -844,40 +844,23 @@ const Lecturers = () => {
     return details;
   }, [reviews]);
 
-  // State for teaching languages in teaching records section
-  const [teachingRecordsLanguages, setTeachingRecordsLanguages] = useState<Map<string, string>>(new Map());
-  const [teachingRecordsLanguagesLoading, setTeachingRecordsLanguagesLoading] = useState(false);
-  
-  // Load teaching languages for teaching records
-  useEffect(() => {
-    const loadTeachingRecordsLanguages = async () => {
-      if (!teachingCourses.length || !decodedName) return;
-      
-      setTeachingRecordsLanguagesLoading(true);
-      try {
-        // Create instructor detail params for each teaching record
-        const instructorDetailParams = teachingCourses.map(teaching => ({
-          courseCode: teaching.course.course_code,
-          termCode: teaching.term.term_code,
-          instructorName: decodedName,
-          sessionType: teaching.sessionType
-        }));
-        
-        // Batch load teaching languages
-        const teachingLanguagesMap = await CourseService.getBatchInstructorDetailTeachingLanguages(instructorDetailParams);
-        setTeachingRecordsLanguages(teachingLanguagesMap);
-      } catch (error) {
-        console.error('Error loading teaching records languages:', error);
-        setTeachingRecordsLanguages(new Map());
-      } finally {
-        setTeachingRecordsLanguagesLoading(false);
-      }
-    };
-    
-    loadTeachingRecordsLanguages();
+  // Teaching languages for the teaching-records section come straight from
+  // teachingCourses (which now carries teachingLanguage from the underlying
+  // teaching_records query) — no separate batch lookup needed. Builds a map
+  // keyed exactly like the previous Appwrite-backed implementation so the
+  // helper signature below stays stable.
+  const teachingRecordsLanguagesLoading = false;
+  const teachingRecordsLanguages = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!decodedName) return map;
+    teachingCourses.forEach(teaching => {
+      if (!teaching.teachingLanguage) return;
+      const key = `${teaching.course.course_code}|${teaching.term.term_code}|${decodedName}|${teaching.sessionType}`;
+      map.set(key, teaching.teachingLanguage);
+    });
+    return map;
   }, [teachingCourses, decodedName]);
-  
-  // Helper function to get teaching language for teaching records
+
   const getTeachingLanguageForTeachingRecord = (courseCode: string, termCode: string, sessionType: string): string | null => {
     if (!decodedName) return null;
     const key = `${courseCode}|${termCode}|${decodedName}|${sessionType}`;
@@ -1087,11 +1070,12 @@ const Lecturers = () => {
     loadInstructorBasicData();
   }, [decodedName, t]);
 
-  // 獲取其他講師的完整信息
+  // 獲取其他講師的完整信息：用單次 IN 查詢取代每位講師一次 getInstructorByName，
+  // 避免 N+1 造成的 instructors collection 多餘讀取。
   useEffect(() => {
     const fetchOtherInstructorsInfo = async () => {
       if (!reviews || !decodedName) return;
-      
+
       const otherInstructorNames = new Set<string>();
       reviews.forEach(reviewInfo => {
         reviewInfo.instructorDetails.forEach(instructorDetail => {
@@ -1101,22 +1085,19 @@ const Lecturers = () => {
         });
       });
 
-      const newOtherInstructorsMap = new Map<string, Instructor>();
-      
-      // 並行獲取所有其他講師信息
-      const promises = Array.from(otherInstructorNames).map(async (name) => {
-        try {
-          const instructor = await CourseService.getInstructorByName(name);
-          if (instructor) {
-            newOtherInstructorsMap.set(name, instructor);
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch instructor info for ${name}:`, error);
-        }
-      });
+      if (otherInstructorNames.size === 0) {
+        setOtherInstructorsMap(new Map());
+        return;
+      }
 
-      await Promise.all(promises);
-      setOtherInstructorsMap(newOtherInstructorsMap);
+      try {
+        const instructors = await CourseService.getInstructorsByNames(Array.from(otherInstructorNames));
+        const newOtherInstructorsMap = new Map<string, Instructor>();
+        instructors.forEach(ins => newOtherInstructorsMap.set(ins.name, ins));
+        setOtherInstructorsMap(newOtherInstructorsMap);
+      } catch (error) {
+        console.warn('Failed to batch fetch other instructor info:', error);
+      }
     };
 
     fetchOtherInstructorsInfo();
