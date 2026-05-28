@@ -102,7 +102,15 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
+        {/* 用戶設定 */}
+        <DropdownMenuItem asChild className="px-4 py-2 text-sm cursor-pointer">
+          <Link to="/settings">
+            <Settings className="h-4 w-4 mr-2" />
+            {t('settings.title')}
+          </Link>
+        </DropdownMenuItem>
+
         {/* 自定義頭像選項 */}
         <AvatarCustomizer>
           <DropdownMenuItem 
