@@ -1822,6 +1822,66 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     }
   };
 
+  // Reusable chart-type switcher, shared across the data and no-data render
+  // branches. Rendering it even when there's no data (e.g. a box plot with only
+  // N/A grades, which filters down to an empty set) means the user can always
+  // switch back to another chart type instead of getting stuck.
+  const chartTypeSwitcher = (
+    <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+          isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
+          chartType === 'bar'
+            ? "text-black dark:text-white font-bold"
+            : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
+        )}
+        onClick={() => setChartType('bar')}
+      >
+        <BarChart3 className="h-3 w-3" />
+        <span className={cn(
+          isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+        )}>{t('chart.barChart')}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+          isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
+          chartType === 'stacked'
+            ? "text-black dark:text-white font-bold"
+            : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
+        )}
+        onClick={() => setChartType('stacked')}
+      >
+        <BarChart className="h-3 w-3" />
+        <span className={cn(
+          isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+        )}>{t('chart.stackedNormalized')}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "px-1 sm:px-2 text-xs gap-1 flex-1 sm:flex-none min-w-0 bg-transparent",
+          isMobile && isPortrait ? "h-auto py-1 flex-col" : "h-7 flex-row",
+          chartType === 'boxplot'
+            ? "text-black dark:text-white font-bold"
+            : "text-gray-500 dark:text-gray-400 font-normal hover:text-gray-700 dark:hover:text-gray-300"
+        )}
+        onClick={() => setChartType('boxplot')}
+      >
+        <BoxSelect className="h-3 w-3" />
+        <span className={cn(
+          isMobile && isPortrait ? "text-center leading-tight whitespace-normal break-words" : "truncate"
+        )}>{t('chart.boxPlot')}</span>
+      </Button>
+    </div>
+  );
+
   // 沒有數據時的顯示
   if (loading) {
     return (
@@ -1849,21 +1909,16 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4 min-h-[2.5rem]" style={{ touchAction: 'pan-y' }}>
                     <div className="flex flex-col gap-2">
                       {/* 圖表類型切換按鈕 */}
-                    <div className="flex items-center gap-0.5 bg-transparent rounded-lg p-0.5 w-full sm:w-auto">
-                      {/* Chart type buttons - simplified for no data state */}
-                      <div className="text-sm text-muted-foreground">
-                        {t('chart.gradeDistribution')}
-                      </div>
-                    </div>
+                    {chartTypeSwitcher}
                   </div>
                       
                       {/* 右側控制項目 */}
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                      <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
                         {/* N/A Grades Toggle - hidden for box plot */}
                         {onNAToggleChange && chartType !== 'boxplot' && (
                           <button
                             onClick={() => onNAToggleChange(!showNAGrades)}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                            className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
                             title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
                           >
                             {showNAGrades ? (
@@ -1982,18 +2037,16 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                     <div className="flex flex-col gap-2 mb-2">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 px-0 sm:px-4 min-h-[2.5rem]" style={{ touchAction: 'pan-y' }}>
                         <div className="flex flex-col gap-2">
-                          <div className="text-sm text-muted-foreground">
-                            {t('chart.gradeDistribution')}
-                          </div>
+                          {chartTypeSwitcher}
                         </div>
                           
                         {/* 右側控制項目 */}
-                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                        <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
                           {/* N/A Grades Toggle - hidden for box plot */}
                           {onNAToggleChange && chartType !== 'boxplot' && (
                             <button
                               onClick={() => onNAToggleChange(!showNAGrades)}
-                              className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                              className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
                               title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
                             >
                               {showNAGrades ? (
@@ -2160,12 +2213,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             </div>
                 
                 {/* 右側控制項目 */}
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
                   {/* N/A Grades Toggle - hidden for box plot */}
                   {onNAToggleChange && chartType !== 'boxplot' && (
                     <button
                       onClick={() => onNAToggleChange(!showNAGrades)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                      className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
                       title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
                     >
                       {showNAGrades ? (
@@ -2504,12 +2557,12 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             </div>
                 
                 {/* 右側控制項目 */}
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
                   {/* N/A Grades Toggle - hidden for box plot */}
                   {onNAToggleChange && chartType !== 'boxplot' && (
                     <button
                       onClick={() => onNAToggleChange(!showNAGrades)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
+                      className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
                       title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
                     >
                       {showNAGrades ? (
