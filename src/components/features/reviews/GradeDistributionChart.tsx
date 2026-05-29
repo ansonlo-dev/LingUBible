@@ -2214,8 +2214,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 
                 {/* 右側控制項目 */}
                 <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
-                  {/* N/A Grades Toggle - hidden for box plot */}
-                  {onNAToggleChange && chartType !== 'boxplot' && (
+                  {/* N/A Grades Toggle - only for stacked here; the bar chart's toggle lives in the centered cumulative-line row below */}
+                  {onNAToggleChange && chartType === 'stacked' && (
                     <button
                       onClick={() => onNAToggleChange(!showNAGrades)}
                       className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
@@ -2391,9 +2391,28 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         )}
       </div>
       
-      {/* Cumulative line toggle above chart */}
+      {/* N/A grades + cumulative line toggles, centered together in one row */}
       {chartType === 'bar' && (
-        <div className="flex justify-center mb-4">
+        <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
+          {onNAToggleChange && (
+            <button
+              onClick={() => onNAToggleChange(!showNAGrades)}
+              className="flex items-center gap-2 px-3 h-8 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-accent transition-colors"
+              title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+            >
+              {showNAGrades ? (
+                <>
+                  <Eye className="h-3 w-3" />
+                  <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-3 w-3" />
+                  <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                </>
+              )}
+            </button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -2558,8 +2577,8 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 
                 {/* 右側控制項目 */}
                 <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
-                  {/* N/A Grades Toggle - hidden for box plot */}
-                  {onNAToggleChange && chartType !== 'boxplot' && (
+                  {/* N/A Grades Toggle - only for stacked here; the bar chart's toggle lives in the centered cumulative-line row below */}
+                  {onNAToggleChange && chartType === 'stacked' && (
                     <button
                       onClick={() => onNAToggleChange(!showNAGrades)}
                       className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
@@ -2735,9 +2754,28 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         )}
       </div>
       
-      {/* Cumulative line toggle above chart */}
+      {/* N/A grades + cumulative line toggles, centered together in one row */}
       {chartType === 'bar' && (
-        <div className="flex justify-center mb-4">
+        <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
+          {onNAToggleChange && (
+            <button
+              onClick={() => onNAToggleChange(!showNAGrades)}
+              className="flex items-center gap-2 px-3 h-8 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-accent transition-colors"
+              title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+            >
+              {showNAGrades ? (
+                <>
+                  <Eye className="h-3 w-3" />
+                  <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-3 w-3" />
+                  <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+                </>
+              )}
+            </button>
+          )}
           <Button
             variant="ghost"
             size="sm"
