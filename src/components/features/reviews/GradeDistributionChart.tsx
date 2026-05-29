@@ -2214,28 +2214,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 
                 {/* 右側控制項目 */}
                 <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
-                  {/* N/A Grades Toggle - only for stacked here; the bar chart's toggle lives in the centered cumulative-line row below */}
-                  {onNAToggleChange && chartType === 'stacked' && (
-                    <button
-                      onClick={() => onNAToggleChange(!showNAGrades)}
-                      className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
-                      title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-                    >
-                      {showNAGrades ? (
-                        <>
-                          <Eye className="h-3 w-3" />
-                          <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff className="h-3 w-3" />
-                          <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                  
-                  {/* 篩選器 */}
+                  {/* 篩選器 (N/A toggle for bar/stacked now lives in the centered row below the controls) */}
                   {filterOptions && filterOptions.length > 0 && onFilterChange && (
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
                       {filterLabel && (
@@ -2391,8 +2370,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         )}
       </div>
       
-      {/* N/A grades + cumulative line toggles, centered together in one row */}
-      {chartType === 'bar' && (
+      {/* N/A grades + cumulative line toggles, centered together in one row.
+          Bar chart shows both; stacked chart shows only the N/A toggle. */}
+      {(chartType === 'bar' || chartType === 'stacked') && (
         <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
           {onNAToggleChange && (
             <button
@@ -2413,20 +2393,22 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               )}
             </button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "px-3 text-xs gap-2 h-8 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md",
-              showCumulativeLine
-                ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600"
-                : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            )}
-            onClick={() => setShowCumulativeLine(!showCumulativeLine)}
-          >
-            <TrendingUp className="h-3 w-3" />
-            <span className="whitespace-nowrap">{t('chart.cumulativeLine')}</span>
-          </Button>
+          {chartType === 'bar' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 text-xs gap-2 h-8 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md",
+                showCumulativeLine
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600"
+                  : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              )}
+              onClick={() => setShowCumulativeLine(!showCumulativeLine)}
+            >
+              <TrendingUp className="h-3 w-3" />
+              <span className="whitespace-nowrap">{t('chart.cumulativeLine')}</span>
+            </Button>
+          )}
         </div>
       )}
       
@@ -2577,28 +2559,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                 
                 {/* 右側控制項目 */}
                 <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
-                  {/* N/A Grades Toggle - only for stacked here; the bar chart's toggle lives in the centered cumulative-line row below */}
-                  {onNAToggleChange && chartType === 'stacked' && (
-                    <button
-                      onClick={() => onNAToggleChange(!showNAGrades)}
-                      className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
-                      title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-                    >
-                      {showNAGrades ? (
-                        <>
-                          <Eye className="h-3 w-3" />
-                          <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff className="h-3 w-3" />
-                          <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                  
-                  {/* 篩選器 */}
+                  {/* 篩選器 (N/A toggle for bar/stacked now lives in the centered row below the controls) */}
                   {filterOptions && filterOptions.length > 0 && onFilterChange && (
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
                       {filterLabel && (
@@ -2754,8 +2715,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
         )}
       </div>
       
-      {/* N/A grades + cumulative line toggles, centered together in one row */}
-      {chartType === 'bar' && (
+      {/* N/A grades + cumulative line toggles, centered together in one row.
+          Bar chart shows both; stacked chart shows only the N/A toggle. */}
+      {(chartType === 'bar' || chartType === 'stacked') && (
         <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
           {onNAToggleChange && (
             <button
@@ -2776,20 +2738,22 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
               )}
             </button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "px-3 text-xs gap-2 h-8 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md",
-              showCumulativeLine
-                ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600"
-                : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            )}
-            onClick={() => setShowCumulativeLine(!showCumulativeLine)}
-          >
-            <TrendingUp className="h-3 w-3" />
-            <span className="whitespace-nowrap">{t('chart.cumulativeLine')}</span>
-          </Button>
+          {chartType === 'bar' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 text-xs gap-2 h-8 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md",
+                showCumulativeLine
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600"
+                  : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              )}
+              onClick={() => setShowCumulativeLine(!showCumulativeLine)}
+            >
+              <TrendingUp className="h-3 w-3" />
+              <span className="whitespace-nowrap">{t('chart.cumulativeLine')}</span>
+            </Button>
+          )}
         </div>
       )}
       
