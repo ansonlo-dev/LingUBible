@@ -2086,6 +2086,18 @@ button[data-state="active"][role="tab"]:not(.attached-tab-trigger),
     border: 1px solid rgb(63, 63, 70) !important;
   }
 
+  /* AlertDialog 內容背景（bg-background 因 CSS 變數為逗號分隔而失效，需強制不透明） */
+  [role="alertdialog"] {
+    background-color: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* 暗色主題下的 AlertDialog 內容背景 */
+  .dark [role="alertdialog"] {
+    background-color: rgb(24, 24, 27) !important;
+    border: 1px solid rgb(63, 63, 70) !important;
+  }
+
   /* 頭像自訂對話框特殊樣式 */
   [data-radix-dialog-content]:has(.avatar-customizer-content) {
     position: fixed !important;
