@@ -12,7 +12,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-7.0.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Appwrite](https://img.shields.io/badge/Appwrite-18.1.1-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
+[![Appwrite](https://img.shields.io/badge/Appwrite-19.0.0-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
+[![ECharts](https://img.shields.io/badge/ECharts-5.6.0-AA344D?style=flat-square&logo=apacheecharts&logoColor=white)](https://echarts.apache.org/)
 
 [![Deployed to Appwrite Sites](https://img.shields.io/badge/Deployed%20to-Appwrite%20Sites-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://lingubible.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
@@ -33,48 +34,15 @@
 
 ---
 
-## 📸 Project Preview
+## 🌐 Live Demo
 
 <div align="center">
 
-### 🎨 Modern Interface Design
-*Responsive design with dark/light theme support*
+**LingUBible is live and serving Lingnan University students at:**
 
-| 🌅 Light Theme | 🌙 Dark Theme |
-|:---:|:---:|
-| ![Light Theme](https://via.placeholder.com/400x250/f8fafc/64748b?text=Light+Theme+Preview) | ![Dark Theme](https://via.placeholder.com/400x250/0f172a/e2e8f0?text=Dark+Theme+Preview) |
+### [🔗 lingubible.com](https://lingubible.com)
 
-### 📱 Multi-Device Support
-*Perfect adaptation for desktop, tablet, and mobile*
-
-![Responsive Design](https://via.placeholder.com/800x200/3b82f6/ffffff?text=Responsive+Design+%7C+Desktop+%7C+Tablet+%7C+Mobile)
-
-### 🎯 Core Features Showcase
-
-<table>
-<tr>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/3b82f6/ffffff?text=📝+Course+Reviews" alt="Course Reviews"/>
-<br><strong>Course Reviews</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/10b981/ffffff?text=👨‍🏫+Lecturer+Ratings" alt="Lecturer Ratings"/>
-<br><strong>Lecturer Ratings</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/f59e0b/ffffff?text=🔍+Smart+Search" alt="Smart Search"/>
-<br><strong>Smart Search</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/8b5cf6/ffffff?text=🌐+Multilingual" alt="Multilingual"/>
-<br><strong>Multi-language Support</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/e11d48/ffffff?text=📊+Data+Analytics" alt="Data Analytics"/>
-<br><strong>Interactive Charts</strong>
-</td>
-</tr>
-</table>
+*Browse courses and lecturers, read and write reviews, and explore interactive grade distributions — no installation required. Sign-up requires a valid Lingnan University email.*
 
 </div>
 
@@ -86,17 +54,19 @@
 
 | Feature | Description | Status |
 |:---:|:---|:---:|
-| 📝 **Course Reviews** | Share detailed course learning experiences and recommendations | ✅ |
-| 👨‍🏫 **Lecturer Ratings** | Evaluate teaching quality and teaching style | ✅ |
-| 🔍 **Smart Search** | Quickly find course and lecturer information | ✅ |
-| 🔐 **Secure Authentication** | Student email verification system | ✅ |
-| 🌐 **Multi-language Support** | English, Traditional Chinese, Simplified Chinese | ✅ |
-| 📱 **Responsive Design** | Support for all devices and screen sizes | ✅ |
-| 🎨 **Modern UI** | Beautiful and intuitive user interface | ✅ |
-| 🌙 **Theme Toggle** | Free switching between dark/light themes | ✅ |
-| 📊 **Data Statistics** | Personal review statistics and achievement system with interactive charts | ✅ |
-| 🔔 **Real-time Notifications** | Important updates and interaction reminders | ✅ |
-| ⚡ **High Performance** | Optimized bundle size and fast loading times | ✅ |
+| 📝 **Course Reviews** | Detailed reviews covering workload, difficulty, grade and teaching, with helpful/unhelpful voting | ✅ |
+| 👨‍🏫 **Lecturer Reviews** | Per-instructor ratings broken down by teaching session (lecture / tutorial) | ✅ |
+| 📊 **Interactive Grade Charts** | Grade distribution as bar, stacked and box-plot views (ECharts), with cumulative line, GPA, and N/A toggle | ✅ |
+| 📄 **Past Exam Papers** | Browse, sort and filter past papers by year and instructor, with multi-select batch ZIP download | ✅ |
+| 📑 **Course Syllabus** | View the latest course syllabus directly from the course page | ✅ |
+| ⭐ **Favorites** | Save favourite courses and instructors for quick access | ✅ |
+| 🔍 **Smart Search** | Fast course and lecturer search, including instructor nickname matching | ✅ |
+| 🏛️ **Faculty & Department Badges** | Multi-department support for courses and instructors | ✅ |
+| 🔐 **Student Verification** | Lingnan email verification, Google OAuth, and reCAPTCHA protection | ✅ |
+| 🌐 **Multi-language Support** | English, Traditional Chinese, and Simplified Chinese | ✅ |
+| 🏆 **Stats & Achievements** | Personal review statistics and an achievement system | ✅ |
+| 📱 **PWA & Responsive** | Installable progressive web app that adapts to every screen size | ✅ |
+| 🌙 **Theme Toggle** | Seamless switching between dark and light themes | ✅ |
 
 </div>
 
@@ -116,16 +86,18 @@
 | | TypeScript | 5.5.3 | Type Safety |
 | | Vite | 7.0.0 | Build Tool |
 | | Tailwind CSS | 3.4.17 | Styling |
-| | shadcn/ui | Latest | UI Components |
-| | ECharts | Latest | Data Visualization & Charts |
-| **🔧 Backend** | Appwrite | 18.1.1 | BaaS Platform |
-| | Email Services | - | Communication |
-| | Authentication | - | User Management |
+| | shadcn/ui · Radix UI | Latest | UI Components |
+| | ECharts | 5.6.0 | Data Visualization & Charts |
+| | React Router | 6.26.2 | Routing |
+| | TanStack Query | 5.56.2 | Data Fetching & Caching |
+| | Zod | 3.23.8 | Schema Validation |
+| **🔧 Backend** | Appwrite | 19.0.0 | BaaS (Auth, TablesDB, Storage, Functions) |
+| | Resend | - | Transactional Email |
+| | Google reCAPTCHA v3 | - | Bot Protection |
 | **📦 Tools** | Bun | Latest | Package Manager & Runtime |
 | | ESLint | Latest | Code Linting |
 | | PostCSS | Latest | CSS Processing |
-| | i18n | - | Internationalization |
-| **🐧 Environment** | Linux | - | Development OS |
+| | Custom i18n | - | Internationalization |
 
 </div>
 
@@ -140,9 +112,9 @@ graph TD
     end
     
     subgraph "🔧 Backend Services"
-        F[Appwrite 18.1.1]
-        G[Email Services]
-        H[Authentication]
+        F[Appwrite 19.0.0]
+        G[Resend Email]
+        H[Auth & TablesDB]
     end
     
     subgraph "📦 Development Tools"
@@ -190,7 +162,6 @@ graph TD
     
     B2 --> B2A[auth]
     B2 --> B2B[user]
-    B2 --> B2C[demo]
     B2 --> B2D[legal]
     
     style A fill:#e1f5fe
@@ -221,52 +192,23 @@ graph TD
 
 </div>
 
-### 📊 Performance Metrics
-
-<table align="center">
-<tr>
-<td align="center">
-<img src="https://img.shields.io/badge/Bundle_Size-<500KB-blue?style=flat-square" alt="Bundle Size"/>
-<br><strong>Bundle Size</strong>
-</td>
-<td align="center">
-<img src="https://img.shields.io/badge/Load_Time-<2s-green?style=flat-square" alt="Load Time"/>
-<br><strong>Load Time</strong>
-</td>
-<td align="center">
-<img src="https://img.shields.io/badge/PWA-Ready-purple?style=flat-square" alt="PWA Ready"/>
-<br><strong>PWA Support</strong>
-</td>
-</tr>
-</table>
-
 </div>
 
 ---
 
-## ⚡ Performance Metrics
+## ⚡ Performance & Optimization
 
 <div align="center">
 
-### 📊 Bundle Analysis & Load Times
-
-| Metric | Value | Status |
-|:-------|:------|:-------|
-| **📦 Bundle Size** | ~357KB (gzipped: ~99KB) | 🟢 Optimized |
-| **⚡ Initial Load** | < 2s | 🟢 Fast |
-| **🔄 Hot Reload** | < 300ms | 🟢 Instant |
-| **🏗️ Build Time** | ~6s | 🟢 Quick |
-| **📱 Mobile Performance** | 95+ Lighthouse Score | 🟢 Excellent |
-| **🖥️ Desktop Performance** | 98+ Lighthouse Score | 🟢 Excellent |
-
-### 🚀 Powered by Bun + Vite 7
-
-- **📦 Package Installation**: 15x faster than npm with Bun
-- **⚡ Development Startup**: 3x faster with Bun + Vite 7 optimizations
-- **🔧 Build Process**: Enhanced compilation with Vite 7's improved bundling
-- **🔄 Hot Module Replacement**: Lightning-fast updates with Vite 7's HMR
+LingUBible is tuned to stay fast and responsive on Appwrite's infrastructure.
 
 </div>
+
+- **🧩 Code splitting** — vendor, UI, charts and locale code are split into separate chunks so the initial payload stays lean and rarely-used code loads on demand.
+- **🗂️ Passive multi-layer caching** — in-memory + `localStorage` write-through TTL caches back the heavy aggregate reads (teaching records, term/language stats), serving repeat visits instantly without any background polling.
+- **🔤 Font subsetting** — the LXGW WenKai CJK font is subset at build time to ship only the glyphs actually used.
+- **🌍 Lazy-loaded locales** — each language bundle is dynamically imported only when selected.
+- **⚡ Bun + Vite 7** — fast installs, near-instant dev startup, and snappy hot module replacement.
 
 ---
 
@@ -328,23 +270,29 @@ bun run dev
    cp env.example .env.local
    ```
 
-2. **Configure necessary environment variables**
+2. **Configure the required environment variables**
    ```env
-   # Appwrite configuration
+   # Frontend (Appwrite client)
    VITE_APPWRITE_ENDPOINT=your_appwrite_endpoint
    VITE_APPWRITE_PROJECT_ID=your_project_id
-   VITE_APPWRITE_DATABASE_ID=your_database_id
-   
-   # Email service configuration
-   VITE_EMAIL_SERVICE_ID=your_email_service_id
-   
-   # Other configurations...
+
+   # Frontend (Google reCAPTCHA v3 — public site key)
+   VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+
+   # Dev mode: allow any email to register (NEVER enable in production)
+   VITE_DEV_MODE=false
+
+   # Server-side / cloud functions (keep secret)
+   APPWRITE_API_KEY=your_appwrite_api_key
+   RESEND_API_KEY=your_resend_api_key
+   RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
    ```
 
-3. **Refer to detailed setup guides**
-   - [📖 Complete Setup Guide](docs/setup/)
-   - [🔐 Authentication Configuration](docs/setup/authentication.md)
-   - [📧 Email Service Setup](docs/setup/email-service.md)
+3. **Refer to the detailed setup guides**
+   - [📖 Setup Guides](docs/setup/)
+   - [🔑 Environment Variables](docs/setup/ENVIRONMENT_VARIABLES_SETUP.md)
+   - [🎓 Student Email Verification](docs/setup/STUDENT_EMAIL_VERIFICATION_SETUP.md)
+   - [🛡️ reCAPTCHA Setup](docs/setup/RECAPTCHA_SETUP.md)
 
 </details>
 
@@ -352,23 +300,24 @@ bun run dev
 
 ```bash
 # 🚀 Development
-bun run dev              # Start development server
-bun run build            # Build production version
-bun run preview          # Preview production build
+bun run dev              # Start dev server on :8080 (--host enabled)
+bun run build            # Production build (output: dist/)
+bun run build:fast       # Production build, skipping font subsetting
+bun run preview          # Preview the production build
 
 # 🔍 Code Quality
-bun run lint             # Code linting
-bun run refactor:check   # Refactoring check
+bun run lint             # ESLint
+bun run refactor:check   # Build + sanity check ("did I break it?")
 
-# 📚 Documentation
-bun run docs:structure   # View documentation structure
-bun run project:structure # View project structure
+# ☁️ Backend
+bun run deploy:functions # Deploy Appwrite cloud functions
 
-# 🛠️ Tools
-bun run docs:setup       # Setup multi-language documentation
-bun run refactor:update-imports # Update import paths
-bun run readme:generate-assets  # Generate README assets
+# 🔤 Fonts & Tooling
+bun run fonts:rebuild    # Re-subset the LXGW WenKai font
+bun run project:structure # Print the src/ tree
 ```
+
+> **Deployment:** the frontend auto-deploys to **Appwrite Sites** via the Appwrite ↔ GitHub integration — pushing to `main` triggers a build. Cloud functions deploy separately with `bun run deploy:functions`.
 
 ---
 
@@ -394,11 +343,10 @@ bun run readme:generate-assets  # Generate README assets
 
 | Category | Content | Link |
 |:---:|:---|:---:|
-| 🔧 **Setup Guide** | Environment configuration, dependency installation, deployment setup | [📖 Setup](docs/setup/) |
-| ⚡ **Feature Documentation** | Core features, API usage, component introduction | [📖 Features](docs/features/) |
-| 🚀 **Deployment Guide** | Production deployment, CI/CD, performance optimization | [📖 Deployment](docs/deployment/) |
-| 🧪 **Testing Documentation** | Unit testing, integration testing, E2E testing | [📖 Testing](docs/testing/) |
-| 🛠️ **Development Documentation** | Architecture design, refactoring records, development standards | [📖 Development](docs/development/) |
+| 🔧 **Setup Guide** | Environment variables, dev mode, email verification, reCAPTCHA | [📖 Setup](docs/setup/) |
+| ⚡ **Feature Documentation** | Avatar system, multilingual implementation, email templates, security | [📖 Features](docs/features/) |
+| 🚀 **Deployment Guide** | Appwrite Sites Git deployment | [📖 Deployment](docs/deployment/) |
+| 🛠️ **Development Documentation** | Project structure, Bun-only setup, functions analysis | [📖 Development](docs/development/) |
 
 </div>
 
@@ -435,9 +383,7 @@ We welcome all forms of contributions, whether it's code, documentation, design,
 
 ### 📖 Detailed Guides
 
-- [Contributing Guide (English)](docs/CONTRIBUTING.md)
-- [貢獻指南 (繁體中文)](docs/zh-TW/CONTRIBUTING.md)
-- [贡献指南 (简体中文)](docs/zh-CN/CONTRIBUTING.md)
+- [📖 Contributing Guide](docs/CONTRIBUTING.md)
 
 ---
 
