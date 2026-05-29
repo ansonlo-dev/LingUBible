@@ -1882,6 +1882,37 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
     </div>
   );
 
+  // Shared, consistently-styled "show / hide N/A grades" toggle button, used by
+  // both the data and no-data render branches so the button looks identical in
+  // every state.
+  const naToggleButton = onNAToggleChange ? (
+    <button
+      onClick={() => onNAToggleChange(!showNAGrades)}
+      className="flex items-center gap-2 px-3 h-8 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-accent transition-colors"
+      title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
+    >
+      {showNAGrades ? (
+        <>
+          <Eye className="h-3 w-3" />
+          <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
+        </>
+      ) : (
+        <>
+          <EyeOff className="h-3 w-3" />
+          <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
+        </>
+      )}
+    </button>
+  ) : null;
+
+  // Centered row holding just the N/A toggle — used in the no-data branches so
+  // the button keeps the same centered placement as the main chart view.
+  const naToggleRow = onNAToggleChange && chartType !== 'boxplot' ? (
+    <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
+      {naToggleButton}
+    </div>
+  ) : null;
+
   // 沒有數據時的顯示
   if (loading) {
     return (
@@ -1914,27 +1945,6 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                       
                       {/* 右側控制項目 */}
                       <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
-                        {/* N/A Grades Toggle - hidden for box plot */}
-                        {onNAToggleChange && chartType !== 'boxplot' && (
-                          <button
-                            onClick={() => onNAToggleChange(!showNAGrades)}
-                            className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
-                            title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-                          >
-                            {showNAGrades ? (
-                              <>
-                                <Eye className="h-3 w-3" />
-                                <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="h-3 w-3" />
-                                <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                        
                         {/* 篩選器 */}
                         {filterOptions && filterOptions.length > 0 && onFilterChange && (
                           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
@@ -1997,6 +2007,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                     </div>
                 </div>
                 
+                {/* Centered N/A toggle, matching the main chart view */}
+                {naToggleRow}
+
                 {/* No data message */}
                 <div className="p-4 text-center text-muted-foreground">
                   <div className="text-sm">{t('chart.noGradeData')}</div>
@@ -2042,27 +2055,6 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                           
                         {/* 右側控制項目 */}
                         <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
-                          {/* N/A Grades Toggle - hidden for box plot */}
-                          {onNAToggleChange && chartType !== 'boxplot' && (
-                            <button
-                              onClick={() => onNAToggleChange(!showNAGrades)}
-                              className="order-last flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
-                              title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-                            >
-                              {showNAGrades ? (
-                                <>
-                                  <Eye className="h-3 w-3" />
-                                  <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff className="h-3 w-3" />
-                                  <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                                </>
-                              )}
-                            </button>
-                          )}
-                          
                           {/* 篩選器 */}
                           {filterOptions && filterOptions.length > 0 && onFilterChange && (
                             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
@@ -2125,6 +2117,9 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                       </div>
                     </div>
                     
+                    {/* Centered N/A toggle, matching the main chart view */}
+                    {naToggleRow}
+
                     {/* No data message */}
                     <div className="p-4 text-center text-muted-foreground">
                       <div className="text-sm">{t('chart.noGradeData')}</div>
@@ -2374,25 +2369,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           Bar chart shows both; stacked chart shows only the N/A toggle. */}
       {(chartType === 'bar' || chartType === 'stacked') && (
         <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
-          {onNAToggleChange && (
-            <button
-              onClick={() => onNAToggleChange(!showNAGrades)}
-              className="flex items-center gap-2 px-3 h-8 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-accent transition-colors"
-              title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-            >
-              {showNAGrades ? (
-                <>
-                  <Eye className="h-3 w-3" />
-                  <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-3 w-3" />
-                  <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                </>
-              )}
-            </button>
-          )}
+          {naToggleButton}
           {chartType === 'bar' && (
             <Button
               variant="ghost"
@@ -2719,25 +2696,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
           Bar chart shows both; stacked chart shows only the N/A toggle. */}
       {(chartType === 'bar' || chartType === 'stacked') && (
         <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
-          {onNAToggleChange && (
-            <button
-              onClick={() => onNAToggleChange(!showNAGrades)}
-              className="flex items-center gap-2 px-3 h-8 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-accent transition-colors"
-              title={showNAGrades ? t('chart.hideNAGrades') : t('chart.showNAGrades')}
-            >
-              {showNAGrades ? (
-                <>
-                  <Eye className="h-3 w-3" />
-                  <span className="whitespace-nowrap">{t('chart.hideNAGrades')}</span>
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-3 w-3" />
-                  <span className="whitespace-nowrap">{t('chart.showNAGrades')}</span>
-                </>
-              )}
-            </button>
-          )}
+          {naToggleButton}
           {chartType === 'bar' && (
             <Button
               variant="ghost"
