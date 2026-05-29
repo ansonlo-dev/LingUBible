@@ -64,7 +64,7 @@
 | 🏛️ **Faculty & Department Badges** | Multi-department support for courses and instructors | ✅ |
 | 🔐 **Student Verification** | Lingnan email verification, Google OAuth, and reCAPTCHA protection | ✅ |
 | 🌐 **Multi-language Support** | English, Traditional Chinese, and Simplified Chinese | ✅ |
-| 🏆 **Stats & Achievements** | Personal review statistics and an achievement system | ✅ |
+| 📈 **Personal Statistics** | Personal dashboard with your review history and votes received | ✅ |
 | 📱 **PWA & Responsive** | Installable progressive web app that adapts to every screen size | ✅ |
 | 🌙 **Theme Toggle** | Seamless switching between dark and light themes | ✅ |
 

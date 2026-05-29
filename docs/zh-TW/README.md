@@ -12,9 +12,10 @@
 
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat-square&logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.4.1-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.0.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Appwrite](https://img.shields.io/badge/Appwrite-18.1.1-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
+[![Appwrite](https://img.shields.io/badge/Appwrite-19.0.0-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
+[![ECharts](https://img.shields.io/badge/ECharts-5.6.0-AA344D?style=flat-square&logo=apacheecharts&logoColor=white)](https://echarts.apache.org/)
 
 [![部署至 Appwrite Sites](https://img.shields.io/badge/部署至-Appwrite%20Sites-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://lingubible.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
@@ -35,48 +36,15 @@
 
 ---
 
-## 📸 專案預覽
+## 🌐 線上體驗
 
 <div align="center">
 
-### 🎨 現代化介面設計
-*響應式設計，支援深色/淺色主題*
+**LingUBible 已正式上線，服務嶺南大學學生：**
 
-| 🌅 淺色主題 | 🌙 深色主題 |
-|:---:|:---:|
-| ![Light Theme](https://via.placeholder.com/400x250/f8fafc/64748b?text=Light+Theme+Preview) | ![Dark Theme](https://via.placeholder.com/400x250/0f172a/e2e8f0?text=Dark+Theme+Preview) |
+### [🔗 lingubible.com](https://lingubible.com)
 
-### 📱 多設備支援
-*桌面、平板、手機完美適配*
-
-![Responsive Design](https://via.placeholder.com/800x200/3b82f6/ffffff?text=Responsive+Design+%7C+Desktop+%7C+Tablet+%7C+Mobile)
-
-### 🎯 核心功能展示
-
-<table>
-<tr>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/3b82f6/ffffff?text=📝+Course+Reviews" alt="Course Reviews"/>
-<br><strong>課程評價</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/10b981/ffffff?text=👨‍🏫+Lecturer+Ratings" alt="Lecturer Ratings"/>
-<br><strong>講師評分</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/f59e0b/ffffff?text=🔍+Smart+Search" alt="Smart Search"/>
-<br><strong>智慧搜尋</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/8b5cf6/ffffff?text=🌐+Multilingual" alt="Multilingual"/>
-<br><strong>多語言支援</strong>
-</td>
-<td align="center" width="20%">
-<img src="https://via.placeholder.com/200x150/e11d48/ffffff?text=📊+Data+Analytics" alt="Data Analytics"/>
-<br><strong>互動式圖表</strong>
-</td>
-</tr>
-</table>
+*瀏覽課程與講師、閱讀及撰寫評價、探索互動式成績分佈——無需安裝。註冊需使用有效的嶺南大學電子郵件。*
 
 </div>
 
@@ -88,17 +56,19 @@
 
 | 功能 | 描述 | 狀態 |
 |:---:|:---|:---:|
-| 📝 **課程評價** | 分享詳細的課程學習體驗和建議 | ✅ |
-| 👨‍🏫 **講師評分** | 評價教學品質和教學風格 | ✅ |
-| 🔍 **智慧搜尋** | 快速找到課程和講師資訊 | ✅ |
-| 🔐 **安全認證** | 學生郵箱驗證系統 | ✅ |
+| 📝 **課程評價** | 涵蓋工作量、難度、成績與教學的詳細評價，並可投票標記是否有用 | ✅ |
+| 👨‍🏫 **講師評價** | 依授課形式（講課／導修）分別呈現各講師評分 | ✅ |
+| 📊 **互動式成績圖表** | 以長條圖、堆疊圖、箱形圖呈現成績分佈（ECharts），附累積百分比線、GPA 與 N/A 切換 | ✅ |
+| 📄 **歷屆試題** | 依學年與講師瀏覽、排序、篩選歷屆試題，並支援多選批次 ZIP 下載 | ✅ |
+| 📑 **課程大綱** | 直接於課程頁面檢視最新課程大綱 | ✅ |
+| ⭐ **收藏** | 收藏喜愛的課程與講師以便快速存取 | ✅ |
+| 🔍 **智慧搜尋** | 快速搜尋課程與講師，並支援講師暱稱比對 | ✅ |
+| 🏛️ **學院與學系徽章** | 支援課程與講師的多學系標示 | ✅ |
+| 🔐 **學生驗證** | 嶺南電郵驗證、Google OAuth 與 reCAPTCHA 防護 | ✅ |
 | 🌐 **多語言支援** | 英文、繁體中文、簡體中文 | ✅ |
-| 📱 **響應式設計** | 支援所有設備和螢幕尺寸 | ✅ |
-| 🎨 **現代化 UI** | 美觀直觀的使用者介面 | ✅ |
-| 🌙 **主題切換** | 深色/淺色主題自由切換 | ✅ |
-| 📊 **數據統計** | 個人評價統計和成就系統，配備互動式圖表 | ✅ |
-| 🔔 **即時通知** | 重要更新和互動提醒 | ✅ |
-| ⚡ **高效能表現** | 優化的打包大小和快速載入時間 | ✅ |
+| 📈 **個人統計** | 個人儀表板，呈現你的評價紀錄與獲得的票數 | ✅ |
+| 📱 **PWA 與響應式** | 可安裝的漸進式網頁應用，適配各種螢幕尺寸 | ✅ |
+| 🌙 **主題切換** | 深色／淺色主題無縫切換 | ✅ |
 
 </div>
 
@@ -116,17 +86,20 @@
 |:-----|:-----|:-----|:-----|
 | **🎨 前端** | React | 18.3.1 | UI 框架 |
 | | TypeScript | 5.5.3 | 型別安全 |
-| | Vite | 5.4.1 | 建構工具 |
+| | Vite | 7.0.0 | 建構工具 |
 | | Tailwind CSS | 3.4.17 | 樣式設計 |
-| | shadcn/ui | 最新 | UI 元件 |
-| | ECharts | 最新 | 數據視覺化與圖表 |
-| **🔧 後端** | Appwrite | 18.1.1 | BaaS 平台 |
-| | 郵件服務 | - | 通訊功能 |
-| | 身份驗證 | - | 用戶管理 |
+| | shadcn/ui · Radix UI | 最新 | UI 元件 |
+| | ECharts | 5.6.0 | 數據視覺化與圖表 |
+| | React Router | 6.26.2 | 路由 |
+| | TanStack Query | 5.56.2 | 資料擷取與快取 |
+| | Zod | 3.23.8 | 結構驗證 |
+| **🔧 後端** | Appwrite | 19.0.0 | BaaS（認證、TablesDB、儲存、函數） |
+| | Resend | - | 交易型郵件 |
+| | Google reCAPTCHA v3 | - | 機器人防護 |
 | **📦 工具** | Bun | 最新 | 套件管理器與執行環境 |
 | | ESLint | 最新 | 程式碼檢查 |
 | | PostCSS | 最新 | CSS 處理 |
-| | i18n | - | 國際化 |
+| | 自製 i18n | - | 國際化 |
 
 </div>
 
@@ -135,15 +108,15 @@ graph TD
     subgraph "🎨 前端技術棧"
         A[React 18.3.1]
         B[TypeScript 5.5.3]
-        C[Vite 5.4.1]
+        C[Vite 7.0.0]
         D[Tailwind CSS]
         E[shadcn/ui]
     end
     
     subgraph "🔧 後端服務"
-        F[Appwrite 18.1.1]
-        G[郵件服務]
-        H[身份驗證]
+        F[Appwrite 19.0.0]
+        G[Resend 郵件]
+        H[認證與 TablesDB]
     end
     
     subgraph "📦 開發工具"
@@ -191,7 +164,6 @@ graph TD
     
     B2 --> B2A[auth]
     B2 --> B2B[user]
-    B2 --> B2C[demo]
     B2 --> B2D[legal]
     
     style A fill:#e1f5fe
@@ -222,55 +194,23 @@ graph TD
 
 </div>
 
-### 📊 效能指標
-
-<table align="center">
-<tr>
-<td align="center">
-<img src="https://img.shields.io/badge/Lighthouse-100-brightgreen?style=flat-square&logo=lighthouse" alt="Lighthouse Score"/>
-<br><strong>效能評分</strong>
-</td>
-<td align="center">
-<img src="https://img.shields.io/badge/Bundle_Size-<500KB-blue?style=flat-square" alt="Bundle Size"/>
-<br><strong>打包大小</strong>
-</td>
-<td align="center">
-<img src="https://img.shields.io/badge/Load_Time-<2s-green?style=flat-square" alt="Load Time"/>
-<br><strong>載入時間</strong>
-</td>
-<td align="center">
-<img src="https://img.shields.io/badge/PWA-Ready-purple?style=flat-square" alt="PWA Ready"/>
-<br><strong>PWA 支援</strong>
-</td>
-</tr>
-</table>
-
 </div>
 
 ---
 
-## ⚡ 效能指標
+## ⚡ 效能與最佳化
 
 <div align="center">
 
-### 📊 打包分析與載入時間
-
-| 指標 | 數值 | 狀態 |
-|:-----|:-----|:-----|
-| **📦 打包大小** | ~357KB (gzipped: ~99KB) | 🟢 已優化 |
-| **⚡ 初始載入** | < 2s | 🟢 快速 |
-| **🔄 熱重載** | < 500ms | 🟢 即時 |
-| **🏗️ 建置時間** | ~4s | 🟢 快速 |
-| **📱 行動裝置效能** | 95+ Lighthouse 分數 | 🟢 優秀 |
-| **🖥️ 桌面效能** | 98+ Lighthouse 分數 | 🟢 優秀 |
-
-### 🚀 由 Bun 驅動
-
-- **📦 套件安裝**: 比 npm 快 15 倍
-- **⚡ 開發啟動**: 比傳統工具快 3 倍
-- **🔧 建置流程**: 編譯速度快 2 倍
+LingUBible 經過調校，在 Appwrite 基礎架構上維持快速且流暢的體驗。
 
 </div>
+
+- **🧩 程式碼分割** — vendor、UI、圖表與語系程式碼拆分為獨立 chunk，讓初始載入更精簡，較少用到的程式碼按需載入。
+- **🗂️ 被動多層快取** — 以記憶體 + `localStorage` 寫穿式 TTL 快取支撐繁重的彙總讀取（授課記錄、學期／語言統計），重訪即時呈現且不進行任何背景輪詢。
+- **🔤 字型子集化** — 於建置時對 LXGW 文楷 CJK 字型做子集化，只內嵌實際使用到的字符。
+- **🌍 語系延遲載入** — 每個語言包僅在選用時才動態載入。
+- **⚡ Bun + Vite 7** — 安裝快速、開發啟動近乎即時，熱模組替換（HMR）反應靈敏。
 
 ---
 
@@ -278,8 +218,8 @@ graph TD
 
 ### 📋 系統需求
 
-- **Node.js**: >= 18.0.0
-- **bun**: >= 1.0.0 (快速的 JavaScript 執行環境與套件管理器)
+- **Node.js**: >= 20.19.0（Vite 7 所需）
+- **bun**: >= 1.0.0（快速的 JavaScript 執行環境與套件管理器）
 - **Git**: 最新版本
 
 ### ⚡ 為什麼選擇 Bun？
@@ -323,21 +263,27 @@ bun run dev
 
 2. **設定必要的環境變數**
    ```env
-   # Appwrite 設定
+   # 前端（Appwrite 客戶端）
    VITE_APPWRITE_ENDPOINT=your_appwrite_endpoint
    VITE_APPWRITE_PROJECT_ID=your_project_id
-   VITE_APPWRITE_DATABASE_ID=your_database_id
-   
-   # 郵件服務設定
-   VITE_EMAIL_SERVICE_ID=your_email_service_id
-   
-   # 其他設定...
+
+   # 前端（Google reCAPTCHA v3 — 公開網站金鑰）
+   VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+
+   # 開發模式：允許任何電郵註冊（生產環境切勿開啟）
+   VITE_DEV_MODE=false
+
+   # 伺服器端／雲端函數（請妥善保密）
+   APPWRITE_API_KEY=your_appwrite_api_key
+   RESEND_API_KEY=your_resend_api_key
+   RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
    ```
 
 3. **參考詳細設定指南**
-   - [📖 完整設定指南](setup/)
-   - [🔐 認證設定](setup/authentication.md)
-   - [📧 郵件服務設定](setup/email-service.md)
+   - [📖 設定指南](setup/)
+   - [🔑 環境變數](setup/ENVIRONMENT_VARIABLES_SETUP.md)
+   - [🎓 學生電郵驗證](setup/STUDENT_EMAIL_VERIFICATION_SETUP.md)
+   - [🛡️ reCAPTCHA 設定](../setup/RECAPTCHA_SETUP.md)
 
 </details>
 
@@ -345,23 +291,24 @@ bun run dev
 
 ```bash
 # 🚀 開發
-bun run dev              # 啟動開發伺服器
-bun run build            # 建置正式版本
+bun run dev              # 啟動開發伺服器（:8080，已啟用 --host）
+bun run build            # 正式建置（輸出：dist/）
+bun run build:fast       # 正式建置，略過字型子集化
 bun run preview          # 預覽正式建置
 
 # 🔍 程式碼品質
-bun run lint             # 程式碼檢查
-bun run refactor:check   # 重構檢查
+bun run lint             # ESLint
+bun run refactor:check   # 建置 + 健全性檢查（「我有沒有改壞？」）
 
-# 📚 文檔
-bun run docs:structure   # 查看文檔結構
-bun run project:structure # 查看專案結構
+# ☁️ 後端
+bun run deploy:functions # 部署 Appwrite 雲端函數
 
-# 🛠️ 工具
-bun run docs:setup       # 設定多語言文檔
-bun run refactor:update-imports # 更新匯入路徑
-bun run readme:generate-assets  # 產生 README 資源
+# 🔤 字型與工具
+bun run fonts:rebuild    # 重新對 LXGW 文楷字型做子集化
+bun run project:structure # 印出 src/ 目錄樹
 ```
+
+> **部署：** 前端透過 Appwrite ↔ GitHub 整合自動部署至 **Appwrite Sites**——推送到 `main` 即觸發建置。雲端函數則以 `bun run deploy:functions` 另行部署。
 
 ---
 
@@ -387,11 +334,10 @@ bun run readme:generate-assets  # 產生 README 資源
 
 | 類別 | 內容 | 連結 |
 |:---:|:---|:---:|
-| 🔧 **設定指南** | 環境設定、相依性安裝、部署設定 | [📖 Setup](setup/) |
-| ⚡ **功能說明** | 核心功能、API 使用、元件介紹 | [📖 Features](features/) |
-| 🚀 **部署指南** | 正式部署、CI/CD、效能最佳化 | [📖 Deployment](deployment/) |
-| 🧪 **測試文檔** | 單元測試、整合測試、E2E 測試 | [📖 Testing](testing/) |
-| 🛠️ **開發文檔** | 架構設計、重構記錄、開發規範 | [📖 Development](development/) |
+| 🔧 **設定指南** | 環境變數、開發模式、電郵驗證、reCAPTCHA | [📖 Setup](setup/) |
+| ⚡ **功能說明** | 頭像系統、多語言實作、郵件範本、安全性 | [📖 Features](features/) |
+| 🚀 **部署指南** | Appwrite Sites Git 部署 | [📖 Deployment](deployment/) |
+| 🛠️ **開發文檔** | 專案結構、Bun-only 設定、函數分析 | [📖 Development](../development/) |
 
 </div>
 
@@ -405,7 +351,7 @@ bun run readme:generate-assets  # 產生 README 資源
 
 我們歡迎所有形式的貢獻，無論是程式碼、文檔、設計還是想法分享。
 
-[![Contributors](https://contrib.rocks/image?repo=ansonlo/LingUBible)](https://github.com/ansonlo-dev/LingUBible/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=ansonlo-dev/LingUBible)](https://github.com/ansonlo-dev/LingUBible/graphs/contributors)
 
 </div>
 
@@ -428,9 +374,7 @@ bun run readme:generate-assets  # 產生 README 資源
 
 ### 📖 詳細指南
 
-- [Contributing Guide (English)](../CONTRIBUTING.md)
-- [貢獻指南 (繁體中文)](CONTRIBUTING.md)
-- [贡献指南 (简体中文)](../zh-CN/CONTRIBUTING.md)
+- [📖 貢獻指南](../CONTRIBUTING.md)
 
 ---
 
@@ -438,16 +382,16 @@ bun run readme:generate-assets  # 產生 README 資源
 
 <div align="center">
 
-![GitHub stars](https://img.shields.io/github/stars/ansonlo/LingUBible?style=social)
-![GitHub forks](https://img.shields.io/github/forks/ansonlo/LingUBible?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/ansonlo/LingUBible?style=social)
+![GitHub stars](https://img.shields.io/github/stars/ansonlo-dev/LingUBible?style=social)
+![GitHub forks](https://img.shields.io/github/forks/ansonlo-dev/LingUBible?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/ansonlo-dev/LingUBible?style=social)
 
-![GitHub issues](https://img.shields.io/github/issues/ansonlo/LingUBible?style=flat-square)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/ansonlo/LingUBible?style=flat-square)
-![GitHub last commit](https://img.shields.io/github/last-commit/ansonlo/LingUBible?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/ansonlo-dev/LingUBible?style=flat-square)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/ansonlo-dev/LingUBible?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/ansonlo-dev/LingUBible?style=flat-square)
 
 ![GitHub code size](https://img.shields.io/github/languages/code-size/ansonlo-dev/LingUBible?style=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo/LingUBible?style=flat-square)
+![GitHub repo size](https://img.shields.io/github/repo-size/ansonlo-dev/LingUBible?style=flat-square)
 
 </div>
 
@@ -549,7 +493,7 @@ copies or substantial portions of the Software.
 
 **⭐ 如果這個專案對您有幫助，請給我們一個 Star！**
 
-[![GitHub stars](https://img.shields.io/github/stars/ansonlo/LingUBible?style=for-the-badge&logo=github)](https://github.com/ansonlo-dev/LingUBible/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/ansonlo-dev/LingUBible?style=for-the-badge&logo=github)](https://github.com/ansonlo-dev/LingUBible/stargazers)
 
 ---
 
