@@ -682,6 +682,9 @@ const CourseDetail = () => {
   // Guests may see the syllabus button, but viewing is restricted to verified
   // students — clicking while logged out opens this prompt instead.
   const [syllabusLoginPromptOpen, setSyllabusLoginPromptOpen] = useState(false);
+  // Whether we're still resolving the syllabus file (logged-in users only —
+  // the bucket is readable by authenticated users, so guests never list it).
+  const [syllabusLoading, setSyllabusLoading] = useState(false);
   // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
   // per-section files). Seeded by a single batched query so we never query the
   // instructors collection per-paper.
@@ -1403,13 +1406,19 @@ const CourseDetail = () => {
   // Resolve the latest course syllabus PDF for the header button.
   // Bucket: course_syllabus; filenames look like CDS2004-202601.pdf — among all
   // files for this course we pick the one with the largest numeric suffix.
-  // Public (no login required).
+  // The bucket read permission is restricted to authenticated users, so we only
+  // attempt to list it when logged in. Guests always see the button (it opens a
+  // login prompt) and never trigger a guaranteed 401.
   useEffect(() => {
     const courseCode = course?.course_code;
-    if (!courseCode) return;
+    setSyllabusFile(null);
+    if (!courseCode || !user) {
+      setSyllabusLoading(false);
+      return;
+    }
 
     let cancelled = false;
-    setSyllabusFile(null);
+    setSyllabusLoading(true);
 
     (async () => {
       try {
@@ -1438,25 +1447,32 @@ const CourseDetail = () => {
           console.error('Failed to load course syllabus', err);
           setSyllabusFile(null);
         }
+      } finally {
+        if (!cancelled) setSyllabusLoading(false);
       }
     })();
 
     return () => { cancelled = true; };
-  }, [course?.course_code]);
+  }, [course?.course_code, user]);
 
   // Open the syllabus PDF — but only for logged-in (verified) users. Guests get
   // a prompt explaining it's restricted material that requires an account.
   const handleViewSyllabus = () => {
-    if (!syllabusFile) return;
     if (!user) {
       setSyllabusLoginPromptOpen(true);
       return;
     }
+    if (!syllabusFile) return;
     openDocumentInNewTab(
       storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
       syllabusFile.name,
     );
   };
+
+  // The syllabus button is always rendered. For guests it's enabled (clicking
+  // opens the login prompt). For logged-in users it's disabled while we resolve
+  // the file or when the course has no syllabus on record.
+  const syllabusButtonDisabled = !!user && (syllabusLoading || !syllabusFile);
 
   // Lazy-load past exam papers when the user opens the exams tab.
   // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
@@ -1606,16 +1622,19 @@ const CourseDetail = () => {
                 </CardTitle>
                 {/* Action buttons - desktop/tablet only inline */}
                 <div className="shrink-0 flex items-center gap-2">
-                  {syllabusFile && (
-                    <Button
-                      variant="outline"
-                      className="h-10 px-3"
-                      onClick={handleViewSyllabus}
-                    >
+                  <Button
+                    variant="outline"
+                    className="h-10 px-3"
+                    onClick={handleViewSyllabus}
+                    disabled={syllabusButtonDisabled}
+                  >
+                    {user && syllabusLoading ? (
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
                       <FileText className="h-4 w-4 mr-1.5" />
-                      {t('pages.courseDetail.viewSyllabus')}
-                    </Button>
-                  )}
+                    )}
+                    {t('pages.courseDetail.viewSyllabus')}
+                  </Button>
                   <FavoriteButton
                     type="course"
                     itemId={course.course_code}
@@ -1699,18 +1718,23 @@ const CourseDetail = () => {
             
             {/* Action buttons - mobile only, separate row (excluding back button) */}
             <div className="md:hidden flex flex-col gap-2 mb-4">
-              {syllabusFile && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-10 w-full"
-                  onClick={handleViewSyllabus}
-                >
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-10 w-full"
+                onClick={handleViewSyllabus}
+                disabled={syllabusButtonDisabled}
+              >
+                {user && syllabusLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
                   <FileText className="h-4 w-4 mr-2" />
-                  {t('pages.courseDetail.viewSyllabus')}
+                )}
+                {t('pages.courseDetail.viewSyllabus')}
+                {!syllabusButtonDisabled && (
                   <ExternalLink className="h-3.5 w-3.5 ml-1.5 opacity-70" />
-                </Button>
-              )}
+                )}
+              </Button>
               <div className="flex flex-row gap-2">
                 <div className="flex-1">
                   <FavoriteButton
