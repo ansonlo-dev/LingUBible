@@ -526,6 +526,8 @@ export default {
   'pages.courseDetail.offerRecords': '开设记录',
   'pages.courseDetail.courseInfo': '课程资讯',
   'pages.courseDetail.viewSyllabus': '课程大纲',
+  'pages.courseDetail.syllabusSignUpTitle': '注册以查看课程大纲',
+  'pages.courseDetail.syllabusSignUpDescription': '课程大纲属受限资料，仅供已验证的岭南大学学生查看。请使用您的岭南电邮登录或注册以查看。',
   'pages.courseDetail.requirements': '修读要求',
   'pages.courseDetail.prerequisites': '先修课程',
   'pages.courseDetail.corequisites': '同期修读课程',

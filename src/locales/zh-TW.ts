@@ -525,6 +525,8 @@ export default {
   'pages.courseDetail.offerRecords': '開設記錄',
   'pages.courseDetail.courseInfo': '課程資訊',
   'pages.courseDetail.viewSyllabus': '課程大綱',
+  'pages.courseDetail.syllabusSignUpTitle': '註冊以查看課程大綱',
+  'pages.courseDetail.syllabusSignUpDescription': '課程大綱屬受限資料，僅供已驗證的嶺南大學學生查看。請使用您的嶺南電郵登入或註冊以查看。',
   'pages.courseDetail.requirements': '修讀要求',
   'pages.courseDetail.prerequisites': '先修課程',
   'pages.courseDetail.corequisites': '同期修讀課程',

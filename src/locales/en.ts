@@ -525,6 +525,8 @@ export default {
   'pages.courseDetail.offerRecords': 'Offer Records',
   'pages.courseDetail.courseInfo': 'Course Info',
   'pages.courseDetail.viewSyllabus': 'Syllabus',
+  'pages.courseDetail.syllabusSignUpTitle': 'Sign up to view the course syllabus',
+  'pages.courseDetail.syllabusSignUpDescription': 'The course syllabus is restricted material available only to verified Lingnan students. Please log in or sign up with your Lingnan email to view it.',
   'pages.courseDetail.requirements': 'Requirements',
   'pages.courseDetail.prerequisites': 'Prerequisites',
   'pages.courseDetail.corequisites': 'Co-requisites',

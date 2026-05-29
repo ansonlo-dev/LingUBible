@@ -9,6 +9,16 @@ import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { 
   ArrowLeft, 
   Star, 
@@ -669,6 +679,9 @@ const CourseDetail = () => {
   // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
   // we surface the largest suffix (most recent version). Open to all visitors.
   const [syllabusFile, setSyllabusFile] = useState<{ id: string; name: string } | null>(null);
+  // Guests may see the syllabus button, but viewing is restricted to verified
+  // students — clicking while logged out opens this prompt instead.
+  const [syllabusLoginPromptOpen, setSyllabusLoginPromptOpen] = useState(false);
   // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
   // per-section files). Seeded by a single batched query so we never query the
   // instructors collection per-paper.
@@ -1431,6 +1444,20 @@ const CourseDetail = () => {
     return () => { cancelled = true; };
   }, [course?.course_code]);
 
+  // Open the syllabus PDF — but only for logged-in (verified) users. Guests get
+  // a prompt explaining it's restricted material that requires an account.
+  const handleViewSyllabus = () => {
+    if (!syllabusFile) return;
+    if (!user) {
+      setSyllabusLoginPromptOpen(true);
+      return;
+    }
+    openDocumentInNewTab(
+      storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
+      syllabusFile.name,
+    );
+  };
+
   // Lazy-load past exam papers when the user opens the exams tab.
   // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
   // `storage.listFiles` caps each response at 100 rows, so paginate until empty
@@ -1583,10 +1610,7 @@ const CourseDetail = () => {
                     <Button
                       variant="outline"
                       className="h-10 px-3"
-                      onClick={() => openDocumentInNewTab(
-                        storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
-                        syllabusFile.name,
-                      )}
+                      onClick={handleViewSyllabus}
                     >
                       <FileText className="h-4 w-4 mr-1.5" />
                       {t('pages.courseDetail.viewSyllabus')}
@@ -1680,10 +1704,7 @@ const CourseDetail = () => {
                   variant="outline"
                   size="lg"
                   className="h-10 w-full"
-                  onClick={() => openDocumentInNewTab(
-                    storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
-                    syllabusFile.name,
-                  )}
+                  onClick={handleViewSyllabus}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   {t('pages.courseDetail.viewSyllabus')}
@@ -3610,6 +3631,27 @@ const CourseDetail = () => {
 
 
       </Tabs>
+
+      {/* Restricted-material prompt shown when a guest clicks "View syllabus" */}
+      <AlertDialog open={syllabusLoginPromptOpen} onOpenChange={setSyllabusLoginPromptOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('pages.courseDetail.syllabusSignUpTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('pages.courseDetail.syllabusSignUpDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate('/login')}>
+              {t('auth.login')}
+            </AlertDialogAction>
+            <AlertDialogAction onClick={() => navigate('/register')}>
+              {t('auth.signUp')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
