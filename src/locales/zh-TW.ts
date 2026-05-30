@@ -1159,7 +1159,7 @@ export default {
   'faq.updateQuestion': '課程資訊多久更新一次？',
   'faq.updateAnswer': '我們會定期更新課程資訊，包括新增的課程、講師變動等。評論和評分會即時更新。如果您發現任何過時或錯誤的資訊，請聯絡我們。',
   'faq.signupRequiredQuestion': '我需要註冊才能查看評論嗎？',
-  'faq.signupRequiredAnswer': '不需要，查看評論不需要註冊，但要發表評論，用戶必須使用有效的嶺南大學電子郵件地址註冊。',
+  'faq.signupRequiredAnswer': '不需要，查看評論不需要註冊。但要發表評論，以及查看歷屆試卷和課程大綱，用戶必須使用有效的嶺南大學電子郵件地址註冊。',
   'faq.websiteFreeQuestion': '這個網站是免費的嗎？',
   'faq.websiteFreeAnswer': '本網站提供的所有服務均為免費。不過，如果您想支持這個項目，可以點擊頁腳的贊助按鈕來幫助我承擔部分營運成本。任何幫助都非常感謝。',
   // FAQ Section Categories

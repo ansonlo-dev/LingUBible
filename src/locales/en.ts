@@ -1217,7 +1217,7 @@ export default {
   'faq.updateQuestion': 'How often is course information updated?',
   'faq.updateAnswer': 'We regularly update course information, including new courses and lecturer changes. Reviews and ratings are updated in real-time. If you find any outdated or incorrect information, please contact us.',
   'faq.signupRequiredQuestion': 'Do I need to sign up to view reviews?',
-  'faq.signupRequiredAnswer': 'No, sign up is not required to view reviews, but to post reviews, users must sign up with a valid Lingnan email address.',
+  'faq.signupRequiredAnswer': 'No, sign up is not required to view reviews. However, you must sign up with a valid Lingnan email address to post reviews, as well as to view past exam papers and course syllabi.',
   'faq.websiteFreeQuestion': 'Is this website free?',
   'faq.websiteFreeAnswer': 'All services provided on this website are free. However, if you would like to support this project, you can click the donate button in the footer to help me cover part of the operational cost. Any help is highly appreciated.',
   // FAQ Section Categories

@@ -1200,7 +1200,7 @@ export default {
   'faq.updateQuestion': '课程信息多久更新一次？',
   'faq.updateAnswer': '我们会定期更新课程信息，包括新增的课程、讲师变动等。评论和评分会即时更新。如果您发现任何过时或错误的信息，请联系我们。',
   'faq.signupRequiredQuestion': '我需要注册才能查看评论吗？',
-  'faq.signupRequiredAnswer': '不需要，查看评论不需要注册，但要发表评论，用户必须使用有效的岭南大学电子邮件地址注册。',
+  'faq.signupRequiredAnswer': '不需要，查看评论不需要注册。但要发表评论，以及查看历届试卷和课程大纲，用户必须使用有效的岭南大学电子邮件地址注册。',
   'faq.websiteFreeQuestion': '这个网站是免费的吗？',
   'faq.websiteFreeAnswer': '本网站提供的所有服务均为免费。不过，如果您想支持这个项目，可以点击页脚的赞助按钮来帮助我承担部分运营成本。任何帮助都非常感谢。',
   // FAQ Section Categories
