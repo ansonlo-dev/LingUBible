@@ -62,7 +62,9 @@ export function UserMenu() {
   const displayName = getDisplayName();
 
   return (
-    <DropdownMenu>
+    // modal={false} disables Radix's body scroll-lock, which otherwise hides
+    // the scrollbar and shifts the whole page sideways while the menu is open.
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
