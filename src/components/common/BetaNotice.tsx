@@ -1,30 +1,64 @@
 import React, { useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
-const BETA_NOTICE_EXPANDED_KEY = 'betaNoticeExpanded';
+const BETA_NOTICE_STATE_KEY = 'betaNoticeState';
+const LEGACY_EXPANDED_KEY = 'betaNoticeExpanded';
+
+// Three states:
+//  - 'expanded'  : full banner with the detail message
+//  - 'collapsed' : single-line banner (header only) — the chevron toggle
+//  - 'hidden'    : banner fully dismissed; replaced by a tiny floating pill
+//                  so the user can always bring it back with one click.
+type BetaNoticeState = 'expanded' | 'collapsed' | 'hidden';
+
+const readInitialState = (): BetaNoticeState => {
+  try {
+    const stored = localStorage.getItem(BETA_NOTICE_STATE_KEY);
+    if (stored === 'expanded' || stored === 'collapsed' || stored === 'hidden') {
+      return stored;
+    }
+    // Migrate from the old boolean-style key.
+    if (localStorage.getItem(LEGACY_EXPANDED_KEY) === 'false') {
+      return 'collapsed';
+    }
+  } catch {
+    // Ignore storage errors (e.g. private mode)
+  }
+  return 'expanded';
+};
 
 export const BetaNotice: React.FC = () => {
   const { t } = useLanguage();
-  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(BETA_NOTICE_EXPANDED_KEY) !== 'false';
-    } catch {
-      return true;
-    }
-  });
+  const [state, setState] = useState<BetaNoticeState>(readInitialState);
 
-  const toggleExpanded = () => {
-    setIsExpanded(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem(BETA_NOTICE_EXPANDED_KEY, String(next));
-      } catch {
-        // Ignore storage errors (e.g. private mode)
-      }
-      return next;
-    });
+  const update = (next: BetaNoticeState) => {
+    setState(next);
+    try {
+      localStorage.setItem(BETA_NOTICE_STATE_KEY, next);
+    } catch {
+      // Ignore storage errors (e.g. private mode)
+    }
   };
+
+  const isExpanded = state === 'expanded';
+
+  // Hidden state: render only a compact floating pill. It occupies almost no
+  // screen space but stays clearly labelled ("WIP") so it's obvious how to
+  // restore the full notice.
+  if (state === 'hidden') {
+    return (
+      <button
+        onClick={() => update('expanded')}
+        aria-label={t('beta.notice.show')}
+        title={t('beta.notice.show')}
+        className="fixed bottom-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-amber-300 dark:border-amber-700 bg-amber-100/95 dark:bg-amber-900/90 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200 shadow-lg backdrop-blur transition-colors hover:bg-amber-200 dark:hover:bg-amber-800"
+      >
+        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+        {t('beta.notice.title')}
+      </button>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
@@ -59,19 +93,29 @@ export const BetaNotice: React.FC = () => {
               )}
             </div>
           </div>
-          <button
-            onClick={toggleExpanded}
-            className="flex-shrink-0 p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
-            aria-label={isExpanded ? t('beta.notice.collapse') : t('beta.notice.expand')}
-          >
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </button>
+          <div className="flex-shrink-0 flex items-center gap-0.5">
+            <button
+              onClick={() => update(isExpanded ? 'collapsed' : 'expanded')}
+              className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+              aria-label={isExpanded ? t('beta.notice.collapse') : t('beta.notice.expand')}
+            >
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              onClick={() => update('hidden')}
+              className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+              aria-label={t('beta.notice.hide')}
+              title={t('beta.notice.hide')}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-}; 
+};

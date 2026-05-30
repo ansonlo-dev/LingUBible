@@ -43,6 +43,8 @@ export default {
   'beta.notice.dismiss': '我知道了',
   'beta.notice.expand': '展開通知',
   'beta.notice.collapse': '收起通知',
+  'beta.notice.hide': '隱藏通知',
+  'beta.notice.show': '顯示開發中通知',
   'pwa.install.title': '安裝 LingUBible',
   'pwa.install.description': '加到主畫面以快速存取',
   'pwa.install.install': '安裝',

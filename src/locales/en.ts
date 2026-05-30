@@ -44,6 +44,8 @@ export default {
   'beta.notice.dismiss': 'I understand',
   'beta.notice.expand': 'Expand notice',
   'beta.notice.collapse': 'Collapse notice',
+  'beta.notice.hide': 'Hide notice',
+  'beta.notice.show': 'Show WIP notice',
   'pwa.install.title': 'Install LingUBible',
   'pwa.install.description': 'Add to home screen for quick access',
   'pwa.install.install': 'Install',
