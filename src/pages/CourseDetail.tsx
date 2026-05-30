@@ -314,7 +314,10 @@ const openDocumentInNewTab = (url: string | URL, title: string) => {
   setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 };
 
-const COURSE_CODE_REGEX = /\b[A-Z]{3}\d{4}\b/g;
+// Course codes are 3 capital letters + 4 digits, optionally followed by a
+// single trailing letter (e.g. HST3366e). MGSL is the one and only 4-letter
+// prefix, so it's special-cased rather than allowing any 4 letters generally.
+const COURSE_CODE_REGEX = /\b(?:MGSL|[A-Z]{3})\d{4}[a-z]?\b/g;
 
 // Normalise separators between course codes so they read cleanly:
 //  - "/"  → spaces before & after  (CDS1003/BUS1102 → CDS1003 / BUS1102)
