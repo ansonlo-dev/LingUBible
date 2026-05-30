@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
+import { isReviewRetryFailGrade } from '@/utils/gradeUtils';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -2161,8 +2162,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           const originalGrade = editingReview.course_final_grade;
           const newGrade = reviewData.course_final_grade;
           
-          // Check if we're changing from F (fail) to a non-F grade
-          if (originalGrade === 'F' && newGrade && newGrade !== 'F') {
+          // Check if we're changing from a fail grade (which is what unlocked
+          // the 2nd review) to a non-fail grade. Uses the shared rule so it
+          // stays in sync with CourseService.canUserSubmitReview.
+          if (isReviewRetryFailGrade(originalGrade) && newGrade && !isReviewRetryFailGrade(newGrade)) {
             try {
               // Get all user's reviews for this course to check if they have 2 reviews
               const allUserReviews = await CourseService.canUserSubmitReview(user.$id, selectedCourse, selectedTerm);

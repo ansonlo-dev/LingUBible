@@ -1,7 +1,7 @@
 import { tablesDB, functions } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
-import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA } from '@/utils/gradeUtils';
+import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA, isReviewRetryFailGrade } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
 import { courseStatsCache, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
 import { persistentCache, PERSISTENT_CACHE_KEYS, PERSISTENT_CACHE_TTL } from '@/utils/persistentCache';
@@ -5676,12 +5676,12 @@ export class CourseService {
       if (existingReviews.length === 1) {
         const firstReview = existingReviews[0];
         const firstGrade = firstReview.course_final_grade;
-        
-        // Check if the first review has a fail grade
-        // Only F (Failure) grade allows for a second review submission
-        const failGrades = ['F'];
-        const isFirstReviewFail = failGrades.includes(firstGrade);
-        
+
+        // Check if the first review has a fail grade. The set of qualifying
+        // grades lives in gradeUtils (REVIEW_RETRY_FAIL_GRADES) so it stays in
+        // sync with the edit guard in ReviewSubmissionForm.
+        const isFirstReviewFail = isReviewRetryFailGrade(firstGrade);
+
         if (isFirstReviewFail) {
           return {
             canSubmit: true,

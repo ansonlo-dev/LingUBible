@@ -54,6 +54,29 @@ const GRADE_TO_GPA_MAP: Record<string, GradeInfo> = {
 const GRADE_ORDER = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F', 'N/A'];
 
 /**
+ * Grades that count as a "fail" for the purpose of allowing a user to submit a
+ * SECOND review for the same course. A user normally gets 1 review per course;
+ * if their first review carries one of these grades, they may submit one more
+ * (max 2 total). This is the single source of truth — both the eligibility
+ * check (CourseService.canUserSubmitReview) and the edit guard in
+ * ReviewSubmissionForm must use `isReviewRetryFailGrade` rather than hard-coding
+ * the grade, so the rule cannot drift between call sites.
+ */
+export const REVIEW_RETRY_FAIL_GRADES = ['F'] as const;
+
+/**
+ * Whether a grade qualifies as a "fail" that unlocks a second review for the
+ * same course. Normalizes case/whitespace so a stored grade like ' f ' still
+ * matches.
+ * @param grade - The stored final grade for the user's first review
+ */
+export const isReviewRetryFailGrade = (grade: string | null | undefined): boolean => {
+  if (!grade) return false;
+  const normalized = grade.trim().toUpperCase();
+  return (REVIEW_RETRY_FAIL_GRADES as readonly string[]).includes(normalized);
+};
+
+/**
  * Get GPA information for a given grade
  * @param grade - The letter grade (e.g., 'A+', 'B', 'C-')
  * @returns GradeInfo object with grade, GPA, and description, or null if grade not found
