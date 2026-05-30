@@ -1569,6 +1569,7 @@ export default {
   'myReviews.deleteConfirmTitle': '刪除評論',
   'myReviews.deleteConfirmDescription': '您確定要刪除這個評論嗎？此操作無法復原。',
   'myReviews.deleteSuccess': '評論刪除成功',
+  'myReviews.deleteSuccessDescription': '您的評論已被永久刪除。',
   'myReviews.deleteError': '刪除評論失敗',
   'myReviews.upvotes': '讚',
   'myReviews.downvotes': '踩',

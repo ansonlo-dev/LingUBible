@@ -1715,6 +1715,7 @@ export default {
   'myReviews.deleteConfirmTitle': 'Delete Review',
   'myReviews.deleteConfirmDescription': 'Are you sure you want to delete this review? This action cannot be undone.',
   'myReviews.deleteSuccess': 'Review deleted successfully',
+  'myReviews.deleteSuccessDescription': 'Your review has been permanently deleted.',
   'myReviews.deleteError': 'Failed to delete review',
   'myReviews.upvotes': 'Upvotes',
   'myReviews.downvotes': 'Downvotes',

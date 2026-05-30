@@ -1626,6 +1626,7 @@ export default {
   'myReviews.deleteConfirmTitle': '删除评论',
   'myReviews.deleteConfirmDescription': '您确定要删除这个评论吗？此操作无法撤销。',
   'myReviews.deleteSuccess': '评论删除成功',
+  'myReviews.deleteSuccessDescription': '您的评论已被永久删除。',
   'myReviews.deleteError': '删除评论失败',
   'myReviews.upvotes': '赞',
   'myReviews.downvotes': '踩',

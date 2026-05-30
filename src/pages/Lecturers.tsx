@@ -4581,28 +4581,10 @@ const Lecturers = () => {
                                         
                                         {/* Desktop/Tablet: Badges on the same line as instructor name (right side) */}
                                         <div className="hidden md:flex md:items-start md:gap-2 md:shrink-0">
-                                          {/* 教學語言徽章 */}
-                                          {(() => {
-                                            const teachingLanguage = getTeachingLanguageForInstructor(
-                                              instructor.instructor_name,
-                                              instructor.session_type
-                                            );
-                                            if (teachingLanguage) {
-                                              return (
-                                                <span 
-                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 max-w-full truncate"
-                                                >
-                                                  {getTeachingLanguageName(teachingLanguage, t)}
-                                                </span>
-                                              );
-                                            }
-                                            return null;
-                                          })()}
-                                          
                                           {/* 課堂類型徽章 */}
-                                          <span 
+                                          <span
                                             className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs shrink-0 ${
-                                              instructor.session_type === 'Lecture' 
+                                              instructor.session_type === 'Lecture'
                                                 ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
                                                 : instructor.session_type === 'Tutorial'
                                                 ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
@@ -4611,6 +4593,24 @@ const Lecturers = () => {
                                           >
                                             {t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`)}
                                           </span>
+
+                                          {/* 教學語言徽章 */}
+                                          {(() => {
+                                            const teachingLanguage = getTeachingLanguageForInstructor(
+                                              instructor.instructor_name,
+                                              instructor.session_type
+                                            );
+                                            if (teachingLanguage) {
+                                              return (
+                                                <span
+                                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 max-w-full truncate"
+                                                >
+                                                  {getTeachingLanguageName(teachingLanguage, t)}
+                                                </span>
+                                              );
+                                            }
+                                            return null;
+                                          })()}
                                         </div>
                                       </div>
                                       
