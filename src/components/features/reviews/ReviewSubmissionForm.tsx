@@ -156,77 +156,71 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
       onMouseLeave={() => setHoveredRating(null)}
     >
       {[1, 2, 3, 4, 5].map((starValue) => {
-        const halfFilled = starValue - 0.5 <= displayRating && !isNotApplicable;
         const fullFilled = starValue <= displayRating && !isNotApplicable;
+        const halfFilled = !fullFilled && starValue - 0.5 <= displayRating && !isNotApplicable;
         const isLast = starValue === 5;
-        return (
-          <div key={starValue} className="relative">
-            {/* Half star (left side) */}
-            <button
-              type="button"
-              onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
-              onMouseEnter={() => setHoveredRating(starValue - 0.5)}
-              // Half-star hit zone is intentionally only the left ~40% of the
-              // star (the star itself is w-6 = 24px). A 50/50 split made the
-              // star's visual centre fall on the boundary, so a natural "tap the
-              // star" gesture kept registering as x.5. Keeping halves to the
-              // left edge lets a centre tap reliably land on the integer value
-              // while half-steps stay reachable near the left edge.
-              className="absolute left-0 top-0 w-2.5 h-6 transition-all hover:scale-110 focus:outline-none outline-none border-none rounded-l z-10"
-              style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
-              disabled={isNotApplicable}
-            >
-              <Star
-                className={cn(
-                  "h-6 w-6 transition-colors",
-                  halfFilled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400 dark:text-gray-400'
-                )}
-                style={{
-                  clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
-                  stroke: halfFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
-                  // Empty stars must keep a visible outline in every theme. The
-                  // --star-stroke-width var is 0px in dark mode (it only governs
-                  // the filled star's outline), so the empty state hardcodes a
-                  // fixed width instead — otherwise the stars vanish on dark bg.
-                  strokeWidth: halfFilled ? 'var(--star-stroke-width, 1px)' : '1.5px'
-                }}
-              />
-            </button>
 
-            {/* Full star */}
-            <button
-              type="button"
-              onClick={() => onRatingChange(rating === starValue ? null : starValue)}
-              onMouseEnter={() => setHoveredRating(starValue)}
+        const halfValue = starValue - 0.5;
+        const selectHalf = () => onRatingChange(rating === halfValue ? null : halfValue);
+        const selectFull = () => onRatingChange(rating === starValue ? null : starValue);
+
+        return (
+          <div
+            key={starValue}
+            className={cn("group relative h-6 w-6", isLast && "mr-4")}
+          >
+            {/* Visual star only — never receives pointer events. The hit zones
+                below decide the value, so clipPath (which also clips hit-testing)
+                can't hijack clicks. */}
+            <Star
               className={cn(
-                "transition-all hover:scale-110 focus:outline-none outline-none border-none rounded",
-                isLast && "pr-4"
+                "h-6 w-6 transition-transform pointer-events-none",
+                !isNotApplicable && "group-hover:scale-110",
+                fullFilled
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : halfFilled
+                  ? 'text-yellow-400'
+                  : 'text-gray-400 dark:text-gray-400'
               )}
-              style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
-              disabled={isNotApplicable}
-            >
-              <Star
-                className={cn(
-                  "h-6 w-6 transition-colors",
-                  fullFilled
-                    ? 'fill-yellow-400 text-yellow-400'
-                    : halfFilled
-                    ? 'text-yellow-400'
-                    : 'text-gray-400 dark:text-gray-400'
-                )}
-                style={{
-                  fill: fullFilled
-                    ? 'currentColor'
-                    : halfFilled
-                    ? 'url(#half-fill)'
-                    : 'none',
-                  stroke: fullFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
-                  // See note above: empty stars need a fixed outline width so
-                  // they stay visible in dark mode (where --star-stroke-width is 0px).
-                  strokeWidth: (fullFilled || halfFilled) ? 'var(--star-stroke-width, 1px)' : '1.5px'
-                }}
+              style={{
+                fill: fullFilled
+                  ? 'currentColor'
+                  : halfFilled
+                  ? 'url(#half-fill)'
+                  : 'none',
+                stroke: fullFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
+                // Empty stars need a fixed outline width so they stay visible in
+                // dark mode (where --star-stroke-width is 0px, meant only for the
+                // filled star's outline).
+                strokeWidth: (fullFilled || halfFilled) ? 'var(--star-stroke-width, 1px)' : '1.5px'
+              }}
+            />
+
+            {/* Two side-by-side hit zones. Left 40% → half value, right 60% →
+                whole value, so a natural tap on the star body gives an integer
+                while half-steps stay reachable at the left edge. These are real
+                non-overlapping flex children, so the split is exact on both
+                desktop (hover) and mobile (tap). */}
+            <div className="absolute inset-0 flex">
+              <button
+                type="button"
+                aria-label={`${halfValue}`}
+                onClick={selectHalf}
+                onMouseEnter={() => setHoveredRating(halfValue)}
+                className="h-full basis-2/5 focus:outline-none outline-none border-none p-0 cursor-pointer"
+                style={{ outline: 'none', border: 'none', boxShadow: 'none', background: 'transparent' }}
+                disabled={isNotApplicable}
               />
-            </button>
+              <button
+                type="button"
+                aria-label={`${starValue}`}
+                onClick={selectFull}
+                onMouseEnter={() => setHoveredRating(starValue)}
+                className="h-full basis-3/5 focus:outline-none outline-none border-none p-0 cursor-pointer"
+                style={{ outline: 'none', border: 'none', boxShadow: 'none', background: 'transparent' }}
+                disabled={isNotApplicable}
+              />
+            </div>
           </div>
         );
       })}
