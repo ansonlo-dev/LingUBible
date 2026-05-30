@@ -52,6 +52,7 @@ import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsi
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { cn } from '@/lib/utils';
 
 // Faculty mapping function - copied from Lecturers.tsx
 const getFacultyByDepartment = (department: string): string => {
@@ -1466,8 +1467,17 @@ const CourseDetail = () => {
   // the file or when the course has no syllabus on record.
   const syllabusButtonDisabled = !!user && (syllabusLoading || !syllabusFile);
 
+  // A review can only be written for a course that has actually been taught at
+  // least once. While teaching records are still loading we keep the button
+  // enabled to avoid a disabled→enabled flash; once loaded with no records, the
+  // write-review action is blocked entirely.
+  const writeReviewDisabled = !teachingInfoLoading && (!teachingInfo || teachingInfo.length === 0);
+
   // Writing a review requires an account — guests get the same login prompt.
   const handleWriteReview = () => {
+    if (writeReviewDisabled) {
+      return;
+    }
     if (!user) {
       promptLogin();
       return;
@@ -1645,14 +1655,21 @@ const CourseDetail = () => {
                     showText={true}
                     variant="outline"
                   />
-                  <Button 
-                    className="h-10 gradient-primary hover:opacity-90 text-white"
+                  <Button
+                    className={cn(
+                      'h-10 text-white',
+                      writeReviewDisabled
+                        ? 'bg-red-300 dark:bg-red-900/50 opacity-60 cursor-not-allowed hover:opacity-60'
+                        : 'gradient-primary hover:opacity-90'
+                    )}
                     onClick={handleWriteReview}
+                    disabled={writeReviewDisabled}
+                    title={writeReviewDisabled ? t('pages.courseDetail.noTeachingRecords') : undefined}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     {t('review.writeReview')}
                   </Button>
-                  <button 
+                  <button
                     onClick={() => navigate('/courses')}
                     className="h-10 px-3 text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
                   >
@@ -1751,8 +1768,15 @@ const CourseDetail = () => {
                 </div>
                 <div className="flex-1">
                   <Button
-                    className="h-10 gradient-primary hover:opacity-90 text-white w-full"
+                    className={cn(
+                      'h-10 text-white w-full',
+                      writeReviewDisabled
+                        ? 'bg-red-300 dark:bg-red-900/50 opacity-60 cursor-not-allowed hover:opacity-60'
+                        : 'gradient-primary hover:opacity-90'
+                    )}
                     onClick={handleWriteReview}
+                    disabled={writeReviewDisabled}
+                    title={writeReviewDisabled ? t('pages.courseDetail.noTeachingRecords') : undefined}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     {t('review.writeReview')}
