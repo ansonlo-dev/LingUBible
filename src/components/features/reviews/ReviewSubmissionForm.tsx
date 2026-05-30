@@ -145,7 +145,10 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
 
   const displayRating = hoveredRating !== null ? hoveredRating : (rating ?? 0);
   const isNotApplicable = rating === -1;
-  const isNotRated = rating === null;
+  // "Not rated" only when there's no committed rating AND no live hover preview.
+  // On hover (desktop), we show the description for the value under the cursor
+  // even before the user clicks. Mobile has no hover, so this is unaffected.
+  const isNotRated = rating === null && hoveredRating === null;
 
   const renderStarRow = () => (
     <div
