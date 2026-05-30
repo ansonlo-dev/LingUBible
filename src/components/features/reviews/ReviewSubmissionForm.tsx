@@ -166,7 +166,13 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
               type="button"
               onClick={() => onRatingChange(rating === starValue - 0.5 ? null : starValue - 0.5)}
               onMouseEnter={() => setHoveredRating(starValue - 0.5)}
-              className="absolute left-0 top-0 w-3 h-6 transition-all hover:scale-110 focus:outline-none outline-none border-none rounded-l z-10"
+              // Half-star hit zone is intentionally only the left ~40% of the
+              // star (the star itself is w-6 = 24px). A 50/50 split made the
+              // star's visual centre fall on the boundary, so a natural "tap the
+              // star" gesture kept registering as x.5. Keeping halves to the
+              // left edge lets a centre tap reliably land on the integer value
+              // while half-steps stay reachable near the left edge.
+              className="absolute left-0 top-0 w-2.5 h-6 transition-all hover:scale-110 focus:outline-none outline-none border-none rounded-l z-10"
               style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
               disabled={isNotApplicable}
             >
