@@ -121,13 +121,15 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         className={cn(
           // Base size - always start with icon size
           getSizeClasses(),
-          // Responsive expansion only when showText is true
+          // Responsive expansion only when showText is true.
+          // Keep a fixed h-10 so it lines up with the other h-10 buttons
+          // (syllabus / write-review) instead of sizing to content.
           showText && [
-            // Mobile portrait: maintain width from parent, expand height and add padding
-            'h-auto px-3 py-2',
-            // Landscape and desktop: auto width and height with padding
-            'landscape:h-auto landscape:w-auto landscape:px-3 landscape:py-2',
-            'sm:h-auto sm:w-auto sm:px-3 sm:py-2'
+            // Mobile portrait: maintain width from parent, fixed height + padding
+            'h-10 px-3 py-2',
+            // Landscape and desktop: auto width, fixed height + padding
+            'landscape:h-10 landscape:w-auto landscape:px-3 landscape:py-2',
+            'sm:h-10 sm:w-auto sm:px-3 sm:py-2'
           ],
           'transition-all duration-200',
           'hover:bg-red-500/20 hover:border-red-500/50',
