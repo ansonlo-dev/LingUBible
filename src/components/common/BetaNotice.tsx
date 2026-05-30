@@ -1,64 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-
-const BETA_NOTICE_STATE_KEY = 'betaNoticeState';
-const LEGACY_EXPANDED_KEY = 'betaNoticeExpanded';
-
-// Three states:
-//  - 'expanded'  : full banner with the detail message
-//  - 'collapsed' : single-line banner (header only) — the chevron toggle
-//  - 'hidden'    : banner fully dismissed; replaced by a tiny floating pill
-//                  so the user can always bring it back with one click.
-type BetaNoticeState = 'expanded' | 'collapsed' | 'hidden';
-
-const readInitialState = (): BetaNoticeState => {
-  try {
-    const stored = localStorage.getItem(BETA_NOTICE_STATE_KEY);
-    if (stored === 'expanded' || stored === 'collapsed' || stored === 'hidden') {
-      return stored;
-    }
-    // Migrate from the old boolean-style key.
-    if (localStorage.getItem(LEGACY_EXPANDED_KEY) === 'false') {
-      return 'collapsed';
-    }
-  } catch {
-    // Ignore storage errors (e.g. private mode)
-  }
-  return 'expanded';
-};
+import { useBetaNoticeState, setBetaNoticeState } from '@/hooks/useBetaNoticeState';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 export const BetaNotice: React.FC = () => {
   const { t } = useLanguage();
-  const [state, setState] = useState<BetaNoticeState>(readInitialState);
+  const state = useBetaNoticeState();
 
-  const update = (next: BetaNoticeState) => {
-    setState(next);
-    try {
-      localStorage.setItem(BETA_NOTICE_STATE_KEY, next);
-    } catch {
-      // Ignore storage errors (e.g. private mode)
-    }
-  };
+  // When hidden, the banner takes no space at all — it can be restored from the
+  // capsule next to the donate button in the footer (see FooterBetaButton).
+  if (state === 'hidden') {
+    return null;
+  }
 
   const isExpanded = state === 'expanded';
-
-  // Hidden state: render only a compact floating pill. It occupies almost no
-  // screen space but stays clearly labelled ("WIP") so it's obvious how to
-  // restore the full notice.
-  if (state === 'hidden') {
-    return (
-      <button
-        onClick={() => update('expanded')}
-        aria-label={t('beta.notice.show')}
-        title={t('beta.notice.show')}
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-amber-300 dark:border-amber-700 bg-amber-100/95 dark:bg-amber-900/90 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200 shadow-lg backdrop-blur transition-colors hover:bg-amber-200 dark:hover:bg-amber-800"
-      >
-        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-        {t('beta.notice.title')}
-      </button>
-    );
-  }
 
   return (
     <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
@@ -95,7 +51,7 @@ export const BetaNotice: React.FC = () => {
           </div>
           <div className="flex-shrink-0 flex items-center gap-0.5">
             <button
-              onClick={() => update(isExpanded ? 'collapsed' : 'expanded')}
+              onClick={() => setBetaNoticeState(isExpanded ? 'collapsed' : 'expanded')}
               className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
               aria-label={isExpanded ? t('beta.notice.collapse') : t('beta.notice.expand')}
             >
@@ -106,7 +62,7 @@ export const BetaNotice: React.FC = () => {
               )}
             </button>
             <button
-              onClick={() => update('hidden')}
+              onClick={() => setBetaNoticeState('hidden')}
               className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
               aria-label={t('beta.notice.hide')}
               title={t('beta.notice.hide')}
@@ -117,5 +73,30 @@ export const BetaNotice: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Capsule button shown in the footer (next to the donate button) only while the
+// banner is hidden. Clicking it restores the full WIP notice. Styled to match
+// the footer's donate capsule, in amber.
+export const FooterBetaButton: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const { t } = useLanguage();
+  const state = useBetaNoticeState();
+
+  if (state !== 'hidden') {
+    return null;
+  }
+
+  return (
+    <ResponsiveTooltip content={t('beta.notice.show')}>
+      <button
+        onClick={() => setBetaNoticeState('expanded')}
+        aria-label={t('beta.notice.show')}
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 hover:shadow-md bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 border border-amber-200/60 dark:border-amber-700/60 text-amber-700 dark:text-amber-300 hover:from-amber-200 hover:to-orange-200 dark:hover:from-amber-800/60 dark:hover:to-orange-800/60 hover:border-amber-300 dark:hover:border-amber-600 whitespace-nowrap cursor-help ${className}`}
+      >
+        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+        <span className="font-semibold text-xs">{t('beta.notice.title')}</span>
+      </button>
+    </ResponsiveTooltip>
   );
 };
