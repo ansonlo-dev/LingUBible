@@ -173,12 +173,16 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
               <Star
                 className={cn(
                   "h-6 w-6 transition-colors",
-                  halfFilled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400 dark:text-gray-500'
+                  halfFilled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400 dark:text-gray-400'
                 )}
                 style={{
                   clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
                   stroke: halfFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
-                  strokeWidth: 'var(--star-stroke-width, 1px)'
+                  // Empty stars must keep a visible outline in every theme. The
+                  // --star-stroke-width var is 0px in dark mode (it only governs
+                  // the filled star's outline), so the empty state hardcodes a
+                  // fixed width instead — otherwise the stars vanish on dark bg.
+                  strokeWidth: halfFilled ? 'var(--star-stroke-width, 1px)' : '1.5px'
                 }}
               />
             </button>
@@ -202,7 +206,7 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                     ? 'fill-yellow-400 text-yellow-400'
                     : halfFilled
                     ? 'text-yellow-400'
-                    : 'text-gray-400 dark:text-gray-500'
+                    : 'text-gray-400 dark:text-gray-400'
                 )}
                 style={{
                   fill: fullFilled
@@ -211,7 +215,9 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
                     ? 'url(#half-fill)'
                     : 'none',
                   stroke: fullFilled ? 'var(--star-stroke, #000000)' : 'currentColor',
-                  strokeWidth: 'var(--star-stroke-width, 1px)'
+                  // See note above: empty stars need a fixed outline width so
+                  // they stay visible in dark mode (where --star-stroke-width is 0px).
+                  strokeWidth: (fullFilled || halfFilled) ? 'var(--star-stroke-width, 1px)' : '1.5px'
                 }}
               />
             </button>
