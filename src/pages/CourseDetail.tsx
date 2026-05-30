@@ -9,16 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectDropdown, SelectOption } from '@/components/ui/multi-select-dropdown';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from '@/components/ui/alert-dialog';
+import { useLoginRequired } from '@/contexts/LoginRequiredContext';
 import { 
   ArrowLeft, 
   Star, 
@@ -447,6 +438,7 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
 const CourseDetail = () => {
   const { courseCode } = useParams<{ courseCode: string }>();
   const navigate = useNavigate();
+  const promptLogin = useLoginRequired();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -679,9 +671,6 @@ const CourseDetail = () => {
   // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
   // we surface the largest suffix (most recent version). Open to all visitors.
   const [syllabusFile, setSyllabusFile] = useState<{ id: string; name: string } | null>(null);
-  // Guests may see the syllabus button, but viewing is restricted to verified
-  // students — clicking while logged out opens this prompt instead.
-  const [syllabusLoginPromptOpen, setSyllabusLoginPromptOpen] = useState(false);
   // Whether we're still resolving the syllabus file (logged-in users only —
   // the bucket is readable by authenticated users, so guests never list it).
   const [syllabusLoading, setSyllabusLoading] = useState(false);
@@ -1459,7 +1448,7 @@ const CourseDetail = () => {
   // a prompt explaining it's restricted material that requires an account.
   const handleViewSyllabus = () => {
     if (!user) {
-      setSyllabusLoginPromptOpen(true);
+      promptLogin();
       return;
     }
     if (!syllabusFile) return;
@@ -1473,6 +1462,15 @@ const CourseDetail = () => {
   // opens the login prompt). For logged-in users it's disabled while we resolve
   // the file or when the course has no syllabus on record.
   const syllabusButtonDisabled = !!user && (syllabusLoading || !syllabusFile);
+
+  // Writing a review requires an account — guests get the same login prompt.
+  const handleWriteReview = () => {
+    if (!user) {
+      promptLogin();
+      return;
+    }
+    navigate(`/write-review/${course.course_code}`);
+  };
 
   // Lazy-load past exam papers when the user opens the exams tab.
   // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
@@ -1644,7 +1642,7 @@ const CourseDetail = () => {
                   />
                   <Button 
                     className="h-10 gradient-primary hover:opacity-90 text-white"
-                    onClick={() => navigate(`/write-review/${course.course_code}`)}
+                    onClick={handleWriteReview}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     {t('review.writeReview')}
@@ -1749,7 +1747,7 @@ const CourseDetail = () => {
                 <div className="flex-1">
                   <Button
                     className="h-10 gradient-primary hover:opacity-90 text-white w-full"
-                    onClick={() => navigate(`/write-review/${course.course_code}`)}
+                    onClick={handleWriteReview}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     {t('review.writeReview')}
@@ -3655,27 +3653,6 @@ const CourseDetail = () => {
 
 
       </Tabs>
-
-      {/* Restricted-material prompt shown when a guest clicks "View syllabus" */}
-      <AlertDialog open={syllabusLoginPromptOpen} onOpenChange={setSyllabusLoginPromptOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('pages.courseDetail.syllabusSignUpTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('pages.courseDetail.syllabusSignUpDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate('/login')}>
-              {t('auth.login')}
-            </AlertDialogAction>
-            <AlertDialogAction onClick={() => navigate('/register')}>
-              {t('auth.signUp')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

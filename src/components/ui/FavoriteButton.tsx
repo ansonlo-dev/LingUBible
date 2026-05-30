@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useLoginRequired } from '@/contexts/LoginRequiredContext';
 import { LanguageContext } from '@/contexts/LanguageContext';
 import { useFavoriteStatus } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const promptLogin = useLoginRequired();
   const { t } = useLanguage();
   
   const { isFavorited: hookIsFavorited, toggle, isLoading } = useFavoriteStatus(type, itemId);
@@ -50,11 +52,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     e.stopPropagation();
 
     if (!user) {
-      toast({
-        variant: 'destructive',
-        title: t('favorites.loginRequired'),
-        description: t('favorites.loginRequiredDescription'),
-      });
+      promptLogin();
       return;
     }
 

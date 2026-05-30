@@ -54,6 +54,8 @@ import { getInstructorName, getCourseTitle, translateDepartmentName, getTeaching
 import { StarRating } from '@/components/ui/star-rating';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLoginRequired } from '@/contexts/LoginRequiredContext';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
@@ -238,10 +240,26 @@ const extractRawDepartmentName = (department: string): string => {
 const Lecturers = () => {
   const { instructorName } = useParams<{ instructorName: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const promptLogin = useLoginRequired();
   const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
-  
+
+  // Writing a review requires an account — guests get the shared login prompt.
+  const handleSubmitInstructorReview = (name: string) => {
+    if (!user) {
+      promptLogin();
+      return;
+    }
+    navigate('/write-review', {
+      state: {
+        preSelectedInstructor: name,
+        originPage: 'instructor',
+      },
+    });
+  };
+
   const [pendingTeachingLanguageFilter, setPendingTeachingLanguageFilter] = useState<string | null>(null);
   const [pendingSessionTypeFilter, setPendingSessionTypeFilter] = useState<string | null>(null);
   const [pendingTermFilter, setPendingTermFilter] = useState<string | null>(null);
@@ -1660,17 +1678,9 @@ const Lecturers = () => {
                     showText={true}
                     variant="outline"
                   />
-                  <Button 
+                  <Button
                     className="h-10 gradient-primary hover:opacity-90 text-white"
-                    onClick={() => {
-                      // Navigate to submit review page with instructor pre-selected
-                      navigate('/write-review', { 
-                        state: { 
-                          preSelectedInstructor: instructor.name,
-                          originPage: 'instructor'
-                        } 
-                      });
-                    }}
+                    onClick={() => handleSubmitInstructorReview(instructor.name)}
                   >
                     <PenTool className="h-4 w-4 mr-2" />
                     {t('instructors.submitReview')}
@@ -1755,17 +1765,9 @@ const Lecturers = () => {
                     />
                   </div>
                   <div className="flex-1">
-                    <Button 
+                    <Button
                       className="h-10 gradient-primary hover:opacity-90 text-white w-full"
-                      onClick={() => {
-                        // Navigate to submit review page with instructor pre-selected
-                        navigate('/write-review', { 
-                          state: { 
-                            preSelectedInstructor: instructor.name,
-                            originPage: 'instructor'
-                          } 
-                        });
-                      }}
+                      onClick={() => handleSubmitInstructorReview(instructor.name)}
                     >
                       <PenTool className="h-4 w-4 mr-2" />
                       {t('instructors.submitReview')}

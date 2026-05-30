@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { RecaptchaProvider, useRecaptcha } from '@/contexts/RecaptchaContext';
+import { LoginRequiredProvider } from '@/contexts/LoginRequiredContext';
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -522,6 +523,7 @@ const RouterContent = ({
       {/* SEO 測試器 - 僅開發模式 */}
       {/* {import.meta.env.DEV && <SEOTester />} */}
       
+      <LoginRequiredProvider>
       <Routes>
         {/* 登入和註冊頁面使用獨立佈局 */}
         <Route path="/login" element={<Login />} />
@@ -678,9 +680,10 @@ const RouterContent = ({
                 <BackToTop />
               </div>
             </div>
-          } 
+          }
         />
       </Routes>
+      </LoginRequiredProvider>
     </>
   );
 };
