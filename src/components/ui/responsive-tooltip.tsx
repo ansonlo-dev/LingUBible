@@ -266,9 +266,24 @@ export const ResponsiveTooltip = React.forwardRef<HTMLElement, ResponsiveTooltip
               onClick: (e: React.MouseEvent) => {
                 // Get the original onClick handler
                 const originalOnClick = (children as React.ReactElement).props?.onClick;
-                
-                // For mobile with click action, let the parent component handle all the logic
-                if (hasClickAction && originalOnClick) {
+
+                // For mobile with click action that drives its two-tap flow via
+                // onFirstTap/onSecondTap, manage the tooltip + tap state here.
+                if (hasClickAction && (onFirstTap || onSecondTap)) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isOpen) {
+                    // Second tap: apply the filter and close the tooltip
+                    setIsOpen(false);
+                    setHasBeenTapped(false);
+                    onSecondTap?.();
+                  } else {
+                    // First tap: show the tooltip hint
+                    setIsOpen(true);
+                    setHasBeenTapped(true);
+                    onFirstTap?.();
+                  }
+                } else if (hasClickAction && originalOnClick) {
                   // Simply call the original onClick - parent will manage state
                   originalOnClick(e);
                 } else if (!hasClickAction) {

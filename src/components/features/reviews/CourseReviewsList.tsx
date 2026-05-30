@@ -644,8 +644,8 @@ export const CourseReviewsList = ({
   };
 
 
-  const renderRequirementBadge = (hasRequirement: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
-    const key = `requirement-${filterKey}-${hasRequirement ? 'has' : 'no'}`;
+  const renderRequirementBadge = (hasRequirement: boolean, label: string, filterKey: keyof CourseRequirementsFilters, uniqueSuffix: string = '') => {
+    const key = `requirement-${filterKey}-${hasRequirement ? 'has' : 'no'}-${uniqueSuffix}`;
     return (
       <ResponsiveTooltip 
         content={t('filter.clickToFilterRequirement', { requirement: label })}
@@ -793,18 +793,18 @@ export const CourseReviewsList = ({
                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                     hasClickAction={true}
                     clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                    open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-desktop`] : undefined}
+                    open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-desktop`] : undefined}
                     onOpenChange={isMobile ? () => {
                       // Tooltip state managed by handleMobileTwoTap
                     } : undefined}
                     onReset={isMobile ? () => {
-                      setMobileTapCounts(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-desktop`]: 0 }));
-                      setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-desktop`]: false }));
+                      setMobileTapCounts(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-desktop`]: 0 }));
+                      setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-desktop`]: false }));
                     } : undefined}
                   >
                     <span
                       ref={(el) => {
-                        if (el) tooltipRefs.current[`session-${instructor.instructor_name}-${instructor.session_type}-desktop`] = el;
+                        if (el) tooltipRefs.current[`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-desktop`] = el;
                       }} 
                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
                         instructor.session_type === 'Lecture' 
@@ -816,7 +816,7 @@ export const CourseReviewsList = ({
                           : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
                       }`}
                       onClick={() => {
-                        handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-desktop`, () => {
+                        handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-desktop`, () => {
                           const newFilters = { ...filters };
                           const sessionType = instructor.session_type;
                           
@@ -850,22 +850,22 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                          open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`] : undefined}
+                          open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
                           } : undefined}
                           onReset={isMobile ? () => {
-                            setMobileTapCounts(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`]: 0 }));
-                            setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`]: false }));
+                            setMobileTapCounts(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`]: false }));
                           } : undefined}
                         >
                           <span
                             ref={(el) => {
-                              if (el) tooltipRefs.current[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`] = el;
+                              if (el) tooltipRefs.current[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`] = el;
                             }} 
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                             onClick={() => {
-                              handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-desktop`, () => {
+                              handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`, () => {
                                 const newFilters = { ...filters };
                                 
                                 // 切換教學語言篩選器
@@ -899,18 +899,18 @@ export const CourseReviewsList = ({
                   content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                   hasClickAction={true}
                   clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                  open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-mobile`] : undefined}
+                  open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-mobile`] : undefined}
                   onOpenChange={isMobile ? () => {
                     // Tooltip state managed by handleMobileTwoTap
                   } : undefined}
                   onReset={isMobile ? () => {
-                    setMobileTapCounts(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-mobile`]: 0 }));
-                    setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-mobile`]: false }));
+                    setMobileTapCounts(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-mobile`]: 0 }));
+                    setMobileTapStates(prev => ({ ...prev, [`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-mobile`]: false }));
                   } : undefined}
                 >
                   <span
                     ref={(el) => {
-                      if (el) tooltipRefs.current[`session-${instructor.instructor_name}-${instructor.session_type}-mobile`] = el;
+                      if (el) tooltipRefs.current[`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-mobile`] = el;
                     }} 
                     className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105 shrink-0 ${
                       instructor.session_type === 'Lecture' 
@@ -922,7 +922,7 @@ export const CourseReviewsList = ({
                         : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
                     }`}
                     onClick={() => {
-                      handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-mobile`, () => {
+                      handleMobileTwoTap(`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-mobile`, () => {
                         const newFilters = { ...filters };
                         const sessionType = instructor.session_type;
                         
@@ -956,22 +956,22 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                        open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`] : undefined}
+                        open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
                         } : undefined}
                         onReset={isMobile ? () => {
-                          setMobileTapCounts(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`]: 0 }));
-                          setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`]: false }));
+                          setMobileTapCounts(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`]: false }));
                         } : undefined}
                       >
                         <span
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`] = el;
+                            if (el) tooltipRefs.current[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`] = el;
                           }} 
                           className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-help transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                           onClick={() => {
-                            handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-mobile`, () => {
+                            handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`, () => {
                               const newFilters = { ...filters };
                               
                               // 切換教學語言篩選器
@@ -1053,14 +1053,14 @@ export const CourseReviewsList = ({
                   <span>{t('review.courseRequirements')}</span>
                 </h5>
                 <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
-                  {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance')}
-                  {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz')}
-                  {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm')}
-                  {renderRequirementBadge(instructor.has_final, t('review.requirements.final'), 'final')}
-                  {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment')}
-                  {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject')}
-                  {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation')}
-                  {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'), 'reading')}
+                  {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'), 'attendance', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'), 'quiz', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'), 'midterm', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_final, t('review.requirements.final'), 'final', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'), 'individualAssignment', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'), 'groupProject', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'), 'presentation', `${reviewId}-${index}`)}
+                  {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'), 'reading', `${reviewId}-${index}`)}
                 </div>
               </div>
             )}
@@ -1099,18 +1099,18 @@ export const CourseReviewsList = ({
                       })}
                       hasClickAction={true}
                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                      open={isMobile ? mobileTapStates[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`] : undefined}
+                      open={isMobile ? mobileTapStates[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}-${reviewId}`] : undefined}
                       onOpenChange={isMobile ? () => {
                         // Tooltip state managed by handleMobileTwoTap
                       } : undefined}
                       onReset={isMobile ? () => {
-                        setMobileTapCounts(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`]: 0 }));
-                        setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`]: false }));
+                        setMobileTapCounts(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}-${reviewId}`]: 0 }));
+                        setMobileTapStates(prev => ({ ...prev, [`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}-${reviewId}`]: false }));
                       } : undefined}
                     >
                       <span
                         ref={(el) => {
-                          if (el) tooltipRefs.current[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`] = el;
+                          if (el) tooltipRefs.current[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}-${reviewId}`] = el;
                         }} 
                         className={cn(
                           "inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-help transition-all duration-200 hover:scale-105",
@@ -1121,7 +1121,7 @@ export const CourseReviewsList = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          handleMobileTwoTap(`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}`, () => {
+                          handleMobileTwoTap(`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}-${reviewId}`, () => {
                             const newFilters = { ...filters };
                             const serviceType = instructor.service_learning_type;
                             
@@ -1359,24 +1359,24 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                        open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-1`] : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-hideheader-1`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
                         } : undefined}
                         onReset={isMobile ? () => {
-                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-hideheader-1`]: 0 }));
-                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-1`]: false }));
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-hideheader-1`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-hideheader-1`]: false }));
                         } : undefined}
                       >
                         <button
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`term-${term.term_code}-hideheader-1`] = el;
+                            if (el) tooltipRefs.current[`term-${term.term_code}-${review.$id}-hideheader-1`] = el;
                           }}
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}-hideheader-1`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-${review.$id}-hideheader-1`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1394,24 +1394,24 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-hideheader-1`] : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-hideheader-1`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
                           } : undefined}
                           onReset={isMobile ? () => {
-                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-1`]: 0 }));
-                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-1`]: false }));
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-hideheader-1`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-hideheader-1`]: false }));
                           } : undefined}
                         >
                           <button
                             ref={(el) => {
-                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-hideheader-1`] = el;
+                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-${review.$id}-hideheader-1`] = el;
                             }}
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}-hideheader-1`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-${review.$id}-hideheader-1`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1434,24 +1434,24 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                        open={isMobile ? mobileTapStates[`term-${term.term_code}-hideheader-2`] : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-hideheader-2`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
                         } : undefined}
                         onReset={isMobile ? () => {
-                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-hideheader-2`]: 0 }));
-                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-hideheader-2`]: false }));
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-hideheader-2`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-hideheader-2`]: false }));
                         } : undefined}
                       >
                         <button
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`term-${term.term_code}-hideheader-2`] = el;
+                            if (el) tooltipRefs.current[`term-${term.term_code}-${review.$id}-hideheader-2`] = el;
                           }}
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}-hideheader-2`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-${review.$id}-hideheader-2`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1469,24 +1469,24 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-hideheader-2`] : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-hideheader-2`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
                           } : undefined}
                           onReset={isMobile ? () => {
-                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-2`]: 0 }));
-                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-hideheader-2`]: false }));
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-hideheader-2`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-hideheader-2`]: false }));
                           } : undefined}
                         >
                           <button
                             ref={(el) => {
-                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-hideheader-2`] = el;
+                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-${review.$id}-hideheader-2`] = el;
                             }}
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}-hideheader-2`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-${review.$id}-hideheader-2`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1505,19 +1505,19 @@ export const CourseReviewsList = ({
                       <div className="flex flex-col items-center">
                         <GradeBadge 
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`grade-${review.course_final_grade}`] = el;
+                            if (el) tooltipRefs.current[`grade-${review.course_final_grade}-${review.$id}`] = el;
                           }}
                           grade={review.course_final_grade}
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
-                          isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : false}
-                          mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : undefined}
+                          isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : false}
+                          mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : undefined}
                           onMobileTooltipChange={isMobile ? () => {
                             // Tooltip state managed by timeout
                           } : undefined}
                           onClick={() => {
-                            handleMobileTwoTap(`grade-${review.course_final_grade}`, () => {
+                            handleMobileTwoTap(`grade-${review.course_final_grade}-${review.$id}`, () => {
                               const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
                               setFilters(prev => ({
                                 ...prev,
@@ -1737,24 +1737,24 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                        open={isMobile ? mobileTapStates[`term-${term.term_code}-card-1`] : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-card-1`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
                         } : undefined}
                         onReset={isMobile ? () => {
-                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-card-1`]: 0 }));
-                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-1`]: false }));
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-card-1`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-card-1`]: false }));
                         } : undefined}
                       >
                         <button
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`term-${term.term_code}-card-1`] = el;
+                            if (el) tooltipRefs.current[`term-${term.term_code}-${review.$id}-card-1`] = el;
                           }}
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}-card-1`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-${review.$id}-card-1`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1772,24 +1772,24 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-card-1`] : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-card-1`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
                           } : undefined}
                           onReset={isMobile ? () => {
-                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-card-1`]: 0 }));
-                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-1`]: false }));
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-card-1`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-card-1`]: false }));
                           } : undefined}
                         >
                           <button
                             ref={(el) => {
-                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-card-1`] = el;
+                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-${review.$id}-card-1`] = el;
                             }}
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 w-fit cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}-card-1`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-${review.$id}-card-1`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1812,24 +1812,24 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                        open={isMobile ? mobileTapStates[`term-${term.term_code}-card-2`] : undefined}
+                        open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-card-2`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
                         } : undefined}
                         onReset={isMobile ? () => {
-                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-card-2`]: 0 }));
-                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-card-2`]: false }));
+                          setMobileTapCounts(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-card-2`]: 0 }));
+                          setMobileTapStates(prev => ({ ...prev, [`term-${term.term_code}-${review.$id}-card-2`]: false }));
                         } : undefined}
                       >
                         <button
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`term-${term.term_code}-card-2`] = el;
+                            if (el) tooltipRefs.current[`term-${term.term_code}-${review.$id}-card-2`] = el;
                           }}
                           className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMobileTwoTap(`term-${term.term_code}-card-2`, () => {
+                            handleMobileTwoTap(`term-${term.term_code}-${review.$id}-card-2`, () => {
                               setFilters(prev => ({
                                 ...prev,
                                 selectedTerms: [term.term_code],
@@ -1847,24 +1847,24 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
-                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-card-2`] : undefined}
+                          open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-card-2`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
                           } : undefined}
                           onReset={isMobile ? () => {
-                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-card-2`]: 0 }));
-                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-card-2`]: false }));
+                            setMobileTapCounts(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-card-2`]: 0 }));
+                            setMobileTapStates(prev => ({ ...prev, [`review-lang-${review.review_language}-${review.$id}-card-2`]: false }));
                           } : undefined}
                         >
                           <button
                             ref={(el) => {
-                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-card-2`] = el;
+                              if (el) tooltipRefs.current[`review-lang-${review.review_language}-${review.$id}-card-2`] = el;
                             }}
                             className="px-2 py-1 text-xs rounded-md transition-colors border bg-background hover:bg-muted border-border hover:border-primary/50 shrink-0 cursor-help"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleMobileTwoTap(`review-lang-${review.review_language}-card-2`, () => {
+                              handleMobileTwoTap(`review-lang-${review.review_language}-${review.$id}-card-2`, () => {
                                 setFilters(prev => ({
                                   ...prev,
                                   selectedLanguages: [review.review_language!],
@@ -1883,19 +1883,19 @@ export const CourseReviewsList = ({
                       <div className="flex flex-col items-center">
                         <GradeBadge 
                           ref={(el) => {
-                            if (el) tooltipRefs.current[`grade-${review.course_final_grade}`] = el;
+                            if (el) tooltipRefs.current[`grade-${review.course_final_grade}-${review.$id}`] = el;
                           }}
                           grade={review.course_final_grade}
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
-                          isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : false}
-                          mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}`] : undefined}
+                          isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : false}
+                          mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : undefined}
                           onMobileTooltipChange={isMobile ? () => {
                             // Tooltip state managed by timeout
                           } : undefined}
                           onClick={() => {
-                            handleMobileTwoTap(`grade-${review.course_final_grade}`, () => {
+                            handleMobileTwoTap(`grade-${review.course_final_grade}-${review.$id}`, () => {
                               const normalizedGrade = review.course_final_grade === '-1' ? 'N/A' : review.course_final_grade;
                               setFilters(prev => ({
                                 ...prev,
