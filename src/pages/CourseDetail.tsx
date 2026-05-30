@@ -1472,12 +1472,14 @@ const CourseDetail = () => {
     navigate(`/write-review/${course.course_code}`);
   };
 
-  // Lazy-load past exam papers when the user opens the exams tab.
+  // Load past exam papers once the course is known (for logged-in users).
+  // We fetch eagerly rather than only when the tab opens so we know whether any
+  // papers exist — the exams tab is hidden entirely when there are none.
   // Bucket: past_exam_papers; filenames are prefixed with the course code (e.g. CDS2004_24252.pdf).
   // `storage.listFiles` caps each response at 100 rows, so paginate until empty
   // to capture every paper (CCC8011 has 130+).
   useEffect(() => {
-    if (!user || activeMainTab !== 'exams' || !course?.course_code || examPapersLoaded) return;
+    if (!user || !course?.course_code || examPapersLoaded) return;
 
     const courseCode = course.course_code;
     let cancelled = false;
@@ -1525,7 +1527,7 @@ const CourseDetail = () => {
     })();
 
     return () => { cancelled = true; };
-  }, [user, activeMainTab, course?.course_code, examPapersLoaded, t]);
+  }, [user, course?.course_code, examPapersLoaded, t]);
 
   // Resolve filename-encoded instructor names that aren't already in
   // teachingInfo, with a single batched query to the instructors collection.
@@ -1987,14 +1989,19 @@ const CourseDetail = () => {
               <span className="hidden sm:inline">{t('chart.gradeDistribution')}</span>
               {activeMainTab === 'grades' && <span className="sm:hidden text-xs">{t('common.grades')}</span>}
             </TabsTrigger>
-            <TabsTrigger
-              value="exams"
-              className="attached-tab-trigger"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('pages.courseDetail.pastExamPapers')}</span>
-              {activeMainTab === 'exams' && <span className="sm:hidden text-xs">{t('pages.courseDetail.pastExamPapersShort')}</span>}
-            </TabsTrigger>
+            {/* Hide the exams tab for logged-in users when no papers exist.
+                Guests still see it (they get a login prompt) since we can't
+                check the bucket without auth. */}
+            {(!user || examPapers.length > 0) && (
+              <TabsTrigger
+                value="exams"
+                className="attached-tab-trigger"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('pages.courseDetail.pastExamPapers')}</span>
+                {activeMainTab === 'exams' && <span className="sm:hidden text-xs">{t('pages.courseDetail.pastExamPapersShort')}</span>}
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
