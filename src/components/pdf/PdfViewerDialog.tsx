@@ -64,6 +64,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   const themePreference = currentMode === 'dark' ? 'dark' : currentMode === 'light' ? 'light' : 'system';
 
   const bodyRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLElement | null>(null);
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -105,6 +106,42 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       timers.forEach(clearTimeout);
       if (el) el.style.paddingRight = '';
     };
+  }, [ready, blobUrl, error, viewerReady]);
+
+  // The dialog's scroll lock (react-remove-scroll, used by Radix) blocks native
+  // wheel scrolling inside the embedded viewer, even though its viewport is
+  // `overflow: auto` (drag-to-pan still works because it scrolls
+  // programmatically). We forward wheel events to the viewer's scroll container
+  // ourselves so the mouse wheel scrolls the document again.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error && viewerReady)) return;
+    const root = bodyRef.current;
+    if (!root) return;
+    const findScroller = (): HTMLElement | null => {
+      const cached = scrollerRef.current;
+      if (cached && root.contains(cached) && cached.scrollHeight > cached.clientHeight) return cached;
+      const candidates = root.querySelectorAll<HTMLElement>('div');
+      for (const el of candidates) {
+        const oy = getComputedStyle(el).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) {
+          scrollerRef.current = el;
+          return el;
+        }
+      }
+      return null;
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) return; // leave pinch/zoom shortcuts untouched
+      const scroller = findScroller();
+      if (!scroller) return;
+      // deltaMode 1 = lines, 2 = pages; normalise to pixels.
+      const factor = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? scroller.clientHeight : 1;
+      scroller.scrollTop += e.deltaY * factor;
+      scroller.scrollLeft += e.deltaX * factor;
+      e.preventDefault();
+    };
+    root.addEventListener('wheel', onWheel, { passive: false });
+    return () => root.removeEventListener('wheel', onWheel);
   }, [ready, blobUrl, error, viewerReady]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
