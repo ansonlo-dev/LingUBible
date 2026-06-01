@@ -37,6 +37,9 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
       // stays available (pan mode sets touch-action:none and captures pointers).
       // Users can still enable it from the toolbar.
       pan: { defaultMode: 'never' },
+      // Don't fetch the default stamp libraries from jsDelivr — they 404 for
+      // locales like zh-TW and we don't need built-in stamps anyway.
+      stamp: { manifests: [] },
     }}
   />
 );

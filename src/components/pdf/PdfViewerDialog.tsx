@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Download, ExternalLink, Loader2, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useTheme } from '@/hooks/theme/useTheme';
 
 // The viewer pulls in the PDFium WebAssembly engine (several MB), so we
 // lazy-load it. The heavy chunk is only fetched the first time a user actually
@@ -61,9 +60,22 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   onOpenChange,
 }) => {
   const { t, language } = useLanguage();
-  const { currentMode } = useTheme();
-  // The viewer accepts 'light' | 'dark' | 'system' — mirror the app's setting.
-  const themePreference = currentMode === 'dark' ? 'dark' : currentMode === 'light' ? 'light' : 'system';
+  // Read the effective theme straight from <html> so it always reflects the
+  // live site theme. (The useTheme hook keeps per-instance state that doesn't
+  // update when the theme is toggled elsewhere, which left the viewer stale.)
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
+  );
+  useEffect(() => {
+    const el = document.documentElement;
+    const update = () => setIsDark(el.classList.contains('dark'));
+    update();
+    const mo = new MutationObserver(update);
+    mo.observe(el, { attributes: true, attributeFilter: ['class'] });
+    return () => mo.disconnect();
+  }, []);
+  // embedpdf reads theme/locale only at init; we pass a resolved light/dark.
+  const themePreference: 'light' | 'dark' = isDark ? 'dark' : 'light';
   // embedpdf's locale codes line up with ours; fall back to English otherwise.
   const viewerLocale = language === 'zh-TW' || language === 'zh-CN' ? language : 'en';
 
@@ -167,7 +179,8 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title || t('components.pdfViewer.title')}
-      className="fixed inset-0 z-[9999] flex flex-col bg-background"
+      className="fixed inset-0 flex flex-col bg-background"
+      style={{ zIndex: 2147483000 }}
     >
       {/* Header: title + actions */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b shrink-0">
