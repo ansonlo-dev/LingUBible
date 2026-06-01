@@ -66,9 +66,31 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  // The viewer measures its container on mount; if it mounts while the dialog's
+  // open animation is still running it can end up with a 0-height viewport and
+  // never render the page (until something forces a resize). So we wait for the
+  // animation to settle before mounting it, then nudge a resize to be safe.
+  const [ready, setReady] = useState(false);
 
   // Warm the viewer/engine chunk in the background once mounted.
   useEffect(() => { prefetchViewer(); }, []);
+
+  useEffect(() => {
+    if (!open) { setReady(false); return; }
+    const id = setTimeout(() => setReady(true), 250);
+    return () => clearTimeout(id);
+  }, [open]);
+
+  // Once the viewer is actually mounted, fire a couple of resize events so its
+  // viewport re-measures and renders the first page without the user having to
+  // toggle the sidebar.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error)) return;
+    const fire = () => window.dispatchEvent(new Event('resize'));
+    const t1 = setTimeout(fire, 60);
+    const t2 = setTimeout(fire, 400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [ready, blobUrl, error]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
@@ -110,7 +132,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-none w-screen h-[100dvh] sm:w-[95vw] sm:h-[92vh] sm:max-w-[1400px] p-0 gap-0 flex flex-col rounded-none sm:rounded-lg overflow-hidden"
+        className="max-w-none w-screen h-[100dvh] p-0 gap-0 flex flex-col rounded-none border-0 overflow-hidden"
       >
         {/* Header: title + actions. The dialog's built-in close (X) sits at top-right. */}
         <div className="flex items-center gap-2 px-4 py-2.5 border-b shrink-0 pr-12">
@@ -154,7 +176,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 {t('components.pdfViewer.openInNewTab')}
               </Button>
             </div>
-          ) : loading || !blobUrl ? (
+          ) : loading || !blobUrl || !ready ? (
             <PdfViewerLoading label={t('components.pdfViewer.loading')} />
           ) : (
             <Suspense fallback={<PdfViewerLoading label={t('components.pdfViewer.loading')} />}>
