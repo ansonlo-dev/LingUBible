@@ -92,21 +92,13 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     if (!(ready && blobUrl && !error)) return;
     const el = bodyRef.current;
     if (!el) return;
-    let raf1 = 0;
-    let raf2 = 0;
-    const nudge = () => {
-      el.style.paddingRight = '1px';
-      raf1 = requestAnimationFrame(() => {
-        raf2 = requestAnimationFrame(() => { el.style.paddingRight = ''; });
-      });
-    };
-    const t1 = setTimeout(nudge, 80);
-    const t2 = setTimeout(nudge, 360);
+    // Spaced out with real timers (not back-to-back rAFs) so ResizeObserver
+    // registers each size as a distinct change rather than coalescing them away.
+    const t1 = setTimeout(() => { el.style.paddingRight = '1px'; }, 80);
+    const t2 = setTimeout(() => { el.style.paddingRight = ''; }, 260);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
       if (el) el.style.paddingRight = '';
     };
   }, [ready, blobUrl, error]);
