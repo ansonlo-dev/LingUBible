@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Download, ExternalLink, Loader2 } from 'lucide-react';
@@ -63,6 +63,8 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // The viewer accepts 'light' | 'dark' | 'system' — mirror the app's setting.
   const themePreference = currentMode === 'dark' ? 'dark' : currentMode === 'light' ? 'light' : 'system';
 
+  const bodyRef = useRef<HTMLDivElement>(null);
+
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -81,15 +83,32 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     return () => clearTimeout(id);
   }, [open]);
 
-  // Once the viewer is actually mounted, fire a couple of resize events so its
-  // viewport re-measures and renders the first page without the user having to
-  // toggle the sidebar.
+  // Once the viewer is mounted, nudge the container's size by 1px (and back) so
+  // the viewer's internal ResizeObserver fires and renders the first page —
+  // this is what toggling the sidebar did manually. A plain window 'resize'
+  // event doesn't work because ResizeObserver only reacts to its own element's
+  // box changing.
   useEffect(() => {
     if (!(ready && blobUrl && !error)) return;
-    const fire = () => window.dispatchEvent(new Event('resize'));
-    const t1 = setTimeout(fire, 60);
-    const t2 = setTimeout(fire, 400);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const el = bodyRef.current;
+    if (!el) return;
+    let raf1 = 0;
+    let raf2 = 0;
+    const nudge = () => {
+      el.style.paddingRight = '1px';
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => { el.style.paddingRight = ''; });
+      });
+    };
+    const t1 = setTimeout(nudge, 80);
+    const t2 = setTimeout(nudge, 360);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (el) el.style.paddingRight = '';
+    };
   }, [ready, blobUrl, error]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
@@ -166,7 +185,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
         </div>
 
         {/* Viewer body */}
-        <div className="flex-1 min-h-0 bg-muted/30">
+        <div ref={bodyRef} className="flex-1 min-h-0 bg-muted/30">
           {error ? (
             <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground px-6 text-center">
               <AlertCircle className="h-6 w-6" />
