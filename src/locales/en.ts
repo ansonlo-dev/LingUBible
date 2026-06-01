@@ -516,6 +516,7 @@ export default {
   'components.pdfViewer.error': 'Could not load this document.',
   'components.pdfViewer.openInNewTab': 'Open in new tab',
   'components.pdfViewer.download': 'Download',
+  'components.pdfViewer.close': 'Close',
   'pages.courseDetail.examPaperDownloadFile': 'Download',
   'pages.courseDetail.examPapersSortLabel': 'Sort',
   'pages.courseDetail.examPapersSortNewest': 'Newest first',
