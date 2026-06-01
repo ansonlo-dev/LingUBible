@@ -5,15 +5,12 @@ import { AlertCircle, Download, ExternalLink, Loader2, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useTheme } from '@/hooks/theme/useTheme';
 
-// The drop-in viewer pulls in the PDFium WebAssembly engine (several MB), so we
+// The viewer pulls in the PDFium WebAssembly engine (several MB), so we
 // lazy-load it. The heavy chunk is only fetched the first time a user actually
 // opens a document, keeping it out of the main bundle.
-const importViewer = () => import('@embedpdf/react-pdf-viewer');
+const importViewer = () => import('./EmbedPdfViewer');
 
-const PDFViewer = lazy(async () => {
-  const mod = await importViewer();
-  return { default: mod.PDFViewer };
-});
+const EmbedPdfViewer = lazy(importViewer);
 
 // Warm the (large) viewer + PDFium engine chunk ahead of the first open so the
 // click feels responsive instead of waiting on a multi-MB download. Runs once,
@@ -63,10 +60,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { currentMode } = useTheme();
   // The viewer accepts 'light' | 'dark' | 'system' — mirror the app's setting.
   const themePreference = currentMode === 'dark' ? 'dark' : currentMode === 'light' ? 'light' : 'system';
+  // embedpdf's locale codes line up with ours; fall back to English otherwise.
+  const viewerLocale = language === 'zh-TW' || language === 'zh-CN' ? language : 'en';
 
   const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -82,6 +81,11 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
 
   // Warm the viewer/engine chunk in the background once mounted.
   useEffect(() => { prefetchViewer(); }, []);
+
+  // Theme/locale are only read by embedpdf at init, so we remount the viewer
+  // (via `key`) when they change. Reset the ready flag so the first-paint nudge
+  // re-runs against the freshly mounted instance.
+  useEffect(() => { setViewerReady(false); }, [themePreference, viewerLocale]);
 
   // Lock background scrolling and wire Esc-to-close while open.
   useEffect(() => {
@@ -163,7 +167,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title || t('components.pdfViewer.title')}
-      className="fixed inset-0 z-50 flex flex-col bg-background"
+      className="fixed inset-0 z-[9999] flex flex-col bg-background"
     >
       {/* Header: title + actions */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b shrink-0">
@@ -221,18 +225,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
           <PdfViewerLoading label={t('components.pdfViewer.loading')} />
         ) : (
           <Suspense fallback={<PdfViewerLoading label={t('components.pdfViewer.loading')} />}>
-            <PDFViewer
-              className="h-full w-full"
-              style={{ height: '100%', width: '100%' }}
+            <EmbedPdfViewer
+              key={`${themePreference}-${viewerLocale}`}
+              src={blobUrl}
+              preference={themePreference}
+              locale={viewerLocale}
               onReady={() => setViewerReady(true)}
-              config={{
-                src: blobUrl,
-                theme: { preference: themePreference },
-                // Keep the hand tool off by default so native wheel / touch
-                // scrolling stays available (pan mode sets touch-action:none and
-                // captures pointers). Users can still enable it from the toolbar.
-                pan: { defaultMode: 'never' },
-              }}
             />
           </Suspense>
         )}
