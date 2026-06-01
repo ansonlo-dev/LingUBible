@@ -61,6 +61,7 @@
     "ensure:bun-only": "bash scripts/ensure-bun-only.sh"
   },
   "dependencies": {
+    "@embedpdf/react-pdf-viewer": "^2.14.3",
     "@hookform/resolvers": "^3.9.0",
     "@lottiefiles/dotlottie-react": "^0.14.3",
     "@openstatus/react": "^0.0.3",

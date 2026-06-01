@@ -52,6 +52,7 @@ import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsi
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { PdfViewerDialog } from '@/components/pdf/PdfViewerDialog';
 import { cn } from '@/lib/utils';
 
 // Faculty mapping function - copied from Lecturers.tsx
@@ -267,52 +268,6 @@ const formatExamPaperSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-// Open a PDF (syllabus / exam paper) in a new tab whose title is the document
-// name. Appwrite's `/view` URL has no filename in its path, so a plain link
-// would title the tab "view"; on desktop we wrap the file in a tiny page that
-// sets <title> and embeds the PDF full-screen.
-//
-// The wrapper HTML is served as a Blob URL and the tab is navigated straight to
-// it. Doing a real navigation (rather than `window.open('', …)` + document.write
-// into a blank tab) avoids the popup-blocker heuristic that otherwise parks the
-// tab behind a "click to open" prompt — so the document opens instantly.
-//
-// Mobile browsers (iOS Safari / Android Chrome) treat opening a `blob:` URL in a
-// new tab as an untrusted popup and still require an extra tap, and they barely
-// surface tab titles anyway — so there we just open the file URL directly, which
-// hands off to the native PDF viewer instantly.
-const openDocumentInNewTab = (url: string | URL, title: string) => {
-  const href = url.toString();
-  const ua = navigator.userAgent;
-  const isMobile =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
-    (('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth < 768);
-  if (isMobile) {
-    window.open(href, '_blank', 'noopener,noreferrer');
-    return;
-  }
-  const safeTitle = title.replace(/[<>&"]/g, c => (
-    { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string
-  ));
-  const html =
-    `<!DOCTYPE html><html><head><meta charset="utf-8">` +
-    `<title>${safeTitle}</title>` +
-    `<meta name="viewport" content="width=device-width, initial-scale=1">` +
-    `<style>html,body{margin:0;padding:0;height:100%;background:#525659}` +
-    `iframe{border:0;width:100%;height:100%;display:block}</style></head>` +
-    `<body><iframe src="${href}" title="${safeTitle}"></iframe></body></html>`;
-  const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-  const win = window.open(blobUrl, '_blank');
-  if (!win) {
-    // Popup blocked — fall back to opening the document directly.
-    URL.revokeObjectURL(blobUrl);
-    window.open(href, '_blank', 'noopener,noreferrer');
-    return;
-  }
-  // Release the blob once the new tab has had time to load it.
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 };
 
 // Course codes are 3 capital letters + 4 digits, optionally followed by a
@@ -678,6 +633,8 @@ const CourseDetail = () => {
   // Whether we're still resolving the syllabus file (logged-in users only —
   // the bucket is readable by authenticated users, so guests never list it).
   const [syllabusLoading, setSyllabusLoading] = useState(false);
+  // In-app PDF viewer (syllabus / exam papers open here instead of a new tab).
+  const [pdfViewer, setPdfViewer] = useState<{ src: string; title: string } | null>(null);
   // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
   // per-section files). Seeded by a single batched query so we never query the
   // instructors collection per-paper.
@@ -1456,10 +1413,10 @@ const CourseDetail = () => {
       return;
     }
     if (!syllabusFile) return;
-    openDocumentInNewTab(
-      storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }),
-      syllabusFile.name,
-    );
+    setPdfViewer({
+      src: storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }).toString(),
+      title: syllabusFile.name,
+    });
   };
 
   // The syllabus button is always rendered. For guests it's enabled (clicking
@@ -3612,7 +3569,7 @@ const CourseDetail = () => {
                                   className="h-8 w-8"
                                   title={t('pages.courseDetail.examPaperViewFile')}
                                   aria-label={t('pages.courseDetail.examPaperViewFile')}
-                                  onClick={() => openDocumentInNewTab(viewUrl, paper.name)}
+                                  onClick={() => setPdfViewer({ src: viewUrl.toString(), title: paper.name })}
                                 >
                                   <ExternalLink className="h-4 w-4" />
                                 </Button>
@@ -3687,6 +3644,13 @@ const CourseDetail = () => {
 
 
       </Tabs>
+
+      <PdfViewerDialog
+        src={pdfViewer?.src ?? null}
+        title={pdfViewer?.title}
+        open={!!pdfViewer}
+        onOpenChange={(o) => { if (!o) setPdfViewer(null); }}
+      />
     </div>
   );
 };

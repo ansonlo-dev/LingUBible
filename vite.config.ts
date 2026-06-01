@@ -72,6 +72,10 @@ export default defineConfig(({ command, mode }) => {
             }
             if (id.includes('node_modules')) {
               if (id.includes('echarts')) return 'charts';
+              // PDF viewer engine (@embedpdf) is only pulled in via a dynamic
+              // import in PdfViewerDialog — keep it in its own chunk so it loads
+              // on demand instead of bloating the eager vendor bundle.
+              if (id.includes('@embedpdf')) return 'pdf-viewer';
               if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui';
               return 'vendor';
             }

@@ -509,6 +509,13 @@ export default {
   'pages.courseDetail.examPapersLoadFailed': '無法載入歷屆試題',
   'pages.courseDetail.examPaperTermFallback': '歷屆試題',
   'pages.courseDetail.examPaperViewFile': '檢視',
+
+  // 內建 PDF 檢視器
+  'components.pdfViewer.title': '文件',
+  'components.pdfViewer.loading': '正在載入文件…',
+  'components.pdfViewer.error': '無法載入此文件。',
+  'components.pdfViewer.openInNewTab': '在新分頁開啟',
+  'components.pdfViewer.download': '下載',
   'pages.courseDetail.examPaperDownloadFile': '下載',
   'pages.courseDetail.examPapersSortLabel': '排序',
   'pages.courseDetail.examPapersSortNewest': '由新至舊',

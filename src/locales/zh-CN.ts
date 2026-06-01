@@ -510,6 +510,13 @@ export default {
   'pages.courseDetail.examPapersLoadFailed': '无法加载历届试题',
   'pages.courseDetail.examPaperTermFallback': '历届试题',
   'pages.courseDetail.examPaperViewFile': '查看',
+
+  // 内置 PDF 查看器
+  'components.pdfViewer.title': '文档',
+  'components.pdfViewer.loading': '正在加载文档…',
+  'components.pdfViewer.error': '无法加载此文档。',
+  'components.pdfViewer.openInNewTab': '在新标签页打开',
+  'components.pdfViewer.download': '下载',
   'pages.courseDetail.examPaperDownloadFile': '下载',
   'pages.courseDetail.examPapersSortLabel': '排序',
   'pages.courseDetail.examPapersSortNewest': '由新到旧',

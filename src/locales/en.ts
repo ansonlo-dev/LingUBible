@@ -509,6 +509,13 @@ export default {
   'pages.courseDetail.examPapersLoadFailed': 'Failed to load past exam papers',
   'pages.courseDetail.examPaperTermFallback': 'Past Exam Paper',
   'pages.courseDetail.examPaperViewFile': 'View',
+
+  // In-app PDF viewer
+  'components.pdfViewer.title': 'Document',
+  'components.pdfViewer.loading': 'Loading document…',
+  'components.pdfViewer.error': 'Could not load this document.',
+  'components.pdfViewer.openInNewTab': 'Open in new tab',
+  'components.pdfViewer.download': 'Download',
   'pages.courseDetail.examPaperDownloadFile': 'Download',
   'pages.courseDetail.examPapersSortLabel': 'Sort',
   'pages.courseDetail.examPapersSortNewest': 'Newest first',
