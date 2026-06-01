@@ -71,37 +71,41 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // The viewer measures its container on mount; if it mounts while the dialog's
   // open animation is still running it can end up with a 0-height viewport and
   // never render the page (until something forces a resize). So we wait for the
-  // animation to settle before mounting it, then nudge a resize to be safe.
+  // animation to settle before mounting it.
   const [ready, setReady] = useState(false);
+  // Becomes true once the viewer fires onReady (plugins registered, document
+  // loading). Used to drive the resize-nudge so it lands after the pages exist.
+  const [viewerReady, setViewerReady] = useState(false);
 
   // Warm the viewer/engine chunk in the background once mounted.
   useEffect(() => { prefetchViewer(); }, []);
 
   useEffect(() => {
-    if (!open) { setReady(false); return; }
+    if (!open) { setReady(false); setViewerReady(false); return; }
     const id = setTimeout(() => setReady(true), 250);
     return () => clearTimeout(id);
   }, [open]);
 
-  // Once the viewer is mounted, nudge the container's size by 1px (and back) so
-  // the viewer's internal ResizeObserver fires and renders the first page —
-  // this is what toggling the sidebar did manually. A plain window 'resize'
-  // event doesn't work because ResizeObserver only reacts to its own element's
-  // box changing.
+  // The drop-in viewer's <div> only paints its pages when its internal
+  // ResizeObserver reports a container size change. Its very first measurement
+  // happens while plugins are still initializing (no pages yet), so nothing
+  // renders until the user manually resizes it (e.g. toggles the sidebar).
+  // Once the viewer is ready we toggle a 1px padding on its wrapper several
+  // times, spaced out to outlast document parsing, so a resize fires *after*
+  // the pages are available. Plain window 'resize' events don't help because
+  // the observer only reacts to its own element's box changing.
   useEffect(() => {
-    if (!(ready && blobUrl && !error)) return;
+    if (!(ready && blobUrl && !error && viewerReady)) return;
     const el = bodyRef.current;
     if (!el) return;
-    // Spaced out with real timers (not back-to-back rAFs) so ResizeObserver
-    // registers each size as a distinct change rather than coalescing them away.
-    const t1 = setTimeout(() => { el.style.paddingRight = '1px'; }, 80);
-    const t2 = setTimeout(() => { el.style.paddingRight = ''; }, 260);
+    const timers = [120, 350, 700, 1300, 2200].map((delay, i) =>
+      setTimeout(() => { el.style.paddingRight = i % 2 === 0 ? '1px' : ''; }, delay),
+    );
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      timers.forEach(clearTimeout);
       if (el) el.style.paddingRight = '';
     };
-  }, [ready, blobUrl, error]);
+  }, [ready, blobUrl, error, viewerReady]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
@@ -192,6 +196,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
           ) : (
             <Suspense fallback={<PdfViewerLoading label={t('components.pdfViewer.loading')} />}>
               <PDFViewer
+                className="h-full w-full"
+                style={{ height: '100%', width: '100%' }}
+                onReady={() => setViewerReady(true)}
                 config={{
                   src: blobUrl,
                   theme: { preference: themePreference },
