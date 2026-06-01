@@ -8,10 +8,27 @@ import { useTheme } from '@/hooks/theme/useTheme';
 // The drop-in viewer pulls in the PDFium WebAssembly engine (several MB), so we
 // lazy-load it. The heavy chunk is only fetched the first time a user actually
 // opens a document, keeping it out of the main bundle.
+const importViewer = () => import('@embedpdf/react-pdf-viewer');
+
 const PDFViewer = lazy(async () => {
-  const mod = await import('@embedpdf/react-pdf-viewer');
+  const mod = await importViewer();
   return { default: mod.PDFViewer };
 });
+
+// Warm the (large) viewer + PDFium engine chunk ahead of the first open so the
+// click feels responsive instead of waiting on a multi-MB download. Runs once,
+// at idle, regardless of how many dialogs mount.
+let viewerPrefetched = false;
+const prefetchViewer = () => {
+  if (viewerPrefetched) return;
+  viewerPrefetched = true;
+  const run = () => { importViewer().catch(() => { viewerPrefetched = false; }); };
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(run, { timeout: 3000 });
+  } else {
+    setTimeout(run, 1200);
+  }
+};
 
 interface PdfViewerDialogProps {
   // The PDF source URL (e.g. an Appwrite `getFileView` URL).
@@ -49,6 +66,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+
+  // Warm the viewer/engine chunk in the background once mounted.
+  useEffect(() => { prefetchViewer(); }, []);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
@@ -142,6 +162,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 config={{
                   src: blobUrl,
                   theme: { preference: themePreference },
+                  // Enable click-and-drag panning on desktop too (default is
+                  // mobile-only, which left desktop users unable to drag).
+                  pan: { defaultMode: 'always' },
                 }}
               />
             </Suspense>
