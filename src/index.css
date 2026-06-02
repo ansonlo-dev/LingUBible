@@ -888,7 +888,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
     z-index: 1 !important;
     transition: all 0.2s ease !important;
     cursor: pointer !important;
-    min-height: 44px !important;
+    height: 48px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -952,7 +952,6 @@ div[style*="position: fixed"][style*="right: 14px"] {
     border: 1px solid rgb(var(--border)) !important;
     border-bottom: none !important;
     z-index: 11 !important;
-    margin-bottom: 2px;
   }
 
   /* Dark theme active tab */
