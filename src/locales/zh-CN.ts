@@ -518,6 +518,7 @@ export default {
   'components.pdfViewer.openInNewTab': '在新标签页打开',
   'components.pdfViewer.download': '下载',
   'components.pdfViewer.close': '关闭',
+  'components.pdfViewer.invertColors': '反转色彩',
   'pages.courseDetail.examPaperDownloadFile': '下载',
   'pages.courseDetail.examPapersSortLabel': '排序',
   'pages.courseDetail.examPapersSortNewest': '由新到旧',

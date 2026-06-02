@@ -517,6 +517,7 @@ export default {
   'components.pdfViewer.openInNewTab': 'Open in new tab',
   'components.pdfViewer.download': 'Download',
   'components.pdfViewer.close': 'Close',
+  'components.pdfViewer.invertColors': 'Invert colors',
   'pages.courseDetail.examPaperDownloadFile': 'Download',
   'pages.courseDetail.examPapersSortLabel': 'Sort',
   'pages.courseDetail.examPapersSortNewest': 'Newest first',

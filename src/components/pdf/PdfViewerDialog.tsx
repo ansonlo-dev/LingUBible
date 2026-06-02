@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Download, ExternalLink, Loader2, X } from 'lucide-react';
+import { AlertCircle, Contrast, Download, ExternalLink, Loader2, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 // The viewer pulls in the PDFium WebAssembly engine (several MB), so we
@@ -83,6 +83,18 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   const [isMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
   );
+
+  // Color inversion toggle — persisted across sessions via localStorage.
+  const [inverted, setInverted] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('pdf-viewer-inverted') === 'true',
+  );
+  const toggleInverted = () => {
+    setInverted((prev) => {
+      const next = !prev;
+      localStorage.setItem('pdf-viewer-inverted', String(next));
+      return next;
+    });
+  };
 
   const bodyRef = useRef<HTMLDivElement>(null);
   // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
@@ -278,7 +290,11 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       style={{ position: 'fixed', inset: 0, zIndex: 2147483000 }}
     >
       {/* Viewer body fills the whole overlay; there is no separate header bar. */}
-      <div ref={bodyRef} className="relative flex-1 min-h-0 bg-muted/30">
+      <div
+        ref={bodyRef}
+        className="relative flex-1 min-h-0 bg-muted/30"
+        style={inverted ? { filter: 'invert(1) hue-rotate(180deg)' } : undefined}
+      >
         {error ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground px-6 text-center">
             <AlertCircle className="h-6 w-6" />
@@ -349,6 +365,17 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             className="absolute top-1.5 z-10 hidden lg:flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
             style={{ right: 48 }}
           >
+            <Button
+              size="icon"
+              variant={inverted ? 'secondary' : 'ghost'}
+              className="h-9 w-9"
+              onClick={toggleInverted}
+              title={t('components.pdfViewer.invertColors')}
+              aria-label={t('components.pdfViewer.invertColors')}
+              aria-pressed={inverted}
+            >
+              <Contrast className="h-[18px] w-[18px]" />
+            </Button>
             <Button
               size="icon"
               variant="ghost"
