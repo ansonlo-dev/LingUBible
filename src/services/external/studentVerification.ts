@@ -470,7 +470,7 @@ class StudentVerificationService {
     const registeredEmails = [
       'test@ln.hk',
       'admin@ln.hk',
-      'student@ln.hk',
+      'student@LN.hk',
       'user@ln.hk'
     ];
     

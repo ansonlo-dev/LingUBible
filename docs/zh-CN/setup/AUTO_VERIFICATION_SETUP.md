@@ -170,7 +170,7 @@ curl -X POST https://sgp.cloud.appwrite.io/v1/functions/send-verification/execut
   -H "Content-Type: application/json" \
   -H "X-Appwrite-Project: lingubible" \
   -d '{
-    "body": "{\"action\":\"createAccount\",\"email\":\"student@ln.hk\",\"password\":\"securePassword\",\"name\":\"Student Name\"}",
+    "body": "{\"action\":\"createAccount\",\"email\":\"student@LN.hk\",\"password\":\"securePassword\",\"name\":\"Student Name\"}",
     "async": false,
     "method": "POST"
   }'
