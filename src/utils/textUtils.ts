@@ -492,21 +492,27 @@ export const formatInstructorTitle = (title: string, language: string): string =
  * @returns 格式化的完整姓名
  */
 export function getFormattedInstructorName(
-  instructor: { 
-    name: string; 
-    name_tc?: string; 
-    name_sc?: string; 
+  instructor: {
+    name: string;
+    name_tc?: string;
+    name_sc?: string;
     title?: string;
-  }, 
+    nickname?: string;
+  },
   language: string
 ): { primary: string; secondary?: string } {
   // 主標題：始終顯示英文頭銜+英文姓名（不管界面語言）
   const englishTitle = instructor.title ? formatInstructorTitle(instructor.title, 'en') : '';
-  const primary = englishTitle ? `${englishTitle} ${instructor.name}` : instructor.name;
-  
+  let primary = englishTitle ? `${englishTitle} ${instructor.name}` : instructor.name;
+
+  // 所有語言模式：在英文名字後加上 ", 暱稱"
+  if (instructor.nickname) {
+    primary = `${primary}, ${instructor.nickname}`;
+  }
+
   // 副標題：根據界面語言顯示對應的中文姓名+中文頭銜
   let secondary: string | undefined;
-  
+
   switch (language) {
     case 'zh-TW':
       // 繁體中文：如果有繁體中文姓名，顯示中文姓名+中文頭銜
@@ -517,7 +523,7 @@ export function getFormattedInstructorName(
         secondary = instructor.name_tc;
       }
       break;
-    
+
     case 'zh-CN':
       // 簡體中文：如果有簡體中文姓名，顯示中文姓名+中文頭銜
       if (instructor.name_sc && instructor.title) {
@@ -527,13 +533,13 @@ export function getFormattedInstructorName(
         secondary = instructor.name_sc;
       }
       break;
-    
+
     default:
       // 英文界面：不顯示中文副標題
       secondary = undefined;
       break;
   }
-  
+
   return { primary, secondary };
 };
 

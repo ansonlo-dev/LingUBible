@@ -1649,7 +1649,8 @@ const Lecturers = () => {
                         name: instructor.name,
                         name_tc: instructor.name_tc,
                         name_sc: instructor.name_sc,
-                        title: instructor.title
+                        title: instructor.title,
+                        nickname: instructor.nickname
                       }, language);
                       return formattedName.primary;
                     })()}
@@ -1660,7 +1661,8 @@ const Lecturers = () => {
                       name: instructor.name,
                       name_tc: instructor.name_tc,
                       name_sc: instructor.name_sc,
-                      title: instructor.title
+                      title: instructor.title,
+                      nickname: instructor.nickname
                     }, language);
                     return formattedName.secondary && (
                       <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
@@ -1705,7 +1707,8 @@ const Lecturers = () => {
                         name: instructor.name,
                         name_tc: instructor.name_tc,
                         name_sc: instructor.name_sc,
-                        title: instructor.title
+                        title: instructor.title,
+                        nickname: instructor.nickname
                       }, language);
                       return formattedName.primary;
                     })()}
@@ -1716,7 +1719,8 @@ const Lecturers = () => {
                       name: instructor.name,
                       name_tc: instructor.name_tc,
                       name_sc: instructor.name_sc,
-                      title: instructor.title
+                      title: instructor.title,
+                      nickname: instructor.nickname
                     }, language);
                     return formattedName.secondary && (
                       <p className="text-lg text-gray-600 dark:text-gray-400 mt-1 font-medium min-h-[1.5rem]">
@@ -1733,11 +1737,11 @@ const Lecturers = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a 
-                      href={`mailto:${instructor.email}@ln.edu.hk`} 
+                    <a
+                      href={`mailto:${instructor.email}`}
                       className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      {instructor.email}@ln.edu.hk
+                      {instructor.email}
                     </a>
                   </div>
                   {/* Back button - mobile only, right aligned */}
