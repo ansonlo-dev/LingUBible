@@ -212,6 +212,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               locale={viewerLocale}
               onReady={() => setViewerReady(true)}
               defaultPanMode={isMobile ? 'always' : 'never'}
+              defaultZoomLevel={isMobile ? undefined : 'fit-width'}
             />
           </Suspense>
         )}
