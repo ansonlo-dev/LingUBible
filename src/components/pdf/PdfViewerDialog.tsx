@@ -85,6 +85,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   );
 
   const bodyRef = useRef<HTMLDivElement>(null);
+  // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
+  // re-request fit-width after the container is properly laid out.
+  const registryRef = useRef<any>(null);
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -102,7 +105,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Theme/locale are only read by embedpdf at init, so we remount the viewer
   // (via `key`) when they change. Reset the ready flag so the first-paint nudge
   // re-runs against the freshly mounted instance.
-  useEffect(() => { setViewerReady(false); }, [themePreference, viewerLocale]);
+  useEffect(() => { setViewerReady(false); registryRef.current = null; }, [themePreference, viewerLocale]);
 
   // Lock background scrolling and wire Esc-to-close while open.
   useEffect(() => {
@@ -134,11 +137,22 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     const timers = [120, 350, 700, 1300, 2200].map((delay, i) =>
       setTimeout(() => { el.style.paddingRight = i % 2 === 0 ? '1px' : ''; }, delay),
     );
+    // Desktop only: after the resize-nudges settle the container reaches its
+    // final dimensions, then we re-request fit-width so the zoom is calculated
+    // against the correct size (the defaultZoomLevel config is read at init,
+    // before the container is fully laid out, so the first calculation is off).
+    const zoomTimer = !isMobile
+      ? setTimeout(() => {
+          const zoomCap = registryRef.current?.getPlugin?.('zoom')?.provides?.();
+          zoomCap?.requestZoom?.('fit-width');
+        }, 2600)
+      : null;
     return () => {
       timers.forEach(clearTimeout);
+      if (zoomTimer !== null) clearTimeout(zoomTimer);
       if (el) el.style.paddingRight = '';
     };
-  }, [ready, blobUrl, error, viewerReady]);
+  }, [ready, blobUrl, error, viewerReady, isMobile]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
@@ -210,7 +224,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               src={blobUrl}
               preference={themePreference}
               locale={viewerLocale}
-              onReady={() => setViewerReady(true)}
+              onReady={(registry) => { registryRef.current = registry; setViewerReady(true); }}
               defaultPanMode={isMobile ? 'always' : 'never'}
               defaultZoomLevel={isMobile ? undefined : 'fit-width'}
             />

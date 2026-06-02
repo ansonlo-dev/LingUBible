@@ -1,5 +1,6 @@
 import React from 'react';
 import { PDFViewer } from '@embedpdf/react-pdf-viewer';
+import type { PluginRegistry } from '@embedpdf/react-pdf-viewer';
 
 // Lazy-loaded on purpose: importing this module pulls in the whole embedpdf
 // snippet (viewer + bundled locale dictionaries). Keeping every @embedpdf import
@@ -12,7 +13,7 @@ interface EmbedPdfViewerProps {
   src: string;
   preference: ViewerPreference;
   locale: ViewerLocale;
-  onReady?: () => void;
+  onReady?: (registry: PluginRegistry) => void;
   /** 'always' on touch devices (drag-to-scroll); 'never' on desktop (text cursor). */
   defaultPanMode?: 'never' | 'always';
   /** Initial zoom level. 'fit-width' recommended for desktop; omit to use viewer default on mobile. */
