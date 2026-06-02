@@ -16,7 +16,7 @@ interface EmbedPdfViewerProps {
   onReady?: (registry: PluginRegistry) => void;
   /** 'always' on touch devices (drag-to-scroll); 'never' on desktop (text cursor). */
   defaultPanMode?: 'never' | 'always';
-  /** Initial zoom level. 'fit-width' recommended for desktop; omit to use viewer default on mobile. */
+  /** Initial zoom level. Defaults to 'fit-width' for all devices. */
   defaultZoomLevel?: 'fit-width' | 'fit-page' | 'automatic' | number;
 }
 
@@ -44,7 +44,7 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
       // text cursor and lets users select text (pan mode sets touch-action:none
       // and captures pointers, which blocks text selection on desktop).
       pan: { defaultMode: defaultPanMode },
-      // Only set when caller provides a value (desktop sets 'fit-width'; mobile omits to keep viewer default).
+      // Only set when caller provides a value.
       ...(defaultZoomLevel !== undefined && { zoom: { defaultZoomLevel } }),
       // Don't fetch the default stamp libraries from jsDelivr — they 404 for
       // locales like zh-TW and we don't need built-in stamps anyway.

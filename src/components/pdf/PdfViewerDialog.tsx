@@ -88,6 +88,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
   // re-request fit-width after the container is properly laid out.
   const registryRef = useRef<any>(null);
+  // Tracks whether we pushed a history entry for this open. Used to clean it
+  // up if the dialog closes via a means other than the back gesture.
+  const pushedHistoryRef = useRef(false);
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -122,6 +125,29 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     };
   }, [open, onOpenChange]);
 
+  // Push a history entry when the dialog opens so the mobile back gesture closes
+  // the PDF instead of navigating away from the page that triggered it.
+  // - On open: pushState so back goes "into" the dialog.
+  // - popstate (back gesture): close the dialog; history is already popped.
+  // - Cleanup (closed via X / Esc / external): pop our pushed entry via history.back().
+  useEffect(() => {
+    if (!open) return;
+    history.pushState({ pdfOpen: true }, '');
+    pushedHistoryRef.current = true;
+    const onPopState = () => {
+      pushedHistoryRef.current = false;
+      onOpenChange(false);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      if (pushedHistoryRef.current) {
+        pushedHistoryRef.current = false;
+        history.back();
+      }
+    };
+  }, [open, onOpenChange]);
+
   // The drop-in viewer's <div> only paints its pages when its internal
   // ResizeObserver reports a container size change. Its very first measurement
   // happens while plugins are still initializing (no pages yet), so nothing
@@ -137,22 +163,69 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     const timers = [120, 350, 700, 1300, 2200].map((delay, i) =>
       setTimeout(() => { el.style.paddingRight = i % 2 === 0 ? '1px' : ''; }, delay),
     );
-    // Desktop only: after the resize-nudges settle the container reaches its
-    // final dimensions, then we re-request fit-width so the zoom is calculated
-    // against the correct size (the defaultZoomLevel config is read at init,
-    // before the container is fully laid out, so the first calculation is off).
-    const zoomTimer = !isMobile
-      ? setTimeout(() => {
-          const zoomCap = registryRef.current?.getPlugin?.('zoom')?.provides?.();
-          zoomCap?.requestZoom?.('fit-width');
-        }, 2600)
-      : null;
+    // After the resize-nudges settle the container reaches its final dimensions,
+    // then we re-request fit-width so the zoom is calculated against the correct
+    // size (the defaultZoomLevel config is read at init, before the container is
+    // fully laid out, so the first calculation is off). Applies to all devices.
+    const zoomTimer = setTimeout(() => {
+      const zoomCap = registryRef.current?.getPlugin?.('zoom')?.provides?.();
+      zoomCap?.requestZoom?.('fit-width');
+    }, 2600);
     return () => {
       timers.forEach(clearTimeout);
-      if (zoomTimer !== null) clearTimeout(zoomTimer);
+      clearTimeout(zoomTimer);
       if (el) el.style.paddingRight = '';
     };
   }, [ready, blobUrl, error, viewerReady, isMobile]);
+
+  // When the viewer is ready, subscribe to document-opened events and open the
+  // outline (bookmark) sidebar panel automatically when the PDF has bookmarks.
+  // If there are no bookmarks the sidebar stays closed (full-width view).
+  useEffect(() => {
+    if (!(ready && blobUrl && !error && viewerReady)) return;
+    const registry = registryRef.current;
+    if (!registry) return;
+
+    const docManager = registry.getPlugin?.('document-manager')?.provides?.();
+    const bookmarkCap = registry.getPlugin?.('bookmark')?.provides?.();
+    const uiCap = registry.getPlugin?.('ui')?.provides?.();
+    if (!docManager || !bookmarkCap || !uiCap) return;
+
+    let outlineOpened = false;
+
+    const tryOpenOutline = (documentId: string) => {
+      if (outlineOpened) return;
+      // getBookmarks() throws synchronously if the document hasn't finished
+      // loading yet — guard with try/catch so an unready doc never crashes.
+      try {
+        bookmarkCap.forDocument(documentId).getBookmarks().wait(
+          ({ bookmarks }) => {
+            if (!outlineOpened && bookmarks && bookmarks.length > 0) {
+              outlineOpened = true;
+              uiCap.setActiveSidebar('left', 'main', 'sidebar-panel', documentId, 'outline');
+            }
+          },
+          () => {}, // no bookmarks or outline data unavailable — leave sidebar closed
+        );
+      } catch {
+        // document not ready yet; onDocumentOpened will retry when it is
+      }
+    };
+
+    // Handle documents already fully loaded when this effect runs.
+    // Skip any document still in 'loading' state — onDocumentOpened will fire
+    // for it once loading completes.
+    for (const doc of docManager.getOpenDocuments?.() ?? []) {
+      if (doc?.status === 'loaded') tryOpenOutline(doc.id);
+    }
+
+    // Handle documents that finish loading after this effect mounts.
+    const unsubscribe = docManager.onDocumentOpened((doc: any) => {
+      if (doc?.id) tryOpenOutline(doc.id);
+    });
+
+    return () => { unsubscribe?.(); };
+  }, [ready, blobUrl, error, viewerReady]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
@@ -224,19 +297,57 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               src={blobUrl}
               preference={themePreference}
               locale={viewerLocale}
-              onReady={(registry) => { registryRef.current = registry; setViewerReady(true); }}
+              onReady={(registry) => {
+                registryRef.current = registry;
+                // Move search and comment panels from the right-side group to sit
+                // next to the pan/pointer buttons in center-group, separated by a
+                // vertical divider. This keeps the right side of the toolbar free
+                // so our custom overlay buttons (ExternalLink, Download, X) can
+                // sit at the far right without overlapping the native UI.
+                const uiCap = (registry as any).getPlugin?.('ui')?.provides?.();
+                if (uiCap) {
+                  const schema = uiCap.getSchema?.();
+                  const mainToolbar = schema?.toolbars?.['main-toolbar'];
+                  if (mainToolbar?.items) {
+                    const items = (mainToolbar.items as any[]).map((item: any) => {
+                      if (item.id === 'center-group') {
+                        return {
+                          ...item,
+                          items: [
+                            ...item.items,
+                            { type: 'divider', id: 'search-panel-divider', orientation: 'vertical' },
+                            { type: 'command-button', id: 'search-button', commandId: 'panel:toggle-search', variant: 'icon', categories: ['panel', 'panel-search'] },
+                            { type: 'command-button', id: 'comment-button', commandId: 'panel:toggle-comment', variant: 'icon', categories: ['panel', 'panel-comment'] },
+                          ],
+                        };
+                      }
+                      if (item.id === 'right-group') {
+                        return { ...item, items: [] };
+                      }
+                      return item;
+                    });
+                    uiCap.mergeSchema?.({
+                      toolbars: {
+                        'main-toolbar': { id: 'main-toolbar', position: mainToolbar.position, items } as any,
+                      },
+                    });
+                  }
+                }
+                setViewerReady(true);
+              }}
               defaultPanMode={isMobile ? 'always' : 'never'}
-              defaultZoomLevel={isMobile ? undefined : 'fit-width'}
+              defaultZoomLevel="fit-width"
             />
           </Suspense>
         )}
 
-        {/* Floating actions, sitting in embedpdf's top-right toolbar band next to
-            its search / comment icons (offset from the right to clear them). */}
+        {/* Floating actions — Search/Comment are now in center-group (via
+            mergeSchema), so the right side of the embedpdf toolbar is free.
+            ExternalLink/Download sit just left of the close button. */}
         {!error && (
           <div
-            className="absolute top-1.5 z-10 hidden md:flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
-            style={{ right: 96 }}
+            className="absolute top-1.5 z-10 hidden lg:flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
+            style={{ right: 48 }}
           >
             <Button
               size="icon"
@@ -262,18 +373,23 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 <Download className="h-[18px] w-[18px]" />
               </a>
             </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-9 w-9"
-              onClick={() => onOpenChange(false)}
-              title={t('components.pdfViewer.close')}
-              aria-label={t('components.pdfViewer.close')}
-            >
-              <X className="h-[18px] w-[18px]" />
-            </Button>
           </div>
         )}
+
+        {/* Close button — pinned to the top-right corner now that the embedpdf
+            right-group is empty (Search/Comment moved to center-group). */}
+        <div className="absolute top-1.5 z-10 hidden lg:flex" style={{ right: 4 }}>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-9 w-9 rounded-lg bg-background/70 backdrop-blur-sm"
+            onClick={() => onOpenChange(false)}
+            title={t('components.pdfViewer.close')}
+            aria-label={t('components.pdfViewer.close')}
+          >
+            <X className="h-[18px] w-[18px]" />
+          </Button>
+        </div>
       </div>
     </div>,
     document.body,

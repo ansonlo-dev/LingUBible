@@ -41,6 +41,11 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     const currentOptions = optionsRef.current;
     if (!currentOptions.enabled) return;
 
+    // PDF viewer portal covers the full screen — swipe gestures for the sidebar
+    // must not fire while it is open, otherwise dragging a page inside the viewer
+    // triggers the sidebar or the browser back gesture.
+    if (document.querySelector('.pdf-viewer-portal')) return;
+
     // 重置狀態
     isScrolling.current = false;
     isValidSwipeStart.current = false;
