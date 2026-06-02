@@ -184,7 +184,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title || t('components.pdfViewer.title')}
-      className="flex flex-col bg-background"
+      className="pdf-viewer-portal flex flex-col bg-background"
       // Position/size/stacking are set inline (not via Tailwind classes) so the
       // full-screen overlay reliably covers the site chrome regardless of any
       // global CSS — earlier the site header bled through the top.

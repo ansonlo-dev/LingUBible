@@ -1349,6 +1349,32 @@ div[style*="position: fixed"][style*="right: 14px"] {
     background: linear-gradient(180deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 100%);
   }
 
+  /* PDF viewer portal: 中性灰捲軸（覆蓋紅色主題）、隱藏水平捲軸 */
+  @media (min-width: 1025px) {
+    .pdf-viewer-portal,
+    .pdf-viewer-portal * {
+      scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+    }
+
+    .pdf-viewer-portal ::-webkit-scrollbar {
+      width: 8px;
+      height: 0; /* 隱藏水平捲軸，防止 fit-width 下的溢出惡性循環 */
+    }
+
+    .pdf-viewer-portal ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .pdf-viewer-portal ::-webkit-scrollbar-thumb {
+      background: rgba(128, 128, 128, 0.5);
+      border-radius: 4px;
+    }
+
+    .pdf-viewer-portal ::-webkit-scrollbar-thumb:hover {
+      background: rgba(128, 128, 128, 0.7);
+    }
+  }
+
   /* 手機版和平板電腦隱藏滾動條 - 現代應用風格 */
   @media (max-width: 1024px) {
     /* Webkit 瀏覽器（Safari, Chrome 等） */
