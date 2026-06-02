@@ -1322,12 +1322,9 @@ div[style*="position: fixed"][style*="right: 14px"] {
   /* 滾動條樣式 - 桌面版 */
   /* Firefox：不支援漸變，使用主題紅色純色 */
   @media (min-width: 1025px) {
-    html {
+    html, html.dark {
       scrollbar-width: thin;
-      scrollbar-color: rgba(220, 38, 38, 0.6) rgb(243, 244, 246);
-    }
-    html.dark {
-      scrollbar-color: rgba(220, 38, 38, 0.7) rgb(39, 39, 42);
+      scrollbar-color: rgba(220, 38, 38, 0.6) transparent;
     }
   }
 
@@ -1338,12 +1335,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   ::-webkit-scrollbar-track {
-    background: rgb(243, 244, 246);
-    border-radius: 4px;
-  }
-
-  .dark ::-webkit-scrollbar-track {
-    background: rgb(39, 39, 42);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
