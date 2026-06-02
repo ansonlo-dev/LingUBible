@@ -119,12 +119,14 @@ div[style*="position: fixed"][style*="right: 14px"] {
     overflow-y: auto;
   }
 
-  /* 
-   * 滾動條佈局偏移修復：
-   * 現在使用 JavaScript 動態補償方案 (scrollbarCompensation.ts)
-   * 當 Radix UI 下拉選單打開時會自動檢測並補償滾動條寬度
-   */
-
+  /* Radix UI 彈窗/下拉開啟時的 body[data-scroll-locked] 覆蓋：
+   * - overflow-y: scroll 保持滾動條可見，防止佈局偏移
+   * - padding-right: 0 移除 Radix 自動加的錯誤補償 padding
+   * 此規則位於 @layer base（已分層），優先級高於 Radix 注入的未分層 !important 規則 */
+  html body[data-scroll-locked] {
+    overflow-y: scroll !important;
+    padding-right: 0 !important;
+  }
 
 }
 

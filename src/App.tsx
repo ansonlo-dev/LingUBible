@@ -55,7 +55,6 @@ import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
-import { initializeScrollbarCompensation } from '@/utils/ui/scrollbarCompensation';
 
 
 
@@ -166,9 +165,6 @@ const AppContent = () => {
     setShowSwipeHint(!hasUsedSwipe);
     setIsInitialized(true);
     
-    // 初始化滾動條補償系統，防止下拉選單導致的佈局偏移
-    const cleanupScrollbarCompensation = initializeScrollbarCompensation();
-    
     // 如果顯示滑動提示，4秒後自動隱藏
     let timer: NodeJS.Timeout | undefined;
     if (!hasUsedSwipe) {
@@ -180,7 +176,6 @@ const AppContent = () => {
     
     return () => {
       unwatch();
-      cleanupScrollbarCompensation();
       if (timer) clearTimeout(timer);
     };
   }, []);
