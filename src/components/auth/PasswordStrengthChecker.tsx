@@ -105,7 +105,7 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
     rules.push({
       id: 'length',
       label: t('password.length'),
-      isValid: pwd.length >= 8 && pwd.length <= 40,
+      isValid: pwd.length >= 12 && pwd.length <= 40,
       type: 'requirement'
     });
 
@@ -175,16 +175,6 @@ export function PasswordStrengthChecker({ password, email, onValidationChange }:
         id: 'school-email',
         label: t('password.notSimilarToEmail'),
         isValid: !containsEmailPart,
-        type: 'warning'
-      });
-    }
-
-    // 長度建議
-    if (pwd.length >= 8 && pwd.length < 12) {
-      rules.push({
-        id: 'length-suggestion',
-        label: t('password.lengthSuggestion'),
-        isValid: false,
         type: 'warning'
       });
     }
