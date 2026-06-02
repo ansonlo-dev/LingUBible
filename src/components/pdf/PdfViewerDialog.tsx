@@ -100,6 +100,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
   // re-request fit-width after the container is properly laid out.
   const registryRef = useRef<any>(null);
+  // Captured in onReady when we know the shadow root exists. More reliable
+  // than calling querySelector each time an effect re-runs.
+  const shadowRootRef = useRef<ShadowRoot | null>(null);
   // Tracks whether we pushed a history entry for this open. Used to clean it
   // up if the dialog closes via a means other than the back gesture.
   const pushedHistoryRef = useRef(false);
@@ -120,7 +123,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Theme/locale are only read by embedpdf at init, so we remount the viewer
   // (via `key`) when they change. Reset the ready flag so the first-paint nudge
   // re-runs against the freshly mounted instance.
-  useEffect(() => { setViewerReady(false); registryRef.current = null; }, [themePreference, viewerLocale]);
+  useEffect(() => { setViewerReady(false); registryRef.current = null; shadowRootRef.current = null; }, [themePreference, viewerLocale]);
 
   // Lock background scrolling and wire Esc-to-close while open.
   useEffect(() => {
@@ -240,30 +243,26 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   }, [ready, blobUrl, error, viewerReady]);
 
   // Inject/remove an inversion filter into the embedpdf shadow root when the
-  // inversion toggle changes. The filter targets only canvas elements (the PDF
-  // page renders) so the toolbar is unaffected. The shadow root is open-mode,
-  // so it is accessible from outside JS. We re-run when viewerReady changes so
-  // the style is re-injected after a viewer remount (theme/locale change).
+  // inversion toggle changes. Pages are rendered as <img> tiles (blob URLs from
+  // PDFium), so the filter targets img elements. The toolbar uses SVG icons and
+  // has no img elements, so it is unaffected. shadowRootRef is populated in
+  // onReady when we know the element is in the DOM; we re-run on viewerReady
+  // changes so the style is re-injected after a viewer remount.
   useEffect(() => {
-    const getShadowRoot = () => {
-      const el = bodyRef.current?.querySelector('embedpdf-container');
-      return (el as any)?.shadowRoot as ShadowRoot | null | undefined;
-    };
     const STYLE_ID = 'pdf-invert-style';
+    const shadow = shadowRootRef.current;
     if (!inverted) {
-      getShadowRoot()?.getElementById(STYLE_ID)?.remove();
+      shadow?.querySelector(`#${STYLE_ID}`)?.remove();
       return;
     }
-    if (!viewerReady) return;
-    const shadow = getShadowRoot();
-    if (!shadow) return;
-    let styleEl = shadow.getElementById(STYLE_ID) as HTMLStyleElement | null;
+    if (!viewerReady || !shadow) return;
+    let styleEl = shadow.querySelector(`#${STYLE_ID}`) as HTMLStyleElement | null;
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = STYLE_ID;
       shadow.appendChild(styleEl);
     }
-    styleEl.textContent = 'canvas { filter: invert(1) hue-rotate(180deg); }';
+    styleEl.textContent = 'img { filter: invert(1) hue-rotate(180deg); }';
   }, [inverted, viewerReady]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
@@ -375,6 +374,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                     });
                   }
                 }
+                // Capture shadow root now while we know the element exists.
+                const epdfEl = bodyRef.current?.querySelector('embedpdf-container');
+                shadowRootRef.current = (epdfEl as any)?.shadowRoot ?? null;
                 setViewerReady(true);
               }}
               defaultPanMode={isMobile ? 'always' : 'never'}
