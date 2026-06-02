@@ -3540,19 +3540,22 @@ const CourseDetail = () => {
                         return (
                           <div
                             key={paper.id}
-                            className={`flex flex-col gap-2 p-3 rounded-lg border shadow-sm hover:shadow-md transition-all min-w-0 ${
+                            className={`flex flex-col gap-2 p-3 rounded-lg border shadow-sm hover:shadow-md transition-all min-w-0 cursor-pointer select-none ${
                               isSelected
                                 ? 'bg-primary/5 border-primary ring-1 ring-primary'
                                 : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-muted/40'
                             }`}
+                            onClick={() => toggleExamPaperSelection(paper.id)}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => toggleExamPaperSelection(paper.id)}
-                                aria-label={termLabel}
-                                className="shrink-0"
-                              />
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleExamPaperSelection(paper.id)}
+                                  aria-label={termLabel}
+                                  className="shrink-0"
+                                />
+                              </div>
                               <div className="p-1.5 bg-muted/50 rounded-md shrink-0">
                                 <FileText className="h-4 w-4 text-muted-foreground" />
                               </div>
@@ -3569,7 +3572,7 @@ const CourseDetail = () => {
                                   className="h-8 w-8"
                                   title={t('pages.courseDetail.examPaperViewFile')}
                                   aria-label={t('pages.courseDetail.examPaperViewFile')}
-                                  onClick={() => setPdfViewer({ src: viewUrl.toString(), title: paper.name })}
+                                  onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name }); }}
                                 >
                                   <ExternalLink className="h-4 w-4" />
                                 </Button>
@@ -3589,7 +3592,7 @@ const CourseDetail = () => {
                                       key={ins.name}
                                       variant="outline"
                                       className={`text-xs font-normal bg-background border-gray-300 dark:border-gray-600 text-foreground transition-colors ${isShell ? '' : 'cursor-pointer hover:bg-muted hover:border-gray-400 dark:hover:border-gray-500'}`}
-                                      onClick={isShell ? undefined : () => navigate(`/instructors/${encodeURIComponent(ins.name)}`)}
+                                      onClick={isShell ? undefined : (e) => { e.stopPropagation(); navigate(`/instructors/${encodeURIComponent(ins.name)}`); }}
                                       title={label}
                                     >
                                       {formatted.primary}
