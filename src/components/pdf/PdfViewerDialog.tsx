@@ -179,52 +179,14 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title || t('components.pdfViewer.title')}
-      className="fixed inset-0 flex flex-col bg-background"
-      style={{ zIndex: 2147483000 }}
+      className="flex flex-col bg-background"
+      // Position/size/stacking are set inline (not via Tailwind classes) so the
+      // full-screen overlay reliably covers the site chrome regardless of any
+      // global CSS — earlier the site header bled through the top.
+      style={{ position: 'fixed', inset: 0, zIndex: 2147483000 }}
     >
-      {/* Header: title + actions */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b shrink-0">
-        <span className="flex-1 min-w-0 truncate text-sm font-medium">
-          {title || t('components.pdfViewer.title')}
-        </span>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 shrink-0"
-          onClick={handleOpenInNewTab}
-          disabled={!src}
-          title={t('components.pdfViewer.openInNewTab')}
-          aria-label={t('components.pdfViewer.openInNewTab')}
-        >
-          <ExternalLink className="h-4 w-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 shrink-0"
-          asChild
-          disabled={!blobUrl}
-          title={t('components.pdfViewer.download')}
-          aria-label={t('components.pdfViewer.download')}
-        >
-          <a href={blobUrl || undefined} download={title || true}>
-            <Download className="h-4 w-4" />
-          </a>
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 shrink-0"
-          onClick={() => onOpenChange(false)}
-          title={t('components.pdfViewer.close')}
-          aria-label={t('components.pdfViewer.close')}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Viewer body */}
-      <div ref={bodyRef} className="flex-1 min-h-0 bg-muted/30">
+      {/* Viewer body fills the whole overlay; there is no separate header bar. */}
+      <div ref={bodyRef} className="relative flex-1 min-h-0 bg-muted/30">
         {error ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground px-6 text-center">
             <AlertCircle className="h-6 w-6" />
@@ -246,6 +208,50 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               onReady={() => setViewerReady(true)}
             />
           </Suspense>
+        )}
+
+        {/* Floating actions, sitting in embedpdf's top-right toolbar band next to
+            its search / comment icons (offset from the right to clear them). */}
+        {!error && (
+          <div
+            className="absolute top-1.5 z-10 flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
+            style={{ right: 96 }}
+          >
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9"
+              onClick={handleOpenInNewTab}
+              disabled={!src}
+              title={t('components.pdfViewer.openInNewTab')}
+              aria-label={t('components.pdfViewer.openInNewTab')}
+            >
+              <ExternalLink className="h-[18px] w-[18px]" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9"
+              asChild
+              disabled={!blobUrl}
+              title={t('components.pdfViewer.download')}
+              aria-label={t('components.pdfViewer.download')}
+            >
+              <a href={blobUrl || undefined} download={title || true}>
+                <Download className="h-[18px] w-[18px]" />
+              </a>
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9"
+              onClick={() => onOpenChange(false)}
+              title={t('components.pdfViewer.close')}
+              aria-label={t('components.pdfViewer.close')}
+            >
+              <X className="h-[18px] w-[18px]" />
+            </Button>
+          </div>
         )}
       </div>
     </div>,
