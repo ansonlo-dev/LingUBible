@@ -13,6 +13,8 @@ interface EmbedPdfViewerProps {
   preference: ViewerPreference;
   locale: ViewerLocale;
   onReady?: () => void;
+  /** 'always' on touch devices (drag-to-scroll); 'never' on desktop (text cursor). */
+  defaultPanMode?: 'never' | 'always';
 }
 
 export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
@@ -20,6 +22,7 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
   preference,
   locale,
   onReady,
+  defaultPanMode = 'never',
 }) => (
   <PDFViewer
     className="h-full w-full"
@@ -33,10 +36,10 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
       // don't pass `locales` — that would replace the bundled set, and the
       // dictionaries aren't exported for us to re-supply.)
       i18n: { defaultLocale: locale, fallbackLocale: 'en' },
-      // Keep the hand tool off by default so native wheel / touch scrolling
-      // stays available (pan mode sets touch-action:none and captures pointers).
-      // Users can still enable it from the toolbar.
-      pan: { defaultMode: 'never' },
+      // Mobile: 'always' so drag scrolls the PDF. Desktop: 'never' keeps the
+      // text cursor and lets users select text (pan mode sets touch-action:none
+      // and captures pointers, which blocks text selection on desktop).
+      pan: { defaultMode: defaultPanMode },
       // Don't fetch the default stamp libraries from jsDelivr — they 404 for
       // locales like zh-TW and we don't need built-in stamps anyway.
       stamp: { manifests: [] },

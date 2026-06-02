@@ -79,6 +79,11 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // embedpdf's locale codes line up with ours; fall back to English otherwise.
   const viewerLocale = language === 'zh-TW' || language === 'zh-CN' ? language : 'en';
 
+  // Detect touch device once at mount — drives pan mode and button visibility.
+  const [isMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+  );
+
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -206,6 +211,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               preference={themePreference}
               locale={viewerLocale}
               onReady={() => setViewerReady(true)}
+              defaultPanMode={isMobile ? 'always' : 'never'}
             />
           </Suspense>
         )}
@@ -214,7 +220,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             its search / comment icons (offset from the right to clear them). */}
         {!error && (
           <div
-            className="absolute top-1.5 z-10 flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
+            className="absolute top-1.5 z-10 hidden md:flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
             style={{ right: 96 }}
           >
             <Button
