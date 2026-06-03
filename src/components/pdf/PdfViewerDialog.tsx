@@ -373,6 +373,17 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                       },
                     });
                   }
+                  const documentMenu = schema?.menus?.['document-menu'];
+                  if (documentMenu?.items) {
+                    const filteredItems = (documentMenu.items as any[]).filter((item: any) =>
+                      item.id !== 'document:open' && item.id !== 'document:close',
+                    );
+                    uiCap.mergeSchema?.({
+                      menus: {
+                        'document-menu': { ...documentMenu, items: filteredItems } as any,
+                      },
+                    });
+                  }
                 }
                 // Capture shadow root now while we know the element exists.
                 const epdfEl = bodyRef.current?.querySelector('embedpdf-container');
