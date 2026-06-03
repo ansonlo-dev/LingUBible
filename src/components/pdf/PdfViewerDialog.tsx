@@ -420,7 +420,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   <Contrast className="h-[18px] w-[18px]" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-foreground text-background border-0" style={{ zIndex: 2147483001 }}>
+              <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
                 {t('components.pdfViewer.invertColors')}
               </TooltipContent>
             </Tooltip>
@@ -437,7 +437,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   <ExternalLink className="h-[18px] w-[18px]" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-foreground text-background border-0" style={{ zIndex: 2147483001 }}>
+              <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
                 {t('components.pdfViewer.openInNewTab')}
               </TooltipContent>
             </Tooltip>
@@ -456,7 +456,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   </a>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-foreground text-background border-0" style={{ zIndex: 2147483001 }}>
+              <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
                 {t('components.pdfViewer.download')}
               </TooltipContent>
             </Tooltip>
