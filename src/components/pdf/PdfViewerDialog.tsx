@@ -1,6 +1,8 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { AlertCircle, Contrast, Download, ExternalLink, Loader2, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -405,57 +407,81 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             className="absolute top-1.5 z-10 hidden lg:flex items-center gap-0.5 rounded-lg bg-background/70 px-0.5 backdrop-blur-sm"
             style={{ right: 48 }}
           >
-            <Button
-              size="icon"
-              variant={inverted ? 'secondary' : 'ghost'}
-              className="h-9 w-9"
-              onClick={toggleInverted}
-              title={t('components.pdfViewer.invertColors')}
-              aria-label={t('components.pdfViewer.invertColors')}
-              aria-pressed={inverted}
-            >
-              <Contrast className="h-[18px] w-[18px]" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-9 w-9"
-              onClick={handleOpenInNewTab}
-              disabled={!src}
-              title={t('components.pdfViewer.openInNewTab')}
-              aria-label={t('components.pdfViewer.openInNewTab')}
-            >
-              <ExternalLink className="h-[18px] w-[18px]" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-9 w-9"
-              asChild
-              disabled={!blobUrl}
-              title={t('components.pdfViewer.download')}
-              aria-label={t('components.pdfViewer.download')}
-            >
-              <a href={blobUrl || undefined} download={title || true}>
-                <Download className="h-[18px] w-[18px]" />
-              </a>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className={cn('h-9 w-9', inverted && 'border border-blue-400 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 hover:text-blue-300')}
+                  onClick={toggleInverted}
+                  aria-label={t('components.pdfViewer.invertColors')}
+                  aria-pressed={inverted}
+                >
+                  <Contrast className="h-[18px] w-[18px]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" style={{ zIndex: 2147483001 }}>
+                {t('components.pdfViewer.invertColors')}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9"
+                  onClick={handleOpenInNewTab}
+                  disabled={!src}
+                  aria-label={t('components.pdfViewer.openInNewTab')}
+                >
+                  <ExternalLink className="h-[18px] w-[18px]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" style={{ zIndex: 2147483001 }}>
+                {t('components.pdfViewer.openInNewTab')}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9"
+                  asChild
+                  disabled={!blobUrl}
+                  aria-label={t('components.pdfViewer.download')}
+                >
+                  <a href={blobUrl || undefined} download={title || true}>
+                    <Download className="h-[18px] w-[18px]" />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" style={{ zIndex: 2147483001 }}>
+                {t('components.pdfViewer.download')}
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
 
         {/* Close button — pinned to the top-right corner now that the embedpdf
             right-group is empty (Search/Comment moved to center-group). */}
         <div className="absolute top-1.5 z-10 hidden lg:flex" style={{ right: 4 }}>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-9 w-9 rounded-lg bg-background/70 backdrop-blur-sm"
-            onClick={() => onOpenChange(false)}
-            title={t('components.pdfViewer.close')}
-            aria-label={t('components.pdfViewer.close')}
-          >
-            <X className="h-[18px] w-[18px]" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9 rounded-lg bg-background/70 backdrop-blur-sm"
+                onClick={() => onOpenChange(false)}
+                aria-label={t('components.pdfViewer.close')}
+              >
+                <X className="h-[18px] w-[18px]" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" style={{ zIndex: 2147483001 }}>
+              {t('components.pdfViewer.close')}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>,
