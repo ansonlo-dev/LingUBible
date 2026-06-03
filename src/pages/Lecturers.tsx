@@ -460,14 +460,7 @@ const Lecturers = () => {
   // Apply teaching language filter (for reviews section)
   const applyTeachingLanguageFilter = (teachingLanguage: string) => {
     const newFilters = { ...filters };
-
-    // Toggle teaching language filter
-    if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-      newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-    } else {
-      newFilters.selectedTeachingLanguages = [teachingLanguage];
-    }
-
+    newFilters.selectedTeachingLanguages = [teachingLanguage];
     handleFiltersChange(newFilters);
   };
 
@@ -4068,16 +4061,8 @@ const Lecturers = () => {
                                         const newFilters = { ...filters };
                                         const sessionType = currentInstructorDetail.session_type;
                                         
-                                        // 切換篩選器
-                                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                        } else {
-                                          newFilters.selectedSessionTypes = [sessionType];
-                                        }
-                                        
-                                        // 重置頁面到第一頁
+                                        newFilters.selectedSessionTypes = [sessionType];
                                         newFilters.currentPage = 1;
-                                        
                                         handleFiltersChange(newFilters);
                                         setPendingSessionTypeFilter(null);
                                       }}
@@ -4096,16 +4081,8 @@ const Lecturers = () => {
                                             const newFilters = { ...filters };
                                             const sessionType = currentInstructorDetail.session_type;
                                             
-                                            // 切換篩選器
-                                            if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                              newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                            } else {
-                                              newFilters.selectedSessionTypes = [sessionType];
-                                            }
-                                            
-                                            // 重置頁面到第一頁
+                                            newFilters.selectedSessionTypes = [sessionType];
                                             newFilters.currentPage = 1;
-                                            
                                             handleFiltersChange(newFilters);
                                           }
                                         }}
@@ -4233,16 +4210,8 @@ const Lecturers = () => {
                                       const newFilters = { ...filters };
                                       const sessionType = currentInstructorDetail.session_type;
                                       
-                                      // 切換篩選器
-                                      if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                        newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                      } else {
-                                        newFilters.selectedSessionTypes = [sessionType];
-                                      }
-                                      
-                                      // 重置頁面到第一頁
+                                      newFilters.selectedSessionTypes = [sessionType];
                                       newFilters.currentPage = 1;
-                                      
                                       handleFiltersChange(newFilters);
                                       setPendingSessionTypeFilter(null);
                                     }}
@@ -4261,16 +4230,8 @@ const Lecturers = () => {
                                           const newFilters = { ...filters };
                                           const sessionType = currentInstructorDetail.session_type;
                                           
-                                          // 切換篩選器
-                                          if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                                            newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                                          } else {
-                                            newFilters.selectedSessionTypes = [sessionType];
-                                          }
-                                          
-                                          // 重置頁面到第一頁
+                                          newFilters.selectedSessionTypes = [sessionType];
                                           newFilters.currentPage = 1;
-                                          
                                           handleFiltersChange(newFilters);
                                         }
                                       }}

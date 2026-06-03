@@ -824,16 +824,8 @@ export const CourseReviewsList = ({
                           const newFilters = { ...filters };
                           const sessionType = instructor.session_type;
                           
-                          // 切換篩選器
-                          if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                            newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                          } else {
-                            newFilters.selectedSessionTypes = [sessionType];
-                          }
-                          
-                          // 重置頁面到第一頁
+                          newFilters.selectedSessionTypes = [sessionType];
                           newFilters.currentPage = 1;
-                          
                           handleFiltersChange(newFilters);
                         });
                       }}
@@ -874,16 +866,8 @@ export const CourseReviewsList = ({
                               handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`, () => {
                                 const newFilters = { ...filters };
                                 
-                                // 切換教學語言篩選器
-                                if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                  newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                                } else {
-                                  newFilters.selectedTeachingLanguages = [teachingLanguage];
-                                }
-                                
-                                // 重置頁面到第一頁
+                                newFilters.selectedTeachingLanguages = [teachingLanguage];
                                 newFilters.currentPage = 1;
-                                
                                 handleFiltersChange(newFilters);
                               });
                             }}
@@ -932,16 +916,8 @@ export const CourseReviewsList = ({
                         const newFilters = { ...filters };
                         const sessionType = instructor.session_type;
                         
-                        // 切換篩選器
-                        if (newFilters.selectedSessionTypes.includes(sessionType)) {
-                          newFilters.selectedSessionTypes = newFilters.selectedSessionTypes.filter(type => type !== sessionType);
-                        } else {
-                          newFilters.selectedSessionTypes = [sessionType];
-                        }
-                        
-                        // 重置頁面到第一頁
+                        newFilters.selectedSessionTypes = [sessionType];
                         newFilters.currentPage = 1;
-                        
                         handleFiltersChange(newFilters);
                       });
                     }}
@@ -982,14 +958,7 @@ export const CourseReviewsList = ({
                             handleMobileTwoTap(`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`, () => {
                               const newFilters = { ...filters };
                               
-                              // 切換教學語言篩選器
-                              if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
-                                newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
-                              } else {
-                                newFilters.selectedTeachingLanguages = [teachingLanguage];
-                              }
-                              
-                              // 重置頁面到第一頁
+                              newFilters.selectedTeachingLanguages = [teachingLanguage];
                               newFilters.currentPage = 1;
                               
                               handleFiltersChange(newFilters);
