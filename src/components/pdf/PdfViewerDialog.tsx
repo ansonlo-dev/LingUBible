@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { AlertCircle, Contrast, Download, ExternalLink, Loader2, X } from 'lucide-react';
@@ -97,6 +98,10 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       return next;
     });
   };
+
+  const [saveDialog, setSaveDialog] = useState<{
+    open: boolean; fileName: string; buffer: ArrayBuffer | null; preparing: boolean;
+  }>({ open: false, fileName: '', buffer: null, preparing: false });
 
   const bodyRef = useRef<HTMLDivElement>(null);
   // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
@@ -267,6 +272,45 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     styleEl.textContent = 'img { filter: invert(1) hue-rotate(180deg); }';
   }, [inverted, viewerReady]);
 
+  // Inject ::selection reset into shadow root once so the site's red primary
+  // color doesn't override the browser-default selection highlight inside the viewer.
+  useEffect(() => {
+    if (!viewerReady || !shadowRootRef.current) return;
+    const shadow = shadowRootRef.current;
+    const STYLE_ID = 'pdf-selection-reset';
+    if (shadow.querySelector(`#${STYLE_ID}`)) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = STYLE_ID;
+    styleEl.textContent = '*::selection { background-color: Highlight; color: HighlightText; }';
+    shadow.appendChild(styleEl);
+  }, [viewerReady]);
+
+  // Ctrl+S / Cmd+S opens the save dialog when the viewer is open.
+  useEffect(() => {
+    if (!open) return;
+    const onCtrlS = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
+      e.preventDefault();
+      const registry = registryRef.current;
+      if (!registry) return;
+      const exportCap = (registry as any).getPlugin?.('export')?.provides?.();
+      const docManager = (registry as any).getPlugin?.('document-manager')?.provides?.();
+      if (!exportCap || !docManager) return;
+      const docs: any[] = docManager.getOpenDocuments?.() ?? [];
+      const docId = docs.find((d: any) => d.status === 'loaded')?.id;
+      if (!docId) return;
+      const baseName = (title || 'document').replace(/\.pdf$/i, '');
+      const defaultName = `${baseName}_exported.pdf`;
+      setSaveDialog({ open: true, fileName: defaultName, buffer: null, preparing: true });
+      exportCap.forDocument(docId).saveAsCopy().wait(
+        (buffer: ArrayBuffer) => setSaveDialog(prev => ({ ...prev, buffer, preparing: false })),
+        () => setSaveDialog(prev => ({ ...prev, preparing: false })),
+      );
+    };
+    window.addEventListener('keydown', onCtrlS);
+    return () => window.removeEventListener('keydown', onCtrlS);
+  }, [open, title]);
+
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
   useEffect(() => {
@@ -325,6 +369,40 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       },
       () => {},
     );
+  };
+
+  const triggerDownload = (buffer: ArrayBuffer, fileName: string) => {
+    const blob = new Blob([buffer], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDialogDownload = () => {
+    const { buffer, fileName } = saveDialog;
+    if (!buffer) return;
+    triggerDownload(buffer, fileName);
+    setSaveDialog(prev => ({ ...prev, open: false }));
+  };
+
+  const handleSaveToFolder = async () => {
+    const { buffer, fileName } = saveDialog;
+    if (!buffer) return;
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: 'PDF Document', accept: { 'application/pdf': ['.pdf'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(buffer);
+      await writable.close();
+      setSaveDialog(prev => ({ ...prev, open: false }));
+    } catch (e: any) {
+      if (e.name !== 'AbortError') triggerDownload(buffer, fileName);
+    }
   };
 
   if (!open) return null;
@@ -402,7 +480,8 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   if (documentMenu?.items) {
                     const filteredItems = (documentMenu.items as any[]).filter((item: any) =>
                       item.id !== 'document:open' && item.id !== 'document:close' &&
-                      item.id !== 'divider-10' && item.id !== 'document:protect',
+                      item.id !== 'divider-10' && item.id !== 'document:protect' &&
+                      item.id !== 'document:export',
                     );
                     uiCap.mergeSchema?.({
                       menus: {
@@ -482,11 +561,46 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 <X className="h-[18px] w-[18px]" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" style={{ zIndex: 2147483001 }}>
+            <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
               {t('components.pdfViewer.close')}
             </TooltipContent>
           </Tooltip>
         </div>
+        {/* Save dialog — shown on Ctrl+S */}
+        {saveDialog.open && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ zIndex: 20, backgroundColor: 'rgba(0,0,0,0.5)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setSaveDialog(prev => ({ ...prev, open: false })); }}
+          >
+            <div className="bg-background rounded-xl p-6 shadow-2xl w-full max-w-sm mx-4">
+              <h2 className="text-base font-semibold mb-4">{t('components.pdfViewer.saveDialog.title')}</h2>
+              <div className="mb-5">
+                <label className="text-sm text-muted-foreground mb-1.5 block">{t('components.pdfViewer.saveDialog.filename')}</label>
+                <Input
+                  value={saveDialog.fileName}
+                  onChange={(e) => setSaveDialog(prev => ({ ...prev, fileName: e.target.value }))}
+                  className="w-full"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter' && saveDialog.buffer) handleDialogDownload(); }}
+                />
+              </div>
+              <div className="flex gap-2 justify-end flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => setSaveDialog(prev => ({ ...prev, open: false }))}>
+                  {t('components.pdfViewer.saveDialog.cancel')}
+                </Button>
+                {'showSaveFilePicker' in window && (
+                  <Button variant="outline" size="sm" onClick={handleSaveToFolder} disabled={!saveDialog.buffer || saveDialog.preparing}>
+                    {t('components.pdfViewer.saveDialog.saveToFolder')}
+                  </Button>
+                )}
+                <Button size="sm" onClick={handleDialogDownload} disabled={!saveDialog.buffer || saveDialog.preparing}>
+                  {saveDialog.preparing ? t('components.pdfViewer.saveDialog.preparing') : t('components.pdfViewer.saveDialog.download')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body,
