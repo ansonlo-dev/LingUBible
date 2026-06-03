@@ -457,18 +457,31 @@ const Lecturers = () => {
     }
   };
 
-  // Apply teaching language filter
+  // Apply teaching language filter (for reviews section)
   const applyTeachingLanguageFilter = (teachingLanguage: string) => {
     const newFilters = { ...filters };
-    
+
     // Toggle teaching language filter
     if (newFilters.selectedTeachingLanguages.includes(teachingLanguage)) {
       newFilters.selectedTeachingLanguages = newFilters.selectedTeachingLanguages.filter(lang => lang !== teachingLanguage);
     } else {
       newFilters.selectedTeachingLanguages = [teachingLanguage];
     }
-    
+
     handleFiltersChange(newFilters);
+  };
+
+  // Apply teaching language filter for the teaching records tab
+  const applyTeachingRecordsLanguageFilter = (teachingLanguage: string) => {
+    const currentValues = Array.isArray(selectedTeachingLanguageFilter)
+      ? selectedTeachingLanguageFilter
+      : (selectedTeachingLanguageFilter === 'all' ? [] : [selectedTeachingLanguageFilter]);
+
+    if (currentValues.includes(teachingLanguage)) {
+      setSelectedTeachingLanguageFilter('all');
+    } else {
+      setSelectedTeachingLanguageFilter([teachingLanguage]);
+    }
   };
 
   // Reset teaching language tooltip state
@@ -2683,12 +2696,12 @@ const Lecturers = () => {
                                                 }));
                                               } else if (newTapCount === 2) {
                                                 // Second tap: apply filter and close tooltip
-                                                applyTeachingLanguageFilter(teachingLanguage);
+                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                 resetTeachingLanguageTooltipState(uniqueLanguageKey);
                                               }
                                             } else {
                                               // Desktop: 1 tap to apply filter
-                                              applyTeachingLanguageFilter(teachingLanguage);
+                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
                                             }
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
@@ -2952,12 +2965,12 @@ const Lecturers = () => {
                                                 }));
                                               } else if (newTapCount === 2) {
                                                 // Second tap: apply filter and close tooltip
-                                                applyTeachingLanguageFilter(teachingLanguage);
+                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                 resetTeachingLanguageTooltipState(uniqueLanguageKey);
                                               }
                                             } else {
                                               // Desktop: 1 tap to apply filter
-                                              applyTeachingLanguageFilter(teachingLanguage);
+                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
                                             }
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
@@ -3221,12 +3234,12 @@ const Lecturers = () => {
                                                 }));
                                               } else if (newTapCount === 2) {
                                                 // Second tap: apply filter and close tooltip
-                                                applyTeachingLanguageFilter(teachingLanguage);
+                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                 resetTeachingLanguageTooltipState(uniqueLanguageKey);
                                               }
                                             } else {
                                               // Desktop: 1 tap to apply filter
-                                              applyTeachingLanguageFilter(teachingLanguage);
+                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
                                             }
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
@@ -3490,12 +3503,12 @@ const Lecturers = () => {
                                                 }));
                                               } else if (newTapCount === 2) {
                                                 // Second tap: apply filter and close tooltip
-                                                applyTeachingLanguageFilter(teachingLanguage);
+                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                 resetTeachingLanguageTooltipState(uniqueLanguageKey);
                                               }
                                             } else {
                                               // Desktop: 1 tap to apply filter
-                                              applyTeachingLanguageFilter(teachingLanguage);
+                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
                                             }
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
@@ -4180,12 +4193,12 @@ const Lecturers = () => {
                                                     }));
                                                   } else if (newTapCount === 2) {
                                                     // Second tap: apply filter and close tooltip
-                                                    applyTeachingLanguageFilter(teachingLanguage);
+                                                    applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                     resetTeachingLanguageTooltipState(uniqueLanguageKey);
                                                   }
                                                 } else {
                                                   // Desktop: 1 tap to apply filter
-                                                  applyTeachingLanguageFilter(teachingLanguage);
+                                                  applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                 }
                                               }}
                                             >
@@ -4343,12 +4356,12 @@ const Lecturers = () => {
                                                   }));
                                                 } else if (newTapCount === 2) {
                                                   // Second tap: apply filter and close tooltip
-                                                  applyTeachingLanguageFilter(teachingLanguage);
+                                                  applyTeachingRecordsLanguageFilter(teachingLanguage);
                                                   resetTeachingLanguageTooltipState(uniqueLanguageKey);
                                                 }
                                               } else {
                                                 // Desktop: 1 tap to apply filter
-                                                applyTeachingLanguageFilter(teachingLanguage);
+                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
                                               }
                                             }}
                                           >
