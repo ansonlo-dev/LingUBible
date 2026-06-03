@@ -2415,13 +2415,13 @@ const Lecturers = () => {
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[100px] h-10 text-sm"
+                      className="w-[170px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}
                     />
                   </div>
-                  
+
                   {/* Teaching language filter */}
                   <div className="flex items-center gap-2 shrink-0">
                     <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
@@ -2484,7 +2484,7 @@ const Lecturers = () => {
                         }
                       }}
                       placeholder={t('common.all')}
-                      className="w-[100px] h-10 text-sm"
+                      className="w-[170px] h-10 text-sm"
                       showCounts={true}
                       maxHeight="max-h-48"
                       totalCount={teachingCourses?.length || 0}

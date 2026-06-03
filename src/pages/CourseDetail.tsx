@@ -2317,13 +2317,13 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[100px] h-10 text-sm"
+                        className="w-[170px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
                       />
                     </div>
-                    
+
                     {/* 教學語言篩選器 */}
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground whitespace-nowrap">
@@ -2353,7 +2353,7 @@ const CourseDetail = () => {
                           }
                         }}
                         placeholder={t('common.all')}
-                        className="w-[100px] h-10 text-sm"
+                        className="w-[170px] h-10 text-sm"
                         showCounts={true}
                         maxHeight="max-h-48"
                         totalCount={teachingInfo.length}
