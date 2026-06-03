@@ -550,6 +550,15 @@ export function MobileSearchModal({ isOpen, onClose, isSidebarCollapsed = false 
 
   useEffect(() => {
     setSelectedIndex(-1);
+    if (searchQuery.trim()) {
+      if (filteredCourses.length === 0 && filteredInstructors.length > 0) {
+        setSearchActiveTab('instructors');
+      } else if (filteredCourses.length > 0) {
+        setSearchActiveTab('courses');
+      }
+    } else {
+      setSearchActiveTab('courses');
+    }
   }, [searchQuery]);
 
 
