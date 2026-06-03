@@ -298,10 +298,33 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     };
   }, [open, src]);
 
-  // Top-level navigation still carries the session cookie (SameSite=Lax), so the
-  // new-tab fallback works even when the in-page fetch is blocked.
   const handleOpenInNewTab = () => {
     if (src) window.open(src, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleExport = () => {
+    const registry = registryRef.current;
+    if (!registry) return;
+    const exportCap = (registry as any).getPlugin?.('export')?.provides?.();
+    const docManager = (registry as any).getPlugin?.('document-manager')?.provides?.();
+    if (!exportCap || !docManager) return;
+    const docs: any[] = docManager.getOpenDocuments?.() ?? [];
+    const docId = docs.find((d: any) => d.status === 'loaded')?.id;
+    if (!docId) return;
+    exportCap.forDocument(docId).saveAsCopy().wait(
+      (buffer: ArrayBuffer) => {
+        const baseName = (title || 'document').replace(/\.pdf$/i, '');
+        const fileName = `${baseName}_exported.pdf`;
+        const blob = new Blob([buffer], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      () => {},
+    );
   };
 
   if (!open) return null;
@@ -412,7 +435,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className={cn('h-9 w-9', inverted && 'border border-blue-400 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 hover:text-blue-300')}
+                  className={cn('h-9 w-9', inverted && 'border-2 border-blue-400 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 hover:text-blue-300')}
                   onClick={toggleInverted}
                   aria-label={t('components.pdfViewer.invertColors')}
                   aria-pressed={inverted}
@@ -430,30 +453,11 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   size="icon"
                   variant="ghost"
                   className="h-9 w-9"
-                  onClick={handleOpenInNewTab}
-                  disabled={!src}
-                  aria-label={t('components.pdfViewer.openInNewTab')}
-                >
-                  <ExternalLink className="h-[18px] w-[18px]" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
-                {t('components.pdfViewer.openInNewTab')}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-9 w-9"
-                  asChild
-                  disabled={!blobUrl}
+                  onClick={handleExport}
+                  disabled={!viewerReady}
                   aria-label={t('components.pdfViewer.download')}
                 >
-                  <a href={blobUrl || undefined} download={title || true}>
-                    <Download className="h-[18px] w-[18px]" />
-                  </a>
+                  <Download className="h-[18px] w-[18px]" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
