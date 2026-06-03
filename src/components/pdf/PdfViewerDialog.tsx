@@ -422,6 +422,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               src={blobUrl}
               preference={themePreference}
               locale={viewerLocale}
+              exportFileName={`${(title || 'document').replace(/\.pdf$/i, '')}_exported.pdf`}
               onReady={(registry) => {
                 registryRef.current = registry;
                 // Move search and comment panels from the right-side group to sit

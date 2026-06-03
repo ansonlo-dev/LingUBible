@@ -18,6 +18,8 @@ interface EmbedPdfViewerProps {
   defaultPanMode?: 'never' | 'always';
   /** Initial zoom level. Defaults to 'fit-width' for all devices. */
   defaultZoomLevel?: 'fit-width' | 'fit-page' | 'automatic' | number;
+  /** Filename used by the built-in Export menu item (mobile). */
+  exportFileName?: string;
 }
 
 export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
@@ -27,6 +29,7 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
   onReady,
   defaultPanMode = 'never',
   defaultZoomLevel,
+  exportFileName,
 }) => (
   <PDFViewer
     className="h-full w-full"
@@ -49,6 +52,8 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
       // Don't fetch the default stamp libraries from jsDelivr — they 404 for
       // locales like zh-TW and we don't need built-in stamps anyway.
       stamp: { manifests: [] },
+      // Set the filename used by the built-in Export command (mobile menu).
+      ...(exportFileName !== undefined && { export: { defaultFileName: exportFileName } }),
     }}
   />
 );
