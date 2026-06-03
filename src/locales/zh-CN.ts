@@ -519,6 +519,7 @@ export default {
   'components.pdfViewer.download': '下载',
   'components.pdfViewer.close': '关闭',
   'components.pdfViewer.invertColors': '反转色彩',
+  'components.pdfViewer.initializingPlugins': '正在初始化…',
   'components.pdfViewer.saveDialog.title': '保存 PDF',
   'components.pdfViewer.saveDialog.filename': '文件名称',
   'components.pdfViewer.saveDialog.saveToFolder': '保存至文件夹…',

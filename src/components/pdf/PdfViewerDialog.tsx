@@ -288,6 +288,37 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     shadow.appendChild(styleEl);
   }, [viewerReady]);
 
+  // Replace the hardcoded "Initializing plugins..." text in the embedpdf shadow root
+  // with the translated equivalent. The text appears before onReady fires, so we use
+  // rAF to find the shadow root as early as possible, then a MutationObserver to catch
+  // the text node whenever it's inserted.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error)) return;
+    const translatedText = t('components.pdfViewer.initializingPlugins');
+    let rafId: number;
+    let observer: MutationObserver | null = null;
+
+    const replaceText = (root: ShadowRoot) => {
+      const p = root.querySelector('p.text-lg');
+      if (p && p.textContent === 'Initializing plugins...') p.textContent = translatedText;
+    };
+
+    const init = () => {
+      const epdfEl = bodyRef.current?.querySelector('embedpdf-container');
+      const shadow = (epdfEl as any)?.shadowRoot as ShadowRoot | null;
+      if (shadow) {
+        replaceText(shadow);
+        observer = new MutationObserver(() => replaceText(shadow));
+        observer.observe(shadow, { childList: true, subtree: true, characterData: true });
+        return;
+      }
+      rafId = requestAnimationFrame(init);
+    };
+
+    init();
+    return () => { cancelAnimationFrame(rafId); observer?.disconnect(); };
+  }, [ready, blobUrl, error, t]);
+
   // Ctrl+S / Cmd+S opens the save dialog when the viewer is open.
   // openSaveDialog reads registryRef (always current) and title (stable during session).
   useEffect(() => {
@@ -417,9 +448,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             </Button>
           </div>
         ) : loading || !blobUrl || !ready ? (
-          <PdfViewerLoading label={t('components.pdfViewer.loading')} />
+          <div className="h-full w-full" />
         ) : (
-          <Suspense fallback={<PdfViewerLoading label={t('components.pdfViewer.loading')} />}>
+          <Suspense fallback={<div className="h-full w-full" />}>
             <EmbedPdfViewer
               key={`${themePreference}-${viewerLocale}`}
               src={blobUrl}

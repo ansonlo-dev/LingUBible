@@ -518,6 +518,7 @@ export default {
   'components.pdfViewer.download': 'Download',
   'components.pdfViewer.close': 'Close',
   'components.pdfViewer.invertColors': 'Invert colors',
+  'components.pdfViewer.initializingPlugins': 'Initializing…',
   'components.pdfViewer.saveDialog.title': 'Save PDF',
   'components.pdfViewer.saveDialog.filename': 'Filename',
   'components.pdfViewer.saveDialog.saveToFolder': 'Save to Folder…',
