@@ -5,7 +5,7 @@ import { APP_CONFIG } from '@/utils/constants/config';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 
 // 自定義 Home 圖示組件
@@ -41,6 +41,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
   const { isMobile, isMobilePortrait, isTouchDevice } = useResponsive(); // Use enhanced detection
   const [forceRender, setForceRender] = useState(0);
   const [dynamicHeight, setDynamicHeight] = useState('100vh');
+  const [isCompact, setIsCompact] = useState(false);
+  const sidebarContentRef = useRef<HTMLDivElement>(null);
 
   // 監聽 OAuth 登入完成事件和強制用戶更新事件，用於強制重新渲染
   useEffect(() => {
@@ -130,6 +132,31 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     
     console.log('✅ 側邊欄: 語言切換完成');
   };
+
+  // 偵測側邊欄內容溢出，當溢出時縮小間距避免出現捲軸
+  useEffect(() => {
+    const getScrollContainer = () => sidebarContentRef.current?.parentElement;
+
+    const checkOverflow = () => {
+      const container = getScrollContainer();
+      if (!container) return;
+      const overflowing = container.scrollHeight > container.clientHeight;
+      const hasHeadroom = container.scrollHeight < container.clientHeight - 40;
+      setIsCompact(prev => {
+        if (!prev && overflowing) return true;
+        if (prev && hasHeadroom) return false;
+        return prev;
+      });
+    };
+
+    checkOverflow();
+
+    const observer = new ResizeObserver(checkOverflow);
+    const container = getScrollContainer();
+    if (container) observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [user, loading, isCollapsed]);
 
   // 在移動設備上，忽略 isCollapsed 狀態，始終顯示文字
   // For landscape phones, always show text when sidebar is open
@@ -248,8 +275,9 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
   return (
     <>
       {/* 側邊欄內容 - 使用動態高度 */}
-      <div 
-        key={`sidebar-${forceRender}`} 
+      <div
+        key={`sidebar-${forceRender}`}
+        ref={sidebarContentRef}
         className="flex flex-col h-full"
         style={{
           // 在手機版使用動態高度
@@ -259,7 +287,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       >
         {/* Logo 區域 - 在手機直向模式下隱藏 (因為顯示在 Header 中) */}
         {!isMobilePortrait && (
-          <div className="p-4 md:p-2 md:h-16 md:flex md:items-center mt-2">
+          <div className={`${isCompact ? 'p-2 md:p-1 md:h-12' : 'p-4 md:p-2 md:h-16'} md:flex md:items-center ${isCompact ? 'mt-0' : 'mt-2'}`}>
             {shouldShowText && (
               <Link 
                 to="/" 
@@ -283,13 +311,13 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
         )}
 
         {/* 導航選單 */}
-        <nav className={`flex-1 p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : 'md:py-4'}`}>
-          <div className={!shouldShowText ? 'space-y-3' : 'space-y-8'}>
+        <nav className={`flex-1 p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : isCompact ? 'md:py-2' : 'md:py-4'}`}>
+          <div className={!shouldShowText ? 'space-y-3' : isCompact ? 'space-y-4' : 'space-y-8'}>
             {navigationGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
                 {/* 分組標題 - 只在有標題且顯示文字時顯示 */}
                 {group.label && shouldShowText && (
-                  <div className="mb-2">
+                  <div className={isCompact ? 'mb-1' : 'mb-2'}>
                     <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {group.label}
                     </h3>
@@ -297,11 +325,11 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                 )}
 
                 {/* 分組項目 */}
-                <ul className={!shouldShowText ? 'space-y-1' : 'space-y-2'}>
+                <ul className={!shouldShowText ? 'space-y-1' : isCompact ? 'space-y-1' : 'space-y-2'}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isExternalOrHash = item.href.startsWith('#');
-                    const itemPy = !shouldShowText ? 'py-1.5' : 'py-2';
+                    const itemPy = !shouldShowText ? 'py-1.5' : isCompact ? 'py-1.5' : 'py-2';
 
                     return (
                       <li key={item.name}>
@@ -400,7 +428,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
         </nav>
 
         {/* 底部設置區域 - 始終顯示語言和主題切換 */}
-        <div className={`p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : 'md:py-4'}`}>
+        <div className={`p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : isCompact ? 'md:py-2' : 'md:py-4'}`}>
           {shouldShowText ? (
             <div className="space-y-1">
               {/* 語言切換器 - 始終顯示 */}
