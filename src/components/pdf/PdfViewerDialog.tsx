@@ -228,6 +228,24 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             if (!outlineOpened && bookmarks && bookmarks.length > 0) {
               outlineOpened = true;
               uiCap.setActiveSidebar('left', 'main', 'sidebar-panel', documentId, 'outline');
+              // The tabs component (bx) uses local useState(tabs[0].id) and never reads
+              // the Redux sidebarTabs state, so setActiveSidebar's activeTab is ignored for
+              // rendering. We must programmatically click the outline tab after the sidebar
+              // has mounted (tabs[0] = thumbnails, tabs[1] = outline).
+              const clickOutlineTab = () => {
+                const shadow = shadowRootRef.current;
+                if (!shadow) return false;
+                const sidebarEl = shadow.querySelector('[data-sidebar-id="sidebar-panel"]');
+                const tabButtons = sidebarEl?.querySelectorAll('[role="tab"]');
+                if (tabButtons && tabButtons.length > 1) {
+                  (tabButtons[1] as HTMLElement).click();
+                  return true;
+                }
+                return false;
+              };
+              requestAnimationFrame(() => {
+                if (!clickOutlineTab()) setTimeout(() => { if (!clickOutlineTab()) setTimeout(clickOutlineTab, 200); }, 100);
+              });
             }
           },
           () => {}, // no bookmarks or outline data unavailable — leave sidebar closed
