@@ -45,7 +45,7 @@
       "purpose": "any"
     },
     {
-      "src": "/web-app-manifest-192x192.png",
+      "src": "/web-app-manifest-192x192-maskable.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
@@ -57,7 +57,7 @@
       "purpose": "any"
     },
     {
-      "src": "/manifest-512_v2.png",
+      "src": "/manifest-512_maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
