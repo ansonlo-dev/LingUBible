@@ -462,7 +462,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                     const filteredItems = (documentMenu.items as any[]).filter((item: any) =>
                       item.id !== 'document:open' && item.id !== 'document:close' &&
                       item.id !== 'divider-10' && item.id !== 'document:protect' &&
-                      item.id !== 'document:export',
+                      (isMobile || item.id !== 'document:export'),
                     );
                     uiCap.mergeSchema?.({
                       menus: {
