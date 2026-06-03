@@ -286,30 +286,18 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   }, [viewerReady]);
 
   // Ctrl+S / Cmd+S opens the save dialog when the viewer is open.
+  // openSaveDialog reads registryRef (always current) and title (stable during session).
   useEffect(() => {
     if (!open) return;
     const onCtrlS = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
       e.preventDefault();
-      const registry = registryRef.current;
-      if (!registry) return;
-      const exportCap = (registry as any).getPlugin?.('export')?.provides?.();
-      const docManager = (registry as any).getPlugin?.('document-manager')?.provides?.();
-      if (!exportCap || !docManager) return;
-      const docs: any[] = docManager.getOpenDocuments?.() ?? [];
-      const docId = docs.find((d: any) => d.status === 'loaded')?.id;
-      if (!docId) return;
-      const baseName = (title || 'document').replace(/\.pdf$/i, '');
-      const defaultName = `${baseName}_exported.pdf`;
-      setSaveDialog({ open: true, fileName: defaultName, buffer: null, preparing: true });
-      exportCap.forDocument(docId).saveAsCopy().wait(
-        (buffer: ArrayBuffer) => setSaveDialog(prev => ({ ...prev, buffer, preparing: false })),
-        () => setSaveDialog(prev => ({ ...prev, preparing: false })),
-      );
+      openSaveDialog();
     };
     window.addEventListener('keydown', onCtrlS);
     return () => window.removeEventListener('keydown', onCtrlS);
-  }, [open, title]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
@@ -346,7 +334,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     if (src) window.open(src, '_blank', 'noopener,noreferrer');
   };
 
-  const handleExport = () => {
+  const openSaveDialog = () => {
     const registry = registryRef.current;
     if (!registry) return;
     const exportCap = (registry as any).getPlugin?.('export')?.provides?.();
@@ -355,19 +343,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     const docs: any[] = docManager.getOpenDocuments?.() ?? [];
     const docId = docs.find((d: any) => d.status === 'loaded')?.id;
     if (!docId) return;
+    const baseName = (title || 'document').replace(/\.pdf$/i, '');
+    const defaultName = `${baseName}_exported.pdf`;
+    setSaveDialog({ open: true, fileName: defaultName, buffer: null, preparing: true });
     exportCap.forDocument(docId).saveAsCopy().wait(
-      (buffer: ArrayBuffer) => {
-        const baseName = (title || 'document').replace(/\.pdf$/i, '');
-        const fileName = `${baseName}_exported.pdf`;
-        const blob = new Blob([buffer], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      () => {},
+      (buffer: ArrayBuffer) => setSaveDialog(prev => ({ ...prev, buffer, preparing: false })),
+      () => setSaveDialog(prev => ({ ...prev, preparing: false })),
     );
   };
 
@@ -532,7 +513,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   size="icon"
                   variant="ghost"
                   className="h-9 w-9"
-                  onClick={handleExport}
+                  onClick={openSaveDialog}
                   disabled={!viewerReady}
                   aria-label={t('components.pdfViewer.download')}
                 >
@@ -566,15 +547,20 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             </TooltipContent>
           </Tooltip>
         </div>
-        {/* Save dialog — shown on Ctrl+S */}
+        {/* Save dialog — shown on Ctrl+S or download button */}
         {saveDialog.open && (
           <div
             className="absolute inset-0 flex items-center justify-center"
-            style={{ zIndex: 20, backgroundColor: 'rgba(0,0,0,0.5)' }}
+            style={{ zIndex: 20, backgroundColor: 'rgba(0,0,0,0.6)' }}
             onClick={(e) => { if (e.target === e.currentTarget) setSaveDialog(prev => ({ ...prev, open: false })); }}
           >
-            <div className="bg-background rounded-xl p-6 shadow-2xl w-full max-w-sm mx-4">
-              <h2 className="text-base font-semibold mb-4">{t('components.pdfViewer.saveDialog.title')}</h2>
+            <div className="bg-card border border-border rounded-xl p-6 shadow-2xl w-full max-w-sm mx-4">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-base font-semibold">{t('components.pdfViewer.saveDialog.title')}</h2>
+                <Button size="icon" variant="ghost" className="h-7 w-7 -mr-1" onClick={() => setSaveDialog(prev => ({ ...prev, open: false }))}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="mb-5">
                 <label className="text-sm text-muted-foreground mb-1.5 block">{t('components.pdfViewer.saveDialog.filename')}</label>
                 <Input
@@ -586,7 +572,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 />
               </div>
               <div className="flex gap-2 justify-end flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => setSaveDialog(prev => ({ ...prev, open: false }))}>
+                <Button variant="ghost" size="sm" onClick={() => setSaveDialog(prev => ({ ...prev, open: false }))}>
                   {t('components.pdfViewer.saveDialog.cancel')}
                 </Button>
                 {'showSaveFilePicker' in window && (
@@ -594,7 +580,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                     {t('components.pdfViewer.saveDialog.saveToFolder')}
                   </Button>
                 )}
-                <Button size="sm" onClick={handleDialogDownload} disabled={!saveDialog.buffer || saveDialog.preparing}>
+                <Button
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+                  onClick={handleDialogDownload}
+                  disabled={!saveDialog.buffer || saveDialog.preparing}
+                >
                   {saveDialog.preparing ? t('components.pdfViewer.saveDialog.preparing') : t('components.pdfViewer.saveDialog.download')}
                 </Button>
               </div>
