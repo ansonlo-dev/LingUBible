@@ -112,7 +112,63 @@ interface FormStarRatingProps {
 
 const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t, required = false }) => {
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
-  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const hasDraggedRef = useRef(false);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const pendingRatingRef = useRef<number | null>(null);
+
+  const getRatingFromTouchX = (clientX: number): number => {
+    if (!containerRef.current) return 1;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width - 0.1));
+    const starWidth = rect.width / 5;
+    const starIndex = Math.floor(x / starWidth);
+    const posInStar = (x - starIndex * starWidth) / starWidth;
+    return posInStar < 0.4 ? starIndex + 0.5 : starIndex + 1;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isNotApplicable) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    pendingRatingRef.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingRef.current || isNotApplicable) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartXRef.current);
+    const dy = Math.abs(touch.clientY - touchStartYRef.current);
+    if (dx < 5 && dy < 5) return;
+    // If vertical scroll intent detected before any horizontal drag, abort
+    if (!hasDraggedRef.current && dy > dx) {
+      isDraggingRef.current = false;
+      setHoveredRating(null);
+      return;
+    }
+    hasDraggedRef.current = true;
+    const newRating = getRatingFromTouchX(touch.clientX);
+    pendingRatingRef.current = newRating;
+    setHoveredRating(newRating);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    if (hasDraggedRef.current && pendingRatingRef.current !== null) {
+      onRatingChange(pendingRatingRef.current);
+      // Prevent the synthesized click so onClick handlers don't fire again
+      e.preventDefault();
+    }
+    setHoveredRating(null);
+    hasDraggedRef.current = false;
+    pendingRatingRef.current = null;
+  };
+
   const getDescription = (value: number) => {
     if (value === 0) {
       switch (type) {
@@ -152,11 +208,16 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
 
   const renderStarRow = () => (
     <div
+      ref={containerRef}
       className={cn(
         "flex items-center gap-1 flex-shrink-0",
         isNotApplicable && "opacity-40 pointer-events-none"
       )}
       onMouseLeave={() => setHoveredRating(null)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ touchAction: 'pan-y' }}
     >
       {[1, 2, 3, 4, 5].map((starValue) => {
         const fullFilled = starValue <= displayRating && !isNotApplicable;
