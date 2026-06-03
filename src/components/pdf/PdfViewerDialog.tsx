@@ -98,6 +98,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       return next;
     });
   };
+  // Ref so the mobile menu command always calls the latest toggle without stale closure.
+  const toggleInvertedRef = useRef(toggleInverted);
+  useEffect(() => { toggleInvertedRef.current = toggleInverted; });
 
   const [saveDialog, setSaveDialog] = useState<{
     open: boolean; fileName: string; buffer: ArrayBuffer | null; preparing: boolean;
@@ -458,16 +461,36 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                       },
                     });
                   }
+                  // Register a custom invert-colors command (for mobile menu).
+                  const commandsCap = (registry as any).getPlugin?.('commands')?.provides?.();
+                  if (commandsCap && isMobile) {
+                    commandsCap.registerCommand({
+                      id: 'custom:invert-colors',
+                      label: t('components.pdfViewer.invertColors'),
+                      icon: 'palette',
+                      categories: ['custom'],
+                      active: () => toggleInvertedRef.current !== undefined && localStorage.getItem('pdf-viewer-inverted') === 'true',
+                      action: () => { toggleInvertedRef.current(); },
+                    });
+                  }
                   const documentMenu = schema?.menus?.['document-menu'];
                   if (documentMenu?.items) {
-                    const filteredItems = (documentMenu.items as any[]).filter((item: any) =>
+                    const filtered = (documentMenu.items as any[]).filter((item: any) =>
                       item.id !== 'document:open' && item.id !== 'document:close' &&
                       item.id !== 'divider-10' && item.id !== 'document:protect' &&
                       (isMobile || item.id !== 'document:export'),
                     );
+                    // On mobile, splice the invert-colors item just before export.
+                    const menuItems = [...filtered];
+                    if (isMobile) {
+                      const exportIdx = menuItems.findIndex((item: any) => item.id === 'document:export');
+                      const invertItem = { type: 'command', id: 'custom:invert-colors', commandId: 'custom:invert-colors', categories: ['custom'] };
+                      if (exportIdx >= 0) menuItems.splice(exportIdx, 0, invertItem as any);
+                      else menuItems.push(invertItem as any);
+                    }
                     uiCap.mergeSchema?.({
                       menus: {
-                        'document-menu': { ...documentMenu, items: filteredItems } as any,
+                        'document-menu': { ...documentMenu, items: menuItems } as any,
                       },
                     });
                   }
@@ -496,23 +519,6 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className={cn('h-9 w-9', inverted && 'border-2 border-blue-400 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 hover:text-blue-300')}
-                  onClick={toggleInverted}
-                  aria-label={t('components.pdfViewer.invertColors')}
-                  aria-pressed={inverted}
-                >
-                  <Contrast className="h-[18px] w-[18px]" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
-                {t('components.pdfViewer.invertColors')}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
                   className="h-9 w-9"
                   onClick={openSaveDialog}
                   disabled={!viewerReady}
@@ -523,6 +529,23 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
                 {t('components.pdfViewer.download')}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className={cn('h-9 w-9', inverted && 'border-2 border-blue-400 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 hover:text-blue-300')}
+                  onClick={toggleInverted}
+                  aria-label={t('components.pdfViewer.invertColors')}
+                  aria-pressed={inverted}
+                >
+                  <Contrast className="h-[18px] w-[18px]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="border-0" style={{ backgroundColor: 'rgb(var(--foreground))', color: 'rgb(var(--background))', zIndex: 2147483001 }}>
+                {t('components.pdfViewer.invertColors')}
               </TooltipContent>
             </Tooltip>
           </div>
