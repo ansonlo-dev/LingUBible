@@ -692,7 +692,7 @@ export const CourseReviewsList = ({
     );
   };
 
-  const renderInstructorDetails = (instructorDetails: InstructorDetail[], reviewId: string) => {
+  const renderInstructorDetails = (instructorDetails: InstructorDetail[], reviewId: string, courseCode: string, termCode: string) => {
     return (
       <div className="space-y-4">
         {instructorDetails.map((instructor, index) => (
@@ -845,8 +845,8 @@ export const CourseReviewsList = ({
                   {/* 教學語言徽章 */}
                   {(() => {
                     const teachingLanguage = getTeachingLanguageForInstructor(
-                      review.course_code,
-                      term.term_code,
+                      courseCode,
+                      termCode,
                       instructor.instructor_name,
                       instructor.session_type
                     );
@@ -953,8 +953,8 @@ export const CourseReviewsList = ({
                 {/* 教學語言徽章 */}
                 {(() => {
                   const teachingLanguage = getTeachingLanguageForInstructor(
-                    review.course_code,
-                    term.term_code,
+                    courseCode,
+                    termCode,
                     instructor.instructor_name,
                     instructor.session_type
                   );
@@ -1641,7 +1641,7 @@ export const CourseReviewsList = ({
                 {isExpanded && instructorDetails.length > 0 && (
                   <>
                     <Separator />
-                    {renderInstructorDetails(instructorDetails, review.$id)}
+                    {renderInstructorDetails(instructorDetails, review.$id, review.course_code, term.term_code)}
                   </>
                 )}
 
@@ -2019,7 +2019,7 @@ export const CourseReviewsList = ({
                 {isExpanded && instructorDetails.length > 0 && (
                   <>
                     <Separator />
-                    {renderInstructorDetails(instructorDetails, review.$id)}
+                    {renderInstructorDetails(instructorDetails, review.$id, review.course_code, term.term_code)}
                   </>
                 )}
 
