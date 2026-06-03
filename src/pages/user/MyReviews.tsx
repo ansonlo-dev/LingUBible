@@ -159,29 +159,27 @@ const MyReviews = () => {
     currentPage: 1
   });
 
-  // Teaching languages hook - collect all instructor details for teaching languages
-  const allInstructorDetails = useMemo(() => {
-    const details: InstructorDetail[] = [];
+  // Collect full params (course+term+instructor+sessionType) for the teaching-language hook
+  const allInstructorDetailParams = useMemo(() => {
+    const params: Array<{ courseCode: string; termCode: string; instructorName: string; sessionType: string }> = [];
     reviews.forEach(reviewInfo => {
-      details.push(...reviewInfo.instructorDetails);
+      reviewInfo.instructorDetails.forEach(d => {
+        params.push({
+          courseCode: reviewInfo.review.course_code,
+          termCode: reviewInfo.term.term_code,
+          instructorName: d.instructor_name,
+          sessionType: d.session_type
+        });
+      });
     });
-    return details;
+    return params;
   }, [reviews]);
 
-  // Extract course code and term code for teaching languages hook
-  const firstReview = reviews[0];
-  const courseCode = firstReview?.review.course_code || '';
-  const termCode = firstReview?.term.term_code || '';
-
-  // Use teaching languages hook
-  const { 
-    teachingLanguages, 
-    loading: teachingLanguagesLoading, 
-    getTeachingLanguageForInstructor 
+  const {
+    loading: teachingLanguagesLoading,
+    getTeachingLanguageForInstructor
   } = useInstructorDetailTeachingLanguages({
-    instructorDetails: allInstructorDetails,
-    courseCode,
-    termCode
+    params: allInstructorDetailParams
   });
 
   // Helper function for mobile two-tap functionality
@@ -413,6 +411,8 @@ const MyReviews = () => {
     reviews.forEach(reviewInfo => {
       reviewInfo.instructorDetails.forEach(instructorDetail => {
         const teachingLanguage = getTeachingLanguageForInstructor(
+          reviewInfo.review.course_code,
+          reviewInfo.term.term_code,
           instructorDetail.instructor_name,
           instructorDetail.session_type
         );
@@ -552,6 +552,8 @@ const MyReviews = () => {
       filteredReviews = filteredReviews.filter(reviewInfo => 
         reviewInfo.instructorDetails.some(detail => {
           const teachingLanguage = getTeachingLanguageForInstructor(
+            reviewInfo.review.course_code,
+            reviewInfo.term.term_code,
             detail.instructor_name,
             detail.session_type
           );
@@ -1192,6 +1194,8 @@ const MyReviews = () => {
                                     {/* 教學語言徽章 */}
                                     {(() => {
                                       const teachingLanguage = getTeachingLanguageForInstructor(
+                                        reviewInfo.review.course_code,
+                                        reviewInfo.term.term_code,
                                         instructorDetail.instructor_name,
                                         instructorDetail.session_type
                                       );
@@ -1215,6 +1219,8 @@ const MyReviews = () => {
                                                 handleMobileTwoTap(`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}-${reviewInfo.review.$id}`, () => {
                                                   // 設置教學語言篩選
                                                   const teachingLanguage = getTeachingLanguageForInstructor(
+                                                    reviewInfo.review.course_code,
+                                                    reviewInfo.term.term_code,
                                                     instructorDetail.instructor_name,
                                                     instructorDetail.session_type
                                                   );
@@ -1270,6 +1276,8 @@ const MyReviews = () => {
                                   {/* 教學語言徽章 */}
                                   {(() => {
                                     const teachingLanguage = getTeachingLanguageForInstructor(
+                                      reviewInfo.review.course_code,
+                                      reviewInfo.term.term_code,
                                       instructorDetail.instructor_name,
                                       instructorDetail.session_type
                                     );
@@ -1293,6 +1301,8 @@ const MyReviews = () => {
                                               handleMobileTwoTap(`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}-${reviewInfo.review.$id}`, () => {
                                                 // 設置教學語言篩選
                                                 const teachingLanguage = getTeachingLanguageForInstructor(
+                                                  reviewInfo.review.course_code,
+                                                  reviewInfo.term.term_code,
                                                   instructorDetail.instructor_name,
                                                   instructorDetail.session_type
                                                 );

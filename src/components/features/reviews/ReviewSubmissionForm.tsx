@@ -574,70 +574,42 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }, {} as Record<string, TeachingRecord[]>);
   }, [filteredInstructors]);
 
-  // Teaching languages hook for preview (selected instructors)
-  const allInstructorDetails = useMemo(() => {
+  // Build params for preview teaching languages hook (selected instructors at current course+term)
+  const allInstructorParams = useMemo(() => {
+    if (!selectedCourse || !selectedTerm) return [];
     return instructorEvaluations.map(instructorEval => ({
-      instructor_name: instructorEval.instructorName,
-      session_type: instructorEval.sessionType,
-      teaching: instructorEval.teachingScore,
-      grading: instructorEval.gradingScore,
-      comments: instructorEval.comments,
-      has_midterm: instructorEval.hasMidterm,
-      has_final: instructorEval.hasFinal,
-      has_quiz: instructorEval.hasQuiz,
-      has_group_project: instructorEval.hasGroupProject,
-      has_individual_assignment: instructorEval.hasIndividualAssignment,
-      has_presentation: instructorEval.hasPresentation,
-      has_reading: instructorEval.hasReading,
-      has_attendance_requirement: instructorEval.hasAttendanceRequirement,
-      has_service_learning: instructorEval.hasServiceLearning,
-      service_learning_type: instructorEval.serviceLearningType,
-      service_learning_description: instructorEval.serviceLearningDescription
+      courseCode: selectedCourse,
+      termCode: selectedTerm,
+      instructorName: instructorEval.instructorName,
+      sessionType: instructorEval.sessionType
     }));
-  }, [instructorEvaluations]);
+  }, [instructorEvaluations, selectedCourse, selectedTerm]);
 
-  // Teaching languages hook for all available instructors (for selection UI)
-  const allAvailableInstructorDetails = useMemo(() => {
+  // Build params for available instructors teaching languages hook
+  const allAvailableInstructorParams = useMemo(() => {
+    if (!selectedCourse || !selectedTerm) return [];
     return availableInstructors.map(instructor => ({
-      instructor_name: instructor.instructor_name,
-      session_type: instructor.session_type,
-      teaching: null,
-      grading: null,
-      comments: '',
-      has_midterm: false,
-      has_final: false,
-      has_quiz: false,
-      has_group_project: false,
-      has_individual_assignment: false,
-      has_presentation: false,
-      has_reading: false,
-      has_attendance_requirement: false,
-      has_service_learning: false,
-      service_learning_type: 'compulsory' as const,
-      service_learning_description: ''
+      courseCode: selectedCourse,
+      termCode: selectedTerm,
+      instructorName: instructor.instructor_name,
+      sessionType: instructor.session_type
     }));
-  }, [availableInstructors]);
+  }, [availableInstructors, selectedCourse, selectedTerm]);
 
   // Use teaching languages hook for preview (selected instructors)
-  const { 
-    teachingLanguages: previewTeachingLanguages, 
-    loading: teachingLanguagesLoading, 
-    getTeachingLanguageForInstructor: getPreviewTeachingLanguageForInstructor 
+  const {
+    loading: teachingLanguagesLoading,
+    getTeachingLanguageForInstructor: getPreviewTeachingLanguageForInstructor
   } = useInstructorDetailTeachingLanguages({
-    instructorDetails: allInstructorDetails,
-    courseCode: selectedCourse,
-    termCode: selectedTerm
+    params: allInstructorParams
   });
 
   // Use teaching languages hook for all available instructors (for selection UI)
-  const { 
-    teachingLanguages: availableTeachingLanguages, 
-    loading: availableTeachingLanguagesLoading, 
-    getTeachingLanguageForInstructor: getAvailableTeachingLanguageForInstructor 
+  const {
+    loading: availableTeachingLanguagesLoading,
+    getTeachingLanguageForInstructor: getAvailableTeachingLanguageForInstructor
   } = useInstructorDetailTeachingLanguages({
-    instructorDetails: allAvailableInstructorDetails,
-    courseCode: selectedCourse,
-    termCode: selectedTerm
+    params: allAvailableInstructorParams
   });
 
   // Performance optimization: Cached teaching records getter
@@ -2797,6 +2769,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 {/* Teaching Language Badge */}
                                 {(() => {
                                   const teachingLanguage = getAvailableTeachingLanguageForInstructor(
+                                    selectedCourse,
+                                    selectedTerm,
                                     evaluation.instructorName,
                                     evaluation.sessionType
                                   );
@@ -2995,6 +2969,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               {/* Teaching Language Badge */}
                               {(() => {
                                 const teachingLanguage = getAvailableTeachingLanguageForInstructor(
+                                  selectedCourse,
+                                  selectedTerm,
                                   evaluation.instructorName,
                                   evaluation.sessionType
                                 );
@@ -3596,6 +3572,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               {/* 教學語言徽章 */}
                               {(() => {
                                 const teachingLanguage = getPreviewTeachingLanguageForInstructor(
+                                  selectedCourse,
+                                  selectedTerm,
                                   instructor.instructorName,
                                   instructor.sessionType
                                 );
@@ -3631,6 +3609,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             {/* 教學語言徽章 */}
                             {(() => {
                               const teachingLanguage = getPreviewTeachingLanguageForInstructor(
+                                selectedCourse,
+                                selectedTerm,
                                 instructor.instructorName,
                                 instructor.sessionType
                               );

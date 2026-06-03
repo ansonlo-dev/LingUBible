@@ -193,29 +193,29 @@ export const CourseReviewsList = ({
     }
   };
   
-  // Extract course code and term code for teaching languages hook
-  const firstReview = allReviews?.[0];
-  const courseCode = firstReview?.review.course_code || '';
-  const termCode = firstReview?.term.term_code || '';
-  
-  // Collect all instructor details for teaching languages hook
-  const allInstructorDetails = useMemo(() => {
+  // Collect full params (course+term+instructor+sessionType) for each review's instructor details
+  const allInstructorDetailParams = useMemo(() => {
     if (!allReviews) return [];
-    const details: InstructorDetail[] = [];
+    const params: Array<{ courseCode: string; termCode: string; instructorName: string; sessionType: string }> = [];
     allReviews.forEach(reviewInfo => {
-      details.push(...reviewInfo.instructorDetails);
+      reviewInfo.instructorDetails.forEach(d => {
+        params.push({
+          courseCode: reviewInfo.review.course_code,
+          termCode: reviewInfo.term.term_code,
+          instructorName: d.instructor_name,
+          sessionType: d.session_type
+        });
+      });
     });
-    return details;
+    return params;
   }, [allReviews]);
 
   // Use teaching languages hook
-  const { 
-    loading: teachingLanguagesLoading, 
-    getTeachingLanguageForInstructor 
+  const {
+    loading: teachingLanguagesLoading,
+    getTeachingLanguageForInstructor
   } = useInstructorDetailTeachingLanguages({
-    instructorDetails: allInstructorDetails,
-    courseCode,
-    termCode
+    params: allInstructorDetailParams
   });
   
 
@@ -361,7 +361,9 @@ export const CourseReviewsList = ({
       const languages = new Set<string>();
       reviewInfo.instructorDetails.forEach(instructorDetail => {
         const teachingLanguage = getTeachingLanguageForInstructor(
-          instructorDetail.instructor_name, 
+          reviewInfo.review.course_code,
+          reviewInfo.term.term_code,
+          instructorDetail.instructor_name,
           instructorDetail.session_type
         );
         if (teachingLanguage) {
@@ -471,6 +473,8 @@ export const CourseReviewsList = ({
       filteredReviews = filteredReviews.filter(reviewInfo => {
         return reviewInfo.instructorDetails.some(instructorDetail => {
           const teachingLanguage = getTeachingLanguageForInstructor(
+            reviewInfo.review.course_code,
+            reviewInfo.term.term_code,
             instructorDetail.instructor_name,
             instructorDetail.session_type
           );
@@ -841,6 +845,8 @@ export const CourseReviewsList = ({
                   {/* 教學語言徽章 */}
                   {(() => {
                     const teachingLanguage = getTeachingLanguageForInstructor(
+                      review.course_code,
+                      term.term_code,
                       instructor.instructor_name,
                       instructor.session_type
                     );
@@ -947,6 +953,8 @@ export const CourseReviewsList = ({
                 {/* 教學語言徽章 */}
                 {(() => {
                   const teachingLanguage = getTeachingLanguageForInstructor(
+                    review.course_code,
+                    term.term_code,
                     instructor.instructor_name,
                     instructor.session_type
                   );

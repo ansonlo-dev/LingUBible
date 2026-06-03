@@ -1,42 +1,34 @@
 import { useState, useEffect } from 'react';
-import { CourseService, InstructorDetail } from '@/services/api/courseService';
+import { CourseService } from '@/services/api/courseService';
 
-interface UseInstructorDetailTeachingLanguagesProps {
-  instructorDetails: InstructorDetail[];
+interface InstructorDetailParam {
   courseCode: string;
   termCode: string;
+  instructorName: string;
+  sessionType: string;
+}
+
+interface UseInstructorDetailTeachingLanguagesProps {
+  params: InstructorDetailParam[];
 }
 
 export const useInstructorDetailTeachingLanguages = ({
-  instructorDetails,
-  courseCode,
-  termCode
+  params
 }: UseInstructorDetailTeachingLanguagesProps) => {
   const [teachingLanguages, setTeachingLanguages] = useState<Map<string, string | null>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTeachingLanguages = async () => {
-      if (!instructorDetails || instructorDetails.length === 0 || !courseCode || !termCode) {
+      if (!params || params.length === 0) {
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        
-        // Prepare instructor details for batch query
-        const instructorDetailParams = instructorDetails.map(detail => ({
-          courseCode,
-          termCode,
-          instructorName: detail.instructor_name,
-          sessionType: detail.session_type
-        }));
 
-        // Batch load teaching languages
-        const teachingLanguagesMap = await CourseService.getBatchInstructorDetailTeachingLanguages(
-          instructorDetailParams
-        );
+        const teachingLanguagesMap = await CourseService.getBatchInstructorDetailTeachingLanguages(params);
 
         setTeachingLanguages(teachingLanguagesMap);
       } catch (error) {
@@ -48,10 +40,14 @@ export const useInstructorDetailTeachingLanguages = ({
     };
 
     loadTeachingLanguages();
-  }, [instructorDetails, courseCode, termCode]);
+  }, [params]);
 
-  // Helper function to get teaching language for a specific instructor detail
-  const getTeachingLanguageForInstructor = (instructorName: string, sessionType: string): string | null => {
+  const getTeachingLanguageForInstructor = (
+    courseCode: string,
+    termCode: string,
+    instructorName: string,
+    sessionType: string
+  ): string | null => {
     const key = `${courseCode}|${termCode}|${instructorName}|${sessionType}`;
     return teachingLanguages.get(key) || null;
   };
@@ -61,4 +57,4 @@ export const useInstructorDetailTeachingLanguages = ({
     loading,
     getTeachingLanguageForInstructor
   };
-}; 
+};

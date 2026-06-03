@@ -865,14 +865,21 @@ const Lecturers = () => {
     navigate(`/instructors?${searchParams.toString()}`);
   };
 
-  // Collect all instructor details for teaching languages hook
-  const allInstructorDetails = useMemo(() => {
+  // Collect full params (course+term+instructor+sessionType) for the reviews teaching-language hook
+  const allReviewInstructorParams = useMemo(() => {
     if (!reviews) return [];
-    const details: InstructorDetail[] = [];
+    const params: Array<{ courseCode: string; termCode: string; instructorName: string; sessionType: string }> = [];
     reviews.forEach(reviewInfo => {
-      details.push(...reviewInfo.instructorDetails);
+      reviewInfo.instructorDetails.forEach(d => {
+        params.push({
+          courseCode: reviewInfo.course.course_code,
+          termCode: reviewInfo.term.term_code,
+          instructorName: d.instructor_name,
+          sessionType: d.session_type
+        });
+      });
     });
-    return details;
+    return params;
   }, [reviews]);
 
   // Teaching languages for the teaching-records section come straight from
@@ -898,19 +905,11 @@ const Lecturers = () => {
     return teachingRecordsLanguages.get(key) || null;
   };
   
-  // Use teaching languages hook for reviews section (keep existing logic)
-  const firstReview = reviews?.[0];
-  const courseCode = firstReview?.course?.course_code || '';
-  const termCode = firstReview?.term?.term_code || '';
-  
-  const { 
-    teachingLanguages, 
-    loading: teachingLanguagesLoading, 
-    getTeachingLanguageForInstructor 
+  const {
+    loading: teachingLanguagesLoading,
+    getTeachingLanguageForInstructor
   } = useInstructorDetailTeachingLanguages({
-    instructorDetails: allInstructorDetails,
-    courseCode,
-    termCode
+    params: allReviewInstructorParams
   });
 
   // Generate filter options for grade distribution chart (courses with session types)
@@ -1342,6 +1341,8 @@ const Lecturers = () => {
 
         // 教學語言計數
         const teachingLanguage = getTeachingLanguageForInstructor(
+          reviewInfo.course.course_code,
+          reviewInfo.term.term_code,
           currentInstructorDetail.instructor_name,
           currentInstructorDetail.session_type
         );
@@ -1439,6 +1440,8 @@ const Lecturers = () => {
         if (!currentInstructorDetail) return false;
         
         const teachingLanguage = getTeachingLanguageForInstructor(
+          reviewInfo.course.course_code,
+          reviewInfo.term.term_code,
           currentInstructorDetail.instructor_name,
           currentInstructorDetail.session_type
         );
@@ -4114,6 +4117,8 @@ const Lecturers = () => {
                                     {/* 教學語言徽章 */}
                                     {(() => {
                                       const teachingLanguage = getTeachingLanguageForInstructor(
+                                        reviewInfo.course.course_code,
+                                        reviewInfo.term.term_code,
                                         currentInstructorDetail.instructor_name,
                                         currentInstructorDetail.session_type
                                       );
@@ -4277,6 +4282,8 @@ const Lecturers = () => {
                                   {/* 教學語言徽章 */}
                                   {(() => {
                                     const teachingLanguage = getTeachingLanguageForInstructor(
+                                      reviewInfo.course.course_code,
+                                      reviewInfo.term.term_code,
                                       currentInstructorDetail.instructor_name,
                                       currentInstructorDetail.session_type
                                     );
@@ -4614,6 +4621,8 @@ const Lecturers = () => {
                                           {/* 教學語言徽章 */}
                                           {(() => {
                                             const teachingLanguage = getTeachingLanguageForInstructor(
+                                              reviewInfo.course.course_code,
+                                              reviewInfo.term.term_code,
                                               instructor.instructor_name,
                                               instructor.session_type
                                             );
@@ -4649,6 +4658,8 @@ const Lecturers = () => {
                                         {/* 教學語言徽章 */}
                                         {(() => {
                                           const teachingLanguage = getTeachingLanguageForInstructor(
+                                            reviewInfo.course.course_code,
+                                            reviewInfo.term.term_code,
                                             instructor.instructor_name,
                                             instructor.session_type
                                           );
