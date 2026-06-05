@@ -496,9 +496,16 @@ export default async ({ req, res, log, error }) => {
     // 由資料庫事件觸發時，req.body 是該則評論文件本身，從中取 course_code
     const courseCode = body.courseCode || body.course_code;
 
-    if (body.all === true) {
+    // Appwrite 觸發來源：'schedule'（排程/cron）、'event'、'http'
+    const trigger = req.headers?.['x-appwrite-trigger'];
+
+    // 排程（cron）觸發時不帶任何 body，預設執行全量重算（這正是每日排程的目的）
+    const isScheduledFullRun =
+      trigger === 'schedule' && !courseCode && body.all !== false && body.instructors !== true;
+
+    if (body.all === true || isScheduledFullRun) {
       const result = await recomputeAll(databases, log, diag);
-      return res.json({ success: true, mode: 'all', ...result });
+      return res.json({ success: true, mode: 'all', triggeredBy: trigger || 'http', ...result });
     }
 
     if (body.instructors === true) {
