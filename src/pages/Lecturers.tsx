@@ -24,6 +24,7 @@ import {
   Building,
   Info,
   UserCheck,
+  UserX,
   PenTool
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -1829,11 +1830,11 @@ const Lecturers = () => {
                 </ResponsiveTooltip>
                 {/* Current Term Teaching Badge */}
                 {isTeachingInCurrentTerm !== null && (
-                  <Badge 
+                  <Badge
                     variant={isTeachingInCurrentTerm ? "default" : "outline"}
                     className={`text-xs cursor-pointer transition-colors ${
-                      isTeachingInCurrentTerm 
-                        ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' 
+                      isTeachingInCurrentTerm
+                        ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
                         : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
                     }`}
                     onClick={handleTeachingBadgeClick}
@@ -1846,6 +1847,28 @@ const Lecturers = () => {
                       )}
                       <span>
                         {isTeachingInCurrentTerm ? t('teaching.yes') : t('teaching.no')} ({currentTermName})
+                      </span>
+                    </div>
+                  </Badge>
+                )}
+                {/* Current Staff Badge */}
+                {instructor.is_current_staff !== undefined && instructor.is_current_staff !== null && (
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${
+                      instructor.is_current_staff
+                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                        : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {instructor.is_current_staff ? (
+                        <UserCheck className="h-3 w-3" />
+                      ) : (
+                        <UserX className="h-3 w-3" />
+                      )}
+                      <span>
+                        {instructor.is_current_staff ? t('staff.current') : t('staff.former')}
                       </span>
                     </div>
                   </Badge>

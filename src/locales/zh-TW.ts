@@ -629,6 +629,8 @@ export default {
   'teaching.tooltip.no': '該講師本學期未授課（{term}）',
   'teaching.tooltip.clickable': '該講師本學期正在授課（{term}）。點擊查看本學期所有授課的講師。',
   'teaching.current': '本學期',
+  'staff.current': '現任教職員',
+  'staff.former': '前教職員',
   'sidebar.myReviews': '我的評論',
   'sidebar.settings': '設置',
   'sidebar.preferences': '偏好設定',

@@ -643,6 +643,8 @@ export default {
   'teaching.tooltip.no': '该讲师本学期未授课（{term}）',
   'teaching.tooltip.clickable': '该讲师本学期正在授课（{term}）。点击查看本学期所有授课的讲师。',
   'teaching.current': '本学期',
+  'staff.current': '现任教职员',
+  'staff.former': '前教职员',
   // 进阶筛选
   'filters.advanced': '进阶筛选',
   'filters.professional': '专业筛选',
