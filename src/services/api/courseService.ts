@@ -1563,7 +1563,7 @@ export class CourseService {
         [
           Query.equal('name', name),
           Query.limit(1),
-          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt', 'is_current_staff'])
         ]
       );
 
@@ -1596,7 +1596,7 @@ export class CourseService {
             [
               Query.equal('name', chunk),
               Query.limit(chunk.length),
-              Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt'])
+              Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt', 'is_current_staff'])
             ]
           )
         )
