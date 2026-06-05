@@ -5566,6 +5566,22 @@ export class CourseService {
           // 解析講師詳情
           const instructorDetails = this.tryParseInstructorDetails(review.instructor_details) ?? [];
 
+          // 跳過沒有任何有意義內容的評論（所有評分為 null + 無評論文字 + 講師也無評分或評語）
+          const hasAnyCourseRating =
+            (review.course_workload !== null && review.course_workload > 0) ||
+            (review.course_difficulties !== null && review.course_difficulties > 0) ||
+            (review.course_usefulness !== null && review.course_usefulness > 0);
+          const hasCourseComments = !!(review.course_comments && review.course_comments.trim().length > 0);
+          const hasAnyInstructorContent = instructorDetails.some(d =>
+            ((d.teaching as any) !== null && d.teaching > 0) ||
+            (d.grading !== null && d.grading > 0) ||
+            !!(d.comments && d.comments.trim().length > 0)
+          );
+          if (!hasAnyCourseRating && !hasCourseComments && !hasAnyInstructorContent) {
+            console.warn(`CourseService: Skipping empty review ${review.$id} for course ${courseCode}`);
+            return null;
+          }
+
           // 獲取投票信息
           const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
           const userVote = userId ? userVotesMap.get(review.$id) : undefined;
