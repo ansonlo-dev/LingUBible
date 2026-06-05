@@ -3503,3 +3503,48 @@ button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2[data-state="act
   box-shadow: none !important;
 }
 }
+
+/* ============================================================
+ * iOS PWA Standalone Mode: Fix sticky header elastic-scroll bug
+ *
+ * Problem: iOS Safari's rubber-band overscroll in standalone PWA
+ * mode shifts the entire viewport, carrying position:sticky
+ * elements with it and leaving empty space above the header.
+ * Android does not have this behaviour.
+ *
+ * Fix 1 (iOS 16+): overscroll-behavior:none prevents the bounce.
+ * Fix 2 (all iOS):  @supports(-webkit-touch-callout) targets iOS
+ *   Safari only (not macOS Safari). Switch header to
+ *   position:fixed which is always viewport-relative and immune
+ *   to the elastic scroll effect.
+ * ============================================================ */
+@media (display-mode: standalone) {
+  /* Prevent rubber-band overscroll bounce (iOS 16+, Android) */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
+  /* iOS-only fallback: position:fixed survives elastic scroll on all iOS versions.
+   * -webkit-touch-callout is supported only on iOS/iPadOS Safari, not macOS Safari,
+   * so this block does not affect desktop. */
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 1023px) {
+      /* Anchor header to the real viewport — elastic scroll cannot displace it */
+      .header-sticky {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+      }
+
+      /* Push main content below the now-fixed header.
+       * Mobile header ≈ 50 px (h-9 button + 5 px top/bottom padding);
+       * 3.25 rem gives a small safety margin. */
+      .main-container {
+        padding-top: 3.25rem !important;
+      }
+    }
+  }
+}
