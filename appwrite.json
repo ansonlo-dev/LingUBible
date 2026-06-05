@@ -969,6 +969,13 @@
                     "required": false,
                     "array": false,
                     "default": false
+                },
+                {
+                    "key": "is_current_staff",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": true
                 }
             ],
             "indexes": []

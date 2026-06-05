@@ -85,6 +85,7 @@ export interface Instructor {
   teaching_languages?: string; // JSON string
   current_term_teaching_language?: string | null;
   is_teaching_in_current_term?: boolean;
+  is_current_staff?: boolean;
 }
 
 export interface InstructorWithStats extends Instructor {
