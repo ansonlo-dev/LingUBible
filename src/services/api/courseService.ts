@@ -253,6 +253,30 @@ export class CourseService {
   private static inFlightRequests = new Map<string, Promise<any>>();
 
   /**
+   * 嘗試解析 instructor_details JSON，失敗時自動修復常見問題（字串值中的未逸出控制字元）
+   */
+  private static tryParseInstructorDetails(jsonStr: string): InstructorDetail[] | null {
+    try {
+      return JSON.parse(jsonStr);
+    } catch {
+      try {
+        // 修復：將 JSON 字串值內的原始控制字元（如換行符）轉為合法的 JSON 跳脫序列
+        const repaired = jsonStr.replace(/"(?:[^"\\]|\\.)*"/g, (match) =>
+          match.replace(/[ -]/g, (c) => {
+            const escapes: Record<string, string> = {
+              '\b': '\\b', '\f': '\\f', '\n': '\\n', '\r': '\\r', '\t': '\\t',
+            };
+            return escapes[c] ?? `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`;
+          })
+        );
+        return JSON.parse(repaired);
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  /**
    * 緩存輔助方法
    */
   private static getCached<T>(key: string): T | null {
@@ -1923,12 +1947,7 @@ export class CourseService {
           }
 
           // 解析講師詳情
-          let instructorDetails: InstructorDetail[] = [];
-          try {
-            instructorDetails = JSON.parse(review.instructor_details);
-          } catch (error) {
-            console.error('Error parsing instructor_details:', error);
-          }
+          const instructorDetails = this.tryParseInstructorDetails(review.instructor_details) ?? [];
 
           return {
             review,
@@ -1976,13 +1995,8 @@ export class CourseService {
       
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
-        try {
-          const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-          return instructorDetails.some(detail => detail.instructor_name === instructorName);
-        } catch (error) {
-          console.error('Error parsing instructor_details:', error);
-          return false;
-        }
+        const instructorDetails = this.tryParseInstructorDetails(review.instructor_details);
+        return instructorDetails !== null && instructorDetails.some(detail => detail.instructor_name === instructorName);
       });
 
       // 批次撈取此講師相關評論的所有學期 / 課程，取代逐筆 getTermByCode +
@@ -2103,12 +2117,7 @@ export class CourseService {
           }
 
           // 解析講師詳情 - 保留所有講師的資料以便顯示展開按鈕
-          let instructorDetails: InstructorDetail[] = [];
-          try {
-            instructorDetails = JSON.parse(review.instructor_details);
-          } catch (error) {
-            console.error('Error parsing instructor_details:', error);
-          }
+          const instructorDetails = this.tryParseInstructorDetails(review.instructor_details) ?? [];
 
           return {
             review,
@@ -4044,13 +4053,8 @@ export class CourseService {
       
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
-        try {
-          const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-          return instructorDetails.some(detail => detail.instructor_name === instructorName);
-        } catch (error) {
-          console.error('Error parsing instructor_details:', error);
-          return false;
-        }
+        const instructorDetails = this.tryParseInstructorDetails(review.instructor_details);
+        return instructorDetails !== null && instructorDetails.some(detail => detail.instructor_name === instructorName);
       });
 
       // 如果沒有找到評論，直接返回空數組
@@ -4094,14 +4098,10 @@ export class CourseService {
         }
 
         // 解析講師詳情並找到該講師的評價
-        let instructorDetail: InstructorDetail | null = null;
-        try {
-          const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-          instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName) || null;
-        } catch (error) {
-          console.error('Error parsing instructor_details:', error);
-          return null;
-        }
+        const instructorDetails_parsed = this.tryParseInstructorDetails(review.instructor_details);
+        const instructorDetail: InstructorDetail | null = instructorDetails_parsed
+          ? instructorDetails_parsed.find(detail => detail.instructor_name === instructorName) ?? null
+          : null;
 
         if (!instructorDetail) {
           return null;
@@ -5564,12 +5564,7 @@ export class CourseService {
           }
 
           // 解析講師詳情
-          let instructorDetails: InstructorDetail[] = [];
-          try {
-            instructorDetails = JSON.parse(review.instructor_details);
-          } catch (error) {
-            console.error('Error parsing instructor_details:', error);
-          }
+          const instructorDetails = this.tryParseInstructorDetails(review.instructor_details) ?? [];
 
           // 獲取投票信息
           const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
