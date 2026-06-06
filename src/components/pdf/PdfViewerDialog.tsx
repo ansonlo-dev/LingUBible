@@ -87,6 +87,16 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
   );
 
+  // Detect whether we're running inside an installed PWA (standalone display
+  // mode). Used to hide the fullscreen button — it's redundant in a PWA but
+  // still useful for in-browser mobile users.
+  const [isStandalonePWA] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true),
+  );
+
   // Color inversion toggle — persisted across sessions via localStorage.
   const [inverted, setInverted] = useState(
     () => typeof window !== 'undefined' && localStorage.getItem('pdf-viewer-inverted') === 'true',
@@ -527,7 +537,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                     const filtered = (documentMenu.items as any[]).filter((item: any) =>
                       item.id !== 'document:open' && item.id !== 'document:close' &&
                       item.id !== 'divider-10' && item.id !== 'document:protect' &&
-                      (isMobile || item.id !== 'document:export'),
+                      (isMobile || item.id !== 'document:export') &&
+                      // Hide the print button on mobile.
+                      !(isMobile && item.id === 'document:print') &&
+                      // Hide fullscreen when running as an installed PWA on mobile
+                      // (keep it for in-browser mobile users).
+                      !(isMobile && isStandalonePWA && item.id === 'document:fullscreen'),
                     );
                     // On mobile, splice the invert-colors item just before export.
                     const menuItems = [...filtered];
@@ -540,6 +555,19 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                     uiCap.mergeSchema?.({
                       menus: {
                         'document-menu': { ...documentMenu, items: menuItems } as any,
+                      },
+                    });
+                  }
+                  // Fullscreen also lives in the page-settings menu — drop it
+                  // there too when running as an installed PWA on mobile.
+                  const pageSettingsMenu = schema?.menus?.['page-settings-menu'];
+                  if (pageSettingsMenu?.items && isMobile && isStandalonePWA) {
+                    const psItems = (pageSettingsMenu.items as any[]).filter(
+                      (item: any) => item.id !== 'document:fullscreen' && item.id !== 'divider-15',
+                    );
+                    uiCap.mergeSchema?.({
+                      menus: {
+                        'page-settings-menu': { ...pageSettingsMenu, items: psItems } as any,
                       },
                     });
                   }
