@@ -322,7 +322,7 @@ export function MultiSelectDropdown({
           </SelectValue>
         </SelectTrigger>
         <SelectContent 
-          className="bg-white dark:bg-gray-900 border border-border w-[calc(100vw-3rem)] sm:w-auto max-w-none sm:max-w-[450px] overflow-hidden" 
+          className="bg-white dark:bg-gray-900 border border-border w-[calc(100vw-3rem)] sm:w-auto max-w-none sm:max-w-[600px] overflow-hidden"
           position="popper" 
           side="bottom" 
           align="center" 
@@ -394,8 +394,8 @@ export function MultiSelectDropdown({
                           className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                         />
                         <label 
-                          htmlFor={`faculty-${option.value}`} 
-                          className="flex-1 cursor-pointer select-none"
+                          htmlFor={`faculty-${option.value}`}
+                          className="flex-1 min-w-0 cursor-pointer select-none"
                         >
                           <div className="flex items-center justify-between w-full gap-2">
                             <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
@@ -427,8 +427,8 @@ export function MultiSelectDropdown({
                         className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary"
                       />
                       <label 
-                        htmlFor={`option-${option.value}`} 
-                        className="flex-1 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
+                        htmlFor={`option-${option.value}`}
+                        className="flex-1 min-w-0 text-sm cursor-pointer select-none text-gray-700 dark:text-gray-300"
                       >
                         <div className="flex items-center justify-between w-full gap-2">
                           <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
