@@ -672,9 +672,11 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
 };
 
 const PdfViewerLoading: React.FC<{ label: string }> = ({ label }) => (
-  <div className="flex h-full w-full items-center justify-center gap-2 text-muted-foreground">
-    <Loader2 className="h-5 w-5 animate-spin" />
-    <span className="text-sm">{label}</span>
+  <div className="flex h-full w-full items-center justify-center">
+    <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 text-muted-foreground shadow-md ring-1 ring-border/50 backdrop-blur-sm">
+      <Loader2 className="h-5 w-5 animate-spin" />
+      <span className="text-sm">{label}</span>
+    </div>
   </div>
 );
 
