@@ -323,6 +323,70 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     return () => { unsubscribe?.(); };
   }, [ready, blobUrl, error, viewerReady]);
 
+  // Cap the smooth-scroll duration for in-document jumps (link targets,
+  // bookmarks, …). embedpdf scrolls its viewport with the browser-native
+  // `element.scrollTo({ behavior: 'smooth' })`, whose duration scales with the
+  // distance — a jump across a long document can take ~4s. We override the
+  // viewport element's `scrollTo` to run our own rAF animation clamped to ~1s.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error && viewerReady)) return;
+
+    const MAX_DURATION = 1000; // ms — long jumps land in ~1s instead of ~4s
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    let rafId = 0;
+    let patched: { el: HTMLElement; native: typeof HTMLElement.prototype.scrollTo } | null = null;
+
+    const patch = () => {
+      const el = shadowRootRef.current?.querySelector('.bg-bg-app') as HTMLElement | null;
+      if (!el) return false;
+      const native = el.scrollTo.bind(el);
+      patched = { el, native };
+      el.scrollTo = function (optionsOrX?: ScrollToOptions | number, y?: number) {
+        const opts: ScrollToOptions =
+          typeof optionsOrX === 'object' && optionsOrX !== null
+            ? optionsOrX
+            : { left: optionsOrX as number, top: y };
+        // Only intercept smooth scrolls; instant scrolls pass straight through.
+        if (opts.behavior !== 'smooth') { native(opts); return; }
+
+        cancelAnimationFrame(rafId);
+        const startLeft = el.scrollLeft;
+        const startTop = el.scrollTop;
+        const targetLeft = opts.left ?? startLeft;
+        const targetTop = opts.top ?? startTop;
+        const distance = Math.max(Math.abs(targetTop - startTop), Math.abs(targetLeft - startLeft));
+        if (distance < 1) return;
+        // Proportional to distance but capped at MAX_DURATION; short hops stay snappy.
+        const duration = Math.min(MAX_DURATION, Math.max(200, distance * 0.5));
+        const startTime = performance.now();
+        const step = (now: number) => {
+          const p = Math.min(1, (now - startTime) / duration);
+          const e = easeInOutCubic(p);
+          el.scrollLeft = startLeft + (targetLeft - startLeft) * e;
+          el.scrollTop = startTop + (targetTop - startTop) * e;
+          if (p < 1) rafId = requestAnimationFrame(step);
+        };
+        rafId = requestAnimationFrame(step);
+      } as typeof el.scrollTo;
+      return true;
+    };
+
+    // The viewport may not be mounted the instant viewerReady flips; retry a few frames.
+    let attempts = 0;
+    const tryPatch = () => {
+      if (patch() || attempts++ > 20) return;
+      rafId = requestAnimationFrame(tryPatch);
+    };
+    tryPatch();
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (patched) patched.el.scrollTo = patched.native;
+    };
+  }, [ready, blobUrl, error, viewerReady]);
+
   // Inject/remove an inversion filter into the embedpdf shadow root when the
   // inversion toggle changes. Pages are rendered as <img> tiles (blob URLs from
   // PDFium), so the filter targets img elements. The toolbar uses SVG icons and
