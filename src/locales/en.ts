@@ -528,6 +528,8 @@ export default {
   'components.pdfViewer.openInNewTab': 'Open in new tab',
   'components.pdfViewer.download': 'Download',
   'components.pdfViewer.close': 'Close',
+  'components.pdfViewer.audio': 'Audio',
+  'components.pdfViewer.closeAudio': 'Close audio player',
   'components.pdfViewer.invertColors': 'Invert colors',
   'components.pdfViewer.initializingPlugins': 'Initializing…',
   'components.pdfViewer.saveDialog.title': 'Save PDF',
