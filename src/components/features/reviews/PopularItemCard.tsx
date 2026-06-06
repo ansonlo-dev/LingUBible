@@ -378,6 +378,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       'APIAS': 'faculty.researchInstitutes',
       'CCRD': 'faculty.researchInstitutes',
       'IPS': 'faculty.researchInstitutes',
+      'LUIAS': 'faculty.researchInstitutes',
       // Units and Offices
       'OSL': 'faculty.unitsOffices',
       'CITAL': 'faculty.unitsOffices'

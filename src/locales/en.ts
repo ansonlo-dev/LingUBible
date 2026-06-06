@@ -1949,6 +1949,7 @@ export default {
   'department.apias': 'Asia-Pacific Institute of Ageing Studies',
   'department.ccrd': 'Centre for Cultural Research and Development',
   'department.ips': 'Institute of Policy Studies',
+  'department.luias': 'LU Institute for Advanced Study',
   // Units and Offices
   'department.cital': 'Centre for Innovative Teaching and Learning',
   'department.osl': 'Office of Service-Learning',
@@ -1998,6 +1999,7 @@ export default {
   'departmentMobile.apias': 'APIAS',
   'departmentMobile.ccrd': 'CCRD',
   'departmentMobile.ips': 'IPS',
+  'departmentMobile.luias': 'LUIAS',
   // Units and Offices
   'departmentMobile.osl': 'OSL',
   'departmentMobile.tlc': 'CITAL',

@@ -1958,6 +1958,7 @@ export default {
   'department.apias': '亚太老年学研究中心',
   'department.ccrd': '文化研究及发展中心',
   'department.ips': '政策研究院',
+  'department.luias': '岭南高等研究院',
   // 单位及办事处
   'department.cital': '教学创新中心',
   'department.osl': '服务研习处',

@@ -273,7 +273,8 @@ export function AdvancedInstructorFilters({
         departments: [
           'APIAS',
           'CCRD',
-          'IPS'
+          'IPS',
+          'LUIAS'
         ]
       },
       'Units and Offices': {

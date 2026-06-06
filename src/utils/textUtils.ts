@@ -309,6 +309,7 @@ const translateSingleDepartment = (department: string, t: any, showAbbreviation:
     'APIAS': t('department.apias'),
     'CCRD': t('department.ccrd'),
     'IPS': t('department.ips'),
+    'LUIAS': t('department.luias'),
     
     // Units and Offices
     'CITAL': t('department.cital'),
@@ -384,6 +385,7 @@ export const getFacultiesForMultiDepartment = (department: string): string[] => 
     'APIAS': 'faculty.researchInstitutes',
     'CCRD': 'faculty.researchInstitutes',
     'IPS': 'faculty.researchInstitutes',
+    'LUIAS': 'faculty.researchInstitutes',
     // Units and Offices
     'OSL': 'faculty.unitsOffices',
     'CITAL': 'faculty.unitsOffices'
