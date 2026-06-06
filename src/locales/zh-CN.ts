@@ -1986,7 +1986,7 @@ export default {
   'faculty.socialSciences': '社会科学院',
   'faculty.dataScience': '数据科学学院',
   'faculty.graduateStudies': '研究生院',
-  'faculty.interdisciplinaryStudies': '跨学科学院',
+  'faculty.interdisciplinaryStudies': '伍絜宜跨学科学院',
   'faculty.researchInstitutes': '研究所、中心及课程',
   'faculty.unitsOffices': '单位及办事处',
 

@@ -1926,7 +1926,7 @@ export default {
   'faculty.socialSciences': '社會科學院',
   'faculty.dataScience': '數據科學學院',
   'faculty.graduateStudies': '研究生院',
-  'faculty.interdisciplinaryStudies': '跨學科學院',
+  'faculty.interdisciplinaryStudies': '伍絜宜跨學科學院',
   'faculty.researchInstitutes': '研究所、中心及課程',
   'faculty.unitsOffices': '單位及辦事處',
 

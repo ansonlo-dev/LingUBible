@@ -1005,10 +1005,43 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-content {
     background: rgb(var(--background)) !important;
     border: none !important;
+    /* Round the top-right corner by default (it's exposed beside the tabs). */
     border-radius: 0 12px 12px 12px !important;
     position: relative !important;
     z-index: 10 !important;
     margin-top: 0 !important;
+  }
+
+  /* When the tab row overflows horizontally, a tab covers the top-right
+     corner, so drop its radius. */
+  .tabs-scrollable .attached-tab-content {
+    border-radius: 0 0 12px 12px !important;
+  }
+
+  /* Light theme only: the active tab sits above the content (z-index 11) and,
+     when it's the right-most tab, its box overlaps the content's rounded
+     top-right corner. Its background matches the content so only the 1px
+     corner border gets hidden. This element redraws that corner border on top
+     of the whole tab row. It lives inside .attached-tabs-container (which
+     creates no stacking context), so its high z-index outranks the active tab.
+     Rendered only when the tabs don't scroll (square top-right otherwise). */
+  .attached-tab-content-corner {
+    display: none;
+  }
+
+  :not(.dark) .attached-tab-content-corner {
+    display: block;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: -1px; /* offset the container's margin-bottom: -1px overlap */
+    width: 12px;
+    height: 12px;
+    border-top: 1px solid rgb(var(--border));
+    border-right: 1px solid rgb(var(--border));
+    border-top-right-radius: 12px;
+    z-index: 14;
+    pointer-events: none;
   }
 
   /* Light theme content area with border */
@@ -1038,7 +1071,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   .attached-tab-content > div:first-child,
   .attached-tab-content [class*="Card"]:first-child {
     background: #F9FAFB !important;
-    border-radius: 0 12px 12px 12px !important;
+    border-radius: 0 0 12px 12px !important;
     border: none !important;
   }
   

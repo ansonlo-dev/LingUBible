@@ -355,6 +355,7 @@ export const getFacultiesForMultiDepartment = (department: string): string[] => 
     'HIST': 'faculty.arts',
     'PHILO': 'faculty.arts',
     'TRAN': 'faculty.arts',
+    'CCRD': 'faculty.arts',
     // Faculty of Business
     'ACCT': 'faculty.business',
     'BUS': 'faculty.business',
@@ -383,7 +384,6 @@ export const getFacultiesForMultiDepartment = (department: string): string[] => 
     'WBLMP': 'faculty.interdisciplinaryStudies',
     // Research Institutes, Centres and Programmes
     'APIAS': 'faculty.researchInstitutes',
-    'CCRD': 'faculty.researchInstitutes',
     'IPS': 'faculty.researchInstitutes',
     'LUIAS': 'faculty.researchInstitutes',
     // Units and Offices
@@ -510,13 +510,22 @@ export function getFormattedInstructorName(
   let primary = englishTitle ? `${englishTitle} ${instructor.name}` : instructor.name;
 
   // 所有語言模式：在英文名字後加上 ", 暱稱"
-  // 若暱稱已包含在英文姓名中（例如 "LAU Tsz Chun Marco" + 暱稱 "Marco"），則避免重複顯示
+  // 若暱稱已包含在英文姓名中（例如 "LAU Tsz Chun Marco" + 暱稱 "Marco"），
+  // 則把姓名中重複的暱稱移除，再統一以 ", 暱稱" 的格式接在後面，
+  // 讓有／無重複問題的講師顯示格式一致（"Mr. LAU Tsz Chun, Marco"）
   if (instructor.nickname) {
-    const nicknameLower = instructor.nickname.trim().toLowerCase();
-    const nameWords = instructor.name.toLowerCase().split(/\s+/);
-    const nicknameAlreadyInName = nameWords.includes(nicknameLower);
-    if (!nicknameAlreadyInName) {
-      primary = `${primary}, ${instructor.nickname}`;
+    const nickname = instructor.nickname.trim();
+    const nicknameLower = nickname.toLowerCase();
+    const nameWords = instructor.name.split(/\s+/);
+    const nicknameAlreadyInName = nameWords.some(w => w.toLowerCase() === nicknameLower);
+
+    if (nicknameAlreadyInName) {
+      // 從英文姓名中移除重複的暱稱字詞，再以 ", 暱稱" 接回
+      const dedupedName = nameWords.filter(w => w.toLowerCase() !== nicknameLower).join(' ');
+      const primaryBase = englishTitle ? `${englishTitle} ${dedupedName}` : dedupedName;
+      primary = `${primaryBase}, ${nickname}`;
+    } else {
+      primary = `${primary}, ${nickname}`;
     }
   }
 

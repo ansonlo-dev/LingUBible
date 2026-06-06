@@ -221,7 +221,8 @@ export function AdvancedInstructorFilters({
           'ENG',
           'HIST',
           'PHILO',
-          'TRAN'
+          'TRAN',
+          'CCRD'
         ]
       },
       'Faculty of Business': {
@@ -274,7 +275,6 @@ export function AdvancedInstructorFilters({
         icon: School,
         departments: [
           'APIAS',
-          'CCRD',
           'IPS',
           'LUIAS'
         ]

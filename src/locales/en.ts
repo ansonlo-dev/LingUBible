@@ -2026,7 +2026,7 @@ export default {
   'faculty.socialSciences': 'Faculty of Social Sciences',
   'faculty.dataScience': 'School of Data Science',
   'faculty.graduateStudies': 'School of Graduate Studies',
-  'faculty.interdisciplinaryStudies': 'School of Interdisciplinary Studies',
+  'faculty.interdisciplinaryStudies': 'Wu Jieh Yee School of Interdisciplinary Studies',
   'faculty.researchInstitutes': 'Research Institutes, Centres and Programmes',
   'faculty.unitsOffices': 'Units and Offices',
 

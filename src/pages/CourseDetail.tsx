@@ -597,6 +597,11 @@ const CourseDetail = () => {
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
   const [activeMainTab, setActiveMainTab] = useState<string>('overview');
+  // Whether the tab row overflows horizontally (tabs wider than the screen).
+  // When it does, the content's top-right corner is covered by a tab, so we
+  // drop the top-right border radius; otherwise we round it.
+  const tabsListRef = useRef<HTMLDivElement>(null);
+  const [tabsScrollable, setTabsScrollable] = useState<boolean>(false);
   const [externalGradeFilter, setExternalGradeFilter] = useState<string>('');
   const [selectedServiceLearningFilter, setSelectedServiceLearningFilter] = useState<string[]>([]);
 
@@ -647,6 +652,20 @@ const CourseDetail = () => {
   const [selectedStudyMaterialIds, setSelectedStudyMaterialIds] = useState<Set<string>>(new Set());
   const [studyMaterialsDownloading, setStudyMaterialsDownloading] = useState<boolean>(false);
   const STUDY_MATERIALS_PAGE_SIZE = 12;
+
+  // Detect whether the tab row overflows its container so we can toggle the
+  // content's top-right border radius. Re-checked on resize and whenever the
+  // tab set / labels change (tab count depends on user + study materials/exam
+  // papers; label widths depend on language).
+  useEffect(() => {
+    const el = tabsListRef.current;
+    if (!el) return;
+    const update = () => setTabsScrollable(el.scrollWidth > el.clientWidth + 1);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [language, user, studyMaterials.length, examPapers.length]);
   // Latest course syllabus PDF (bucket: course_syllabus). Filenames are prefixed
   // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
   // we surface the largest suffix (most recent version). Open to all visitors.
@@ -2108,10 +2127,10 @@ const CourseDetail = () => {
         </Card>
       </div>
 
-      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className={`w-full ${tabsScrollable ? 'tabs-scrollable' : ''}`}>
         {/* Tab Navigation - Attached Design */}
         <div className="attached-tabs-container">
-          <TabsList className="attached-tabs-list">
+          <TabsList ref={tabsListRef} className="attached-tabs-list">
             <TabsTrigger
               value="overview"
               className="attached-tab-trigger"
@@ -2171,6 +2190,9 @@ const CourseDetail = () => {
               </TabsTrigger>
             )}
           </TabsList>
+          {/* Redraws the content's rounded top-right corner border above the
+              active tab (light theme). Only needed when tabs don't scroll. */}
+          {!tabsScrollable && <div className="attached-tab-content-corner" aria-hidden="true" />}
         </div>
 
         {/* Overview Tab */}
