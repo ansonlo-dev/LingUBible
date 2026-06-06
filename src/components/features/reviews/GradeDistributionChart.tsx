@@ -1944,10 +1944,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                   </div>
                       
                       {/* 右側控制項目 */}
-                      <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                      <div className="flex flex-col items-start gap-2 w-full sm:w-auto min-w-0">
                         {/* 篩選器 */}
                         {filterOptions && filterOptions.length > 0 && onFilterChange && (
-                          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto min-w-0">
                             {filterLabel && (
                               <span className="text-sm text-muted-foreground whitespace-nowrap">
                                 {(() => {
@@ -1963,7 +1963,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
                               onValueChange={(value) => onFilterChange(value)}
                             >
-                              <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
+                              <SelectTrigger className="flex-1 sm:flex-initial sm:basis-[250px] sm:max-w-[400px] h-8 min-w-0">
                                 <SelectValue placeholder={t('common.all')}>
                                   <div className="w-full overflow-hidden">
                                     <div className="truncate">
@@ -2054,10 +2054,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </div>
                           
                         {/* 右側控制項目 */}
-                        <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                        <div className="flex flex-col items-start gap-2 w-full sm:w-auto min-w-0">
                           {/* 篩選器 */}
                           {filterOptions && filterOptions.length > 0 && onFilterChange && (
-                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto min-w-0">
                               {filterLabel && (
                                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                                   {(() => {
@@ -2073,7 +2073,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                                 value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
                                 onValueChange={(value) => onFilterChange(value)}
                               >
-                                <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
+                                <SelectTrigger className="flex-1 sm:flex-initial sm:basis-[250px] sm:max-w-[400px] h-8 min-w-0">
                                   <SelectValue placeholder={t('common.all')}>
                                     <div className="w-full overflow-hidden">
                                       <div className="truncate">
@@ -2208,10 +2208,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             </div>
                 
                 {/* 右側控制項目 */}
-                <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                <div className="flex flex-col items-start gap-2 w-full sm:w-auto min-w-0">
                   {/* 篩選器 (N/A toggle for bar/stacked now lives in the centered row below the controls) */}
                   {filterOptions && filterOptions.length > 0 && onFilterChange && (
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto min-w-0">
                       {filterLabel && (
                         <span className="text-sm text-muted-foreground whitespace-nowrap">
                           {(() => {
@@ -2229,7 +2229,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                           value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
                           onValueChange={(value) => onFilterChange(value)}
                         >
-                          <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
+                          <SelectTrigger className="flex-1 sm:flex-initial sm:basis-[250px] sm:max-w-[400px] h-8 min-w-0">
                             <SelectValue placeholder={t('common.all')}>
                               <div className="w-full overflow-hidden">
                                 <div className="truncate">
@@ -2269,7 +2269,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </Select>
                       ) : (
                         // Multiple selection for stacked chart and box plot
-                        <div className="relative flex-1 sm:flex-none sm:min-w-[250px] sm:max-w-[400px] min-w-0">
+                        <div className="relative flex-1 sm:flex-initial sm:basis-[250px] sm:max-w-[400px] min-w-0">
                           <MultiSelectDropdown
                             options={filterOptions.map((option): SelectOption => ({
                               value: option.value,
@@ -2292,7 +2292,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               }
                             }}
                             placeholder={t('common.all')}
-                            className="w-full sm:min-w-[250px] sm:max-w-[400px]"
+                            className="w-full"
                             showCounts={true}
                             maxHeight="max-h-48"
                             totalCount={totalCount}
@@ -2535,10 +2535,10 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
             </div>
                 
                 {/* 右側控制項目 */}
-                <div className="flex flex-col items-start gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                <div className="flex flex-col items-start gap-2 w-full sm:w-auto min-w-0">
                   {/* 篩選器 (N/A toggle for bar/stacked now lives in the centered row below the controls) */}
                   {filterOptions && filterOptions.length > 0 && onFilterChange && (
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:shrink-0 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto min-w-0">
                       {filterLabel && (
                         <span className="text-sm text-muted-foreground whitespace-nowrap">
                           {(() => {
@@ -2556,7 +2556,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                           value={Array.isArray(selectedFilter) ? selectedFilter[0] || 'all' : selectedFilter || 'all'} 
                           onValueChange={(value) => onFilterChange(value)}
                         >
-                          <SelectTrigger className="flex-1 sm:flex-none sm:min-w-[250px] sm:max-w-[400px] h-8 min-w-0">
+                          <SelectTrigger className="flex-1 sm:flex-initial sm:basis-[250px] sm:max-w-[400px] h-8 min-w-0">
                             <SelectValue placeholder={t('common.all')}>
                               <div className="w-full overflow-hidden">
                                 <div className="truncate">
@@ -2596,7 +2596,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                         </Select>
                       ) : (
                         // Multiple selection for stacked chart and box plot
-                        <div className="relative flex-1 sm:flex-none sm:min-w-[250px] sm:max-w-[400px] min-w-0">
+                        <div className="relative flex-1 sm:flex-initial sm:basis-[250px] sm:max-w-[400px] min-w-0">
                           <MultiSelectDropdown
                             options={filterOptions.map((option): SelectOption => ({
                               value: option.value,
@@ -2619,7 +2619,7 @@ const GradeDistributionChart: React.FC<GradeDistributionChartProps> = React.memo
                               }
                             }}
                             placeholder={t('common.all')}
-                            className="w-full sm:min-w-[250px] sm:max-w-[400px]"
+                            className="w-full"
                             showCounts={true}
                             maxHeight="max-h-48"
                             totalCount={totalCount}
