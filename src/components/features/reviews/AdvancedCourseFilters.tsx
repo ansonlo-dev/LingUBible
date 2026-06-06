@@ -50,7 +50,7 @@ const getFacultyByDepartment = (department: string): string => {
     'Sociology and Social Policy': 'faculty.socialSciences',
     // Core and Other
     'Core Office': 'faculty.core',
-    'Science Unit': 'faculty.core',
+    'Division of Science': 'faculty.core',
     'Lui Che Woo Music and Arts': 'faculty.core',
     'Chan Shu-Ming Data Science Institute': 'faculty.core',
   };
@@ -421,7 +421,7 @@ export function AdvancedCourseFilters({
       {/* 篩選器行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-2">
         {/* 學科領域 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <BookOpen className="h-4 w-4" />
             {t('filter.subjectArea')}
@@ -437,7 +437,7 @@ export function AdvancedCourseFilters({
         </div>
 
         {/* 開設學期 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.offeredTerms')}
@@ -459,7 +459,7 @@ export function AdvancedCourseFilters({
         </div>
 
         {/* 授課語言 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <Globe className="h-4 w-4" />
             {t('filter.teachingLanguage')}
@@ -475,7 +475,7 @@ export function AdvancedCourseFilters({
         </div>
 
         {/* 服務學習 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <Sparkles className="h-4 w-4" />
             {t('features.serviceLearning')}

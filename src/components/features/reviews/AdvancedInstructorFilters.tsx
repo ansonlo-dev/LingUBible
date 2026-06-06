@@ -516,7 +516,7 @@ export function AdvancedInstructorFilters({
       {/* 篩選器行 */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-2">
         {/* 部門 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <Building2 className="h-4 w-4" />
             {t('filter.department')}
@@ -556,7 +556,7 @@ export function AdvancedInstructorFilters({
         </div>
 
         {/* 授課學期 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <Calendar className="h-4 w-4" />
             {t('filter.teachingTerm')}
@@ -578,7 +578,7 @@ export function AdvancedInstructorFilters({
         </div>
 
         {/* 授課語言 */}
-        <div className="flex items-center gap-2 lg:flex-1">
+        <div className="flex items-center gap-2 lg:flex-1 min-w-0">
           <label className={getLabelClassName()}>
             <Globe className="h-4 w-4" />
             {t('filter.teachingLanguage')}

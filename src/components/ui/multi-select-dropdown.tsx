@@ -302,7 +302,7 @@ export function MultiSelectDropdown({
 
 
   return (
-    <div className={cn("relative w-full multi-select-dropdown", className)}>
+    <div className={cn("relative w-full min-w-0 multi-select-dropdown", className)}>
       <Select 
         value="multi-select" 
         onValueChange={() => {}} // Controlled by checkbox interactions
