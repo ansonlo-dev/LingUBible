@@ -627,16 +627,21 @@ const CourseDetail = () => {
   const [examPapersDownloading, setExamPapersDownloading] = useState<boolean>(false);
   const EXAM_PAPERS_PAGE_SIZE = 12;
 
-  // Study materials state — mirrors the past-exam-papers logic but reads from
-  // the `study_materials` bucket. Shares the ExamPaper shape and the term-code
-  // filename convention (course code prefix + YYYYT suffix).
-  const [studyMaterials, setStudyMaterials] = useState<ExamPaper[]>([]);
+  // Study materials state — reads from the `study_materials` bucket. Unlike
+  // past exam papers, these have no term-code convention and no filters: the
+  // displayed name is just the filename minus the course-code prefix and the
+  // extension (e.g. "LCC1010_book.pdf" → "book"), while downloads keep the
+  // original filename.
+  type StudyMaterial = {
+    id: string;
+    name: string;        // original filename (used for download)
+    displayName: string; // filename without course-code prefix or extension
+    sizeOriginal: number;
+  };
+  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
   const [studyMaterialsLoading, setStudyMaterialsLoading] = useState<boolean>(false);
   const [studyMaterialsError, setStudyMaterialsError] = useState<string | null>(null);
   const [studyMaterialsLoaded, setStudyMaterialsLoaded] = useState<boolean>(false);
-  const [studyMaterialsSort, setStudyMaterialsSort] = useState<'newest' | 'oldest'>('newest');
-  const [studyMaterialsYearFilter, setStudyMaterialsYearFilter] = useState<string[]>([]);
-  const [studyMaterialsInstructorFilter, setStudyMaterialsInstructorFilter] = useState<string[]>([]);
   const [studyMaterialsCurrentPage, setStudyMaterialsCurrentPage] = useState<number>(1);
   // Multi-select for bulk download of study materials.
   const [selectedStudyMaterialIds, setSelectedStudyMaterialIds] = useState<Set<string>>(new Set());
@@ -816,102 +821,10 @@ const CourseDetail = () => {
     });
   }, [enrichedExamPapers, examPapersSort, examPapersYearFilter, examPapersInstructorFilter]);
 
-  // ---- Study materials: enrichment / filter options / filtered list --------
-  // Same instructor-resolution and term-parsing strategy as the exam papers.
-  const enrichedStudyMaterials = React.useMemo<EnrichedExamPaper[]>(() => {
-    return studyMaterials.map(p => {
-      const fromFile = p.term?.instructorNameFromFile;
-      if (fromFile) {
-        const resolved =
-          teachingInstructorByName.get(fromFile) ||
-          filenameInstructorsByName.get(fromFile) ||
-          makeShellInstructor(fromFile);
-        return { ...p, lectureInstructors: [resolved] };
-      }
-      let lectureInstructors: Instructor[] = [];
-      if (p.term) {
-        for (const code of p.term.termCodes) {
-          const hit = lectureInstructorsByTermCode.get(code);
-          if (hit && hit.length > 0) {
-            lectureInstructors = hit;
-            break;
-          }
-        }
-      }
-      return { ...p, lectureInstructors };
-    });
-  }, [studyMaterials, lectureInstructorsByTermCode, teachingInstructorByName, filenameInstructorsByName, makeShellInstructor]);
-
-  const studyMaterialsYearOptions = React.useMemo<SelectOption[]>(() => {
-    const counts = new Map<string, number>();
-    let unknownCount = 0;
-    studyMaterials.forEach(p => {
-      if (p.term) {
-        const key = String(p.term.startYear);
-        counts.set(key, (counts.get(key) || 0) + 1);
-      } else {
-        unknownCount += 1;
-      }
-    });
-    const years = Array.from(counts.entries())
-      .sort((a, b) => parseInt(b[0], 10) - parseInt(a[0], 10))
-      .map(([startYearStr, count]) => {
-        const startYear = parseInt(startYearStr, 10);
-        const endYearShort = String((startYear + 1) % 100).padStart(2, '0');
-        return { value: startYearStr, label: `${startYear}-${endYearShort}`, count };
-      });
-    if (unknownCount > 0) {
-      years.push({ value: UNKNOWN_YEAR_KEY, label: t('pages.courseDetail.examPapersYearUnknown'), count: unknownCount });
-    }
-    return years;
-  }, [studyMaterials, t]);
-
-  const studyMaterialsInstructorOptions = React.useMemo<SelectOption[]>(() => {
-    const counts = new Map<string, { instructor: Instructor; count: number }>();
-    enrichedStudyMaterials.forEach(p => {
-      p.lectureInstructors.forEach(ins => {
-        const entry = counts.get(ins.name);
-        if (entry) entry.count += 1;
-        else counts.set(ins.name, { instructor: ins, count: 1 });
-      });
-    });
-    return Array.from(counts.values())
-      .sort((a, b) => extractInstructorNameForSorting(a.instructor.name)
-        .localeCompare(extractInstructorNameForSorting(b.instructor.name)))
-      .map(({ instructor, count }) => {
-        const formatted = getFormattedInstructorName(instructor, language);
-        return {
-          value: instructor.name,
-          label: formatted.secondary ? `${formatted.primary} · ${formatted.secondary}` : formatted.primary,
-          count,
-        };
-      });
-  }, [enrichedStudyMaterials, language]);
-
-  const filteredStudyMaterials = React.useMemo<EnrichedExamPaper[]>(() => {
-    const yearSet = new Set(studyMaterialsYearFilter);
-    const instructorSet = new Set(studyMaterialsInstructorFilter);
-    const filtered = enrichedStudyMaterials.filter(p => {
-      if (yearSet.size > 0) {
-        const key = p.term ? String(p.term.startYear) : UNKNOWN_YEAR_KEY;
-        if (!yearSet.has(key)) return false;
-      }
-      if (instructorSet.size > 0) {
-        if (!p.lectureInstructors.some(i => instructorSet.has(i.name))) return false;
-      }
-      return true;
-    });
-    const dir = studyMaterialsSort === 'newest' ? -1 : 1;
-    return [...filtered].sort((a, b) => {
-      if (!a.term && !b.term) return a.name.localeCompare(b.name);
-      if (!a.term) return 1;
-      if (!b.term) return -1;
-      if (a.term.termSortKey !== b.term.termSortKey) {
-        return dir * (a.term.termSortKey - b.term.termSortKey);
-      }
-      return a.name.localeCompare(b.name);
-    });
-  }, [enrichedStudyMaterials, studyMaterialsSort, studyMaterialsYearFilter, studyMaterialsInstructorFilter]);
+  // Study materials sorted alphabetically by display name (no filters).
+  const sortedStudyMaterials = React.useMemo<StudyMaterial[]>(() => {
+    return [...studyMaterials].sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }, [studyMaterials]);
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
@@ -1005,9 +918,9 @@ const CourseDetail = () => {
   // ---- Study materials: bulk-download selection --------------------------
   const selectedStudyMaterialCount = selectedStudyMaterialIds.size;
   const allStudyMaterialsSelected =
-    filteredStudyMaterials.length > 0 && selectedStudyMaterialCount === filteredStudyMaterials.length;
+    sortedStudyMaterials.length > 0 && selectedStudyMaterialCount === sortedStudyMaterials.length;
   const someStudyMaterialsSelected = selectedStudyMaterialCount > 0 && !allStudyMaterialsSelected;
-  const selectedStudyMaterialsSize = filteredStudyMaterials.reduce(
+  const selectedStudyMaterialsSize = sortedStudyMaterials.reduce(
     (sum, p) => (selectedStudyMaterialIds.has(p.id) ? sum + (p.sizeOriginal || 0) : sum),
     0,
   );
@@ -1023,13 +936,13 @@ const CourseDetail = () => {
 
   const toggleSelectAllStudyMaterials = () => {
     setSelectedStudyMaterialIds(prev =>
-      prev.size === filteredStudyMaterials.length ? new Set() : new Set(filteredStudyMaterials.map(p => p.id))
+      prev.size === sortedStudyMaterials.length ? new Set() : new Set(sortedStudyMaterials.map(p => p.id))
     );
   };
 
   const handleDownloadSelectedStudyMaterials = async () => {
     if (studyMaterialsDownloading) return;
-    const selected = filteredStudyMaterials.filter(p => selectedStudyMaterialIds.has(p.id));
+    const selected = sortedStudyMaterials.filter(p => selectedStudyMaterialIds.has(p.id));
     if (selected.length === 0) return;
 
     setStudyMaterialsDownloading(true);
@@ -1735,10 +1648,21 @@ const CourseDetail = () => {
     const PAGE_SIZE = 100;
     const SAFETY_CAP = 5000;
 
+    const prefix = `${courseCode.toLowerCase()}_`;
+    // Strip the "<courseCode>_" prefix and file extension for display, e.g.
+    // "LCC1010_book.pdf" → "book". Falls back to the raw name if it doesn't fit.
+    const toDisplayName = (fileName: string): string => {
+      const dot = fileName.lastIndexOf('.');
+      let stem = dot > 0 ? fileName.slice(0, dot) : fileName;
+      if (stem.toLowerCase().startsWith(prefix)) {
+        stem = stem.slice(prefix.length);
+      }
+      return stem || fileName;
+    };
+
     (async () => {
       try {
-        const prefix = `${courseCode.toLowerCase()}_`;
-        const collected: ExamPaper[] = [];
+        const collected: StudyMaterial[] = [];
         let offset = 0;
         while (offset < SAFETY_CAP) {
           const res = await storage.listFiles({
@@ -1753,8 +1677,8 @@ const CourseDetail = () => {
             collected.push({
               id: f.$id,
               name: f.name,
+              displayName: toDisplayName(f.name),
               sizeOriginal: f.sizeOriginal,
-              term: parseExamPaperTermCode(f.name, courseCode.length),
             });
           }
           if (files.length < PAGE_SIZE) break;
@@ -1775,37 +1699,10 @@ const CourseDetail = () => {
     return () => { cancelled = true; };
   }, [user, course?.course_code, studyMaterialsLoaded, t]);
 
-  // Resolve filename-encoded instructor names for study materials into the
-  // shared filenameInstructorsByName map (same as the exam-papers resolver).
-  useEffect(() => {
-    if (studyMaterials.length === 0) return;
-    const needed = new Set<string>();
-    studyMaterials.forEach(p => {
-      const name = p.term?.instructorNameFromFile;
-      if (!name) return;
-      if (teachingInstructorByName.has(name)) return;
-      if (filenameInstructorsByName.has(name)) return;
-      needed.add(name);
-    });
-    if (needed.size === 0) return;
-    let cancelled = false;
-    CourseService.getInstructorsByNames(Array.from(needed))
-      .then(rows => {
-        if (cancelled || rows.length === 0) return;
-        setFilenameInstructorsByName(prev => {
-          const next = new Map(prev);
-          rows.forEach(r => next.set(r.name, r));
-          return next;
-        });
-      })
-      .catch(err => console.error('Failed to resolve filename instructors', err));
-    return () => { cancelled = true; };
-  }, [studyMaterials, teachingInstructorByName, filenameInstructorsByName]);
-
   useEffect(() => {
     setStudyMaterialsCurrentPage(1);
     setSelectedStudyMaterialIds(new Set());
-  }, [studyMaterialsSort, studyMaterialsYearFilter, studyMaterialsInstructorFilter, studyMaterials]);
+  }, [studyMaterials]);
 
   if (loading) {
     return (
@@ -3730,164 +3627,96 @@ const CourseDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Toolbar: sort + year filter + instructor filter + result count */}
-                  <div className="flex flex-col gap-3">
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      <Select value={studyMaterialsSort} onValueChange={v => setStudyMaterialsSort(v as 'newest' | 'oldest')}>
-                        <SelectTrigger className="h-8" aria-label={t('pages.courseDetail.examPapersSortLabel')}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="newest">{t('pages.courseDetail.examPapersSortNewest')}</SelectItem>
-                          <SelectItem value="oldest">{t('pages.courseDetail.examPapersSortOldest')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <MultiSelectDropdown
-                        options={studyMaterialsYearOptions}
-                        selectedValues={studyMaterialsYearFilter}
-                        onSelectionChange={setStudyMaterialsYearFilter}
-                        placeholder={t('pages.courseDetail.examPapersFilterYearPlaceholder')}
-                        totalCount={studyMaterials.length}
-                      />
-                      {studyMaterialsInstructorOptions.length > 0 && (
-                        <MultiSelectDropdown
-                          options={studyMaterialsInstructorOptions}
-                          selectedValues={studyMaterialsInstructorFilter}
-                          onSelectionChange={setStudyMaterialsInstructorFilter}
-                          placeholder={t('pages.courseDetail.examPapersFilterInstructorPlaceholder')}
-                          totalCount={studyMaterials.length}
+                  {/* Toolbar: select-all + count + bulk download (no filters) */}
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                        <Checkbox
+                          checked={allStudyMaterialsSelected ? true : someStudyMaterialsSelected ? 'indeterminate' : false}
+                          onCheckedChange={toggleSelectAllStudyMaterials}
+                          aria-label={t('pages.courseDetail.examPapersSelectAll')}
                         />
+                        <span className="text-sm">{t('pages.courseDetail.examPapersSelectAll')}</span>
+                      </label>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {selectedStudyMaterialCount > 0
+                          ? `${t('pages.courseDetail.examPapersSelectedCount', { count: selectedStudyMaterialCount })}${
+                              selectedStudyMaterialsSize > 0 ? ` · ${formatExamPaperSize(selectedStudyMaterialsSize)}` : ''
+                            }`
+                          : t('pages.courseDetail.examPapersResultCount', {
+                              filtered: sortedStudyMaterials.length,
+                              total: studyMaterials.length,
+                            })}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="h-8 shrink-0"
+                      disabled={selectedStudyMaterialCount === 0 || studyMaterialsDownloading}
+                      onClick={handleDownloadSelectedStudyMaterials}
+                    >
+                      {studyMaterialsDownloading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-2" />
                       )}
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {filteredStudyMaterials.length > 0 && (
-                          <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
-                            <Checkbox
-                              checked={allStudyMaterialsSelected ? true : someStudyMaterialsSelected ? 'indeterminate' : false}
-                              onCheckedChange={toggleSelectAllStudyMaterials}
-                              aria-label={t('pages.courseDetail.examPapersSelectAll')}
-                            />
-                            <span className="text-sm">{t('pages.courseDetail.examPapersSelectAll')}</span>
-                          </label>
-                        )}
-                        <span className="text-xs text-muted-foreground truncate">
-                          {selectedStudyMaterialCount > 0
-                            ? `${t('pages.courseDetail.examPapersSelectedCount', { count: selectedStudyMaterialCount })}${
-                                selectedStudyMaterialsSize > 0 ? ` · ${formatExamPaperSize(selectedStudyMaterialsSize)}` : ''
-                              }`
-                            : t('pages.courseDetail.examPapersResultCount', {
-                                filtered: filteredStudyMaterials.length,
-                                total: studyMaterials.length,
-                              })}
-                        </span>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="h-8 shrink-0"
-                        disabled={selectedStudyMaterialCount === 0 || studyMaterialsDownloading}
-                        onClick={handleDownloadSelectedStudyMaterials}
-                      >
-                        {studyMaterialsDownloading ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4 mr-2" />
-                        )}
-                        {studyMaterialsDownloading
-                          ? t('pages.courseDetail.examPapersDownloading')
-                          : t('pages.courseDetail.examPapersDownloadSelected', { count: selectedStudyMaterialCount })}
-                      </Button>
-                    </div>
+                      {studyMaterialsDownloading
+                        ? t('pages.courseDetail.examPapersDownloading')
+                        : t('pages.courseDetail.examPapersDownloadSelected', { count: selectedStudyMaterialCount })}
+                    </Button>
                   </div>
 
-                  {filteredStudyMaterials.length === 0 ? (
-                    <div className="text-center py-12 space-y-4">
-                      <div className="flex justify-center">
-                        <div className="p-4 bg-muted/50 rounded-full">
-                          <BookText className="h-12 w-12 text-muted-foreground" />
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {t('pages.courseDetail.studyMaterialsNoMatch')}
-                      </p>
-                    </div>
-                  ) : (() => {
-                    const totalPages = Math.max(1, Math.ceil(filteredStudyMaterials.length / STUDY_MATERIALS_PAGE_SIZE));
+                  {(() => {
+                    const totalPages = Math.max(1, Math.ceil(sortedStudyMaterials.length / STUDY_MATERIALS_PAGE_SIZE));
                     const currentPage = Math.min(studyMaterialsCurrentPage, totalPages);
                     const startIdx = (currentPage - 1) * STUDY_MATERIALS_PAGE_SIZE;
-                    const pagePapers = filteredStudyMaterials.slice(startIdx, startIdx + STUDY_MATERIALS_PAGE_SIZE);
+                    const pagePapers = sortedStudyMaterials.slice(startIdx, startIdx + STUDY_MATERIALS_PAGE_SIZE);
                     return (
                     <>
                     <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                       {pagePapers.map(paper => {
-                        const termLabel = paper.term?.label || t('pages.courseDetail.studyMaterialTermFallback');
                         const sizeLabel = formatExamPaperSize(paper.sizeOriginal);
                         const viewUrl = storage.getFileView({ bucketId: 'study_materials', fileId: paper.id });
                         const isSelected = selectedStudyMaterialIds.has(paper.id);
                         return (
                           <div
                             key={paper.id}
-                            className={`flex flex-col gap-2 p-3 rounded-lg border shadow-sm hover:shadow-md transition-all min-w-0 cursor-pointer select-none ${
+                            className={`flex items-center gap-2.5 p-3 rounded-lg border shadow-sm hover:shadow-md transition-all min-w-0 cursor-pointer select-none ${
                               isSelected
                                 ? 'bg-primary/5 border-primary ring-1 ring-primary'
                                 : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-muted/40'
                             }`}
                             onClick={() => toggleStudyMaterialSelection(paper.id)}
                           >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => toggleStudyMaterialSelection(paper.id)}
-                                  aria-label={termLabel}
-                                  className="shrink-0"
-                                />
-                              </div>
-                              <div className="p-1.5 bg-muted/50 rounded-md shrink-0">
-                                <BookText className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">{termLabel}</div>
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {sizeLabel || paper.name}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  title={t('pages.courseDetail.examPaperViewFile')}
-                                  aria-label={t('pages.courseDetail.examPaperViewFile')}
-                                  onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name }); }}
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                </Button>
-                              </div>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleStudyMaterialSelection(paper.id)}
+                                aria-label={paper.displayName}
+                                className="shrink-0"
+                              />
                             </div>
-                            {paper.lectureInstructors.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1.5 pl-1">
-                                <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                {paper.lectureInstructors.map(ins => {
-                                  const formatted = getFormattedInstructorName(ins, language);
-                                  const label = formatted.secondary
-                                    ? `${formatted.primary} · ${formatted.secondary}`
-                                    : formatted.primary;
-                                  const isShell = ins.$id.startsWith('shell:');
-                                  return (
-                                    <Badge
-                                      key={ins.name}
-                                      variant="outline"
-                                      className={`text-xs font-normal bg-background border-gray-300 dark:border-gray-600 text-foreground transition-colors ${isShell ? '' : 'cursor-pointer hover:bg-muted hover:border-gray-400 dark:hover:border-gray-500'}`}
-                                      onClick={isShell ? undefined : (e) => { e.stopPropagation(); navigate(`/instructors/${encodeURIComponent(ins.name)}`); }}
-                                      title={label}
-                                    >
-                                      {formatted.primary}
-                                    </Badge>
-                                  );
-                                })}
-                              </div>
-                            )}
+                            <div className="p-1.5 bg-muted/50 rounded-md shrink-0">
+                              <BookText className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{paper.displayName}</div>
+                              {sizeLabel && (
+                                <div className="text-xs text-muted-foreground truncate">{sizeLabel}</div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                title={t('pages.courseDetail.examPaperViewFile')}
+                                aria-label={t('pages.courseDetail.examPaperViewFile')}
+                                onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name }); }}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}
@@ -3898,7 +3727,7 @@ const CourseDetail = () => {
                         totalPages={totalPages}
                         onPageChange={setStudyMaterialsCurrentPage}
                         itemsPerPage={STUDY_MATERIALS_PAGE_SIZE}
-                        totalItems={filteredStudyMaterials.length}
+                        totalItems={sortedStudyMaterials.length}
                       />
                     )}
                     </>

@@ -519,8 +519,6 @@ export default {
   'pages.courseDetail.studyMaterialsSignUpDescription': '學習資料屬受限資源，僅供已驗證的嶺南大學學生查看。請使用您的嶺南電郵註冊以取得存取權限。',
   'pages.courseDetail.noStudyMaterials': '暫無學習資料',
   'pages.courseDetail.studyMaterialsLoadFailed': '無法載入學習資料',
-  'pages.courseDetail.studyMaterialTermFallback': '學習資料',
-  'pages.courseDetail.studyMaterialsNoMatch': '沒有符合目前篩選條件的學習資料',
   'pages.courseDetail.studyMaterialsDownloadFailed': '下載學習資料失敗，請再試一次。',
 
   // 內建 PDF 檢視器
