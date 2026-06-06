@@ -280,6 +280,49 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     return () => { unsubscribe?.(); };
   }, [ready, blobUrl, error, viewerReady]);
 
+  // Make link annotations follow on a single click, like the browser's native
+  // PDF reader. By default embedpdf only *selects* a clicked link and surfaces a
+  // "Go to Link" button you must tap again. We watch the annotation selection
+  // and, when a single link annotation gets selected, immediately replicate the
+  // built-in `annotation:goto-link` action (jump to a destination / open a URI
+  // or embedded audio via the engine's autoOpenLinks handler) and clear the
+  // selection so the toolbar never lingers.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error && viewerReady)) return;
+    const annotation = registryRef.current?.getPlugin?.('annotation')?.provides?.();
+    if (!annotation?.onStateChange) return;
+
+    const LINK_TYPE = 2; // PdfAnnotationSubtype.LINK
+
+    const unsubscribe = annotation.onStateChange((payload: any) => {
+      const documentId = payload?.documentId;
+      const selectedUids = payload?.state?.selectedUids;
+      // Only act on a single selected annotation (a deliberate link click).
+      if (!documentId || !Array.isArray(selectedUids) || selectedUids.length !== 1) return;
+
+      const scope = annotation.forDocument?.(documentId);
+      const selected = scope?.getSelectedAnnotation?.();
+      if (!selected) return;
+
+      // Resolve the link object: either the annotation itself is a LINK, or it
+      // carries attached links (mirrors the goto-link command's logic).
+      let link = null;
+      if (selected.object?.type === LINK_TYPE) {
+        link = selected.object;
+      } else {
+        const attached = scope.getAttachedLinks?.(selected.object?.id) ?? [];
+        if (attached.length > 0) link = attached[0].object;
+      }
+
+      if (link?.target) {
+        scope.navigateTarget(link.target);
+        scope.deselectAnnotation?.(); // dismiss the "Go to Link" toolbar
+      }
+    });
+
+    return () => { unsubscribe?.(); };
+  }, [ready, blobUrl, error, viewerReady]);
+
   // Inject/remove an inversion filter into the embedpdf shadow root when the
   // inversion toggle changes. Pages are rendered as <img> tiles (blob URLs from
   // PDFium), so the filter targets img elements. The toolbar uses SVG icons and
