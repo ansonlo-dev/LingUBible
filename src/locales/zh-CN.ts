@@ -686,6 +686,7 @@ export default {
   'language.mandarinChinese': '普通话',
   'filter.offeredTerms': '开设学期',
   'filter.clearAll': '清除全部',
+  'filter.showFormerStaff': '显示前教职员',
   'filter.term1': '第一学期',
   'filter.term2': '第二学期',
   'filter.summer': '暑期',

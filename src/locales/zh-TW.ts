@@ -730,6 +730,7 @@ export default {
   'filter.offeredTerms': '開設學期',
   'filter.applied': '已套用篩選條件',
   'filter.clearAll': '清除全部',
+  'filter.showFormerStaff': '顯示前教職員',
   'filter.clear': '清除篩選',
   'filter.teachingStatus': '教學狀態',
   'filter.teachingTerm': '授課學期',

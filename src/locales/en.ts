@@ -809,6 +809,7 @@ export default {
   'filter.offeredTerms': 'Offered Term',
   'filter.applied': 'Filters applied',
   'filter.clearAll': 'Clear All',
+  'filter.showFormerStaff': 'Show Former Staff',
   'filter.clear': 'Clear filters',
   'filter.checkingTerm': 'Checking courses for selected term...',
   'filter.clickToFilterDepartment': 'Click to filter instructors by this department',

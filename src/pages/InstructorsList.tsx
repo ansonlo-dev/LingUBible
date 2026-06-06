@@ -47,6 +47,7 @@ const InstructorsList = () => {
     sortOrder: 'asc',
     currentPage: 1,
     itemsPerPage: 6,
+    showFormerStaff: false,
   });
 
   // 使用防抖來優化搜尋性能
@@ -104,6 +105,12 @@ const InstructorsList = () => {
     const page = searchParams.get('page');
     if (page && !isNaN(parseInt(page))) {
       urlFilters.currentPage = parseInt(page);
+    }
+
+    // 讀取顯示前教職員開關
+    const showFormerStaff = searchParams.get('showFormerStaff');
+    if (showFormerStaff === 'true') {
+      urlFilters.showFormerStaff = true;
     }
     
     // 如果有 URL 參數，更新 filters 狀態
@@ -203,6 +210,11 @@ const InstructorsList = () => {
     }
 
     let filtered = instructors;
+
+    // 前教職員篩選（預設隱藏）
+    if (!filters.showFormerStaff) {
+      filtered = filtered.filter(instructor => instructor.is_current_staff !== false);
+    }
 
     // 搜尋篩選
     if (debouncedSearchTerm.trim()) {
@@ -399,7 +411,8 @@ const InstructorsList = () => {
         JSON.stringify(newFilters.teachingTerm) !== JSON.stringify(filters.teachingTerm) ||
         JSON.stringify(newFilters.teachingLanguage) !== JSON.stringify(filters.teachingLanguage) ||
         newFilters.sortBy !== filters.sortBy ||
-        newFilters.sortOrder !== filters.sortOrder) {
+        newFilters.sortOrder !== filters.sortOrder ||
+        newFilters.showFormerStaff !== filters.showFormerStaff) {
       newFilters.currentPage = 1;
     }
     
@@ -430,7 +443,10 @@ const InstructorsList = () => {
     if (newFilters.currentPage > 1) {
       newSearchParams.set('page', newFilters.currentPage.toString());
     }
-    
+    if (newFilters.showFormerStaff) {
+      newSearchParams.set('showFormerStaff', 'true');
+    }
+
     // 更新 URL 但不觸發導航
     setSearchParams(newSearchParams, { replace: true });
   };
@@ -451,6 +467,7 @@ const InstructorsList = () => {
       sortOrder: 'asc',
       itemsPerPage: 6,
       currentPage: 1,
+      showFormerStaff: false,
     };
     
     setFilters(defaultFilters);
