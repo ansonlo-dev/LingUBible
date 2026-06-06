@@ -3131,7 +3131,7 @@ export class CourseService {
             Query.limit(this.MAX_INSTRUCTORS_LIMIT),
             Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department', '$createdAt', '$updatedAt',
               'stats_review_count', 'stats_avg_gpa', 'stats_avg_gpa_count', 'stats_teaching_score', 'stats_grading_fairness',
-              'teaching_languages', 'current_term_teaching_language', 'is_teaching_in_current_term'])
+              'teaching_languages', 'current_term_teaching_language', 'is_teaching_in_current_term', 'is_current_staff'])
           ]
         );
 

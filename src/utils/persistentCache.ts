@@ -100,7 +100,7 @@ export const PERSISTENT_CACHE_KEYS = {
   TOP_INSTRUCTORS_BY_GPA: 'landing_top_instructors_gpa',
   MAIN_PAGE_STATS: 'landing_main_page_stats',
   ALL_COURSES_WITH_STATS: 'catalog_all_courses_with_stats',
-  ALL_INSTRUCTORS_WITH_DETAILED_STATS: 'catalog_all_instructors_detailed_stats',
+  ALL_INSTRUCTORS_WITH_DETAILED_STATS: 'catalog_all_instructors_detailed_stats_v2',
   COURSES_WITH_STATS_BATCH: 'catalog_courses_with_stats_batch',
 } as const;
 

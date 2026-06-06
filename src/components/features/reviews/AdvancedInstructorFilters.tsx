@@ -687,8 +687,8 @@ export function AdvancedInstructorFilters({
             onClick={() => updateFilters({ showFormerStaff: !filters.showFormerStaff })}
             className={`h-6 px-3 text-xs flex items-center gap-1.5 whitespace-nowrap transition-all duration-200 ${
               filters.showFormerStaff
-                ? 'bg-amber-500 hover:bg-amber-600 border-amber-500 text-white'
-                : 'border-black dark:border-white text-black dark:text-white hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-300'
+                ? 'bg-primary hover:bg-primary/90 border-primary text-white'
+                : 'border-black dark:border-white text-black dark:text-white hover:bg-primary/10 dark:hover:bg-primary/20 hover:border-primary hover:text-primary'
             }`}
           >
             <UserX className="h-3 w-3" />
