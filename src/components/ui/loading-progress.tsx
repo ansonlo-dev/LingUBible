@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface LoadingProgressProps {
   isLoading: boolean;
@@ -18,17 +19,18 @@ export function LoadingProgress({
   variant = 'default',
   className
 }: LoadingProgressProps) {
+  const { t } = useLanguage();
   const [displayProgress, setDisplayProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
   const startTimeRef = useRef<number>(0);
 
-  // 簡化的載入步驟系統
+  // 簡化的載入步驟系統（標籤透過翻譯鍵動態取得）
   const loadingSteps = [
-    { name: 'courses', label: '課程' },
-    { name: 'instructors', label: '講師' },
-    { name: 'reviews', label: '評價' },
-    { name: 'stats', label: '統計' },
-    { name: 'cache', label: '緩存' },
+    { name: 'courses', labelKey: 'loading.progress.step.courses' },
+    { name: 'instructors', labelKey: 'loading.progress.step.instructors' },
+    { name: 'reviews', labelKey: 'loading.progress.step.reviews' },
+    { name: 'stats', labelKey: 'loading.progress.step.stats' },
+    { name: 'cache', labelKey: 'loading.progress.step.cache' },
   ];
 
   useEffect(() => {
@@ -117,8 +119,12 @@ export function LoadingProgress({
     
     const totalSteps = loadingSteps.length;
     const currentStepData = loadingSteps[currentStep - 1] || loadingSteps[0];
-    
-    return `載入${currentStepData.label} (${currentStep}/${totalSteps})`;
+
+    return t('loading.progress.text', {
+      label: t(currentStepData.labelKey),
+      current: currentStep,
+      total: totalSteps,
+    });
   };
 
   const getProgressBarClasses = () => {

@@ -31,6 +31,7 @@ import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { translateDepartmentName, extractInstructorNameForSorting, extractUniqueDepartmentsFromInstructors, doesInstructorBelongToDepartment } from '@/utils/textUtils';
 import { InstructorGrid } from '@/components/responsive';
+import { LoadingProgress } from '@/components/ui/loading-progress';
 
 const InstructorsList = () => {
   const { t, language } = useLanguage();
@@ -514,12 +515,13 @@ const InstructorsList = () => {
           {/* 頁面標題 */}
           <HeaderSection />
 
-          {/* 載入指示器 */}
-          <div className="text-center mt-4">
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t('common.loading')}
-            </div>
+          {/* 專業進度條 - 使用智能階段文字 */}
+          <div className="max-w-md mx-auto mt-6">
+            <LoadingProgress
+              isLoading={loading}
+              variant="gradient"
+              className="mb-4"
+            />
           </div>
 
           {/* 講師卡片骨架 */}
