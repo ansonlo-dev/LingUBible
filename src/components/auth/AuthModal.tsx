@@ -119,9 +119,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setError(t('auth.invalidCredentials'));
       } else if (err?.message?.includes('user with the same email already exists')) {
         setError(t('auth.emailAlreadyExists'));
-      } else if (err?.message?.includes('Password must be between 8 and 256 characters') || 
+      } else if (err?.message?.includes('Password must be between 8 and 256 characters') ||
                  err?.message?.includes('Invalid `password` param: Password must be between 8 and 256 characters long')) {
-        setError(t('auth.passwordTooShort'));
+        // 登入時不顯示密碼長度限制（會誤導使用 8-11 字元舊密碼的用戶），一律當作帳密錯誤；註冊時才提示長度
+        setError(isSignUp ? t('auth.passwordTooShort') : t('auth.invalidCredentials'));
       } else if (err?.message?.includes('Rate limit') || 
                  err?.message?.includes('Too many requests') ||
                  err?.message?.includes('Rate limit for the current endpoint has been exceeded')) {

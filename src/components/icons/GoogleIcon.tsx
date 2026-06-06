@@ -1,4 +1,5 @@
 import React from 'react';
+import { GOOGLE_ICON_DATA_URI } from './googleIconData';
 
 interface GoogleIconProps {
   className?: string;
@@ -40,7 +41,7 @@ export function GoogleIcon({ className = '', size = 20, variant = 'color' }: Goo
   // For color variant, use the new gradient Google icon matching your provided image
   return (
     <img
-      src="/Google_Favicon_2025.svg.png"
+      src={GOOGLE_ICON_DATA_URI}
       alt="Google"
       width={size}
       height={size}
