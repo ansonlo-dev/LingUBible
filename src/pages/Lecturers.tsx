@@ -1652,8 +1652,8 @@ const Lecturers = () => {
               {/* Desktop/Tablet: Instructor name and buttons in same row */}
               <div className="hidden md:flex md:items-center md:justify-between md:gap-4 mb-4">
                 <div className="min-w-0 flex-1 overflow-hidden">
-                  <CardTitle className="text-2xl truncate flex items-center gap-2">
-                    <GraduationCap className="h-7 w-7 text-primary" />
+                  <CardTitle className="text-2xl flex items-start gap-2 break-words">
+                    <GraduationCap className="h-7 w-7 text-primary shrink-0 mt-0.5" />
                     {(() => {
                       const formattedName = getFormattedInstructorName({
                         name: instructor.name,
@@ -1710,8 +1710,8 @@ const Lecturers = () => {
               {/* Mobile: Instructor name separate from buttons */}
               <div className="md:hidden mb-4">
                 <div className="mb-3">
-                  <CardTitle className="text-2xl truncate flex items-center gap-2">
-                    <GraduationCap className="h-7 w-7 text-primary" />
+                  <CardTitle className="text-2xl flex items-start gap-2 break-words">
+                    <GraduationCap className="h-7 w-7 text-primary shrink-0 mt-0.5" />
                     {(() => {
                       const formattedName = getFormattedInstructorName({
                         name: instructor.name,
@@ -1828,6 +1828,28 @@ const Lecturers = () => {
                     </span>
                   </Badge>
                 </ResponsiveTooltip>
+                {/* Current Staff Badge */}
+                {instructor.is_current_staff !== undefined && instructor.is_current_staff !== null && (
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${
+                      instructor.is_current_staff
+                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                        : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {instructor.is_current_staff ? (
+                        <UserCheck className="h-3 w-3" />
+                      ) : (
+                        <UserX className="h-3 w-3" />
+                      )}
+                      <span>
+                        {instructor.is_current_staff ? t('staff.current') : t('staff.former')}
+                      </span>
+                    </div>
+                  </Badge>
+                )}
                 {/* Current Term Teaching Badge */}
                 {isTeachingInCurrentTerm !== null && (
                   <Badge
@@ -1847,28 +1869,6 @@ const Lecturers = () => {
                       )}
                       <span>
                         {isTeachingInCurrentTerm ? t('teaching.yes') : t('teaching.no')} ({currentTermName})
-                      </span>
-                    </div>
-                  </Badge>
-                )}
-                {/* Current Staff Badge */}
-                {instructor.is_current_staff !== undefined && instructor.is_current_staff !== null && (
-                  <Badge
-                    variant="outline"
-                    className={`text-xs ${
-                      instructor.is_current_staff
-                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-                        : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      {instructor.is_current_staff ? (
-                        <UserCheck className="h-3 w-3" />
-                      ) : (
-                        <UserX className="h-3 w-3" />
-                      )}
-                      <span>
-                        {instructor.is_current_staff ? t('staff.current') : t('staff.former')}
                       </span>
                     </div>
                   </Badge>
