@@ -432,6 +432,10 @@ export default {
   'pagination.previous': '上一頁',
   'pagination.next': '下一頁',
   'pagination.last': '末頁',
+  'pagination.firstTooltip': '首頁（Home 鍵）',
+  'pagination.previousTooltip': '上一頁（← 鍵）',
+  'pagination.nextTooltip': '下一頁（→ 鍵）',
+  'pagination.lastTooltip': '末頁（End 鍵）',
   'pagination.foundCourses': '找到 {count} 個課程',
   'pagination.foundInstructors': '找到 {count} 位講師',
   // Review filters

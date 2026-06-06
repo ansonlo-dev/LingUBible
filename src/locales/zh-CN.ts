@@ -433,6 +433,10 @@ export default {
   'pagination.previous': '上一页',
   'pagination.next': '下一页',
   'pagination.last': '末页',
+  'pagination.firstTooltip': '首页（Home 键）',
+  'pagination.previousTooltip': '上一页（← 键）',
+  'pagination.nextTooltip': '下一页（→ 键）',
+  'pagination.lastTooltip': '末页（End 键）',
   'pagination.foundCourses': '找到 {count} 个课程',
   'pagination.foundInstructors': '找到 {count} 位讲师',
   // Review filters
@@ -807,6 +811,7 @@ export default {
   'filter.clickToFilterBySessionType': '点击以依课堂类型筛选：{type}',
   'filter.clickToFilterByGrade': '点击以依成绩筛选：{grade}',
   'filter.clickToFilterServiceLearning': '点击以依服务学习筛选：{type}',
+  'filter.allServiceLearning': '所有服务学习',
   'filter.clickToFilterByServiceLearning': '点击以依服务学习筛选：{type}',
   'filter.clickAgainToApplyFilter': '再次点击以应用筛选',
   'filter.courseRequirements': '课程要求筛选器',

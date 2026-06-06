@@ -431,6 +431,10 @@ export default {
   'pagination.previous': 'Previous',
   'pagination.next': 'Next',
   'pagination.last': 'Last',
+  'pagination.firstTooltip': 'First page (Home)',
+  'pagination.previousTooltip': 'Previous page (←)',
+  'pagination.nextTooltip': 'Next page (→)',
+  'pagination.lastTooltip': 'Last page (End)',
   'pagination.foundCourses': 'Found {count} course|courses',
   'pagination.foundInstructors': 'Found {count} instructor|instructors',
   // Review filters
