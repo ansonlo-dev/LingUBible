@@ -514,6 +514,15 @@ export default {
   'pages.courseDetail.examPapersLoadFailed': '无法加载历届试题',
   'pages.courseDetail.examPaperTermFallback': '历届试题',
   'pages.courseDetail.examPaperViewFile': '查看',
+  'pages.courseDetail.studyMaterials': '学习资料',
+  'pages.courseDetail.studyMaterialsShort': '资料',
+  'pages.courseDetail.studyMaterialsSignUpTitle': '注册以查看学习资料',
+  'pages.courseDetail.studyMaterialsSignUpDescription': '学习资料属受限资源，仅供已验证的岭南大学学生查看。请使用您的岭南电邮注册以获取访问权限。',
+  'pages.courseDetail.noStudyMaterials': '暂无学习资料',
+  'pages.courseDetail.studyMaterialsLoadFailed': '无法加载学习资料',
+  'pages.courseDetail.studyMaterialTermFallback': '学习资料',
+  'pages.courseDetail.studyMaterialsNoMatch': '没有符合当前筛选条件的学习资料',
+  'pages.courseDetail.studyMaterialsDownloadFailed': '下载学习资料失败，请再试一次。',
 
   // 内置 PDF 查看器
   'components.pdfViewer.title': '文档',

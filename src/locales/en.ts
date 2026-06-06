@@ -513,6 +513,15 @@ export default {
   'pages.courseDetail.examPapersLoadFailed': 'Failed to load past exam papers',
   'pages.courseDetail.examPaperTermFallback': 'Past Exam Paper',
   'pages.courseDetail.examPaperViewFile': 'View',
+  'pages.courseDetail.studyMaterials': 'Study Materials',
+  'pages.courseDetail.studyMaterialsShort': 'Materials',
+  'pages.courseDetail.studyMaterialsSignUpTitle': 'Sign up to view study materials',
+  'pages.courseDetail.studyMaterialsSignUpDescription': 'Study materials are restricted resources available only to verified Lingnan students. Sign up with your Lingnan email to access them.',
+  'pages.courseDetail.noStudyMaterials': 'No study materials available yet',
+  'pages.courseDetail.studyMaterialsLoadFailed': 'Failed to load study materials',
+  'pages.courseDetail.studyMaterialTermFallback': 'Study Material',
+  'pages.courseDetail.studyMaterialsNoMatch': 'No study materials match the current filter',
+  'pages.courseDetail.studyMaterialsDownloadFailed': 'Failed to download study materials. Please try again.',
 
   // In-app PDF viewer
   'components.pdfViewer.title': 'Document',
