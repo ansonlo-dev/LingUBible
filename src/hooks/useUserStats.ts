@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import AppwriteUserStatsService from "@/services/api/appwriteUserStats";
-import UserStatsService from "@/services/api/userStats";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UserStats {
@@ -95,7 +94,6 @@ export function useUserStats() {
   const instanceIdRef = useRef(++instanceCount);
 
   const appwriteUserStatsService = AppwriteUserStatsService.getInstance();
-  const localUserStatsService = UserStatsService.getInstance();
 
   // 檢查是否需要更新緩存
   const shouldUpdateCache = useCallback(() => {
@@ -147,19 +145,14 @@ export function useUserStats() {
     isCurrentlyFetching = true;
     
     try {
-      // 優先使用 Function 方法（更安全）
-      let globalStats;
-      try {
-        globalStats = await appwriteUserStatsService.getStatsViaFunction();
-        
-        // 保存原始後端數據
-        if (globalStats._backendData) {
-          globalBackendStatsCache = globalStats._backendData;
-        }
-      } catch (error) {
-        globalStats = await appwriteUserStatsService.getStats();
+      // 透過 Function 方法獲取註冊用戶統計
+      const globalStats = await appwriteUserStatsService.getStatsViaFunction();
+
+      // 保存原始後端數據
+      if (globalStats._backendData) {
+        globalBackendStatsCache = globalStats._backendData;
       }
-      
+
       // 更新全局緩存
       globalStatsCache = globalStats;
       lastFetchTime = Date.now();
@@ -205,44 +198,6 @@ export function useUserStats() {
       isCurrentlyFetching = false;
     }
   }, [appwriteUserStatsService, shouldUpdateCache]);
-
-  // 用戶登入
-  const handleUserLogin = useCallback(async (userId: string): Promise<string> => {
-    try {
-      const sessionId = await appwriteUserStatsService.userLogin(userId);
-      // 登入後強制更新統計（生產環境）
-      if (!isDevelopment) {
-        await updateStats(true);
-      }
-      return sessionId;
-    } catch (error) {
-      console.error('用戶登入失敗:', error);
-      throw error;
-    }
-  }, [appwriteUserStatsService, updateStats]);
-
-  // 用戶登出
-  const handleUserLogout = useCallback(async (sessionId: string) => {
-    try {
-      await appwriteUserStatsService.userLogout(sessionId);
-      // 登出後強制更新統計（生產環境）
-      if (!isDevelopment) {
-        await updateStats(true);
-      }
-    } catch (error) {
-      console.error('用戶登出失敗:', error);
-    }
-  }, [appwriteUserStatsService, updateStats]);
-
-  // 發送 ping
-  const sendPing = useCallback(async (sessionId?: string) => {
-    try {
-      return await appwriteUserStatsService.sendPing(sessionId);
-    } catch (error) {
-      console.error('發送 ping 失敗:', error);
-      return false;
-    }
-  }, [appwriteUserStatsService]);
 
   // 初始化和定期更新 - 使用單一全局定時器
   useEffect(() => {
@@ -305,9 +260,6 @@ export function useUserStats() {
     stats,
     backendStats: globalBackendStatsCache, // 添加原始後端數據
     isLoading,
-    updateStats: (force = false) => updateStats(force, true),
-    userLogin: handleUserLogin,
-    userLogout: handleUserLogout,
-    sendPing
+    updateStats: (force = false) => updateStats(force, true)
   };
 } 
