@@ -466,9 +466,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             </Button>
           </div>
         ) : loading || !blobUrl || !ready ? (
-          <div className="h-full w-full" />
+          <PdfViewerLoading label={t('components.pdfViewer.loading')} />
         ) : (
-          <Suspense fallback={<div className="h-full w-full" />}>
+          <Suspense fallback={<PdfViewerLoading label={t('components.pdfViewer.loading')} />}>
             <EmbedPdfViewer
               key={`${themePreference}-${viewerLocale}`}
               src={blobUrl}
