@@ -510,8 +510,14 @@ export function getFormattedInstructorName(
   let primary = englishTitle ? `${englishTitle} ${instructor.name}` : instructor.name;
 
   // 所有語言模式：在英文名字後加上 ", 暱稱"
+  // 若暱稱已包含在英文姓名中（例如 "LAU Tsz Chun Marco" + 暱稱 "Marco"），則避免重複顯示
   if (instructor.nickname) {
-    primary = `${primary}, ${instructor.nickname}`;
+    const nicknameLower = instructor.nickname.trim().toLowerCase();
+    const nameWords = instructor.name.toLowerCase().split(/\s+/);
+    const nicknameAlreadyInName = nameWords.includes(nicknameLower);
+    if (!nicknameAlreadyInName) {
+      primary = `${primary}, ${instructor.nickname}`;
+    }
   }
 
   // 副標題：根據界面語言顯示對應的中文姓名+中文頭銜
