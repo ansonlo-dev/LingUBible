@@ -27,6 +27,58 @@ export function Pagination({
 
   // 即使只有一頁也顯示分頁信息
 
+  // 鍵盤快捷鍵：← 上一頁、→ 下一頁、Home 首頁、End 末頁
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 忽略修飾鍵組合（避免與瀏覽器／系統快捷鍵衝突）
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+
+      // 忽略在輸入元素中的按鍵
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (
+          tag === 'INPUT' ||
+          tag === 'TEXTAREA' ||
+          tag === 'SELECT' ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          if (currentPage > 1) {
+            e.preventDefault();
+            onPageChange(currentPage - 1);
+          }
+          break;
+        case 'ArrowRight':
+          if (currentPage < totalPages) {
+            e.preventDefault();
+            onPageChange(currentPage + 1);
+          }
+          break;
+        case 'Home':
+          if (currentPage !== 1) {
+            e.preventDefault();
+            onPageChange(1);
+          }
+          break;
+        case 'End':
+          if (currentPage !== totalPages) {
+            e.preventDefault();
+            onPageChange(totalPages);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, totalPages, onPageChange]);
+
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
