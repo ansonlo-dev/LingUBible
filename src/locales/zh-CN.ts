@@ -1951,15 +1951,16 @@ export default {
   // 研究生院
   'department.graduateStudies': '研究生院',
   // 跨学科学院
-  'department.sis': '跨学科学院',
+  'department.sis': '伍絜宜跨学科学院',
   'department.scienceUnit': '科学教研组',
   'department.musicUnit': '黄炳礼音乐及演艺部',
   // 研究所、中心及课程
   'department.apias': '亚太老年学研究中心',
+  'department.ccrd': '文化研究及发展中心',
   'department.ips': '政策研究院',
   // 单位及办事处
+  'department.cital': '教学创新中心',
   'department.osl': '服务研习处',
-  'department.tlc': '教与学中心',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 学院与学系

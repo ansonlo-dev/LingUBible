@@ -263,8 +263,8 @@ export function AdvancedInstructorFilters({
       'School of Interdisciplinary Studies': {
         icon: GraduationCap,
         departments: [
+          'DoS',
           'SIS',
-          'SU',
           'WBLMP'
         ]
       },
@@ -272,6 +272,7 @@ export function AdvancedInstructorFilters({
         icon: School,
         departments: [
           'APIAS',
+          'CCRD',
           'IPS'
         ]
       },
@@ -279,7 +280,7 @@ export function AdvancedInstructorFilters({
         icon: School,
         departments: [
           'OSL',
-          'TLC'
+          'CITAL'
         ]
       },
       'Other': {

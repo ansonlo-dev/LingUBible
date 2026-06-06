@@ -1892,15 +1892,16 @@ export default {
   // 研究生院
   'department.graduateStudies': '研究生院',
   // 跨學科學院
-  'department.sis': '跨學科學院',
+  'department.sis': '伍絜宜跨學科學院',
   'department.scienceUnit': '科學教研組',
   'department.musicUnit': '黃炳禮音樂及演藝部',
   // 研究所、中心及課程
   'department.apias': '亞太老年學研究中心',
+  'department.ccrd': '文化研究及發展中心',
   'department.ips': '政策研究院',
   // 單位及辦事處
+  'department.cital': '教學創新中心',
   'department.osl': '服務研習處',
-  'department.tlc': '教與學中心',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 學院與學系

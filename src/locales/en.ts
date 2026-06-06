@@ -1942,15 +1942,16 @@ export default {
   // School of Graduate Studies
   'department.graduateStudies': 'School of Graduate Studies',
   // School of Interdisciplinary Studies
-  'department.sis': 'School of Interdisciplinary Studies',
-  'department.scienceUnit': 'Science Unit',
+  'department.sis': 'Wu Jieh Yee School of Interdisciplinary Studies',
+  'department.scienceUnit': 'Division of Science',
   'department.musicUnit': 'Wong Bing Lai Music and Performing Arts Unit',
   // Research Institutes, Centres and Programmes
   'department.apias': 'Asia-Pacific Institute of Ageing Studies',
+  'department.ccrd': 'Centre for Cultural Research and Development',
   'department.ips': 'Institute of Policy Studies',
   // Units and Offices
+  'department.cital': 'Centre for Innovative Teaching and Learning',
   'department.osl': 'Office of Service-Learning',
-  'department.tlc': 'Teaching and Learning Centre',
 
   // Mobile-specific department names (shorter versions)
   // Affiliated Units
@@ -1991,14 +1992,15 @@ export default {
   'departmentMobile.graduateStudies': 'Graduate Studies',
   // School of Interdisciplinary Studies
   'departmentMobile.sis': 'SIS',
-  'departmentMobile.scienceUnit': 'Science Unit',
+  'departmentMobile.scienceUnit': 'Division of Science',
   'departmentMobile.musicUnit': 'Music Unit',
   // Research Institutes
   'departmentMobile.apias': 'APIAS',
+  'departmentMobile.ccrd': 'CCRD',
   'departmentMobile.ips': 'IPS',
   // Units and Offices
   'departmentMobile.osl': 'OSL',
-  'departmentMobile.tlc': 'TLC',
+  'departmentMobile.tlc': 'CITAL',
 
   // =============================================================================
   // 11. FACULTIES AND SCHOOLS - 學院與學系

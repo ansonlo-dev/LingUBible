@@ -302,16 +302,17 @@ const translateSingleDepartment = (department: string, t: any, showAbbreviation:
     
     // School of Interdisciplinary Studies
     'SIS': t('department.sis'),
-    'SU': t('department.scienceUnit'),
+    'DoS': t('department.scienceUnit'),
     'WBLMP': t('department.musicUnit'),
     
     // Research Institutes, Centres and Programmes
     'APIAS': t('department.apias'),
+    'CCRD': t('department.ccrd'),
     'IPS': t('department.ips'),
     
     // Units and Offices
+    'CITAL': t('department.cital'),
     'OSL': t('department.osl'),
-    'TLC': t('department.tlc'),
     
     // Default fallback
     default: department
@@ -376,15 +377,16 @@ export const getFacultiesForMultiDepartment = (department: string): string[] => 
     // School of Graduate Studies
     'GS': 'faculty.graduateStudies',
     // School of Interdisciplinary Studies
+    'DoS': 'faculty.interdisciplinaryStudies',
     'SIS': 'faculty.interdisciplinaryStudies',
-    'SU': 'faculty.interdisciplinaryStudies',
     'WBLMP': 'faculty.interdisciplinaryStudies',
     // Research Institutes, Centres and Programmes
     'APIAS': 'faculty.researchInstitutes',
+    'CCRD': 'faculty.researchInstitutes',
     'IPS': 'faculty.researchInstitutes',
     // Units and Offices
     'OSL': 'faculty.unitsOffices',
-    'TLC': 'faculty.unitsOffices'
+    'CITAL': 'faculty.unitsOffices'
   };
 
   // Get unique faculties

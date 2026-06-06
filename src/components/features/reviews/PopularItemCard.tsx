@@ -371,15 +371,16 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       // School of Graduate Studies
       'GS': 'faculty.graduateStudies',
       // School of Interdisciplinary Studies
+      'DoS': 'faculty.interdisciplinaryStudies',
       'SIS': 'faculty.interdisciplinaryStudies',
-      'SU': 'faculty.interdisciplinaryStudies',
       'WBLMP': 'faculty.interdisciplinaryStudies',
       // Research Institutes, Centres and Programmes
       'APIAS': 'faculty.researchInstitutes',
+      'CCRD': 'faculty.researchInstitutes',
       'IPS': 'faculty.researchInstitutes',
       // Units and Offices
       'OSL': 'faculty.unitsOffices',
-      'TLC': 'faculty.unitsOffices'
+      'CITAL': 'faculty.unitsOffices'
     };
     
     return facultyMapping[rawDepartment] || '';
@@ -394,7 +395,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       'Chinese Language Education and Assessment Centre', 'Accountancy', 'Finance', 
       'Management', 'Marketing and International Business', 'Operations and Risk Management',
       'Psychology', 'Economics', 'Government and International Affairs', 
-      'Sociology and Social Policy', 'Science Unit',
+      'Sociology and Social Policy', 'Division of Science',
       'Wong Bing Lai Music and Performing Arts Unit', 'LEO Dr David P. Chan Institute of Data Science'
     ];
     
@@ -423,7 +424,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       'Department of Economics': 'Economics',
       'Department of Government and International Affairs': 'Government and International Affairs',
       'Department of Sociology and Social Policy': 'Sociology and Social Policy',
-      'Science Unit': 'Science Unit',
+      'Division of Science': 'Division of Science',
       'Wong Bing Lai Music and Performing Arts Unit': 'Wong Bing Lai Music and Performing Arts Unit',
       'LEO Dr David P. Chan Institute of Data Science': 'LEO Dr David P. Chan Institute of Data Science',
       
@@ -446,7 +447,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       '經濟學系': 'Economics',
       '政府與國際事務學系': 'Government and International Affairs',
       '社會學及社會政策系': 'Sociology and Social Policy',
-      '科學教研組': 'Science Unit',
+      '科學教研組': 'Division of Science',
       '黃炳禮音樂及演藝部': 'Wong Bing Lai Music and Performing Arts Unit',
       '嶺南教育機構陳斌博士數據科學研究所': 'LEO Dr David P. Chan Institute of Data Science',
       
@@ -466,7 +467,7 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
       '经济学系': 'Economics',
       '政府与国际事务学系': 'Government and International Affairs',
       '社会学及社会政策系': 'Sociology and Social Policy',
-      '科学教研组': 'Science Unit',
+      '科学教研组': 'Division of Science',
       '黄炳礼音乐及演艺部': 'Wong Bing Lai Music and Performing Arts Unit',
       '岭南教育机构陈斌博士数据科学研究所': 'LEO Dr David P. Chan Institute of Data Science'
     };
