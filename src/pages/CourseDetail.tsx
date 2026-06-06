@@ -100,7 +100,7 @@ const getFacultyByDepartment = (department: string): string => {
     'GS': 'faculty.graduateStudies',
     // School of Interdisciplinary Studies
     'DoS': 'faculty.interdisciplinaryStudies',
-    'SIS': 'faculty.interdisciplinaryStudies',
+    'WJYSIS': 'faculty.interdisciplinaryStudies',
     'WBLMP': 'faculty.interdisciplinaryStudies',
     // Research Institutes, Centres and Programmes
     'APIAS': 'faculty.researchInstitutes',

@@ -2004,7 +2004,7 @@ export default {
   // School of Graduate Studies
   'departmentMobile.graduateStudies': 'Graduate Studies',
   // School of Interdisciplinary Studies
-  'departmentMobile.sis': 'SIS',
+  'departmentMobile.sis': 'WJYSIS',
   'departmentMobile.scienceUnit': 'Division of Science',
   'departmentMobile.musicUnit': 'Music Unit',
   // Research Institutes

@@ -266,7 +266,7 @@ export function AdvancedInstructorFilters({
         icon: GraduationCap,
         departments: [
           'DoS',
-          'SIS',
+          'WJYSIS',
           'WBLMP'
         ]
       },

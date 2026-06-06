@@ -135,7 +135,7 @@ const getFacultyByDepartment = (department: string): string => {
     // School of Graduate Studies
     'GS': 'faculty.graduateStudies',
     // School of Interdisciplinary Studies
-    'SIS': 'faculty.interdisciplinaryStudies',
+    'WJYSIS': 'faculty.interdisciplinaryStudies',
     'DoS': 'faculty.interdisciplinaryStudies',
     'WBLMP': 'faculty.interdisciplinaryStudies',
     // Research Institutes, Centres and Programmes
@@ -842,7 +842,7 @@ const Lecturers = () => {
       // School of Graduate Studies
       'faculty.graduateStudies': ['GS'],
       // School of Interdisciplinary Studies
-      'faculty.interdisciplinaryStudies': ['DoS', 'SIS', 'WBLMP'],
+      'faculty.interdisciplinaryStudies': ['DoS', 'WJYSIS', 'WBLMP'],
       // Research Institutes, Centres and Programmes
       'faculty.researchInstitutes': ['APIAS', 'IPS'],
       // Units and Offices

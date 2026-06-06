@@ -301,7 +301,7 @@ const translateSingleDepartment = (department: string, t: any, showAbbreviation:
     'GS': t('department.graduateStudies'),
     
     // School of Interdisciplinary Studies
-    'SIS': t('department.sis'),
+    'WJYSIS': t('department.sis'),
     'DoS': t('department.scienceUnit'),
     'WBLMP': t('department.musicUnit'),
     
@@ -379,7 +379,7 @@ export const getFacultiesForMultiDepartment = (department: string): string[] => 
     'GS': 'faculty.graduateStudies',
     // School of Interdisciplinary Studies
     'DoS': 'faculty.interdisciplinaryStudies',
-    'SIS': 'faculty.interdisciplinaryStudies',
+    'WJYSIS': 'faculty.interdisciplinaryStudies',
     'WBLMP': 'faculty.interdisciplinaryStudies',
     // Research Institutes, Centres and Programmes
     'APIAS': 'faculty.researchInstitutes',
