@@ -16,6 +16,24 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  // Only intercept same-origin GET requests. We deliberately DON'T touch:
+  //  - non-GET requests,
+  //  - cross-origin requests (e.g. Appwrite, embedded audio on gochi.ln.edu.hk),
+  //  - range requests (media streaming).
+  // Re-issuing a cross-origin media *range* request from inside the SW
+  // (event.respondWith(fetch(req))) makes <audio>/<video> fail with a
+  // "network error response: the promise was rejected". By returning without
+  // calling respondWith, the browser handles those itself (native range /
+  // streaming), which is exactly what media playback needs. The handler still
+  // exists, so PWA installability is unaffected.
+  if (
+    req.method !== 'GET' ||
+    new URL(req.url).origin !== self.location.origin ||
+    req.headers.has('range')
+  ) {
+    return;
+  }
   // Pass-through: no caching, no offline support.
-  event.respondWith(fetch(event.request));
+  event.respondWith(fetch(req));
 });
