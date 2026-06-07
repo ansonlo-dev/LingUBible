@@ -53,11 +53,15 @@ interface InlineAudioPlayerProps {
  * (`bg-background`, `text-foreground`, …) so it adapts to light/dark and stays
  * legible over the page via a solid border + shadow.
  */
+// Playback speeds the speed button cycles through (in order).
+const AUDIO_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
 const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [rate, setRate] = useState(1);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -82,11 +86,19 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
     };
   }, []);
 
+  // Keep the media element's rate in sync with our state (also re-applies after
+  // a source swap, since playbackRate resets to 1 on load).
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = rate;
+  }, [rate, src]);
+
   const toggle = () => {
     const el = audioRef.current;
     if (!el) return;
     if (el.paused) el.play().catch(() => {}); else el.pause();
   };
+  const cycleRate = () =>
+    setRate((prev) => AUDIO_RATES[(AUDIO_RATES.indexOf(prev) + 1) % AUDIO_RATES.length] ?? 1);
   const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const el = audioRef.current;
     if (!el) return;
@@ -96,7 +108,7 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
   };
 
   return (
-    <div className="flex items-center gap-1.5 rounded-full border border-border bg-background/95 py-1.5 pl-1.5 pr-2 shadow-lg backdrop-blur-sm">
+    <div className="flex items-center gap-1.5 rounded-full border border-border bg-background py-1.5 pl-1.5 pr-2 shadow-lg">
       {/* Native element drives playback but is visually hidden. */}
       <audio ref={audioRef} src={src} autoPlay aria-label={t('components.pdfViewer.audio')} className="hidden" />
       <Button
@@ -120,6 +132,17 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
         className="w-28 cursor-pointer accent-primary sm:w-40"
       />
       <span className="w-9 text-xs tabular-nums text-foreground/70">{formatAudioTime(duration)}</span>
+      {/* Playback speed — cycles 0.5×→2×→… on each tap. */}
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-8 w-11 shrink-0 rounded-full px-0 text-xs font-medium tabular-nums text-foreground hover:bg-accent"
+        onClick={cycleRate}
+        aria-label={t('components.pdfViewer.playbackSpeed')}
+        title={t('components.pdfViewer.playbackSpeed')}
+      >
+        {rate}×
+      </Button>
       <Button
         size="icon"
         variant="ghost"
