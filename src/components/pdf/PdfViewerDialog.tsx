@@ -560,7 +560,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Theme/locale are only read by embedpdf at init, so we remount the viewer
   // (via `key`) when they change. Reset the ready flag so the first-paint nudge
   // re-runs against the freshly mounted instance.
-  useEffect(() => { setViewerReady(false); setRestoring(true); registryRef.current = null; shadowRootRef.current = null; }, [themePreference, viewerLocale]);
+  useEffect(() => { setViewerReady(false); setRestoring(persistState); registryRef.current = null; shadowRootRef.current = null; }, [themePreference, viewerLocale, persistState]);
 
   // Lock background scrolling while open. On desktop we intentionally do NOT
   // wire Esc-to-close: it's too easy to hit while editing/annotating and lose
@@ -570,7 +570,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     if (!open) { setReady(false); setViewerReady(false); setRestoring(false); setAudio(null); setAudioPos(null); return; }
     // Cover the viewer with the "restoring…" notice from the moment it opens; the
     // zoom/page-restore effect clears it once the saved position is in place.
-    setRestoring(true);
+    // Skip it entirely when we're not persisting (syllabus / exam papers): there's
+    // nothing to restore, so the document just opens clean at page 1.
+    setRestoring(persistState);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const id = setTimeout(() => setReady(true), 50);
@@ -578,7 +580,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       document.body.style.overflow = prevOverflow;
       clearTimeout(id);
     };
-  }, [open]);
+  }, [open, persistState]);
 
   // Push a history entry when the dialog opens so the mobile back gesture closes
   // the PDF instead of navigating away from the page that triggered it.
