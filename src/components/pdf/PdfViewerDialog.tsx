@@ -507,6 +507,16 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Tracks whether we pushed a history entry for this open. Used to clean it
   // up if the dialog closes via a means other than the back gesture.
   const pushedHistoryRef = useRef(false);
+  // Always holds the latest onOpenChange so the history effect can call it
+  // without listing onOpenChange in its deps. The parent (CourseDetail) passes
+  // an inline arrow, so onOpenChange is a fresh reference on every render; if
+  // the effect depended on it, any parent re-render (e.g. the viewport resize
+  // when the mobile soft keyboard opens to edit the page number) would tear the
+  // effect down — firing history.back() in cleanup — and re-run it, and that
+  // back() then fires a popstate that closes the dialog. Keeping it in a ref
+  // pins the effect to [open] only.
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -593,7 +603,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     pushedHistoryRef.current = true;
     const onPopState = () => {
       pushedHistoryRef.current = false;
-      onOpenChange(false);
+      onOpenChangeRef.current(false);
     };
     window.addEventListener('popstate', onPopState);
     return () => {
@@ -603,7 +613,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
         history.back();
       }
     };
-  }, [open, onOpenChange]);
+    // Depends on `open` only — see onOpenChangeRef above for why onOpenChange
+    // must not be a dependency (its identity changes every parent render).
+  }, [open]);
 
   // The drop-in viewer's <div> only paints its pages when its internal
   // ResizeObserver reports a container size change. Its very first measurement
