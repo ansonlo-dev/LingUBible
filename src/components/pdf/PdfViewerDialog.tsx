@@ -168,7 +168,7 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, po
   }, [rate, src]);
 
   // Desktop keyboard shortcuts (YouTube-style): ">" speeds up, "<" slows down
-  // (stepping through the same rates as the speed menu), and "P" toggles
+  // (stepping through the same rates as the speed menu), and "k" toggles
   // play/pause. Active only while the player is mounted (i.e. a clip is playing).
   // Ignored when typing in a field.
   useEffect(() => {
@@ -176,7 +176,7 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, po
     const sorted = [...AUDIO_RATES].sort((a, b) => a - b); // ascending
     const onKey = (e: KeyboardEvent) => {
       const isSpeed = e.key === '>' || e.key === '<';
-      const isPlay = e.key === 'p' || e.key === 'P';
+      const isPlay = e.key === 'k' || e.key === 'K';
       if (!isSpeed && !isPlay) return;
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
