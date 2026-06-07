@@ -776,10 +776,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
           </Tooltip>
         </div>
         {/* Inline audio player — appears when an in-document audio link is
-            tapped, pinned bottom-centre so playback continues while reading. */}
+            tapped. Pinned to the bottom-LEFT (not centre) so it doesn't overlap
+            embedpdf's centred page-control bar, letting the user keep reading
+            and paging while listening. */}
         {audio && (
           <div
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-background/95 px-3 py-2 shadow-lg ring-1 ring-border/60 backdrop-blur-sm"
+            className="absolute bottom-3 left-3 flex items-center gap-2"
             style={{ zIndex: 15, maxWidth: 'calc(100% - 24px)' }}
           >
             <audio
@@ -791,10 +793,13 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               className="h-9"
               style={{ maxWidth: 'min(70vw, 360px)' }}
             />
+            {/* Close button carries its own solid background + explicit
+                foreground colour so it stays visible in both light and dark
+                themes (ghost-on-transparent was invisible in light mode). */}
             <Button
               size="icon"
-              variant="ghost"
-              className="h-9 w-9 shrink-0"
+              variant="secondary"
+              className="h-9 w-9 shrink-0 rounded-full bg-background text-foreground shadow-lg ring-1 ring-border/60 hover:bg-accent"
               onClick={() => setAudio(null)}
               aria-label={t('components.pdfViewer.closeAudio')}
             >
