@@ -40,6 +40,10 @@ const formatAudioTime = (s: number) => {
 interface InlineAudioPlayerProps {
   src: string;
   isMobile: boolean;
+  // Lifted to the parent so a dragged position survives the remount that
+  // happens (via `key`) when a new audio clip starts playing.
+  pos: { left: number; top: number } | null;
+  setPos: (pos: { left: number; top: number } | null) => void;
   onClose: () => void;
   t: (key: string) => string;
 }
@@ -65,7 +69,7 @@ const AUDIO_RATES = [2, 1.75, 1.5, 1.25, 1, 0.75, 0.5];
 // Shared hover tint that works regardless of the broken theme utilities.
 const AUDIO_BTN = 'shrink-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10';
 
-const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, onClose, t }) => {
+const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, pos, setPos, onClose, t }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const speedRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -75,10 +79,9 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, on
   const [duration, setDuration] = useState(0);
   const [rate, setRate] = useState(1);
   const [speedOpen, setSpeedOpen] = useState(false);
-  // null = use the device-aware default CSS position; once the user drags, we
-  // switch to explicit viewport coords (the overlay is fixed inset-0, so its
-  // offset-parent box matches the viewport).
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  // `pos` is lifted to the parent (see props): null = device-aware default CSS
+  // position; once dragged, explicit viewport coords (the overlay is fixed
+  // inset-0, so its offset-parent box matches the viewport).
   const [dragging, setDragging] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
   const dragState = useRef<{ startX: number; startY: number; left: number; top: number } | null>(null);
@@ -391,6 +394,9 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // while still reading the document (important inside the installed PWA). The
   // `key` forces the <audio> to remount + autoplay when the same link is reused.
   const [audio, setAudio] = useState<{ src: string; key: number } | null>(null);
+  // Dragged player position, kept here (not in the player) so it persists when
+  // a new clip remounts the player. Reset only when the viewer itself closes.
+  const [audioPos, setAudioPos] = useState<{ left: number; top: number } | null>(null);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
@@ -423,7 +429,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
 
   // Lock background scrolling and wire Esc-to-close while open.
   useEffect(() => {
-    if (!open) { setReady(false); setViewerReady(false); setAudio(null); return; }
+    if (!open) { setReady(false); setViewerReady(false); setAudio(null); setAudioPos(null); return; }
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
@@ -1053,6 +1059,8 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             key={audio.key}
             src={audio.src}
             isMobile={isMobile}
+            pos={audioPos}
+            setPos={setAudioPos}
             onClose={() => setAudio(null)}
             t={t}
           />
