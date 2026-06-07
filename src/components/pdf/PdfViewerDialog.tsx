@@ -29,6 +29,11 @@ const prefetchViewer = () => {
   }
 };
 
+// Per-document key for remembering the last-read page. The query string is
+// stripped so a refreshed Appwrite file token doesn't orphan the saved spot.
+const pageStorageKey = (s: string | null) =>
+  s ? `pdf-viewer-page:${s.split('?')[0]}` : null;
+
 // mm:ss formatter for the audio player timestamps.
 const formatAudioTime = (s: number) => {
   if (!isFinite(s) || s < 0) s = 0;
@@ -480,6 +485,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     const timers = [120, 350, 700, 1300, 2200].map((delay, i) =>
       setTimeout(() => { el.style.paddingRight = i % 2 === 0 ? '1px' : ''; }, delay),
     );
+    // Snapshot the saved page *before* any onPageChange fires, so the page-save
+    // effect (which writes page 1 during initial load) can't clobber the value
+    // we're about to restore to.
+    const key = pageStorageKey(src);
+    const savedPage = key ? parseInt(localStorage.getItem(key) || '', 10) : NaN;
+    let restoreTimer: ReturnType<typeof setTimeout> | undefined;
     // After the resize-nudges settle the container reaches its final dimensions,
     // then we re-request fit-width so the zoom is calculated against the correct
     // size (the defaultZoomLevel config is read at init, before the container is
@@ -487,13 +498,43 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     const zoomTimer = setTimeout(() => {
       const zoomCap = registryRef.current?.getPlugin?.('zoom')?.provides?.();
       zoomCap?.requestZoom?.('fit-width');
+      // Restore the last-read page only after the final fit-width layout is in
+      // place — scrolling earlier would land on the wrong pixel once the zoom
+      // shift relays out the pages.
+      if (savedPage > 1) {
+        restoreTimer = setTimeout(() => {
+          const scrollCap = registryRef.current?.getPlugin?.('scroll')?.provides?.();
+          if (!scrollCap?.scrollToPage) return;
+          const total = scrollCap.getTotalPages?.() ?? 0;
+          if (total === 0 || savedPage <= total) {
+            scrollCap.scrollToPage({ pageNumber: savedPage, behavior: 'auto' });
+          }
+        }, 150);
+      }
     }, 2600);
     return () => {
       timers.forEach(clearTimeout);
       clearTimeout(zoomTimer);
+      if (restoreTimer) clearTimeout(restoreTimer);
       if (el) el.style.paddingRight = '';
     };
-  }, [ready, blobUrl, error, viewerReady, isMobile]);
+  }, [ready, blobUrl, error, viewerReady, isMobile, src]);
+
+  // Remember the last-read page per document so reopening lands where the user
+  // left off. We persist on every page change; the restore (in the zoom effect)
+  // reads the value snapshotted before any change fires, so writing page 1
+  // during the initial load can't clobber the position we restore to.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error && viewerReady)) return;
+    const key = pageStorageKey(src);
+    if (!key) return;
+    const scrollCap = registryRef.current?.getPlugin?.('scroll')?.provides?.();
+    if (!scrollCap?.onPageChange) return;
+    const unsubscribe = scrollCap.onPageChange((e: any) => {
+      if (e?.pageNumber > 0) localStorage.setItem(key, String(e.pageNumber));
+    });
+    return () => unsubscribe?.();
+  }, [ready, blobUrl, error, viewerReady, src]);
 
   // When the viewer is ready, subscribe to document-opened events and open the
   // outline (bookmark) sidebar panel automatically when the PDF has bookmarks.
@@ -764,6 +805,18 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Ctrl+I / Cmd+I toggles colour inversion (desktop only — mobile uses the menu).
+  useEffect(() => {
+    if (!open || isMobile) return;
+    const onCtrlI = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'i') return;
+      e.preventDefault();
+      toggleInvertedRef.current();
+    };
+    window.addEventListener('keydown', onCtrlI);
+    return () => window.removeEventListener('keydown', onCtrlI);
+  }, [open, isMobile]);
+
   // Fetch (with credentials) whenever an opened dialog has a source. Revoke the
   // object URL on cleanup so we never leak blobs.
   useEffect(() => {
@@ -938,8 +991,10 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                   const documentMenu = schema?.menus?.['document-menu'];
                   if (documentMenu?.items) {
                     const filtered = (documentMenu.items as any[]).filter((item: any) =>
-                      item.id !== 'document:open' && item.id !== 'document:close' &&
-                      item.id !== 'divider-10' && item.id !== 'document:protect' &&
+                      // Keep the "import document" entry (and its divider) on
+                      // desktop; drop them on mobile to keep the menu compact.
+                      (item.id !== 'document:open' || !isMobile) && item.id !== 'document:close' &&
+                      (item.id !== 'divider-10' || !isMobile) && item.id !== 'document:protect' &&
                       (isMobile || item.id !== 'document:export') &&
                       // Hide the print button on mobile.
                       !(isMobile && item.id === 'document:print') &&
