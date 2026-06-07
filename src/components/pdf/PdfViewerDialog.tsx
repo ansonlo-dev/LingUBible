@@ -116,12 +116,6 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     open: boolean; fileName: string; buffer: ArrayBuffer | null; preparing: boolean;
   }>({ open: false, fileName: '', buffer: null, preparing: false });
 
-  // In-document audio links (e.g. pronunciation .mp3 buttons) play in a small
-  // inline player overlay instead of opening a new tab, so the user can listen
-  // while still reading the document (important inside the installed PWA). The
-  // `key` forces the <audio> to remount + autoplay when the same link is reused.
-  const [audio, setAudio] = useState<{ src: string; key: number } | null>(null);
-
   const bodyRef = useRef<HTMLDivElement>(null);
   // Holds the embedpdf PluginRegistry once the viewer fires onReady. Used to
   // re-request fit-width after the container is properly laid out.
@@ -153,7 +147,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
 
   // Lock background scrolling and wire Esc-to-close while open.
   useEffect(() => {
-    if (!open) { setReady(false); setViewerReady(false); setAudio(null); return; }
+    if (!open) { setReady(false); setViewerReady(false); return; }
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
@@ -321,17 +315,13 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       }
 
       if (link?.target) {
-        // If the link is a URI action pointing at an audio file, play it inline
-        // instead of letting the engine's autoOpenLinks handler open a new tab —
-        // that way the user can listen while still reading the document.
-        const action = link.target?.action;
-        const uri = typeof action?.uri === 'string' ? action.uri : null;
-        const isAudio = !!uri && /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus)(\?|#|$)/i.test(uri);
-        if (isAudio) {
-          setAudio({ src: uri!, key: Date.now() });
-        } else {
-          scope.navigateTarget(link.target);
-        }
+        // Destinations scroll in-document; URI links (incl. external audio such
+        // as the gochi.ln.edu.hk pronunciation .mp3 buttons) open in a new tab
+        // via the engine's autoOpenLinks handler. We can't play those inline —
+        // the LN media server sits behind Cloudflare bot protection that 403s
+        // any embedded/cross-origin request and sets CORP same-origin — so a
+        // top-level navigation (new tab) is the only thing that works.
+        scope.navigateTarget(link.target);
         scope.deselectAnnotation?.(); // dismiss the "Go to Link" toolbar
       }
     });
@@ -771,33 +761,6 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
             </TooltipContent>
           </Tooltip>
         </div>
-        {/* Inline audio player — appears when an in-document audio link is
-            tapped, pinned bottom-centre so playback continues while reading. */}
-        {audio && (
-          <div
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-background/95 px-3 py-2 shadow-lg ring-1 ring-border/60 backdrop-blur-sm"
-            style={{ zIndex: 15, maxWidth: 'calc(100% - 24px)' }}
-          >
-            <audio
-              key={audio.key}
-              src={audio.src}
-              controls
-              autoPlay
-              aria-label={t('components.pdfViewer.audio')}
-              className="h-9"
-              style={{ maxWidth: 'min(70vw, 360px)' }}
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-9 w-9 shrink-0"
-              onClick={() => setAudio(null)}
-              aria-label={t('components.pdfViewer.closeAudio')}
-            >
-              <X className="h-[18px] w-[18px]" />
-            </Button>
-          </div>
-        )}
         {/* Save dialog — shown on Ctrl+S or download button */}
         {saveDialog.open && (
           <div
