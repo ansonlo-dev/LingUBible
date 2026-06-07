@@ -167,6 +167,32 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, po
     if (audioRef.current) audioRef.current.playbackRate = rate;
   }, [rate, src]);
 
+  // Desktop keyboard shortcuts (YouTube-style): ">" speeds up, "<" slows down,
+  // stepping through the same rates as the speed menu. Active only while the
+  // player is mounted (i.e. a clip is playing). Ignored when typing in a field.
+  useEffect(() => {
+    if (isMobile) return;
+    const sorted = [...AUDIO_RATES].sort((a, b) => a - b); // ascending
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '>' && e.key !== '<') return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      e.preventDefault();
+      const dir = e.key === '>' ? 1 : -1;
+      setRate((prev) => {
+        // Snap to the nearest known rate if prev isn't on the list (defensive).
+        let i = sorted.indexOf(prev);
+        if (i === -1) {
+          i = sorted.reduce((best, r, idx) =>
+            Math.abs(r - prev) < Math.abs(sorted[best] - prev) ? idx : best, 0);
+        }
+        return sorted[Math.min(sorted.length - 1, Math.max(0, i + dir))];
+      });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isMobile]);
+
   // Close the speed menu on any outside pointer-down.
   useEffect(() => {
     if (!speedOpen) return;
