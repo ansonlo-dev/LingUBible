@@ -894,6 +894,25 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     shadow.appendChild(styleEl);
   }, [viewerReady]);
 
+  // Desktop: the page-control bar is now an inline toolbar item (componentId
+  // "page-controls"). That component is built for the floating bottom overlay —
+  // it fades to opacity-0 at rest (only showing on scroll/hover) and wears a
+  // bordered/shadowed pill. Inside the toolbar we want it always visible and
+  // visually flush, so we override those styles via the shadow root.
+  useEffect(() => {
+    if (isMobile || !viewerReady || !shadowRootRef.current) return;
+    const shadow = shadowRootRef.current;
+    const STYLE_ID = 'pdf-inline-page-controls';
+    if (shadow.querySelector(`#${STYLE_ID}`)) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = STYLE_ID;
+    styleEl.textContent =
+      '[data-epdf-i="page-controls-inline"] [class*="transition-opacity"] {' +
+      'opacity: 1 !important; border: none !important; box-shadow: none !important;' +
+      'background: transparent !important; padding: 0 !important; }';
+    shadow.appendChild(styleEl);
+  }, [viewerReady, isMobile]);
+
   // Replace the hardcoded "Initializing plugins..." text in the embedpdf shadow root
   // with the translated equivalent. The text appears before onReady fires, so we use
   // rAF to find the shadow root as early as possible, then a MutationObserver to catch
@@ -1096,11 +1115,23 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                             { type: 'divider', id: 'search-panel-divider', orientation: 'vertical' },
                             { type: 'command-button', id: 'search-button', commandId: 'panel:toggle-search', variant: 'icon', categories: ['panel', 'panel-search'] },
                             { type: 'command-button', id: 'comment-button', commandId: 'panel:toggle-comment', variant: 'icon', categories: ['panel', 'panel-comment'] },
+                            // Desktop only: bring the page-control bar up from the
+                            // bottom overlay into the toolbar, right of the comment
+                            // icon, separated by a vertical divider. (The floating
+                            // bottom overlay is disabled below; mobile keeps it.)
+                            ...(!isMobile ? [
+                              { type: 'divider', id: 'page-controls-divider', orientation: 'vertical' },
+                              { type: 'custom', id: 'page-controls-inline', componentId: 'page-controls' },
+                            ] : []),
                           ],
                         };
                       }
                       if (item.id === 'right-group') {
                         return { ...item, items: [] };
+                      }
+                      // Drop the unused "Redact" mode tab.
+                      if (item.id === 'mode-tabs' && Array.isArray(item.tabs)) {
+                        return { ...item, tabs: item.tabs.filter((tab: any) => tab.id !== 'redact-mode') };
                       }
                       return item;
                     });
@@ -1109,6 +1140,26 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                         'main-toolbar': { id: 'main-toolbar', position: mainToolbar.position, items } as any,
                       },
                     });
+                  }
+                  // Also drop "Redact" from the mode overflow menu (shown when the
+                  // mode tabs collapse into the mode-select button on narrow widths).
+                  const modeOverflow = schema?.menus?.['mode-tabs-overflow-menu'];
+                  if (modeOverflow?.items) {
+                    uiCap.mergeSchema?.({
+                      menus: {
+                        'mode-tabs-overflow-menu': {
+                          ...modeOverflow,
+                          items: (modeOverflow.items as any[]).filter(
+                            (it: any) => it.id !== 'mode:redact' && it.commandId !== 'mode:redact',
+                          ),
+                        } as any,
+                      },
+                    });
+                  }
+                  // Desktop: hide the floating bottom page-control overlay — it now
+                  // lives inline in the toolbar. Mobile keeps the bottom overlay.
+                  if (!isMobile) {
+                    try { uiCap.disableOverlay?.('page-controls'); } catch { /* noop */ }
                   }
                   // Register a custom invert-colors command (for mobile menu).
                   const commandsCap = (registry as any).getPlugin?.('commands')?.provides?.();
