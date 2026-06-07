@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { AlertCircle, Contrast, Download, ExternalLink, Loader2, X } from 'lucide-react';
+import { AlertCircle, Contrast, Download, ExternalLink, Loader2, Pause, Play, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 // The viewer pulls in the PDFium WebAssembly engine (several MB), so we
@@ -27,6 +27,110 @@ const prefetchViewer = () => {
   } else {
     setTimeout(run, 1200);
   }
+};
+
+// mm:ss formatter for the audio player timestamps.
+const formatAudioTime = (s: number) => {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+};
+
+interface InlineAudioPlayerProps {
+  src: string;
+  onClose: () => void;
+  t: (key: string) => string;
+}
+
+/**
+ * A compact, theme-aware audio player for in-document pronunciation links.
+ *
+ * The native `<audio controls>` widget can't be themed cross-browser — it
+ * renders an opaque light bar even in dark mode, and washes out against the
+ * white PDF page. So we hide the native element and drive it through our own
+ * controls (play/pause, seek, timestamps), styled with the app's theme tokens
+ * (`bg-background`, `text-foreground`, …) so it adapts to light/dark and stays
+ * legible over the page via a solid border + shadow.
+ */
+const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => setCurrent(el.currentTime);
+    const onMeta = () => setDuration(isFinite(el.duration) ? el.duration : 0);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    el.addEventListener('timeupdate', onTime);
+    el.addEventListener('loadedmetadata', onMeta);
+    el.addEventListener('durationchange', onMeta);
+    el.addEventListener('play', onPlay);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('ended', onPause);
+    return () => {
+      el.removeEventListener('timeupdate', onTime);
+      el.removeEventListener('loadedmetadata', onMeta);
+      el.removeEventListener('durationchange', onMeta);
+      el.removeEventListener('play', onPlay);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('ended', onPause);
+    };
+  }, []);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) el.play().catch(() => {}); else el.pause();
+  };
+  const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const el = audioRef.current;
+    if (!el) return;
+    const v = Number(e.target.value);
+    el.currentTime = v;
+    setCurrent(v);
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-full border border-border bg-background/95 py-1.5 pl-1.5 pr-2 shadow-lg backdrop-blur-sm">
+      {/* Native element drives playback but is visually hidden. */}
+      <audio ref={audioRef} src={src} autoPlay aria-label={t('components.pdfViewer.audio')} className="hidden" />
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 shrink-0 rounded-full text-foreground hover:bg-accent"
+        onClick={toggle}
+        aria-label={t(playing ? 'components.pdfViewer.pauseAudio' : 'components.pdfViewer.playAudio')}
+      >
+        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" />}
+      </Button>
+      <span className="w-9 text-right text-xs tabular-nums text-foreground/70">{formatAudioTime(current)}</span>
+      <input
+        type="range"
+        min={0}
+        max={duration || 0}
+        step="any"
+        value={Math.min(current, duration || 0)}
+        onChange={seek}
+        aria-label={t('components.pdfViewer.audio')}
+        className="w-28 cursor-pointer accent-primary sm:w-40"
+      />
+      <span className="w-9 text-xs tabular-nums text-foreground/70">{formatAudioTime(duration)}</span>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 shrink-0 rounded-full text-foreground hover:bg-accent"
+        onClick={onClose}
+        aria-label={t('components.pdfViewer.closeAudio')}
+      >
+        <X className="h-[18px] w-[18px]" />
+      </Button>
+    </div>
+  );
 };
 
 interface PdfViewerDialogProps {
@@ -776,35 +880,23 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
           </Tooltip>
         </div>
         {/* Inline audio player — appears when an in-document audio link is
-            tapped. Pinned to the bottom-LEFT (not centre) so it doesn't overlap
-            embedpdf's centred page-control bar, letting the user keep reading
-            and paging while listening. */}
+            tapped. Position differs by device so it never overlaps the viewer
+            chrome:
+            - Desktop: bottom-RIGHT, clear of both the left bookmarks/TOC panel
+              and embedpdf's centred page-control bar.
+            - Mobile: bottom-CENTRE but lifted ABOVE the page-control bar (a
+              left/right corner there would still clip the wider mobile bar). */}
         {audio && (
           <div
-            className="absolute bottom-3 left-3 flex items-center gap-2"
+            className={cn(
+              'absolute flex',
+              isMobile
+                ? 'bottom-20 left-1/2 -translate-x-1/2'
+                : 'bottom-3 right-3',
+            )}
             style={{ zIndex: 15, maxWidth: 'calc(100% - 24px)' }}
           >
-            <audio
-              key={audio.key}
-              src={audio.src}
-              controls
-              autoPlay
-              aria-label={t('components.pdfViewer.audio')}
-              className="h-9"
-              style={{ maxWidth: 'min(70vw, 360px)' }}
-            />
-            {/* Close button carries its own solid background + explicit
-                foreground colour so it stays visible in both light and dark
-                themes (ghost-on-transparent was invisible in light mode). */}
-            <Button
-              size="icon"
-              variant="secondary"
-              className="h-9 w-9 shrink-0 rounded-full bg-background text-foreground shadow-lg ring-1 ring-border/60 hover:bg-accent"
-              onClick={() => setAudio(null)}
-              aria-label={t('components.pdfViewer.closeAudio')}
-            >
-              <X className="h-[18px] w-[18px]" />
-            </Button>
+            <InlineAudioPlayer key={audio.key} src={audio.src} onClose={() => setAudio(null)} t={t} />
           </div>
         )}
         {/* Save dialog — shown on Ctrl+S or download button */}

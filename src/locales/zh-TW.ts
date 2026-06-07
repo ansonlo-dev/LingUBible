@@ -529,6 +529,8 @@ export default {
   'components.pdfViewer.download': '下載',
   'components.pdfViewer.close': '關閉',
   'components.pdfViewer.audio': '音訊',
+  'components.pdfViewer.playAudio': '播放',
+  'components.pdfViewer.pauseAudio': '暫停',
   'components.pdfViewer.closeAudio': '關閉音訊播放器',
   'components.pdfViewer.invertColors': '反轉色彩',
   'components.pdfViewer.initializingPlugins': '正在初始化…',
