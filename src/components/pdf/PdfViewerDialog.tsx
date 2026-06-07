@@ -34,6 +34,53 @@ const prefetchViewer = () => {
 const pageStorageKey = (s: string | null) =>
   s ? `pdf-viewer-page:${s.split('?')[0]}` : null;
 
+// Per-document key for the user's locally-saved annotations.
+const annotationStorageKey = (s: string | null) =>
+  s ? `pdf-viewer-annotations:${s.split('?')[0]}` : null;
+
+// --- Annotation (de)serialization for localStorage ---------------------------
+// exportAnnotations() returns plain objects, except stamps carry their image in
+// `ctx.data` as an ArrayBuffer (not JSON-serializable) and annotations may carry
+// `created`/`modified` as Date objects. We base64 the binary and ISO the dates
+// on the way out, and revive both on the way back in.
+const abToB64 = (buf: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  const CHUNK = 0x8000; // avoid call-stack limits on big buffers
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin);
+};
+const b64ToAb = (b64: string): ArrayBuffer => {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+};
+const serializeAnnotations = (items: any[]): string =>
+  JSON.stringify(items, (_key, value) => {
+    if (value instanceof ArrayBuffer) return { __ab: abToB64(value) };
+    if (ArrayBuffer.isView(value) && value instanceof Uint8Array) {
+      return { __ab: abToB64(value.buffer) };
+    }
+    return value;
+  });
+const deserializeAnnotations = (raw: string): any[] => {
+  const items = JSON.parse(raw, (_key, value) =>
+    value && typeof value === 'object' && typeof value.__ab === 'string'
+      ? b64ToAb(value.__ab)
+      : value,
+  );
+  // Revive Date fields PDFium expects as real Dates.
+  for (const it of items) {
+    const a = it?.annotation;
+    if (a?.created) a.created = new Date(a.created);
+    if (a?.modified) a.modified = new Date(a.modified);
+  }
+  return items;
+};
+
 // mm:ss formatter for the audio player timestamps.
 const formatAudioTime = (s: number) => {
   if (!isFinite(s) || s < 0) s = 0;
@@ -534,6 +581,93 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       if (e?.pageNumber > 0) localStorage.setItem(key, String(e.pageNumber));
     });
     return () => unsubscribe?.();
+  }, [ready, blobUrl, error, viewerReady, src]);
+
+  // Persist the user's annotations locally (localStorage) so reopening a
+  // document restores its markup instead of a clean copy — no server calls.
+  //
+  // Only *user-added* annotations are saved: we snapshot the ids that ship
+  // embedded in the PDF (e.g. the audio-pronunciation links) as a baseline and
+  // exclude them, so re-importing on open can't duplicate what the PDF already
+  // carries. Saves are debounced off the annotation plugin's state changes.
+  useEffect(() => {
+    if (!(ready && blobUrl && !error && viewerReady)) return;
+    const key = annotationStorageKey(src);
+    if (!key) return;
+    const annotation = registryRef.current?.getPlugin?.('annotation')?.provides?.();
+    const docManager = registryRef.current?.getPlugin?.('document-manager')?.provides?.();
+    if (!annotation?.forDocument || !docManager) return;
+
+    const started = new Set<string>();   // setup() entered for this doc
+    const restored = new Set<string>();   // baseline taken + annotations imported
+    let saveTimer: ReturnType<typeof setTimeout> | undefined;
+    const unsubs: Array<() => void> = [];
+
+    const setup = (documentId: string) => {
+      if (started.has(documentId)) return;
+      started.add(documentId);
+      const scope = annotation.forDocument(documentId);
+
+      // Defer baseline/import until the embedded annotations have parsed. The
+      // scoped emitter replays its cached 'loaded' event, so this fires whether
+      // loading finished before or after we subscribe.
+      const unsubEvent = scope.onAnnotationEvent((ev: any) => {
+        if (ev?.type !== 'loaded' || restored.has(documentId)) return;
+        restored.add(documentId);
+
+        // Baseline = annotations shipped inside the PDF (e.g. audio links). We
+        // never persist these, so re-importing on open can't duplicate them.
+        const baseline = new Set<string>();
+        for (const a of scope.getAnnotations?.() ?? []) {
+          const id = a?.object?.id;
+          if (id != null) baseline.add(String(id));
+        }
+
+        // Restore the user's previously-saved annotations.
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const items = deserializeAnnotations(raw);
+            if (items.length) scope.importAnnotations(items);
+          }
+        } catch { /* corrupt/oversized entry — ignore */ }
+
+        // Persist (debounced) the user-added annotations on every change.
+        const save = () => {
+          scope.exportAnnotations().wait(
+            (items: any[]) => {
+              const userItems = (items ?? []).filter(
+                (it) => !baseline.has(String(it?.annotation?.id)),
+              );
+              try {
+                if (userItems.length) localStorage.setItem(key, serializeAnnotations(userItems));
+                else localStorage.removeItem(key);
+              } catch { /* quota exceeded — skip this save */ }
+            },
+            () => {},
+          );
+        };
+        const unsubState = scope.onStateChange(() => {
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(save, 700);
+        });
+        unsubs.push(() => unsubState?.());
+      });
+      unsubs.push(() => unsubEvent?.());
+    };
+
+    for (const doc of docManager.getOpenDocuments?.() ?? []) {
+      if (doc?.id) setup(doc.id);
+    }
+    const unsubOpened = docManager.onDocumentOpened((doc: any) => {
+      if (doc?.id) setup(doc.id);
+    });
+
+    return () => {
+      clearTimeout(saveTimer);
+      unsubOpened?.();
+      unsubs.forEach((u) => u());
+    };
   }, [ready, blobUrl, error, viewerReady, src]);
 
   // When the viewer is ready, subscribe to document-opened events and open the
