@@ -522,7 +522,10 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // re-runs against the freshly mounted instance.
   useEffect(() => { setViewerReady(false); setRestoring(true); registryRef.current = null; shadowRootRef.current = null; }, [themePreference, viewerLocale]);
 
-  // Lock background scrolling and wire Esc-to-close while open.
+  // Lock background scrolling while open. On desktop we intentionally do NOT
+  // wire Esc-to-close: it's too easy to hit while editing/annotating and lose
+  // your place — desktop users exit via the 'X' button only. (Mobile has no Esc
+  // key; it closes via the back gesture handled in the history effect below.)
   useEffect(() => {
     if (!open) { setReady(false); setViewerReady(false); setRestoring(false); setAudio(null); setAudioPos(null); return; }
     // Cover the viewer with the "restoring…" notice from the moment it opens; the
@@ -530,15 +533,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     setRestoring(true);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
-    window.addEventListener('keydown', onKey);
     const id = setTimeout(() => setReady(true), 50);
     return () => {
       document.body.style.overflow = prevOverflow;
-      window.removeEventListener('keydown', onKey);
       clearTimeout(id);
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   // Push a history entry when the dialog opens so the mobile back gesture closes
   // the PDF instead of navigating away from the page that triggered it.

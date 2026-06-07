@@ -525,7 +525,7 @@ export default {
   'components.pdfViewer.title': '文件',
   'components.pdfViewer.loading': '正在載入文件…',
   'components.pdfViewer.restoring': '正在還原上次的閱讀狀態…',
-  'components.pdfViewer.restoringHint': '正在載入上次的頁面與註解，捲動前請稍候。',
+  'components.pdfViewer.restoringHint': '正在載入上次的頁面與註解，請稍候。',
   'components.pdfViewer.error': '無法載入此文件。',
   'components.pdfViewer.openInNewTab': '在新分頁開啟',
   'components.pdfViewer.download': '下載',
