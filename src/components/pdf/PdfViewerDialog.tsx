@@ -250,9 +250,10 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, po
       className={cn(
         'absolute flex items-center gap-1.5 rounded-full border py-1.5 pl-1 pr-2 shadow-lg',
         // Device-aware default position, dropped once the player is dragged:
-        // desktop = bottom-right (clear of left TOC + centred page bar);
-        // mobile = above the centred page-control bar.
-        !pos && (isMobile ? 'bottom-20 left-1/2 -translate-x-1/2' : 'bottom-3 right-3'),
+        // desktop = bottom-centre (the page-control bar now lives in the top
+        // toolbar, so the bottom is free); mobile = above the centred bottom
+        // page-control bar.
+        !pos && (isMobile ? 'bottom-20 left-1/2 -translate-x-1/2' : 'bottom-3 left-1/2 -translate-x-1/2'),
       )}
       style={{ zIndex: 15, maxWidth: 'calc(100% - 24px)', ...surface, ...(pos ? { left: pos.left, top: pos.top } : {}) }}
     >
@@ -446,6 +447,12 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // while still reading the document (important inside the installed PWA). The
   // `key` forces the <audio> to remount + autoplay when the same link is reused.
   const [audio, setAudio] = useState<{ src: string; key: number } | null>(null);
+  // The audio link points at our cross-origin Appwrite bucket; the bare <audio>
+  // element would fetch it without the session cookie (same reason the PDF can't
+  // be loaded by URL — see the class doc), so an authenticated bucket rejects it
+  // and nothing plays. We fetch the bytes ourselves with credentials and feed
+  // the player a same-origin blob URL instead. Falls back to the raw URL.
+  const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   // Dragged player position, kept here (not in the player) so it persists when
   // a new clip remounts the player. Reset only when the viewer itself closes.
   const [audioPos, setAudioPos] = useState<{ left: number; top: number } | null>(null);
@@ -473,6 +480,37 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
 
   // Warm the viewer/engine chunk in the background once mounted.
   useEffect(() => { prefetchViewer(); }, []);
+
+  // Compute the zoom that makes the *first* page fill the viewport width. This
+  // mirrors embedpdf's own fit-width math (availableWidth / pageContentWidth)
+  // but uses page 1 only, instead of the widest page in the document — so a
+  // landscape page elsewhere doesn't shrink the (portrait) pages. Returns null
+  // if the viewer/metrics aren't ready, so callers can fall back to 'fit-width'.
+  const computeFirstPageFitWidth = (): number | null => {
+    const reg = registryRef.current;
+    const viewport = reg?.getPlugin?.('viewport')?.provides?.();
+    const scroll = reg?.getPlugin?.('scroll')?.provides?.();
+    const docManager = reg?.getPlugin?.('document-manager')?.provides?.();
+    const docId = docManager?.getOpenDocuments?.()?.[0]?.id;
+    if (!viewport || !scroll || !docId) return null;
+    try {
+      const vp = viewport.getMetrics?.();
+      const vpGap = viewport.getViewportGap?.() ?? 0;
+      const pgGap = scroll.getPageGap?.() ?? 0;
+      const firstSpread = scroll.forDocument(docId).getSpreadPagesWithRotatedSize?.()?.[0];
+      if (!vp || !(vp.clientWidth > 0) || !firstSpread?.length) return null;
+      const availableWidth = vp.clientWidth - 2 * vpGap;
+      // A spread can hold >1 page (book mode); sum their widths + inter-page gaps.
+      const contentW = firstSpread.reduce(
+        (sum: number, p: any, i: number) => sum + p.rotatedSize.width + (i ? pgGap : 0),
+        0,
+      );
+      if (availableWidth <= 0 || contentW <= 0) return null;
+      return availableWidth / contentW;
+    } catch {
+      return null;
+    }
+  };
 
   // Theme/locale are only read by embedpdf at init, so we remount the viewer
   // (via `key`) when they change. Reset the ready flag so the first-paint nudge
@@ -539,12 +577,15 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     const savedPage = key ? parseInt(localStorage.getItem(key) || '', 10) : NaN;
     let restoreTimer: ReturnType<typeof setTimeout> | undefined;
     // After the resize-nudges settle the container reaches its final dimensions,
-    // then we re-request fit-width so the zoom is calculated against the correct
-    // size (the defaultZoomLevel config is read at init, before the container is
-    // fully laid out, so the first calculation is off). Applies to all devices.
+    // then we set the zoom so the *first* page fills the width. We can't use the
+    // built-in 'fit-width' mode: it divides the viewport by the *widest* page in
+    // the document (`availableWidth / maxContentW`), so a single landscape page
+    // at the end shrinks every (portrait) page. Instead we mirror embedpdf's
+    // fit-width formula but lock it to page 1, then apply the result as a fixed
+    // numeric zoom. Falls back to 'fit-width' if the measurements aren't ready.
     const zoomTimer = setTimeout(() => {
       const zoomCap = registryRef.current?.getPlugin?.('zoom')?.provides?.();
-      zoomCap?.requestZoom?.('fit-width');
+      if (zoomCap) zoomCap.requestZoom(computeFirstPageFitWidth() ?? 'fit-width');
       // Restore the last-read page only after the final fit-width layout is in
       // place — scrolling earlier would land on the wrong pixel once the zoom
       // shift relays out the pages.
@@ -793,6 +834,30 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
 
     return () => { unsubscribe?.(); };
   }, [ready, blobUrl, error, viewerReady]);
+
+  // Fetch the selected audio clip with credentials and expose it as a same-origin
+  // blob URL (see the audioBlobUrl declaration for why). Re-runs whenever a new
+  // clip is chosen; revokes the previous blob and ignores a stale in-flight fetch
+  // if the user picks another clip first. Falls back to the raw URL on failure so
+  // a public bucket (no auth needed) still plays.
+  useEffect(() => {
+    if (!audio) { setAudioBlobUrl(null); return; }
+    let cancelled = false;
+    let createdUrl: string | null = null;
+    setAudioBlobUrl(null);
+    fetch(audio.src, { credentials: 'include' })
+      .then((res) => { if (!res.ok) throw new Error(String(res.status)); return res.blob(); })
+      .then((blob) => {
+        if (cancelled) return;
+        createdUrl = URL.createObjectURL(blob);
+        setAudioBlobUrl(createdUrl);
+      })
+      .catch(() => { if (!cancelled) setAudioBlobUrl(audio.src); });
+    return () => {
+      cancelled = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [audio]);
 
   // Cap the smooth-scroll duration for in-document jumps (link targets,
   // bookmarks, …). embedpdf scrolls its viewport with the browser-native
@@ -1294,10 +1359,10 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
         {/* Inline audio player — appears when an in-document audio link is
             tapped. It positions itself (device-aware default + drag-to-move)
             and seeks via a custom progress bar; see InlineAudioPlayer. */}
-        {audio && (
+        {audio && audioBlobUrl && (
           <InlineAudioPlayer
             key={audio.key}
-            src={audio.src}
+            src={audioBlobUrl}
             isMobile={isMobile}
             pos={audioPos}
             setPos={setAudioPos}
