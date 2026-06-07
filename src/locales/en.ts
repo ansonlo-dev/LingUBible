@@ -524,6 +524,8 @@ export default {
   // In-app PDF viewer
   'components.pdfViewer.title': 'Document',
   'components.pdfViewer.loading': 'Loading document…',
+  'components.pdfViewer.restoring': 'Restoring your last session…',
+  'components.pdfViewer.restoringHint': 'Loading your last page and notes — please wait before scrolling.',
   'components.pdfViewer.error': 'Could not load this document.',
   'components.pdfViewer.openInNewTab': 'Open in new tab',
   'components.pdfViewer.download': 'Download',

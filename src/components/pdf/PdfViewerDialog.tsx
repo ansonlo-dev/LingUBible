@@ -477,6 +477,11 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Becomes true once the viewer fires onReady (plugins registered, document
   // loading). Used to drive the resize-nudge so it lands after the pages exist.
   const [viewerReady, setViewerReady] = useState(false);
+  // True while we're restoring the saved session (zoom, last page, annotations)
+  // after the pages first appear. We overlay a blocking "restoring…" notice for
+  // this window so the user doesn't scroll mid-restore and land on the wrong
+  // page. Cleared by the zoom/page-restore effect once the position is settled.
+  const [restoring, setRestoring] = useState(false);
 
   // Warm the viewer/engine chunk in the background once mounted.
   useEffect(() => { prefetchViewer(); }, []);
@@ -515,11 +520,14 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // Theme/locale are only read by embedpdf at init, so we remount the viewer
   // (via `key`) when they change. Reset the ready flag so the first-paint nudge
   // re-runs against the freshly mounted instance.
-  useEffect(() => { setViewerReady(false); registryRef.current = null; shadowRootRef.current = null; }, [themePreference, viewerLocale]);
+  useEffect(() => { setViewerReady(false); setRestoring(true); registryRef.current = null; shadowRootRef.current = null; }, [themePreference, viewerLocale]);
 
   // Lock background scrolling and wire Esc-to-close while open.
   useEffect(() => {
-    if (!open) { setReady(false); setViewerReady(false); setAudio(null); setAudioPos(null); return; }
+    if (!open) { setReady(false); setViewerReady(false); setRestoring(false); setAudio(null); setAudioPos(null); return; }
+    // Cover the viewer with the "restoring…" notice from the moment it opens; the
+    // zoom/page-restore effect clears it once the saved position is in place.
+    setRestoring(true);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
@@ -588,21 +596,29 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       if (zoomCap) zoomCap.requestZoom(computeFirstPageFitWidth() ?? 'fit-width');
       // Restore the last-read page only after the final fit-width layout is in
       // place — scrolling earlier would land on the wrong pixel once the zoom
-      // shift relays out the pages.
+      // shift relays out the pages. Drop the "restoring…" overlay once the
+      // position is settled (immediately when there's no page to restore).
       if (savedPage > 1) {
         restoreTimer = setTimeout(() => {
           const scrollCap = registryRef.current?.getPlugin?.('scroll')?.provides?.();
-          if (!scrollCap?.scrollToPage) return;
-          const total = scrollCap.getTotalPages?.() ?? 0;
-          if (total === 0 || savedPage <= total) {
-            scrollCap.scrollToPage({ pageNumber: savedPage, behavior: 'auto' });
+          if (scrollCap?.scrollToPage) {
+            const total = scrollCap.getTotalPages?.() ?? 0;
+            if (total === 0 || savedPage <= total) {
+              scrollCap.scrollToPage({ pageNumber: savedPage, behavior: 'auto' });
+            }
           }
+          setRestoring(false);
         }, 150);
+      } else {
+        setRestoring(false);
       }
     }, 2600);
+    // Safety net: never leave the overlay stuck if a timer/plugin misbehaves.
+    const safety = setTimeout(() => setRestoring(false), 6000);
     return () => {
       timers.forEach(clearTimeout);
       clearTimeout(zoomTimer);
+      clearTimeout(safety);
       if (restoreTimer) clearTimeout(restoreTimer);
       if (el) el.style.paddingRight = '';
     };
@@ -1289,6 +1305,25 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
               defaultZoomLevel="fit-width"
             />
           </Suspense>
+        )}
+
+        {/* Restoring overlay — covers the pages (but not our top-right close /
+            download buttons, which stay at z-10) while the saved zoom, last page
+            and annotations are applied. It captures wheel/touch so the user can't
+            scroll mid-restore and land on the wrong page. */}
+        {restoring && ready && blobUrl && !error && (
+          <div
+            className="absolute inset-0 z-[5] flex items-center justify-center bg-background/55 backdrop-blur-[2px]"
+            style={{ touchAction: 'none' }}
+            onWheel={(e) => e.preventDefault()}
+            onTouchMove={(e) => e.preventDefault()}
+          >
+            <div className="mx-6 flex max-w-xs flex-col items-center gap-3 rounded-2xl bg-background/90 px-6 py-5 text-center shadow-lg ring-1 ring-border/50">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-sm font-medium">{t('components.pdfViewer.restoring')}</span>
+              <span className="text-xs text-muted-foreground">{t('components.pdfViewer.restoringHint')}</span>
+            </div>
+          </div>
         )}
 
         {/* Floating actions — Search/Comment are now in center-group (via

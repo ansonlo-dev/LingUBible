@@ -525,6 +525,8 @@ export default {
   // 内置 PDF 查看器
   'components.pdfViewer.title': '文档',
   'components.pdfViewer.loading': '正在加载文档…',
+  'components.pdfViewer.restoring': '正在还原上次的阅读状态…',
+  'components.pdfViewer.restoringHint': '正在加载上次的页面与批注，滚动前请稍候。',
   'components.pdfViewer.error': '无法加载此文档。',
   'components.pdfViewer.openInNewTab': '在新标签页打开',
   'components.pdfViewer.download': '下载',
