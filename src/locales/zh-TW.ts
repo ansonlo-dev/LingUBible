@@ -532,6 +532,7 @@ export default {
   'components.pdfViewer.playAudio': '播放',
   'components.pdfViewer.pauseAudio': '暫停',
   'components.pdfViewer.playbackSpeed': '播放速度',
+  'components.pdfViewer.normalSpeed': '正常',
   'components.pdfViewer.closeAudio': '關閉音訊播放器',
   'components.pdfViewer.invertColors': '反轉色彩',
   'components.pdfViewer.initializingPlugins': '正在初始化…',

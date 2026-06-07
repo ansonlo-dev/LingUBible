@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { AlertCircle, Contrast, Download, ExternalLink, Loader2, Pause, Play, X } from 'lucide-react';
+import { AlertCircle, Check, Contrast, Download, ExternalLink, Loader2, Pause, Play, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 // The viewer pulls in the PDFium WebAssembly engine (several MB), so we
@@ -49,19 +49,29 @@ interface InlineAudioPlayerProps {
  * The native `<audio controls>` widget can't be themed cross-browser — it
  * renders an opaque light bar even in dark mode, and washes out against the
  * white PDF page. So we hide the native element and drive it through our own
- * controls (play/pause, seek, timestamps), styled with the app's theme tokens
- * (`bg-background`, `text-foreground`, …) so it adapts to light/dark and stays
- * legible over the page via a solid border + shadow.
+ * controls (play/pause, seek, timestamps, speed menu).
+ *
+ * IMPORTANT: this project's theme tokens are stored as comma-separated RGB
+ * triples (e.g. `--background: 255, 255, 255`), but Tailwind maps several of
+ * them through `rgb(var(--x) / <alpha-value>)` / `hsl(var(--x))`, which yields
+ * *invalid* colours (`rgb(255, 255, 255 / 1)`) that render transparent. So the
+ * `bg-background` / `text-foreground` / `border-border` utilities silently
+ * don't work here — we apply colours via inline `rgb(var(--…))` instead, the
+ * same pattern the rest of the viewer chrome uses.
  */
-// Playback speeds the speed button cycles through (in order).
-const AUDIO_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
+// Playback speeds offered in the speed menu (descending, YouTube-style).
+const AUDIO_RATES = [2, 1.75, 1.5, 1.25, 1, 0.75, 0.5];
+// Shared hover tint that works regardless of the broken theme utilities.
+const AUDIO_BTN = 'shrink-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10';
 
 const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const speedRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [rate, setRate] = useState(1);
+  const [speedOpen, setSpeedOpen] = useState(false);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -92,13 +102,21 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
     if (audioRef.current) audioRef.current.playbackRate = rate;
   }, [rate, src]);
 
+  // Close the speed menu on any outside pointer-down.
+  useEffect(() => {
+    if (!speedOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (speedRef.current && !speedRef.current.contains(e.target as Node)) setSpeedOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [speedOpen]);
+
   const toggle = () => {
     const el = audioRef.current;
     if (!el) return;
     if (el.paused) el.play().catch(() => {}); else el.pause();
   };
-  const cycleRate = () =>
-    setRate((prev) => AUDIO_RATES[(AUDIO_RATES.indexOf(prev) + 1) % AUDIO_RATES.length] ?? 1);
   const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const el = audioRef.current;
     if (!el) return;
@@ -107,20 +125,29 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
     setCurrent(v);
   };
 
+  const surface = {
+    backgroundColor: 'rgb(var(--background))',
+    borderColor: 'rgb(var(--border))',
+    color: 'rgb(var(--foreground))',
+  } as const;
+
   return (
-    <div className="flex items-center gap-1.5 rounded-full border border-border bg-background py-1.5 pl-1.5 pr-2 shadow-lg">
+    <div
+      className="flex items-center gap-1.5 rounded-full border py-1.5 pl-1.5 pr-2 shadow-lg"
+      style={surface}
+    >
       {/* Native element drives playback but is visually hidden. */}
       <audio ref={audioRef} src={src} autoPlay aria-label={t('components.pdfViewer.audio')} className="hidden" />
       <Button
         size="icon"
         variant="ghost"
-        className="h-8 w-8 shrink-0 rounded-full text-foreground hover:bg-accent"
+        className={cn('h-8 w-8', AUDIO_BTN)}
         onClick={toggle}
         aria-label={t(playing ? 'components.pdfViewer.pauseAudio' : 'components.pdfViewer.playAudio')}
       >
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" />}
       </Button>
-      <span className="w-9 text-right text-xs tabular-nums text-foreground/70">{formatAudioTime(current)}</span>
+      <span className="w-9 text-right text-xs tabular-nums opacity-70">{formatAudioTime(current)}</span>
       <input
         type="range"
         min={0}
@@ -131,22 +158,47 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
         aria-label={t('components.pdfViewer.audio')}
         className="w-28 cursor-pointer accent-primary sm:w-40"
       />
-      <span className="w-9 text-xs tabular-nums text-foreground/70">{formatAudioTime(duration)}</span>
-      {/* Playback speed — cycles 0.5×→2×→… on each tap. */}
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-8 w-11 shrink-0 rounded-full px-0 text-xs font-medium tabular-nums text-foreground hover:bg-accent"
-        onClick={cycleRate}
-        aria-label={t('components.pdfViewer.playbackSpeed')}
-        title={t('components.pdfViewer.playbackSpeed')}
-      >
-        {rate}×
-      </Button>
+      <span className="w-9 text-xs tabular-nums opacity-70">{formatAudioTime(duration)}</span>
+      {/* Playback speed — opens a YouTube-style list to pick a rate. */}
+      <div className="relative shrink-0" ref={speedRef}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className={cn('h-8 w-11 px-0 text-xs font-medium tabular-nums', AUDIO_BTN)}
+          onClick={() => setSpeedOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={speedOpen}
+          aria-label={t('components.pdfViewer.playbackSpeed')}
+          title={t('components.pdfViewer.playbackSpeed')}
+        >
+          {rate}×
+        </Button>
+        {speedOpen && (
+          <div
+            role="listbox"
+            aria-label={t('components.pdfViewer.playbackSpeed')}
+            className="absolute bottom-full right-0 mb-2 max-h-64 w-24 overflow-auto rounded-xl border py-1 shadow-xl"
+            style={surface}
+          >
+            {AUDIO_RATES.map((r) => (
+              <button
+                key={r}
+                role="option"
+                aria-selected={r === rate}
+                onClick={() => { setRate(r); setSpeedOpen(false); }}
+                className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left text-xs tabular-nums hover:bg-black/5 dark:hover:bg-white/10"
+              >
+                <Check className={cn('h-3.5 w-3.5 shrink-0', r === rate ? 'opacity-100' : 'opacity-0')} />
+                <span>{r === 1 ? t('components.pdfViewer.normalSpeed') : `${r}×`}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <Button
         size="icon"
         variant="ghost"
-        className="h-8 w-8 shrink-0 rounded-full text-foreground hover:bg-accent"
+        className={cn('h-8 w-8', AUDIO_BTN)}
         onClick={onClose}
         aria-label={t('components.pdfViewer.closeAudio')}
       >
