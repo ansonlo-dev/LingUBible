@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { AlertCircle, Check, Contrast, Download, ExternalLink, Loader2, Pause, Play, X } from 'lucide-react';
+import { AlertCircle, Check, Contrast, Download, ExternalLink, GripVertical, Loader2, Pause, Play, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 // The viewer pulls in the PDFium WebAssembly engine (several MB), so we
@@ -39,6 +39,7 @@ const formatAudioTime = (s: number) => {
 
 interface InlineAudioPlayerProps {
   src: string;
+  isMobile: boolean;
   onClose: () => void;
   t: (key: string) => string;
 }
@@ -64,14 +65,23 @@ const AUDIO_RATES = [2, 1.75, 1.5, 1.25, 1, 0.75, 0.5];
 // Shared hover tint that works regardless of the broken theme utilities.
 const AUDIO_BTN = 'shrink-0 rounded-full hover:bg-black/5 dark:hover:bg-white/10';
 
-const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }) => {
+const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, onClose, t }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const speedRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [rate, setRate] = useState(1);
   const [speedOpen, setSpeedOpen] = useState(false);
+  // null = use the device-aware default CSS position; once the user drags, we
+  // switch to explicit viewport coords (the overlay is fixed inset-0, so its
+  // offset-parent box matches the viewport).
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [scrubbing, setScrubbing] = useState(false);
+  const dragState = useRef<{ startX: number; startY: number; left: number; top: number } | null>(null);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -117,12 +127,58 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
     if (!el) return;
     if (el.paused) el.play().catch(() => {}); else el.pause();
   };
-  const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  // --- Progress bar: click anywhere to jump, hold + drag to scrub. ---
+  const seekToClientX = (clientX: number) => {
+    const bar = barRef.current;
     const el = audioRef.current;
-    if (!el) return;
-    const v = Number(e.target.value);
-    el.currentTime = v;
-    setCurrent(v);
+    if (!bar || !el || !duration) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const time = ratio * duration;
+    el.currentTime = time;
+    setCurrent(time);
+  };
+  const onBarPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setScrubbing(true);
+    seekToClientX(e.clientX);
+  };
+  const onBarPointerMove = (e: React.PointerEvent) => {
+    if (scrubbing) seekToClientX(e.clientX);
+  };
+  const onBarPointerUp = (e: React.PointerEvent) => {
+    setScrubbing(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  // --- Drag handle: reposition the whole player anywhere in the viewer. ---
+  const onHandleDown = (e: React.PointerEvent) => {
+    const root = rootRef.current;
+    if (!root) return;
+    e.preventDefault();
+    const rect = root.getBoundingClientRect();
+    dragState.current = { startX: e.clientX, startY: e.clientY, left: rect.left, top: rect.top };
+    setPos({ left: rect.left, top: rect.top }); // pin to current spot, no jump
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onHandleMove = (e: React.PointerEvent) => {
+    const ds = dragState.current;
+    const root = rootRef.current;
+    if (!ds || !root) return;
+    const w = root.offsetWidth;
+    const h = root.offsetHeight;
+    const left = Math.min(Math.max(8, ds.left + (e.clientX - ds.startX)), window.innerWidth - w - 8);
+    const top = Math.min(Math.max(8, ds.top + (e.clientY - ds.startY)), window.innerHeight - h - 8);
+    setPos({ left, top });
+  };
+  const onHandleUp = (e: React.PointerEvent) => {
+    setDragging(false);
+    dragState.current = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   const surface = {
@@ -131,13 +187,34 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
     color: 'rgb(var(--foreground))',
   } as const;
 
+  const progress = duration ? Math.min(100, (current / duration) * 100) : 0;
+
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full border py-1.5 pl-1.5 pr-2 shadow-lg"
-      style={surface}
+      ref={rootRef}
+      className={cn(
+        'absolute flex items-center gap-1.5 rounded-full border py-1.5 pl-1 pr-2 shadow-lg',
+        // Device-aware default position, dropped once the player is dragged:
+        // desktop = bottom-right (clear of left TOC + centred page bar);
+        // mobile = above the centred page-control bar.
+        !pos && (isMobile ? 'bottom-20 left-1/2 -translate-x-1/2' : 'bottom-3 right-3'),
+      )}
+      style={{ zIndex: 15, maxWidth: 'calc(100% - 24px)', ...surface, ...(pos ? { left: pos.left, top: pos.top } : {}) }}
     >
       {/* Native element drives playback but is visually hidden. */}
       <audio ref={audioRef} src={src} autoPlay aria-label={t('components.pdfViewer.audio')} className="hidden" />
+      {/* Drag handle — press and drag to move the player anywhere. */}
+      <div
+        role="button"
+        aria-label={t('components.pdfViewer.movePlayer')}
+        title={t('components.pdfViewer.movePlayer')}
+        onPointerDown={onHandleDown}
+        onPointerMove={onHandleMove}
+        onPointerUp={onHandleUp}
+        className={cn('flex h-8 w-5 shrink-0 touch-none items-center justify-center rounded-full opacity-50 hover:opacity-100', dragging ? 'cursor-grabbing' : 'cursor-grab')}
+      >
+        <GripVertical className="h-4 w-4" />
+      </div>
       <Button
         size="icon"
         variant="ghost"
@@ -148,16 +225,30 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, onClose, t }
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" />}
       </Button>
       <span className="w-9 text-right text-xs tabular-nums opacity-70">{formatAudioTime(current)}</span>
-      <input
-        type="range"
-        min={0}
-        max={duration || 0}
-        step="any"
-        value={Math.min(current, duration || 0)}
-        onChange={seek}
+      {/* Custom progress bar — click to jump, drag to scrub. */}
+      <div
+        ref={barRef}
+        role="slider"
         aria-label={t('components.pdfViewer.audio')}
-        className="w-28 cursor-pointer accent-primary sm:w-40"
-      />
+        aria-valuemin={0}
+        aria-valuemax={Math.round(duration)}
+        aria-valuenow={Math.round(current)}
+        tabIndex={0}
+        onPointerDown={onBarPointerDown}
+        onPointerMove={onBarPointerMove}
+        onPointerUp={onBarPointerUp}
+        className="relative h-4 w-28 shrink-0 cursor-pointer touch-none select-none sm:w-40"
+      >
+        {/* track */}
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full" style={{ backgroundColor: 'rgba(var(--foreground), 0.2)' }} />
+        {/* filled portion */}
+        <div className="absolute left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full" style={{ width: `${progress}%`, backgroundColor: 'rgb(var(--primary))' }} />
+        {/* thumb */}
+        <div
+          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full shadow"
+          style={{ left: `${progress}%`, backgroundColor: 'rgb(var(--primary))' }}
+        />
+      </div>
       <span className="w-9 text-xs tabular-nums opacity-70">{formatAudioTime(duration)}</span>
       {/* Playback speed — opens a YouTube-style list to pick a rate. */}
       <div className="relative shrink-0" ref={speedRef}>
@@ -955,24 +1046,16 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
           </Tooltip>
         </div>
         {/* Inline audio player — appears when an in-document audio link is
-            tapped. Position differs by device so it never overlaps the viewer
-            chrome:
-            - Desktop: bottom-RIGHT, clear of both the left bookmarks/TOC panel
-              and embedpdf's centred page-control bar.
-            - Mobile: bottom-CENTRE but lifted ABOVE the page-control bar (a
-              left/right corner there would still clip the wider mobile bar). */}
+            tapped. It positions itself (device-aware default + drag-to-move)
+            and seeks via a custom progress bar; see InlineAudioPlayer. */}
         {audio && (
-          <div
-            className={cn(
-              'absolute flex',
-              isMobile
-                ? 'bottom-20 left-1/2 -translate-x-1/2'
-                : 'bottom-3 right-3',
-            )}
-            style={{ zIndex: 15, maxWidth: 'calc(100% - 24px)' }}
-          >
-            <InlineAudioPlayer key={audio.key} src={audio.src} onClose={() => setAudio(null)} t={t} />
-          </div>
+          <InlineAudioPlayer
+            key={audio.key}
+            src={audio.src}
+            isMobile={isMobile}
+            onClose={() => setAudio(null)}
+            t={t}
+          />
         )}
         {/* Save dialog — shown on Ctrl+S or download button */}
         {saveDialog.open && (

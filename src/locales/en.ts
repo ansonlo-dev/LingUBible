@@ -533,6 +533,7 @@ export default {
   'components.pdfViewer.pauseAudio': 'Pause',
   'components.pdfViewer.playbackSpeed': 'Playback speed',
   'components.pdfViewer.normalSpeed': 'Normal',
+  'components.pdfViewer.movePlayer': 'Drag to move',
   'components.pdfViewer.closeAudio': 'Close audio player',
   'components.pdfViewer.invertColors': 'Invert colors',
   'components.pdfViewer.initializingPlugins': 'Initializing…',
