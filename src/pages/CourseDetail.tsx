@@ -674,7 +674,9 @@ const CourseDetail = () => {
   // the bucket is readable by authenticated users, so guests never list it).
   const [syllabusLoading, setSyllabusLoading] = useState(false);
   // In-app PDF viewer (syllabus / exam papers open here instead of a new tab).
-  const [pdfViewer, setPdfViewer] = useState<{ src: string; title: string } | null>(null);
+  // `persist` controls whether the viewer remembers last-read page + annotations:
+  // only study materials persist; syllabus & exam papers always open clean.
+  const [pdfViewer, setPdfViewer] = useState<{ src: string; title: string; persist?: boolean } | null>(null);
   // Instructor records resolved by name from filename suffixes (e.g. CCC8011's
   // per-section files). Seeded by a single batched query so we never query the
   // instructors collection per-paper.
@@ -1536,6 +1538,7 @@ const CourseDetail = () => {
     setPdfViewer({
       src: storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }).toString(),
       title: syllabusFile.name,
+      persist: false,
     });
   };
 
@@ -3741,7 +3744,7 @@ const CourseDetail = () => {
                                 className="h-8 w-8"
                                 title={t('pages.courseDetail.examPaperViewFile')}
                                 aria-label={t('pages.courseDetail.examPaperViewFile')}
-                                onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name }); }}
+                                onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name, persist: true }); }}
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
@@ -3948,7 +3951,7 @@ const CourseDetail = () => {
                                   className="h-8 w-8"
                                   title={t('pages.courseDetail.examPaperViewFile')}
                                   aria-label={t('pages.courseDetail.examPaperViewFile')}
-                                  onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name }); }}
+                                  onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name, persist: false }); }}
                                 >
                                   <ExternalLink className="h-4 w-4" />
                                 </Button>
@@ -4028,6 +4031,7 @@ const CourseDetail = () => {
         src={pdfViewer?.src ?? null}
         title={pdfViewer?.title}
         open={!!pdfViewer}
+        persistState={pdfViewer?.persist ?? false}
         onOpenChange={(o) => { if (!o) setPdfViewer(null); }}
       />
     </div>

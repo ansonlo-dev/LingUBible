@@ -396,6 +396,11 @@ interface PdfViewerDialogProps {
   title?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Whether to remember & restore per-document state (last-read page +
+  // user annotations) via localStorage. Defaults to true (study materials).
+  // Set false for ad-hoc documents (syllabus, past exam papers) so they always
+  // open clean at page 1 with no saved markup.
+  persistState?: boolean;
 }
 
 /**
@@ -421,6 +426,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   title,
   open,
   onOpenChange,
+  persistState = true,
 }) => {
   const { t, language } = useLanguage();
   // Read the effective theme straight from <html> so it always reflects the
@@ -615,7 +621,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     // Snapshot the saved page *before* any onPageChange fires, so the page-save
     // effect (which writes page 1 during initial load) can't clobber the value
     // we're about to restore to.
-    const key = pageStorageKey(src);
+    const key = persistState ? pageStorageKey(src) : null;
     const savedPage = key ? parseInt(localStorage.getItem(key) || '', 10) : NaN;
     let restoreTimer: ReturnType<typeof setTimeout> | undefined;
     // After the resize-nudges settle the container reaches its final dimensions,
@@ -656,7 +662,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       if (restoreTimer) clearTimeout(restoreTimer);
       if (el) el.style.paddingRight = '';
     };
-  }, [ready, blobUrl, error, viewerReady, isMobile, src]);
+  }, [ready, blobUrl, error, viewerReady, isMobile, src, persistState]);
 
   // Remember the last-read page per document so reopening lands where the user
   // left off. We persist on every page change; the restore (in the zoom effect)
@@ -664,7 +670,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // during the initial load can't clobber the position we restore to.
   useEffect(() => {
     if (!(ready && blobUrl && !error && viewerReady)) return;
-    const key = pageStorageKey(src);
+    const key = persistState ? pageStorageKey(src) : null;
     if (!key) return;
     const scrollCap = registryRef.current?.getPlugin?.('scroll')?.provides?.();
     if (!scrollCap?.onPageChange) return;
@@ -672,7 +678,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       if (e?.pageNumber > 0) localStorage.setItem(key, String(e.pageNumber));
     });
     return () => unsubscribe?.();
-  }, [ready, blobUrl, error, viewerReady, src]);
+  }, [ready, blobUrl, error, viewerReady, src, persistState]);
 
   // Persist the user's annotations locally (localStorage) so reopening a
   // document restores its markup instead of a clean copy — no server calls.
@@ -683,7 +689,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
   // carries. Saves are debounced off the annotation plugin's state changes.
   useEffect(() => {
     if (!(ready && blobUrl && !error && viewerReady)) return;
-    const key = annotationStorageKey(src);
+    const key = persistState ? annotationStorageKey(src) : null;
     if (!key) return;
     const annotation = registryRef.current?.getPlugin?.('annotation')?.provides?.();
     const docManager = registryRef.current?.getPlugin?.('document-manager')?.provides?.();
@@ -759,7 +765,7 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
       unsubOpened?.();
       unsubs.forEach((u) => u());
     };
-  }, [ready, blobUrl, error, viewerReady, src]);
+  }, [ready, blobUrl, error, viewerReady, src, persistState]);
 
   // When the viewer is ready, subscribe to document-opened events and open the
   // outline (bookmark) sidebar panel automatically when the PDF has bookmarks.
