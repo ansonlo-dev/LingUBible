@@ -167,17 +167,25 @@ const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({ src, isMobile, po
     if (audioRef.current) audioRef.current.playbackRate = rate;
   }, [rate, src]);
 
-  // Desktop keyboard shortcuts (YouTube-style): ">" speeds up, "<" slows down,
-  // stepping through the same rates as the speed menu. Active only while the
-  // player is mounted (i.e. a clip is playing). Ignored when typing in a field.
+  // Desktop keyboard shortcuts (YouTube-style): ">" speeds up, "<" slows down
+  // (stepping through the same rates as the speed menu), and "P" toggles
+  // play/pause. Active only while the player is mounted (i.e. a clip is playing).
+  // Ignored when typing in a field.
   useEffect(() => {
     if (isMobile) return;
     const sorted = [...AUDIO_RATES].sort((a, b) => a - b); // ascending
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== '>' && e.key !== '<') return;
+      const isSpeed = e.key === '>' || e.key === '<';
+      const isPlay = e.key === 'p' || e.key === 'P';
+      if (!isSpeed && !isPlay) return;
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
       e.preventDefault();
+      if (isPlay) {
+        const a = audioRef.current;
+        if (a) { if (a.paused) a.play().catch(() => {}); else a.pause(); }
+        return;
+      }
       const dir = e.key === '>' ? 1 : -1;
       setRate((prev) => {
         // Snap to the nearest known rate if prev isn't on the list (defensive).
