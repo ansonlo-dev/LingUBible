@@ -518,6 +518,7 @@ export default {
   'pages.courseDetail.studyMaterialsSignUpTitle': 'Sign up to view study materials',
   'pages.courseDetail.studyMaterialsSignUpDescription': 'Study materials are restricted resources available only to verified Lingnan students. Sign up with your Lingnan email to access them.',
   'pages.courseDetail.noStudyMaterials': 'No study materials available yet',
+  'pages.courseDetail.studyMaterialsPersonalUseNotice': 'For personal study purpose only',
   'pages.courseDetail.studyMaterialsLoadFailed': 'Failed to load study materials',
   'pages.courseDetail.studyMaterialsDownloadFailed': 'Failed to download study materials. Please try again.',
 

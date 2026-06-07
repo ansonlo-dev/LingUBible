@@ -3649,6 +3649,13 @@ const CourseDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* Personal-use notice for specific courses (LCC1010 / LCC2010) */}
+                  {['LCC1010', 'LCC2010'].includes((course.course_code || '').toUpperCase()) && (
+                    <div className="flex items-center gap-2 rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>{t('pages.courseDetail.studyMaterialsPersonalUseNotice')}</span>
+                    </div>
+                  )}
                   {/* Toolbar: select-all + count + bulk download (no filters) */}
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
