@@ -139,6 +139,7 @@
     "fonttools": "^1.0.7",
     "globals": "^15.9.0",
     "lovable-tagger": "^1.1.7",
+    "node-appwrite": "^26.1.0",
     "postcss": "^8.5.4",
     "tailwindcss": "^3.4.17",
     "terser": "^5.40.0",

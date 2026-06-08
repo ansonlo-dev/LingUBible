@@ -1048,6 +1048,24 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
     shadow.appendChild(styleEl);
   }, [viewerReady, isMobile]);
 
+  // Mobile: tighten the spacing between the top toolbar's items so the close
+  // button we add to the right-group fits without crowding the existing icons.
+  // The toolbar groups are flex containers tagged with data-epdf-i; we only
+  // shrink their gap (default gap-2 ≈ 0.5rem) a touch, leaving the buttons' own
+  // hit-areas intact.
+  useEffect(() => {
+    if (!isMobile || !viewerReady || !shadowRootRef.current) return;
+    const shadow = shadowRootRef.current;
+    const STYLE_ID = 'pdf-mobile-toolbar-gap';
+    if (shadow.querySelector(`#${STYLE_ID}`)) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = STYLE_ID;
+    styleEl.textContent =
+      '[data-epdf-i="left-group"],[data-epdf-i="center-group"],[data-epdf-i="right-group"]' +
+      '{gap:0.125rem !important;}';
+    shadow.appendChild(styleEl);
+  }, [viewerReady, isMobile]);
+
   // Replace the hardcoded "Initializing plugins..." text in the embedpdf shadow root
   // with the translated equivalent. The text appears before onReady fires, so we use
   // rAF to find the shadow root as early as possible, then a MutationObserver to catch
@@ -1262,7 +1280,15 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                         };
                       }
                       if (item.id === 'right-group') {
-                        return { ...item, items: [] };
+                        // Desktop: keep it empty (our overlay X sits at top-right).
+                        // Mobile: drop in a close button so there's a visible exit
+                        // at the far right of the toolbar.
+                        return {
+                          ...item,
+                          items: isMobile
+                            ? [{ type: 'command-button', id: 'close-button', commandId: 'custom:close', variant: 'icon', categories: ['custom'] }]
+                            : [],
+                        };
                       }
                       // Drop the unused "Redact" mode tab.
                       if (item.id === 'mode-tabs' && Array.isArray(item.tabs)) {
@@ -1306,6 +1332,16 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({
                       categories: ['custom'],
                       active: () => toggleInvertedRef.current !== undefined && localStorage.getItem('pdf-viewer-inverted') === 'true',
                       action: () => { toggleInvertedRef.current(); },
+                    });
+                    // Mobile has no visible close affordance (desktop's overlay X is
+                    // hidden via `lg:flex`), so surface one as the right-most toolbar
+                    // item. Added to the (otherwise empty) right-group below.
+                    commandsCap.registerCommand({
+                      id: 'custom:close',
+                      label: t('components.pdfViewer.close'),
+                      icon: 'x',
+                      categories: ['custom'],
+                      action: () => { onOpenChangeRef.current(false); },
                     });
                   }
                   const documentMenu = schema?.menus?.['document-menu'];
