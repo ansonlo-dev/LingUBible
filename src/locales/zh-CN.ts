@@ -1376,7 +1376,6 @@ export default {
   'review.noInstructorsFound': '找不到此课程/学期的教师',
   'review.instructorEvaluations': '教师评价',
   'review.maxOneLectureInstructor': '您只能选择一位讲课教师',
-  'review.ccc8012LectureCount': 'CCC8012 必须选择刚好 3 位讲课教师',
   'review.maxOneTutorialInstructor': '您只能选择一位导修教师',
   'review.lectureInstructors': '讲课 (Lecture)',
   'review.tutorialInstructors': '导修 (Tutorial)',

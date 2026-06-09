@@ -7,6 +7,18 @@ const TEACHING_RECORDS_COLLECTION_ID = 'teaching_records';
 const INSTRUCTORS_COLLECTION_ID = 'instructors';
 const PAGE_LIMIT = 1000;
 
+// 合併講師姓名（teaching_records.instructor_name 可能為 "A / B" 共同授課格式）拆成個別姓名。
+// 與前端 src/utils/instructorNameUtils.ts 的 splitInstructorNames 保持一致。
+function splitInstructorNames(raw) {
+  if (!raw) return [];
+  const parts = String(raw).split(/\s*\/\s*/).map(s => s.trim()).filter(s => s.length > 0);
+  if (parts.length === 0) {
+    const trimmed = String(raw).trim();
+    return trimmed ? [trimmed] : [];
+  }
+  return parts;
+}
+
 // 標準香港大學成績對 GPA 對照表，與前端 src/utils/gradeUtils.ts 保持一致
 const GRADE_TO_GPA = {
   'A': 4.00, 'A-': 3.67, 'B+': 3.33, 'B': 3.00, 'B-': 2.67,
@@ -157,15 +169,18 @@ function accumulateInstructorReview(map, review) {
   if (!Array.isArray(details)) return;
 
   for (const detail of details) {
-    const name = detail.instructor_name;
-    if (!name) continue;
-    if (!map.has(name)) map.set(name, newInstructorReviewAgg());
-    const agg = map.get(name);
-    agg.reviewCount++;
-    if (detail.teaching > 0) { agg.teachingSum += detail.teaching; agg.teachingCount++; }
-    if (detail.grading && detail.grading > 0) { agg.gradingSum += detail.grading; agg.gradingCount++; }
+    // 合併講師（"A / B"）的評價同時累加到每位個別講師
+    const names = splitInstructorNames(detail.instructor_name);
+    if (names.length === 0) continue;
     const gpa = gradeToCountedGPA(review.course_final_grade);
-    if (gpa !== null) { agg.gradeSum += gpa; agg.gradeCount++; }
+    for (const name of names) {
+      if (!map.has(name)) map.set(name, newInstructorReviewAgg());
+      const agg = map.get(name);
+      agg.reviewCount++;
+      if (detail.teaching > 0) { agg.teachingSum += detail.teaching; agg.teachingCount++; }
+      if (detail.grading && detail.grading > 0) { agg.gradingSum += detail.grading; agg.gradingCount++; }
+      if (gpa !== null) { agg.gradeSum += gpa; agg.gradeCount++; }
+    }
   }
 }
 
@@ -323,9 +338,10 @@ async function recomputeAll(databases, log, diag) {
     for (const r of res.documents) {
       if (!teachingByCourse.has(r.course_code)) teachingByCourse.set(r.course_code, []);
       teachingByCourse.get(r.course_code).push(r);
-      if (r.instructor_name) {
-        if (!teachingByInstructor.has(r.instructor_name)) teachingByInstructor.set(r.instructor_name, []);
-        teachingByInstructor.get(r.instructor_name).push(r);
+      // 合併講師列同時歸到每位個別講師之下
+      for (const name of splitInstructorNames(r.instructor_name)) {
+        if (!teachingByInstructor.has(name)) teachingByInstructor.set(name, []);
+        teachingByInstructor.get(name).push(r);
       }
     }
     totalTeaching += res.documents.length;
@@ -438,9 +454,11 @@ async function recomputeInstructors(databases, log, diag) {
     if (cursor) queries.push(Query.cursorAfter(cursor));
     const res = await databases.listDocuments(DATABASE_ID, TEACHING_RECORDS_COLLECTION_ID, queries);
     for (const r of res.documents) {
-      if (!r.instructor_name) continue;
-      if (!teachingByInstructor.has(r.instructor_name)) teachingByInstructor.set(r.instructor_name, []);
-      teachingByInstructor.get(r.instructor_name).push(r);
+      // 合併講師列同時歸到每位個別講師之下
+      for (const name of splitInstructorNames(r.instructor_name)) {
+        if (!teachingByInstructor.has(name)) teachingByInstructor.set(name, []);
+        teachingByInstructor.get(name).push(r);
+      }
     }
     totalTeaching += res.documents.length;
     if (res.documents.length < PAGE_LIMIT) break;

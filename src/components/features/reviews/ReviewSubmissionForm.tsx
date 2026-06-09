@@ -75,11 +75,6 @@ import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 import { ProgressBarForm } from '@/components/ui/progress-bar-form';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 
-// CCC8012 special case: lecture sections are co-taught, so a valid review must cover
-// exactly the section's instructors — always 3 lecture instructors (chosen one by one).
-const CCC8012_COURSE_CODE = 'CCC8012';
-const CCC8012_REQUIRED_LECTURE_COUNT = 3;
-
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
   editReviewId?: string;
@@ -478,23 +473,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const selectedLectureInstructors = selectedInstructors.filter(key => key.endsWith('|Lecture'));
     const selectedTutorialInstructors = selectedInstructors.filter(key => key.endsWith('|Tutorial'));
 
-    // Special case: CCC8012 co-teaching section. Required lecture count is the number of
-    // available lecture instructors capped at 3 (<=3 are all pre-selected/locked; >3 means
-    // the user must pick exactly 3).
-    const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
-    const ccc8012RequiredLectureCount = Math.min(lectureInstructors.length, CCC8012_REQUIRED_LECTURE_COUNT);
-    const lectureSelectionValid = isCCC8012
-      ? selectedLectureInstructors.length === ccc8012RequiredLectureCount
-      : selectedLectureInstructors.length > 0;
-
+    // 共同授課的場次會有多位講課/導修導師（teaching_records 合併列在資料層已展開成個別講師），
+    // 使用者可自行複選任意位，但每種可選的場次類型至少要選一位。
     // If both lecture and tutorial instructors are available, user must select at least one from each
     if (hasLectureInstructors && hasTutorialInstructors) {
-      return lectureSelectionValid && selectedTutorialInstructors.length > 0;
+      return selectedLectureInstructors.length > 0 && selectedTutorialInstructors.length > 0;
     }
 
-    // If only lecture instructors are available, user must select the required lecture instructor(s)
+    // If only lecture instructors are available, user must select at least one lecture instructor
     if (hasLectureInstructors && !hasTutorialInstructors) {
-      return lectureSelectionValid;
+      return selectedLectureInstructors.length > 0;
     }
     
     // If only tutorial instructors are available, user must select at least one tutorial instructor
@@ -1588,19 +1576,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               setSelectedInstructors([autoSelectKey]);
             }
           }
-
-          // Special case: CCC8012 co-teaching lecture sections.
-          // If there are <= 3 lecture instructors, the only valid choice is "all of them",
-          // so pre-select every lecture instructor and lock them. If there are > 3, leave
-          // them unselected and let the user pick exactly 3 one by one.
-          if (selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE) {
-            const lectureKeys = filteredRecords
-              .filter(record => record.session_type === 'Lecture')
-              .map(record => `${record.instructor_name}|${record.session_type}`);
-            if (lectureKeys.length > 0 && lectureKeys.length <= CCC8012_REQUIRED_LECTURE_COUNT) {
-              setSelectedInstructors(prev => [...new Set([...prev, ...lectureKeys])]);
-            }
-          }
         } else {
           // In edit mode, validate that instructors are available
           // Don't turn off the flag here - let it be handled after evaluations are set
@@ -1912,18 +1887,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const handleInstructorToggle = useCallback((instructorKey: string) => {
     const [instructorName, sessionType] = instructorKey.split('|');
 
-    // Special case: CCC8012 has co-teaching lecture sections.
-    // - If there are <= 3 lecture instructors, all of them are pre-selected and LOCKED
-    //   (the only valid choice is "all of them"), so disallow toggling.
-    // - If there are > 3 lecture instructors, the user picks exactly 3 one by one.
-    const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
-    const availableLectureCount = availableInstructors.filter(record => record.session_type === 'Lecture').length;
-    const ccc8012LecturesLocked = isCCC8012 && availableLectureCount <= CCC8012_REQUIRED_LECTURE_COUNT;
-    if (ccc8012LecturesLocked && sessionType === 'Lecture') {
-      return; // Locked — all lecture instructors must stay selected together
-    }
-    const maxLectureInstructors = isCCC8012 ? CCC8012_REQUIRED_LECTURE_COUNT : 1;
-
     setSelectedInstructors(prev => {
       if (prev.includes(instructorKey)) {
         // Check if this instructor is pre-selected from instructor page
@@ -1939,34 +1902,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Removing instructor
         return prev.filter(key => key !== instructorKey);
       } else {
-        // Adding instructor - check limits
-        const currentLectureCount = prev.filter(key => key.endsWith('|Lecture')).length;
-        const currentTutorialCount = prev.filter(key => key.endsWith('|Tutorial')).length;
-
-        if (sessionType === 'Lecture' && currentLectureCount >= maxLectureInstructors) {
-          toast({
-            title: t('common.error'),
-            description: isCCC8012
-              ? (t('review.ccc8012LectureCount') || 'CCC8012 requires exactly 3 lecture instructors')
-              : (t('review.maxOneLectureInstructor') || 'You can only select one lecture instructor'),
-            variant: 'destructive',
-          });
-          return prev;
-        }
-        
-        if (sessionType === 'Tutorial' && currentTutorialCount >= 1) {
-          toast({
-            title: t('common.error'),
-            description: t('review.maxOneTutorialInstructor') || 'You can only select one tutorial instructor',
-            variant: 'destructive',
-          });
-          return prev;
-        }
-        
+        // 共同授課的場次可有多位講課/導修導師（合併列已於資料層展開成個別講師），
+        // 使用者可自由複選任意位並各自評分，這裡不再限制單一講課/導修導師。
         return [...prev, instructorKey];
       }
     });
-  }, [originPage, preSelectedInstructor, toast, t, selectedCourse, availableInstructors]);
+  }, [originPage, preSelectedInstructor, toast, t]);
 
   const validateForm = useCallback(async (): Promise<boolean> => {
     // 檢查基本選擇
@@ -1977,21 +1918,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         variant: 'destructive',
       });
       return false;
-    }
-
-    // 特例：CCC8012 必須選滿「可選講課導師數，上限 3」位講課導師
-    if (selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE) {
-      const availableLectureCount = availableInstructors.filter(record => record.session_type === 'Lecture').length;
-      const requiredLectureCount = Math.min(availableLectureCount, CCC8012_REQUIRED_LECTURE_COUNT);
-      const selectedLectureCount = selectedInstructors.filter(key => key.endsWith('|Lecture')).length;
-      if (requiredLectureCount > 0 && selectedLectureCount !== requiredLectureCount) {
-        toast({
-          title: t('common.error'),
-          description: t('review.ccc8012LectureCount') || 'CCC8012 requires exactly 3 lecture instructors',
-          variant: 'destructive',
-        });
-        return false;
-      }
     }
 
     // 檢查從講師頁面進入時預選講師必須被選中
@@ -2490,32 +2416,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         
                         // Helper function to render instructor list
                         const renderInstructorList = (instructors: TeachingRecord[]) => {
-                          // CCC8012 co-teaching lecture handling:
-                          // - <= 3 lecture instructors: all pre-selected and locked
-                          // - > 3 lecture instructors: user picks exactly 3, show a live counter hint
-                          const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
-                          const isLectureList = instructors[0]?.session_type === 'Lecture';
-                          const ccc8012LecturesLocked = isCCC8012 && lectureInstructors.length <= CCC8012_REQUIRED_LECTURE_COUNT;
-                          const showCcc8012Counter = isCCC8012 && isLectureList && !ccc8012LecturesLocked;
-                          const selectedLectureCount = selectedInstructors.filter(key => key.endsWith('|Lecture')).length;
                           return (
                             <div className="space-y-2">
-                              {showCcc8012Counter && (
-                                <div className={cn(
-                                  "text-sm px-3 py-2 rounded-md border",
-                                  selectedLectureCount === CCC8012_REQUIRED_LECTURE_COUNT
-                                    ? "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-900"
-                                    : "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-900"
-                                )}>
-                                  {t('review.ccc8012LectureCount')} ({selectedLectureCount}/{CCC8012_REQUIRED_LECTURE_COUNT})
-                                </div>
-                              )}
                               {instructors.map((record, index) => {
                                 const instructorKey = `${record.instructor_name}|${record.session_type}`;
                                 const isSelected = selectedInstructors.includes(instructorKey);
-                                const isLocked = (ccc8012LecturesLocked && record.session_type === 'Lecture') ||
-                                                 (originPage === 'instructor' && preSelectedInstructor &&
-                                                  instructorKey.startsWith(preSelectedInstructor + '|') && isSelected);
+                                // 從講師頁面進入時的預選講師不可取消；其餘皆可自由複選
+                                const isLocked = originPage === 'instructor' && preSelectedInstructor &&
+                                                 instructorKey.startsWith(preSelectedInstructor + '|') && isSelected;
 
                                 return (
                                   <label

@@ -3,6 +3,7 @@ import { Query } from 'appwrite';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA, isReviewRetryFailGrade } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
+import { expandRecordsByInstructorName, splitInstructorNames, instructorNameMatches } from '@/utils/instructorNameUtils';
 import { courseStatsCache, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
 import { persistentCache, PERSISTENT_CACHE_KEYS, PERSISTENT_CACHE_TTL } from '@/utils/persistentCache';
 
@@ -123,6 +124,7 @@ export interface TeachingRawRecord {
   course_code: string;
   term_code: string;
   instructor_name: string;
+  session_type: string;
   teaching_language: string;
   service_learning: string | null;
   $createdAt: string;
@@ -1376,10 +1378,13 @@ export class CourseService {
       );
 
       // 處理教學記錄，將空白 instructor_name 替換為 'UNKNOWN'
-      const teachingRecords = (response.rows as unknown as TeachingRecord[]).map(record => ({
+      const normalizedRecords = (response.rows as unknown as TeachingRecord[]).map(record => ({
         ...record,
         instructor_name: (!record.instructor_name || record.instructor_name.trim() === '') ? 'UNKNOWN' : record.instructor_name
       }));
+      // 合併講師列展開成個別講師列：課程詳情顯示與寫評價選單皆以個別講師呈現，
+      // 共同授課的每位講師可分別點擊／評分。
+      const teachingRecords = expandRecordsByInstructorName(normalizedRecords);
 
       // 快取結果 (10分鐘)
       this.setCached(cacheKey, teachingRecords, 10 * 60 * 1000);
@@ -1448,17 +1453,9 @@ export class CourseService {
     averageRating: number;
   }> {
     try {
-      // 並行獲取教學記錄和評論，使用更精確的查詢
-      const [teachingRecords, reviewsResponse] = await Promise.all([
-        tablesDB.listRows(
-          this.DATABASE_ID,
-          this.TEACHING_RECORDS_COLLECTION_ID,
-          [
-            Query.equal('instructor_name', instructorName),
-            Query.limit(50), // 從 100 減少到 50，大多數講師不會教超過50門課程
-            Query.select(['course_code']) // 只需要課程代碼來計算數量
-          ]
-        ),
+      // 並行獲取教學記錄（共享展開快取，合併講師已拆成個別列）和評論
+      const [rawRecords, reviewsResponse] = await Promise.all([
+        this.getAllTeachingRecordsRaw(),
         tablesDB.listRows(
           this.DATABASE_ID,
           this.REVIEWS_COLLECTION_ID,
@@ -1470,19 +1467,20 @@ export class CourseService {
         )
       ]);
 
-      // 計算課程數（去重）
+      // 計算課程數（去重）— 以個別講師比對
       const uniqueCourses = new Set(
-        (teachingRecords.rows as unknown as TeachingRecord[])
+        rawRecords
+          .filter(record => record.instructor_name === instructorName)
           .map(record => record.course_code)
       );
       const courseCount = uniqueCourses.size;
 
-      // 過濾包含該講師的評論並計算統計
+      // 過濾包含該講師的評論並計算統計（instructor_details 亦可能為合併格式，以成員包含比對）
       const allReviews = reviewsResponse.rows as unknown as Review[];
       const instructorReviews = allReviews.filter(review => {
         try {
           const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-          return instructorDetails.some(detail => detail.instructor_name === instructorName);
+          return instructorDetails.some(detail => instructorNameMatches(detail.instructor_name, instructorName));
         } catch (error) {
           return false;
         }
@@ -1495,7 +1493,7 @@ export class CourseService {
         const totalRating = instructorReviews.reduce((sum, review) => {
           try {
             const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-            const instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName);
+            const instructorDetail = instructorDetails.find(detail => instructorNameMatches(detail.instructor_name, instructorName));
             return sum + (instructorDetail?.teaching || 0);
           } catch (error) {
             return sum;
@@ -1752,16 +1750,23 @@ export class CourseService {
         return cached;
       }
 
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('instructor_name', instructorName),
-          Query.limit(100)
-        ]
-      );
-
-      const teachingRecords = response.rows as unknown as TeachingRecord[];
+      // 合併講師列無法用 Query.equal 精確比對，改由已展開的共享快取做 client-side 比對：
+      // getAllTeachingRecordsRaw() 已把 "A / B" 展開成個別列，因此這裡用 === 即可命中
+      // 共同授課的個別講師，且不額外發出查詢（沿用被動快取，符合配額限制）。
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      const teachingRecords = rawRecords
+        .filter(record => record.instructor_name === instructorName)
+        .map(record => ({
+          $id: record.$id,
+          course_code: record.course_code,
+          term_code: record.term_code,
+          instructor_name: record.instructor_name,
+          session_type: record.session_type,
+          service_learning: record.service_learning,
+          teaching_language: record.teaching_language,
+          $createdAt: record.$createdAt,
+          $updatedAt: record.$createdAt,
+        })) as unknown as TeachingRecord[];
       this.setCached(cacheKey, teachingRecords, 10 * 60 * 1000); // 10 分鐘快取
       return teachingRecords;
     } catch (error) {
@@ -1997,7 +2002,7 @@ export class CourseService {
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
         const instructorDetails = this.tryParseInstructorDetails(review.instructor_details);
-        return instructorDetails !== null && instructorDetails.some(detail => detail.instructor_name === instructorName);
+        return instructorDetails !== null && instructorDetails.some(detail => instructorNameMatches(detail.instructor_name, instructorName));
       });
 
       // 批次撈取此講師相關評論的所有學期 / 課程，取代逐筆 getTermByCode +
@@ -2898,8 +2903,10 @@ export class CourseService {
       const allReviews = reviewsResponse.rows as unknown as Review[];
       const currentTermTeachingRecords = teachingRecordsResponse.rows as unknown as TeachingRecord[];
       
-      // 創建當前學期教學的講師集合
-      const currentTermInstructors = new Set(currentTermTeachingRecords.map(record => record.instructor_name));
+      // 創建當前學期教學的講師集合（合併講師列拆成個別講師以正確比對）
+      const currentTermInstructors = new Set(
+        currentTermTeachingRecords.flatMap(record => splitInstructorNames(record.instructor_name))
+      );
 
       // 創建講師統計映射
       const instructorStatsMap = new Map<string, {
@@ -3695,7 +3702,8 @@ export class CourseService {
       ]);
 
       const instructors = instructorsResponse.rows as unknown as Instructor[];
-      const allTeachingRecords = teachingRecordsResponse.rows as unknown as TeachingRecord[];
+      // 合併講師列展開成個別講師列，確保按 instructor.name 分組能正確命中共同授課的每位講師
+      const allTeachingRecords = expandRecordsByInstructorName(teachingRecordsResponse.rows as unknown as TeachingRecord[]);
       const allReviews = reviewsResponse.rows as unknown as Review[];
 
       // 創建講師統計映射
@@ -3728,7 +3736,7 @@ export class CourseService {
         const instructorReviews = allReviews.filter(review => {
           try {
             const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-            return instructorDetails.some(detail => detail.instructor_name === instructorName);
+            return instructorDetails.some(detail => instructorNameMatches(detail.instructor_name, instructorName));
           } catch (error) {
             return false;
           }
@@ -3741,7 +3749,7 @@ export class CourseService {
           const totalRating = instructorReviews.reduce((sum, review) => {
             try {
               const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-              const instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName);
+              const instructorDetail = instructorDetails.find(detail => instructorNameMatches(detail.instructor_name, instructorName));
               return sum + (instructorDetail?.teaching || 0);
             } catch (error) {
               return sum;
@@ -4018,17 +4026,11 @@ export class CourseService {
    */
   static async isInstructorTeachingInTerm(instructorName: string, termCode: string): Promise<boolean> {
     try {
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('instructor_name', instructorName),
-          Query.equal('term_code', termCode),
-          Query.limit(1),
-          Query.select(['$id']) // 僅檢查是否存在，無需取回整列或全部教學課程
-        ]
+      // 合併講師列需以「成員包含」比對，改用已展開的共享快取（不額外查詢）
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      return rawRecords.some(
+        record => record.term_code === termCode && record.instructor_name === instructorName
       );
-      return response.rows.length > 0;
     } catch (error) {
       console.error('Error checking if instructor is teaching in term:', error);
       return false;
@@ -4055,7 +4057,7 @@ export class CourseService {
       // 過濾包含該講師的評論
       const instructorReviews = allReviews.filter(review => {
         const instructorDetails = this.tryParseInstructorDetails(review.instructor_details);
-        return instructorDetails !== null && instructorDetails.some(detail => detail.instructor_name === instructorName);
+        return instructorDetails !== null && instructorDetails.some(detail => instructorNameMatches(detail.instructor_name, instructorName));
       });
 
       // 如果沒有找到評論，直接返回空數組
@@ -4101,7 +4103,7 @@ export class CourseService {
         // 解析講師詳情並找到該講師的評價
         const instructorDetails_parsed = this.tryParseInstructorDetails(review.instructor_details);
         const instructorDetail: InstructorDetail | null = instructorDetails_parsed
-          ? instructorDetails_parsed.find(detail => detail.instructor_name === instructorName) ?? null
+          ? instructorDetails_parsed.find(detail => instructorNameMatches(detail.instructor_name, instructorName)) ?? null
           : null;
 
         if (!instructorDetail) {
@@ -4277,30 +4279,20 @@ export class CourseService {
         return cached;
       }
 
-      // 獲取指定學期的所有教學記錄
-      const queries = [
-        Query.equal('term_code', termCodeArray),
-        Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-        Query.select(['instructor_name'])
-      ];
-
-      // 如果提供了特定講師名稱，則只查詢這些講師
-      if (instructorNames && instructorNames.length > 0) {
-        queries.push(Query.equal('instructor_name', instructorNames));
+      // 合併講師列需以個別講師比對，改由已展開的共享快取過濾（不額外查詢、符合配額限制）
+      const termSet = new Set(termCodeArray);
+      const nameSet = instructorNames && instructorNames.length > 0 ? new Set(instructorNames) : null;
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      const teachingInstructors = new Set<string>();
+      for (const record of rawRecords) {
+        if (!record.instructor_name || !termSet.has(record.term_code)) continue;
+        if (nameSet && !nameSet.has(record.instructor_name)) continue;
+        teachingInstructors.add(record.instructor_name);
       }
-
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        queries
-      );
-
-      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'instructor_name'>[];
-      const teachingInstructors = new Set(teachingRecords.map(record => record.instructor_name));
 
       // 緩存結果（較長時間，因為學期數據相對穩定）
       this.setCached(cacheKey, teachingInstructors, 10 * 60 * 1000); // 10分鐘緩存
-      
+
       return teachingInstructors;
     } catch (error) {
       console.error('Error fetching instructors teaching in term (batch):', error);
@@ -4391,7 +4383,7 @@ export class CourseService {
           const queries = [
             Query.orderAsc('$createdAt'),
             Query.limit(PAGE),
-            Query.select(['course_code', 'term_code', 'teaching_language', 'service_learning', 'instructor_name', '$createdAt'])
+            Query.select(['course_code', 'term_code', 'session_type', 'teaching_language', 'service_learning', 'instructor_name', '$createdAt'])
           ];
           if (cursor) queries.push(Query.cursorAfter(cursor));
           const res = await tablesDB.listRows(this.DATABASE_ID, this.TEACHING_RECORDS_COLLECTION_ID, queries);
@@ -4400,8 +4392,12 @@ export class CourseService {
           if (rows.length < PAGE) break;
           cursor = (rows[rows.length - 1] as any).$id;
         }
-        this.teachingRecordsRawCache = { data: all, expiry: Date.now() + this.TEACHING_RAW_TTL };
-        return all;
+        // 合併講師列（instructor_name 含 " / "）在此資料邊界展開成個別講師列，
+        // 讓所有讀取此共享快取的聚合（課程/講師教學語言、任教學期、課程對照表）
+        // 都以「每列一位講師」運作，正確對應個別講師檔案。
+        const expanded = expandRecordsByInstructorName(all);
+        this.teachingRecordsRawCache = { data: expanded, expiry: Date.now() + this.TEACHING_RAW_TTL };
+        return expanded;
       } finally {
         this.teachingRecordsRawInflight = null;
       }
@@ -5095,7 +5091,7 @@ export class CourseService {
       const instructorReviews = allReviews.filter(review => {
         try {
           const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-          return instructorDetails.some(detail => detail.instructor_name === instructorName);
+          return instructorDetails.some(detail => instructorNameMatches(detail.instructor_name, instructorName));
         } catch (error) {
           return false;
         }
@@ -5250,7 +5246,7 @@ export class CourseService {
           let instructorDetail: InstructorDetail | null = null;
           try {
             const instructorDetails: InstructorDetail[] = JSON.parse(review.instructor_details);
-            instructorDetail = instructorDetails.find(detail => detail.instructor_name === instructorName) || null;
+            instructorDetail = instructorDetails.find(detail => instructorNameMatches(detail.instructor_name, instructorName)) || null;
           } catch (error) {
             return null;
           }
@@ -6246,25 +6242,15 @@ export class CourseService {
     sessionType: string
   ): Promise<string | null> {
     try {
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('course_code', courseCode),
-          Query.equal('term_code', termCode),
-          Query.equal('instructor_name', instructorName),
-          Query.equal('session_type', sessionType),
-          Query.select(['teaching_language']),
-          Query.limit(1)
-        ]
+      // 合併講師列以個別講師比對，改用已展開的共享快取（不額外查詢）
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      const match = rawRecords.find(record =>
+        record.course_code === courseCode &&
+        record.term_code === termCode &&
+        record.session_type === sessionType &&
+        record.instructor_name === instructorName
       );
-
-      if (response.rows.length > 0) {
-        const record = response.rows[0] as unknown as TeachingRecord;
-        return record.teaching_language;
-      }
-
-      return null;
+      return match ? match.teaching_language : null;
     } catch (error) {
       console.error('Error fetching instructor detail teaching language:', error);
       return null;
@@ -6842,27 +6828,25 @@ export class CourseService {
       const uniqueInstructorNames = [...new Set(instructorDetails.map(detail => detail.instructorName))];
       const uniqueSessionTypes = [...new Set(instructorDetails.map(detail => detail.sessionType))];
 
-      // Query all relevant teaching records
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('course_code', uniqueCourseCodes),
-          Query.equal('term_code', uniqueTermCodes),
-          Query.equal('instructor_name', uniqueInstructorNames),
-          Query.equal('session_type', uniqueSessionTypes),
-          Query.select(['course_code', 'term_code', 'instructor_name', 'session_type', 'teaching_language']),
-          Query.limit(instructorDetails.length * 2) // Allow some buffer for multiple matches
-        ]
-      );
+      // 合併講師列以個別講師比對：改用已展開的共享快取（每列一位講師），
+      // 以 course|term|instructor|session 複合鍵查表（不額外查詢）
+      const courseSet = new Set(uniqueCourseCodes);
+      const termSet = new Set(uniqueTermCodes);
+      const nameSet = new Set(uniqueInstructorNames);
+      const sessionSet = new Set(uniqueSessionTypes);
+      const rawRecords = await this.getAllTeachingRecordsRaw();
 
-      const teachingRecords = response.rows as unknown as TeachingRecord[];
-      
       // Create a map for quick lookup by composite key
       const recordsMap = new Map<string, string>();
-      teachingRecords.forEach(record => {
+      rawRecords.forEach(record => {
+        if (!courseSet.has(record.course_code) || !termSet.has(record.term_code) ||
+            !nameSet.has(record.instructor_name) || !sessionSet.has(record.session_type)) {
+          return;
+        }
         const key = `${record.course_code}|${record.term_code}|${record.instructor_name}|${record.session_type}`;
-        recordsMap.set(key, record.teaching_language);
+        if (!recordsMap.has(key)) {
+          recordsMap.set(key, record.teaching_language);
+        }
       });
 
       // Build result map
@@ -6886,23 +6870,16 @@ export class CourseService {
    */
   static async getInstructorTeachingLanguages(instructorName: string): Promise<string[]> {
     try {
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('instructor_name', instructorName),
-          Query.orderAsc('term_code'), // Chronological order
-          Query.limit(200), // Reasonable limit for instructor teaching records
-          Query.select(['teaching_language', 'term_code'])
-        ]
-      );
+      // 合併講師列以個別講師比對，改用已展開的共享快取（不額外查詢）
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      const teachingRecords = rawRecords
+        .filter(record => record.instructor_name === instructorName)
+        .sort((a, b) => (a.term_code || '').localeCompare(b.term_code || '')); // Chronological order
 
-      const teachingRecords = response.rows as unknown as TeachingRecord[];
-      
       // Get unique teaching languages in chronological order
       const languageSet = new Set<string>();
       const languageOrder: string[] = [];
-      
+
       teachingRecords.forEach(record => {
         if (record.teaching_language && !languageSet.has(record.teaching_language)) {
           languageSet.add(record.teaching_language);
@@ -6922,96 +6899,45 @@ export class CourseService {
    */
   static async getBatchInstructorTeachingLanguages(instructorNames: string[]): Promise<Map<string, string[]>> {
     if (instructorNames.length === 0) {
-      console.log('🔍 getBatchInstructorTeachingLanguages: No instructor names provided');
       return new Map();
     }
 
     try {
-      console.log(`🔍 getBatchInstructorTeachingLanguages: Fetching languages for ${instructorNames.length} instructors`);
-      
       const result = new Map<string, string[]>();
-      
-      // Split into batches to avoid URL length limits (max ~50 instructors per batch)
-      const batchSize = 200;
-      const batches = [];
-      
-      for (let i = 0; i < instructorNames.length; i += batchSize) {
-        batches.push(instructorNames.slice(i, i + batchSize));
-      }
-      
-      console.log(`🔍 getBatchInstructorTeachingLanguages: Processing ${batches.length} batches of ${batchSize} instructors each`);
-      
-      let totalRecords = 0;
-      let totalInstructorsWithData = 0;
-      
-      // Process each batch
-      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-        const batch = batches[batchIndex];
-        console.log(`🔍 Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} instructors`);
-        
-        try {
-          // Fetch all teaching records for this batch of instructors
-          const response = await tablesDB.listRows(
-            this.DATABASE_ID,
-            this.TEACHING_RECORDS_COLLECTION_ID,
-            [
-              Query.equal('instructor_name', batch),
-              Query.orderAsc('term_code'), // Chronological order
-              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-              Query.select(['instructor_name', 'teaching_language', 'term_code'])
-            ]
-          );
+      const nameSet = new Set(instructorNames);
+      instructorNames.forEach(name => result.set(name, []));
 
-          const teachingRecords = response.rows as unknown as TeachingRecord[];
-          totalRecords += teachingRecords.length;
-          console.log(`🔍 Batch ${batchIndex + 1}: Found ${teachingRecords.length} teaching records`);
-          
-          // Debug: Show sample of first few records from first batch
-          if (batchIndex === 0 && teachingRecords.length > 0) {
-            console.log('🔍 Sample teaching records:', teachingRecords.slice(0, 3).map(r => ({
-              instructor: r.instructor_name,
-              language: r.teaching_language,
-              term: r.term_code
-            })));
-          }
-          
-          // Group records by instructor
-          const instructorRecordsMap = new Map<string, TeachingRecord[]>();
-          teachingRecords.forEach(record => {
-            if (!instructorRecordsMap.has(record.instructor_name)) {
-              instructorRecordsMap.set(record.instructor_name, []);
-            }
-            instructorRecordsMap.get(record.instructor_name)!.push(record);
-          });
+      // 合併講師列以個別講師比對：改用已展開的共享快取（每列一位講師，0 額外查詢）
+      const rawRecords = await this.getAllTeachingRecordsRaw();
 
-          // Build result map with unique languages in chronological order
-          batch.forEach(instructorName => {
-            const records = instructorRecordsMap.get(instructorName) || [];
-            
-            const languageSet = new Set<string>();
-            const languageOrder: string[] = [];
-            
-            records.forEach(record => {
-              if (record.teaching_language && !languageSet.has(record.teaching_language)) {
-                languageSet.add(record.teaching_language);
-                languageOrder.push(record.teaching_language);
-              }
-            });
-
-            result.set(instructorName, languageOrder);
-            if (languageOrder.length > 0) {
-              totalInstructorsWithData++;
-            }
-          });
-          
-        } catch (batchError) {
-          console.error(`❌ Error processing batch ${batchIndex + 1}:`, batchError);
+      // 依個別講師分組（依學期時間排序以保留年表順序）
+      const instructorRecordsMap = new Map<string, { term_code: string; teaching_language: string }[]>();
+      rawRecords.forEach(record => {
+        if (!nameSet.has(record.instructor_name)) return;
+        if (!instructorRecordsMap.has(record.instructor_name)) {
+          instructorRecordsMap.set(record.instructor_name, []);
         }
-      }
+        instructorRecordsMap.get(record.instructor_name)!.push({
+          term_code: record.term_code,
+          teaching_language: record.teaching_language
+        });
+      });
 
-      console.log(`🔍 getBatchInstructorTeachingLanguages: Processed ${totalRecords} total records`);
-      console.log(`🔍 getBatchInstructorTeachingLanguages: ${totalInstructorsWithData} instructors have language data`);
-      console.log(`🔍 Sample language mapping:`, Array.from(result.entries()).slice(0, 3));
+      instructorNames.forEach(instructorName => {
+        const records = (instructorRecordsMap.get(instructorName) || [])
+          .sort((a, b) => (a.term_code || '').localeCompare(b.term_code || ''));
+
+        const languageSet = new Set<string>();
+        const languageOrder: string[] = [];
+        records.forEach(record => {
+          if (record.teaching_language && !languageSet.has(record.teaching_language)) {
+            languageSet.add(record.teaching_language);
+            languageOrder.push(record.teaching_language);
+          }
+        });
+
+        result.set(instructorName, languageOrder);
+      });
 
       return result;
     } catch (error) {
@@ -7027,24 +6953,15 @@ export class CourseService {
   static async getInstructorCurrentTermTeachingLanguage(instructorName: string): Promise<string | null> {
     try {
       const currentTermCode = getCurrentTermCode();
-      
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        [
-          Query.equal('instructor_name', instructorName),
-          Query.equal('term_code', currentTermCode),
-          Query.limit(1),
-          Query.select(['teaching_language'])
-        ]
+
+      // 合併講師列以個別講師比對，改用已展開的共享快取（不額外查詢）
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      const match = rawRecords.find(record =>
+        record.instructor_name === instructorName &&
+        record.term_code === currentTermCode &&
+        record.teaching_language
       );
-
-      if (response.rows.length === 0) {
-        return null;
-      }
-
-      const teachingRecord = response.rows[0] as unknown as TeachingRecord;
-      return teachingRecord.teaching_language || null;
+      return match ? match.teaching_language : null;
     } catch (error) {
       console.error('Error fetching instructor current term teaching language:', error);
       return null;
@@ -7061,84 +6978,25 @@ export class CourseService {
 
     try {
       const currentTermCode = getCurrentTermCode();
-      const BATCH_SIZE = 50; // 🚀 限制每批查詢的講師數量，避免URL過長
       const result = new Map<string, string | null>();
-      
+      const nameSet = new Set(instructorNames);
+
       // 初始化所有講師為 null
       instructorNames.forEach(name => {
         result.set(name, null);
       });
 
-      // 🚀 分批處理避免URL過長
-      if (instructorNames.length <= BATCH_SIZE) {
-        // 小批量，直接查詢
-        const response = await tablesDB.listRows(
-          this.DATABASE_ID,
-          this.TEACHING_RECORDS_COLLECTION_ID,
-          [
-            Query.equal('term_code', currentTermCode),
-            Query.equal('instructor_name', instructorNames),
-            Query.limit(200),
-            Query.select(['instructor_name', 'teaching_language'])
-          ]
-        );
-
-        const teachingRecords = response.rows as unknown as TeachingRecord[];
-        
-        teachingRecords.forEach(record => {
-          if (record.teaching_language && !result.get(record.instructor_name)) {
-            result.set(record.instructor_name, record.teaching_language);
-          }
-        });
-        
-        return result;
-      } else {
-        // 大批量，分批處理
-        console.log(`📊 Processing ${instructorNames.length} instructors in batches for current term teaching languages`);
-        
-        const batches = [];
-        for (let i = 0; i < instructorNames.length; i += BATCH_SIZE) {
-          batches.push(instructorNames.slice(i, i + BATCH_SIZE));
+      // 合併講師列以個別講師比對：改用已展開的共享快取（每列一位講師，0 額外查詢）
+      const rawRecords = await this.getAllTeachingRecordsRaw();
+      rawRecords.forEach(record => {
+        if (record.term_code !== currentTermCode) return;
+        if (!nameSet.has(record.instructor_name)) return;
+        if (record.teaching_language && !result.get(record.instructor_name)) {
+          result.set(record.instructor_name, record.teaching_language);
         }
+      });
 
-        const batchPromises = batches.map(async (batch, index) => {
-          try {
-            const response = await tablesDB.listRows(
-              this.DATABASE_ID,
-              this.TEACHING_RECORDS_COLLECTION_ID,
-              [
-                Query.equal('term_code', currentTermCode),
-                Query.equal('instructor_name', batch),
-                Query.limit(200),
-                Query.select(['instructor_name', 'teaching_language'])
-              ]
-            );
-
-            const teachingRecords = response.rows as unknown as TeachingRecord[];
-            console.log(`✅ Instructor current term batch ${index + 1}/${batches.length}: Found ${teachingRecords.length} records`);
-            
-            return teachingRecords;
-          } catch (error) {
-            console.error(`❌ Error in instructor current term batch ${index + 1}:`, error);
-            return [];
-          }
-        });
-
-        const batchResults = await Promise.all(batchPromises);
-        
-        // 合併所有批次結果
-        batchResults.forEach(teachingRecords => {
-          teachingRecords.forEach(record => {
-            if (record.teaching_language && !result.get(record.instructor_name)) {
-              result.set(record.instructor_name, record.teaching_language);
-            }
-          });
-        });
-
-        console.log(`✅ Processed ${batches.length} instructor current term batches`);
-        return result;
-      }
-
+      return result;
     } catch (error) {
       console.error('Error fetching batch instructor current term teaching languages:', error);
       return new Map();

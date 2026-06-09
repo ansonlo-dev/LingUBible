@@ -1332,7 +1332,6 @@ export default {
   'review.noInstructorsFound': '找不到此課程/學期的教師',
   'review.instructorEvaluations': '教師評價',
   'review.maxOneLectureInstructor': '您只能選擇一位講課教師',
-  'review.ccc8012LectureCount': 'CCC8012 必須選擇剛好 3 位講課教師',
   'review.maxOneTutorialInstructor': '您只能選擇一位導修教師',
   'review.lectureInstructors': '講課 (Lecture)',
   'review.tutorialInstructors': '導修 (Tutorial)',
