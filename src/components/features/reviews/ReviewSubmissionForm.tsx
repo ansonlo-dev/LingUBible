@@ -589,14 +589,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   }, [instructorEvaluations, selectedCourse, selectedTerm]);
 
   // Build params for available instructors teaching languages hook
+  // 合併講師（"A / B"）拆成個別講師查詢，對應已展開的 teaching_records 快取
   const allAvailableInstructorParams = useMemo(() => {
     if (!selectedCourse || !selectedTerm) return [];
-    return availableInstructors.map(instructor => ({
-      courseCode: selectedCourse,
-      termCode: selectedTerm,
-      instructorName: instructor.instructor_name,
-      sessionType: instructor.session_type
-    }));
+    return availableInstructors.flatMap(instructor =>
+      splitInstructorNames(instructor.instructor_name).map(name => ({
+        courseCode: selectedCourse,
+        termCode: selectedTerm,
+        instructorName: name,
+        sessionType: instructor.session_type
+      }))
+    );
   }, [availableInstructors, selectedCourse, selectedTerm]);
 
   // Use teaching languages hook for preview (selected instructors)
@@ -1553,8 +1556,20 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Remove any selected instructors that are not available for this course/term combination
         // But preserve selected instructors during edit data population
         if (!isPopulatingEditData) {
-          const validInstructorKeys = filteredRecords.map(record => `${record.instructor_name}|${record.session_type}`);
-          setSelectedInstructors(prev => prev.filter(instructorKey => validInstructorKeys.includes(instructorKey)));
+          // 把已選的 key 對應到「原始教學記錄（場次）」的 key：
+          // - 完全相符（含合併列 "A/B"）→ 保留
+          // - 個別講師（如編輯舊評價時的 "A"）→ 映射到包含該講師的合併列 "A/B"
+          // 無對應者則移除；最後去重，維持「每個 session_type 一個場次」。
+          setSelectedInstructors(prev => {
+            const remapped = prev.map(instructorKey => {
+              const [name, session] = instructorKey.split('|');
+              const exact = filteredRecords.find(r => r.instructor_name === name && r.session_type === session);
+              if (exact) return instructorKey;
+              const covering = filteredRecords.find(r => r.session_type === session && instructorNameMatches(r.instructor_name, name));
+              return covering ? `${covering.instructor_name}|${covering.session_type}` : null;
+            }).filter((k): k is string => k !== null);
+            return Array.from(new Set(remapped));
+          });
           
           // Auto-select pre-selected instructor if available
           if (preSelectedInstructor) {
@@ -1626,12 +1641,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return;
     }
     
-    const newEvaluations: InstructorEvaluation[] = selectedInstructors.map(instructorKey => {
-      const [instructorName, sessionType] = instructorKey.split('|');
+    // 合併講師選項（"A / B"）在評分階段拆成個別講師，各自獨立評分／留言並分別存成一筆 instructor_detail。
+    const newEvaluations: InstructorEvaluation[] = selectedInstructors.flatMap(instructorKey => {
+      const [rawName, sessionType] = instructorKey.split('|');
+      return splitInstructorNames(rawName).map(instructorName => {
       const existing = instructorEvaluations.find(
         evaluation => evaluation.instructorName === instructorName && evaluation.sessionType === sessionType
       );
-      
+
       return existing || {
         instructorName,
         sessionType,
@@ -1650,8 +1667,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         serviceLearningType: 'compulsory',
         serviceLearningDescription: '',
       };
+      });
     });
-    
+
     // Only update if the evaluations have actually changed
     const hasChanges = newEvaluations.length !== instructorEvaluations.length ||
       newEvaluations.some((newEval, index) => {
@@ -1737,7 +1755,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     // Update instructor evaluations with current service learning data from teaching records
     const updatedEvaluations = instructorEvaluations.map(evaluation => {
       const teachingRecord = availableInstructors.find(
-        record => record.instructor_name === evaluation.instructorName && 
+        record => instructorNameMatches(record.instructor_name, evaluation.instructorName) &&
                  record.session_type === evaluation.sessionType
       );
       
@@ -1807,7 +1825,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     // Update instructor evaluations with service learning data from teaching records
     const updatedEvaluations = instructorEvaluations.map(evaluation => {
       const teachingRecord = availableInstructors.find(
-        record => record.instructor_name === evaluation.instructorName && 
+        record => instructorNameMatches(record.instructor_name, evaluation.instructorName) &&
                  record.session_type === evaluation.sessionType
       );
       
@@ -2748,22 +2766,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               title: t('review.lectureReview'),
               icon: <GraduationCap className="h-5 w-5" />,
               isValid: () => {
-                const lectureInstructors = selectedInstructors.filter(key => key.endsWith('|Lecture'));
-                return lectureInstructors.length > 0 && lectureInstructors.every((_, idx) => {
-                  const actualIdx = selectedInstructors.findIndex(key => key === selectedInstructors[idx]);
-                  return validateSingleInstructorEvaluation(actualIdx);
-                });
+                // 以個別講師評分為準（合併講師已於評分階段拆開）
+                const lectureIdxs = instructorEvaluations
+                  .map((evaluation, idx) => ({ evaluation, idx }))
+                  .filter(({ evaluation }) => evaluation.sessionType === 'Lecture');
+                return lectureIdxs.length > 0 && lectureIdxs.every(({ idx }) => validateSingleInstructorEvaluation(idx));
               },
               content: (
                 <div className="space-y-6">
-                  {selectedInstructors
-                    .map((instructorKey, idx) => {
-                      const [instructorName, sessionType] = instructorKey.split('|');
-                      if (sessionType !== 'Lecture') return null;
-                      
-                      const evaluation = instructorEvaluations[idx];
-                      if (!evaluation) return null;
-                      
+                  {instructorEvaluations
+                    .map((evaluation, idx) => {
+                      if (evaluation.sessionType !== 'Lecture') return null;
+
                       return (
                         <div key={idx} className="space-y-4">
                           <div className="mb-4">
@@ -2932,22 +2946,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               title: t('review.tutorialReview'),
               icon: <Users className="h-5 w-5" />,
               isValid: () => {
-                const tutorialInstructors = selectedInstructors.filter(key => key.endsWith('|Tutorial'));
-                return tutorialInstructors.length > 0 && tutorialInstructors.every((_, idx) => {
-                  const actualIdx = selectedInstructors.findIndex(key => key === selectedInstructors[idx]);
-                  return validateSingleInstructorEvaluation(actualIdx);
-                });
+                // 以個別講師評分為準（合併講師已於評分階段拆開）
+                const tutorialIdxs = instructorEvaluations
+                  .map((evaluation, idx) => ({ evaluation, idx }))
+                  .filter(({ evaluation }) => evaluation.sessionType === 'Tutorial');
+                return tutorialIdxs.length > 0 && tutorialIdxs.every(({ idx }) => validateSingleInstructorEvaluation(idx));
               },
               content: (
                 <div className="space-y-6">
-                  {selectedInstructors
-                    .map((instructorKey, idx) => {
-                      const [instructorName, sessionType] = instructorKey.split('|');
-                      if (sessionType !== 'Tutorial') return null;
-                      
-                      const evaluation = instructorEvaluations[idx];
-                      if (!evaluation) return null;
-                      
+                  {instructorEvaluations
+                    .map((evaluation, idx) => {
+                      if (evaluation.sessionType !== 'Tutorial') return null;
+
                       return (
                         <div key={idx} className="space-y-4">
                           <div className="mb-4">
@@ -3110,10 +3120,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           }
           
           // Keep the old dynamic logic as a fallback for any remaining instructor evaluations
-          const remainingInstructorSteps = selectedInstructors.map((instructorKey, idx) => {
-            const [instructorName, sessionType] = instructorKey.split('|');
-            const evaluation = instructorEvaluations[idx];
-            
+          // 以個別講師評分為準（合併講師已於評分階段拆開）
+          const remainingInstructorSteps = instructorEvaluations.map((evaluation, idx) => {
+            const sessionType = evaluation.sessionType;
+
             // Skip if already handled by static steps
             if (sessionType === 'Lecture' || sessionType === 'Tutorial') {
               return null;
