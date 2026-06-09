@@ -53,7 +53,17 @@ export const EmbedPdfViewer: React.FC<EmbedPdfViewerProps> = ({
       // locales like zh-TW and we don't need built-in stamps anyway.
       stamp: { manifests: [] },
       // Set the filename used by the built-in Export command (mobile menu).
-      ...(exportFileName !== undefined && { export: { defaultFileName: exportFileName } }),
+      // The export plugin names the file after the *document's* name
+      // (`coreDoc.name ?? defaultFileName`), and a doc loaded from a plain
+      // `src` blob URL gets a random UUID name (extracted from the blob URL).
+      // So we must load it via documentManager with an explicit `name` —
+      // setting `export.defaultFileName` alone is never reached. We pass src
+      // through `initialDocuments` here; the snippet merges our documentManager
+      // config last, so this overrides its default `[{ url: src }]` entry.
+      ...(exportFileName !== undefined && {
+        export: { defaultFileName: exportFileName },
+        documentManager: { initialDocuments: [{ url: src, name: exportFileName }] },
+      }),
     }}
   />
 );
