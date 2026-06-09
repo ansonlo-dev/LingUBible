@@ -478,10 +478,13 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const selectedLectureInstructors = selectedInstructors.filter(key => key.endsWith('|Lecture'));
     const selectedTutorialInstructors = selectedInstructors.filter(key => key.endsWith('|Tutorial'));
 
-    // Special case: CCC8012 requires exactly 3 lecture instructors (co-teaching section).
+    // Special case: CCC8012 co-teaching section. Required lecture count is the number of
+    // available lecture instructors capped at 3 (<=3 are all pre-selected/locked; >3 means
+    // the user must pick exactly 3).
     const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
+    const ccc8012RequiredLectureCount = Math.min(lectureInstructors.length, CCC8012_REQUIRED_LECTURE_COUNT);
     const lectureSelectionValid = isCCC8012
-      ? selectedLectureInstructors.length === CCC8012_REQUIRED_LECTURE_COUNT
+      ? selectedLectureInstructors.length === ccc8012RequiredLectureCount
       : selectedLectureInstructors.length > 0;
 
     // If both lecture and tutorial instructors are available, user must select at least one from each
@@ -1585,6 +1588,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               setSelectedInstructors([autoSelectKey]);
             }
           }
+
+          // Special case: CCC8012 co-teaching lecture sections.
+          // If there are <= 3 lecture instructors, the only valid choice is "all of them",
+          // so pre-select every lecture instructor and lock them. If there are > 3, leave
+          // them unselected and let the user pick exactly 3 one by one.
+          if (selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE) {
+            const lectureKeys = filteredRecords
+              .filter(record => record.session_type === 'Lecture')
+              .map(record => `${record.instructor_name}|${record.session_type}`);
+            if (lectureKeys.length > 0 && lectureKeys.length <= CCC8012_REQUIRED_LECTURE_COUNT) {
+              setSelectedInstructors(prev => [...new Set([...prev, ...lectureKeys])]);
+            }
+          }
         } else {
           // In edit mode, validate that instructors are available
           // Don't turn off the flag here - let it be handled after evaluations are set
@@ -1896,9 +1912,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const handleInstructorToggle = useCallback((instructorKey: string) => {
     const [instructorName, sessionType] = instructorKey.split('|');
 
-    // Special case: CCC8012 has co-teaching lecture sections; a valid review must
-    // cover exactly the section's instructors, which is always 3 lecture instructors.
+    // Special case: CCC8012 has co-teaching lecture sections.
+    // - If there are <= 3 lecture instructors, all of them are pre-selected and LOCKED
+    //   (the only valid choice is "all of them"), so disallow toggling.
+    // - If there are > 3 lecture instructors, the user picks exactly 3 one by one.
     const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
+    const availableLectureCount = availableInstructors.filter(record => record.session_type === 'Lecture').length;
+    const ccc8012LecturesLocked = isCCC8012 && availableLectureCount <= CCC8012_REQUIRED_LECTURE_COUNT;
+    if (ccc8012LecturesLocked && sessionType === 'Lecture') {
+      return; // Locked — all lecture instructors must stay selected together
+    }
     const maxLectureInstructors = isCCC8012 ? CCC8012_REQUIRED_LECTURE_COUNT : 1;
 
     setSelectedInstructors(prev => {
@@ -1943,7 +1966,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         return [...prev, instructorKey];
       }
     });
-  }, [originPage, preSelectedInstructor, toast, t, selectedCourse]);
+  }, [originPage, preSelectedInstructor, toast, t, selectedCourse, availableInstructors]);
 
   const validateForm = useCallback(async (): Promise<boolean> => {
     // 檢查基本選擇
@@ -1956,10 +1979,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return false;
     }
 
-    // 特例：CCC8012 必須剛好選 3 位講課導師
+    // 特例：CCC8012 必須選滿「可選講課導師數，上限 3」位講課導師
     if (selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE) {
+      const availableLectureCount = availableInstructors.filter(record => record.session_type === 'Lecture').length;
+      const requiredLectureCount = Math.min(availableLectureCount, CCC8012_REQUIRED_LECTURE_COUNT);
       const selectedLectureCount = selectedInstructors.filter(key => key.endsWith('|Lecture')).length;
-      if (selectedLectureCount !== CCC8012_REQUIRED_LECTURE_COUNT) {
+      if (requiredLectureCount > 0 && selectedLectureCount !== requiredLectureCount) {
         toast({
           title: t('common.error'),
           description: t('review.ccc8012LectureCount') || 'CCC8012 requires exactly 3 lecture instructors',
@@ -2175,7 +2200,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }
 
     return true;
-  }, [selectedCourse, selectedTerm, selectedInstructors, originPage, preSelectedInstructor, isEditMode, reviewEligibility, workload, difficulty, usefulness, grade, courseComments, instructorEvaluations, toast, t]);
+  }, [selectedCourse, selectedTerm, selectedInstructors, availableInstructors, originPage, preSelectedInstructor, isEditMode, reviewEligibility, workload, difficulty, usefulness, grade, courseComments, instructorEvaluations, toast, t]);
 
   const handleSubmit = useCallback(async () => {
     console.log('🚀 handleSubmit called');
@@ -2465,13 +2490,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         
                         // Helper function to render instructor list
                         const renderInstructorList = (instructors: TeachingRecord[]) => {
-                          // CCC8012 lecture sections need exactly 3 instructors — show a live counter hint
-                          const isCCC8012Lecture = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE &&
-                                                   instructors[0]?.session_type === 'Lecture';
+                          // CCC8012 co-teaching lecture handling:
+                          // - <= 3 lecture instructors: all pre-selected and locked
+                          // - > 3 lecture instructors: user picks exactly 3, show a live counter hint
+                          const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
+                          const isLectureList = instructors[0]?.session_type === 'Lecture';
+                          const ccc8012LecturesLocked = isCCC8012 && lectureInstructors.length <= CCC8012_REQUIRED_LECTURE_COUNT;
+                          const showCcc8012Counter = isCCC8012 && isLectureList && !ccc8012LecturesLocked;
                           const selectedLectureCount = selectedInstructors.filter(key => key.endsWith('|Lecture')).length;
                           return (
                             <div className="space-y-2">
-                              {isCCC8012Lecture && (
+                              {showCcc8012Counter && (
                                 <div className={cn(
                                   "text-sm px-3 py-2 rounded-md border",
                                   selectedLectureCount === CCC8012_REQUIRED_LECTURE_COUNT
@@ -2484,12 +2513,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               {instructors.map((record, index) => {
                                 const instructorKey = `${record.instructor_name}|${record.session_type}`;
                                 const isSelected = selectedInstructors.includes(instructorKey);
+                                const isLocked = (ccc8012LecturesLocked && record.session_type === 'Lecture') ||
+                                                 (originPage === 'instructor' && preSelectedInstructor &&
+                                                  instructorKey.startsWith(preSelectedInstructor + '|') && isSelected);
 
                                 return (
                                   <label
                                     key={index}
                                     className={cn(
-                                      "flex items-center space-x-3 p-3 rounded-md cursor-pointer transition-colors",
+                                      "flex items-center space-x-3 p-3 rounded-md transition-colors",
+                                      isLocked ? "cursor-default" : "cursor-pointer",
                                       isSelected
                                         ? "bg-primary/10 border-primary/20"
                                         : "hover:bg-accent"
@@ -2499,8 +2532,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                       checked={isSelected}
                                       onCheckedChange={() => handleInstructorToggle(instructorKey)}
                                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                      disabled={originPage === 'instructor' && preSelectedInstructor &&
-                                               instructorKey.startsWith(preSelectedInstructor + '|') && isSelected}
+                                      disabled={isLocked}
                                     />
                                     <div className="flex-1">
                                       <div className="font-medium">
