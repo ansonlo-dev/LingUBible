@@ -71,6 +71,7 @@ import { StarRating as UIStarRating } from '@/components/ui/star-rating';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 import { useInstructorDetailTeachingLanguages } from '@/hooks/useInstructorDetailTeachingLanguages';
 import { getTeachingLanguageName, extractInstructorNameForSorting, getInstructorName } from '@/utils/textUtils';
+import { splitInstructorNames, instructorNameMatches } from '@/utils/instructorNameUtils';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 import { ProgressBarForm } from '@/components/ui/progress-bar-form';
 import { VotingButtons } from '@/components/ui/voting-buttons';
@@ -620,7 +621,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return teachingRecordsCache.get(courseCode)!;
     }
     
-    const records = await CourseService.getCourseTeachingRecords(courseCode);
+    // 寫評價頁以「場次」為單位：使用原始（未展開）教學記錄，讓 A、B、A/B 各為獨立選項
+    const records = await CourseService.getCourseTeachingRecordsRaw(courseCode);
     setTeachingRecordsCache(prev => new Map(prev.set(courseCode, records)));
     return records;
   }, [teachingRecordsCache]);
@@ -1556,17 +1558,26 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           
           // Auto-select pre-selected instructor if available
           if (preSelectedInstructor) {
-            const preSelectedInstructorRecords = filteredRecords.filter(record => 
-              record.instructor_name === preSelectedInstructor
+            // 合併講師（"A / B"）以成員包含比對；每個 session_type 只挑一個選項，
+            // 優先精確命中單獨開課的列，否則退而取含該講師的合併列。
+            const matchingRecords = filteredRecords.filter(record =>
+              instructorNameMatches(record.instructor_name, preSelectedInstructor)
             );
-            if (preSelectedInstructorRecords.length > 0) {
-              // Select all session types for the pre-selected instructor
-              const preSelectedKeys = preSelectedInstructorRecords.map(record => 
-                `${record.instructor_name}|${record.session_type}`
-              );
+            if (matchingRecords.length > 0) {
+              const keyBySession = new Map<string, string>();
+              for (const record of matchingRecords) {
+                const key = `${record.instructor_name}|${record.session_type}`;
+                const isExact = record.instructor_name === preSelectedInstructor;
+                if (!keyBySession.has(record.session_type) || isExact) {
+                  keyBySession.set(record.session_type, key);
+                }
+              }
+              const preSelectedKeys = Array.from(keyBySession.values());
               setSelectedInstructors(prev => {
-                const newSelected = [...new Set([...prev, ...preSelectedKeys])];
-                return newSelected;
+                // 維持「每個 session_type 僅一個選項」：先移除這些 session_type 既有的選擇
+                const sessionTypesToReplace = new Set(Array.from(keyBySession.keys()).map(s => `|${s}`));
+                const kept = prev.filter(key => !Array.from(sessionTypesToReplace).some(suffix => key.endsWith(suffix)));
+                return [...new Set([...kept, ...preSelectedKeys])];
               });
             }
           } else {
@@ -1866,11 +1877,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   // Load instructor information for preview display
   useEffect(() => {
     const fetchInstructorsInfo = async () => {
-      if (instructorEvaluations.length === 0) return;
-      
+      // 合併講師（"A / B"）需載入每位個別講師檔案以正確在地化顯示；
+      // 同時載入可選清單（availableInstructors）的講師，讓未選取的選項也能在地化。
+      const rawNames = [
+        ...instructorEvaluations.map(evaluation => evaluation.instructorName),
+        ...availableInstructors.map(record => record.instructor_name),
+      ];
       const instructorNames = Array.from(new Set(
-        instructorEvaluations.map(evaluation => evaluation.instructorName)
+        rawNames.flatMap(name => splitInstructorNames(name))
       ));
+      if (instructorNames.length === 0) return;
 
       try {
         // Use batch loading for better performance
@@ -1882,16 +1898,51 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     };
 
     fetchInstructorsInfo();
-  }, [instructorEvaluations, batchLoadInstructors]);
+  }, [instructorEvaluations, availableInstructors, batchLoadInstructors]);
+
+  // 顯示（可能為合併格式的）講師姓名：把 "A / B" 拆成個別講師、各自在地化後以 " / " 串接。
+  // 單一講師時行為與原本一致。找不到檔案時以原字串顯示。
+  const renderCombinedInstructorName = useCallback((
+    rawName: string,
+    opts?: { primaryClassName?: string; secondaryClassName?: string; wrapperClassName?: string }
+  ) => {
+    const parts = splitInstructorNames(rawName);
+    const primaries: string[] = [];
+    const secondaries: string[] = [];
+    for (const part of parts) {
+      const fullInstructor = instructorsMap.get(part);
+      if (fullInstructor) {
+        const nameInfo = getInstructorName(fullInstructor, language);
+        primaries.push(nameInfo.primary);
+        if (nameInfo.secondary) secondaries.push(nameInfo.secondary);
+      } else {
+        primaries.push(part);
+      }
+    }
+    return (
+      <div className={opts?.wrapperClassName}>
+        <div className={opts?.primaryClassName}>{primaries.join(' / ')}</div>
+        {secondaries.length > 0 && (
+          <div className={opts?.secondaryClassName ?? 'text-sm text-muted-foreground'}>
+            {secondaries.join(' / ')}
+          </div>
+        )}
+      </div>
+    );
+  }, [instructorsMap, language]);
 
   const handleInstructorToggle = useCallback((instructorKey: string) => {
     const [instructorName, sessionType] = instructorKey.split('|');
+    const sessionSuffix = `|${sessionType}`;
+    // 是否為「從講師頁進入時鎖定的預選講師」所屬選項（合併列以成員包含比對）
+    const isPreSelectedKey = (key: string) =>
+      originPage === 'instructor' && !!preSelectedInstructor &&
+      instructorNameMatches(key.split('|')[0], preSelectedInstructor);
 
     setSelectedInstructors(prev => {
       if (prev.includes(instructorKey)) {
-        // Check if this instructor is pre-selected from instructor page
-        if (originPage === 'instructor' && preSelectedInstructor &&
-            instructorKey.startsWith(preSelectedInstructor + '|')) {
+        // 預選講師所屬選項不可取消
+        if (isPreSelectedKey(instructorKey)) {
           toast({
             title: t('common.error'),
             description: t('review.cannotDeselectPreSelectedInstructor', { instructor: preSelectedInstructor }),
@@ -1902,9 +1953,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Removing instructor
         return prev.filter(key => key !== instructorKey);
       } else {
-        // 共同授課的場次可有多位講課/導修導師（合併列已於資料層展開成個別講師），
-        // 使用者可自由複選任意位並各自評分，這裡不再限制單一講課/導修導師。
-        return [...prev, instructorKey];
+        // 每個 session_type 只能選一個選項（場次）：A、B、A/B 為三個獨立選項，僅能擇一。
+        // 選新的會取代同類型的舊選擇（單選行為）。
+        const sameTypeSelected = prev.filter(key => key.endsWith(sessionSuffix));
+        // 若同類型已選的是被鎖定的預選講師選項，不可切換掉
+        if (sameTypeSelected.some(isPreSelectedKey)) {
+          toast({
+            title: t('common.error'),
+            description: t('review.cannotDeselectPreSelectedInstructor', { instructor: preSelectedInstructor }),
+            variant: 'destructive',
+          });
+          return prev;
+        }
+        return [...prev.filter(key => !key.endsWith(sessionSuffix)), instructorKey];
       }
     });
   }, [originPage, preSelectedInstructor, toast, t]);
@@ -1920,10 +1981,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return false;
     }
 
-    // 檢查從講師頁面進入時預選講師必須被選中
+    // 檢查從講師頁面進入時預選講師必須被選中（合併列以成員包含比對）
     if (originPage === 'instructor' && preSelectedInstructor) {
-      const preSelectedInstructorIncluded = selectedInstructors.some(instructorKey => 
-        instructorKey.startsWith(preSelectedInstructor + '|')
+      const preSelectedInstructorIncluded = selectedInstructors.some(instructorKey =>
+        instructorNameMatches(instructorKey.split('|')[0], preSelectedInstructor)
       );
       if (!preSelectedInstructorIncluded) {
         toast({
@@ -2444,23 +2505,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                     />
                                     <div className="flex-1">
                                       <div className="font-medium">
-                                        {(() => {
-                                          const fullInstructor = instructorsMap.get(record.instructor_name);
-                                          if (fullInstructor) {
-                                            const nameInfo = getInstructorName(fullInstructor, language);
-                                            return (
-                                              <div>
-                                                <div>{nameInfo.primary}</div>
-                                                {nameInfo.secondary && (
-                                                  <div className="text-sm text-muted-foreground">
-                                                    {nameInfo.secondary}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            );
-                                          }
-                                          return record.instructor_name;
-                                        })()}
+                                        {renderCombinedInstructorName(record.instructor_name)}
                                       </div>
                                     </div>
                                   </label>
@@ -2724,23 +2769,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           <div className="mb-4">
                             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                               <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
-                                {(() => {
-                                  const fullInstructor = instructorsMap.get(evaluation.instructorName);
-                                  if (fullInstructor) {
-                                    const nameInfo = getInstructorName(fullInstructor, language);
-                                    return (
-                                      <div>
-                                        <div>{nameInfo.primary}</div>
-                                        {nameInfo.secondary && (
-                                          <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                            {nameInfo.secondary}
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  }
-                                  return evaluation.instructorName;
-                                })()}
+                                {renderCombinedInstructorName(evaluation.instructorName, { secondaryClassName: 'text-sm text-muted-foreground font-normal mt-0.5' })}
                               </div>
                               
                               {/* Badges on the right for desktop, below name for mobile */}
@@ -2924,23 +2953,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           <div className="mb-4">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                             <div className="text-md font-semibold text-red-500 flex-1 min-w-0">
-                              {(() => {
-                                const fullInstructor = instructorsMap.get(evaluation.instructorName);
-                                if (fullInstructor) {
-                                  const nameInfo = getInstructorName(fullInstructor, language);
-                                  return (
-                                    <div>
-                                      <div>{nameInfo.primary}</div>
-                                      {nameInfo.secondary && (
-                                        <div className="text-sm text-muted-foreground font-normal mt-0.5">
-                                          {nameInfo.secondary}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                }
-                                return evaluation.instructorName;
-                              })()}
+                              {renderCombinedInstructorName(evaluation.instructorName, { secondaryClassName: 'text-sm text-muted-foreground font-normal mt-0.5' })}
                             </div>
                             
                             {/* Badges on the right for desktop, below name for mobile */}
@@ -3517,25 +3530,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                             {/* Instructor name */}
                             <div className="font-semibold text-lg min-w-0 md:flex-1">
                               <div className="text-primary px-2 py-1 rounded-md inline-block">
-                                {(() => {
-                                  const fullInstructor = instructorsMap.get(instructor.instructorName);
-                                  if (fullInstructor) {
-                                    const nameInfo = getInstructorName(fullInstructor, language);
-                                    return (
-                                      <div className="text-left">
-                                        <div className="font-bold">{nameInfo.primary}</div>
-                                        {nameInfo.secondary && (
-                                          <div className="text-sm text-muted-foreground font-normal mt-0.5 text-left">
-                                            {nameInfo.secondary}
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  }
-                                  return (
-                                    <div className="font-bold text-left">{instructor.instructorName}</div>
-                                  );
-                                })()}
+                                {renderCombinedInstructorName(instructor.instructorName, { wrapperClassName: 'text-left', primaryClassName: 'font-bold', secondaryClassName: 'text-sm text-muted-foreground font-normal mt-0.5 text-left' })}
                               </div>
                             </div>
                             

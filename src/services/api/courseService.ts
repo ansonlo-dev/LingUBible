@@ -1355,14 +1355,18 @@ export class CourseService {
   /**
    * 獲取課程的教學記錄
    */
-  static async getCourseTeachingRecords(courseCode: string): Promise<TeachingRecord[]> {
+  /**
+   * 課程教學記錄「原始版」：保留資料庫每一列（含合併講師 "A / B" 為單一列），
+   * 不展開成個別講師。寫評價頁需要以「場次」為單位呈現選項：例如同一 session_type
+   * 下若有 A、B、A/B 三列，就應顯示 3 個獨立選項，由學生選擇自己那一節。
+   */
+  static async getCourseTeachingRecordsRaw(courseCode: string): Promise<TeachingRecord[]> {
     try {
-      const cacheKey = `course_teaching_records_${courseCode}`;
-      
+      const cacheKey = `course_teaching_records_raw_${courseCode}`;
+
       // 檢查快取
       const cached = this.getCached<TeachingRecord[]>(cacheKey);
       if (cached) {
-        console.log(`📚 使用快取：課程 ${courseCode} 的教學記錄: ${cached.length} 筆記錄`);
         return cached;
       }
 
@@ -1382,13 +1386,35 @@ export class CourseService {
         ...record,
         instructor_name: (!record.instructor_name || record.instructor_name.trim() === '') ? 'UNKNOWN' : record.instructor_name
       }));
-      // 合併講師列展開成個別講師列：課程詳情顯示與寫評價選單皆以個別講師呈現，
-      // 共同授課的每位講師可分別點擊／評分。
+
+      // 快取結果 (10分鐘)
+      this.setCached(cacheKey, normalizedRecords, 10 * 60 * 1000);
+      return normalizedRecords;
+    } catch (error) {
+      console.error('Error fetching raw teaching records:', error);
+      throw new Error('Failed to fetch teaching records');
+    }
+  }
+
+  static async getCourseTeachingRecords(courseCode: string): Promise<TeachingRecord[]> {
+    try {
+      const cacheKey = `course_teaching_records_${courseCode}`;
+
+      // 檢查快取
+      const cached = this.getCached<TeachingRecord[]>(cacheKey);
+      if (cached) {
+        console.log(`📚 使用快取：課程 ${courseCode} 的教學記錄: ${cached.length} 筆記錄`);
+        return cached;
+      }
+
+      // 共用原始版的查詢與快取（避免重複讀取），再展開合併講師列：
+      // 課程詳情顯示與統計皆以個別講師呈現，共同授課的每位講師可分別點擊／計入。
+      const normalizedRecords = await this.getCourseTeachingRecordsRaw(courseCode);
       const teachingRecords = expandRecordsByInstructorName(normalizedRecords);
 
       // 快取結果 (10分鐘)
       this.setCached(cacheKey, teachingRecords, 10 * 60 * 1000);
-      
+
       console.log(`📚 獲取課程 ${courseCode} 的教學記錄: ${teachingRecords.length} 筆記錄 (已快取)`);
       return teachingRecords;
     } catch (error) {
