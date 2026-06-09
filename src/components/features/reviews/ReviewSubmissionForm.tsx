@@ -1903,8 +1903,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Adding instructor - check limits
         const currentLectureCount = prev.filter(key => key.endsWith('|Lecture')).length;
         const currentTutorialCount = prev.filter(key => key.endsWith('|Tutorial')).length;
-        
-        if (sessionType === 'Lecture' && currentLectureCount >= 1) {
+
+        // Special case: CCC8012 has multiple lecture-session instructors co-teaching
+        // the same course in the same term for the same group of students, so the
+        // single-lecture-instructor limit does not apply for this course only.
+        const allowMultipleLectureInstructors =
+          selectedCourse.trim().toUpperCase() === 'CCC8012';
+
+        if (sessionType === 'Lecture' && !allowMultipleLectureInstructors && currentLectureCount >= 1) {
           toast({
             title: t('common.error'),
             description: t('review.maxOneLectureInstructor') || 'You can only select one lecture instructor',
@@ -1925,7 +1931,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         return [...prev, instructorKey];
       }
     });
-  }, [originPage, preSelectedInstructor, toast, t]);
+  }, [originPage, preSelectedInstructor, toast, t, selectedCourse]);
 
   const validateForm = useCallback(async (): Promise<boolean> => {
     // 檢查基本選擇
