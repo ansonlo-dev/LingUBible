@@ -75,6 +75,11 @@ import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 import { ProgressBarForm } from '@/components/ui/progress-bar-form';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 
+// CCC8012 special case: lecture sections are co-taught, so a valid review must cover
+// exactly the section's instructors — always 3 lecture instructors (chosen one by one).
+const CCC8012_COURSE_CODE = 'CCC8012';
+const CCC8012_REQUIRED_LECTURE_COUNT = 3;
+
 interface ReviewSubmissionFormProps {
   preselectedCourseCode?: string;
   editReviewId?: string;
@@ -472,15 +477,21 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     
     const selectedLectureInstructors = selectedInstructors.filter(key => key.endsWith('|Lecture'));
     const selectedTutorialInstructors = selectedInstructors.filter(key => key.endsWith('|Tutorial'));
-    
+
+    // Special case: CCC8012 requires exactly 3 lecture instructors (co-teaching section).
+    const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
+    const lectureSelectionValid = isCCC8012
+      ? selectedLectureInstructors.length === CCC8012_REQUIRED_LECTURE_COUNT
+      : selectedLectureInstructors.length > 0;
+
     // If both lecture and tutorial instructors are available, user must select at least one from each
     if (hasLectureInstructors && hasTutorialInstructors) {
-      return selectedLectureInstructors.length > 0 && selectedTutorialInstructors.length > 0;
+      return lectureSelectionValid && selectedTutorialInstructors.length > 0;
     }
-    
-    // If only lecture instructors are available, user must select at least one lecture instructor
+
+    // If only lecture instructors are available, user must select the required lecture instructor(s)
     if (hasLectureInstructors && !hasTutorialInstructors) {
-      return selectedLectureInstructors.length > 0;
+      return lectureSelectionValid;
     }
     
     // If only tutorial instructors are available, user must select at least one tutorial instructor
@@ -1574,19 +1585,6 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               setSelectedInstructors([autoSelectKey]);
             }
           }
-
-          // Special case: CCC8012 has multiple lecture-session instructors co-teaching
-          // the same course/term for the same group of students. The only valid choice
-          // is "all of them", so always pre-select every lecture instructor and prevent
-          // manual select/deselect of lecture instructors for this course only.
-          if (selectedCourse.trim().toUpperCase() === 'CCC8012') {
-            const allLectureKeys = filteredRecords
-              .filter(record => record.session_type === 'Lecture')
-              .map(record => `${record.instructor_name}|${record.session_type}`);
-            if (allLectureKeys.length > 0) {
-              setSelectedInstructors(prev => [...new Set([...prev, ...allLectureKeys])]);
-            }
-          }
         } else {
           // In edit mode, validate that instructors are available
           // Don't turn off the flag here - let it be handled after evaluations are set
@@ -1897,13 +1895,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   const handleInstructorToggle = useCallback((instructorKey: string) => {
     const [instructorName, sessionType] = instructorKey.split('|');
-    
-    // Special case: CCC8012 lecture instructors are all co-teaching and must stay
-    // selected together — disallow toggling any lecture instructor for this course.
-    const isCCC8012 = selectedCourse.trim().toUpperCase() === 'CCC8012';
-    if (isCCC8012 && sessionType === 'Lecture') {
-      return;
-    }
+
+    // Special case: CCC8012 has co-teaching lecture sections; a valid review must
+    // cover exactly the section's instructors, which is always 3 lecture instructors.
+    const isCCC8012 = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE;
+    const maxLectureInstructors = isCCC8012 ? CCC8012_REQUIRED_LECTURE_COUNT : 1;
 
     setSelectedInstructors(prev => {
       if (prev.includes(instructorKey)) {
@@ -1924,10 +1920,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         const currentLectureCount = prev.filter(key => key.endsWith('|Lecture')).length;
         const currentTutorialCount = prev.filter(key => key.endsWith('|Tutorial')).length;
 
-        if (sessionType === 'Lecture' && currentLectureCount >= 1) {
+        if (sessionType === 'Lecture' && currentLectureCount >= maxLectureInstructors) {
           toast({
             title: t('common.error'),
-            description: t('review.maxOneLectureInstructor') || 'You can only select one lecture instructor',
+            description: isCCC8012
+              ? (t('review.ccc8012LectureCount') || 'CCC8012 requires exactly 3 lecture instructors')
+              : (t('review.maxOneLectureInstructor') || 'You can only select one lecture instructor'),
             variant: 'destructive',
           });
           return prev;
@@ -1956,6 +1954,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         variant: 'destructive',
       });
       return false;
+    }
+
+    // 特例：CCC8012 必須剛好選 3 位講課導師
+    if (selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE) {
+      const selectedLectureCount = selectedInstructors.filter(key => key.endsWith('|Lecture')).length;
+      if (selectedLectureCount !== CCC8012_REQUIRED_LECTURE_COUNT) {
+        toast({
+          title: t('common.error'),
+          description: t('review.ccc8012LectureCount') || 'CCC8012 requires exactly 3 lecture instructors',
+          variant: 'destructive',
+        });
+        return false;
+      }
     }
 
     // 檢查從講師頁面進入時預選講師必須被選中
@@ -2454,24 +2465,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                         
                         // Helper function to render instructor list
                         const renderInstructorList = (instructors: TeachingRecord[]) => {
+                          // CCC8012 lecture sections need exactly 3 instructors — show a live counter hint
+                          const isCCC8012Lecture = selectedCourse.trim().toUpperCase() === CCC8012_COURSE_CODE &&
+                                                   instructors[0]?.session_type === 'Lecture';
+                          const selectedLectureCount = selectedInstructors.filter(key => key.endsWith('|Lecture')).length;
                           return (
                             <div className="space-y-2">
+                              {isCCC8012Lecture && (
+                                <div className={cn(
+                                  "text-sm px-3 py-2 rounded-md border",
+                                  selectedLectureCount === CCC8012_REQUIRED_LECTURE_COUNT
+                                    ? "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-900"
+                                    : "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-900"
+                                )}>
+                                  {t('review.ccc8012LectureCount')} ({selectedLectureCount}/{CCC8012_REQUIRED_LECTURE_COUNT})
+                                </div>
+                              )}
                               {instructors.map((record, index) => {
                                 const instructorKey = `${record.instructor_name}|${record.session_type}`;
                                 const isSelected = selectedInstructors.includes(instructorKey);
-                                // CCC8012 lecture instructors are locked (all co-teach, always selected together)
-                                const isLockedLecture = selectedCourse.trim().toUpperCase() === 'CCC8012' &&
-                                                        record.session_type === 'Lecture';
-                                const isLocked = isLockedLecture ||
-                                                 (originPage === 'instructor' && preSelectedInstructor &&
-                                                  instructorKey.startsWith(preSelectedInstructor + '|') && isSelected);
 
                                 return (
                                   <label
                                     key={index}
                                     className={cn(
-                                      "flex items-center space-x-3 p-3 rounded-md transition-colors",
-                                      isLocked ? "cursor-default" : "cursor-pointer",
+                                      "flex items-center space-x-3 p-3 rounded-md cursor-pointer transition-colors",
                                       isSelected
                                         ? "bg-primary/10 border-primary/20"
                                         : "hover:bg-accent"
@@ -2481,7 +2499,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                       checked={isSelected}
                                       onCheckedChange={() => handleInstructorToggle(instructorKey)}
                                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                      disabled={isLocked}
+                                      disabled={originPage === 'instructor' && preSelectedInstructor &&
+                                               instructorKey.startsWith(preSelectedInstructor + '|') && isSelected}
                                     />
                                     <div className="flex-1">
                                       <div className="font-medium">

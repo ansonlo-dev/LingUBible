@@ -1402,6 +1402,7 @@ export default {
   'review.noInstructorsFound': 'No instructors found for this course/term',
   'review.instructorEvaluations': 'Instructor Evaluations',
   'review.maxOneLectureInstructor': 'You can only select one lecture instructor',
+  'review.ccc8012LectureCount': 'CCC8012 requires selecting exactly 3 lecture instructors',
   'review.maxOneTutorialInstructor': 'You can only select one tutorial instructor',
   'review.lectureInstructors': 'Lecture',
   'review.tutorialInstructors': 'Tutorial',
