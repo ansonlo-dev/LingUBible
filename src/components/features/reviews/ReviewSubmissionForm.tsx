@@ -1574,6 +1574,19 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               setSelectedInstructors([autoSelectKey]);
             }
           }
+
+          // Special case: CCC8012 has multiple lecture-session instructors co-teaching
+          // the same course/term for the same group of students. The only valid choice
+          // is "all of them", so always pre-select every lecture instructor and prevent
+          // manual select/deselect of lecture instructors for this course only.
+          if (selectedCourse.trim().toUpperCase() === 'CCC8012') {
+            const allLectureKeys = filteredRecords
+              .filter(record => record.session_type === 'Lecture')
+              .map(record => `${record.instructor_name}|${record.session_type}`);
+            if (allLectureKeys.length > 0) {
+              setSelectedInstructors(prev => [...new Set([...prev, ...allLectureKeys])]);
+            }
+          }
         } else {
           // In edit mode, validate that instructors are available
           // Don't turn off the flag here - let it be handled after evaluations are set
@@ -1885,10 +1898,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const handleInstructorToggle = useCallback((instructorKey: string) => {
     const [instructorName, sessionType] = instructorKey.split('|');
     
+    // Special case: CCC8012 lecture instructors are all co-teaching and must stay
+    // selected together — disallow toggling any lecture instructor for this course.
+    const isCCC8012 = selectedCourse.trim().toUpperCase() === 'CCC8012';
+    if (isCCC8012 && sessionType === 'Lecture') {
+      return;
+    }
+
     setSelectedInstructors(prev => {
       if (prev.includes(instructorKey)) {
         // Check if this instructor is pre-selected from instructor page
-        if (originPage === 'instructor' && preSelectedInstructor && 
+        if (originPage === 'instructor' && preSelectedInstructor &&
             instructorKey.startsWith(preSelectedInstructor + '|')) {
           toast({
             title: t('common.error'),
@@ -1904,13 +1924,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         const currentLectureCount = prev.filter(key => key.endsWith('|Lecture')).length;
         const currentTutorialCount = prev.filter(key => key.endsWith('|Tutorial')).length;
 
-        // Special case: CCC8012 has multiple lecture-session instructors co-teaching
-        // the same course in the same term for the same group of students, so the
-        // single-lecture-instructor limit does not apply for this course only.
-        const allowMultipleLectureInstructors =
-          selectedCourse.trim().toUpperCase() === 'CCC8012';
-
-        if (sessionType === 'Lecture' && !allowMultipleLectureInstructors && currentLectureCount >= 1) {
+        if (sessionType === 'Lecture' && currentLectureCount >= 1) {
           toast({
             title: t('common.error'),
             description: t('review.maxOneLectureInstructor') || 'You can only select one lecture instructor',
@@ -2445,14 +2459,21 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               {instructors.map((record, index) => {
                                 const instructorKey = `${record.instructor_name}|${record.session_type}`;
                                 const isSelected = selectedInstructors.includes(instructorKey);
-                                
+                                // CCC8012 lecture instructors are locked (all co-teach, always selected together)
+                                const isLockedLecture = selectedCourse.trim().toUpperCase() === 'CCC8012' &&
+                                                        record.session_type === 'Lecture';
+                                const isLocked = isLockedLecture ||
+                                                 (originPage === 'instructor' && preSelectedInstructor &&
+                                                  instructorKey.startsWith(preSelectedInstructor + '|') && isSelected);
+
                                 return (
                                   <label
                                     key={index}
                                     className={cn(
-                                      "flex items-center space-x-3 p-3 rounded-md cursor-pointer transition-colors",
-                                      isSelected 
-                                        ? "bg-primary/10 border-primary/20" 
+                                      "flex items-center space-x-3 p-3 rounded-md transition-colors",
+                                      isLocked ? "cursor-default" : "cursor-pointer",
+                                      isSelected
+                                        ? "bg-primary/10 border-primary/20"
                                         : "hover:bg-accent"
                                     )}
                                   >
@@ -2460,8 +2481,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                       checked={isSelected}
                                       onCheckedChange={() => handleInstructorToggle(instructorKey)}
                                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                      disabled={originPage === 'instructor' && preSelectedInstructor && 
-                                               instructorKey.startsWith(preSelectedInstructor + '|') && isSelected}
+                                      disabled={isLocked}
                                     />
                                     <div className="flex-1">
                                       <div className="font-medium">
