@@ -671,6 +671,24 @@
                     "encrypt": false
                 },
                 {
+                    "key": "course_recommended",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_restriction",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
                     "key": "stats_review_count",
                     "type": "integer",
                     "required": false,
