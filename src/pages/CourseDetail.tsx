@@ -34,7 +34,9 @@ import {
   ListChecks,
   Layers,
   Ban,
-  ShieldCheck
+  ShieldCheck,
+  ThumbsUp,
+  ShieldAlert
 } from 'lucide-react';
 import { storage } from '@/lib/appwrite';
 import { Query } from 'appwrite';
@@ -362,6 +364,20 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
       value: formatRequirementSeparators(course.course_exemption_requirements?.trim() || ''),
       icon: <ShieldCheck className="h-4 w-4" />,
       accent: 'text-amber-600 dark:text-amber-400 bg-amber-500/10',
+    },
+    {
+      key: 'recommended',
+      label: t('pages.courseDetail.recommended'),
+      value: formatRequirementSeparators(course.course_recommended?.trim() || ''),
+      icon: <ThumbsUp className="h-4 w-4" />,
+      accent: 'text-violet-600 dark:text-violet-400 bg-violet-500/10',
+    },
+    {
+      key: 'restriction',
+      label: t('pages.courseDetail.restriction'),
+      value: formatRequirementSeparators(course.course_restriction?.trim() || ''),
+      icon: <ShieldAlert className="h-4 w-4" />,
+      accent: 'text-orange-600 dark:text-orange-400 bg-orange-500/10',
     },
   ].filter(item => item.value);
 
@@ -2212,7 +2228,9 @@ const CourseDetail = () => {
                 course.course_prerequisites?.trim() ||
                 course.course_corequisites?.trim() ||
                 course.course_exclusions?.trim() ||
-                course.course_exemption_requirements?.trim()
+                course.course_exemption_requirements?.trim() ||
+                course.course_recommended?.trim() ||
+                course.course_restriction?.trim()
               );
 
               if (!description && !hasRequirements) {

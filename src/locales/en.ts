@@ -569,6 +569,8 @@ export default {
   'pages.courseDetail.corequisites': 'Co-requisites',
   'pages.courseDetail.exclusions': 'Exclusions',
   'pages.courseDetail.exemptionRequirements': 'Exemption Requirements',
+  'pages.courseDetail.recommended': 'Recommended',
+  'pages.courseDetail.restriction': 'Restriction',
   'pages.instructors.title': 'Instructors Catalog',
   'pages.instructors.showingResults': 'Showing {count} of {total} instructors',
   'pages.instructors.foundCount': 'Found {count} instructor|instructors',

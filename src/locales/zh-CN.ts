@@ -570,6 +570,8 @@ export default {
   'pages.courseDetail.corequisites': '同期修读课程',
   'pages.courseDetail.exclusions': '互斥课程',
   'pages.courseDetail.exemptionRequirements': '豁免要求',
+  'pages.courseDetail.recommended': '建议修读',
+  'pages.courseDetail.restriction': '修读限制',
   'pages.instructors.title': '教师目录',
   'pages.instructors.showingResults': '显示 {count} / {total} 位教师',
   'pages.instructors.foundCount': '找到 {count} 位教师',

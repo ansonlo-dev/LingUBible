@@ -569,6 +569,8 @@ export default {
   'pages.courseDetail.corequisites': '同期修讀課程',
   'pages.courseDetail.exclusions': '互斥課程',
   'pages.courseDetail.exemptionRequirements': '豁免要求',
+  'pages.courseDetail.recommended': '建議修讀',
+  'pages.courseDetail.restriction': '修讀限制',
   'pages.instructors.title': '教師目錄',
   'pages.instructors.showingResults': '顯示 {count} / {total} 位教師',
   'pages.instructors.foundCount': '找到 {count} 位教師',
