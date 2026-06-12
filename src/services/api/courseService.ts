@@ -20,6 +20,8 @@ export interface Course {
   course_corequisites?: string;
   course_exclusions?: string;
   course_exemption_requirements?: string;
+  course_recommended?: string;
+  course_restriction?: string;
   department: string;
   credits?: string;
   $createdAt: string;
@@ -1305,7 +1307,7 @@ export class CourseService {
         [
           Query.equal('course_code', courseCode),
           Query.limit(1),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'course_prerequisites', 'course_corequisites', 'course_exclusions', 'course_exemption_requirements', 'department', 'credits', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'course_prerequisites', 'course_corequisites', 'course_exclusions', 'course_exemption_requirements', 'course_recommended', 'course_restriction', 'department', 'credits', '$createdAt', '$updatedAt'])
         ]
       );
 
