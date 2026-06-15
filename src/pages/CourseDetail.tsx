@@ -285,9 +285,32 @@ const formatRequirementSeparators = (text: string): string =>
     .replace(/\s*\/\s*/g, ' / ')
     .replace(/\s*,\s*/g, ', ');
 
+// Lookup of referenced course codes → their titles (English + localized),
+// used to append the course name after each detected course code.
+type CourseTitleInfo = { title?: string; title_tc?: string; title_sc?: string };
+type CourseTitleMap = Record<string, CourseTitleInfo>;
+
+// Build the text shown after a course code, e.g. " - Calculus" (en) or
+// " - Calculus (微積分)" (zh-TW) / " - Calculus (微积分)" (zh-CN). Returns an
+// empty string when the referenced course's title is not available.
+const buildCourseCodeNameSuffix = (
+  code: string,
+  titleMap: CourseTitleMap,
+  language: string,
+): string => {
+  const info = titleMap[code];
+  if (!info || !info.title) return '';
+  let suffix = ` - ${info.title}`;
+  if (language === 'zh-TW' && info.title_tc) suffix += ` (${info.title_tc})`;
+  else if (language === 'zh-CN' && info.title_sc) suffix += ` (${info.title_sc})`;
+  return suffix;
+};
+
 const renderTextWithCourseLinks = (
   text: string,
   currentCourseCode?: string,
+  titleMap: CourseTitleMap = {},
+  language: string = 'en',
 ): React.ReactNode[] => {
   const nodes: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -299,10 +322,17 @@ const renderTextWithCourseLinks = (
       nodes.push(text.slice(lastIndex, match.index));
     }
     const code = match[0];
+    const suffix = buildCourseCodeNameSuffix(code, titleMap, language);
+    const inner = (
+      <>
+        <span className="font-mono font-semibold">{code}</span>
+        {suffix && <span className="font-medium">{suffix}</span>}
+      </>
+    );
     if (currentCourseCode && code === currentCourseCode) {
       nodes.push(
-        <span key={`code-${key++}`} className="font-mono font-semibold text-muted-foreground">
-          {code}
+        <span key={`code-${key++}`} className="text-muted-foreground">
+          {inner}
         </span>,
       );
     } else {
@@ -310,9 +340,9 @@ const renderTextWithCourseLinks = (
         <Link
           key={`code-${key++}`}
           to={`/courses/${code}`}
-          className="font-mono font-semibold text-primary hover:underline underline-offset-2 transition-colors"
+          className="text-primary hover:underline underline-offset-2 transition-colors"
         >
-          {code}
+          {inner}
         </Link>,
       );
     }
@@ -328,9 +358,10 @@ interface CourseRequirementsSectionProps {
   course: Course;
   t: (key: string, params?: Record<string, any>) => string;
   language: string;
+  titleMap: CourseTitleMap;
 }
 
-const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t, language }) => {
+const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t, language, titleMap }) => {
   // 依目前語言挑選對應的本地化欄位，缺值時退回英文原文
   const pickLocalized = (en?: string, tc?: string, sc?: string): string => {
     if (language === 'zh-TW') return (tc || en || '');
@@ -408,7 +439,7 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
               <span className="text-sm font-semibold text-foreground">{item.label}</span>
             </div>
             <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line break-words">
-              {renderTextWithCourseLinks(item.value, course.course_code)}
+              {renderTextWithCourseLinks(item.value, course.course_code, titleMap, language)}
             </p>
           </div>
         ))}
@@ -634,6 +665,10 @@ const CourseDetail = () => {
   
   // N/A grades toggle state
   const [showNAGrades, setShowNAGrades] = useState<boolean>(true);
+
+  // Titles (en + localized) of course codes referenced in the description /
+  // requirements, so we can render "CODE - Title (本地化標題)" next to each code.
+  const [referencedCourseTitles, setReferencedCourseTitles] = useState<CourseTitleMap>({});
 
   // Past exam papers state (lazy-loaded when the tab is opened)
   type ExamPaper = {
@@ -872,6 +907,64 @@ const CourseDetail = () => {
 
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
+
+  // 收集課程描述與修讀要求中提及的課程代碼，批次抓取其名稱（含繁/簡），
+  // 以便在代碼後附上課程名稱並建立連結。
+  useEffect(() => {
+    if (!course) {
+      setReferencedCourseTitles({});
+      return;
+    }
+    const sources = [
+      course.course_description, course.course_description_tc, course.course_description_sc,
+      course.course_prerequisites, course.course_prerequisites_tc, course.course_prerequisites_sc,
+      course.course_corequisites, course.course_corequisites_tc, course.course_corequisites_sc,
+      course.course_exclusions, course.course_exclusions_tc, course.course_exclusions_sc,
+      course.course_exemption_requirements, course.course_exemption_requirements_tc, course.course_exemption_requirements_sc,
+      course.course_recommended, course.course_recommended_tc, course.course_recommended_sc,
+      course.course_restriction, course.course_restriction_tc, course.course_restriction_sc,
+    ].filter(Boolean) as string[];
+
+    const codes = new Set<string>();
+    const re = new RegExp(COURSE_CODE_REGEX.source, 'g');
+    for (const s of sources) {
+      let m: RegExpExecArray | null;
+      re.lastIndex = 0;
+      while ((m = re.exec(s)) !== null) codes.add(m[0]);
+    }
+    // 當前課程的名稱直接取自已載入的 course，毋須再向後端查詢。
+    const selfInfo: CourseTitleInfo = {
+      title: course.course_title,
+      title_tc: course.course_title_tc,
+      title_sc: course.course_title_sc,
+    };
+    codes.delete(course.course_code);
+
+    const codeList = [...codes];
+    if (codeList.length === 0) {
+      setReferencedCourseTitles({ [course.course_code]: selfInfo });
+      return;
+    }
+
+    let cancelled = false;
+    CourseService.getCoursesByCodes(codeList)
+      .then(list => {
+        if (cancelled) return;
+        const map: CourseTitleMap = { [course.course_code]: selfInfo };
+        for (const c of list) {
+          map[c.course_code] = {
+            title: c.course_title,
+            title_tc: c.course_title_tc,
+            title_sc: c.course_title_sc,
+          };
+        }
+        setReferencedCourseTitles(map);
+      })
+      .catch(() => {
+        if (!cancelled) setReferencedCourseTitles({ [course.course_code]: selfInfo });
+      });
+    return () => { cancelled = true; };
+  }, [course?.$id]);
 
   // ---- Past exam papers: bulk-download selection -------------------------
   const selectedExamPaperCount = selectedExamPaperIds.size;
@@ -2253,12 +2346,12 @@ const CourseDetail = () => {
                 <>
                   {description ? (
                     <p className="text-base leading-relaxed text-foreground whitespace-pre-line text-justify hyphens-auto">
-                      {description}
+                      {renderTextWithCourseLinks(description, course.course_code, referencedCourseTitles, language)}
                     </p>
                   ) : (
                     <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
                   )}
-                  <CourseRequirementsSection course={course} t={t} language={language} />
+                  <CourseRequirementsSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
                 </>
               );
             })()}
