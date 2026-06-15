@@ -797,6 +797,153 @@
                     "encrypt": false
                 },
                 {
+                    "key": "course_recommended_study_year",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_recommended_study_year_tc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_recommended_study_year_sc",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_mode_of_tuition",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_mode_of_tuition_tc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_mode_of_tuition_sc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_class_contact_hours",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_class_contact_hours_tc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_class_contact_hours_sc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_category",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_category_tc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_category_sc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_discipline",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_discipline_tc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_discipline_sc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_language_of_instruction",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_language_of_instruction_tc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
+                    "key": "course_language_of_instruction_sc",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": null
+                },
+                {
                     "key": "stats_review_count",
                     "type": "integer",
                     "required": false,

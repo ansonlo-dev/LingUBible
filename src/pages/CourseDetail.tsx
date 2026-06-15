@@ -36,7 +36,11 @@ import {
   Ban,
   ShieldCheck,
   ThumbsUp,
-  ShieldAlert
+  ShieldAlert,
+  Clock,
+  Tags,
+  Languages,
+  Presentation
 } from 'lucide-react';
 import { storage } from '@/lib/appwrite';
 import { Query } from 'appwrite';
@@ -352,6 +356,100 @@ const renderTextWithCourseLinks = (
     nodes.push(text.slice(lastIndex));
   }
   return nodes;
+};
+
+interface CourseBasicInfoSectionProps {
+  course: Course;
+  t: (key: string, params?: Record<string, any>) => string;
+  language: string;
+  titleMap: CourseTitleMap;
+}
+
+const CourseBasicInfoSection: React.FC<CourseBasicInfoSectionProps> = ({ course, t, language, titleMap }) => {
+  // 依目前語言挑選對應的本地化欄位，缺值時退回英文原文
+  const pickLocalized = (en?: string, tc?: string, sc?: string): string => {
+    if (language === 'zh-TW') return (tc || en || '');
+    if (language === 'zh-CN') return (sc || en || '');
+    return en || '';
+  };
+  const items: Array<{
+    key: string;
+    label: string;
+    value: string;
+    icon: React.ReactNode;
+    accent: string;
+  }> = [
+    {
+      key: 'recommendedStudyYear',
+      label: t('pages.courseDetail.recommendedStudyYear'),
+      value: pickLocalized(course.course_recommended_study_year, course.course_recommended_study_year_tc, course.course_recommended_study_year_sc).trim(),
+      icon: <GraduationCap className="h-4 w-4" />,
+      accent: 'text-blue-600 dark:text-blue-400 bg-blue-500/10',
+    },
+    {
+      key: 'modeOfTuition',
+      label: t('pages.courseDetail.modeOfTuition'),
+      value: pickLocalized(course.course_mode_of_tuition, course.course_mode_of_tuition_tc, course.course_mode_of_tuition_sc).trim(),
+      icon: <Presentation className="h-4 w-4" />,
+      accent: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
+    },
+    {
+      key: 'classContactHours',
+      label: t('pages.courseDetail.classContactHours'),
+      value: pickLocalized(course.course_class_contact_hours, course.course_class_contact_hours_tc, course.course_class_contact_hours_sc).trim(),
+      icon: <Clock className="h-4 w-4" />,
+      accent: 'text-amber-600 dark:text-amber-400 bg-amber-500/10',
+    },
+    {
+      key: 'category',
+      label: t('pages.courseDetail.category'),
+      value: pickLocalized(course.course_category, course.course_category_tc, course.course_category_sc).trim(),
+      icon: <Tags className="h-4 w-4" />,
+      accent: 'text-violet-600 dark:text-violet-400 bg-violet-500/10',
+    },
+    {
+      key: 'discipline',
+      label: t('pages.courseDetail.discipline'),
+      value: pickLocalized(course.course_discipline, course.course_discipline_tc, course.course_discipline_sc).trim(),
+      icon: <BookText className="h-4 w-4" />,
+      accent: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
+    },
+    {
+      key: 'languageOfInstruction',
+      label: t('pages.courseDetail.languageOfInstruction'),
+      value: pickLocalized(course.course_language_of_instruction, course.course_language_of_instruction_tc, course.course_language_of_instruction_sc).trim(),
+      icon: <Languages className="h-4 w-4" />,
+      accent: 'text-teal-600 dark:text-teal-400 bg-teal-500/10',
+    },
+  ].filter(item => item.value);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-6 pt-6 border-t border-border/60">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        {t('pages.courseDetail.basicInfo')}
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map(item => (
+          <div
+            key={item.key}
+            className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:p-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`flex h-7 w-7 items-center justify-center rounded-md ${item.accent}`}>
+                {item.icon}
+              </span>
+              <span className="text-sm font-semibold text-foreground">{item.label}</span>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line break-words">
+              {renderTextWithCourseLinks(item.value, course.course_code, titleMap, language)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 interface CourseRequirementsSectionProps {
@@ -2333,7 +2431,16 @@ const CourseDetail = () => {
                 course.course_restriction?.trim()
               );
 
-              if (!description && !hasRequirements) {
+              const hasBasicInfo = Boolean(
+                course.course_recommended_study_year?.trim() ||
+                course.course_mode_of_tuition?.trim() ||
+                course.course_class_contact_hours?.trim() ||
+                course.course_category?.trim() ||
+                course.course_discipline?.trim() ||
+                course.course_language_of_instruction?.trim()
+              );
+
+              if (!description && !hasRequirements && !hasBasicInfo) {
                 return (
                   <div className="text-center py-8">
                     <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -2351,6 +2458,7 @@ const CourseDetail = () => {
                   ) : (
                     <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
                   )}
+                  <CourseBasicInfoSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
                   <CourseRequirementsSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
                 </>
               );

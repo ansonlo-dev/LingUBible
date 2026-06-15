@@ -34,6 +34,25 @@ export interface Course {
   course_restriction?: string;
   course_restriction_tc?: string;
   course_restriction_sc?: string;
+  // 基本資訊欄位（由 course_info.csv 匯入）
+  course_recommended_study_year?: string;
+  course_recommended_study_year_tc?: string;
+  course_recommended_study_year_sc?: string;
+  course_mode_of_tuition?: string;
+  course_mode_of_tuition_tc?: string;
+  course_mode_of_tuition_sc?: string;
+  course_class_contact_hours?: string;
+  course_class_contact_hours_tc?: string;
+  course_class_contact_hours_sc?: string;
+  course_category?: string;
+  course_category_tc?: string;
+  course_category_sc?: string;
+  course_discipline?: string;
+  course_discipline_tc?: string;
+  course_discipline_sc?: string;
+  course_language_of_instruction?: string;
+  course_language_of_instruction_tc?: string;
+  course_language_of_instruction_sc?: string;
   department: string;
   credits?: string;
   $createdAt: string;
@@ -1319,7 +1338,7 @@ export class CourseService {
         [
           Query.equal('course_code', courseCode),
           Query.limit(1),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'course_prerequisites', 'course_prerequisites_tc', 'course_prerequisites_sc', 'course_corequisites', 'course_corequisites_tc', 'course_corequisites_sc', 'course_exclusions', 'course_exclusions_tc', 'course_exclusions_sc', 'course_exemption_requirements', 'course_exemption_requirements_tc', 'course_exemption_requirements_sc', 'course_recommended', 'course_recommended_tc', 'course_recommended_sc', 'course_restriction', 'course_restriction_tc', 'course_restriction_sc', 'department', 'credits', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'course_prerequisites', 'course_prerequisites_tc', 'course_prerequisites_sc', 'course_corequisites', 'course_corequisites_tc', 'course_corequisites_sc', 'course_exclusions', 'course_exclusions_tc', 'course_exclusions_sc', 'course_exemption_requirements', 'course_exemption_requirements_tc', 'course_exemption_requirements_sc', 'course_recommended', 'course_recommended_tc', 'course_recommended_sc', 'course_restriction', 'course_restriction_tc', 'course_restriction_sc', 'course_recommended_study_year', 'course_recommended_study_year_tc', 'course_recommended_study_year_sc', 'course_mode_of_tuition', 'course_mode_of_tuition_tc', 'course_mode_of_tuition_sc', 'course_class_contact_hours', 'course_class_contact_hours_tc', 'course_class_contact_hours_sc', 'course_category', 'course_category_tc', 'course_category_sc', 'course_discipline', 'course_discipline_tc', 'course_discipline_sc', 'course_language_of_instruction', 'course_language_of_instruction_tc', 'course_language_of_instruction_sc', 'department', 'credits', '$createdAt', '$updatedAt'])
         ]
       );
 
