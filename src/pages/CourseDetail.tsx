@@ -327,9 +327,16 @@ const renderTextWithCourseLinks = (
 interface CourseRequirementsSectionProps {
   course: Course;
   t: (key: string, params?: Record<string, any>) => string;
+  language: string;
 }
 
-const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t }) => {
+const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t, language }) => {
+  // 依目前語言挑選對應的本地化欄位，缺值時退回英文原文
+  const pickLocalized = (en?: string, tc?: string, sc?: string): string => {
+    if (language === 'zh-TW') return (tc || en || '');
+    if (language === 'zh-CN') return (sc || en || '');
+    return en || '';
+  };
   const items: Array<{
     key: string;
     label: string;
@@ -340,42 +347,42 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
     {
       key: 'prerequisites',
       label: t('pages.courseDetail.prerequisites'),
-      value: formatRequirementSeparators(course.course_prerequisites?.trim() || ''),
+      value: formatRequirementSeparators(pickLocalized(course.course_prerequisites, course.course_prerequisites_tc, course.course_prerequisites_sc).trim()),
       icon: <ListChecks className="h-4 w-4" />,
       accent: 'text-blue-600 dark:text-blue-400 bg-blue-500/10',
     },
     {
       key: 'corequisites',
       label: t('pages.courseDetail.corequisites'),
-      value: formatRequirementSeparators(course.course_corequisites?.trim() || ''),
+      value: formatRequirementSeparators(pickLocalized(course.course_corequisites, course.course_corequisites_tc, course.course_corequisites_sc).trim()),
       icon: <Layers className="h-4 w-4" />,
       accent: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
     },
     {
       key: 'exclusions',
       label: t('pages.courseDetail.exclusions'),
-      value: formatRequirementSeparators(course.course_exclusions?.trim() || ''),
+      value: formatRequirementSeparators(pickLocalized(course.course_exclusions, course.course_exclusions_tc, course.course_exclusions_sc).trim()),
       icon: <Ban className="h-4 w-4" />,
       accent: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
     },
     {
       key: 'exemptionRequirements',
       label: t('pages.courseDetail.exemptionRequirements'),
-      value: formatRequirementSeparators(course.course_exemption_requirements?.trim() || ''),
+      value: formatRequirementSeparators(pickLocalized(course.course_exemption_requirements, course.course_exemption_requirements_tc, course.course_exemption_requirements_sc).trim()),
       icon: <ShieldCheck className="h-4 w-4" />,
       accent: 'text-amber-600 dark:text-amber-400 bg-amber-500/10',
     },
     {
       key: 'recommended',
       label: t('pages.courseDetail.recommended'),
-      value: formatRequirementSeparators(course.course_recommended?.trim() || ''),
+      value: formatRequirementSeparators(pickLocalized(course.course_recommended, course.course_recommended_tc, course.course_recommended_sc).trim()),
       icon: <ThumbsUp className="h-4 w-4" />,
       accent: 'text-violet-600 dark:text-violet-400 bg-violet-500/10',
     },
     {
       key: 'restriction',
       label: t('pages.courseDetail.restriction'),
-      value: formatRequirementSeparators(course.course_restriction?.trim() || ''),
+      value: formatRequirementSeparators(pickLocalized(course.course_restriction, course.course_restriction_tc, course.course_restriction_sc).trim()),
       icon: <ShieldAlert className="h-4 w-4" />,
       accent: 'text-orange-600 dark:text-orange-400 bg-orange-500/10',
     },
@@ -2251,7 +2258,7 @@ const CourseDetail = () => {
                   ) : (
                     <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
                   )}
-                  <CourseRequirementsSection course={course} t={t} />
+                  <CourseRequirementsSection course={course} t={t} language={language} />
                 </>
               );
             })()}

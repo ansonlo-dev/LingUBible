@@ -17,11 +17,23 @@ export interface Course {
   course_description_tc?: string;
   course_description_sc?: string;
   course_prerequisites?: string;
+  course_prerequisites_tc?: string;
+  course_prerequisites_sc?: string;
   course_corequisites?: string;
+  course_corequisites_tc?: string;
+  course_corequisites_sc?: string;
   course_exclusions?: string;
+  course_exclusions_tc?: string;
+  course_exclusions_sc?: string;
   course_exemption_requirements?: string;
+  course_exemption_requirements_tc?: string;
+  course_exemption_requirements_sc?: string;
   course_recommended?: string;
+  course_recommended_tc?: string;
+  course_recommended_sc?: string;
   course_restriction?: string;
+  course_restriction_tc?: string;
+  course_restriction_sc?: string;
   department: string;
   credits?: string;
   $createdAt: string;
@@ -1307,7 +1319,7 @@ export class CourseService {
         [
           Query.equal('course_code', courseCode),
           Query.limit(1),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'course_prerequisites', 'course_corequisites', 'course_exclusions', 'course_exemption_requirements', 'course_recommended', 'course_restriction', 'department', 'credits', '$createdAt', '$updatedAt'])
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'course_description', 'course_description_tc', 'course_description_sc', 'course_prerequisites', 'course_prerequisites_tc', 'course_prerequisites_sc', 'course_corequisites', 'course_corequisites_tc', 'course_corequisites_sc', 'course_exclusions', 'course_exclusions_tc', 'course_exclusions_sc', 'course_exemption_requirements', 'course_exemption_requirements_tc', 'course_exemption_requirements_sc', 'course_recommended', 'course_recommended_tc', 'course_recommended_sc', 'course_restriction', 'course_restriction_tc', 'course_restriction_sc', 'department', 'credits', '$createdAt', '$updatedAt'])
         ]
       );
 
