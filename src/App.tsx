@@ -26,6 +26,7 @@ import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Lecturers from "./pages/Lecturers";
 import InstructorsList from "./pages/InstructorsList";
+import Timetable from "./pages/Timetable";
 import WriteReview from "./pages/WriteReview";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -624,6 +625,7 @@ const RouterContent = ({
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/courses/:courseCode" element={<CourseDetail />} />
                     <Route path="/instructors" element={<InstructorsList />} />
+                    <Route path="/timetable" element={<Timetable />} />
                     <Route path="/instructors/:instructorName" element={<Lecturers />} />
                     <Route path="/write-review" element={<WriteReview />} />
                     <Route path="/write-review/:courseCode" element={<WriteReview />} />
