@@ -179,9 +179,27 @@ function loadSelectedIds(): string[] {
 
 function meetingSummary(section: TimetableSection, dayLabels: Record<string, string>): string {
   if (section.meetings.length === 0) return '';
-  return [...section.meetings]
+  // Merge meetings that share the same day + time but differ only by venue, so a
+  // class taught in several rooms reads e.g. "Wed 17:00–18:29 @SEK205/LCH213".
+  const groups = new Map<string, { day: string; start: string; end: string; startMinutes: number; venues: string[] }>();
+  for (const m of section.meetings) {
+    const key = `${m.day}-${m.start}-${m.end}`;
+    const g = groups.get(key);
+    if (g) {
+      if (m.venue && !g.venues.includes(m.venue)) g.venues.push(m.venue);
+    } else {
+      groups.set(key, {
+        day: m.day,
+        start: m.start,
+        end: m.end,
+        startMinutes: m.startMinutes,
+        venues: m.venue ? [m.venue] : [],
+      });
+    }
+  }
+  return [...groups.values()]
     .sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day) || a.startMinutes - b.startMinutes)
-    .map((m) => `${dayLabels[m.day]} ${m.start}–${m.end}${m.venue ? ` @${m.venue}` : ''}`)
+    .map((g) => `${dayLabels[g.day]} ${g.start}–${g.end}${g.venues.length ? ` @${g.venues.join('/')}` : ''}`)
     .join(' · ');
 }
 
@@ -672,9 +690,9 @@ const Timetable = () => {
                 className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 {panelCollapsed ? (
-                  <Eye className="h-9 w-9" />
+                  <Eye className="h-5 w-5" />
                 ) : (
-                  <EyeOff className="h-9 w-9" />
+                  <EyeOff className="h-5 w-5" />
                 )}
               </button>
 
@@ -776,8 +794,11 @@ const Timetable = () => {
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" title={t('timetable.customize')}>
                       <SlidersHorizontal className="h-4 w-4" />
-                      {/* Label hidden on desktop to save room in the action row. */}
-                      <span className="ml-1 lg:hidden">{t('timetable.customize')}</span>
+                      {/* Label appears when the panel is hidden (the filters make room
+                          on desktop); kept on mobile too where the row wraps. */}
+                      <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
+                        {t('timetable.customize')}
+                      </span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -985,6 +1006,10 @@ const Timetable = () => {
                       ) : (
                         <Download className="h-4 w-4" />
                       )}
+                      {/* Label appears when the panel is hidden (extra room available). */}
+                      <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
+                        {t('timetable.export')}
+                      </span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">

@@ -109,7 +109,12 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
   html, body {
     overflow-x: hidden;
-    max-width: 100vw;
+    /* Use 100% (not 100vw — `vw` includes the scrollbar width). With 100vw the
+       layout width changes whenever the scrollbar appears/disappears, so when a
+       Radix Select/Popover locks body scroll the page content shifts sideways.
+       100% tracks the real content width and lets react-remove-scroll compensate
+       correctly, avoiding the horizontal jump. */
+    max-width: 100%;
     height: 100%;
   }
 
