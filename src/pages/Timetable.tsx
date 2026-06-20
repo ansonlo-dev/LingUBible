@@ -29,6 +29,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -40,6 +46,8 @@ import {
   X,
   Image as ImageIcon,
   FileDown,
+  Download,
+  ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
   Settings2,
@@ -63,9 +71,15 @@ interface ExportOptions {
   days: string[];
   firstDay: 'sun' | 'mon';
   // Export-only options
-  size: 'fit' | 'full';
+  resolution: 'low' | 'standard' | 'high';
   theme: 'light' | 'dark';
 }
+
+const RESOLUTION_SCALE: Record<ExportOptions['resolution'], number> = {
+  low: 1,
+  standard: 2,
+  high: 3,
+};
 
 const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeTitle: true,
@@ -78,7 +92,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   endHour: 18,
   days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
   firstDay: 'mon',
-  size: 'fit',
+  resolution: 'standard',
   theme: 'light',
 };
 
@@ -126,20 +140,6 @@ function OptionToggle<T extends string>({
       ))}
     </div>
   );
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-// A4 canvas pixel size (~150 dpi) for composing a full-page PNG.
-function pageCanvasSize(orientation: 'portrait' | 'landscape') {
-  return orientation === 'landscape' ? { w: 1754, h: 1240 } : { w: 1240, h: 1754 };
 }
 
 function loadSelectedIds(): string[] {
@@ -329,56 +329,26 @@ const Timetable = () => {
       const bgColor = dark ? '#000000' : '#ffffff';
       const { toPng } = await import('html-to-image');
       const contentUrl = await toPng(node, {
-        pixelRatio: 2,
+        pixelRatio: RESOLUTION_SCALE[exportOptions.resolution],
         backgroundColor: bgColor,
         cacheBust: true,
       });
       const imgW = node.scrollWidth;
       const imgH = node.scrollHeight;
       const safeName = `${term.name.replace(/[^\w一-鿿-]+/g, '_')}_timetable`;
-      const fullPage = exportOptions.size === 'full';
 
       if (format === 'png') {
-        let outUrl = contentUrl;
-        if (fullPage) {
-          // Stretch the timetable to fill an A4-shaped page (small margin).
-          const img = await loadImage(contentUrl);
-          const { w, h } = pageCanvasSize('landscape');
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d')!;
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, w, h);
-          const margin = 40;
-          ctx.drawImage(img, margin, margin, w - 2 * margin, h - 2 * margin);
-          outUrl = canvas.toDataURL('image/png');
-        }
         const link = document.createElement('a');
         link.download = `${safeName}.png`;
-        link.href = outUrl;
+        link.href = contentUrl;
         link.click();
       } else {
+        // PDF page sized exactly to the content (orientation follows the content).
         const { jsPDF } = await import('jspdf');
-        if (fullPage) {
-          // Standard A4 in the chosen orientation; image stretched to fill the page.
-          const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-          const pageW = pdf.internal.pageSize.getWidth();
-          const pageH = pdf.internal.pageSize.getHeight();
-          const margin = 18;
-          if (dark) {
-            pdf.setFillColor(0, 0, 0);
-            pdf.rect(0, 0, pageW, pageH, 'F');
-          }
-          pdf.addImage(contentUrl, 'PNG', margin, margin, pageW - 2 * margin, pageH - 2 * margin);
-          pdf.save(`${safeName}.pdf`);
-        } else {
-          // Page sized exactly to the content (orientation follows the content).
-          const orientation = imgW >= imgH ? 'landscape' : 'portrait';
-          const pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH] });
-          pdf.addImage(contentUrl, 'PNG', 0, 0, imgW, imgH);
-          pdf.save(`${safeName}.pdf`);
-        }
+        const orientation = imgW >= imgH ? 'landscape' : 'portrait';
+        const pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH] });
+        pdf.addImage(contentUrl, 'PNG', 0, 0, imgW, imgH);
+        pdf.save(`${safeName}.pdf`);
       }
     } catch (err) {
       console.error('Timetable export failed:', err);
@@ -800,36 +770,42 @@ const Timetable = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.size')}</Label>
+                      <Label className="text-sm">{t('timetable.opt.resolution')}</Label>
                       <OptionToggle
-                        value={exportOptions.size}
-                        onChange={(v) => setOpt({ size: v })}
+                        value={exportOptions.resolution}
+                        onChange={(v) => setOpt({ resolution: v })}
                         options={[
-                          { value: 'fit', label: t('timetable.opt.fitContent') },
-                          { value: 'full', label: t('timetable.opt.fullPage') },
+                          { value: 'low', label: t('timetable.opt.resLow') },
+                          { value: 'standard', label: t('timetable.opt.resStandard') },
+                          { value: 'high', label: t('timetable.opt.resHigh') },
                         ]}
                       />
                     </div>
                   </PopoverContent>
                 </Popover>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleExport('png')}
-                  disabled={exporting || selectedSections.length === 0}
-                >
-                  {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ImageIcon className="h-4 w-4 mr-1" />}
-                  {t('timetable.exportPng')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleExport('pdf')}
-                  disabled={exporting || selectedSections.length === 0}
-                >
-                  {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileDown className="h-4 w-4 mr-1" />}
-                  {t('timetable.exportPdf')}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" disabled={exporting || selectedSections.length === 0}>
+                      {exporting ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-1" />
+                      )}
+                      {t('timetable.export')}
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white dark:bg-gray-900">
+                    <DropdownMenuItem onClick={() => handleExport('png')}>
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      {t('timetable.exportPng')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                      <FileDown className="h-4 w-4 mr-2" />
+                      {t('timetable.exportPdf')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
