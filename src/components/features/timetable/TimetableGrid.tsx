@@ -10,6 +10,10 @@ interface TimetableGridProps {
   colorMap?: Map<string, string>;
   /** When true, the grid renders at full width without horizontal scrolling (for image/PDF export). */
   forExport?: boolean;
+  /** Show the half-hour sub gridlines (default true). */
+  showSubGrid?: boolean;
+  /** Use 24-hour time labels; false → 12-hour AM/PM (default true). */
+  use24Hour?: boolean;
 }
 
 interface PositionedBlock {
@@ -33,13 +37,22 @@ const DEFAULT_END_MIN = 18 * 60; // 18:00
 
 const FALLBACK_COLOR = '#64748b';
 
-function fmt(hhmm: string): string {
-  // Reference timetable shows 12-hour times; keep it compact.
+/** Format a "HH:MM" string in either 24-hour or 12-hour notation. */
+function formatTime(hhmm: string, use24: boolean): string {
   const [h, m] = hhmm.split(':').map((n) => parseInt(n, 10));
   if (Number.isNaN(h)) return hhmm;
+  if (use24) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   const period = h < 12 ? 'AM' : 'PM';
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+/** Format a whole-hour tick label (e.g. "13:00" or "1 PM"). */
+function formatHourTick(h: number, use24: boolean): string {
+  if (use24) return `${String(h).padStart(2, '0')}:00`;
+  const period = h < 12 ? 'AM' : 'PM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12} ${period}`;
 }
 
 /** Lay out overlapping blocks in a day into side-by-side columns. */
@@ -68,7 +81,14 @@ function layoutDay(blocks: PositionedBlock[]): PositionedBlock[] {
   return sorted;
 }
 
-export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: TimetableGridProps) {
+export function TimetableGrid({
+  sections,
+  conflictIds,
+  colorMap,
+  forExport,
+  showSubGrid = true,
+  use24Hour = true,
+}: TimetableGridProps) {
   const { t } = useLanguage();
 
   const dayLabels: Record<string, string> = {
@@ -207,7 +227,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                   className={`absolute left-0 right-1 ${sz.gutter} text-muted-foreground text-right pr-1`}
                   style={{ top: idx * hourHeight - 6 }}
                 >
-                  {`${String(h).padStart(2, '0')}:00`}
+                  {formatHourTick(h, use24Hour)}
                 </div>
               );
             })}
@@ -226,7 +246,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
               ))}
 
               {/* Half-hour sub gridlines — thinner, lighter grey, dashed */}
-              {hours.slice(0, -1).map((h, idx) => (
+              {showSubGrid && hours.slice(0, -1).map((h, idx) => (
                 <div
                   key={`half-${h}`}
                   className="absolute left-0 right-0 border-t border-dashed border-gray-400/25 dark:border-gray-500/25"
@@ -258,7 +278,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                       outline: isConflict ? '2px solid #ef4444' : undefined,
                       outlineOffset: isConflict ? '-2px' : undefined,
                     }}
-                    title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${fmt(block.start)} - ${fmt(block.end)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
+                    title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
                     <div className={`${sz.code} leading-tight truncate`}>
                       {block.section.courseCode}
@@ -279,7 +299,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                     )}
                     {height > show.time && (
                       <div className={`${sz.meta} leading-tight opacity-80 mt-0.5 truncate`}>
-                        {fmt(block.start)}–{fmt(block.end)}
+                        {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}
                       </div>
                     )}
                   </div>

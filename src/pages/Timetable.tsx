@@ -22,6 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
   CalendarDays,
@@ -34,10 +37,42 @@ import {
   FileDown,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings2,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
+const EXPORT_OPTS_KEY = 'timetable.exportOptions';
 const MAX_RESULTS = 80;
+
+interface ExportOptions {
+  includeTitle: boolean;
+  showSubGrid: boolean;
+  orientation: 'portrait' | 'landscape';
+  size: 'fit' | 'full';
+  timeFormat: '24' | '12';
+}
+
+const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
+  includeTitle: true,
+  showSubGrid: true,
+  orientation: 'landscape',
+  size: 'fit',
+  timeFormat: '24',
+};
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// A4 canvas pixel size (~150 dpi) for composing a full-page PNG.
+function pageCanvasSize(orientation: 'portrait' | 'landscape') {
+  return orientation === 'landscape' ? { w: 1754, h: 1240 } : { w: 1240, h: 1754 };
+}
 
 function loadSelectedIds(): string[] {
   try {
@@ -81,6 +116,24 @@ const Timetable = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds());
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+
+  const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
+    try {
+      const raw = localStorage.getItem(EXPORT_OPTS_KEY);
+      if (raw) return { ...DEFAULT_EXPORT_OPTIONS, ...JSON.parse(raw) };
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_EXPORT_OPTIONS;
+  });
+  const setOpt = (patch: Partial<ExportOptions>) => setExportOptions((prev) => ({ ...prev, ...patch }));
+  useEffect(() => {
+    try {
+      localStorage.setItem(EXPORT_OPTS_KEY, JSON.stringify(exportOptions));
+    } catch {
+      /* ignore */
+    }
+  }, [exportOptions]);
 
   // Collapsible filter/results panel (default expanded). Persisted across visits.
   const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
@@ -204,29 +257,59 @@ const Timetable = () => {
       const isDark = document.documentElement.classList.contains('dark');
       const bgColor = isDark ? '#18181b' : '#ffffff';
       const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(node, {
+      const contentUrl = await toPng(node, {
         pixelRatio: 2,
         backgroundColor: bgColor,
         cacheBust: true,
       });
+      const imgW = node.scrollWidth;
+      const imgH = node.scrollHeight;
       const safeName = `${term.name.replace(/[^\w一-鿿-]+/g, '_')}_timetable`;
+      const fullPage = exportOptions.size === 'full';
 
       if (format === 'png') {
+        let outUrl = contentUrl;
+        if (fullPage) {
+          // Compose the timetable, contained and centred, on an A4-shaped page.
+          const img = await loadImage(contentUrl);
+          const { w, h } = pageCanvasSize(exportOptions.orientation);
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d')!;
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, w, h);
+          const margin = 48;
+          const ratio = Math.min((w - 2 * margin) / img.width, (h - 2 * margin) / img.height);
+          const dw = img.width * ratio;
+          const dh = img.height * ratio;
+          ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+          outUrl = canvas.toDataURL('image/png');
+        }
         const link = document.createElement('a');
         link.download = `${safeName}.png`;
-        link.href = dataUrl;
+        link.href = outUrl;
         link.click();
       } else {
         const { jsPDF } = await import('jspdf');
-        const width = node.scrollWidth;
-        const height = node.scrollHeight;
-        const pdf = new jsPDF({
-          orientation: width >= height ? 'landscape' : 'portrait',
-          unit: 'px',
-          format: [width, height],
-        });
-        pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
-        pdf.save(`${safeName}.pdf`);
+        if (fullPage) {
+          // Standard A4 page in the chosen orientation; image contained & centred.
+          const pdf = new jsPDF({ orientation: exportOptions.orientation, unit: 'pt', format: 'a4' });
+          const pageW = pdf.internal.pageSize.getWidth();
+          const pageH = pdf.internal.pageSize.getHeight();
+          const margin = 24;
+          const ratio = Math.min((pageW - 2 * margin) / imgW, (pageH - 2 * margin) / imgH);
+          const dw = imgW * ratio;
+          const dh = imgH * ratio;
+          pdf.addImage(contentUrl, 'PNG', (pageW - dw) / 2, (pageH - dh) / 2, dw, dh);
+          pdf.save(`${safeName}.pdf`);
+        } else {
+          // Page sized exactly to the content (orientation follows the content).
+          const orientation = imgW >= imgH ? 'landscape' : 'portrait';
+          const pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH] });
+          pdf.addImage(contentUrl, 'PNG', 0, 0, imgW, imgH);
+          pdf.save(`${safeName}.pdf`);
+        }
       }
     } catch (err) {
       console.error('Timetable export failed:', err);
@@ -463,6 +546,71 @@ const Timetable = () => {
                 {panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
               </Button>
               <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings2 className="h-4 w-4 mr-1" />
+                      {t('timetable.exportSettings')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="opt-title" className="text-sm">{t('timetable.opt.title')}</Label>
+                      <Switch
+                        id="opt-title"
+                        checked={exportOptions.includeTitle}
+                        onCheckedChange={(v) => setOpt({ includeTitle: v })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="opt-subgrid" className="text-sm">{t('timetable.opt.subGrid')}</Label>
+                      <Switch
+                        id="opt-subgrid"
+                        checked={exportOptions.showSubGrid}
+                        onCheckedChange={(v) => setOpt({ showSubGrid: v })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.orientation')}</Label>
+                      <Select
+                        value={exportOptions.orientation}
+                        onValueChange={(v) => setOpt({ orientation: v as ExportOptions['orientation'] })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="portrait">{t('timetable.opt.portrait')}</SelectItem>
+                          <SelectItem value="landscape">{t('timetable.opt.landscape')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.size')}</Label>
+                      <Select
+                        value={exportOptions.size}
+                        onValueChange={(v) => setOpt({ size: v as ExportOptions['size'] })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fit">{t('timetable.opt.fitContent')}</SelectItem>
+                          <SelectItem value="full">{t('timetable.opt.fullPage')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.timeFormat')}</Label>
+                      <Select
+                        value={exportOptions.timeFormat}
+                        onValueChange={(v) => setOpt({ timeFormat: v as ExportOptions['timeFormat'] })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="24">{t('timetable.opt.format24')}</SelectItem>
+                          <SelectItem value="12">{t('timetable.opt.format12')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Button
                   variant="outline"
                   size="sm"
@@ -501,12 +649,16 @@ const Timetable = () => {
               style={{ position: 'absolute', left: '-99999px', top: 0, width: 1320, pointerEvents: 'none' }}
             >
               <div ref={exportRef} className="bg-background text-foreground p-6">
-                <h2 className="text-2xl font-bold text-center mb-4">{term.name}</h2>
+                {exportOptions.includeTitle && (
+                  <h2 className="text-2xl font-bold text-center mb-4">{term.name}</h2>
+                )}
                 <TimetableGrid
                   sections={selectedSections}
                   conflictIds={conflictIds}
                   colorMap={colorMap}
                   forExport
+                  showSubGrid={exportOptions.showSubGrid}
+                  use24Hour={exportOptions.timeFormat === '24'}
                 />
               </div>
             </div>
