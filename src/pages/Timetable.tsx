@@ -56,6 +56,7 @@ import {
   SlidersHorizontal,
   Palette,
   Pencil,
+  ExternalLink,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -70,6 +71,7 @@ interface ExportOptions {
   timeFormat: '24' | '12';
   dayFormat: DayFormat;
   textColor: TextColorMode;
+  showIcons: boolean;
   fields: BlockFields;
   rangeMode: 'auto' | 'custom';
   startHour: number;
@@ -99,6 +101,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   timeFormat: '24',
   dayFormat: 'short',
   textColor: 'dynamic',
+  showIcons: true,
   fields: { ...DEFAULT_BLOCK_FIELDS },
   rangeMode: 'auto',
   startHour: 8,
@@ -166,14 +169,41 @@ function OptionToggle<T extends string>({
   );
 }
 
-function loadSelectedIds(): string[] {
+// Selected sections are saved per term (a section id only exists within its term),
+// so each term keeps its own last-saved timetable in localStorage.
+function loadSelections(): Record<string, string[]> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+    // Legacy shape: a flat array of ids → migrate under the first term.
+    if (Array.isArray(parsed)) {
+      return { [TERMS[0].id]: parsed.filter((x) => typeof x === 'string') };
+    }
+    if (parsed && typeof parsed === 'object') {
+      const out: Record<string, string[]> = {};
+      for (const [termId, ids] of Object.entries(parsed)) {
+        if (Array.isArray(ids)) out[termId] = ids.filter((x) => typeof x === 'string');
+      }
+      return out;
+    }
+    return {};
   } catch {
-    return [];
+    return {};
+  }
+}
+
+function loadSelectedIds(termId: string): string[] {
+  return loadSelections()[termId] ?? [];
+}
+
+function saveSelectedIds(termId: string, ids: string[]) {
+  try {
+    const all = loadSelections();
+    all[termId] = ids;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  } catch {
+    /* ignore quota errors */
   }
 }
 
@@ -224,7 +254,13 @@ const Timetable = () => {
   const [type, setType] = useState('all');
   const [day, setDay] = useState('all');
 
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds());
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds(TERMS[0].id));
+  // Tracks the term the current selection belongs to, so saves always target the
+  // right term even when selectedIds updates lag a term switch by a render.
+  const termIdRef = useRef(termId);
+  useEffect(() => {
+    termIdRef.current = termId;
+  }, [termId]);
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -292,13 +328,21 @@ const Timetable = () => {
     };
   }, [term.csvUrl]);
 
+  // Persist the current term's selection whenever it changes.
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedIds));
-    } catch {
-      /* ignore quota errors */
-    }
+    saveSelectedIds(termIdRef.current, selectedIds);
   }, [selectedIds]);
+
+  // When the term changes, load that term's last-saved selection (empty if none).
+  // Skip the very first run — the initial term is already loaded in useState above.
+  const firstTermLoad = useRef(true);
+  useEffect(() => {
+    if (firstTermLoad.current) {
+      firstTermLoad.current = false;
+      return;
+    }
+    setSelectedIds(loadSelectedIds(termId));
+  }, [termId]);
 
   const dayLabels: Record<string, string> = {
     MON: t('timetable.day.mon'),
@@ -563,12 +607,49 @@ const Timetable = () => {
           </div>
         )}
         <div className="min-w-0 pr-12">
-          <span className="font-semibold text-sm">{s.courseCode}</span>
+          {/* Course code + a dedicated link icon to the course page. The icon is the
+              only link target (the text stays part of the add/remove card tap area);
+              its padding gives a comfortable, accurate hit area on touch screens. */}
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-sm">{s.courseCode}</span>
+            <a
+              href={`/courses/${s.courseCode}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              title={t('timetable.openCourse')}
+              aria-label={`${t('timetable.openCourse')}: ${s.courseCode}`}
+              className={`-my-1.5 p-1.5 rounded shrink-0 transition-colors ${
+                added ? 'text-white/80 hover:bg-white/20' : 'text-muted-foreground hover:bg-foreground/10'
+              }`}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
           <p className="text-sm truncate">{s.courseTitle}</p>
           {s.instructors.length > 0 && (
-            <p className={`text-xs truncate ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
-              {s.instructors.join(', ')}
-            </p>
+            <div className={`mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
+              {s.instructors.map((name) => (
+                <span key={name} className="inline-flex items-center gap-0.5">
+                  <span className="truncate max-w-[160px]">{name}</span>
+                  <a
+                    href={`/instructors/${encodeURIComponent(name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    title={t('timetable.openInstructor')}
+                    aria-label={`${t('timetable.openInstructor')}: ${name}`}
+                    className={`-my-1.5 p-1.5 rounded shrink-0 transition-colors ${
+                      added ? 'text-white/80 hover:bg-white/20' : 'text-muted-foreground hover:bg-foreground/10'
+                    }`}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </span>
+              ))}
+            </div>
           )}
           <p className={`text-[11px] mt-0.5 ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
             {meetingSummary(s, dayLabels) || t('timetable.noSchedule')}
@@ -927,6 +1008,17 @@ const Timetable = () => {
                           ]}
                         />
                       </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.icons')}</Label>
+                        <OptionToggle
+                          value={exportOptions.showIcons ? 'on' : 'off'}
+                          onChange={(v) => setOpt({ showIcons: v === 'on' })}
+                          options={[
+                            { value: 'on', label: t('timetable.opt.show') },
+                            { value: 'off', label: t('timetable.opt.hide') },
+                          ]}
+                        />
+                      </div>
                       <div className="space-y-1 col-span-2">
                         <Label className="text-xs">{t('timetable.opt.days')}</Label>
                         <div className="flex flex-wrap gap-1">
@@ -1120,6 +1212,7 @@ const Timetable = () => {
               showSubGrid={exportOptions.showSubGrid}
               showHours={exportOptions.showHours}
               textColor={exportOptions.textColor}
+              showIcons={exportOptions.showIcons}
               use24Hour={exportOptions.timeFormat === '24'}
               dayFormat={exportOptions.dayFormat}
               fields={exportOptions.fields}
@@ -1154,6 +1247,7 @@ const Timetable = () => {
                   showSubGrid={exportOptions.showSubGrid}
                   showHours={exportOptions.showHours}
                   textColor={exportOptions.textColor}
+                  showIcons={exportOptions.showIcons}
                   use24Hour={exportOptions.timeFormat === '24'}
                   dayFormat={exportOptions.dayFormat}
                   fields={exportOptions.fields}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Palette, Trash2 } from 'lucide-react';
+import { Palette, Trash2, MapPin, GraduationCap, Clock } from 'lucide-react';
 import { DAY_ORDER, meetingsOverlap, type TimetableSection } from '@/services/timetableService';
 
 export type DayFormat = 'short' | 'long' | 'zh';
@@ -45,6 +45,8 @@ interface TimetableGridProps {
   showHours?: boolean;
   /** Block text colour: 'dynamic' picks white/black per background luminance (default). */
   textColor?: TextColorMode;
+  /** Show small leading icons (location / instructor / time) on the info rows. */
+  showIcons?: boolean;
   /** Use 24-hour time labels; false → 12-hour AM/PM (default true). */
   use24Hour?: boolean;
   /** Day-header label style (default 'short'). */
@@ -182,6 +184,7 @@ export function TimetableGrid({
   showSubGrid = true,
   showHours = true,
   textColor = 'dynamic',
+  showIcons = true,
   use24Hour = true,
   dayFormat = 'short',
   fields = DEFAULT_BLOCK_FIELDS,
@@ -301,6 +304,7 @@ export function TimetableGrid({
   const sz = forExport
     ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-bold', header: 'text-xl font-bold', headerH: 'h-14', hours: 'text-[13px] font-semibold', badge: 'text-[13px] font-bold' }
     : { code: 'text-[15px] font-bold', title: 'text-[14px] font-semibold', meta: 'text-[12px] font-medium', pad: 'px-2 py-1.5', gutter: 'text-[12px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10', hours: 'text-[10px] font-medium', badge: 'text-[10px] font-bold' };
+  const iconSz = forExport ? 'h-4 w-4' : 'h-3 w-3';
   const hours: number[] = [];
   for (let h = startHour; h <= endHour; h++) hours.push(h);
   const gridHeight = ((dayEndMin - dayStartMin) / 60) * hourHeight;
@@ -444,18 +448,23 @@ export function TimetableGrid({
                     )}
                     {/* Session type lives in the top-right badge; show only the venue here. */}
                     {fields.venue && block.venues.length > 0 && (
-                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1.5`}>
-                        {block.venues.join(', ')}
+                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1.5 flex items-start gap-1`}>
+                        {showIcons && <MapPin className={`${iconSz} shrink-0 mt-[1px]`} />}
+                        <span className="min-w-0">{block.venues.join(', ')}</span>
                       </div>
                     )}
                     {fields.instructor && block.section.instructors.length > 0 && (
-                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1 line-clamp-2`}>
-                        {block.section.instructors.join(', ')}
+                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1 flex items-start gap-1`}>
+                        {showIcons && <GraduationCap className={`${iconSz} shrink-0 mt-[1px]`} />}
+                        <span className="min-w-0 line-clamp-2">{block.section.instructors.join(', ')}</span>
                       </div>
                     )}
                     {fields.time && (
-                      <div className={`${sz.meta} leading-tight opacity-80 dark:opacity-100 mt-1 truncate`}>
-                        {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}
+                      <div className={`${sz.meta} leading-tight opacity-80 dark:opacity-100 mt-1 flex items-center gap-1`}>
+                        {showIcons && <Clock className={`${iconSz} shrink-0`} />}
+                        <span className="truncate">
+                          {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}
+                        </span>
                       </div>
                     )}
                     {editableColors && !forExport && onColorChange && (
