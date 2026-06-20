@@ -26,8 +26,6 @@ import { useToast } from '@/hooks/use-toast';
 import {
   CalendarDays,
   Loader2,
-  Plus,
-  Check,
   Trash2,
   AlertTriangle,
   Search,
@@ -391,12 +389,28 @@ const Timetable = () => {
                 return (
                   <div
                     key={s.id}
-                    className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/40 transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={added}
+                    onClick={() => toggleSection(s.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleSection(s.id);
+                      }
+                    }}
+                    title={added ? t('timetable.remove') : t('timetable.add')}
+                    className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-accent/40 ${
+                      added ? 'bg-accent/40' : ''
+                    }`}
+                    style={added ? { borderColor: colorMap.get(s.id) } : undefined}
                   >
-                    <span
-                      className="mt-1 h-3 w-3 rounded-full shrink-0"
-                      style={{ backgroundColor: added ? colorMap.get(s.id) : '#94a3b8' }}
-                    />
+                    {added && (
+                      <span
+                        className="mt-1 h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: colorMap.get(s.id) }}
+                      />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm">{s.courseCode}</span>
@@ -420,15 +434,6 @@ const Timetable = () => {
                         {meetingSummary(s, dayLabels) || t('timetable.noSchedule')}
                       </p>
                     </div>
-                    <Button
-                      size="icon"
-                      variant={added ? 'secondary' : 'default'}
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => toggleSection(s.id)}
-                      title={added ? t('timetable.remove') : t('timetable.add')}
-                    >
-                      {added ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                    </Button>
                   </div>
                 );
               })}
