@@ -60,6 +60,8 @@ interface ExportOptions {
   rangeMode: 'auto' | 'custom';
   startHour: number;
   endHour: number;
+  days: string[];
+  firstDay: 'sun' | 'mon';
   // Export-only options
   size: 'fit' | 'full';
   theme: 'light' | 'dark';
@@ -74,8 +76,15 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   rangeMode: 'auto',
   startHour: 8,
   endHour: 18,
+  days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+  firstDay: 'mon',
   size: 'fit',
   theme: 'light',
+};
+
+const WEEK_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const DAY_PILL_LABEL: Record<string, string> = {
+  MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun',
 };
 
 // Theme tokens used by the timetable grid, mirrored from index.css so the
@@ -661,6 +670,48 @@ const Timetable = () => {
                       />
                     </div>
                     <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.firstDay')}</Label>
+                      <OptionToggle
+                        value={exportOptions.firstDay}
+                        onChange={(v) => setOpt({ firstDay: v })}
+                        options={[
+                          { value: 'sun', label: t('timetable.opt.sunday') },
+                          { value: 'mon', label: t('timetable.opt.monday') },
+                        ]}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.days')}</Label>
+                      <div className="flex flex-wrap gap-1">
+                        {(exportOptions.firstDay === 'sun'
+                          ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                          : WEEK_DAYS
+                        ).map((d) => {
+                          const active = exportOptions.days.includes(d);
+                          return (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() =>
+                                setOpt({
+                                  days: active
+                                    ? exportOptions.days.filter((x) => x !== d)
+                                    : [...exportOptions.days, d],
+                                })
+                              }
+                              className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                                active
+                                  ? 'bg-primary text-white border-primary'
+                                  : 'bg-transparent text-muted-foreground hover:bg-accent'
+                              }`}
+                            >
+                              {DAY_PILL_LABEL[d]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.timeRange')}</Label>
                       <OptionToggle
                         value={exportOptions.rangeMode}
@@ -803,6 +854,8 @@ const Timetable = () => {
               fields={exportOptions.fields}
               rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
               rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
+              days={exportOptions.days}
+              firstDay={exportOptions.firstDay}
             />
 
             {/* Off-screen, full-width render used only for PNG/PDF export */}
@@ -829,6 +882,8 @@ const Timetable = () => {
                   fields={exportOptions.fields}
                   rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
                   rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
+                  days={exportOptions.days}
+                  firstDay={exportOptions.firstDay}
                 />
               </div>
             </div>

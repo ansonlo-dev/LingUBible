@@ -41,7 +41,13 @@ interface TimetableGridProps {
   /** Manual vertical range (whole-hour). When omitted, the range is auto-cropped. */
   rangeStart?: number;
   rangeEnd?: number;
+  /** Which days to render as columns (default Mon–Fri). */
+  days?: string[];
+  /** Week start — 'sun' puts Sunday first (default 'mon'). */
+  firstDay?: 'sun' | 'mon';
 }
+
+const DEFAULT_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 
 const DAY_LABEL_SETS: Record<DayFormat, Record<string, string>> = {
   short: { MON: 'MON', TUE: 'TUE', WED: 'WED', THU: 'THU', FRI: 'FRI', SAT: 'SAT', SUN: 'SUN' },
@@ -131,6 +137,8 @@ export function TimetableGrid({
   fields = DEFAULT_BLOCK_FIELDS,
   rangeStart,
   rangeEnd,
+  days,
+  firstDay = 'mon',
 }: TimetableGridProps) {
   const dayLabels = DAY_LABEL_SETS[dayFormat];
 
@@ -184,12 +192,15 @@ export function TimetableGrid({
 
     for (const day of DAY_ORDER) byDay[day] = layoutDay(byDay[day]);
 
-    // Show Mon–Fri always; weekend columns only when used.
-    const visible = DAY_ORDER.filter(
-      (d) => ['MON', 'TUE', 'WED', 'THU', 'FRI'].includes(d) || byDay[d].length > 0,
-    );
+    // Render exactly the chosen days, ordered by the chosen week start.
+    const allowed = days && days.length ? days : DEFAULT_DAYS;
+    const order =
+      firstDay === 'sun'
+        ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+        : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const visible = order.filter((d) => allowed.includes(d));
     return { visibleDays: visible, blocksByDay: byDay };
-  }, [sections]);
+  }, [sections, days, firstDay]);
 
   // Dynamic vertical range: span only the hours actually used by the selected
   // sections (rounded to whole hours). Falls back to a default when empty.
@@ -325,24 +336,24 @@ export function TimetableGrid({
                       </div>
                     )}
                     {fields.title && (
-                      <div className={`${sz.title} leading-tight opacity-95 line-clamp-2`}>
+                      <div className={`${sz.title} leading-tight opacity-95 dark:opacity-100 line-clamp-2`}>
                         {block.section.courseTitle}
                       </div>
                     )}
                     {(fields.type || (fields.venue && block.venues.length > 0)) && height > show.type && (
-                      <div className={`${sz.meta} leading-tight opacity-90 mt-0.5`}>
+                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-0.5`}>
                         {fields.type && <span className="font-semibold">{block.type}</span>}
                         {fields.type && fields.venue && block.venues.length > 0 && ' · '}
                         {fields.venue && block.venues.length > 0 && block.venues.join(', ')}
                       </div>
                     )}
                     {fields.instructor && height > show.instructor && block.section.instructors.length > 0 && (
-                      <div className={`${sz.meta} leading-tight opacity-90 mt-0.5 line-clamp-2`}>
+                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-0.5 line-clamp-2`}>
                         {block.section.instructors.join(', ')}
                       </div>
                     )}
                     {fields.time && height > show.time && (
-                      <div className={`${sz.meta} leading-tight opacity-80 mt-0.5 truncate`}>
+                      <div className={`${sz.meta} leading-tight opacity-80 dark:opacity-100 mt-0.5 truncate`}>
                         {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}
                       </div>
                     )}
