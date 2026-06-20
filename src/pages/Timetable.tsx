@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -50,6 +49,7 @@ interface ExportOptions {
   orientation: 'portrait' | 'landscape';
   size: 'fit' | 'full';
   timeFormat: '24' | '12';
+  theme: 'light' | 'dark';
 }
 
 const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
@@ -58,7 +58,49 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   orientation: 'landscape',
   size: 'fit',
   timeFormat: '24',
+  theme: 'light',
 };
+
+// Theme tokens used by the timetable grid, mirrored from index.css so the
+// export can be rendered in light or dark independently of the site theme.
+function themeVars(dark: boolean): CSSProperties {
+  const vars = dark
+    ? { '--background': '0, 0, 0', '--foreground': '255, 255, 255', '--card': '24, 24, 27', '--border': '63, 63, 70', '--muted': '55, 65, 81', '--muted-foreground': '156, 163, 175' }
+    : { '--background': '255, 255, 255', '--foreground': '0, 0, 0', '--card': '245, 245, 245', '--border': '209, 213, 219', '--muted': '243, 244, 246', '--muted-foreground': '107, 114, 128' };
+  return {
+    ...(vars as CSSProperties),
+    backgroundColor: dark ? '#000000' : '#ffffff',
+    color: dark ? '#ffffff' : '#000000',
+  };
+}
+
+/** Compact segmented two-option toggle used for the export settings. */
+function OptionToggle<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { value: T; label: string }[];
+}) {
+  return (
+    <div className="flex rounded-md border overflow-hidden">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`flex-1 px-2 py-1 text-xs font-medium transition-colors ${
+            value === o.value ? 'bg-primary text-white' : 'bg-transparent text-muted-foreground hover:bg-accent'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -118,13 +160,16 @@ const Timetable = () => {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
+    const siteDark =
+      typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+    const base: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, theme: siteDark ? 'dark' : 'light' };
     try {
       const raw = localStorage.getItem(EXPORT_OPTS_KEY);
-      if (raw) return { ...DEFAULT_EXPORT_OPTIONS, ...JSON.parse(raw) };
+      if (raw) return { ...base, ...JSON.parse(raw) };
     } catch {
       /* ignore */
     }
-    return DEFAULT_EXPORT_OPTIONS;
+    return base;
   });
   const setOpt = (patch: Partial<ExportOptions>) => setExportOptions((prev) => ({ ...prev, ...patch }));
   useEffect(() => {
@@ -254,8 +299,8 @@ const Timetable = () => {
     if (!node || selectedSections.length === 0) return;
     setExporting(true);
     try {
-      const isDark = document.documentElement.classList.contains('dark');
-      const bgColor = isDark ? '#18181b' : '#ffffff';
+      const dark = exportOptions.theme === 'dark';
+      const bgColor = dark ? '#000000' : '#ffffff';
       const { toPng } = await import('html-to-image');
       const contentUrl = await toPng(node, {
         pixelRatio: 2,
@@ -270,7 +315,7 @@ const Timetable = () => {
       if (format === 'png') {
         let outUrl = contentUrl;
         if (fullPage) {
-          // Compose the timetable, contained and centred, on an A4-shaped page.
+          // Stretch the timetable to fill an A4-shaped page (small margin).
           const img = await loadImage(contentUrl);
           const { w, h } = pageCanvasSize(exportOptions.orientation);
           const canvas = document.createElement('canvas');
@@ -279,11 +324,8 @@ const Timetable = () => {
           const ctx = canvas.getContext('2d')!;
           ctx.fillStyle = bgColor;
           ctx.fillRect(0, 0, w, h);
-          const margin = 48;
-          const ratio = Math.min((w - 2 * margin) / img.width, (h - 2 * margin) / img.height);
-          const dw = img.width * ratio;
-          const dh = img.height * ratio;
-          ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+          const margin = 40;
+          ctx.drawImage(img, margin, margin, w - 2 * margin, h - 2 * margin);
           outUrl = canvas.toDataURL('image/png');
         }
         const link = document.createElement('a');
@@ -293,15 +335,16 @@ const Timetable = () => {
       } else {
         const { jsPDF } = await import('jspdf');
         if (fullPage) {
-          // Standard A4 page in the chosen orientation; image contained & centred.
+          // Standard A4 in the chosen orientation; image stretched to fill the page.
           const pdf = new jsPDF({ orientation: exportOptions.orientation, unit: 'pt', format: 'a4' });
           const pageW = pdf.internal.pageSize.getWidth();
           const pageH = pdf.internal.pageSize.getHeight();
-          const margin = 24;
-          const ratio = Math.min((pageW - 2 * margin) / imgW, (pageH - 2 * margin) / imgH);
-          const dw = imgW * ratio;
-          const dh = imgH * ratio;
-          pdf.addImage(contentUrl, 'PNG', (pageW - dw) / 2, (pageH - dh) / 2, dw, dh);
+          const margin = 18;
+          if (dark) {
+            pdf.setFillColor(0, 0, 0);
+            pdf.rect(0, 0, pageW, pageH, 'F');
+          }
+          pdf.addImage(contentUrl, 'PNG', margin, margin, pageW - 2 * margin, pageH - 2 * margin);
           pdf.save(`${safeName}.pdf`);
         } else {
           // Page sized exactly to the content (orientation follows the content).
@@ -553,61 +596,72 @@ const Timetable = () => {
                       {t('timetable.exportSettings')}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="opt-title" className="text-sm">{t('timetable.opt.title')}</Label>
-                      <Switch
-                        id="opt-title"
-                        checked={exportOptions.includeTitle}
-                        onCheckedChange={(v) => setOpt({ includeTitle: v })}
+                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.title')}</Label>
+                      <OptionToggle
+                        value={exportOptions.includeTitle ? 'on' : 'off'}
+                        onChange={(v) => setOpt({ includeTitle: v === 'on' })}
+                        options={[
+                          { value: 'on', label: t('timetable.opt.show') },
+                          { value: 'off', label: t('timetable.opt.hide') },
+                        ]}
                       />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="opt-subgrid" className="text-sm">{t('timetable.opt.subGrid')}</Label>
-                      <Switch
-                        id="opt-subgrid"
-                        checked={exportOptions.showSubGrid}
-                        onCheckedChange={(v) => setOpt({ showSubGrid: v })}
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.subGrid')}</Label>
+                      <OptionToggle
+                        value={exportOptions.showSubGrid ? 'on' : 'off'}
+                        onChange={(v) => setOpt({ showSubGrid: v === 'on' })}
+                        options={[
+                          { value: 'on', label: t('timetable.opt.show') },
+                          { value: 'off', label: t('timetable.opt.hide') },
+                        ]}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.theme')}</Label>
+                      <OptionToggle
+                        value={exportOptions.theme}
+                        onChange={(v) => setOpt({ theme: v })}
+                        options={[
+                          { value: 'light', label: t('timetable.opt.light') },
+                          { value: 'dark', label: t('timetable.opt.dark') },
+                        ]}
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.orientation')}</Label>
-                      <Select
+                      <OptionToggle
                         value={exportOptions.orientation}
-                        onValueChange={(v) => setOpt({ orientation: v as ExportOptions['orientation'] })}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="portrait">{t('timetable.opt.portrait')}</SelectItem>
-                          <SelectItem value="landscape">{t('timetable.opt.landscape')}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        onChange={(v) => setOpt({ orientation: v })}
+                        options={[
+                          { value: 'portrait', label: t('timetable.opt.portrait') },
+                          { value: 'landscape', label: t('timetable.opt.landscape') },
+                        ]}
+                      />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.size')}</Label>
-                      <Select
+                      <OptionToggle
                         value={exportOptions.size}
-                        onValueChange={(v) => setOpt({ size: v as ExportOptions['size'] })}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fit">{t('timetable.opt.fitContent')}</SelectItem>
-                          <SelectItem value="full">{t('timetable.opt.fullPage')}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        onChange={(v) => setOpt({ size: v })}
+                        options={[
+                          { value: 'fit', label: t('timetable.opt.fitContent') },
+                          { value: 'full', label: t('timetable.opt.fullPage') },
+                        ]}
+                      />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.timeFormat')}</Label>
-                      <Select
+                      <OptionToggle
                         value={exportOptions.timeFormat}
-                        onValueChange={(v) => setOpt({ timeFormat: v as ExportOptions['timeFormat'] })}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="24">{t('timetable.opt.format24')}</SelectItem>
-                          <SelectItem value="12">{t('timetable.opt.format12')}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        onChange={(v) => setOpt({ timeFormat: v })}
+                        options={[
+                          { value: '24', label: t('timetable.opt.format24') },
+                          { value: '12', label: t('timetable.opt.format12') },
+                        ]}
+                      />
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -648,7 +702,11 @@ const Timetable = () => {
               aria-hidden
               style={{ position: 'absolute', left: '-99999px', top: 0, width: 1320, pointerEvents: 'none' }}
             >
-              <div ref={exportRef} className="bg-background text-foreground p-6">
+              <div
+                ref={exportRef}
+                className="p-6"
+                style={themeVars(exportOptions.theme === 'dark')}
+              >
                 {exportOptions.includeTitle && (
                   <h2 className="text-2xl font-bold text-center mb-4">{term.name}</h2>
                 )}
