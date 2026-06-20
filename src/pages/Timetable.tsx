@@ -937,6 +937,8 @@ const Timetable = () => {
               rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
               days={exportOptions.days}
               firstDay={exportOptions.firstDay}
+              editableColors={panelCollapsed}
+              onColorChange={setCourseColor}
             />
 
             {/* Off-screen, full-width render used only for PNG/PDF export */}

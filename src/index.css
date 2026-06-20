@@ -23,6 +23,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
 
 @layer base {
   :root {
+    color-scheme: light;
     --background: 255, 255, 255;
     --foreground: 0, 0, 0;
     --card: 245, 245, 245;
@@ -66,6 +67,7 @@ div[style*="position: fixed"][style*="right: 14px"] {
   }
 
   .dark {
+    color-scheme: dark;
     --background: 0, 0, 0;
     --foreground: 255, 255, 255;
     --card: 24, 24, 27;
