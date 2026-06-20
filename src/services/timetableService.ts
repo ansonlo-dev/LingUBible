@@ -13,9 +13,24 @@
  * (passive: fetched once on demand, never background-refreshed).
  */
 
-// 🔧 When the CSV is uploaded to Appwrite Storage, swap this for the file's
-// public view URL, e.g. `${endpoint}/storage/buckets/<bucket>/files/<id>/view?project=<project>`.
+// 🔧 When the CSV is uploaded to Appwrite Storage, swap each term's `csvUrl`
+// for the file's public view URL, e.g.
+// `${endpoint}/storage/buckets/<bucket>/files/<id>/view?project=<project>`.
 export const TIMETABLE_CSV_URL = '/data/timetable.csv';
+
+/** A selectable academic term, each backed by its own CSV export. */
+export interface TimetableTerm {
+  id: string;
+  /** Display name shown as the timetable title (e.g. "2024–25 Term 2"). */
+  name: string;
+  csvUrl: string;
+}
+
+// Today there is a single term; add more entries here when new CSVs are
+// available (e.g. Term 1 / Term 2 of the same academic year).
+export const TERMS: TimetableTerm[] = [
+  { id: '2024-25-t2', name: '2024–25 Term 2', csvUrl: TIMETABLE_CSV_URL },
+];
 
 /** A single scheduled meeting (one day/time/venue) of a section. */
 export interface TimetableMeeting {
@@ -91,8 +106,8 @@ function toMinutes(hhmm: string): number | null {
   return h * 60 + min;
 }
 
-let sectionsCache: TimetableSection[] | null = null;
-let inflight: Promise<TimetableSection[]> | null = null;
+const sectionsCacheByUrl = new Map<string, TimetableSection[]>();
+const inflightByUrl = new Map<string, Promise<TimetableSection[]>>();
 
 /** Parse raw CSV text into grouped sections. Exported for testing/reuse. */
 export function parseTimetableCsv(text: string): TimetableSection[] {
@@ -177,29 +192,42 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
   return sections;
 }
 
-/** Fetch + parse the timetable CSV. Result is cached for the session. */
-export async function loadTimetableSections(): Promise<TimetableSection[]> {
-  if (sectionsCache) return sectionsCache;
-  if (inflight) return inflight;
+/** Fetch + parse a term's timetable CSV. Result is cached per-URL for the session. */
+export async function loadTimetableSections(url: string = TIMETABLE_CSV_URL): Promise<TimetableSection[]> {
+  const cached = sectionsCacheByUrl.get(url);
+  if (cached) return cached;
+  const existing = inflightByUrl.get(url);
+  if (existing) return existing;
 
-  inflight = (async () => {
-    const res = await fetch(TIMETABLE_CSV_URL, { cache: 'force-cache' });
+  const promise = (async () => {
+    const res = await fetch(url, { cache: 'force-cache' });
     if (!res.ok) {
       throw new Error(`Failed to load timetable data (${res.status})`);
     }
     const text = await res.text();
     const sections = parseTimetableCsv(text);
-    sectionsCache = sections;
-    inflight = null;
+    sectionsCacheByUrl.set(url, sections);
+    inflightByUrl.delete(url);
     return sections;
   })();
 
+  inflightByUrl.set(url, promise);
   try {
-    return await inflight;
+    return await promise;
   } catch (err) {
-    inflight = null;
+    inflightByUrl.delete(url);
     throw err;
   }
+}
+
+/**
+ * Auto-assign a visually distinct colour by position. Uses the golden-angle
+ * hue rotation so consecutively-added sections never get similar colours,
+ * regardless of how many are selected.
+ */
+export function colorForIndex(index: number): string {
+  const hue = (index * 137.508) % 360;
+  return `hsl(${hue.toFixed(1)}, 62%, 42%)`;
 }
 
 /** True if two meetings overlap in time on the same day. */

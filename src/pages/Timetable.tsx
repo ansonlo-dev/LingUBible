@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
   loadTimetableSections,
   findConflicts,
+  colorForIndex,
   DAY_ORDER,
+  TERMS,
   type TimetableSection,
 } from '@/services/timetableService';
-import { TimetableGrid, colorForCourse } from '@/components/features/timetable/TimetableGrid';
+import { TimetableGrid } from '@/components/features/timetable/TimetableGrid';
 import { Combobox, type ComboboxOption } from '@/components/features/timetable/Combobox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import {
   CalendarDays,
   Loader2,
@@ -29,6 +32,8 @@ import {
   AlertTriangle,
   Search,
   X,
+  Image as ImageIcon,
+  FileDown,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -55,10 +60,15 @@ function meetingSummary(section: TimetableSection, dayLabels: Record<string, str
 
 const Timetable = () => {
   const { t } = useLanguage();
+  const { toast } = useToast();
 
   const [allSections, setAllSections] = useState<TimetableSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Term selection (today there is one; the dropdown is future-proofed for more).
+  const [termId, setTermId] = useState(TERMS[0].id);
+  const term = useMemo(() => TERMS.find((tm) => tm.id === termId) ?? TERMS[0], [termId]);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,11 +79,13 @@ const Timetable = () => {
   const [day, setDay] = useState('all');
 
   const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds());
+  const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    loadTimetableSections()
+    loadTimetableSections(term.csvUrl)
       .then((sections) => {
         if (!active) return;
         setAllSections(sections);
@@ -87,7 +99,7 @@ const Timetable = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [term.csvUrl]);
 
   useEffect(() => {
     try {
@@ -161,6 +173,56 @@ const Timetable = () => {
 
   const conflictIds = useMemo(() => findConflicts(selectedSections), [selectedSections]);
 
+  // Auto-assign a distinct colour to each section in the order it was added.
+  const colorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    selectedIds.forEach((id, i) => map.set(id, colorForIndex(i)));
+    return map;
+  }, [selectedIds]);
+
+  const handleExport = async (format: 'png' | 'pdf') => {
+    const node = exportRef.current;
+    if (!node || selectedSections.length === 0) return;
+    setExporting(true);
+    try {
+      const isDark = document.documentElement.classList.contains('dark');
+      const bgColor = isDark ? '#18181b' : '#ffffff';
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(node, {
+        pixelRatio: 2,
+        backgroundColor: bgColor,
+        cacheBust: true,
+      });
+      const safeName = `${term.name.replace(/[^\w一-鿿-]+/g, '_')}_timetable`;
+
+      if (format === 'png') {
+        const link = document.createElement('a');
+        link.download = `${safeName}.png`;
+        link.href = dataUrl;
+        link.click();
+      } else {
+        const { jsPDF } = await import('jspdf');
+        const width = node.scrollWidth;
+        const height = node.scrollHeight;
+        const pdf = new jsPDF({
+          orientation: width >= height ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [width, height],
+        });
+        pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
+        pdf.save(`${safeName}.pdf`);
+      }
+    } catch (err) {
+      console.error('Timetable export failed:', err);
+      toast({
+        title: t('timetable.exportError'),
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const hasActiveFilters =
     searchTerm !== '' || courseCode !== '' || instructor !== '' || type !== 'all' || day !== 'all';
 
@@ -223,6 +285,18 @@ const Timetable = () => {
 
                 {/* Dropdown filters */}
                 <div className="space-y-2">
+                  <Select value={termId} onValueChange={setTermId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('timetable.filter.term')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TERMS.map((tm) => (
+                        <SelectItem key={tm.id} value={tm.id}>
+                          {tm.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Combobox
                     options={courseOptions}
                     value={courseCode}
@@ -299,12 +373,15 @@ const Timetable = () => {
                   >
                     <span
                       className="mt-1 h-3 w-3 rounded-full shrink-0"
-                      style={{ backgroundColor: colorForCourse(s.courseCode) }}
+                      style={{ backgroundColor: added ? colorMap.get(s.id) : '#94a3b8' }}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm">{s.courseCode}</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0 !bg-[rgb(var(--secondary))] !text-[rgb(var(--secondary-foreground))]"
+                        >
                           {t('timetable.sectionLabel', { sect: s.section || '—' })}
                         </Badge>
                         {s.types.map((ty) => (
@@ -343,6 +420,30 @@ const Timetable = () => {
 
           {/* Right: timetable + selected */}
           <div className="space-y-4">
+            {/* Export actions */}
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExport('png')}
+                  disabled={exporting || selectedSections.length === 0}
+                >
+                  {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ImageIcon className="h-4 w-4 mr-1" />}
+                  {t('timetable.exportPng')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExport('pdf')}
+                  disabled={exporting || selectedSections.length === 0}
+                >
+                  {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileDown className="h-4 w-4 mr-1" />}
+                  {t('timetable.exportPdf')}
+                </Button>
+              </div>
+            </div>
+
             {conflictIds.size > 0 && (
               <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -350,7 +451,25 @@ const Timetable = () => {
               </div>
             )}
 
-            <TimetableGrid sections={selectedSections} conflictIds={conflictIds} />
+            {/* On-screen title + grid */}
+            <h2 className="text-xl font-bold text-center">{term.name}</h2>
+            <TimetableGrid sections={selectedSections} conflictIds={conflictIds} colorMap={colorMap} />
+
+            {/* Off-screen, full-width render used only for PNG/PDF export */}
+            <div
+              aria-hidden
+              style={{ position: 'absolute', left: '-99999px', top: 0, width: 1100, pointerEvents: 'none' }}
+            >
+              <div ref={exportRef} className="bg-background text-foreground p-6">
+                <h2 className="text-2xl font-bold text-center mb-4">{term.name}</h2>
+                <TimetableGrid
+                  sections={selectedSections}
+                  conflictIds={conflictIds}
+                  colorMap={colorMap}
+                  forExport
+                />
+              </div>
+            </div>
 
             {/* Selected sections list */}
             <div className="flex items-center justify-between px-1">
@@ -375,7 +494,7 @@ const Timetable = () => {
                   <div
                     key={s.id}
                     className="flex items-center gap-2 rounded-full pl-2 pr-1 py-1 text-xs text-white"
-                    style={{ backgroundColor: colorForCourse(s.courseCode) }}
+                    style={{ backgroundColor: colorMap.get(s.id) }}
                   >
                     {conflictIds.has(s.id) && <AlertTriangle className="h-3 w-3" />}
                     <span className="font-semibold">{s.courseCode}</span>

@@ -6,6 +6,10 @@ interface TimetableGridProps {
   sections: TimetableSection[];
   /** Section ids that clash with another selected section (rendered with a warning ring). */
   conflictIds?: Set<string>;
+  /** Per-section colour (id → CSS colour). Falls back to a neutral grey. */
+  colorMap?: Map<string, string>;
+  /** When true, the grid renders at full width without horizontal scrolling (for image/PDF export). */
+  forExport?: boolean;
 }
 
 interface PositionedBlock {
@@ -24,25 +28,11 @@ interface PositionedBlock {
 }
 
 const HOUR_HEIGHT = 56; // px per hour
-const DAY_START_MIN = 8 * 60; // 08:00
-const DAY_END_MIN = 21 * 60; // 21:00
+// Fallback range used only when nothing is selected yet.
+const DEFAULT_START_MIN = 8 * 60; // 08:00
+const DEFAULT_END_MIN = 18 * 60; // 18:00
 
-// A deterministic, pleasant palette. Each course code maps to one colour so
-// the same course always looks the same (mirrors the reference timetable PNG).
-const PALETTE = [
-  '#6d4c41', '#5e35b1', '#43702f', '#8e1f49', '#1565c0',
-  '#00695c', '#ad6800', '#4527a0', '#2e7d32', '#c2185b',
-  '#0277bd', '#00838f', '#d84315', '#3949ab', '#558b2f',
-  '#6a1b9a', '#00796b', '#ef6c00', '#283593', '#b71c1c',
-];
-
-function colorForCourse(courseCode: string): string {
-  let hash = 0;
-  for (let i = 0; i < courseCode.length; i++) {
-    hash = (hash * 31 + courseCode.charCodeAt(i)) >>> 0;
-  }
-  return PALETTE[hash % PALETTE.length];
-}
+const FALLBACK_COLOR = '#64748b';
 
 function fmt(hhmm: string): string {
   // Reference timetable shows 12-hour times; keep it compact.
@@ -79,7 +69,7 @@ function layoutDay(blocks: PositionedBlock[]): PositionedBlock[] {
   return sorted;
 }
 
-export function TimetableGrid({ sections, conflictIds }: TimetableGridProps) {
+export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: TimetableGridProps) {
   const { t } = useLanguage();
 
   const dayLabels: Record<string, string> = {
@@ -149,14 +139,34 @@ export function TimetableGrid({ sections, conflictIds }: TimetableGridProps) {
     return { visibleDays: visible, blocksByDay: byDay };
   }, [sections]);
 
+  // Dynamic vertical range: span only the hours actually used by the selected
+  // sections (rounded to whole hours). Falls back to a default when empty.
+  const { startHour, endHour } = useMemo(() => {
+    let minStart = Infinity;
+    let maxEnd = -Infinity;
+    for (const section of sections) {
+      for (const m of section.meetings) {
+        minStart = Math.min(minStart, m.startMinutes);
+        maxEnd = Math.max(maxEnd, m.endMinutes + 1); // inclusive end (16:29 → 16:30)
+      }
+    }
+    if (!Number.isFinite(minStart) || !Number.isFinite(maxEnd)) {
+      return { startHour: DEFAULT_START_MIN / 60, endHour: DEFAULT_END_MIN / 60 };
+    }
+    return { startHour: Math.floor(minStart / 60), endHour: Math.ceil(maxEnd / 60) };
+  }, [sections]);
+
+  const dayStartMin = startHour * 60;
+  const dayEndMin = endHour * 60;
+
   const hours: number[] = [];
-  for (let h = DAY_START_MIN / 60; h <= DAY_END_MIN / 60; h++) hours.push(h);
-  const gridHeight = ((DAY_END_MIN - DAY_START_MIN) / 60) * HOUR_HEIGHT;
+  for (let h = startHour; h <= endHour; h++) hours.push(h);
+  const gridHeight = ((dayEndMin - dayStartMin) / 60) * HOUR_HEIGHT;
 
   const TIME_COL = 64; // px
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card">
+    <div className={`${forExport ? 'overflow-visible' : 'overflow-x-auto'} rounded-lg border bg-card`}>
       <div className="min-w-[760px]">
         {/* Header row with day names */}
         <div
@@ -178,15 +188,19 @@ export function TimetableGrid({ sections, conflictIds }: TimetableGridProps) {
         >
           {/* Time gutter */}
           <div className="relative" style={{ height: gridHeight }}>
-            {hours.map((h, idx) => (
-              <div
-                key={h}
-                className="absolute left-0 right-1 text-[11px] text-muted-foreground text-right pr-1"
-                style={{ top: idx * HOUR_HEIGHT - 6 }}
-              >
-                {fmt(`${String(h).padStart(2, '0')}:00`)}
-              </div>
-            ))}
+            {hours.map((h, idx) => {
+              // Hide the first and last labels (they sit on the grid edges).
+              if (idx === 0 || idx === hours.length - 1) return null;
+              return (
+                <div
+                  key={h}
+                  className="absolute left-0 right-1 text-[11px] text-muted-foreground text-right pr-1"
+                  style={{ top: idx * HOUR_HEIGHT - 6 }}
+                >
+                  {fmt(`${String(h).padStart(2, '0')}:00`)}
+                </div>
+              );
+            })}
           </div>
 
           {/* Day columns */}
@@ -203,14 +217,14 @@ export function TimetableGrid({ sections, conflictIds }: TimetableGridProps) {
 
               {/* Class blocks */}
               {blocksByDay[day].map((block, idx) => {
-                const top = ((block.startMinutes - DAY_START_MIN) / 60) * HOUR_HEIGHT;
+                const top = ((block.startMinutes - dayStartMin) / 60) * HOUR_HEIGHT;
                 const height = Math.max(
                   ((block.endMinutes + 1 - block.startMinutes) / 60) * HOUR_HEIGHT - 2,
                   20,
                 );
                 const widthPct = 100 / block.columns;
                 const leftPct = block.column * widthPct;
-                const bg = colorForCourse(block.section.courseCode);
+                const bg = colorMap?.get(block.section.id) ?? FALLBACK_COLOR;
                 const isConflict = block.conflict || conflictIds?.has(block.section.id);
                 return (
                   <div
@@ -233,13 +247,18 @@ export function TimetableGrid({ sections, conflictIds }: TimetableGridProps) {
                     <div className="text-[10px] leading-tight opacity-95 line-clamp-2">
                       {block.section.courseTitle}
                     </div>
-                    {height > 46 && (
+                    {height > 44 && (
                       <div className="text-[9px] leading-tight opacity-90 mt-0.5">
                         <span className="font-semibold">{block.type}</span>
                         {block.venues.length > 0 && <> · {block.venues.join(', ')}</>}
                       </div>
                     )}
-                    {height > 64 && (
+                    {height > 60 && block.section.instructors.length > 0 && (
+                      <div className="text-[9px] leading-tight opacity-90 mt-0.5 line-clamp-2">
+                        {block.section.instructors.join(', ')}
+                      </div>
+                    )}
+                    {height > 82 && (
                       <div className="text-[9px] leading-tight opacity-80 mt-0.5 truncate">
                         {fmt(block.start)}–{fmt(block.end)}
                       </div>
@@ -254,5 +273,3 @@ export function TimetableGrid({ sections, conflictIds }: TimetableGridProps) {
     </div>
   );
 }
-
-export { colorForCourse };
