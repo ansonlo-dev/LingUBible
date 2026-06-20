@@ -241,12 +241,12 @@ const Timetable = () => {
   return (
     <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8">
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-3">
+      <div className="mb-6 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-7 w-7 text-primary" />
           <h1 className="text-3xl font-bold">{t('timetable.title')}</h1>
         </div>
-        <p className="text-muted-foreground">{t('timetable.subtitle')}</p>
+        <p className="text-muted-foreground md:-translate-y-[3px]">{t('timetable.subtitle')}</p>
       </div>
 
       {loading && (
