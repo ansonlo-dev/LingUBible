@@ -207,7 +207,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                   className={`absolute left-0 right-1 ${sz.gutter} text-muted-foreground text-right pr-1`}
                   style={{ top: idx * hourHeight - 6 }}
                 >
-                  {fmt(`${String(h).padStart(2, '0')}:00`)}
+                  {`${String(h).padStart(2, '0')}:00`}
                 </div>
               );
             })}
@@ -222,6 +222,15 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                   key={h}
                   className="absolute left-0 right-0 border-t border-border/50"
                   style={{ top: idx * hourHeight }}
+                />
+              ))}
+
+              {/* Half-hour sub gridlines — thinner, lighter grey, dashed */}
+              {hours.slice(0, -1).map((h, idx) => (
+                <div
+                  key={`half-${h}`}
+                  className="absolute left-0 right-0 border-t border-dashed border-gray-400/25 dark:border-gray-500/25"
+                  style={{ top: idx * hourHeight + hourHeight / 2 }}
                 />
               ))}
 
