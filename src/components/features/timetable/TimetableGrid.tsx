@@ -426,7 +426,7 @@ export function TimetableGrid({
                     {/* Session type + section number, e.g. "LEC9" / "TUT11" */}
                     {badgeText && (
                       <div
-                        className={`absolute top-1 right-1 ${sz.badge} rounded px-1 leading-none`}
+                        className={`absolute top-1 right-1 ${sz.badge} rounded px-1 py-0.5 leading-none`}
                         style={{ backgroundColor: badgeBg, color: fg }}
                       >
                         {badgeText}

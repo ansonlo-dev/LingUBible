@@ -20,7 +20,6 @@ import { Combobox, type ComboboxOption } from '@/components/features/timetable/C
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
@@ -501,6 +500,8 @@ const Timetable = () => {
   const renderResultItem = (s: TimetableSection) => {
     const added = selectedSet.has(s.id);
     const color = colorMap.get(s.id);
+    // Combined session type + section number, matching the timetable blocks (e.g. "LEC1").
+    const typeNumber = `${s.types.join('/')}${s.section}`;
     return (
       <div
         key={s.id}
@@ -515,34 +516,23 @@ const Timetable = () => {
           }
         }}
         title={added ? t('timetable.remove') : t('timetable.add')}
-        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${
+        className={`relative rounded-lg border p-3 cursor-pointer transition-colors ${
           added ? 'text-white border-transparent' : 'hover:bg-accent/40'
         }`}
         style={added ? { backgroundColor: color } : undefined}
       >
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm">{s.courseCode}</span>
-            <Badge
-              variant="secondary"
-              className={`text-[10px] px-1.5 py-0 ${
-                added
-                  ? 'bg-white/25 text-white border-transparent'
-                  : '!bg-[rgb(var(--secondary))] !text-[rgb(var(--secondary-foreground))]'
-              }`}
-            >
-              {t('timetable.sectionLabel', { sect: s.section || '—' })}
-            </Badge>
-            {s.types.map((ty) => (
-              <Badge
-                key={ty}
-                variant="outline"
-                className={`text-[10px] px-1.5 py-0 ${added ? 'border-white/50 text-white' : ''}`}
-              >
-                {ty}
-              </Badge>
-            ))}
+        {/* Top-right: session type + number badge (same look as the timetable blocks) */}
+        {typeNumber && (
+          <div
+            className={`absolute top-2 right-2 text-[10px] font-bold rounded px-1 py-0.5 leading-none ${
+              added ? 'bg-black/25 text-white' : 'bg-foreground/10 text-foreground'
+            }`}
+          >
+            {typeNumber}
           </div>
+        )}
+        <div className="min-w-0 pr-12">
+          <span className="font-semibold text-sm">{s.courseCode}</span>
           <p className="text-sm truncate">{s.courseTitle}</p>
           {s.instructors.length > 0 && (
             <p className={`text-xs truncate ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
@@ -555,7 +545,7 @@ const Timetable = () => {
         </div>
         {added && (
           <label
-            className="relative shrink-0 mt-0.5 cursor-pointer"
+            className="absolute bottom-2 right-2 cursor-pointer"
             title={t('timetable.opt.customColor')}
             onClick={(e) => e.stopPropagation()}
           >
@@ -655,18 +645,20 @@ const Timetable = () => {
           <div className="space-y-4">
             {/* Panel toggle + search/filters + export actions */}
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
+              {/* The icon itself is the button (no surrounding chrome); sized h-9 to
+                  line up with the filter dropdowns next to it. */}
+              <button
+                type="button"
                 onClick={() => setPanelCollapsed((v) => !v)}
                 title={panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
+                className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 {panelCollapsed ? (
-                  <PanelLeftOpen className="h-4 w-4" />
+                  <PanelLeftOpen className="h-9 w-9" />
                 ) : (
-                  <PanelLeftClose className="h-4 w-4" />
+                  <PanelLeftClose className="h-9 w-9" />
                 )}
-              </Button>
+              </button>
 
               {/* Filters (hidden while the results panel is collapsed) */}
               {!panelCollapsed && (
