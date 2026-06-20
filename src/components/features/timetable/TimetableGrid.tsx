@@ -31,8 +31,13 @@ interface TimetableGridProps {
   colorMap?: Map<string, string>;
   /** When true, the grid renders at full width without horizontal scrolling (for image/PDF export). */
   forExport?: boolean;
+  /** Export theme (only used with forExport) — drives explicit gridline colours so they
+   *  stay clearly visible regardless of the live site theme. */
+  exportDark?: boolean;
   /** Show the half-hour sub gridlines (default true). */
   showSubGrid?: boolean;
+  /** Show per-day and weekly total hours in the header (default true). */
+  showHours?: boolean;
   /** Use 24-hour time labels; false → 12-hour AM/PM (default true). */
   use24Hour?: boolean;
   /** Day-header label style (default 'short'). */
@@ -101,6 +106,12 @@ function formatTime(hhmm: string, use24: boolean): string {
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
+/** Format a duration given in minutes as a compact hours label (e.g. "3h", "1.5h"). */
+function formatHours(minutes: number): string {
+  const rounded = Math.round((minutes / 60) * 10) / 10;
+  return `${rounded}h`;
+}
+
 /** Format a whole-hour tick label (e.g. "13:00" or "1 PM"). */
 function formatHourTick(h: number, use24: boolean): string {
   if (use24) return `${String(h).padStart(2, '0')}:00`;
@@ -140,7 +151,9 @@ export function TimetableGrid({
   conflictIds,
   colorMap,
   forExport,
+  exportDark,
   showSubGrid = true,
+  showHours = true,
   use24Hour = true,
   dayFormat = 'short',
   fields = DEFAULT_BLOCK_FIELDS,
@@ -156,7 +169,7 @@ export function TimetableGrid({
   const fmtType = (ty: string) => (typeLabel ? typeLabel(ty) : ty);
   const dayLabels = DAY_LABEL_SETS[dayFormat];
 
-  const { visibleDays, blocksByDay } = useMemo(() => {
+  const { visibleDays, blocksByDay, minsByDay, weekMins } = useMemo(() => {
     const byDay: Record<string, PositionedBlock[]> = {};
     for (const day of DAY_ORDER) byDay[day] = [];
 
@@ -206,6 +219,18 @@ export function TimetableGrid({
 
     for (const day of DAY_ORDER) byDay[day] = layoutDay(byDay[day]);
 
+    // Total lesson minutes per day, and for the whole week. The week total spans
+    // every day in DAY_ORDER (not just the visible columns), so lessons on a
+    // hidden day (e.g. a hidden Saturday) still count toward the weekly total.
+    const minsByDay: Record<string, number> = {};
+    let weekMins = 0;
+    for (const day of DAY_ORDER) {
+      let dayMins = 0;
+      for (const b of byDay[day]) dayMins += b.endMinutes + 1 - b.startMinutes;
+      minsByDay[day] = dayMins;
+      weekMins += dayMins;
+    }
+
     // Render exactly the chosen days, ordered by the chosen week start.
     const allowed = days && days.length ? days : DEFAULT_DAYS;
     const order =
@@ -213,7 +238,7 @@ export function TimetableGrid({
         ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
         : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     const visible = order.filter((d) => allowed.includes(d));
-    return { visibleDays: visible, blocksByDay: byDay };
+    return { visibleDays: visible, blocksByDay: byDay, minsByDay, weekMins };
   }, [sections, days, firstDay]);
 
   // Dynamic vertical range: span only the hours actually used by the selected
@@ -246,13 +271,19 @@ export function TimetableGrid({
   // bold text for readability; the on-screen grid is a touch larger too.
   const hourHeight = forExport ? 108 : 60;
   const sz = forExport
-    ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-bold', header: 'text-xl font-bold', headerH: 'h-14' }
-    : { code: 'text-[13px] font-bold', title: 'text-[12px] font-semibold', meta: 'text-[11px] font-medium', pad: 'px-1.5 py-1', gutter: 'text-[12px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10' };
+    ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-bold', header: 'text-xl font-bold', headerH: 'h-14', hours: 'text-[13px] font-semibold', badge: 'text-[13px] font-bold' }
+    : { code: 'text-[13px] font-bold', title: 'text-[12px] font-semibold', meta: 'text-[11px] font-medium', pad: 'px-1.5 py-1', gutter: 'text-[12px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10', hours: 'text-[10px] font-medium', badge: 'text-[10px] font-bold' };
   const hours: number[] = [];
   for (let h = startHour; h <= endHour; h++) hours.push(h);
   const gridHeight = ((dayEndMin - dayStartMin) / 60) * hourHeight;
 
   const TIME_COL = forExport ? 64 : 50; // px
+
+  // Export gridlines use explicit colours (the live-site theme tokens / Tailwind
+  // `dark:` variants don't track the chosen export theme, and the light token is
+  // too faint on white). On-screen keeps its theme-token classes.
+  const hourLineColor = exportDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.26)';
+  const subLineColor = exportDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.13)';
 
   return (
     <div className={`${forExport ? 'overflow-visible' : 'overflow-hidden'} rounded-lg border bg-card`}>
@@ -262,10 +293,27 @@ export function TimetableGrid({
           className="grid border-b bg-muted/40"
           style={{ gridTemplateColumns: `${TIME_COL}px repeat(${visibleDays.length}, minmax(0, 1fr))` }}
         >
-          <div className={sz.headerH} />
+          <div
+            className={`${sz.headerH} ${sz.hours} flex items-center justify-center text-muted-foreground`}
+            title="Total hours this week (including hidden days)"
+          >
+            {showHours && weekMins > 0 ? formatHours(weekMins) : ''}
+          </div>
           {visibleDays.map((day) => (
-            <div key={day} className={`${sz.headerH} ${sz.header} flex items-center justify-center border-l`}>
-              {dayLabels[day]}
+            <div
+              key={day}
+              className={`${sz.headerH} relative flex items-center justify-center border-l`}
+            >
+              <span
+                className={`${sz.header} rounded-md bg-foreground/10 px-2 py-0.5 text-foreground`}
+              >
+                {dayLabels[day]}
+              </span>
+              {showHours && minsByDay[day] > 0 && (
+                <span className={`absolute right-1.5 ${sz.hours} text-muted-foreground`}>
+                  {formatHours(minsByDay[day])}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -299,8 +347,8 @@ export function TimetableGrid({
               {hours.map((h, idx) => (
                 <div
                   key={h}
-                  className="absolute left-0 right-0 border-t border-border/50"
-                  style={{ top: idx * hourHeight }}
+                  className={`absolute left-0 right-0 border-t ${forExport ? '' : 'border-border/50'}`}
+                  style={forExport ? { top: idx * hourHeight, borderTopColor: hourLineColor } : { top: idx * hourHeight }}
                 />
               ))}
 
@@ -308,8 +356,12 @@ export function TimetableGrid({
               {showSubGrid && hours.slice(0, -1).map((h, idx) => (
                 <div
                   key={`half-${h}`}
-                  className="absolute left-0 right-0 border-t border-dashed border-gray-400/25 dark:border-gray-500/25"
-                  style={{ top: idx * hourHeight + hourHeight / 2 }}
+                  className={`absolute left-0 right-0 border-t border-dashed ${forExport ? '' : 'border-gray-400/25 dark:border-gray-500/25'}`}
+                  style={
+                    forExport
+                      ? { top: idx * hourHeight + hourHeight / 2, borderTopColor: subLineColor }
+                      : { top: idx * hourHeight + hourHeight / 2 }
+                  }
                 />
               ))}
 
@@ -339,8 +391,14 @@ export function TimetableGrid({
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
+                    {/* Session type + section number, e.g. "LEC9" / "TUT11" */}
+                    <div
+                      className={`absolute top-1 right-1 ${sz.badge} rounded bg-black/25 px-1 leading-none text-white`}
+                    >
+                      {block.type}{block.section.section}
+                    </div>
                     {fields.code && (
-                      <div className={`${sz.code} leading-tight truncate`}>
+                      <div className={`${sz.code} leading-tight truncate ${forExport ? 'pr-14' : 'pr-9'}`}>
                         {block.section.courseCode}
                       </div>
                     )}
@@ -368,7 +426,7 @@ export function TimetableGrid({
                     )}
                     {editableColors && !forExport && onColorChange && (
                       <label
-                        className="absolute top-1 right-1 cursor-pointer"
+                        className="absolute bottom-1 right-7 cursor-pointer"
                         title="Custom colour"
                         onClick={(e) => e.stopPropagation()}
                       >

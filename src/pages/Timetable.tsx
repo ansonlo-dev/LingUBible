@@ -36,6 +36,16 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   CalendarDays,
@@ -64,6 +74,7 @@ interface ExportOptions {
   // Timetable options (affect on-screen preview + export)
   includeTitle: boolean;
   showSubGrid: boolean;
+  showHours: boolean;
   timeFormat: '24' | '12';
   dayFormat: DayFormat;
   fields: BlockFields;
@@ -88,6 +99,7 @@ const RESOLUTION_SCALE: Record<ExportOptions['resolution'], number> = {
 const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeTitle: true,
   showSubGrid: true,
+  showHours: true,
   timeFormat: '24',
   dayFormat: 'short',
   fields: { ...DEFAULT_BLOCK_FIELDS },
@@ -117,7 +129,7 @@ const DAY_PILL_LABEL: Record<string, string> = {
 function themeVars(dark: boolean): CSSProperties {
   const vars = dark
     ? { '--background': '0, 0, 0', '--foreground': '255, 255, 255', '--card': '24, 24, 27', '--border': '63, 63, 70', '--muted': '55, 65, 81', '--muted-foreground': '156, 163, 175' }
-    : { '--background': '255, 255, 255', '--foreground': '0, 0, 0', '--card': '245, 245, 245', '--border': '209, 213, 219', '--muted': '243, 244, 246', '--muted-foreground': '107, 114, 128' };
+    : { '--background': '255, 255, 255', '--foreground': '0, 0, 0', '--card': '245, 245, 245', '--border': '156, 163, 175', '--muted': '243, 244, 246', '--muted-foreground': '107, 114, 128' };
   return {
     ...(vars as CSSProperties),
     backgroundColor: dark ? '#000000' : '#ffffff',
@@ -197,6 +209,7 @@ const Timetable = () => {
   const exportRef = useRef<HTMLDivElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [pendingExport, setPendingExport] = useState<'png' | 'pdf' | null>(null);
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
     const siteDark =
@@ -333,21 +346,44 @@ const Timetable = () => {
 
   const conflictIds = useMemo(() => findConflicts(selectedSections), [selectedSections]);
 
-  // Assign a distinct colour per course code (in first-added order), so all
-  // sections of the same course (e.g. its lecture and tutorial) share a colour.
-  // A user-picked custom colour overrides the auto-assigned one.
+  // Assign a distinct colour per course code, so all sections of the same course
+  // (e.g. its lecture and tutorial) share a colour. The colour-slot assignment is
+  // kept stable in a ref: a course code holds its slot for as long as it stays
+  // selected, so removing one section never recolours the remaining ones. A slot
+  // is only freed once its course code leaves the selection entirely (then it may
+  // be reused by a newly-added course). A user-picked custom colour always wins.
+  const colorSlotRef = useRef<Map<string, number>>(new Map());
   const colorMap = useMemo(() => {
+    const slots = colorSlotRef.current;
+
+    const presentCodes = new Set<string>();
+    for (const id of selectedIds) {
+      const s = sectionById.get(id);
+      if (s) presentCodes.add(s.courseCode);
+    }
+    // Free slots for course codes no longer selected.
+    for (const code of [...slots.keys()]) {
+      if (!presentCodes.has(code)) slots.delete(code);
+    }
+    // Assign the lowest free slot to any newly-present course code (first-added order).
+    const used = new Set(slots.values());
+    const nextFreeSlot = () => {
+      let n = 0;
+      while (used.has(n)) n++;
+      used.add(n);
+      return n;
+    };
+    for (const id of selectedIds) {
+      const s = sectionById.get(id);
+      if (!s || slots.has(s.courseCode)) continue;
+      slots.set(s.courseCode, nextFreeSlot());
+    }
+
     const map = new Map<string, string>();
-    const courseColor = new Map<string, string>();
-    let i = 0;
     for (const id of selectedIds) {
       const s = sectionById.get(id);
       if (!s) continue;
-      if (!courseColor.has(s.courseCode)) {
-        courseColor.set(s.courseCode, colorForIndex(i));
-        i++;
-      }
-      map.set(id, exportOptions.customColors[s.courseCode] ?? courseColor.get(s.courseCode)!);
+      map.set(id, exportOptions.customColors[s.courseCode] ?? colorForIndex(slots.get(s.courseCode)!));
     }
     return map;
   }, [selectedIds, sectionById, exportOptions.customColors]);
@@ -411,6 +447,15 @@ const Timetable = () => {
       });
     } finally {
       setExporting(false);
+    }
+  };
+
+  // Confirm before exporting when there are clashing sections.
+  const requestExport = (format: 'png' | 'pdf') => {
+    if (conflictIds.size > 0) {
+      setPendingExport(format);
+    } else {
+      handleExport(format);
     }
   };
 
@@ -627,6 +672,9 @@ const Timetable = () => {
             <div className="flex items-center justify-between px-1">
               <span className="text-sm font-medium">{t('timetable.results')}</span>
               <span className="text-xs text-muted-foreground">
+                {t('timetable.selectedCount', { count: String(selectedSections.length) })}
+              </span>
+              <span className="text-xs text-muted-foreground">
                 {t('timetable.resultsCount', { count: String(filtered.length) })}
               </span>
             </div>
@@ -695,6 +743,17 @@ const Timetable = () => {
                       <OptionToggle
                         value={exportOptions.showSubGrid ? 'on' : 'off'}
                         onChange={(v) => setOpt({ showSubGrid: v === 'on' })}
+                        options={[
+                          { value: 'on', label: t('timetable.opt.show') },
+                          { value: 'off', label: t('timetable.opt.hide') },
+                        ]}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.hours')}</Label>
+                      <OptionToggle
+                        value={exportOptions.showHours ? 'on' : 'off'}
+                        onChange={(v) => setOpt({ showHours: v === 'on' })}
                         options={[
                           { value: 'on', label: t('timetable.opt.show') },
                           { value: 'off', label: t('timetable.opt.hide') },
@@ -881,11 +940,11 @@ const Timetable = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-white dark:bg-gray-900">
-                    <DropdownMenuItem onClick={() => handleExport('png')}>
+                    <DropdownMenuItem onClick={() => requestExport('png')}>
                       <ImageIcon className="h-4 w-4 mr-2" />
                       {t('timetable.exportPng')}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                    <DropdownMenuItem onClick={() => requestExport('pdf')}>
                       <FileDown className="h-4 w-4 mr-2" />
                       {t('timetable.exportPdf')}
                     </DropdownMenuItem>
@@ -948,6 +1007,7 @@ const Timetable = () => {
               conflictIds={conflictIds}
               colorMap={colorMap}
               showSubGrid={exportOptions.showSubGrid}
+              showHours={exportOptions.showHours}
               use24Hour={exportOptions.timeFormat === '24'}
               dayFormat={exportOptions.dayFormat}
               fields={exportOptions.fields}
@@ -963,7 +1023,7 @@ const Timetable = () => {
             {/* Off-screen, full-width render used only for PNG/PDF export */}
             <div
               aria-hidden
-              style={{ position: 'absolute', left: '-99999px', top: 0, width: 1320, pointerEvents: 'none' }}
+              style={{ position: 'absolute', left: '-99999px', top: 0, width: 1320, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
             >
               <div
                 ref={exportRef}
@@ -978,7 +1038,9 @@ const Timetable = () => {
                   conflictIds={conflictIds}
                   colorMap={colorMap}
                   forExport
+                  exportDark={exportOptions.theme === 'dark'}
                   showSubGrid={exportOptions.showSubGrid}
+                  showHours={exportOptions.showHours}
                   use24Hour={exportOptions.timeFormat === '24'}
                   dayFormat={exportOptions.dayFormat}
                   fields={exportOptions.fields}
@@ -992,6 +1054,28 @@ const Timetable = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm export when there are time conflicts */}
+      <AlertDialog open={pendingExport !== null} onOpenChange={(open) => !open && setPendingExport(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('timetable.exportConflictTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('timetable.exportConflictDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('timetable.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const fmt = pendingExport;
+                setPendingExport(null);
+                if (fmt) handleExport(fmt);
+              }}
+            >
+              {t('timetable.exportAnyway')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
