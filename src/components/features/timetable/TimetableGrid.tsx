@@ -1,6 +1,26 @@
 import { useMemo } from 'react';
-import { useLanguage } from '@/hooks/useLanguage';
 import { DAY_ORDER, meetingsOverlap, type TimetableSection } from '@/services/timetableService';
+
+export type DayFormat = 'short' | 'long' | 'zh';
+
+/** Which pieces of info to render inside each class block. */
+export interface BlockFields {
+  code: boolean;
+  title: boolean;
+  type: boolean;
+  venue: boolean;
+  instructor: boolean;
+  time: boolean;
+}
+
+export const DEFAULT_BLOCK_FIELDS: BlockFields = {
+  code: true,
+  title: true,
+  type: true,
+  venue: true,
+  instructor: true,
+  time: true,
+};
 
 interface TimetableGridProps {
   sections: TimetableSection[];
@@ -14,7 +34,26 @@ interface TimetableGridProps {
   showSubGrid?: boolean;
   /** Use 24-hour time labels; false → 12-hour AM/PM (default true). */
   use24Hour?: boolean;
+  /** Day-header label style (default 'short'). */
+  dayFormat?: DayFormat;
+  /** Which info lines to render inside each block (default: all). */
+  fields?: BlockFields;
+  /** Manual vertical range (whole-hour). When omitted, the range is auto-cropped. */
+  rangeStart?: number;
+  rangeEnd?: number;
 }
+
+const DAY_LABEL_SETS: Record<DayFormat, Record<string, string>> = {
+  short: { MON: 'MON', TUE: 'TUE', WED: 'WED', THU: 'THU', FRI: 'FRI', SAT: 'SAT', SUN: 'SUN' },
+  long: {
+    MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday',
+    FRI: 'Friday', SAT: 'Saturday', SUN: 'Sunday',
+  },
+  zh: {
+    MON: '星期一', TUE: '星期二', WED: '星期三', THU: '星期四',
+    FRI: '星期五', SAT: '星期六', SUN: '星期日',
+  },
+};
 
 interface PositionedBlock {
   section: TimetableSection;
@@ -88,18 +127,12 @@ export function TimetableGrid({
   forExport,
   showSubGrid = true,
   use24Hour = true,
+  dayFormat = 'short',
+  fields = DEFAULT_BLOCK_FIELDS,
+  rangeStart,
+  rangeEnd,
 }: TimetableGridProps) {
-  const { t } = useLanguage();
-
-  const dayLabels: Record<string, string> = {
-    MON: t('timetable.day.mon'),
-    TUE: t('timetable.day.tue'),
-    WED: t('timetable.day.wed'),
-    THU: t('timetable.day.thu'),
-    FRI: t('timetable.day.fri'),
-    SAT: t('timetable.day.sat'),
-    SUN: t('timetable.day.sun'),
-  };
+  const dayLabels = DAY_LABEL_SETS[dayFormat];
 
   const { visibleDays, blocksByDay } = useMemo(() => {
     const byDay: Record<string, PositionedBlock[]> = {};
@@ -161,6 +194,12 @@ export function TimetableGrid({
   // Dynamic vertical range: span only the hours actually used by the selected
   // sections (rounded to whole hours). Falls back to a default when empty.
   const { startHour, endHour } = useMemo(() => {
+    // Manual whole-hour range overrides the auto-cropped range.
+    if (rangeStart != null && rangeEnd != null) {
+      const s = Math.floor(rangeStart);
+      const e = Math.max(s + 1, Math.ceil(rangeEnd));
+      return { startHour: s, endHour: e };
+    }
     let minStart = Infinity;
     let maxEnd = -Infinity;
     for (const section of sections) {
@@ -173,7 +212,7 @@ export function TimetableGrid({
       return { startHour: DEFAULT_START_MIN / 60, endHour: DEFAULT_END_MIN / 60 };
     }
     return { startHour: Math.floor(minStart / 60), endHour: Math.ceil(maxEnd / 60) };
-  }, [sections]);
+  }, [sections, rangeStart, rangeEnd]);
 
   const dayStartMin = startHour * 60;
   const dayEndMin = endHour * 60;
@@ -235,7 +274,7 @@ export function TimetableGrid({
 
           {/* Day columns */}
           {visibleDays.map((day) => (
-            <div key={day} className="relative border-l" style={{ height: gridHeight }}>
+            <div key={day} className="relative border-l overflow-hidden" style={{ height: gridHeight }}>
               {/* Hour gridlines */}
               {hours.map((h, idx) => (
                 <div
@@ -280,24 +319,29 @@ export function TimetableGrid({
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
-                    <div className={`${sz.code} leading-tight truncate`}>
-                      {block.section.courseCode}
-                    </div>
-                    <div className={`${sz.title} leading-tight opacity-95 line-clamp-2`}>
-                      {block.section.courseTitle}
-                    </div>
-                    {height > show.type && (
-                      <div className={`${sz.meta} leading-tight opacity-90 mt-0.5`}>
-                        <span className="font-semibold">{block.type}</span>
-                        {block.venues.length > 0 && <> · {block.venues.join(', ')}</>}
+                    {fields.code && (
+                      <div className={`${sz.code} leading-tight truncate`}>
+                        {block.section.courseCode}
                       </div>
                     )}
-                    {height > show.instructor && block.section.instructors.length > 0 && (
+                    {fields.title && (
+                      <div className={`${sz.title} leading-tight opacity-95 line-clamp-2`}>
+                        {block.section.courseTitle}
+                      </div>
+                    )}
+                    {(fields.type || (fields.venue && block.venues.length > 0)) && height > show.type && (
+                      <div className={`${sz.meta} leading-tight opacity-90 mt-0.5`}>
+                        {fields.type && <span className="font-semibold">{block.type}</span>}
+                        {fields.type && fields.venue && block.venues.length > 0 && ' · '}
+                        {fields.venue && block.venues.length > 0 && block.venues.join(', ')}
+                      </div>
+                    )}
+                    {fields.instructor && height > show.instructor && block.section.instructors.length > 0 && (
                       <div className={`${sz.meta} leading-tight opacity-90 mt-0.5 line-clamp-2`}>
                         {block.section.instructors.join(', ')}
                       </div>
                     )}
-                    {height > show.time && (
+                    {fields.time && height > show.time && (
                       <div className={`${sz.meta} leading-tight opacity-80 mt-0.5 truncate`}>
                         {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}
                       </div>

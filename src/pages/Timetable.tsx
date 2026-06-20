@@ -9,8 +9,14 @@ import {
   TERMS,
   type TimetableSection,
 } from '@/services/timetableService';
-import { TimetableGrid } from '@/components/features/timetable/TimetableGrid';
+import {
+  TimetableGrid,
+  DEFAULT_BLOCK_FIELDS,
+  type BlockFields,
+  type DayFormat,
+} from '@/components/features/timetable/TimetableGrid';
 import { Combobox, type ComboboxOption } from '@/components/features/timetable/Combobox';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,20 +51,30 @@ const EXPORT_OPTS_KEY = 'timetable.exportOptions';
 const MAX_RESULTS = 80;
 
 interface ExportOptions {
+  // Timetable options (affect on-screen preview + export)
   includeTitle: boolean;
   showSubGrid: boolean;
-  orientation: 'portrait' | 'landscape';
-  size: 'fit' | 'full';
   timeFormat: '24' | '12';
+  dayFormat: DayFormat;
+  fields: BlockFields;
+  rangeMode: 'auto' | 'custom';
+  startHour: number;
+  endHour: number;
+  // Export-only options
+  size: 'fit' | 'full';
   theme: 'light' | 'dark';
 }
 
 const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeTitle: true,
   showSubGrid: true,
-  orientation: 'landscape',
-  size: 'fit',
   timeFormat: '24',
+  dayFormat: 'short',
+  fields: { ...DEFAULT_BLOCK_FIELDS },
+  rangeMode: 'auto',
+  startHour: 8,
+  endHour: 18,
+  size: 'fit',
   theme: 'light',
 };
 
@@ -318,7 +334,7 @@ const Timetable = () => {
         if (fullPage) {
           // Stretch the timetable to fill an A4-shaped page (small margin).
           const img = await loadImage(contentUrl);
-          const { w, h } = pageCanvasSize(exportOptions.orientation);
+          const { w, h } = pageCanvasSize('landscape');
           const canvas = document.createElement('canvas');
           canvas.width = w;
           canvas.height = h;
@@ -337,7 +353,7 @@ const Timetable = () => {
         const { jsPDF } = await import('jspdf');
         if (fullPage) {
           // Standard A4 in the chosen orientation; image stretched to fill the page.
-          const pdf = new jsPDF({ orientation: exportOptions.orientation, unit: 'pt', format: 'a4' });
+          const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
           const pageW = pdf.internal.pageSize.getWidth();
           const pageH = pdf.internal.pageSize.getHeight();
           const margin = 18;
@@ -598,7 +614,7 @@ const Timetable = () => {
                       {t('timetable.timetableSettings')}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">
+                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3 max-h-[75vh] overflow-y-auto timetable-scroll">
                     <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.title')}</Label>
                       <OptionToggle
@@ -632,6 +648,83 @@ const Timetable = () => {
                         ]}
                       />
                     </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.dayFormat')}</Label>
+                      <OptionToggle
+                        value={exportOptions.dayFormat}
+                        onChange={(v) => setOpt({ dayFormat: v })}
+                        options={[
+                          { value: 'short', label: 'MON' },
+                          { value: 'long', label: 'Monday' },
+                          { value: 'zh', label: '中文' },
+                        ]}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.timeRange')}</Label>
+                      <OptionToggle
+                        value={exportOptions.rangeMode}
+                        onChange={(v) => setOpt({ rangeMode: v })}
+                        options={[
+                          { value: 'auto', label: t('timetable.opt.rangeAuto') },
+                          { value: 'custom', label: t('timetable.opt.rangeCustom') },
+                        ]}
+                      />
+                      {exportOptions.rangeMode === 'custom' && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <Select
+                            value={String(exportOptions.startHour)}
+                            onValueChange={(v) => setOpt({ startHour: parseInt(v, 10) })}
+                          >
+                            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
+                                <SelectItem key={h} value={String(h)} disabled={h >= exportOptions.endHour}>
+                                  {`${String(h).padStart(2, '0')}:00`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-muted-foreground">–</span>
+                          <Select
+                            value={String(exportOptions.endHour)}
+                            onValueChange={(v) => setOpt({ endHour: parseInt(v, 10) })}
+                          >
+                            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 17 }, (_, i) => i + 7).map((h) => (
+                                <SelectItem key={h} value={String(h)} disabled={h <= exportOptions.startHour}>
+                                  {`${String(h).padStart(2, '0')}:00`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">{t('timetable.opt.fields')}</Label>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {([
+                          { key: 'code', label: t('timetable.opt.fCode') },
+                          { key: 'title', label: t('timetable.opt.fTitle') },
+                          { key: 'type', label: t('timetable.opt.fType') },
+                          { key: 'venue', label: t('timetable.opt.fVenue') },
+                          { key: 'instructor', label: t('timetable.opt.fInstructor') },
+                          { key: 'time', label: t('timetable.opt.fTime') },
+                        ] as { key: keyof BlockFields; label: string }[]).map((f) => (
+                          <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
+                            <Checkbox
+                              checked={exportOptions.fields[f.key]}
+                              onCheckedChange={(v) =>
+                                setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } })
+                              }
+                            />
+                            {f.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </PopoverContent>
                 </Popover>
 
@@ -652,17 +745,6 @@ const Timetable = () => {
                         options={[
                           { value: 'light', label: t('timetable.opt.light') },
                           { value: 'dark', label: t('timetable.opt.dark') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.orientation')}</Label>
-                      <OptionToggle
-                        value={exportOptions.orientation}
-                        onChange={(v) => setOpt({ orientation: v })}
-                        options={[
-                          { value: 'portrait', label: t('timetable.opt.portrait') },
-                          { value: 'landscape', label: t('timetable.opt.landscape') },
                         ]}
                       />
                     </div>
@@ -717,6 +799,10 @@ const Timetable = () => {
               colorMap={colorMap}
               showSubGrid={exportOptions.showSubGrid}
               use24Hour={exportOptions.timeFormat === '24'}
+              dayFormat={exportOptions.dayFormat}
+              fields={exportOptions.fields}
+              rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
+              rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
             />
 
             {/* Off-screen, full-width render used only for PNG/PDF export */}
@@ -739,6 +825,10 @@ const Timetable = () => {
                   forExport
                   showSubGrid={exportOptions.showSubGrid}
                   use24Hour={exportOptions.timeFormat === '24'}
+                  dayFormat={exportOptions.dayFormat}
+                  fields={exportOptions.fields}
+                  rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
+                  rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
                 />
               </div>
             </div>
