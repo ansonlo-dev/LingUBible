@@ -300,7 +300,7 @@ export function TimetableGrid({
   const hourHeight = forExport ? 108 : 60;
   const sz = forExport
     ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-bold', header: 'text-xl font-bold', headerH: 'h-14', hours: 'text-[13px] font-semibold', badge: 'text-[13px] font-bold' }
-    : { code: 'text-[13px] font-bold', title: 'text-[12px] font-semibold', meta: 'text-[11px] font-medium', pad: 'px-1.5 py-1', gutter: 'text-[12px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10', hours: 'text-[10px] font-medium', badge: 'text-[10px] font-bold' };
+    : { code: 'text-[15px] font-bold', title: 'text-[14px] font-semibold', meta: 'text-[12px] font-medium', pad: 'px-2 py-1.5', gutter: 'text-[12px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10', hours: 'text-[10px] font-medium', badge: 'text-[10px] font-bold' };
   const hours: number[] = [];
   for (let h = startHour; h <= endHour; h++) hours.push(h);
   const gridHeight = ((dayEndMin - dayStartMin) / 60) * hourHeight;
@@ -442,20 +442,19 @@ export function TimetableGrid({
                         {block.section.courseTitle}
                       </div>
                     )}
-                    {(fields.type || (fields.venue && block.venues.length > 0)) && (
-                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-0.5`}>
-                        {fields.type && <span className="font-semibold">{fmtType(block.type)}</span>}
-                        {fields.type && fields.venue && block.venues.length > 0 && ' · '}
-                        {fields.venue && block.venues.length > 0 && block.venues.join(', ')}
+                    {/* Session type lives in the top-right badge; show only the venue here. */}
+                    {fields.venue && block.venues.length > 0 && (
+                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1.5`}>
+                        {block.venues.join(', ')}
                       </div>
                     )}
                     {fields.instructor && block.section.instructors.length > 0 && (
-                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-0.5 line-clamp-2`}>
+                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1 line-clamp-2`}>
                         {block.section.instructors.join(', ')}
                       </div>
                     )}
                     {fields.time && (
-                      <div className={`${sz.meta} leading-tight opacity-80 dark:opacity-100 mt-0.5 truncate`}>
+                      <div className={`${sz.meta} leading-tight opacity-80 dark:opacity-100 mt-1 truncate`}>
                         {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}
                       </div>
                     )}

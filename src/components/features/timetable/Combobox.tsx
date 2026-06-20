@@ -55,7 +55,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0 bg-white dark:bg-gray-900"
+        className="w-[min(440px,90vw)] p-0 bg-white dark:bg-gray-900"
         align="start"
       >
         <Command className="bg-transparent">
@@ -84,7 +84,7 @@ export function Combobox({
                 }}
               >
                 <Check
-                  className={cn('mr-2 h-4 w-4', value === option.value ? 'opacity-100' : 'opacity-0')}
+                  className={cn('mr-2 h-4 w-4 shrink-0', value === option.value ? 'opacity-100' : 'opacity-0')}
                 />
                 <span className="truncate">{option.label}</span>
               </CommandItem>

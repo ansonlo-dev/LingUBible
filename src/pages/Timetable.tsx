@@ -30,12 +30,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
@@ -61,7 +55,6 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
-  Settings2,
   SlidersHorizontal,
   Palette,
   Pencil,
@@ -84,6 +77,9 @@ interface ExportOptions {
   startHour: number;
   endHour: number;
   days: string[];
+  // Manual weekend overrides: when the user explicitly toggles SAT/SUN, the choice
+  // is remembered here so it survives the auto include/exclude based on lessons.
+  weekendInclude: Record<string, boolean>;
   firstDay: 'sun' | 'mon';
   customTitle: string;
   customColors: Record<string, string>;
@@ -110,6 +106,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   startHour: 8,
   endHour: 18,
   days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+  weekendInclude: {},
   firstDay: 'mon',
   customTitle: '',
   customColors: {},
@@ -353,6 +350,26 @@ const Timetable = () => {
 
   const conflictIds = useMemo(() => findConflicts(selectedSections), [selectedSections]);
 
+  // Auto-manage the weekend columns (SAT/SUN): show one when a selected lesson
+  // lands on it, hide it again once none do — unless the user has manually forced
+  // it on (tracked in weekendInclude). Mon–Fri are always present by default.
+  useEffect(() => {
+    const daysWithLessons = new Set<string>();
+    for (const s of selectedSections) {
+      for (const m of s.meetings) daysWithLessons.add(m.day);
+    }
+    setExportOptions((prev) => {
+      let days = prev.days;
+      for (const wd of ['SAT', 'SUN']) {
+        const shouldShow = daysWithLessons.has(wd) || prev.weekendInclude[wd] === true;
+        const has = days.includes(wd);
+        if (shouldShow && !has) days = [...days, wd];
+        else if (!shouldShow && has) days = days.filter((x) => x !== wd);
+      }
+      return days === prev.days ? prev : { ...prev, days };
+    });
+  }, [selectedSections]);
+
   // Assign a distinct colour per course code, so all sections of the same course
   // (e.g. its lecture and tutorial) share a colour. The colour-slot assignment is
   // kept stable in a ref: a course code holds its slot for as long as it stays
@@ -556,7 +573,7 @@ const Timetable = () => {
   };
 
   return (
-    <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8">
+    <div className="mx-auto px-3 lg:px-4 pt-3 pb-8">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
         <div className="flex items-center gap-2">
@@ -585,95 +602,22 @@ const Timetable = () => {
 
       {!loading && !error && (
         <div
-          className={`grid grid-cols-1 gap-6 items-start ${
+          className={`grid grid-cols-1 gap-3 items-start ${
             panelCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(280px,340px)_1fr]'
           }`}
         >
-          {/* Left: search / filters / results */}
+          {/* Left: smart search + results (filters live in the action row) */}
           <div className={`space-y-3 ${panelCollapsed ? 'hidden' : ''}`}>
-            <Card>
-              <CardContent className="p-3 space-y-2">
-                {/* Free-text search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Smart Search"
-                    className="pl-9 h-9"
-                  />
-                </div>
-
-                {/* Dropdown filters */}
-                <div className="space-y-1.5">
-                  <Select value={termId} onValueChange={setTermId}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder={t('timetable.filter.term')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TERMS.map((tm) => (
-                        <SelectItem key={tm.id} value={tm.id}>
-                          {tm.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Combobox
-                    options={courseOptions}
-                    value={courseCode}
-                    onChange={setCourseCode}
-                    placeholder={t('timetable.filter.course')}
-                    searchPlaceholder={t('timetable.filter.courseSearch')}
-                    emptyText={t('timetable.noResults')}
-                    className="h-9"
-                  />
-                  <Combobox
-                    options={instructorOptions}
-                    value={instructor}
-                    onChange={setInstructor}
-                    placeholder={t('timetable.filter.instructor')}
-                    searchPlaceholder={t('timetable.filter.instructorSearch')}
-                    emptyText={t('timetable.noResults')}
-                    className="h-9"
-                  />
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <Select value={type} onValueChange={setType}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder={t('timetable.filter.type')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t('timetable.filter.allTypes')}</SelectItem>
-                        {typeOptions.map((ty) => (
-                          <SelectItem key={ty} value={ty}>
-                            {typeOptionLabel(ty)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={day} onValueChange={setDay}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder={t('timetable.filter.day')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t('timetable.filter.allDays')}</SelectItem>
-                        {DAY_ORDER.map((d) => (
-                          <SelectItem key={d} value={d}>
-                            {dayLabels[d]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full">
-                    <X className="h-4 w-4 mr-1" />
-                    {t('timetable.clearFilters')}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+            {/* Free-text search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t('timetable.smartSearch')}
+                className="pl-9 h-9"
+              />
+            </div>
 
             {/* Results */}
             <div className="flex items-center justify-between px-1">
@@ -709,216 +653,309 @@ const Timetable = () => {
 
           {/* Right: timetable + selected */}
           <div className="space-y-4">
-            {/* Panel toggle + export actions */}
-            <div className="flex flex-wrap items-center gap-2 justify-between">
+            {/* Panel toggle + search/filters + export actions */}
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
                 onClick={() => setPanelCollapsed((v) => !v)}
                 title={panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
               >
                 {panelCollapsed ? (
-                  <PanelLeftOpen className="h-4 w-4 mr-1" />
+                  <PanelLeftOpen className="h-4 w-4" />
                 ) : (
-                  <PanelLeftClose className="h-4 w-4 mr-1" />
+                  <PanelLeftClose className="h-4 w-4" />
                 )}
-                {panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
               </Button>
-              <div className="flex flex-wrap items-center gap-2">
+
+              {/* Filters (hidden while the results panel is collapsed) */}
+              {!panelCollapsed && (
+                <>
+                  <Select value={termId} onValueChange={setTermId}>
+                    <SelectTrigger className="h-9 w-auto min-w-[90px]">
+                      {/* Always show the generic "Terms" label, not the picked term. */}
+                      <span className="truncate">{t('timetable.filter.term')}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TERMS.map((tm) => (
+                        <SelectItem key={tm.id} value={tm.id}>
+                          {tm.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Combobox
+                    options={courseOptions}
+                    value={courseCode}
+                    onChange={setCourseCode}
+                    placeholder={t('timetable.filter.course')}
+                    searchPlaceholder={t('timetable.filter.courseSearch')}
+                    emptyText={t('timetable.noResults')}
+                    className="h-9 flex-1 min-w-[150px] max-w-[260px]"
+                  />
+                  <Combobox
+                    options={instructorOptions}
+                    value={instructor}
+                    onChange={setInstructor}
+                    placeholder={t('timetable.filter.instructor')}
+                    searchPlaceholder={t('timetable.filter.instructorSearch')}
+                    emptyText={t('timetable.noResults')}
+                    className="h-9 flex-1 min-w-[150px] max-w-[260px]"
+                  />
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger className="h-9 w-auto min-w-[100px]">
+                      <SelectValue placeholder={t('timetable.filter.type')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('timetable.filter.allTypes')}</SelectItem>
+                      {typeOptions.map((ty) => (
+                        <SelectItem key={ty} value={ty}>
+                          {typeOptionLabel(ty)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={day} onValueChange={setDay}>
+                    <SelectTrigger className="h-9 w-auto min-w-[100px]">
+                      <SelectValue placeholder={t('timetable.filter.day')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('timetable.filter.allDays')}</SelectItem>
+                      {DAY_ORDER.filter((d) => d !== 'SUN').map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {dayLabels[d]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={clearFilters}
+                      title={t('timetable.clearFilters')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
+              )}
+
+              <div className="ml-auto flex flex-wrap items-center gap-2">
                 {/* Timetable options — these update the on-screen preview instantly */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
                       <SlidersHorizontal className="h-4 w-4 mr-1" />
-                      {t('timetable.timetableSettings')}
+                      {t('timetable.customize')}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3 max-h-[75vh] overflow-y-auto timetable-scroll">
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.title')}</Label>
-                      <OptionToggle
-                        value={exportOptions.includeTitle ? 'on' : 'off'}
-                        onChange={(v) => setOpt({ includeTitle: v === 'on' })}
-                        options={[
-                          { value: 'on', label: t('timetable.opt.show') },
-                          { value: 'off', label: t('timetable.opt.hide') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.subGrid')}</Label>
-                      <OptionToggle
-                        value={exportOptions.showSubGrid ? 'on' : 'off'}
-                        onChange={(v) => setOpt({ showSubGrid: v === 'on' })}
-                        options={[
-                          { value: 'on', label: t('timetable.opt.show') },
-                          { value: 'off', label: t('timetable.opt.hide') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.hours')}</Label>
-                      <OptionToggle
-                        value={exportOptions.showHours ? 'on' : 'off'}
-                        onChange={(v) => setOpt({ showHours: v === 'on' })}
-                        options={[
-                          { value: 'on', label: t('timetable.opt.show') },
-                          { value: 'off', label: t('timetable.opt.hide') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.timeFormat')}</Label>
-                      <OptionToggle
-                        value={exportOptions.timeFormat}
-                        onChange={(v) => setOpt({ timeFormat: v })}
-                        options={[
-                          { value: '24', label: t('timetable.opt.format24') },
-                          { value: '12', label: t('timetable.opt.format12') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.dayFormat')}</Label>
-                      <OptionToggle
-                        value={exportOptions.dayFormat}
-                        onChange={(v) => setOpt({ dayFormat: v })}
-                        options={[
-                          { value: 'short', label: 'MON' },
-                          { value: 'long', label: 'Monday' },
-                          { value: 'zh', label: '中文' },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.firstDay')}</Label>
-                      <OptionToggle
-                        value={exportOptions.firstDay}
-                        onChange={(v) => setOpt({ firstDay: v })}
-                        options={[
-                          { value: 'sun', label: t('timetable.opt.sunday') },
-                          { value: 'mon', label: t('timetable.opt.monday') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.days')}</Label>
-                      <div className="flex flex-wrap gap-1">
-                        {(exportOptions.firstDay === 'sun'
-                          ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-                          : WEEK_DAYS
-                        ).map((d) => {
-                          const active = exportOptions.days.includes(d);
-                          return (
-                            <button
-                              key={d}
-                              type="button"
-                              onClick={() =>
-                                setOpt({
-                                  days: active
-                                    ? exportOptions.days.filter((x) => x !== d)
-                                    : [...exportOptions.days, d],
-                                })
-                              }
-                              className={`px-2 py-1 text-xs rounded-full border transition-colors ${
-                                active
-                                  ? 'bg-primary text-white border-primary'
-                                  : 'bg-transparent text-muted-foreground hover:bg-accent'
-                              }`}
+                  <PopoverContent
+                    align="end"
+                    className="w-[580px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-gray-900 max-h-[85vh] overflow-y-auto timetable-scroll"
+                  >
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.title')}</Label>
+                        <OptionToggle
+                          value={exportOptions.includeTitle ? 'on' : 'off'}
+                          onChange={(v) => setOpt({ includeTitle: v === 'on' })}
+                          options={[
+                            { value: 'on', label: t('timetable.opt.show') },
+                            { value: 'off', label: t('timetable.opt.hide') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.subGrid')}</Label>
+                        <OptionToggle
+                          value={exportOptions.showSubGrid ? 'on' : 'off'}
+                          onChange={(v) => setOpt({ showSubGrid: v === 'on' })}
+                          options={[
+                            { value: 'on', label: t('timetable.opt.show') },
+                            { value: 'off', label: t('timetable.opt.hide') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.hours')}</Label>
+                        <OptionToggle
+                          value={exportOptions.showHours ? 'on' : 'off'}
+                          onChange={(v) => setOpt({ showHours: v === 'on' })}
+                          options={[
+                            { value: 'on', label: t('timetable.opt.show') },
+                            { value: 'off', label: t('timetable.opt.hide') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.timeFormat')}</Label>
+                        <OptionToggle
+                          value={exportOptions.timeFormat}
+                          onChange={(v) => setOpt({ timeFormat: v })}
+                          options={[
+                            { value: '24', label: t('timetable.opt.format24') },
+                            { value: '12', label: t('timetable.opt.format12') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.dayFormat')}</Label>
+                        <OptionToggle
+                          value={exportOptions.dayFormat}
+                          onChange={(v) => setOpt({ dayFormat: v })}
+                          options={[
+                            { value: 'short', label: 'MON' },
+                            { value: 'long', label: 'Monday' },
+                            { value: 'zh', label: '中文' },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.firstDay')}</Label>
+                        <OptionToggle
+                          value={exportOptions.firstDay}
+                          onChange={(v) => setOpt({ firstDay: v })}
+                          options={[
+                            { value: 'sun', label: t('timetable.opt.sunday') },
+                            { value: 'mon', label: t('timetable.opt.monday') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.timeRange')}</Label>
+                        <OptionToggle
+                          value={exportOptions.rangeMode}
+                          onChange={(v) => setOpt({ rangeMode: v })}
+                          options={[
+                            { value: 'auto', label: t('timetable.opt.rangeAuto') },
+                            { value: 'custom', label: t('timetable.opt.rangeCustom') },
+                          ]}
+                        />
+                        {exportOptions.rangeMode === 'custom' && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <Select
+                              value={String(exportOptions.startHour)}
+                              onValueChange={(v) => setOpt({ startHour: parseInt(v, 10) })}
                             >
-                              {DAY_PILL_LABEL[d]}
-                            </button>
-                          );
-                        })}
+                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
+                                  <SelectItem key={h} value={String(h)} disabled={h >= exportOptions.endHour}>
+                                    {`${String(h).padStart(2, '0')}:00`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-muted-foreground">–</span>
+                            <Select
+                              value={String(exportOptions.endHour)}
+                              onValueChange={(v) => setOpt({ endHour: parseInt(v, 10) })}
+                            >
+                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 17 }, (_, i) => i + 7).map((h) => (
+                                  <SelectItem key={h} value={String(h)} disabled={h <= exportOptions.startHour}>
+                                    {`${String(h).padStart(2, '0')}:00`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.timeRange')}</Label>
-                      <OptionToggle
-                        value={exportOptions.rangeMode}
-                        onChange={(v) => setOpt({ rangeMode: v })}
-                        options={[
-                          { value: 'auto', label: t('timetable.opt.rangeAuto') },
-                          { value: 'custom', label: t('timetable.opt.rangeCustom') },
-                        ]}
-                      />
-                      {exportOptions.rangeMode === 'custom' && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <Select
-                            value={String(exportOptions.startHour)}
-                            onValueChange={(v) => setOpt({ startHour: parseInt(v, 10) })}
-                          >
-                            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
-                                <SelectItem key={h} value={String(h)} disabled={h >= exportOptions.endHour}>
-                                  {`${String(h).padStart(2, '0')}:00`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-muted-foreground">–</span>
-                          <Select
-                            value={String(exportOptions.endHour)}
-                            onValueChange={(v) => setOpt({ endHour: parseInt(v, 10) })}
-                          >
-                            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 17 }, (_, i) => i + 7).map((h) => (
-                                <SelectItem key={h} value={String(h)} disabled={h <= exportOptions.startHour}>
-                                  {`${String(h).padStart(2, '0')}:00`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.textColor')}</Label>
+                        <OptionToggle
+                          value={exportOptions.textColor}
+                          onChange={(v) => setOpt({ textColor: v })}
+                          options={[
+                            { value: 'dynamic', label: t('timetable.opt.textAuto') },
+                            { value: 'white', label: t('timetable.opt.textWhite') },
+                            { value: 'black', label: t('timetable.opt.textBlack') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1 col-span-2">
+                        <Label className="text-xs">{t('timetable.opt.days')}</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {(exportOptions.firstDay === 'sun'
+                            ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                            : WEEK_DAYS
+                          ).map((d) => {
+                            const active = exportOptions.days.includes(d);
+                            const isWeekend = d === 'SAT' || d === 'SUN';
+                            return (
+                              <button
+                                key={d}
+                                type="button"
+                                onClick={() =>
+                                  setOpt({
+                                    days: active
+                                      ? exportOptions.days.filter((x) => x !== d)
+                                      : [...exportOptions.days, d],
+                                    // Remember a manual weekend choice so it overrides
+                                    // the lesson-based auto include/exclude.
+                                    ...(isWeekend && {
+                                      weekendInclude: { ...exportOptions.weekendInclude, [d]: !active },
+                                    }),
+                                  })
+                                }
+                                className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                                  active
+                                    ? 'bg-primary text-white border-primary'
+                                    : 'bg-transparent text-muted-foreground hover:bg-accent'
+                                }`}
+                              >
+                                {DAY_PILL_LABEL[d]}
+                              </button>
+                            );
+                          })}
                         </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm">{t('timetable.opt.fields')}</Label>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {([
-                          { key: 'code', label: t('timetable.opt.fCode') },
-                          { key: 'title', label: t('timetable.opt.fTitle') },
-                          { key: 'type', label: t('timetable.opt.fType') },
-                          { key: 'number', label: t('timetable.opt.fNumber') },
-                          { key: 'venue', label: t('timetable.opt.fVenue') },
-                          { key: 'instructor', label: t('timetable.opt.fInstructor') },
-                          { key: 'time', label: t('timetable.opt.fTime') },
-                        ] as { key: keyof BlockFields; label: string }[]).map((f) => (
-                          <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
-                            <Checkbox
-                              checked={exportOptions.fields[f.key]}
-                              onCheckedChange={(v) =>
-                                setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } })
-                              }
-                            />
-                            {f.label}
-                          </label>
-                        ))}
                       </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.textColor')}</Label>
-                      <OptionToggle
-                        value={exportOptions.textColor}
-                        onChange={(v) => setOpt({ textColor: v })}
-                        options={[
-                          { value: 'dynamic', label: t('timetable.opt.textAuto') },
-                          { value: 'white', label: t('timetable.opt.textWhite') },
-                          { value: 'black', label: t('timetable.opt.textBlack') },
-                        ]}
-                      />
+                      <div className="space-y-1.5 col-span-2">
+                        <Label className="text-xs">{t('timetable.opt.fields')}</Label>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {([
+                            { key: 'code', label: t('timetable.opt.fCode') },
+                            { key: 'title', label: t('timetable.opt.fTitle') },
+                            { key: 'type', label: t('timetable.opt.fType') },
+                            { key: 'number', label: t('timetable.opt.fNumber') },
+                            { key: 'venue', label: t('timetable.opt.fVenue') },
+                            { key: 'instructor', label: t('timetable.opt.fInstructor') },
+                            { key: 'time', label: t('timetable.opt.fTime') },
+                          ] as { key: keyof BlockFields; label: string }[]).map((f) => (
+                            <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
+                              <Checkbox
+                                checked={exportOptions.fields[f.key]}
+                                onCheckedChange={(v) =>
+                                  setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } })
+                                }
+                              />
+                              {f.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
 
-                {/* Export options — only affect the exported file */}
+                {/* Export — the red button now carries its own options (theme,
+                    resolution, file type); picking a file type runs the export. */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Settings2 className="h-4 w-4 mr-1" />
-                      {t('timetable.exportSettings')}
+                    <Button
+                      size="sm"
+                      disabled={exporting || selectedSections.length === 0}
+                      title={t('timetable.export')}
+                    >
+                      {exporting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                      <ChevronDown className="h-4 w-4 ml-1" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">
@@ -945,31 +982,31 @@ const Timetable = () => {
                         ]}
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">{t('timetable.opt.fileType')}</Label>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={exporting || selectedSections.length === 0}
+                          onClick={() => requestExport('png')}
+                        >
+                          <ImageIcon className="h-4 w-4 mr-1" />
+                          {t('timetable.exportPng')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={exporting || selectedSections.length === 0}
+                          onClick={() => requestExport('pdf')}
+                        >
+                          <FileDown className="h-4 w-4 mr-1" />
+                          {t('timetable.exportPdf')}
+                        </Button>
+                      </div>
+                    </div>
                   </PopoverContent>
                 </Popover>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" disabled={exporting || selectedSections.length === 0}>
-                      {exporting ? (
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4 mr-1" />
-                      )}
-                      {t('timetable.export')}
-                      <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-white dark:bg-gray-900">
-                    <DropdownMenuItem onClick={() => requestExport('png')}>
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      {t('timetable.exportPng')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => requestExport('pdf')}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      {t('timetable.exportPdf')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <Button
                   variant="outline"
                   size="icon"
