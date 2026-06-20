@@ -758,6 +758,7 @@ export default {
   'timetable.exportPng': '导出 PNG',
   'timetable.exportPdf': '导出 PDF',
   'timetable.exportError': '导出失败，请再试一次。',
+  'timetable.timetableSettings': '时间表选项',
   'timetable.exportSettings': '导出选项',
   'timetable.opt.show': '显示',
   'timetable.opt.hide': '隐藏',

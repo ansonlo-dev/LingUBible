@@ -750,6 +750,7 @@ export default {
   'timetable.exportPng': 'Export PNG',
   'timetable.exportPdf': 'Export PDF',
   'timetable.exportError': 'Export failed. Please try again.',
+  'timetable.timetableSettings': 'Timetable options',
   'timetable.exportSettings': 'Export options',
   'timetable.opt.show': 'Show',
   'timetable.opt.hide': 'Hide',

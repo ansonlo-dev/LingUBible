@@ -688,6 +688,7 @@ export default {
   'timetable.exportPng': '匯出 PNG',
   'timetable.exportPdf': '匯出 PDF',
   'timetable.exportError': '匯出失敗，請再試一次。',
+  'timetable.timetableSettings': '時間表選項',
   'timetable.exportSettings': '匯出選項',
   'timetable.opt.show': '顯示',
   'timetable.opt.hide': '隱藏',

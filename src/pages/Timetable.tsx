@@ -37,6 +37,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings2,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -588,12 +589,13 @@ const Timetable = () => {
                 )}
                 {panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
               </Button>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Timetable options — these update the on-screen preview instantly */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
-                      <Settings2 className="h-4 w-4 mr-1" />
-                      {t('timetable.exportSettings')}
+                      <SlidersHorizontal className="h-4 w-4 mr-1" />
+                      {t('timetable.timetableSettings')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">
@@ -619,6 +621,29 @@ const Timetable = () => {
                         ]}
                       />
                     </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.timeFormat')}</Label>
+                      <OptionToggle
+                        value={exportOptions.timeFormat}
+                        onChange={(v) => setOpt({ timeFormat: v })}
+                        options={[
+                          { value: '24', label: t('timetable.opt.format24') },
+                          { value: '12', label: t('timetable.opt.format12') },
+                        ]}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Export options — only affect the exported file */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings2 className="h-4 w-4 mr-1" />
+                      {t('timetable.exportSettings')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">
                     <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.theme')}</Label>
                       <OptionToggle
@@ -652,17 +677,6 @@ const Timetable = () => {
                         ]}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.timeFormat')}</Label>
-                      <OptionToggle
-                        value={exportOptions.timeFormat}
-                        onChange={(v) => setOpt({ timeFormat: v })}
-                        options={[
-                          { value: '24', label: t('timetable.opt.format24') },
-                          { value: '12', label: t('timetable.opt.format12') },
-                        ]}
-                      />
-                    </div>
                   </PopoverContent>
                 </Popover>
                 <Button
@@ -693,9 +707,17 @@ const Timetable = () => {
               </div>
             )}
 
-            {/* On-screen title + grid */}
-            <h2 className="text-xl font-bold text-center">{term.name}</h2>
-            <TimetableGrid sections={selectedSections} conflictIds={conflictIds} colorMap={colorMap} />
+            {/* On-screen title + grid (reflects the timetable options live) */}
+            {exportOptions.includeTitle && (
+              <h2 className="text-xl font-bold text-center">{term.name}</h2>
+            )}
+            <TimetableGrid
+              sections={selectedSections}
+              conflictIds={conflictIds}
+              colorMap={colorMap}
+              showSubGrid={exportOptions.showSubGrid}
+              use24Hour={exportOptions.timeFormat === '24'}
+            />
 
             {/* Off-screen, full-width render used only for PNG/PDF export */}
             <div
