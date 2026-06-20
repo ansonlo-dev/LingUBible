@@ -745,6 +745,8 @@ export default {
   'timetable.filter.day': 'Day',
   'timetable.filter.allDays': 'All days',
   'timetable.filter.term': 'Term',
+  'timetable.collapsePanel': 'Hide panel',
+  'timetable.expandPanel': 'Show panel',
   'timetable.exportPng': 'Export PNG',
   'timetable.exportPdf': 'Export PDF',
   'timetable.exportError': 'Export failed. Please try again.',

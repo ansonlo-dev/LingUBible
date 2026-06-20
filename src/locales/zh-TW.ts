@@ -683,6 +683,8 @@ export default {
   'timetable.filter.day': '星期',
   'timetable.filter.allDays': '所有日子',
   'timetable.filter.term': '學期',
+  'timetable.collapsePanel': '收合面板',
+  'timetable.expandPanel': '展開面板',
   'timetable.exportPng': '匯出 PNG',
   'timetable.exportPdf': '匯出 PDF',
   'timetable.exportError': '匯出失敗，請再試一次。',

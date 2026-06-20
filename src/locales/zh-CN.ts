@@ -753,6 +753,8 @@ export default {
   'timetable.filter.day': '星期',
   'timetable.filter.allDays': '所有日子',
   'timetable.filter.term': '学期',
+  'timetable.collapsePanel': '收起面板',
+  'timetable.expandPanel': '展开面板',
   'timetable.exportPng': '导出 PNG',
   'timetable.exportPdf': '导出 PDF',
   'timetable.exportError': '导出失败，请再试一次。',

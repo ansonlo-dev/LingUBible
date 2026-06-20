@@ -34,6 +34,8 @@ import {
   X,
   Image as ImageIcon,
   FileDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -81,6 +83,22 @@ const Timetable = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds());
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+
+  // Collapsible filter/results panel (default expanded). Persisted across visits.
+  const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('timetable.panelCollapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('timetable.panelCollapsed', panelCollapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [panelCollapsed]);
 
   useEffect(() => {
     let active = true;
@@ -267,9 +285,13 @@ const Timetable = () => {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,340px)_1fr] gap-6 items-start">
+        <div
+          className={`grid grid-cols-1 gap-6 items-start ${
+            panelCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(280px,340px)_1fr]'
+          }`}
+        >
           {/* Left: search / filters / results */}
-          <div className="space-y-4">
+          <div className={`space-y-4 ${panelCollapsed ? 'hidden' : ''}`}>
             <Card>
               <CardContent className="p-4 space-y-3">
                 {/* Free-text search */}
@@ -420,8 +442,21 @@ const Timetable = () => {
 
           {/* Right: timetable + selected */}
           <div className="space-y-4">
-            {/* Export actions */}
-            <div className="flex flex-wrap items-center gap-2 justify-end">
+            {/* Panel toggle + export actions */}
+            <div className="flex flex-wrap items-center gap-2 justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPanelCollapsed((v) => !v)}
+                title={panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
+              >
+                {panelCollapsed ? (
+                  <PanelLeftOpen className="h-4 w-4 mr-1" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4 mr-1" />
+                )}
+                {panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
+              </Button>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
