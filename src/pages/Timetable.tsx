@@ -14,6 +14,7 @@ import {
   DEFAULT_BLOCK_FIELDS,
   type BlockFields,
   type DayFormat,
+  type TextColorMode,
 } from '@/components/features/timetable/TimetableGrid';
 import { Combobox, type ComboboxOption } from '@/components/features/timetable/Combobox';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -77,6 +78,7 @@ interface ExportOptions {
   showHours: boolean;
   timeFormat: '24' | '12';
   dayFormat: DayFormat;
+  textColor: TextColorMode;
   fields: BlockFields;
   rangeMode: 'auto' | 'custom';
   startHour: number;
@@ -102,6 +104,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   showHours: true,
   timeFormat: '24',
   dayFormat: 'short',
+  textColor: 'dynamic',
   fields: { ...DEFAULT_BLOCK_FIELDS },
   rangeMode: 'auto',
   startHour: 8,
@@ -217,7 +220,11 @@ const Timetable = () => {
     const base: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, theme: siteDark ? 'dark' : 'light' };
     try {
       const raw = localStorage.getItem(EXPORT_OPTS_KEY);
-      if (raw) return { ...base, ...JSON.parse(raw) };
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Deep-merge `fields` so newly-added field keys keep their defaults.
+        return { ...base, ...parsed, fields: { ...base.fields, ...(parsed.fields ?? {}) } };
+      }
     } catch {
       /* ignore */
     }
@@ -874,6 +881,7 @@ const Timetable = () => {
                           { key: 'code', label: t('timetable.opt.fCode') },
                           { key: 'title', label: t('timetable.opt.fTitle') },
                           { key: 'type', label: t('timetable.opt.fType') },
+                          { key: 'number', label: t('timetable.opt.fNumber') },
                           { key: 'venue', label: t('timetable.opt.fVenue') },
                           { key: 'instructor', label: t('timetable.opt.fInstructor') },
                           { key: 'time', label: t('timetable.opt.fTime') },
@@ -889,6 +897,18 @@ const Timetable = () => {
                           </label>
                         ))}
                       </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">{t('timetable.opt.textColor')}</Label>
+                      <OptionToggle
+                        value={exportOptions.textColor}
+                        onChange={(v) => setOpt({ textColor: v })}
+                        options={[
+                          { value: 'dynamic', label: t('timetable.opt.textAuto') },
+                          { value: 'white', label: t('timetable.opt.textWhite') },
+                          { value: 'black', label: t('timetable.opt.textBlack') },
+                        ]}
+                      />
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -1008,6 +1028,7 @@ const Timetable = () => {
               colorMap={colorMap}
               showSubGrid={exportOptions.showSubGrid}
               showHours={exportOptions.showHours}
+              textColor={exportOptions.textColor}
               use24Hour={exportOptions.timeFormat === '24'}
               dayFormat={exportOptions.dayFormat}
               fields={exportOptions.fields}
@@ -1041,6 +1062,7 @@ const Timetable = () => {
                   exportDark={exportOptions.theme === 'dark'}
                   showSubGrid={exportOptions.showSubGrid}
                   showHours={exportOptions.showHours}
+                  textColor={exportOptions.textColor}
                   use24Hour={exportOptions.timeFormat === '24'}
                   dayFormat={exportOptions.dayFormat}
                   fields={exportOptions.fields}

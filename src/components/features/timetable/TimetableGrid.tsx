@@ -9,6 +9,7 @@ export interface BlockFields {
   code: boolean;
   title: boolean;
   type: boolean;
+  number: boolean;
   venue: boolean;
   instructor: boolean;
   time: boolean;
@@ -18,10 +19,14 @@ export const DEFAULT_BLOCK_FIELDS: BlockFields = {
   code: true,
   title: true,
   type: true,
+  number: true,
   venue: true,
   instructor: true,
   time: true,
 };
+
+/** Block text-colour mode: auto-pick per background, or force white/black. */
+export type TextColorMode = 'dynamic' | 'white' | 'black';
 
 interface TimetableGridProps {
   sections: TimetableSection[];
@@ -38,6 +43,8 @@ interface TimetableGridProps {
   showSubGrid?: boolean;
   /** Show per-day and weekly total hours in the header (default true). */
   showHours?: boolean;
+  /** Block text colour: 'dynamic' picks white/black per background luminance (default). */
+  textColor?: TextColorMode;
   /** Use 24-hour time labels; false → 12-hour AM/PM (default true). */
   use24Hour?: boolean;
   /** Day-header label style (default 'short'). */
@@ -95,6 +102,26 @@ const DEFAULT_START_MIN = 8 * 60; // 08:00
 const DEFAULT_END_MIN = 18 * 60; // 18:00
 
 const FALLBACK_COLOR = '#64748b';
+
+/** True when a hex colour is dark enough to need white text on top of it. */
+function isDarkColor(hex: string): boolean {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return true; // unknown → assume dark background → white text
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  // Perceived luminance (0..1). Below the threshold ⇒ dark background.
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.6;
+}
+
+/** Resolve the on-block text colour for a given background + mode. */
+function blockTextColor(bg: string, mode: TextColorMode): string {
+  if (mode === 'white') return '#ffffff';
+  if (mode === 'black') return '#000000';
+  return isDarkColor(bg) ? '#ffffff' : '#000000';
+}
 
 /** Format a "HH:MM" string in either 24-hour or 12-hour notation. */
 function formatTime(hhmm: string, use24: boolean): string {
@@ -154,6 +181,7 @@ export function TimetableGrid({
   exportDark,
   showSubGrid = true,
   showHours = true,
+  textColor = 'dynamic',
   use24Hour = true,
   dayFormat = 'short',
   fields = DEFAULT_BLOCK_FIELDS,
@@ -376,27 +404,34 @@ export function TimetableGrid({
                 const leftPct = block.column * widthPct;
                 const bg = colorMap?.get(block.section.id) ?? FALLBACK_COLOR;
                 const isConflict = block.conflict || conflictIds?.has(block.section.id);
+                const fg = blockTextColor(bg, textColor);
+                const badgeBg = fg === '#ffffff' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.4)';
+                const badgeText = `${fields.type ? block.type : ''}${fields.number ? block.section.section : ''}`;
                 return (
                   <div
                     key={`${block.section.id}-${idx}`}
-                    className={`absolute rounded-md ${sz.pad} text-white overflow-hidden shadow-sm`}
+                    className={`absolute rounded-md ${sz.pad} overflow-hidden shadow-sm`}
                     style={{
                       top,
                       height,
                       left: `calc(${leftPct}% + 2px)`,
                       width: `calc(${widthPct}% - 4px)`,
                       backgroundColor: bg,
+                      color: fg,
                       outline: isConflict ? '2px solid #ef4444' : undefined,
                       outlineOffset: isConflict ? '-2px' : undefined,
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
                     {/* Session type + section number, e.g. "LEC9" / "TUT11" */}
-                    <div
-                      className={`absolute top-1 right-1 ${sz.badge} rounded bg-black/25 px-1 leading-none text-white`}
-                    >
-                      {block.type}{block.section.section}
-                    </div>
+                    {badgeText && (
+                      <div
+                        className={`absolute top-1 right-1 ${sz.badge} rounded px-1 leading-none`}
+                        style={{ backgroundColor: badgeBg, color: fg }}
+                      >
+                        {badgeText}
+                      </div>
+                    )}
                     {fields.code && (
                       <div className={`${sz.code} leading-tight truncate ${forExport ? 'pr-14' : 'pr-9'}`}>
                         {block.section.courseCode}
@@ -430,7 +465,7 @@ export function TimetableGrid({
                         title="Custom colour"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Palette className="h-4 w-4 text-white/90 drop-shadow" />
+                        <Palette className="h-4 w-4 opacity-90 drop-shadow" />
                         <input
                           type="color"
                           value={bg}
@@ -449,7 +484,7 @@ export function TimetableGrid({
                           onRemoveSection(block.section.id);
                         }}
                       >
-                        <Trash2 className="h-4 w-4 text-white/90 drop-shadow" />
+                        <Trash2 className="h-4 w-4 opacity-90 drop-shadow" />
                       </button>
                     )}
                   </div>
