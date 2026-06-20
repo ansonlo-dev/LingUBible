@@ -311,6 +311,12 @@ const Timetable = () => {
     [selectedIds, sectionById],
   );
 
+  // Search results excluding already-selected sections (those are pinned on top).
+  const unselectedResults = useMemo(
+    () => filtered.filter((s) => !selectedSet.has(s.id)),
+    [filtered, selectedSet],
+  );
+
   const conflictIds = useMemo(() => findConflicts(selectedSections), [selectedSections]);
 
   // Auto-assign a distinct colour to each section in the order it was added.
@@ -378,6 +384,60 @@ const Timetable = () => {
     setInstructor('');
     setType('all');
     setDay('all');
+  };
+
+  const renderResultItem = (s: TimetableSection) => {
+    const added = selectedSet.has(s.id);
+    return (
+      <div
+        key={s.id}
+        role="button"
+        tabIndex={0}
+        aria-pressed={added}
+        onClick={() => toggleSection(s.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleSection(s.id);
+          }
+        }}
+        title={added ? t('timetable.remove') : t('timetable.add')}
+        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-accent/40 ${
+          added ? 'bg-accent/40' : ''
+        }`}
+        style={added ? { borderColor: colorMap.get(s.id) } : undefined}
+      >
+        {added && (
+          <span
+            className="mt-1 h-3 w-3 rounded-full shrink-0"
+            style={{ backgroundColor: colorMap.get(s.id) }}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-sm">{s.courseCode}</span>
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0 !bg-[rgb(var(--secondary))] !text-[rgb(var(--secondary-foreground))]"
+            >
+              {t('timetable.sectionLabel', { sect: s.section || '—' })}
+            </Badge>
+            {s.types.map((ty) => (
+              <Badge key={ty} variant="outline" className="text-[10px] px-1.5 py-0">
+                {ty}
+              </Badge>
+            ))}
+          </div>
+          <p className="text-sm truncate">{s.courseTitle}</p>
+          {s.instructors.length > 0 && (
+            <p className="text-xs text-muted-foreground truncate">{s.instructors.join(', ')}</p>
+          )}
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {meetingSummary(s, dayLabels) || t('timetable.noSchedule')}
+          </p>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -507,65 +567,21 @@ const Timetable = () => {
             </div>
 
             <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 timetable-scroll">
-              {filtered.length === 0 && (
+              {/* Pinned: currently-selected sections, always visible at the top */}
+              {selectedSections.length > 0 && (
+                <>
+                  {selectedSections.map((s) => renderResultItem(s))}
+                  <div className="border-t border-dashed my-1" />
+                </>
+              )}
+
+              {unselectedResults.length === 0 && selectedSections.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
               )}
-              {filtered.slice(0, MAX_RESULTS).map((s) => {
-                const added = selectedSet.has(s.id);
-                return (
-                  <div
-                    key={s.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={added}
-                    onClick={() => toggleSection(s.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleSection(s.id);
-                      }
-                    }}
-                    title={added ? t('timetable.remove') : t('timetable.add')}
-                    className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-accent/40 ${
-                      added ? 'bg-accent/40' : ''
-                    }`}
-                    style={added ? { borderColor: colorMap.get(s.id) } : undefined}
-                  >
-                    {added && (
-                      <span
-                        className="mt-1 h-3 w-3 rounded-full shrink-0"
-                        style={{ backgroundColor: colorMap.get(s.id) }}
-                      />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">{s.courseCode}</span>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] px-1.5 py-0 !bg-[rgb(var(--secondary))] !text-[rgb(var(--secondary-foreground))]"
-                        >
-                          {t('timetable.sectionLabel', { sect: s.section || '—' })}
-                        </Badge>
-                        {s.types.map((ty) => (
-                          <Badge key={ty} variant="outline" className="text-[10px] px-1.5 py-0">
-                            {ty}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-sm truncate">{s.courseTitle}</p>
-                      {s.instructors.length > 0 && (
-                        <p className="text-xs text-muted-foreground truncate">{s.instructors.join(', ')}</p>
-                      )}
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {meetingSummary(s, dayLabels) || t('timetable.noSchedule')}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              {filtered.length > MAX_RESULTS && (
+              {unselectedResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
+              {unselectedResults.length > MAX_RESULTS && (
                 <p className="text-xs text-muted-foreground text-center py-2">
-                  {t('timetable.moreResults', { count: String(filtered.length - MAX_RESULTS) })}
+                  {t('timetable.moreResults', { count: String(unselectedResults.length - MAX_RESULTS) })}
                 </p>
               )}
             </div>
@@ -810,15 +826,18 @@ const Timetable = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSelectedIds([])}
+                  disabled={selectedSections.length === 0}
+                  title={t('timetable.clearAll')}
+                  className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-
-            {conflictIds.size > 0 && (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                {t('timetable.conflictWarning')}
-              </div>
-            )}
 
             {/* On-screen title + grid (reflects the timetable options live) */}
             {exportOptions.includeTitle && (
@@ -867,46 +886,6 @@ const Timetable = () => {
                 />
               </div>
             </div>
-
-            {/* Selected sections list */}
-            <div className="flex items-center justify-between px-1">
-              <span className="text-sm font-medium">
-                {t('timetable.selected', { count: String(selectedSections.length) })}
-              </span>
-              {selectedSections.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  {t('timetable.clearAll')}
-                </Button>
-              )}
-            </div>
-
-            {selectedSections.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6 border rounded-lg border-dashed">
-                {t('timetable.emptySelection')}
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {selectedSections.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center gap-2 rounded-full pl-2 pr-1 py-1 text-xs text-white"
-                    style={{ backgroundColor: colorMap.get(s.id) }}
-                  >
-                    {conflictIds.has(s.id) && <AlertTriangle className="h-3 w-3" />}
-                    <span className="font-semibold">{s.courseCode}</span>
-                    <span className="opacity-90">·{s.section}</span>
-                    <button
-                      onClick={() => toggleSection(s.id)}
-                      className="rounded-full hover:bg-black/20 p-0.5"
-                      title={t('timetable.remove')}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -232,8 +232,8 @@ export function TimetableGrid({
   // bold text for readability; the on-screen grid is a touch larger too.
   const hourHeight = forExport ? 108 : 60;
   const sz = forExport
-    ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-semibold', header: 'text-xl font-bold', headerH: 'h-14' }
-    : { code: 'text-[13px] font-bold', title: 'text-[12px] font-semibold', meta: 'text-[11px] font-medium', pad: 'px-1.5 py-1', gutter: 'text-[12px] font-medium', header: 'text-sm font-semibold', headerH: 'h-10' };
+    ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[17px] font-bold', header: 'text-xl font-bold', headerH: 'h-14' }
+    : { code: 'text-[13px] font-bold', title: 'text-[12px] font-semibold', meta: 'text-[11px] font-medium', pad: 'px-1.5 py-1', gutter: 'text-[14px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10' };
   // Minimum block height before each extra line of text is shown (scaled for export).
   const show = forExport
     ? { type: 88, instructor: 124, time: 160 }
@@ -243,7 +243,7 @@ export function TimetableGrid({
   for (let h = startHour; h <= endHour; h++) hours.push(h);
   const gridHeight = ((dayEndMin - dayStartMin) / 60) * hourHeight;
 
-  const TIME_COL = forExport ? 76 : 64; // px
+  const TIME_COL = forExport ? 64 : 50; // px
 
   return (
     <div className={`${forExport ? 'overflow-visible' : 'overflow-hidden'} rounded-lg border bg-card`}>
