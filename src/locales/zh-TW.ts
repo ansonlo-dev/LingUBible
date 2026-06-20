@@ -686,6 +686,8 @@ export default {
   'timetable.collapsePanel': '收合面板',
   'timetable.expandPanel': '展開面板',
   'timetable.export': '匯出',
+  'timetable.editTitle': '編輯標題',
+  'timetable.opt.customColor': '自訂顏色',
   'timetable.opt.resolution': '解析度',
   'timetable.opt.resLow': '低',
   'timetable.opt.resStandard': '標準',

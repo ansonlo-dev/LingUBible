@@ -756,6 +756,8 @@ export default {
   'timetable.collapsePanel': '收起面板',
   'timetable.expandPanel': '展开面板',
   'timetable.export': '导出',
+  'timetable.editTitle': '编辑标题',
+  'timetable.opt.customColor': '自定义颜色',
   'timetable.opt.resolution': '分辨率',
   'timetable.opt.resLow': '低',
   'timetable.opt.resStandard': '标准',

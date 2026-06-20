@@ -52,6 +52,8 @@ import {
   PanelLeftOpen,
   Settings2,
   SlidersHorizontal,
+  Palette,
+  Pencil,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -70,6 +72,8 @@ interface ExportOptions {
   endHour: number;
   days: string[];
   firstDay: 'sun' | 'mon';
+  customTitle: string;
+  customColors: Record<string, string>;
   // Export-only options
   resolution: 'low' | 'standard' | 'high';
   theme: 'light' | 'dark';
@@ -92,6 +96,8 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   endHour: 18,
   days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
   firstDay: 'mon',
+  customTitle: '',
+  customColors: {},
   resolution: 'standard',
   theme: 'light',
 };
@@ -184,6 +190,8 @@ const Timetable = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds());
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
     const siteDark =
@@ -321,6 +329,7 @@ const Timetable = () => {
 
   // Assign a distinct colour per course code (in first-added order), so all
   // sections of the same course (e.g. its lecture and tutorial) share a colour.
+  // A user-picked custom colour overrides the auto-assigned one.
   const colorMap = useMemo(() => {
     const map = new Map<string, string>();
     const courseColor = new Map<string, string>();
@@ -332,10 +341,15 @@ const Timetable = () => {
         courseColor.set(s.courseCode, colorForIndex(i));
         i++;
       }
-      map.set(id, courseColor.get(s.courseCode)!);
+      map.set(id, exportOptions.customColors[s.courseCode] ?? courseColor.get(s.courseCode)!);
     }
     return map;
-  }, [selectedIds, sectionById]);
+  }, [selectedIds, sectionById, exportOptions.customColors]);
+
+  const setCourseColor = (courseCode: string, color: string) =>
+    setOpt({ customColors: { ...exportOptions.customColors, [courseCode]: color } });
+
+  const displayTitle = exportOptions.customTitle.trim() ? exportOptions.customTitle : term.name;
 
   const handleExport = async (format: 'png' | 'pdf') => {
     const node = exportRef.current;
@@ -399,6 +413,7 @@ const Timetable = () => {
 
   const renderResultItem = (s: TimetableSection) => {
     const added = selectedSet.has(s.id);
+    const color = colorMap.get(s.id);
     return (
       <div
         key={s.id}
@@ -413,40 +428,59 @@ const Timetable = () => {
           }
         }}
         title={added ? t('timetable.remove') : t('timetable.add')}
-        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-accent/40 ${
-          added ? 'bg-accent/40' : ''
+        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${
+          added ? 'text-white border-transparent' : 'hover:bg-accent/40'
         }`}
-        style={added ? { borderColor: colorMap.get(s.id) } : undefined}
+        style={added ? { backgroundColor: color } : undefined}
       >
-        {added && (
-          <span
-            className="mt-1 h-3 w-3 rounded-full shrink-0"
-            style={{ backgroundColor: colorMap.get(s.id) }}
-          />
-        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-sm">{s.courseCode}</span>
             <Badge
               variant="secondary"
-              className="text-[10px] px-1.5 py-0 !bg-[rgb(var(--secondary))] !text-[rgb(var(--secondary-foreground))]"
+              className={`text-[10px] px-1.5 py-0 ${
+                added
+                  ? 'bg-white/25 text-white border-transparent'
+                  : '!bg-[rgb(var(--secondary))] !text-[rgb(var(--secondary-foreground))]'
+              }`}
             >
               {t('timetable.sectionLabel', { sect: s.section || '—' })}
             </Badge>
             {s.types.map((ty) => (
-              <Badge key={ty} variant="outline" className="text-[10px] px-1.5 py-0">
+              <Badge
+                key={ty}
+                variant="outline"
+                className={`text-[10px] px-1.5 py-0 ${added ? 'border-white/50 text-white' : ''}`}
+              >
                 {ty}
               </Badge>
             ))}
           </div>
           <p className="text-sm truncate">{s.courseTitle}</p>
           {s.instructors.length > 0 && (
-            <p className="text-xs text-muted-foreground truncate">{s.instructors.join(', ')}</p>
+            <p className={`text-xs truncate ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
+              {s.instructors.join(', ')}
+            </p>
           )}
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className={`text-[11px] mt-0.5 ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
             {meetingSummary(s, dayLabels) || t('timetable.noSchedule')}
           </p>
         </div>
+        {added && (
+          <label
+            className="relative shrink-0 mt-0.5 cursor-pointer"
+            title={t('timetable.opt.customColor')}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Palette className="h-4 w-4 text-white/90" />
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setCourseColor(s.courseCode, e.target.value)}
+              className="absolute inset-0 h-4 w-4 opacity-0 cursor-pointer"
+            />
+          </label>
+        )}
       </div>
     );
   };
@@ -495,7 +529,7 @@ const Timetable = () => {
                   <Input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={t('timetable.searchPlaceholder')}
+                    placeholder="Smart Search"
                     className="pl-9 h-9"
                   />
                 </div>
@@ -854,7 +888,42 @@ const Timetable = () => {
 
             {/* On-screen title + grid (reflects the timetable options live) */}
             {exportOptions.includeTitle && (
-              <h2 className="text-xl font-bold text-center">{term.name}</h2>
+              <div className="flex items-center justify-center gap-2">
+                {editingTitle ? (
+                  <Input
+                    autoFocus
+                    value={titleDraft}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={() => {
+                      setOpt({ customTitle: titleDraft.trim() });
+                      setEditingTitle(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setOpt({ customTitle: titleDraft.trim() });
+                        setEditingTitle(false);
+                      } else if (e.key === 'Escape') {
+                        setEditingTitle(false);
+                      }
+                    }}
+                    className="h-9 max-w-xs text-center text-xl font-bold"
+                  />
+                ) : (
+                  <>
+                    <h2 className="text-xl font-bold text-center">{displayTitle}</h2>
+                    <button
+                      onClick={() => {
+                        setTitleDraft(displayTitle);
+                        setEditingTitle(true);
+                      }}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title={t('timetable.editTitle')}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             )}
             <TimetableGrid
               sections={selectedSections}
@@ -881,7 +950,7 @@ const Timetable = () => {
                 style={themeVars(exportOptions.theme === 'dark')}
               >
                 {exportOptions.includeTitle && (
-                  <h2 className="text-2xl font-bold text-center mb-4">{term.name}</h2>
+                  <h2 className="text-2xl font-bold text-center mb-4">{displayTitle}</h2>
                 )}
                 <TimetableGrid
                   sections={selectedSections}

@@ -748,6 +748,8 @@ export default {
   'timetable.collapsePanel': 'Hide panel',
   'timetable.expandPanel': 'Show panel',
   'timetable.export': 'Export',
+  'timetable.editTitle': 'Edit title',
+  'timetable.opt.customColor': 'Custom colour',
   'timetable.opt.resolution': 'Resolution',
   'timetable.opt.resLow': 'Low',
   'timetable.opt.resStandard': 'Standard',

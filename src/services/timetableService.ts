@@ -220,14 +220,29 @@ export async function loadTimetableSections(url: string = TIMETABLE_CSV_URL): Pr
   }
 }
 
+function hslToHex(h: number, s: number, l: number): string {
+  const sN = s / 100;
+  const lN = l / 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = sN * Math.min(lN, 1 - lN);
+  const f = (n: number) => {
+    const color = lN - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
 /**
  * Auto-assign a visually distinct colour by position. Uses the golden-angle
  * hue rotation so consecutively-added sections never get similar colours,
- * regardless of how many are selected.
+ * regardless of how many are selected. Returned as hex (so it works directly
+ * with a native colour picker).
  */
 export function colorForIndex(index: number): string {
   const hue = (index * 137.508) % 360;
-  return `hsl(${hue.toFixed(1)}, 62%, 42%)`;
+  return hslToHex(hue, 62, 42);
 }
 
 /** True if two meetings overlap in time on the same day. */
