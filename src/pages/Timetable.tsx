@@ -360,7 +360,7 @@ const Timetable = () => {
               </span>
             </div>
 
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 timetable-scroll">
               {filtered.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
               )}

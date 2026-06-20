@@ -27,7 +27,6 @@ interface PositionedBlock {
   columns: number;
 }
 
-const HOUR_HEIGHT = 56; // px per hour
 // Fallback range used only when nothing is selected yet.
 const DEFAULT_START_MIN = 8 * 60; // 08:00
 const DEFAULT_END_MIN = 18 * 60; // 18:00
@@ -159,23 +158,34 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
   const dayStartMin = startHour * 60;
   const dayEndMin = endHour * 60;
 
+  // Sizing — the exported (PDF/PNG) grid is rendered taller with larger text
+  // for readability; the on-screen grid is a touch larger than before too.
+  const hourHeight = forExport ? 84 : 60;
+  const sz = forExport
+    ? { code: 'text-[15px]', title: 'text-[13px]', meta: 'text-[12px]', pad: 'px-2 py-1.5', gutter: 'text-[13px]', header: 'text-base', headerH: 'h-12' }
+    : { code: 'text-[12px]', title: 'text-[11px]', meta: 'text-[10px]', pad: 'px-1.5 py-1', gutter: 'text-[11px]', header: 'text-sm', headerH: 'h-10' };
+  // Minimum block height before each extra line of text is shown (scaled for export).
+  const show = forExport
+    ? { type: 64, instructor: 92, time: 124 }
+    : { type: 48, instructor: 68, time: 92 };
+
   const hours: number[] = [];
   for (let h = startHour; h <= endHour; h++) hours.push(h);
-  const gridHeight = ((dayEndMin - dayStartMin) / 60) * HOUR_HEIGHT;
+  const gridHeight = ((dayEndMin - dayStartMin) / 60) * hourHeight;
 
-  const TIME_COL = 64; // px
+  const TIME_COL = forExport ? 76 : 64; // px
 
   return (
-    <div className={`${forExport ? 'overflow-visible' : 'overflow-x-auto'} rounded-lg border bg-card`}>
+    <div className={`${forExport ? 'overflow-visible' : 'overflow-x-auto timetable-scroll'} rounded-lg border bg-card`}>
       <div className="min-w-[760px]">
         {/* Header row with day names */}
         <div
           className="grid border-b bg-muted/40"
           style={{ gridTemplateColumns: `${TIME_COL}px repeat(${visibleDays.length}, minmax(0, 1fr))` }}
         >
-          <div className="h-10" />
+          <div className={sz.headerH} />
           {visibleDays.map((day) => (
-            <div key={day} className="h-10 flex items-center justify-center text-sm font-semibold border-l">
+            <div key={day} className={`${sz.headerH} ${sz.header} flex items-center justify-center font-semibold border-l`}>
               {dayLabels[day]}
             </div>
           ))}
@@ -194,8 +204,8 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
               return (
                 <div
                   key={h}
-                  className="absolute left-0 right-1 text-[11px] text-muted-foreground text-right pr-1"
-                  style={{ top: idx * HOUR_HEIGHT - 6 }}
+                  className={`absolute left-0 right-1 ${sz.gutter} text-muted-foreground text-right pr-1`}
+                  style={{ top: idx * hourHeight - 6 }}
                 >
                   {fmt(`${String(h).padStart(2, '0')}:00`)}
                 </div>
@@ -211,16 +221,16 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                 <div
                   key={h}
                   className="absolute left-0 right-0 border-t border-border/50"
-                  style={{ top: idx * HOUR_HEIGHT }}
+                  style={{ top: idx * hourHeight }}
                 />
               ))}
 
               {/* Class blocks */}
               {blocksByDay[day].map((block, idx) => {
-                const top = ((block.startMinutes - dayStartMin) / 60) * HOUR_HEIGHT;
+                const top = ((block.startMinutes - dayStartMin) / 60) * hourHeight;
                 const height = Math.max(
-                  ((block.endMinutes + 1 - block.startMinutes) / 60) * HOUR_HEIGHT - 2,
-                  20,
+                  ((block.endMinutes + 1 - block.startMinutes) / 60) * hourHeight - 2,
+                  forExport ? 28 : 22,
                 );
                 const widthPct = 100 / block.columns;
                 const leftPct = block.column * widthPct;
@@ -229,7 +239,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                 return (
                   <div
                     key={`${block.section.id}-${idx}`}
-                    className="absolute rounded-md px-1.5 py-1 text-white overflow-hidden shadow-sm"
+                    className={`absolute rounded-md ${sz.pad} text-white overflow-hidden shadow-sm`}
                     style={{
                       top,
                       height,
@@ -241,25 +251,25 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${fmt(block.start)} - ${fmt(block.end)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
-                    <div className="text-[11px] font-bold leading-tight truncate">
+                    <div className={`${sz.code} font-bold leading-tight truncate`}>
                       {block.section.courseCode}
                     </div>
-                    <div className="text-[10px] leading-tight opacity-95 line-clamp-2">
+                    <div className={`${sz.title} leading-tight opacity-95 line-clamp-2`}>
                       {block.section.courseTitle}
                     </div>
-                    {height > 44 && (
-                      <div className="text-[9px] leading-tight opacity-90 mt-0.5">
+                    {height > show.type && (
+                      <div className={`${sz.meta} leading-tight opacity-90 mt-0.5`}>
                         <span className="font-semibold">{block.type}</span>
                         {block.venues.length > 0 && <> · {block.venues.join(', ')}</>}
                       </div>
                     )}
-                    {height > 60 && block.section.instructors.length > 0 && (
-                      <div className="text-[9px] leading-tight opacity-90 mt-0.5 line-clamp-2">
+                    {height > show.instructor && block.section.instructors.length > 0 && (
+                      <div className={`${sz.meta} leading-tight opacity-90 mt-0.5 line-clamp-2`}>
                         {block.section.instructors.join(', ')}
                       </div>
                     )}
-                    {height > 82 && (
-                      <div className="text-[9px] leading-tight opacity-80 mt-0.5 truncate">
+                    {height > show.time && (
+                      <div className={`${sz.meta} leading-tight opacity-80 mt-0.5 truncate`}>
                         {fmt(block.start)}–{fmt(block.end)}
                       </div>
                     )}
