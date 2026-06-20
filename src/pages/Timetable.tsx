@@ -327,27 +327,31 @@ const Timetable = () => {
     try {
       const dark = exportOptions.theme === 'dark';
       const bgColor = dark ? '#000000' : '#ffffff';
-      const { toPng } = await import('html-to-image');
-      const contentUrl = await toPng(node, {
-        pixelRatio: RESOLUTION_SCALE[exportOptions.resolution],
-        backgroundColor: bgColor,
-        cacheBust: true,
-      });
+      const pixelRatio = RESOLUTION_SCALE[exportOptions.resolution];
+      const htmlToImage = await import('html-to-image');
       const imgW = node.scrollWidth;
       const imgH = node.scrollHeight;
       const safeName = `${term.name.replace(/[^\w一-鿿-]+/g, '_')}_timetable`;
 
       if (format === 'png') {
+        const dataUrl = await htmlToImage.toPng(node, { pixelRatio, backgroundColor: bgColor, cacheBust: true });
         const link = document.createElement('a');
         link.download = `${safeName}.png`;
-        link.href = contentUrl;
+        link.href = dataUrl;
         link.click();
       } else {
-        // PDF page sized exactly to the content (orientation follows the content).
+        // Use a JPEG (lossy) image + stream compression to keep the PDF small —
+        // a PNG-based PDF can be ~10× larger for the same timetable.
+        const dataUrl = await htmlToImage.toJpeg(node, {
+          pixelRatio,
+          backgroundColor: bgColor,
+          quality: 0.82,
+          cacheBust: true,
+        });
         const { jsPDF } = await import('jspdf');
         const orientation = imgW >= imgH ? 'landscape' : 'portrait';
-        const pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH] });
-        pdf.addImage(contentUrl, 'PNG', 0, 0, imgW, imgH);
+        const pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH], compress: true });
+        pdf.addImage(dataUrl, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
         pdf.save(`${safeName}.pdf`);
       }
     } catch (err) {
