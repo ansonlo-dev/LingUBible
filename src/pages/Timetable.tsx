@@ -319,12 +319,23 @@ const Timetable = () => {
 
   const conflictIds = useMemo(() => findConflicts(selectedSections), [selectedSections]);
 
-  // Auto-assign a distinct colour to each section in the order it was added.
+  // Assign a distinct colour per course code (in first-added order), so all
+  // sections of the same course (e.g. its lecture and tutorial) share a colour.
   const colorMap = useMemo(() => {
     const map = new Map<string, string>();
-    selectedIds.forEach((id, i) => map.set(id, colorForIndex(i)));
+    const courseColor = new Map<string, string>();
+    let i = 0;
+    for (const id of selectedIds) {
+      const s = sectionById.get(id);
+      if (!s) continue;
+      if (!courseColor.has(s.courseCode)) {
+        courseColor.set(s.courseCode, colorForIndex(i));
+        i++;
+      }
+      map.set(id, courseColor.get(s.courseCode)!);
+    }
     return map;
-  }, [selectedIds]);
+  }, [selectedIds, sectionById]);
 
   const handleExport = async (format: 'png' | 'pdf') => {
     const node = exportRef.current;
@@ -475,9 +486,9 @@ const Timetable = () => {
           }`}
         >
           {/* Left: search / filters / results */}
-          <div className={`space-y-4 ${panelCollapsed ? 'hidden' : ''}`}>
+          <div className={`space-y-3 ${panelCollapsed ? 'hidden' : ''}`}>
             <Card>
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-3 space-y-2">
                 {/* Free-text search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -485,14 +496,14 @@ const Timetable = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={t('timetable.searchPlaceholder')}
-                    className="pl-9"
+                    className="pl-9 h-9"
                   />
                 </div>
 
                 {/* Dropdown filters */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Select value={termId} onValueChange={setTermId}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue placeholder={t('timetable.filter.term')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -510,6 +521,7 @@ const Timetable = () => {
                     placeholder={t('timetable.filter.course')}
                     searchPlaceholder={t('timetable.filter.courseSearch')}
                     emptyText={t('timetable.noResults')}
+                    className="h-9"
                   />
                   <Combobox
                     options={instructorOptions}
@@ -518,10 +530,11 @@ const Timetable = () => {
                     placeholder={t('timetable.filter.instructor')}
                     searchPlaceholder={t('timetable.filter.instructorSearch')}
                     emptyText={t('timetable.noResults')}
+                    className="h-9"
                   />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <Select value={type} onValueChange={setType}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9">
                         <SelectValue placeholder={t('timetable.filter.type')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -534,7 +547,7 @@ const Timetable = () => {
                       </SelectContent>
                     </Select>
                     <Select value={day} onValueChange={setDay}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9">
                         <SelectValue placeholder={t('timetable.filter.day')} />
                       </SelectTrigger>
                       <SelectContent>
