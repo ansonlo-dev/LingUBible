@@ -158,15 +158,15 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
   const dayStartMin = startHour * 60;
   const dayEndMin = endHour * 60;
 
-  // Sizing — the exported (PDF/PNG) grid is rendered taller with larger text
-  // for readability; the on-screen grid is a touch larger than before too.
-  const hourHeight = forExport ? 84 : 60;
+  // Sizing — the exported (PDF/PNG) grid is rendered much taller with large,
+  // bold text for readability; the on-screen grid is a touch larger too.
+  const hourHeight = forExport ? 108 : 60;
   const sz = forExport
-    ? { code: 'text-[15px]', title: 'text-[13px]', meta: 'text-[12px]', pad: 'px-2 py-1.5', gutter: 'text-[13px]', header: 'text-base', headerH: 'h-12' }
-    : { code: 'text-[12px]', title: 'text-[11px]', meta: 'text-[10px]', pad: 'px-1.5 py-1', gutter: 'text-[11px]', header: 'text-sm', headerH: 'h-10' };
+    ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-semibold', header: 'text-xl font-bold', headerH: 'h-14' }
+    : { code: 'text-[13px] font-bold', title: 'text-[12px] font-semibold', meta: 'text-[11px] font-medium', pad: 'px-1.5 py-1', gutter: 'text-[12px] font-medium', header: 'text-sm font-semibold', headerH: 'h-10' };
   // Minimum block height before each extra line of text is shown (scaled for export).
   const show = forExport
-    ? { type: 64, instructor: 92, time: 124 }
+    ? { type: 88, instructor: 124, time: 160 }
     : { type: 48, instructor: 68, time: 92 };
 
   const hours: number[] = [];
@@ -185,7 +185,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
         >
           <div className={sz.headerH} />
           {visibleDays.map((day) => (
-            <div key={day} className={`${sz.headerH} ${sz.header} flex items-center justify-center font-semibold border-l`}>
+            <div key={day} className={`${sz.headerH} ${sz.header} flex items-center justify-center border-l`}>
               {dayLabels[day]}
             </div>
           ))}
@@ -230,7 +230,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                 const top = ((block.startMinutes - dayStartMin) / 60) * hourHeight;
                 const height = Math.max(
                   ((block.endMinutes + 1 - block.startMinutes) / 60) * hourHeight - 2,
-                  forExport ? 28 : 22,
+                  forExport ? 36 : 22,
                 );
                 const widthPct = 100 / block.columns;
                 const leftPct = block.column * widthPct;
@@ -251,7 +251,7 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${fmt(block.start)} - ${fmt(block.end)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
-                    <div className={`${sz.code} font-bold leading-tight truncate`}>
+                    <div className={`${sz.code} leading-tight truncate`}>
                       {block.section.courseCode}
                     </div>
                     <div className={`${sz.title} leading-tight opacity-95 line-clamp-2`}>

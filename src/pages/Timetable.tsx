@@ -458,7 +458,7 @@ const Timetable = () => {
             {/* Off-screen, full-width render used only for PNG/PDF export */}
             <div
               aria-hidden
-              style={{ position: 'absolute', left: '-99999px', top: 0, width: 1100, pointerEvents: 'none' }}
+              style={{ position: 'absolute', left: '-99999px', top: 0, width: 1320, pointerEvents: 'none' }}
             >
               <div ref={exportRef} className="bg-background text-foreground p-6">
                 <h2 className="text-2xl font-bold text-center mb-4">{term.name}</h2>
