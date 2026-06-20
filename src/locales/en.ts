@@ -737,6 +737,8 @@ export default {
   'timetable.error': 'Could not load timetable data.',
   'timetable.searchPlaceholder': 'Search course code, title, instructor or CRN…',
   'timetable.smartSearch': 'Smart Search',
+  'timetable.filter.subject': 'Subject',
+  'timetable.filter.allSubjects': 'Subjects',
   'timetable.filter.course': 'Courses',
   'timetable.filter.courseSearch': 'Search course…',
   'timetable.filter.instructor': 'Instructors',

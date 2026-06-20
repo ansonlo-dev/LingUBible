@@ -51,9 +51,8 @@ import {
   Image as ImageIcon,
   FileDown,
   Download,
-  ChevronDown,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Eye,
+  EyeOff,
   SlidersHorizontal,
   Palette,
   Pencil,
@@ -122,6 +121,9 @@ const WEEK_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const DAY_PILL_LABEL: Record<string, string> = {
   MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun',
 };
+
+/** Subject-area prefix of a course code, e.g. "CDS1001" → "CDS", "ABCT1D14" → "ABCT". */
+const codePrefix = (code: string) => code.match(/^[A-Za-z]+/)?.[0] ?? code;
 
 // Theme tokens used by the timetable grid, mirrored from index.css so the
 // export can be rendered in light or dark independently of the site theme.
@@ -198,6 +200,7 @@ const Timetable = () => {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 250);
+  const [subjectArea, setSubjectArea] = useState('all');
   const [courseCode, setCourseCode] = useState('');
   const [instructor, setInstructor] = useState('');
   const [type, setType] = useState('all');
@@ -290,15 +293,22 @@ const Timetable = () => {
   };
 
   // Build dropdown option lists from the data.
+  const subjectAreaOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of allSections) set.add(codePrefix(s.courseCode));
+    return Array.from(set).sort();
+  }, [allSections]);
+
   const courseOptions: ComboboxOption[] = useMemo(() => {
     const map = new Map<string, string>();
     for (const s of allSections) {
+      if (subjectArea !== 'all' && codePrefix(s.courseCode) !== subjectArea) continue;
       if (!map.has(s.courseCode)) map.set(s.courseCode, `${s.courseCode} · ${s.courseTitle}`);
     }
     return Array.from(map.entries())
       .map(([value, label]) => ({ value, label }))
       .sort((a, b) => a.value.localeCompare(b.value));
-  }, [allSections]);
+  }, [allSections, subjectArea]);
 
   const instructorOptions: ComboboxOption[] = useMemo(() => {
     const set = new Set<string>();
@@ -317,6 +327,7 @@ const Timetable = () => {
   const filtered = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
     return allSections.filter((s) => {
+      if (subjectArea !== 'all' && codePrefix(s.courseCode) !== subjectArea) return false;
       if (courseCode && s.courseCode !== courseCode) return false;
       if (instructor && !s.instructors.includes(instructor)) return false;
       if (type !== 'all' && !s.types.includes(type)) return false;
@@ -327,7 +338,7 @@ const Timetable = () => {
       }
       return true;
     });
-  }, [allSections, debouncedSearch, courseCode, instructor, type, day]);
+  }, [allSections, debouncedSearch, subjectArea, courseCode, instructor, type, day]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const sectionById = useMemo(() => {
@@ -483,7 +494,8 @@ const Timetable = () => {
   };
 
   const hasActiveFilters =
-    searchTerm !== '' || courseCode !== '' || instructor !== '' || type !== 'all' || day !== 'all';
+    searchTerm !== '' || subjectArea !== 'all' || courseCode !== '' ||
+    instructor !== '' || type !== 'all' || day !== 'all';
 
   const toggleSection = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -491,6 +503,7 @@ const Timetable = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
+    setSubjectArea('all');
     setCourseCode('');
     setInstructor('');
     setType('all');
@@ -592,12 +605,12 @@ const Timetable = () => {
 
       {!loading && !error && (
         <div
-          className={`grid grid-cols-1 gap-3 items-start ${
+          className={`grid grid-cols-1 gap-3 items-stretch ${
             panelCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(280px,340px)_1fr]'
           }`}
         >
           {/* Left: smart search + results (filters live in the action row) */}
-          <div className={`space-y-3 ${panelCollapsed ? 'hidden' : ''}`}>
+          <div className={`flex flex-col gap-3 min-h-0 ${panelCollapsed ? 'hidden' : ''}`}>
             {/* Free-text search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -620,24 +633,29 @@ const Timetable = () => {
               </span>
             </div>
 
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 timetable-scroll">
-              {/* Pinned: currently-selected sections, always visible at the top */}
-              {selectedSections.length > 0 && (
-                <>
-                  {selectedSections.map((s) => renderResultItem(s))}
-                  <div className="border-t border-dashed my-1" />
-                </>
-              )}
+            {/* On desktop the inner list is absolutely positioned so its content
+                doesn't drive the column height — the timetable column does — letting
+                the results area match the timetable's height and scroll within it. */}
+            <div className="relative lg:flex-1 lg:min-h-0">
+              <div className="space-y-2 max-h-[60vh] lg:max-h-none lg:absolute lg:inset-0 overflow-y-auto pr-1 timetable-scroll">
+                {/* Pinned: currently-selected sections, always visible at the top */}
+                {selectedSections.length > 0 && (
+                  <>
+                    {selectedSections.map((s) => renderResultItem(s))}
+                    <div className="border-t border-dashed my-1" />
+                  </>
+                )}
 
-              {unselectedResults.length === 0 && selectedSections.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
-              )}
-              {unselectedResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
-              {unselectedResults.length > MAX_RESULTS && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  {t('timetable.moreResults', { count: String(unselectedResults.length - MAX_RESULTS) })}
-                </p>
-              )}
+                {unselectedResults.length === 0 && selectedSections.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
+                )}
+                {unselectedResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
+                {unselectedResults.length > MAX_RESULTS && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    {t('timetable.moreResults', { count: String(unselectedResults.length - MAX_RESULTS) })}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -654,9 +672,9 @@ const Timetable = () => {
                 className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 {panelCollapsed ? (
-                  <PanelLeftOpen className="h-9 w-9" />
+                  <Eye className="h-9 w-9" />
                 ) : (
-                  <PanelLeftClose className="h-9 w-9" />
+                  <EyeOff className="h-9 w-9" />
                 )}
               </button>
 
@@ -672,6 +690,25 @@ const Timetable = () => {
                       {TERMS.map((tm) => (
                         <SelectItem key={tm.id} value={tm.id}>
                           {tm.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={subjectArea}
+                    onValueChange={(v) => {
+                      setSubjectArea(v);
+                      setCourseCode('');
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-auto min-w-[110px]">
+                      <SelectValue placeholder={t('timetable.filter.subject')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('timetable.filter.allSubjects')}</SelectItem>
+                      {subjectAreaOptions.map((sa) => (
+                        <SelectItem key={sa} value={sa}>
+                          {sa}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -737,9 +774,10 @@ const Timetable = () => {
                 {/* Timetable options — these update the on-screen preview instantly */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <SlidersHorizontal className="h-4 w-4 mr-1" />
-                      {t('timetable.customize')}
+                    <Button variant="outline" size="sm" title={t('timetable.customize')}>
+                      <SlidersHorizontal className="h-4 w-4" />
+                      {/* Label hidden on desktop to save room in the action row. */}
+                      <span className="ml-1 lg:hidden">{t('timetable.customize')}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -947,7 +985,6 @@ const Timetable = () => {
                       ) : (
                         <Download className="h-4 w-4" />
                       )}
-                      <ChevronDown className="h-4 w-4 ml-1" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">

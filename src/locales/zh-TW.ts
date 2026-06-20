@@ -675,6 +675,8 @@ export default {
   'timetable.error': '無法載入時間表資料。',
   'timetable.searchPlaceholder': '搜尋課程代碼、名稱、講師或 CRN…',
   'timetable.smartSearch': '智能搜尋',
+  'timetable.filter.subject': '科目',
+  'timetable.filter.allSubjects': '科目',
   'timetable.filter.course': '課程',
   'timetable.filter.courseSearch': '搜尋課程…',
   'timetable.filter.instructor': '講師',
