@@ -357,11 +357,16 @@ const Timetable = () => {
 
   const displayTitle = exportOptions.customTitle.trim() ? exportOptions.customTitle : term.name;
 
-  // Localise session types (LEC/TUT) for zh sites; English keeps the raw code.
-  const translateType = (ty: string) => {
-    if (language === 'zh-TW') return SESSION_TYPE_LABELS[ty]?.['zh-TW'] ?? ty;
-    if (language === 'zh-CN') return SESSION_TYPE_LABELS[ty]?.['zh-CN'] ?? ty;
-    return ty;
+  // Dropdown-only label: append the Chinese name on zh sites, e.g. "LEC (講課)".
+  // Search results and the timetable keep the raw English code.
+  const typeOptionLabel = (ty: string) => {
+    const zh =
+      language === 'zh-TW'
+        ? SESSION_TYPE_LABELS[ty]?.['zh-TW']
+        : language === 'zh-CN'
+          ? SESSION_TYPE_LABELS[ty]?.['zh-CN']
+          : null;
+    return zh ? `${ty} (${zh})` : ty;
   };
 
   const handleExport = async (format: 'png' | 'pdf') => {
@@ -465,7 +470,7 @@ const Timetable = () => {
                 variant="outline"
                 className={`text-[10px] px-1.5 py-0 ${added ? 'border-white/50 text-white' : ''}`}
               >
-                {translateType(ty)}
+                {ty}
               </Badge>
             ))}
           </div>
@@ -588,7 +593,7 @@ const Timetable = () => {
                         <SelectItem value="all">{t('timetable.filter.allTypes')}</SelectItem>
                         {typeOptions.map((ty) => (
                           <SelectItem key={ty} value={ty}>
-                            {translateType(ty)}
+                            {typeOptionLabel(ty)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -953,7 +958,6 @@ const Timetable = () => {
               editableColors={panelCollapsed}
               onColorChange={setCourseColor}
               onRemoveSection={toggleSection}
-              typeLabel={translateType}
             />
 
             {/* Off-screen, full-width render used only for PNG/PDF export */}
@@ -982,7 +986,6 @@ const Timetable = () => {
                   rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
                   days={exportOptions.days}
                   firstDay={exportOptions.firstDay}
-                  typeLabel={translateType}
                 />
               </div>
             </div>
