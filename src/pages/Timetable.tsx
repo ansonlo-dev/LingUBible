@@ -267,7 +267,7 @@ const Timetable = () => {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,420px)_1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,340px)_1fr] gap-6 items-start">
           {/* Left: search / filters / results */}
           <div className="space-y-4">
             <Card>

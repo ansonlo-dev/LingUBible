@@ -176,8 +176,8 @@ export function TimetableGrid({ sections, conflictIds, colorMap, forExport }: Ti
   const TIME_COL = forExport ? 76 : 64; // px
 
   return (
-    <div className={`${forExport ? 'overflow-visible' : 'overflow-x-auto timetable-scroll'} rounded-lg border bg-card`}>
-      <div className="min-w-[760px]">
+    <div className={`${forExport ? 'overflow-visible' : 'overflow-hidden'} rounded-lg border bg-card`}>
+      <div className="w-full">
         {/* Header row with day names */}
         <div
           className="grid border-b bg-muted/40"
