@@ -102,6 +102,11 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   theme: 'light',
 };
 
+const SESSION_TYPE_LABELS: Record<string, { 'zh-TW': string; 'zh-CN': string }> = {
+  LEC: { 'zh-TW': '講課', 'zh-CN': '讲课' },
+  TUT: { 'zh-TW': '導修', 'zh-CN': '导修' },
+};
+
 const WEEK_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const DAY_PILL_LABEL: Record<string, string> = {
   MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun',
@@ -168,7 +173,7 @@ function meetingSummary(section: TimetableSection, dayLabels: Record<string, str
 }
 
 const Timetable = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
 
   const [allSections, setAllSections] = useState<TimetableSection[]>([]);
@@ -236,7 +241,8 @@ const Timetable = () => {
     loadTimetableSections(term.csvUrl)
       .then((sections) => {
         if (!active) return;
-        setAllSections(sections);
+        // Drop sections with no scheduled meeting (e.g. PRJ) — not useful here.
+        setAllSections(sections.filter((s) => s.meetings.length > 0));
         setError(null);
       })
       .catch((err) => {
@@ -351,6 +357,13 @@ const Timetable = () => {
 
   const displayTitle = exportOptions.customTitle.trim() ? exportOptions.customTitle : term.name;
 
+  // Localise session types (LEC/TUT) for zh sites; English keeps the raw code.
+  const translateType = (ty: string) => {
+    if (language === 'zh-TW') return SESSION_TYPE_LABELS[ty]?.['zh-TW'] ?? ty;
+    if (language === 'zh-CN') return SESSION_TYPE_LABELS[ty]?.['zh-CN'] ?? ty;
+    return ty;
+  };
+
   const handleExport = async (format: 'png' | 'pdf') => {
     const node = exportRef.current;
     if (!node || selectedSections.length === 0) return;
@@ -452,7 +465,7 @@ const Timetable = () => {
                 variant="outline"
                 className={`text-[10px] px-1.5 py-0 ${added ? 'border-white/50 text-white' : ''}`}
               >
-                {ty}
+                {translateType(ty)}
               </Badge>
             ))}
           </div>
@@ -575,7 +588,7 @@ const Timetable = () => {
                         <SelectItem value="all">{t('timetable.filter.allTypes')}</SelectItem>
                         {typeOptions.map((ty) => (
                           <SelectItem key={ty} value={ty}>
-                            {ty}
+                            {translateType(ty)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -939,6 +952,8 @@ const Timetable = () => {
               firstDay={exportOptions.firstDay}
               editableColors={panelCollapsed}
               onColorChange={setCourseColor}
+              onRemoveSection={toggleSection}
+              typeLabel={translateType}
             />
 
             {/* Off-screen, full-width render used only for PNG/PDF export */}
@@ -967,6 +982,7 @@ const Timetable = () => {
                   rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
                   days={exportOptions.days}
                   firstDay={exportOptions.firstDay}
+                  typeLabel={translateType}
                 />
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Palette } from 'lucide-react';
+import { Palette, Trash2 } from 'lucide-react';
 import { DAY_ORDER, meetingsOverlap, type TimetableSection } from '@/services/timetableService';
 
 export type DayFormat = 'short' | 'long' | 'zh';
@@ -46,10 +46,14 @@ interface TimetableGridProps {
   days?: string[];
   /** Week start — 'sun' puts Sunday first (default 'mon'). */
   firstDay?: 'sun' | 'mon';
-  /** Show a per-block colour picker (used when the side panel is collapsed). */
+  /** Show per-block colour picker + delete controls (used when the side panel is collapsed). */
   editableColors?: boolean;
   /** Called when a block's colour is changed via its picker. */
   onColorChange?: (courseCode: string, color: string) => void;
+  /** Called when a block's delete control is clicked. */
+  onRemoveSection?: (sectionId: string) => void;
+  /** Optional label transform for session types (e.g. localised LEC/TUT). */
+  typeLabel?: (type: string) => string;
 }
 
 const DEFAULT_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
@@ -146,7 +150,10 @@ export function TimetableGrid({
   firstDay = 'mon',
   editableColors,
   onColorChange,
+  onRemoveSection,
+  typeLabel,
 }: TimetableGridProps) {
+  const fmtType = (ty: string) => (typeLabel ? typeLabel(ty) : ty);
   const dayLabels = DAY_LABEL_SETS[dayFormat];
 
   const { visibleDays, blocksByDay } = useMemo(() => {
@@ -344,7 +351,7 @@ export function TimetableGrid({
                     )}
                     {(fields.type || (fields.venue && block.venues.length > 0)) && (
                       <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-0.5`}>
-                        {fields.type && <span className="font-semibold">{block.type}</span>}
+                        {fields.type && <span className="font-semibold">{fmtType(block.type)}</span>}
                         {fields.type && fields.venue && block.venues.length > 0 && ' · '}
                         {fields.venue && block.venues.length > 0 && block.venues.join(', ')}
                       </div>
@@ -373,6 +380,19 @@ export function TimetableGrid({
                           className="absolute inset-0 h-4 w-4 opacity-0 cursor-pointer"
                         />
                       </label>
+                    )}
+                    {editableColors && !forExport && onRemoveSection && (
+                      <button
+                        type="button"
+                        className="absolute bottom-1 right-1 cursor-pointer"
+                        title="Remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveSection(block.section.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-white/90 drop-shadow" />
+                      </button>
                     )}
                   </div>
                 );
