@@ -79,7 +79,7 @@ export function TimeFilter({ value, onChange, availableDays, dayLabels, t, class
           <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[280px] p-3">
+      <PopoverContent align="start" className="w-[280px] p-3 bg-white dark:bg-gray-900">
         <div className="space-y-3">
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t('timetable.filter.days')}</p>
@@ -250,7 +250,7 @@ export function VenueFilter({ groups, value, onChange, t, className }: VenueFilt
           <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[300px] p-0">
+      <PopoverContent align="start" className="w-[300px] p-0 bg-white dark:bg-gray-900">
         <div className="border-b p-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

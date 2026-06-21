@@ -147,6 +147,67 @@ const SESSION_TYPE_LABELS: Record<string, { 'zh-TW': string; 'zh-CN': string }> 
   SEM: { 'zh-TW': '研討', 'zh-CN': '研讨' },
 };
 
+// Full English name per subject-area code, shown after the code in the subject
+// filter (e.g. "ACT · Accounting"). Intentionally always English regardless of
+// site language (unlike the catalog page's translated subject names).
+const SUBJECT_FULL_NAMES: Record<string, string> = {
+  ACT: 'Accounting',
+  ADA: 'Animation and Digital Arts',
+  ARS: 'Arts',
+  BAI: 'Business Analytics and Innovation',
+  BUS: 'General Business',
+  CCC: 'Common Core',
+  CDS: 'Computing and Data Sciences',
+  CHI: 'Chinese',
+  CLA: 'Creativity and Innovation',
+  CLB: 'Humanities and the Arts',
+  CLC: 'Management and Society',
+  CLD: 'Science, Technology, Mathematics and Society',
+  CLE: 'Values, Cultures and Societies',
+  CMI: 'Creative Media Industries',
+  CRE: 'Creativity',
+  CUS: 'Cultural Studies',
+  ECO: 'Economics',
+  ENG: 'English',
+  FIN: 'Finance',
+  FRE: 'French',
+  FVA: 'Film and Visual Arts',
+  GDS: 'Global Development and Sustainability',
+  GER: 'German',
+  GLA: 'Global Liberal Arts',
+  GOV: 'Government and International Affairs',
+  HRM: 'Human Resource Management',
+  HSM: 'Health and Social Services Management',
+  HST: 'History',
+  ISM: 'Information Systems',
+  JAP: 'Japanese',
+  KOR: 'Korean',
+  LCC: 'Language and Communication - Chinese',
+  LCE: 'Language and Communication - English',
+  LUE: 'Lingnan University English',
+  MGT: 'Management',
+  MKT: 'Marketing',
+  MPA: 'Music and Performing Arts',
+  ORM: 'Operations and Risk Management',
+  PAI: 'Philosophy and Artificial Intelligence',
+  PHI: 'Philosophy',
+  PMS: 'Public Management and Smart Governance',
+  POL: 'Political Science',
+  PSY: 'Psychology',
+  RIM: 'Risk and Insurance Management',
+  RUS: 'Russian',
+  SCE: 'Sports Coaching and Event Management',
+  SCI: 'Science',
+  SDA: 'Social Data Science',
+  SLP: 'Service Learning Programmes',
+  SOC: 'Sociology',
+  SPA: 'Spanish',
+  SSC: 'Social Sciences',
+  TRA: 'Translation',
+  VIS: 'Visual Studies',
+  MGSL: 'Service Leadership',
+};
+
 const WEEK_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const DAY_PILL_LABEL: Record<string, string> = {
   MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun',
@@ -1701,13 +1762,17 @@ const Timetable = () => {
                     }}
                   >
                     <SelectTrigger className="h-9 w-auto min-w-[110px]">
-                      <SelectValue placeholder={t('timetable.filter.subject')} />
+                      {/* Trigger shows just the code (or "All subjects"); the full
+                          English name only appears in the dropdown items. */}
+                      <span className="truncate">
+                        {subjectArea === 'all' ? t('timetable.filter.allSubjects') : subjectArea}
+                      </span>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('timetable.filter.allSubjects')}</SelectItem>
                       {subjectAreaOptions.map((sa) => (
                         <SelectItem key={sa} value={sa}>
-                          {sa}
+                          {SUBJECT_FULL_NAMES[sa] ? `${sa} · ${SUBJECT_FULL_NAMES[sa]}` : sa}
                         </SelectItem>
                       ))}
                     </SelectContent>
