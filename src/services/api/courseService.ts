@@ -1,6 +1,6 @@
 import { tablesDB, functions } from '@/lib/appwrite';
 import { Query } from 'appwrite';
-import { getCurrentTermCode, setTermDates } from '@/utils/dateUtils';
+import { getCurrentTermCode, setTermDates, compareTermCodesDesc } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA, isReviewRetryFailGrade } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
 import { expandRecordsByInstructorName, splitInstructorNames, instructorNameMatches } from '@/utils/instructorNameUtils';
@@ -1971,6 +1971,9 @@ export class CourseService {
       );
 
       const terms = response.rows as unknown as Term[];
+      // 以時序（新到舊）排序：暑期是該學年最晚的學期，需排在 Term 2 之前。
+      // 不能依賴 DB 的 orderDesc('term_code') 字串排序，因為 'S' < 'T' 會把暑期錯排到最後。
+      terms.sort((a, b) => compareTermCodesDesc(a.term_code, b.term_code));
       // 以資料庫的實際學期日期更新「當前學期」判斷的快取
       setTermDates(terms);
       return terms;

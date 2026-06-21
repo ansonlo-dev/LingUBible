@@ -144,6 +144,43 @@ export function getTermDisplayName(termCode: string, t?: any): string {
 }
 
 /**
+ * 將學期代碼解析為可比較的時序值。
+ * 同一學年內的順序：Term 1 → Term 2 → Summer（暑期為該學年最晚的學期）。
+ */
+function getTermSortKey(termCode: string): number {
+  const parts = (termCode || '').split('-');
+  if (parts.length !== 2) return -Infinity;
+
+  const year = parseInt(parts[0]);
+  if (Number.isNaN(year)) return -Infinity;
+
+  let termOrder = 0;
+  switch (parts[1]) {
+    case 'T1':
+      termOrder = 1;
+      break;
+    case 'T2':
+      termOrder = 2;
+      break;
+    case 'S':
+    case 'Summer':
+      termOrder = 3;
+      break;
+  }
+
+  return year * 10 + termOrder;
+}
+
+/**
+ * 以時序（新到舊）比較兩個學期代碼。
+ * 注意：不可用字串排序，因為 'S' < 'T'，會把暑期錯排在 Term 1/2 之後，
+ * 但暑期其實是該學年最晚的學期，應排在 Term 2 之前（更新）。
+ */
+export function compareTermCodesDesc(a: string, b: string): number {
+  return getTermSortKey(b) - getTermSortKey(a);
+}
+
+/**
  * 確定學期狀態（當前、過去或未來）
  */
 export function getTermStatus(termCode: string): 'current' | 'past' | 'future' {
