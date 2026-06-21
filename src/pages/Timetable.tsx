@@ -69,6 +69,7 @@ import {
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
 const EXPORT_OPTS_KEY = 'timetable.exportOptions';
+const CUSTOM_TITLES_KEY = 'timetable.customTitles';
 const MAX_RESULTS = 80;
 
 interface ExportOptions {
@@ -89,7 +90,6 @@ interface ExportOptions {
   // is remembered here so it survives the auto include/exclude based on lessons.
   weekendInclude: Record<string, boolean>;
   firstDay: 'sun' | 'mon';
-  customTitle: string;
   customColors: Record<string, string>;
   // Export-only options
   resolution: 'low' | 'standard' | 'high';
@@ -120,7 +120,6 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
   weekendInclude: {},
   firstDay: 'mon',
-  customTitle: '',
   customColors: {},
   resolution: 'standard',
   theme: 'light',
@@ -350,6 +349,28 @@ const Timetable = () => {
     }
   }, [exportOptions]);
 
+  // Custom timetable titles are remembered per term, so switching terms restores
+  // that term's own title (or falls back to the term name) instead of leaking the
+  // previous term's custom title.
+  const [customTitles, setCustomTitles] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem(CUSTOM_TITLES_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(CUSTOM_TITLES_KEY, JSON.stringify(customTitles));
+    } catch {
+      /* ignore */
+    }
+  }, [customTitles]);
+  const setCustomTitle = (title: string) =>
+    setCustomTitles((prev) => ({ ...prev, [termId]: title }));
+
   // Collapsible filter/results panel (default expanded). Persisted across visits.
   const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
     try {
@@ -365,6 +386,32 @@ const Timetable = () => {
       /* ignore */
     }
   }, [panelCollapsed]);
+
+  // The results list no longer matches the timetable's height exactly. Instead it
+  // gets a minimum height equal to the tallest it can be without forcing the page
+  // to scroll, so users can browse more results even when only a few sections are
+  // selected (a short timetable). Desktop only; recomputed on resize/layout.
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [resultsMinH, setResultsMinH] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const recompute = () => {
+      const el = resultsRef.current;
+      if (!el || panelCollapsed || window.innerWidth < 1024) {
+        setResultsMinH(undefined);
+        return;
+      }
+      const docTop = el.getBoundingClientRect().top + window.scrollY;
+      const h = Math.round(window.innerHeight - docTop - 16);
+      setResultsMinH(h > 240 ? h : undefined);
+    };
+    recompute();
+    const raf = requestAnimationFrame(recompute);
+    window.addEventListener('resize', recompute);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', recompute);
+    };
+  }, [panelCollapsed, loading, error]);
 
   useEffect(() => {
     let active = true;
@@ -595,7 +642,8 @@ const Timetable = () => {
   const setCourseColor = (courseCode: string, color: string) =>
     setOpt({ customColors: { ...exportOptions.customColors, [courseCode]: color } });
 
-  const displayTitle = exportOptions.customTitle.trim() ? exportOptions.customTitle : term.name;
+  const customTitle = customTitles[termId] ?? '';
+  const displayTitle = customTitle.trim() ? customTitle : term.name;
 
   // Dropdown-only label: append the Chinese name on zh sites, e.g. "LEC (講課)".
   // Search results and the timetable keep the raw English code.
@@ -900,7 +948,11 @@ const Timetable = () => {
             {/* On desktop the inner list is absolutely positioned so its content
                 doesn't drive the column height — the timetable column does — letting
                 the results area match the timetable's height and scroll within it. */}
-            <div className="relative lg:flex-1 lg:min-h-0">
+            <div
+              ref={resultsRef}
+              className="relative lg:flex-1 lg:min-h-0"
+              style={resultsMinH ? { minHeight: resultsMinH } : undefined}
+            >
               <div className="space-y-2 max-h-[60vh] lg:max-h-none lg:absolute lg:inset-0 overflow-y-auto pr-1 timetable-scroll">
                 {/* Pinned: currently-selected sections, always visible at the top */}
                 {selectedSections.length > 0 && (
@@ -946,8 +998,8 @@ const Timetable = () => {
                 <>
                   <Select value={termId} onValueChange={setTermId}>
                     <SelectTrigger className="h-9 w-auto min-w-[90px]">
-                      {/* Always show the generic "Terms" label, not the picked term. */}
-                      <span className="truncate">{t('timetable.filter.term')}</span>
+                      {/* Show the picked term's short form (e.g. "2425-T1"). */}
+                      <span className="truncate">{term.short}</span>
                     </SelectTrigger>
                     <SelectContent>
                       {TERMS.map((tm) => (
@@ -1399,12 +1451,12 @@ const Timetable = () => {
                     value={titleDraft}
                     onChange={(e) => setTitleDraft(e.target.value)}
                     onBlur={() => {
-                      setOpt({ customTitle: titleDraft.trim() });
+                      setCustomTitle(titleDraft.trim());
                       setEditingTitle(false);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        setOpt({ customTitle: titleDraft.trim() });
+                        setCustomTitle(titleDraft.trim());
                         setEditingTitle(false);
                       } else if (e.key === 'Escape') {
                         setEditingTitle(false);

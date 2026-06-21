@@ -744,7 +744,7 @@ export default {
   'timetable.loading': '正在加载授课记录…',
   'timetable.error': '无法加载时间表数据。',
   'timetable.searchPlaceholder': '搜索课程代码、名称、讲师或 CRN…',
-  'timetable.smartSearch': '智能搜索',
+  'timetable.smartSearch': 'CRN/课程/讲师',
   'timetable.filter.subject': '科目',
   'timetable.filter.allSubjects': '科目',
   'timetable.filter.course': '课程',

@@ -23,6 +23,8 @@ export interface TimetableTerm {
   id: string;
   /** Display name shown as the timetable title (e.g. "2024–25 Term 2"). */
   name: string;
+  /** Compact label for the dropdown trigger (e.g. "2425-T1", "2425-S"). */
+  short: string;
   csvUrl: string;
 }
 
@@ -30,11 +32,11 @@ export interface TimetableTerm {
 // data folder), so add a row here for every CSV you want to appear. Keep each
 // term's `id` stable — it keys that term's saved timetable in localStorage.
 export const TERMS: TimetableTerm[] = [
-  { id: '2024-25-t1', name: '2024–25 Term 1', csvUrl: '/data/2024-T1.csv' },
-  { id: '2024-25-t2', name: '2024–25 Term 2', csvUrl: '/data/2024-T2.csv' },
-  { id: '2024-25-s', name: '2024–25 Summer Term', csvUrl: '/data/2024-S.csv' },
-  { id: '2025-26-t1', name: '2025–26 Term 1', csvUrl: '/data/2025-T1.csv' },
-  { id: '2025-26-t2', name: '2025–26 Term 2', csvUrl: '/data/2025-T2.csv' }
+  { id: '2024-25-t1', name: '2024–25 Term 1', short: '2425-T1', csvUrl: '/data/2024-T1.csv' },
+  { id: '2024-25-t2', name: '2024–25 Term 2', short: '2425-T2', csvUrl: '/data/2024-T2.csv' },
+  { id: '2024-25-s', name: '2024–25 Summer Term', short: '2425-S', csvUrl: '/data/2024-S.csv' },
+  { id: '2025-26-t1', name: '2025–26 Term 1', short: '2526-T1', csvUrl: '/data/2025-T1.csv' },
+  { id: '2025-26-t2', name: '2025–26 Term 2', short: '2526-T2', csvUrl: '/data/2025-T2.csv' }
 
 ];
 
