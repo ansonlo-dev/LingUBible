@@ -9,6 +9,7 @@ import {
   TERMS,
   type TimetableSection,
 } from '@/services/timetableService';
+import { buildTimetableIcs } from '@/services/timetableIcs';
 import {
   TimetableGrid,
   DEFAULT_BLOCK_FIELDS,
@@ -86,6 +87,9 @@ interface ExportOptions {
   // Export-only options
   resolution: 'low' | 'standard' | 'high';
   theme: 'light' | 'dark';
+  // .ics calendar export date range ("YYYY-MM-DD").
+  icsStart: string;
+  icsEnd: string;
 }
 
 const RESOLUTION_SCALE: Record<ExportOptions['resolution'], number> = {
@@ -113,6 +117,8 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   customColors: {},
   resolution: 'standard',
   theme: 'light',
+  icsStart: '',
+  icsEnd: '',
 };
 
 const SESSION_TYPE_LABELS: Record<string, { 'zh-TW': string; 'zh-CN': string }> = {
@@ -388,7 +394,7 @@ const Timetable = () => {
 
   const filtered = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
-    return allSections.filter((s) => {
+    const result = allSections.filter((s) => {
       if (subjectArea !== 'all' && codePrefix(s.courseCode) !== subjectArea) return false;
       if (courseCode && s.courseCode !== courseCode) return false;
       if (instructor && !s.instructors.includes(instructor)) return false;
@@ -400,6 +406,19 @@ const Timetable = () => {
       }
       return true;
     });
+    // Rank CRN matches first (exact > prefix > substring), so e.g. searching
+    // "22" surfaces sections with that CRN before course-code matches like ACT2200.
+    if (term) {
+      const crnRank = (s: TimetableSection) => {
+        const crn = String(s.crn).toLowerCase();
+        if (crn === term) return 0;
+        if (crn.startsWith(term)) return 1;
+        if (crn.includes(term)) return 2;
+        return 3;
+      };
+      result.sort((a, b) => crnRank(a) - crnRank(b));
+    }
+    return result;
   }, [allSections, debouncedSearch, subjectArea, courseCode, instructor, type, day]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -543,6 +562,25 @@ const Timetable = () => {
       });
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportIcs = () => {
+    const { icsStart, icsEnd } = exportOptions;
+    if (!icsStart || !icsEnd || selectedSections.length === 0) return;
+    try {
+      const ics = buildTimetableIcs(selectedSections, icsStart, icsEnd, displayTitle);
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(displayTitle || term.name).replace(/[^\w-]+/g, '_')}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: t('timetable.exportError'), variant: 'destructive' });
     }
   };
 
@@ -1104,7 +1142,7 @@ const Timetable = () => {
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 bg-white dark:bg-gray-900 space-y-3">
+                  <PopoverContent align="end" className="w-80 bg-white dark:bg-gray-900 space-y-3">
                     <div className="space-y-1">
                       <Label className="text-sm">{t('timetable.opt.theme')}</Label>
                       <OptionToggle
@@ -1150,6 +1188,46 @@ const Timetable = () => {
                           {t('timetable.exportPdf')}
                         </Button>
                       </div>
+                    </div>
+                    {/* Calendar (.ics) — recurring weekly events over a custom date range. */}
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">{t('timetable.exportIcs')}</Label>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">{t('timetable.icsStart')}</Label>
+                          <Input
+                            type="date"
+                            value={exportOptions.icsStart}
+                            onChange={(e) => setOpt({ icsStart: e.target.value })}
+                            className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">{t('timetable.icsEnd')}</Label>
+                          <Input
+                            type="date"
+                            value={exportOptions.icsEnd}
+                            min={exportOptions.icsStart || undefined}
+                            onChange={(e) => setOpt({ icsEnd: e.target.value })}
+                            className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={
+                          selectedSections.length === 0 ||
+                          !exportOptions.icsStart ||
+                          !exportOptions.icsEnd ||
+                          exportOptions.icsEnd < exportOptions.icsStart
+                        }
+                        onClick={handleExportIcs}
+                      >
+                        <CalendarDays className="h-4 w-4 mr-1" />
+                        {t('timetable.exportIcs')}
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>
