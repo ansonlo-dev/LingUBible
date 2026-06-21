@@ -66,6 +66,7 @@ import { HybridMarkdownEditor } from '@/components/ui/hybrid-markdown-editor';
 import { renderCommentMarkdown, hasMarkdownFormatting } from '@/utils/ui/markdownRenderer';
 import { validateWordCount } from '@/utils/textUtils';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
+import { getTermStatus } from '@/utils/dateUtils';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { StarRating as UIStarRating } from '@/components/ui/star-rating';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
@@ -1496,7 +1497,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Batch load terms using cache
         const termsMap = await batchLoadTerms(termCodes);
         
-        const validTerms = Array.from(termsMap.values());
+        // 只允許評價過去的學期：排除當前及未來學期
+        const validTerms = Array.from(termsMap.values()).filter(
+          term => getTermStatus(term.term_code) === 'past'
+        );
         const sortedTerms = validTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
         setTerms(sortedTerms);
         
