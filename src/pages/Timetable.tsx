@@ -4,6 +4,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import {
   loadTimetableSections,
   findConflicts,
+  meetingsOverlap,
   DAY_ORDER,
   TERMS,
   type TimetableSection,
@@ -317,6 +318,7 @@ const Timetable = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [pendingExport, setPendingExport] = useState<'png' | 'pdf' | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
     const siteDark =
@@ -692,6 +694,15 @@ const Timetable = () => {
     setDay('all');
   };
 
+  // True if adding this section would clash (time-overlap) with the current
+  // selection. Used to warn in the results list; users may still add it.
+  const conflictsWithSelection = (s: TimetableSection) =>
+    selectedSections.some(
+      (sel) =>
+        sel.id !== s.id &&
+        sel.meetings.some((m) => s.meetings.some((sm) => meetingsOverlap(m, sm))),
+    );
+
   const renderResultItem = (s: TimetableSection) => {
     const added = selectedSet.has(s.id);
     const color = colorMap.get(s.id);
@@ -700,6 +711,10 @@ const Timetable = () => {
     const fg = added ? blockTextColor(color || '', exportOptions.textColor) : undefined;
     const lightBg = added && fg === '#000000';
     const hoverOverlay = lightBg ? 'hover:bg-black/10' : 'hover:bg-white/20';
+    // Flag time clashes: for added items reuse the computed conflict set; for
+    // results, check against the current selection (so users see the warning
+    // before adding). A red border marks it — adding is still allowed.
+    const conflicts = added ? conflictIds.has(s.id) : conflictsWithSelection(s);
     // Combined session type + section number, matching the timetable blocks (e.g. "LEC1").
     const typeNumber = `${s.types.join('/')}${s.section}`;
     return (
@@ -715,10 +730,10 @@ const Timetable = () => {
             toggleSection(s.id);
           }
         }}
-        title={added ? t('timetable.remove') : t('timetable.add')}
+        title={added ? t('timetable.remove') : conflicts ? t('timetable.conflictAddHint') : t('timetable.add')}
         className={`relative rounded-lg border p-3 cursor-pointer transition-colors ${
-          added ? 'border-transparent' : 'hover:bg-accent/40'
-        }`}
+          conflicts ? 'border-2 border-red-500' : added ? 'border-transparent' : ''
+        } ${added ? '' : 'hover:bg-accent/40'}`}
         style={added ? { backgroundColor: color, color: fg } : undefined}
       >
         {/* Top-right: session type + number badge (same look as the timetable blocks) */}
@@ -1334,7 +1349,7 @@ const Timetable = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => commitSelection([])}
+                  onClick={() => setConfirmClear(true)}
                   disabled={selectedSections.length === 0}
                   title={t('timetable.clearAll')}
                   className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
@@ -1457,6 +1472,28 @@ const Timetable = () => {
               }}
             >
               {t('timetable.exportAnyway')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm before clearing the whole timetable (guards an accidental tap) */}
+      <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('timetable.clearConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('timetable.clearConfirmDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('timetable.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                commitSelection([]);
+                setConfirmClear(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('timetable.clearAll')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -428,8 +428,9 @@ export function TimetableGrid({
                       width: `calc(${widthPct}% - 4px)`,
                       backgroundColor: bg,
                       color: fg,
-                      outline: isConflict ? '2px solid #ef4444' : undefined,
-                      outlineOffset: isConflict ? '-2px' : undefined,
+                      outline: isConflict ? '3px solid #ef4444' : undefined,
+                      outlineOffset: isConflict ? '-3px' : undefined,
+                      boxShadow: isConflict ? '0 0 0 1px #ef4444' : undefined,
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
