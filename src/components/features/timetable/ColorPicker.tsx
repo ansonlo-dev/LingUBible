@@ -53,9 +53,6 @@ export function ColorPicker({ value, onChange, className, iconClassName }: Color
         align="end"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="mb-2 text-xs font-medium text-muted-foreground">
-          {t('timetable.opt.presetColors')}
-        </p>
         <div className="space-y-1.5">
           {CATPPUCCIN_PALETTE.map(({ variant, colors }) => (
             <div key={variant}>
