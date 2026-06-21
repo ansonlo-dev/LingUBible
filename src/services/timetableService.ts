@@ -38,8 +38,8 @@ export const TERMS: TimetableTerm[] = [
   { id: '2024-25-t2', name: '2024–25 Term 2', short: '2425-T2', csvUrl: '/data/2024-T2.csv' },
   { id: '2024-25-s', name: '2024–25 Summer Term', short: '2425-S', csvUrl: '/data/2024-S.csv', summer: true },
   { id: '2025-26-t1', name: '2025–26 Term 1', short: '2526-T1', csvUrl: '/data/2025-T1.csv' },
-  { id: '2025-26-t2', name: '2025–26 Term 2', short: '2526-T2', csvUrl: '/data/2025-T2.csv' }
-
+  { id: '2025-26-t2', name: '2025–26 Term 2', short: '2526-T2', csvUrl: '/data/2025-T2.csv' },
+  { id: '2025-26-s', name: '2025–26 Summer Term', short: '2526-S', csvUrl: '/data/2025-S.csv', summer: true }
 ];
 
 /** A single scheduled meeting (one day/time/venue) of a section. */
@@ -180,11 +180,19 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
     instructorEmail: col('instructor email'),
   };
 
-  // Parse a "DD/MM/YYYY" date into ISO "YYYY-MM-DD" (returns undefined if blank).
+  // Parse a date into ISO "YYYY-MM-DD" (returns undefined if blank/unparseable).
+  // Handles both formats seen across the term exports, with "/" or "-" separators:
+  //   • day-first:  "27/05/2025" (DD/MM/YYYY)  — e.g. 2024-S.csv
+  //   • year-first: "2026/5/26"  (YYYY/M/D)    — e.g. 2025-S.csv
   const parseDmy = (raw: string): string | undefined => {
-    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((raw || '').trim());
-    if (!m) return undefined;
-    return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+    const s = (raw || '').trim();
+    // Year-first: YYYY/MM/DD or YYYY-MM-DD.
+    let m = /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/.exec(s);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    // Day-first: DD/MM/YYYY or DD-MM-YYYY.
+    m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/.exec(s);
+    if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+    return undefined;
   };
 
   const rows = lines.slice(1);
