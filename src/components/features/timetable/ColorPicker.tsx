@@ -5,28 +5,30 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 
 /**
- * Common preset colours so most users can pick a colour with one tap instead of
- * fiddling with the exact hex picker. Chosen to be visually distinct and to read
- * well with the dynamic light/dark text colour. Power users who want an exact
- * colour still get the native colour picker below the presets.
+ * Preset swatches from the Catppuccin palette (https://catppuccin.com/palette).
+ * Four variants (Latte → Mocha, light → dark), each with the same 10 distinct
+ * rainbow accents in spectrum order, so most users can pick a pleasant colour
+ * with one tap. Power users who want an exact colour still get the native colour
+ * picker below the presets.
  */
-export const PRESET_COLORS: string[] = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#f59e0b', // amber
-  '#eab308', // yellow
-  '#84cc16', // lime
-  '#22c55e', // green
-  '#10b981', // emerald
-  '#14b8a6', // teal
-  '#06b6d4', // cyan
-  '#3b82f6', // blue
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
-  '#a855f7', // purple
-  '#d946ef', // fuchsia
-  '#ec4899', // pink
-  '#78716c', // stone
+export const CATPPUCCIN_PALETTE: { variant: string; colors: string[] }[] = [
+  {
+    variant: 'Latte',
+    // red, maroon, peach, yellow, green, teal, sky, blue, mauve, pink
+    colors: ['#d20f39', '#e64553', '#fe640b', '#df8e1d', '#40a02b', '#179299', '#04a5e5', '#1e66f5', '#8839ef', '#ea76cb'],
+  },
+  {
+    variant: 'Frappé',
+    colors: ['#e78284', '#ea999c', '#ef9f76', '#e5c890', '#a6d189', '#81c8be', '#99d1db', '#8caaee', '#ca9ee6', '#f4b8e4'],
+  },
+  {
+    variant: 'Macchiato',
+    colors: ['#ed8796', '#ee99a0', '#f5a97f', '#eed49f', '#a6da95', '#8bd5ca', '#91d7e3', '#8aadf4', '#c6a0f6', '#f5bde6'],
+  },
+  {
+    variant: 'Mocha',
+    colors: ['#f38ba8', '#eba0ac', '#fab387', '#f9e2af', '#a6e3a1', '#94e2d5', '#89dceb', '#89b4fa', '#cba6f7', '#f5c2e7'],
+  },
 ];
 
 interface ColorPickerProps {
@@ -63,28 +65,37 @@ export function ColorPicker({ value, onChange, className, iconClassName }: Color
         <p className="mb-2 text-xs font-medium text-muted-foreground">
           {t('timetable.opt.presetColors')}
         </p>
-        <div className="grid grid-cols-8 gap-1.5">
-          {PRESET_COLORS.map((c) => {
-            const selected = c.toLowerCase() === current;
-            return (
-              <button
-                key={c}
-                type="button"
-                className={cn(
-                  'flex h-6 w-6 items-center justify-center rounded-full border border-black/10 transition-transform hover:scale-110',
-                  selected && 'ring-2 ring-foreground ring-offset-1 ring-offset-popover',
-                )}
-                style={{ backgroundColor: c }}
-                title={c}
-                onClick={() => {
-                  onChange(c);
-                  setOpen(false);
-                }}
-              >
-                {selected && <Check className="h-3.5 w-3.5 text-white drop-shadow" />}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          {CATPPUCCIN_PALETTE.map(({ variant, colors }) => (
+            <div key={variant}>
+              <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                {variant}
+              </p>
+              <div className="grid grid-cols-10 gap-1.5">
+                {colors.map((c) => {
+                  const selected = c.toLowerCase() === current;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      className={cn(
+                        'flex h-6 w-6 items-center justify-center rounded-full border border-black/10 transition-transform hover:scale-110',
+                        selected && 'ring-2 ring-foreground ring-offset-1 ring-offset-popover',
+                      )}
+                      style={{ backgroundColor: c }}
+                      title={`${variant} · ${c}`}
+                      onClick={() => {
+                        onChange(c);
+                        setOpen(false);
+                      }}
+                    >
+                      {selected && <Check className="h-3.5 w-3.5 text-white drop-shadow" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
         <label className="mt-3 flex cursor-pointer items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
           <span
