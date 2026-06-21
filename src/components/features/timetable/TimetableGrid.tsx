@@ -310,6 +310,17 @@ export function TimetableGrid({
   const sz = forExport
     ? { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', gutter: 'text-[15px] font-bold', header: 'text-xl font-bold', headerH: 'h-14', hours: 'text-[13px] font-semibold', badge: 'text-[13px] font-bold' }
     : { code: 'text-[15px] font-bold', title: 'text-[14px] font-semibold', meta: 'text-[12px] font-medium', pad: 'px-2 py-1.5', gutter: 'text-[12px] font-semibold', header: 'text-sm font-semibold', headerH: 'h-10', hours: 'text-[10px] font-medium', badge: 'text-[10px] font-bold' };
+  // Per-block text sizing. Short blocks (e.g. 1-hour slots) can't fit every
+  // field at full size, so they fall back to a compact tier — smaller fonts,
+  // tighter spacing and single-line clamps — so the time line isn't clipped.
+  const blockSizes = (compact: boolean) =>
+    forExport
+      ? compact
+        ? { code: 'text-[15px] font-extrabold', title: 'text-[14px] font-bold', meta: 'text-[12px] font-semibold', pad: 'px-2 py-1', badge: 'text-[11px] font-bold', gap: 'mt-0.5', clamp: 'line-clamp-1', codePr: 'pr-12' }
+        : { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', badge: 'text-[13px] font-bold', gap: 'mt-1', clamp: 'line-clamp-2', codePr: 'pr-14' }
+      : compact
+        ? { code: 'text-[12px] font-bold', title: 'text-[11px] font-semibold', meta: 'text-[10px] font-medium', pad: 'px-1.5 py-0.5', badge: 'text-[9px] font-bold', gap: 'mt-0', clamp: 'line-clamp-1', codePr: 'pr-8' }
+        : { code: 'text-[15px] font-bold', title: 'text-[14px] font-semibold', meta: 'text-[12px] font-medium', pad: 'px-2 py-1.5', badge: 'text-[10px] font-bold', gap: 'mt-1', clamp: 'line-clamp-2', codePr: 'pr-9' };
   const iconSz = forExport ? 'h-4 w-4' : 'h-3 w-3';
   const hours: number[] = [];
   for (let h = startHour; h <= endHour; h++) hours.push(h);
@@ -417,10 +428,14 @@ export function TimetableGrid({
                 const fg = blockTextColor(bg, textColor);
                 const badgeBg = fg === '#ffffff' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.4)';
                 const badgeText = `${fields.type ? block.type : ''}${fields.number ? block.section.section : ''}`;
+                // Compact tier for short blocks so all fields (incl. the time)
+                // still fit without being clipped.
+                const compact = height < (forExport ? 150 : 84);
+                const b = blockSizes(compact);
                 return (
                   <div
                     key={`${block.section.id}-${idx}`}
-                    className={`absolute rounded-md ${sz.pad} overflow-hidden shadow-sm`}
+                    className={`absolute rounded-md ${b.pad} overflow-hidden shadow-sm`}
                     style={{
                       top,
                       height,
@@ -437,37 +452,37 @@ export function TimetableGrid({
                     {/* Session type + section number, e.g. "LEC9" / "TUT11" */}
                     {badgeText && (
                       <div
-                        className={`absolute top-1 right-1 ${sz.badge} rounded px-1 py-0.5 leading-none`}
+                        className={`absolute top-1 right-1 ${b.badge} rounded px-1 py-0.5 leading-none`}
                         style={{ backgroundColor: badgeBg, color: fg }}
                       >
                         {badgeText}
                       </div>
                     )}
                     {fields.code && (
-                      <div className={`${sz.code} leading-tight truncate ${forExport ? 'pr-14' : 'pr-9'}`}>
+                      <div className={`${b.code} leading-tight truncate ${b.codePr}`}>
                         {block.section.courseCode}
                       </div>
                     )}
                     {fields.title && (
-                      <div className={`${sz.title} leading-tight opacity-95 dark:opacity-100 line-clamp-2`}>
+                      <div className={`${b.title} leading-tight opacity-95 dark:opacity-100 ${b.clamp}`}>
                         {block.section.courseTitle}
                       </div>
                     )}
                     {/* Session type lives in the top-right badge; show only the venue here. */}
                     {fields.venue && block.venues.length > 0 && (
-                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1.5 flex items-start gap-1`}>
+                      <div className={`${b.meta} leading-tight opacity-90 dark:opacity-100 ${b.gap} flex items-start gap-1`}>
                         {showIcons && <MapPin className={`${iconSz} shrink-0 mt-[1px]`} />}
                         <span className="min-w-0">{block.venues.join(', ')}</span>
                       </div>
                     )}
                     {fields.instructor && block.section.instructors.length > 0 && (
-                      <div className={`${sz.meta} leading-tight opacity-90 dark:opacity-100 mt-1 flex items-start gap-1`}>
+                      <div className={`${b.meta} leading-tight opacity-90 dark:opacity-100 ${b.gap} flex items-start gap-1`}>
                         {showIcons && <GraduationCap className={`${iconSz} shrink-0 mt-[1px]`} />}
-                        <span className="min-w-0 line-clamp-2">{block.section.instructors.join(', ')}</span>
+                        <span className={`min-w-0 ${b.clamp}`}>{block.section.instructors.join(', ')}</span>
                       </div>
                     )}
                     {fields.time && (
-                      <div className={`${sz.meta} leading-tight opacity-80 dark:opacity-100 mt-1 flex items-center gap-1`}>
+                      <div className={`${b.meta} leading-tight opacity-80 dark:opacity-100 ${b.gap} flex items-center gap-1`}>
                         {showIcons && <Clock className={`${iconSz} shrink-0`} />}
                         <span className="truncate">
                           {formatTime(block.start, use24Hour)}–{formatTime(block.end, use24Hour)}

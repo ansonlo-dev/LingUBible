@@ -670,7 +670,7 @@ export default {
   'nav.timetable': '時間表',
   // 時間表規劃工具
   'timetable.title': '時間表規劃',
-  'timetable.subtitle': '搜尋授課紀錄，編排出滿意的每週上課時間表。',
+  'timetable.subtitle': '搜尋授課紀錄，編排出滿意的每週上課時間表',
   'timetable.loading': '正在載入授課紀錄…',
   'timetable.error': '無法載入時間表資料。',
   'timetable.searchPlaceholder': '搜尋課程代碼、名稱、講師或 CRN…',
