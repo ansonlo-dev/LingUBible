@@ -19,8 +19,9 @@ export function getCurrentTermCode(): string {
     // 1-5月屬於上一年開始的學年的 Term 2
     return `${year - 1}-T2`;
   } else {
-    // 6-8月屬於暑期，通常課程較少，歸類為當年的夏季學期
-    return `${year}-Summer`;
+    // 6-8月屬於暑期。暑期學期屬於「前一年9月開始」的學年，
+    // 與 Term 2 一樣以該學年的起始年份命名（例如 2026 年 6-8 月屬於 2025-26 學年）
+    return `${year - 1}-Summer`;
   }
 }
 
