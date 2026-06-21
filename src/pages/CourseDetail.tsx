@@ -344,7 +344,7 @@ const renderTextWithCourseLinks = (
         <Link
           key={`code-${key++}`}
           to={`/courses/${code}`}
-          className="text-primary hover:underline underline-offset-2 transition-colors"
+          className="text-red-600 dark:text-red-400 hover:underline underline-offset-2 transition-colors"
         >
           {inner}
         </Link>,
