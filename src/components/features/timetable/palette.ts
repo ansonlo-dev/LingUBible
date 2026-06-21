@@ -18,22 +18,26 @@ export const CATPPUCCIN_PALETTE: { variant: string; colors: string[] }[] = [
 const LATTE = CATPPUCCIN_PALETTE[0].colors;
 const MOCHA = CATPPUCCIN_PALETTE[1].colors;
 
-// Indices of the 7 accents auto-assigned to new courses, in order:
-// red, peach, yellow, green, teal, blue, mauve.
-const DEFAULT_INDICES = [0, 2, 3, 4, 5, 7, 8];
-const LATTE_DEFAULTS = DEFAULT_INDICES.map((i) => LATTE[i]);
-const MOCHA_DEFAULTS = DEFAULT_INDICES.map((i) => MOCHA[i]);
+// Order accents are auto-assigned to new courses (indices into a variant's 10):
+// red, peach, yellow, green, teal, blue, mauve, maroon, sky, pink.
+const DEFAULT_INDICES = [0, 2, 3, 4, 5, 7, 8, 1, 6, 9];
 
 const LATTE_SET = new Set(LATTE.map((c) => c.toLowerCase()));
 const MOCHA_SET = new Set(MOCHA.map((c) => c.toLowerCase()));
 
 /**
- * Default colour for the Nth-added course. The variant contrasts the site theme
- * so blocks stand out: dark theme → Latte (dark accents), light theme → Mocha
- * (light accents). Cycles through the 7 default accents.
+ * Default colour for the Nth-added course. The primary variant contrasts the
+ * site theme so blocks stand out: dark theme → Latte (dark accents), light
+ * theme → Mocha (light accents). The first 10 use that variant in spectrum
+ * order, the next 10 the other variant in the same order, then it cycles.
  */
 export function defaultCourseColor(index: number, dark: boolean): string {
-  const seq = dark ? LATTE_DEFAULTS : MOCHA_DEFAULTS;
+  const primary = dark ? LATTE : MOCHA;
+  const other = dark ? MOCHA : LATTE;
+  const seq = [
+    ...DEFAULT_INDICES.map((i) => primary[i]),
+    ...DEFAULT_INDICES.map((i) => other[i]),
+  ];
   return seq[((index % seq.length) + seq.length) % seq.length];
 }
 
