@@ -507,11 +507,17 @@ export function TimetableGrid({
                         )}
                       </div>
                     )}
-                    {fields.code && (
+                    {fields.code ? (
                       <div className={`${b.code} leading-tight truncate ${codePr}`}>
                         {block.section.courseCode}
                       </div>
-                    )}
+                    ) : (creditText || badgeText) ? (
+                      // Course code hidden: keep its first-row space so the title
+                      // (now the first line) doesn't slide under the top-right badges.
+                      <div className={`${b.code} leading-tight`} aria-hidden>
+                        &nbsp;
+                      </div>
+                    ) : null}
                     {fields.title && (
                       <div className={`${b.title} leading-tight opacity-95 dark:opacity-100 ${b.clamp}`}>
                         {block.section.courseTitle}
