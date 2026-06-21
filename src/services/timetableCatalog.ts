@@ -21,7 +21,9 @@ export interface TimetableCatalog {
   instructors: Record<string, { tc?: string; sc?: string; nickname?: string }>;
 }
 
-const CATALOG_KEY = 'timetable_catalog_v1';
+// v2: added per-course `credits` to the distilled catalog. Bumping the key
+// invalidates the old (creditless) cached copy so it re-distills.
+const CATALOG_KEY = 'timetable_catalog_v2';
 const CATALOG_TTL = 24 * 60 * 60 * 1000; // 24h
 
 /** Normalise an instructor name for matching (trim, collapse spaces, lowercase). */
