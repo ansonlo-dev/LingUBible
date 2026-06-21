@@ -756,6 +756,8 @@ export default {
   'timetable.clearFilters': '清除篩選',
   'timetable.results': '搜尋結果',
   'timetable.chosenSessions': '已選時段',
+  'timetable.summerSession1': '第一節',
+  'timetable.summerSession2': '第二節',
   'timetable.availableSessions': '可選時段',
   'timetable.noChosen': '尚未選擇任何時段',
   'timetable.resultsCount': '{count} 個班別',

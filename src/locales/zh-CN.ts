@@ -826,6 +826,8 @@ export default {
   'timetable.clearFilters': '清除筛选',
   'timetable.results': '搜索结果',
   'timetable.chosenSessions': '已选时段',
+  'timetable.summerSession1': '第一节',
+  'timetable.summerSession2': '第二节',
   'timetable.availableSessions': '可选时段',
   'timetable.noChosen': '尚未选择任何时段',
   'timetable.resultsCount': '{count} 个班别',

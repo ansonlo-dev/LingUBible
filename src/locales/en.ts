@@ -818,6 +818,8 @@ export default {
   'timetable.clearFilters': 'Clear filters',
   'timetable.results': 'Results',
   'timetable.chosenSessions': 'Chosen sessions',
+  'timetable.summerSession1': 'Session 1',
+  'timetable.summerSession2': 'Session 2',
   'timetable.availableSessions': 'Available sessions',
   'timetable.noChosen': 'No sessions chosen yet',
   'timetable.resultsCount': '{count} section(s)',

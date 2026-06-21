@@ -266,8 +266,11 @@ const Timetable = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Term selection (today there is one; the dropdown is future-proofed for more).
-  const [termId, setTermId] = useState(TERMS[0].id);
-  const term = useMemo(() => TERMS.find((tm) => tm.id === termId) ?? TERMS[0], [termId]);
+  // Default to the newest term and list terms newest-first in the dropdown.
+  const [termId, setTermId] = useState(TERMS[TERMS.length - 1].id);
+  const term = useMemo(() => TERMS.find((tm) => tm.id === termId) ?? TERMS[TERMS.length - 1], [termId]);
+  const isSummer = !!term.summer;
+  const termsNewestFirst = useMemo(() => [...TERMS].reverse(), []);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -288,7 +291,7 @@ const Timetable = () => {
     past: string[][];
     present: string[];
     future: string[][];
-  }>(() => ({ past: [], present: loadSelectedIds(TERMS[0].id), future: [] }));
+  }>(() => ({ past: [], present: loadSelectedIds(TERMS[TERMS.length - 1].id), future: [] }));
   const selectedIds = selHistory.present;
   const MAX_HISTORY = 10;
   const sameIds = (a: string[], b: string[]) =>
@@ -331,7 +334,7 @@ const Timetable = () => {
     termIdRef.current = termId;
   }, [termId]);
   const [exporting, setExporting] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
+  const exportPageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [pendingExport, setPendingExport] = useState<'png' | 'pdf' | null>(null);
@@ -676,7 +679,25 @@ const Timetable = () => {
     [filtered, selectedSet],
   );
 
-  const conflictIds = useMemo(() => findConflicts(selectedSections), [selectedSections]);
+  // Summer terms split the selection into two independent sessions (1st / 2nd),
+  // each rendered as its own timetable. A section with no session falls back to 1.
+  const summerSel1 = useMemo(
+    () => selectedSections.filter((s) => (s.summerSession ?? 1) === 1),
+    [selectedSections],
+  );
+  const summerSel2 = useMemo(
+    () => selectedSections.filter((s) => s.summerSession === 2),
+    [selectedSections],
+  );
+
+  // Conflicts are computed within each session (the two sessions never overlap in
+  // real time), then combined for the export-clash warning.
+  const conf1 = useMemo(() => findConflicts(summerSel1), [summerSel1]);
+  const conf2 = useMemo(() => findConflicts(summerSel2), [summerSel2]);
+  const conflictIds = useMemo(
+    () => (isSummer ? new Set<string>([...conf1, ...conf2]) : findConflicts(selectedSections)),
+    [isSummer, conf1, conf2, selectedSections],
+  );
 
   // Auto-manage the weekend columns (SAT/SUN): show one when a selected lesson
   // lands on it, hide it again once none do — unless the user has manually forced
@@ -762,38 +783,43 @@ const Timetable = () => {
   };
 
   const handleExport = async (format: 'png' | 'pdf') => {
-    const node = exportRef.current;
-    if (!node || selectedSections.length === 0) return;
+    // One node per page (summer can have two; otherwise one).
+    const nodes = exportPageRefs.current.filter((n): n is HTMLDivElement => !!n);
+    if (nodes.length === 0 || selectedSections.length === 0) return;
     setExporting(true);
     try {
       const dark = exportOptions.theme === 'dark';
       const bgColor = dark ? '#000000' : '#ffffff';
       const pixelRatio = RESOLUTION_SCALE[exportOptions.resolution];
       const htmlToImage = await import('html-to-image');
-      const imgW = node.scrollWidth;
-      const imgH = node.scrollHeight;
       const safeName = `${term.name.replace(/[^\w一-鿿-]+/g, '_')}_timetable`;
+      const multi = nodes.length > 1;
 
       if (format === 'png') {
-        const dataUrl = await htmlToImage.toPng(node, { pixelRatio, backgroundColor: bgColor, cacheBust: true });
-        const link = document.createElement('a');
-        link.download = `${safeName}.png`;
-        link.href = dataUrl;
-        link.click();
+        // PNG has no pages — export one file per page (suffixed when multiple).
+        for (let i = 0; i < nodes.length; i++) {
+          const dataUrl = await htmlToImage.toPng(nodes[i], { pixelRatio, backgroundColor: bgColor, cacheBust: true });
+          const link = document.createElement('a');
+          link.download = multi ? `${safeName}_S${i + 1}.png` : `${safeName}.png`;
+          link.href = dataUrl;
+          link.click();
+        }
       } else {
         // Use a JPEG (lossy) image + stream compression to keep the PDF small —
-        // a PNG-based PDF can be ~10× larger for the same timetable.
-        const dataUrl = await htmlToImage.toJpeg(node, {
-          pixelRatio,
-          backgroundColor: bgColor,
-          quality: 0.82,
-          cacheBust: true,
-        });
+        // a PNG-based PDF can be ~10× larger for the same timetable. Each page
+        // becomes its own PDF page.
         const { jsPDF } = await import('jspdf');
-        const orientation = imgW >= imgH ? 'landscape' : 'portrait';
-        const pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH], compress: true });
-        pdf.addImage(dataUrl, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
-        pdf.save(`${safeName}.pdf`);
+        let pdf: import('jspdf').jsPDF | null = null;
+        for (const node of nodes) {
+          const imgW = node.scrollWidth;
+          const imgH = node.scrollHeight;
+          const dataUrl = await htmlToImage.toJpeg(node, { pixelRatio, backgroundColor: bgColor, quality: 0.82, cacheBust: true });
+          const orientation = imgW >= imgH ? 'landscape' : 'portrait';
+          if (!pdf) pdf = new jsPDF({ orientation, unit: 'px', format: [imgW, imgH], compress: true });
+          else pdf.addPage([imgW, imgH], orientation);
+          pdf.addImage(dataUrl, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+        }
+        pdf!.save(`${safeName}.pdf`);
       }
     } catch (err) {
       console.error('Timetable export failed:', err);
@@ -853,13 +879,18 @@ const Timetable = () => {
   };
 
   // True if adding this section would clash (time-overlap) with the current
-  // selection. Used to warn in the results list; users may still add it.
-  const conflictsWithSelection = (s: TimetableSection) =>
-    selectedSections.some(
+  // selection. Used to warn in the results list; users may still add it. In
+  // summer terms only same-session selections can clash.
+  const conflictsWithSelection = (s: TimetableSection) => {
+    const pool = isSummer
+      ? selectedSections.filter((x) => (x.summerSession ?? 1) === (s.summerSession ?? 1))
+      : selectedSections;
+    return pool.some(
       (sel) =>
         sel.id !== s.id &&
         sel.meetings.some((m) => s.meetings.some((sm) => meetingsOverlap(m, sm))),
     );
+  };
 
   // Results actually shown: optionally drop the clashing (red-bordered) ones.
   const visibleResults = showConflicts
@@ -970,6 +1001,38 @@ const Timetable = () => {
       </div>
     );
   };
+
+  // A live (on-screen, editable) timetable grid for a given subset of sections.
+  const renderLiveGrid = (sections: TimetableSection[], conflicts: Set<string>) => (
+    <TimetableGrid
+      sections={sections}
+      conflictIds={conflicts}
+      colorMap={colorMap}
+      showSubGrid={exportOptions.showSubGrid}
+      showHours={exportOptions.showHours}
+      textColor={exportOptions.textColor}
+      showIcons={exportOptions.showIcons}
+      use24Hour={exportOptions.timeFormat === '24'}
+      dayFormat={exportOptions.dayFormat}
+      fields={exportOptions.fields}
+      rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
+      rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
+      days={exportOptions.days}
+      firstDay={exportOptions.firstDay}
+      editableColors={panelCollapsed}
+      onColorChange={setCourseColor}
+      onRemoveSection={toggleSection}
+    />
+  );
+
+  // Pages to export: non-summer → one page; summer → one page per session that
+  // actually has lessons (so an empty session is never exported).
+  const exportPages = isSummer
+    ? ([
+        summerSel1.length ? { label: t('timetable.summerSession1'), sections: summerSel1, conflicts: conf1 } : null,
+        summerSel2.length ? { label: t('timetable.summerSession2'), sections: summerSel2, conflicts: conf2 } : null,
+      ].filter(Boolean) as { label: string; sections: TimetableSection[]; conflicts: Set<string> }[])
+    : [{ label: '', sections: selectedSections, conflicts: conflictIds }];
 
   return (
     <div className="mx-auto px-3 lg:px-4 pt-3 pb-8">
@@ -1125,7 +1188,7 @@ const Timetable = () => {
                       <span className="truncate">{term.short}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      {TERMS.map((tm) => (
+                      {termsNewestFirst.map((tm) => (
                         <SelectItem key={tm.id} value={tm.id}>
                           {tm.name}
                         </SelectItem>
@@ -1599,58 +1662,60 @@ const Timetable = () => {
                 )}
               </div>
             )}
-            <TimetableGrid
-              sections={selectedSections}
-              conflictIds={conflictIds}
-              colorMap={colorMap}
-              showSubGrid={exportOptions.showSubGrid}
-              showHours={exportOptions.showHours}
-              textColor={exportOptions.textColor}
-              showIcons={exportOptions.showIcons}
-              use24Hour={exportOptions.timeFormat === '24'}
-              dayFormat={exportOptions.dayFormat}
-              fields={exportOptions.fields}
-              rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
-              rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
-              days={exportOptions.days}
-              firstDay={exportOptions.firstDay}
-              editableColors={panelCollapsed}
-              onColorChange={setCourseColor}
-              onRemoveSection={toggleSection}
-            />
+            {isSummer ? (
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-muted-foreground">{t('timetable.summerSession1')}</p>
+                  {renderLiveGrid(summerSel1, conf1)}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-muted-foreground">{t('timetable.summerSession2')}</p>
+                  {renderLiveGrid(summerSel2, conf2)}
+                </div>
+              </div>
+            ) : (
+              renderLiveGrid(selectedSections, conflictIds)
+            )}
 
-            {/* Off-screen, full-width render used only for PNG/PDF export */}
+            {/* Off-screen, full-width render used only for PNG/PDF export. One
+                node per export page (summer terms can produce two). */}
             <div
               aria-hidden
               style={{ position: 'absolute', left: '-99999px', top: 0, width: 1320, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
             >
-              <div
-                ref={exportRef}
-                className="p-6"
-                style={themeVars(exportOptions.theme === 'dark')}
-              >
-                {exportOptions.includeTitle && (
-                  <h2 className="text-2xl font-bold text-center mb-4">{displayTitle}</h2>
-                )}
-                <TimetableGrid
-                  sections={selectedSections}
-                  conflictIds={conflictIds}
-                  colorMap={colorMap}
-                  forExport
-                  exportDark={exportOptions.theme === 'dark'}
-                  showSubGrid={exportOptions.showSubGrid}
-                  showHours={exportOptions.showHours}
-                  textColor={exportOptions.textColor}
-                  showIcons={exportOptions.showIcons}
-                  use24Hour={exportOptions.timeFormat === '24'}
-                  dayFormat={exportOptions.dayFormat}
-                  fields={exportOptions.fields}
-                  rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
-                  rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
-                  days={exportOptions.days}
-                  firstDay={exportOptions.firstDay}
-                />
-              </div>
+              {exportPages.map((page, i) => (
+                <div
+                  key={i}
+                  ref={(el) => (exportPageRefs.current[i] = el)}
+                  className="p-6"
+                  style={themeVars(exportOptions.theme === 'dark')}
+                >
+                  {exportOptions.includeTitle && (
+                    <h2 className="text-2xl font-bold text-center mb-4">
+                      {displayTitle}
+                      {page.label ? ` — ${page.label}` : ''}
+                    </h2>
+                  )}
+                  <TimetableGrid
+                    sections={page.sections}
+                    conflictIds={page.conflicts}
+                    colorMap={colorMap}
+                    forExport
+                    exportDark={exportOptions.theme === 'dark'}
+                    showSubGrid={exportOptions.showSubGrid}
+                    showHours={exportOptions.showHours}
+                    textColor={exportOptions.textColor}
+                    showIcons={exportOptions.showIcons}
+                    use24Hour={exportOptions.timeFormat === '24'}
+                    dayFormat={exportOptions.dayFormat}
+                    fields={exportOptions.fields}
+                    rangeStart={exportOptions.rangeMode === 'custom' ? exportOptions.startHour : undefined}
+                    rangeEnd={exportOptions.rangeMode === 'custom' ? exportOptions.endHour : undefined}
+                    days={exportOptions.days}
+                    firstDay={exportOptions.firstDay}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>

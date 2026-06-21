@@ -26,6 +26,8 @@ export interface TimetableTerm {
   /** Compact label for the dropdown trigger (e.g. "2425-T1", "2425-S"). */
   short: string;
   csvUrl: string;
+  /** Summer terms split into two sequential sessions (1st / 2nd). */
+  summer?: boolean;
 }
 
 // One entry per term. The dropdown is built from this list (it does NOT scan the
@@ -34,7 +36,7 @@ export interface TimetableTerm {
 export const TERMS: TimetableTerm[] = [
   { id: '2024-25-t1', name: '2024–25 Term 1', short: '2425-T1', csvUrl: '/data/2024-T1.csv' },
   { id: '2024-25-t2', name: '2024–25 Term 2', short: '2425-T2', csvUrl: '/data/2024-T2.csv' },
-  { id: '2024-25-s', name: '2024–25 Summer Term', short: '2425-S', csvUrl: '/data/2024-S.csv' },
+  { id: '2024-25-s', name: '2024–25 Summer Term', short: '2425-S', csvUrl: '/data/2024-S.csv', summer: true },
   { id: '2025-26-t1', name: '2025–26 Term 1', short: '2526-T1', csvUrl: '/data/2025-T1.csv' },
   { id: '2025-26-t2', name: '2025–26 Term 2', short: '2526-T2', csvUrl: '/data/2025-T2.csv' }
 
@@ -64,6 +66,8 @@ export interface TimetableSection {
   instructors: string[];  // split on " / "
   instructorEmails: string[];
   meetings: TimetableMeeting[];
+  /** Summer-term session: 1 (1st) or 2 (2nd); null for non-summer terms. */
+  summerSession: number | null;
 }
 
 export const DAY_ORDER = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -150,17 +154,58 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
   const lines = cleaned.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length <= 1) return [];
 
-  // Drop the header row.
+  // Resolve columns by header name so optional/extra columns (e.g. the summer
+  // "Sesson" column present only in 2024-S.csv) don't shift the field mapping.
+  const header = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+  const col = (name: string) => header.indexOf(name);
+  const ci = {
+    sesson: col('sesson'),
+    crn: col('crn'),
+    courseCode: col('course code'),
+    courseTitle: col('course title'),
+    sect: col('sect'),
+    lang: col('lang'),
+    svl: col('svl'),
+    type: col('type'),
+    day: col('day'),
+    start: col('start'),
+    end: col('end'),
+    venue: col('venue'),
+    instructorName: col('instructor name'),
+    instructorEmail: col('instructor email'),
+  };
+
   const rows = lines.slice(1);
   const byKey = new Map<string, TimetableSection>();
 
+  const parseSession = (raw: string): number | null => {
+    const v = (raw || '').trim();
+    if (/^1/.test(v)) return 1;
+    if (/^2/.test(v)) return 2;
+    return null;
+  };
+
   for (const line of rows) {
     const cols = parseCsvLine(line);
-    // CRN,LWE,Course Code,Course Title,Sect,Lang,STC,SVL,Type,Day,Start,End,Venue,Instructor Name,Instructor Email
-    const [crn, , courseCode, courseTitle, sect, lang, , svl, type, day, start, end, venue, instructorName, instructorEmail] = cols;
+    const at = (i: number) => (i >= 0 ? (cols[i] ?? '') : '');
+    const crn = at(ci.crn);
+    const courseCode = at(ci.courseCode);
+    const courseTitle = at(ci.courseTitle);
+    const sect = at(ci.sect);
+    const lang = at(ci.lang);
+    const svl = at(ci.svl);
+    const type = at(ci.type);
+    const day = at(ci.day);
+    const start = at(ci.start);
+    const end = at(ci.end);
+    const venue = at(ci.venue);
+    const instructorName = at(ci.instructorName);
+    const instructorEmail = at(ci.instructorEmail);
+    const summerSession = parseSession(at(ci.sesson));
     if (!courseCode) continue;
 
-    const key = `${crn || `${courseCode}-${sect}`}`;
+    // Sessions are distinct timetables, so the key must include the session.
+    const key = `${summerSession ? `S${summerSession}-` : ''}${crn || `${courseCode}-${sect}`}`;
     let section = byKey.get(key);
     if (!section) {
       section = {
@@ -175,6 +220,7 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
         instructors: [],
         instructorEmails: [],
         meetings: [],
+        summerSession,
       };
       byKey.set(key, section);
     }
