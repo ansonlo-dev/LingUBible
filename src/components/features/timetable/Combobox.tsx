@@ -14,6 +14,8 @@ import {
 export interface ComboboxOption {
   value: string;
   label: string;
+  /** Extra terms to match against when typing (e.g. Chinese name, nickname). */
+  keywords?: string[];
 }
 
 interface ComboboxProps {
@@ -78,6 +80,7 @@ export function Combobox({
               <CommandItem
                 key={option.value}
                 value={option.label}
+                keywords={option.keywords}
                 onSelect={() => {
                   onChange(option.value === value ? '' : option.value);
                   setOpen(false);

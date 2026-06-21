@@ -674,7 +674,7 @@ export default {
   'timetable.loading': '正在載入授課紀錄…',
   'timetable.error': '無法載入時間表資料。',
   'timetable.searchPlaceholder': '搜尋課程代碼、名稱、講師或 CRN…',
-  'timetable.smartSearch': 'CRN/課程/講師',
+  'timetable.smartSearch': 'CRN / 課程 / 講師',
   'timetable.filter.subject': '科目',
   'timetable.filter.allSubjects': '科目',
   'timetable.filter.course': '課程',

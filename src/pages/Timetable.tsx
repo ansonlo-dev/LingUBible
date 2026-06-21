@@ -10,6 +10,7 @@ import {
   type TimetableSection,
 } from '@/services/timetableService';
 import { buildTimetableIcs } from '@/services/timetableIcs';
+import { loadTimetableCatalog, normInstructorName, type TimetableCatalog } from '@/services/timetableCatalog';
 import {
   TimetableGrid,
   blockTextColor,
@@ -433,6 +434,22 @@ const Timetable = () => {
     };
   }, [term.csvUrl]);
 
+  // Multilingual catalog (Chinese course titles, instructor Chinese names &
+  // nicknames) for richer search and instructor display. Loaded once and served
+  // from a 24h localStorage cache — see loadTimetableCatalog for the read budget.
+  const [catalog, setCatalog] = useState<TimetableCatalog | null>(null);
+  useEffect(() => {
+    let active = true;
+    loadTimetableCatalog()
+      .then((c) => active && setCatalog(c))
+      .catch(() => {
+        /* search/display gracefully fall back to English-only */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Persist the current term's selection whenever it changes.
   useEffect(() => {
     saveSelectedIds(termIdRef.current, selectedIds);
@@ -501,29 +518,62 @@ const Timetable = () => {
   }, [allSections]);
 
   const courseOptions: ComboboxOption[] = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, ComboboxOption>();
     for (const s of allSections) {
       if (subjectArea !== 'all' && codePrefix(s.courseCode) !== subjectArea) continue;
-      if (!map.has(s.courseCode)) map.set(s.courseCode, `${s.courseCode} · ${s.courseTitle}`);
+      if (!map.has(s.courseCode)) {
+        // Chinese titles go into keywords so the dropdown is searchable by them
+        // (e.g. typing "中文" surfaces CHI3219) while the label stays compact.
+        const ch = catalog?.courses[s.courseCode.toUpperCase()];
+        const keywords = [s.courseTitle, ch?.tc, ch?.sc].filter(Boolean) as string[];
+        map.set(s.courseCode, {
+          value: s.courseCode,
+          label: `${s.courseCode} · ${s.courseTitle}`,
+          keywords,
+        });
+      }
     }
-    return Array.from(map.entries())
-      .map(([value, label]) => ({ value, label }))
-      .sort((a, b) => a.value.localeCompare(b.value));
-  }, [allSections, subjectArea]);
+    return Array.from(map.values()).sort((a, b) => a.value.localeCompare(b.value));
+  }, [allSections, subjectArea, catalog]);
 
   const instructorOptions: ComboboxOption[] = useMemo(() => {
     const set = new Set<string>();
     for (const s of allSections) for (const name of s.instructors) set.add(name);
     return Array.from(set)
       .sort((a, b) => a.localeCompare(b))
-      .map((name) => ({ value: name, label: name }));
-  }, [allSections]);
+      .map((name) => {
+        const ci = catalog?.instructors[normInstructorName(name)];
+        // Show the Chinese name after the English one on zh sites, e.g.
+        // "TANG Lili (湯莉莉)"; searchable by Chinese name and nickname too.
+        const zh = language === 'zh-TW' ? ci?.tc : language === 'zh-CN' ? ci?.sc : undefined;
+        const label = zh ? `${name} (${zh})` : name;
+        const keywords = [ci?.tc, ci?.sc, ci?.nickname].filter(Boolean) as string[];
+        return { value: name, label, keywords };
+      });
+  }, [allSections, catalog, language]);
 
   const typeOptions = useMemo(() => {
     const set = new Set<string>();
     for (const s of allSections) for (const ty of s.types) set.add(ty);
     return Array.from(set).sort();
   }, [allSections]);
+
+  // Extra multilingual search text per section (Chinese course title, instructor
+  // Chinese names & nicknames), so the smart search box matches them too.
+  const sectionSearchText = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of allSections) {
+      let extra = '';
+      const ch = catalog?.courses[s.courseCode.toUpperCase()];
+      if (ch) extra += ` ${ch.tc ?? ''} ${ch.sc ?? ''}`;
+      for (const name of s.instructors) {
+        const ci = catalog?.instructors[normInstructorName(name)];
+        if (ci) extra += ` ${ci.tc ?? ''} ${ci.sc ?? ''} ${ci.nickname ?? ''}`;
+      }
+      map.set(s.id, extra.toLowerCase());
+    }
+    return map;
+  }, [allSections, catalog]);
 
   const filtered = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
@@ -534,7 +584,7 @@ const Timetable = () => {
       if (type !== 'all' && !s.types.includes(type)) return false;
       if (day !== 'all' && !s.meetings.some((m) => m.day === day)) return false;
       if (term) {
-        const haystack = `${s.courseCode} ${s.courseTitle} ${s.crn} ${s.instructors.join(' ')}`.toLowerCase();
+        const haystack = `${s.courseCode} ${s.courseTitle} ${s.crn} ${s.instructors.join(' ')} ${sectionSearchText.get(s.id) ?? ''}`.toLowerCase();
         if (!haystack.includes(term)) return false;
       }
       return true;
@@ -552,7 +602,7 @@ const Timetable = () => {
       result.sort((a, b) => crnRank(a) - crnRank(b));
     }
     return result;
-  }, [allSections, debouncedSearch, subjectArea, courseCode, instructor, type, day]);
+  }, [allSections, debouncedSearch, subjectArea, courseCode, instructor, type, day, sectionSearchText]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const sectionById = useMemo(() => {
