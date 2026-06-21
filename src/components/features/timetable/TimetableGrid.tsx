@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Palette, Trash2, MapPin, GraduationCap, Clock } from 'lucide-react';
+import { Trash2, MapPin, GraduationCap, Clock } from 'lucide-react';
 import { DAY_ORDER, meetingsOverlap, type TimetableSection } from '@/services/timetableService';
+import { ColorPicker } from '@/components/features/timetable/ColorPicker';
 
 export type DayFormat = 'short' | 'long' | 'zh';
 
@@ -468,19 +469,12 @@ export function TimetableGrid({
                       </div>
                     )}
                     {editableColors && !forExport && onColorChange && (
-                      <label
-                        className="absolute bottom-1 right-7 cursor-pointer"
-                        title="Custom colour"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Palette className="h-4 w-4 opacity-90 drop-shadow" />
-                        <input
-                          type="color"
-                          value={bg}
-                          onChange={(e) => onColorChange(block.section.courseCode, e.target.value)}
-                          className="absolute inset-0 h-4 w-4 opacity-0 cursor-pointer"
-                        />
-                      </label>
+                      <ColorPicker
+                        className="absolute bottom-1 right-7"
+                        iconClassName="opacity-90 drop-shadow"
+                        value={bg}
+                        onChange={(c) => onColorChange(block.section.courseCode, c)}
+                      />
                     )}
                     {editableColors && !forExport && onRemoveSection && (
                       <button

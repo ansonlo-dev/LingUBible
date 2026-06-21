@@ -18,6 +18,7 @@ import {
   type TextColorMode,
 } from '@/components/features/timetable/TimetableGrid';
 import { Combobox, type ComboboxOption } from '@/components/features/timetable/Combobox';
+import { ColorPicker } from '@/components/features/timetable/ColorPicker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,6 @@ import {
   Eye,
   EyeOff,
   SlidersHorizontal,
-  Palette,
   Pencil,
   ExternalLink,
 } from 'lucide-react';
@@ -694,19 +694,12 @@ const Timetable = () => {
           </p>
         </div>
         {added && (
-          <label
-            className="absolute bottom-2 right-2 cursor-pointer"
-            title={t('timetable.opt.customColor')}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Palette className="h-4 w-4 text-white/90" />
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setCourseColor(s.courseCode, e.target.value)}
-              className="absolute inset-0 h-4 w-4 opacity-0 cursor-pointer"
-            />
-          </label>
+          <ColorPicker
+            className="absolute bottom-2 right-2"
+            iconClassName="text-white/90"
+            value={color}
+            onChange={(c) => setCourseColor(s.courseCode, c)}
+          />
         )}
       </div>
     );

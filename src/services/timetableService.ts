@@ -16,7 +16,7 @@
 // 🔧 When the CSV is uploaded to Appwrite Storage, swap each term's `csvUrl`
 // for the file's public view URL, e.g.
 // `${endpoint}/storage/buckets/<bucket>/files/<id>/view?project=<project>`.
-export const TIMETABLE_CSV_URL = '/data/timetable.csv';
+export const TIMETABLE_CSV_URL = '/data/2024-T2.csv';
 
 /** A selectable academic term, each backed by its own CSV export. */
 export interface TimetableTerm {
@@ -26,10 +26,16 @@ export interface TimetableTerm {
   csvUrl: string;
 }
 
-// Today there is a single term; add more entries here when new CSVs are
-// available (e.g. Term 1 / Term 2 of the same academic year).
+// One entry per term. The dropdown is built from this list (it does NOT scan the
+// data folder), so add a row here for every CSV you want to appear. Keep each
+// term's `id` stable — it keys that term's saved timetable in localStorage.
 export const TERMS: TimetableTerm[] = [
-  { id: '2024-25-t2', name: '2024–25 Term 2', csvUrl: TIMETABLE_CSV_URL },
+  { id: '2024-25-t1', name: '2024–25 Term 1', csvUrl: '/data/2024-T1.csv' },
+  { id: '2024-25-t2', name: '2024–25 Term 2', csvUrl: '/data/2024-T2.csv' },
+  { id: '2024-25-s', name: '2024–25 Summer Term', csvUrl: '/data/2024-S.csv' },
+  { id: '2025-26-t1', name: '2025–26 Term 1', csvUrl: '/data/2025-T1.csv' },
+  { id: '2025-26-t2', name: '2025–26 Term 2', csvUrl: '/data/2025-T2.csv' }
+
 ];
 
 /** A single scheduled meeting (one day/time/venue) of a section. */
@@ -69,6 +75,32 @@ const DAY_ALIASES: Record<string, string> = {
   SAT: 'SAT', SATURDAY: 'SAT',
   SUN: 'SUN', SUNDAY: 'SUN',
 };
+
+/**
+ * Parse a "Day" field into one or more normalised days. Handles a single day
+ * ("TUE"/"Tuesday"), separated lists ("TUE/THU", "TUE,THU", "TUE THU") and
+ * concatenated 3-letter codes with no separator ("TUETHU" → Tue + Thu).
+ */
+export function parseDays(raw: string): string[] {
+  if (!raw) return [];
+  const days: string[] = [];
+  const add = (d: string) => { if (!days.includes(d)) days.push(d); };
+
+  for (const part of raw.toUpperCase().split(/[\s,/&;+|-]+/).filter(Boolean)) {
+    // Whole token is a known alias (e.g. "TUE", "TUESDAY").
+    if (DAY_ALIASES[part]) { add(DAY_ALIASES[part]); continue; }
+    // Otherwise try to read it as back-to-back 3-letter codes ("TUETHU").
+    const chunks: string[] = [];
+    let ok = part.length % 3 === 0 && part.length > 0;
+    for (let i = 0; ok && i < part.length; i += 3) {
+      const norm = DAY_ALIASES[part.slice(i, i + 3)];
+      if (norm) chunks.push(norm);
+      else ok = false;
+    }
+    if (ok) for (const d of chunks) add(d);
+  }
+  return days;
+}
 
 /** Parse a single CSV line, honouring double-quoted fields that contain commas. */
 function parseCsvLine(line: string): string[] {
@@ -159,23 +191,25 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
       }
     }
 
-    const normalisedDay = DAY_ALIASES[(day || '').toUpperCase()];
     const startMin = toMinutes(start || '');
     const endMin = toMinutes(end || '');
-    if (normalisedDay && startMin != null && endMin != null) {
-      const exists = section.meetings.some(
-        (mt) => mt.day === normalisedDay && mt.startMinutes === startMin && mt.endMinutes === endMin && mt.venue === (venue || ''),
-      );
-      if (!exists) {
-        section.meetings.push({
-          day: normalisedDay,
-          startMinutes: startMin,
-          endMinutes: endMin,
-          start: start.trim(),
-          end: end.trim(),
-          venue: venue || '',
-          type: type || '',
-        });
+    if (startMin != null && endMin != null) {
+      // A row may list several days (e.g. "TUETHU") → one meeting per day.
+      for (const normalisedDay of parseDays(day || '')) {
+        const exists = section.meetings.some(
+          (mt) => mt.day === normalisedDay && mt.startMinutes === startMin && mt.endMinutes === endMin && mt.venue === (venue || ''),
+        );
+        if (!exists) {
+          section.meetings.push({
+            day: normalisedDay,
+            startMinutes: startMin,
+            endMinutes: endMin,
+            start: start.trim(),
+            end: end.trim(),
+            venue: venue || '',
+            type: type || '',
+          });
+        }
       }
     }
   }
@@ -200,7 +234,9 @@ export async function loadTimetableSections(url: string = TIMETABLE_CSV_URL): Pr
   if (existing) return existing;
 
   const promise = (async () => {
-    const res = await fetch(url, { cache: 'force-cache' });
+    // `no-cache` = always revalidate with the server (cheap 304 when unchanged),
+    // so an updated CSV is picked up instead of a stale browser-cached copy.
+    const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) {
       throw new Error(`Failed to load timetable data (${res.status})`);
     }
