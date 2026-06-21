@@ -961,15 +961,29 @@ const Timetable = () => {
         } ${added ? '' : 'hover:bg-accent/40'}`}
         style={added ? { backgroundColor: color, color: fg } : undefined}
       >
-        {/* Top-right: session type + number badge (same look as the timetable blocks) */}
-        {typeNumber && (
-          <div
-            className={`absolute top-2 right-2 text-[10px] font-bold rounded px-1 py-0.5 leading-none ${
-              added ? '' : 'bg-foreground/10 text-foreground'
-            }`}
-            style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
-          >
-            {typeNumber}
+        {/* Top-right badges: summer session (S1/S2) then session type + number. */}
+        {(typeNumber || (isSummer && s.summerSession)) && (
+          <div className="absolute top-2 right-2 flex items-center gap-1">
+            {isSummer && s.summerSession && (
+              <span
+                className={`text-[10px] font-bold rounded px-1 py-0.5 leading-none ${
+                  added ? '' : 'bg-foreground/10 text-foreground'
+                }`}
+                style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
+              >
+                S{s.summerSession}
+              </span>
+            )}
+            {typeNumber && (
+              <span
+                className={`text-[10px] font-bold rounded px-1 py-0.5 leading-none ${
+                  added ? '' : 'bg-foreground/10 text-foreground'
+                }`}
+                style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
+              >
+                {typeNumber}
+              </span>
+            )}
           </div>
         )}
         <div className="min-w-0 pr-12">
