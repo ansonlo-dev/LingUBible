@@ -363,9 +363,10 @@ interface CourseBasicInfoSectionProps {
   t: (key: string, params?: Record<string, any>) => string;
   language: string;
   titleMap: CourseTitleMap;
+  columns?: 1 | 2;
 }
 
-const CourseBasicInfoSection: React.FC<CourseBasicInfoSectionProps> = ({ course, t, language, titleMap }) => {
+const CourseBasicInfoSection: React.FC<CourseBasicInfoSectionProps> = ({ course, t, language, titleMap, columns = 1 }) => {
   // 依目前語言挑選對應的本地化欄位，缺值時退回英文原文
   const pickLocalized = (en?: string, tc?: string, sc?: string): string => {
     if (language === 'zh-TW') return (tc || en || '');
@@ -430,7 +431,7 @@ const CourseBasicInfoSection: React.FC<CourseBasicInfoSectionProps> = ({ course,
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
         {t('pages.courseDetail.basicInfo')}
       </h3>
-      <div className="flex flex-col">
+      <div className={columns === 2 ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-8' : 'flex flex-col'}>
         {items.map(item => (
           <div
             key={item.key}
@@ -457,9 +458,10 @@ interface CourseRequirementsSectionProps {
   t: (key: string, params?: Record<string, any>) => string;
   language: string;
   titleMap: CourseTitleMap;
+  columns?: 1 | 2;
 }
 
-const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t, language, titleMap }) => {
+const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ course, t, language, titleMap, columns = 1 }) => {
   // 依目前語言挑選對應的本地化欄位，缺值時退回英文原文
   const pickLocalized = (en?: string, tc?: string, sc?: string): string => {
     if (language === 'zh-TW') return (tc || en || '');
@@ -524,7 +526,7 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
         {t('pages.courseDetail.requirements')}
       </h3>
-      <div className="flex flex-col">
+      <div className={columns === 2 ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-8' : 'flex flex-col'}>
         {items.map(item => (
           <div
             key={item.key}
@@ -2463,9 +2465,9 @@ const CourseDetail = () => {
                       <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <CourseBasicInfoSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
-                    <CourseRequirementsSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
+                  <div className={hasBasicInfo && hasRequirements ? 'grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6' : 'space-y-6'}>
+                    <CourseBasicInfoSection course={course} t={t} language={language} titleMap={referencedCourseTitles} columns={hasBasicInfo && hasRequirements ? 1 : 2} />
+                    <CourseRequirementsSection course={course} t={t} language={language} titleMap={referencedCourseTitles} columns={hasBasicInfo && hasRequirements ? 1 : 2} />
                   </div>
                 </div>
               );
