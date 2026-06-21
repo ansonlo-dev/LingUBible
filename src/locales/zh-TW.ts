@@ -564,6 +564,7 @@ export default {
   'pages.courseDetail.offerRecords': '開設記錄',
   'pages.courseDetail.courseInfo': '課程資訊',
   'pages.courseDetail.viewSyllabus': '課程大綱',
+  'pages.courseDetail.description': '課程描述',
   'pages.courseDetail.requirements': '修讀要求',
   'pages.courseDetail.prerequisites': '先修課程',
   'pages.courseDetail.corequisites': '同期修讀課程',

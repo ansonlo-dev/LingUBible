@@ -565,6 +565,7 @@ export default {
   'pages.courseDetail.offerRecords': '开设记录',
   'pages.courseDetail.courseInfo': '课程资讯',
   'pages.courseDetail.viewSyllabus': '课程大纲',
+  'pages.courseDetail.description': '课程描述',
   'pages.courseDetail.requirements': '修读要求',
   'pages.courseDetail.prerequisites': '先修课程',
   'pages.courseDetail.corequisites': '同期修读课程',

@@ -564,6 +564,7 @@ export default {
   'pages.courseDetail.offerRecords': 'Offer Records',
   'pages.courseDetail.courseInfo': 'Course Info',
   'pages.courseDetail.viewSyllabus': 'Syllabus',
+  'pages.courseDetail.description': 'Description',
   'pages.courseDetail.requirements': 'Requirements',
   'pages.courseDetail.prerequisites': 'Prerequisites',
   'pages.courseDetail.corequisites': 'Co-requisites',

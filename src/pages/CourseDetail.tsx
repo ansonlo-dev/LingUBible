@@ -426,22 +426,22 @@ const CourseBasicInfoSection: React.FC<CourseBasicInfoSectionProps> = ({ course,
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-6 pt-6 border-t border-border/60">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+    <div>
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
         {t('pages.courseDetail.basicInfo')}
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+      <div className="flex flex-col">
         {items.map(item => (
           <div
             key={item.key}
-            className="flex items-start gap-3 rounded-md px-2 py-2 hover:bg-muted/40 transition-colors"
+            className="flex items-start gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
           >
-            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${item.accent}`}>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${item.accent}`}>
               {item.icon}
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-xs font-medium text-muted-foreground leading-tight">{item.label}</div>
-              <p className="mt-0.5 text-sm leading-snug text-foreground whitespace-pre-line break-words">
+              <p className="text-sm leading-snug text-foreground whitespace-pre-line break-words">
                 {renderTextWithCourseLinks(item.value, course.course_code, titleMap, language)}
               </p>
             </div>
@@ -520,22 +520,22 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-6 pt-6 border-t border-border/60">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+    <div>
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
         {t('pages.courseDetail.requirements')}
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+      <div className="flex flex-col">
         {items.map(item => (
           <div
             key={item.key}
-            className="flex items-start gap-3 rounded-md px-2 py-2 hover:bg-muted/40 transition-colors"
+            className="flex items-start gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
           >
-            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${item.accent}`}>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${item.accent}`}>
               {item.icon}
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-xs font-medium text-muted-foreground leading-tight">{item.label}</div>
-              <p className="mt-0.5 text-sm leading-snug text-foreground whitespace-pre-line break-words">
+              <p className="text-sm leading-snug text-foreground whitespace-pre-line break-words">
                 {renderTextWithCourseLinks(item.value, course.course_code, titleMap, language)}
               </p>
             </div>
@@ -2450,17 +2450,24 @@ const CourseDetail = () => {
               }
 
               return (
-                <>
-                  {description ? (
-                    <p className="text-base leading-relaxed text-foreground whitespace-pre-line text-justify hyphens-auto">
-                      {renderTextWithCourseLinks(description, course.course_code, referencedCourseTitles, language)}
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
-                  )}
-                  <CourseBasicInfoSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
-                  <CourseRequirementsSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
-                </>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                      {t('pages.courseDetail.description')}
+                    </h3>
+                    {description ? (
+                      <p className="text-base leading-relaxed text-foreground whitespace-pre-line text-justify hyphens-auto">
+                        {renderTextWithCourseLinks(description, course.course_code, referencedCourseTitles, language)}
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">{t('pages.courseDetail.noDescription')}</p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <CourseBasicInfoSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
+                    <CourseRequirementsSection course={course} t={t} language={language} titleMap={referencedCourseTitles} />
+                  </div>
+                </div>
               );
             })()}
           </div>
