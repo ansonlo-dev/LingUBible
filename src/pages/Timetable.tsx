@@ -70,6 +70,8 @@ import {
   Menu,
   ArrowLeft,
   ArrowRight,
+  ChevronDown,
+  ChevronRight,
   SlidersHorizontal,
   Pencil,
   ExternalLink,
@@ -336,6 +338,9 @@ const Timetable = () => {
   const [confirmClear, setConfirmClear] = useState(false);
   // Whether to show results that clash with the current timetable (red-bordered).
   const [showConflicts, setShowConflicts] = useState(true);
+  // Collapsible state for the two result groups (chosen / available).
+  const [chosenCollapsed, setChosenCollapsed] = useState(false);
+  const [availableCollapsed, setAvailableCollapsed] = useState(false);
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
     // Export defaults to a light theme even when the site is in dark mode (a
@@ -1034,17 +1039,6 @@ const Timetable = () => {
               </button>
             </div>
 
-            {/* Results */}
-            <div className="flex items-center justify-between px-1">
-              <span className="text-sm font-medium">{t('timetable.results')}</span>
-              <span className="text-xs text-muted-foreground">
-                {t('timetable.selectedCount', { count: String(selectedSections.length) })}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {t('timetable.resultsCount', { count: String(filtered.length) })}
-              </span>
-            </div>
-
             {/* On desktop the inner list is absolutely positioned so its content
                 doesn't drive the column height — the timetable column does — letting
                 the results area match the timetable's height and scroll within it. */}
@@ -1053,23 +1047,52 @@ const Timetable = () => {
               className="relative lg:flex-1 lg:min-h-0"
               style={resultsMinH ? { minHeight: resultsMinH } : undefined}
             >
-              <div className="space-y-2 max-h-[60vh] lg:max-h-none lg:absolute lg:inset-0 overflow-y-auto pr-1 timetable-scroll">
-                {/* Pinned: currently-selected sections, always visible at the top */}
-                {selectedSections.length > 0 && (
-                  <>
-                    {selectedSections.map((s) => renderResultItem(s))}
-                    <div className="border-t border-dashed my-1" />
-                  </>
+              <div className="space-y-1 max-h-[60vh] lg:max-h-none lg:absolute lg:inset-0 overflow-y-auto pr-1 timetable-scroll">
+                {/* Group 1: chosen (currently-selected) sessions */}
+                <button
+                  type="button"
+                  onClick={() => setChosenCollapsed((v) => !v)}
+                  className="sticky top-0 z-10 flex w-full items-center gap-1.5 bg-background/95 backdrop-blur px-1 py-1.5 text-sm font-medium"
+                >
+                  {chosenCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  <span>{t('timetable.chosenSessions')}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{selectedSections.length}</span>
+                </button>
+                {!chosenCollapsed && (
+                  <div className="space-y-2 pb-1">
+                    {selectedSections.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-3">{t('timetable.noChosen')}</p>
+                    ) : (
+                      selectedSections.map((s) => renderResultItem(s))
+                    )}
+                  </div>
                 )}
 
-                {visibleResults.length === 0 && selectedSections.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
-                )}
-                {visibleResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
-                {visibleResults.length > MAX_RESULTS && (
-                  <p className="text-xs text-muted-foreground text-center py-2">
-                    {t('timetable.moreResults', { count: String(visibleResults.length - MAX_RESULTS) })}
-                  </p>
+                {/* Group 2: available (search result) sessions */}
+                <button
+                  type="button"
+                  onClick={() => setAvailableCollapsed((v) => !v)}
+                  className="sticky top-0 z-10 flex w-full items-center gap-1.5 bg-background/95 backdrop-blur px-1 py-1.5 text-sm font-medium"
+                >
+                  {availableCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  <span>{t('timetable.availableSessions')}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{visibleResults.length}</span>
+                </button>
+                {!availableCollapsed && (
+                  <div className="space-y-2 pb-1">
+                    {visibleResults.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
+                    ) : (
+                      <>
+                        {visibleResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
+                        {visibleResults.length > MAX_RESULTS && (
+                          <p className="text-xs text-muted-foreground text-center py-2">
+                            {t('timetable.moreResults', { count: String(visibleResults.length - MAX_RESULTS) })}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
