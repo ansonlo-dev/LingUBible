@@ -716,10 +716,11 @@ const Timetable = () => {
   const fmtDate = (iso?: string) => {
     if (!iso) return '';
     const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
+    // YYYY/MM/DD to avoid the ambiguous DD/MM vs MM/DD reading.
+    return `${y}/${m}/${d}`;
   };
 
-  // "Session 1 (27/05/2025 - 08/07/2025)" — range appended when known.
+  // "Session 1 (2025/05/27 - 2025/07/08)" — range appended when known.
   const summerLabel = (session: number) => {
     const base = t(session === 1 ? 'timetable.summerSession1' : 'timetable.summerSession2');
     const r = summerRanges[session];
