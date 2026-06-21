@@ -57,6 +57,9 @@ import {
   Download,
   Eye,
   EyeOff,
+  Menu,
+  ArrowLeft,
+  ArrowRight,
   SlidersHorizontal,
   Pencil,
   ExternalLink,
@@ -319,11 +322,13 @@ const Timetable = () => {
   const [titleDraft, setTitleDraft] = useState('');
   const [pendingExport, setPendingExport] = useState<'png' | 'pdf' | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  // Whether to show results that clash with the current timetable (red-bordered).
+  const [showConflicts, setShowConflicts] = useState(true);
 
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
-    const siteDark =
-      typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-    const base: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, theme: siteDark ? 'dark' : 'light' };
+    // Export defaults to a light theme even when the site is in dark mode (a
+    // light timetable prints/shares better); the user can still switch it.
+    const base: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, theme: 'light' };
     try {
       const raw = localStorage.getItem(EXPORT_OPTS_KEY);
       if (raw) {
@@ -703,6 +708,11 @@ const Timetable = () => {
         sel.meetings.some((m) => s.meetings.some((sm) => meetingsOverlap(m, sm))),
     );
 
+  // Results actually shown: optionally drop the clashing (red-bordered) ones.
+  const visibleResults = showConflicts
+    ? unselectedResults
+    : unselectedResults.filter((s) => !conflictsWithSelection(s));
+
   const renderResultItem = (s: TimetableSection) => {
     const added = selectedSet.has(s.id);
     const color = colorMap.get(s.id);
@@ -843,15 +853,37 @@ const Timetable = () => {
         >
           {/* Left: smart search + results (filters live in the action row) */}
           <div className={`flex flex-col gap-3 min-h-0 ${panelCollapsed ? 'hidden' : ''}`}>
-            {/* Free-text search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t('timetable.smartSearch')}
-                className="pl-9 h-9"
-              />
+            {/* Free-text search + conflict toggle + hide-panel button */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={t('timetable.smartSearch')}
+                  className="pl-9 h-9"
+                />
+              </div>
+              {/* Show/hide results that would clash with the current timetable
+                  (the ones marked with a red border). */}
+              <button
+                type="button"
+                onClick={() => setShowConflicts((v) => !v)}
+                title={showConflicts ? t('timetable.hideConflicts') : t('timetable.showConflicts')}
+                className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showConflicts ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+              </button>
+              {/* Hide the panel. Hamburger + left arrow = collapse. */}
+              <button
+                type="button"
+                onClick={() => setPanelCollapsed(true)}
+                title={t('timetable.collapsePanel')}
+                className="flex h-9 shrink-0 items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Menu className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4" />
+              </button>
             </div>
 
             {/* Results */}
@@ -878,13 +910,13 @@ const Timetable = () => {
                   </>
                 )}
 
-                {unselectedResults.length === 0 && selectedSections.length === 0 && (
+                {visibleResults.length === 0 && selectedSections.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-8">{t('timetable.noResults')}</p>
                 )}
-                {unselectedResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
-                {unselectedResults.length > MAX_RESULTS && (
+                {visibleResults.slice(0, MAX_RESULTS).map((s) => renderResultItem(s))}
+                {visibleResults.length > MAX_RESULTS && (
                   <p className="text-xs text-muted-foreground text-center py-2">
-                    {t('timetable.moreResults', { count: String(unselectedResults.length - MAX_RESULTS) })}
+                    {t('timetable.moreResults', { count: String(visibleResults.length - MAX_RESULTS) })}
                   </p>
                 )}
               </div>
@@ -895,20 +927,19 @@ const Timetable = () => {
           <div className="space-y-4">
             {/* Panel toggle + search/filters + export actions */}
             <div className="flex flex-wrap items-center gap-2">
-              {/* The icon itself is the button (no surrounding chrome); sized h-9 to
-                  line up with the filter dropdowns next to it. */}
-              <button
-                type="button"
-                onClick={() => setPanelCollapsed((v) => !v)}
-                title={panelCollapsed ? t('timetable.expandPanel') : t('timetable.collapsePanel')}
-                className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {panelCollapsed ? (
-                  <Eye className="h-5 w-5" />
-                ) : (
-                  <EyeOff className="h-5 w-5" />
-                )}
-              </button>
+              {/* Show-panel button — only when collapsed (the hide button lives
+                  inside the panel itself). Hamburger + right arrow = expand. */}
+              {panelCollapsed && (
+                <button
+                  type="button"
+                  onClick={() => setPanelCollapsed(false)}
+                  title={t('timetable.expandPanel')}
+                  className="flex h-9 shrink-0 items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Menu className="h-5 w-5" />
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
 
               {/* Filters (hidden while the results panel is collapsed) */}
               {!panelCollapsed && (

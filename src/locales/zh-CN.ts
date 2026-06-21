@@ -828,6 +828,8 @@ export default {
   'timetable.clearConfirmTitle': '清除整个课表?',
   'timetable.clearConfirmDesc': '这会移除课表上所有已加入的时段。清除后仍可撤销。',
   'timetable.conflictAddHint': '此时段与你的课表冲突,但仍可加入',
+  'timetable.showConflicts': '显示冲突结果',
+  'timetable.hideConflicts': '隐藏冲突结果',
   'timetable.undo': '撤销',
   'timetable.redo': '重做',
   'timetable.emptySelection': '尚未加入任何班别。搜索并加入班别以编排时间表。',

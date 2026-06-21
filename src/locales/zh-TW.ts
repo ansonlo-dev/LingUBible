@@ -758,6 +758,8 @@ export default {
   'timetable.clearConfirmTitle': '清除整個課表?',
   'timetable.clearConfirmDesc': '這會移除課表上所有已加入的時段。清除後仍可復原。',
   'timetable.conflictAddHint': '此時段與你的課表衝突,但仍可加入',
+  'timetable.showConflicts': '顯示衝突結果',
+  'timetable.hideConflicts': '隱藏衝突結果',
   'timetable.undo': '復原',
   'timetable.redo': '重做',
   'timetable.emptySelection': '尚未加入任何班別。搜尋並加入班別以編排時間表。',

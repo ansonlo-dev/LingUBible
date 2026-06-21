@@ -820,6 +820,8 @@ export default {
   'timetable.clearConfirmTitle': 'Clear the whole timetable?',
   'timetable.clearConfirmDesc': 'This removes all added sections from your timetable. You can undo it afterwards.',
   'timetable.conflictAddHint': 'This section clashes with your timetable — you can still add it',
+  'timetable.showConflicts': 'Show clashing results',
+  'timetable.hideConflicts': 'Hide clashing results',
   'timetable.undo': 'Undo',
   'timetable.redo': 'Redo',
   'timetable.emptySelection': 'No sections added yet. Search and add sections to build your timetable.',
