@@ -63,8 +63,8 @@ function nowStamp(): string {
  */
 export function buildTimetableIcs(
   sections: TimetableSection[],
-  startYmd: string,
-  endYmd: string,
+  startYmd: string = '',
+  endYmd: string = '',
   calendarName?: string,
 ): string {
   const lines: string[] = [];
@@ -89,9 +89,13 @@ export function buildTimetableIcs(
   push('END:VTIMEZONE');
 
   const stamp = nowStamp();
-  const until = `${endYmd.replace(/-/g, '')}T235959Z`;
 
   for (const s of sections) {
+    // A section may carry its own date range (e.g. summer sessions); otherwise
+    // fall back to the caller-supplied bounds.
+    const secStart = s.startDate || startYmd;
+    const secEnd = s.endDate || endYmd;
+    const until = `${secEnd.replace(/-/g, '')}T235959Z`;
     // Merge meetings sharing the same day + time (different venues) into one event.
     const groups = new Map<
       string,
@@ -115,7 +119,7 @@ export function buildTimetableIcs(
 
     let idx = 0;
     for (const g of groups.values()) {
-      const date = firstOccurrence(startYmd, g.day);
+      const date = firstOccurrence(secStart, g.day);
       const venues = g.venues.join(', ');
       const description = [
         `${s.courseCode} ${s.courseTitle}`,

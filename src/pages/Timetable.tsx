@@ -699,6 +699,33 @@ const Timetable = () => {
     [isSummer, conf1, conf2, selectedSections],
   );
 
+  // Per-session date ranges (from the CSV) used in the sub-titles and as the
+  // default .ics date range for each summer session.
+  const summerRanges = useMemo(() => {
+    const r: Record<number, { start?: string; end?: string }> = {};
+    for (const s of allSections) {
+      if (!s.summerSession) continue;
+      const cur = r[s.summerSession] ?? {};
+      if (s.startDate && (!cur.start || s.startDate < cur.start)) cur.start = s.startDate;
+      if (s.endDate && (!cur.end || s.endDate > cur.end)) cur.end = s.endDate;
+      r[s.summerSession] = cur;
+    }
+    return r;
+  }, [allSections]);
+
+  const fmtDate = (iso?: string) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
+  // "Session 1 (27/05/2025 - 08/07/2025)" — range appended when known.
+  const summerLabel = (session: number) => {
+    const base = t(session === 1 ? 'timetable.summerSession1' : 'timetable.summerSession2');
+    const r = summerRanges[session];
+    return r?.start && r?.end ? `${base} (${fmtDate(r.start)} - ${fmtDate(r.end)})` : base;
+  };
+
   // Auto-manage the weekend columns (SAT/SUN): show one when a selected lesson
   // lands on it, hide it again once none do — unless the user has manually forced
   // it on (tracked in weekendInclude). Mon–Fri are always present by default.
@@ -834,7 +861,10 @@ const Timetable = () => {
 
   const handleExportIcs = () => {
     const { icsStart, icsEnd } = exportOptions;
-    if (!icsStart || !icsEnd || selectedSections.length === 0) return;
+    if (selectedSections.length === 0) return;
+    // Summer sections carry their own per-session date range (from the CSV), so
+    // the manual start/end inputs aren't required there.
+    if (!isSummer && (!icsStart || !icsEnd)) return;
     try {
       const ics = buildTimetableIcs(selectedSections, icsStart, icsEnd, displayTitle);
       const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
@@ -1029,8 +1059,8 @@ const Timetable = () => {
   // actually has lessons (so an empty session is never exported).
   const exportPages = isSummer
     ? ([
-        summerSel1.length ? { label: t('timetable.summerSession1'), sections: summerSel1, conflicts: conf1 } : null,
-        summerSel2.length ? { label: t('timetable.summerSession2'), sections: summerSel2, conflicts: conf2 } : null,
+        summerSel1.length ? { label: summerLabel(1), sections: summerSel1, conflicts: conf1 } : null,
+        summerSel2.length ? { label: summerLabel(2), sections: summerSel2, conflicts: conf2 } : null,
       ].filter(Boolean) as { label: string; sections: TimetableSection[]; conflicts: Set<string> }[])
     : [{ label: '', sections: selectedSections, conflicts: conflictIds }];
 
@@ -1568,39 +1598,52 @@ const Timetable = () => {
                         </Button>
                       </div>
                     </div>
-                    {/* Calendar (.ics) — recurring weekly events over a custom date range. */}
+                    {/* Calendar (.ics) — recurring weekly events over a date range.
+                        Summer terms use each session's own range from the CSV. */}
                     <div className="space-y-1.5">
                       <Label className="text-sm">{t('timetable.exportIcs')}</Label>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <div className="space-y-1">
-                          <Label className="text-[11px] text-muted-foreground">{t('timetable.icsStart')}</Label>
-                          <Input
-                            type="date"
-                            value={exportOptions.icsStart}
-                            onChange={(e) => setOpt({ icsStart: e.target.value })}
-                            className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
-                          />
+                      {isSummer ? (
+                        <div className="space-y-0.5 text-[11px] text-muted-foreground">
+                          {summerRanges[1]?.start && (
+                            <p>{summerLabel(1)}</p>
+                          )}
+                          {summerRanges[2]?.start && (
+                            <p>{summerLabel(2)}</p>
+                          )}
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[11px] text-muted-foreground">{t('timetable.icsEnd')}</Label>
-                          <Input
-                            type="date"
-                            value={exportOptions.icsEnd}
-                            min={exportOptions.icsStart || undefined}
-                            onChange={(e) => setOpt({ icsEnd: e.target.value })}
-                            className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
-                          />
+                      ) : (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <div className="space-y-1">
+                            <Label className="text-[11px] text-muted-foreground">{t('timetable.icsStart')}</Label>
+                            <Input
+                              type="date"
+                              value={exportOptions.icsStart}
+                              onChange={(e) => setOpt({ icsStart: e.target.value })}
+                              className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[11px] text-muted-foreground">{t('timetable.icsEnd')}</Label>
+                            <Input
+                              type="date"
+                              value={exportOptions.icsEnd}
+                              min={exportOptions.icsStart || undefined}
+                              onChange={(e) => setOpt({ icsEnd: e.target.value })}
+                              className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
                         className="w-full"
                         disabled={
                           selectedSections.length === 0 ||
-                          !exportOptions.icsStart ||
-                          !exportOptions.icsEnd ||
-                          exportOptions.icsEnd < exportOptions.icsStart
+                          (!isSummer &&
+                            (!exportOptions.icsStart ||
+                              !exportOptions.icsEnd ||
+                              exportOptions.icsEnd < exportOptions.icsStart))
                         }
                         onClick={handleExportIcs}
                       >
@@ -1665,11 +1708,11 @@ const Timetable = () => {
             {isSummer ? (
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-muted-foreground">{t('timetable.summerSession1')}</p>
+                  <p className="text-sm font-semibold text-muted-foreground">{summerLabel(1)}</p>
                   {renderLiveGrid(summerSel1, conf1)}
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-muted-foreground">{t('timetable.summerSession2')}</p>
+                  <p className="text-sm font-semibold text-muted-foreground">{summerLabel(2)}</p>
                   {renderLiveGrid(summerSel2, conf2)}
                 </div>
               </div>

@@ -68,6 +68,9 @@ export interface TimetableSection {
   meetings: TimetableMeeting[];
   /** Summer-term session: 1 (1st) or 2 (2nd); null for non-summer terms. */
   summerSession: number | null;
+  /** Session date range (ISO "YYYY-MM-DD"), when the CSV provides it. */
+  startDate?: string;
+  endDate?: string;
 }
 
 export const DAY_ORDER = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -167,12 +170,21 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
     lang: col('lang'),
     svl: col('svl'),
     type: col('type'),
+    startDate: col('start date'),
+    endDate: col('end date'),
     day: col('day'),
     start: col('start'),
     end: col('end'),
     venue: col('venue'),
     instructorName: col('instructor name'),
     instructorEmail: col('instructor email'),
+  };
+
+  // Parse a "DD/MM/YYYY" date into ISO "YYYY-MM-DD" (returns undefined if blank).
+  const parseDmy = (raw: string): string | undefined => {
+    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((raw || '').trim());
+    if (!m) return undefined;
+    return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   };
 
   const rows = lines.slice(1);
@@ -202,6 +214,8 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
     const instructorName = at(ci.instructorName);
     const instructorEmail = at(ci.instructorEmail);
     const summerSession = parseSession(at(ci.sesson));
+    const startDate = parseDmy(at(ci.startDate));
+    const endDate = parseDmy(at(ci.endDate));
     if (!courseCode) continue;
 
     // Sessions are distinct timetables, so the key must include the session.
@@ -221,6 +235,8 @@ export function parseTimetableCsv(text: string): TimetableSection[] {
         instructorEmails: [],
         meetings: [],
         summerSession,
+        startDate,
+        endDate,
       };
       byKey.set(key, section);
     }
