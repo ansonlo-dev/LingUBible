@@ -921,7 +921,7 @@ export class CourseService {
         [
           Query.orderAsc('course_code'),
           Query.limit(this.MAX_COURSES_LIMIT),
-          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', '$createdAt', '$updatedAt',
+          Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department', 'credits', '$createdAt', '$updatedAt',
             'stats_review_count', 'stats_avg_rating', 'stats_student_count', 'stats_avg_workload', 'stats_avg_difficulty', 'stats_avg_usefulness', 'stats_avg_gpa', 'stats_avg_gpa_count',
             'teaching_languages', 'current_term_teaching_language', 'service_learning_types', 'current_term_service_learning', 'current_term_offered'])
         ]
