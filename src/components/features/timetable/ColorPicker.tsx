@@ -6,24 +6,15 @@ import { cn } from '@/lib/utils';
 
 /**
  * Preset swatches from the Catppuccin palette (https://catppuccin.com/palette).
- * Four variants (Latte → Mocha, light → dark), each with the same 10 distinct
- * rainbow accents in spectrum order, so most users can pick a pleasant colour
- * with one tap. Power users who want an exact colour still get the native colour
- * picker below the presets.
+ * Two variants (Latte and Mocha), each with the same 10 distinct rainbow accents
+ * in spectrum order, so most users can pick a pleasant colour with one tap. Power
+ * users who want an exact colour still get the native colour picker below.
+ * Order: red, maroon, peach, yellow, green, teal, sky, blue, mauve, pink.
  */
 export const CATPPUCCIN_PALETTE: { variant: string; colors: string[] }[] = [
   {
     variant: 'Latte',
-    // red, maroon, peach, yellow, green, teal, sky, blue, mauve, pink
     colors: ['#d20f39', '#e64553', '#fe640b', '#df8e1d', '#40a02b', '#179299', '#04a5e5', '#1e66f5', '#8839ef', '#ea76cb'],
-  },
-  {
-    variant: 'Frappé',
-    colors: ['#e78284', '#ea999c', '#ef9f76', '#e5c890', '#a6d189', '#81c8be', '#99d1db', '#8caaee', '#ca9ee6', '#f4b8e4'],
-  },
-  {
-    variant: 'Macchiato',
-    colors: ['#ed8796', '#ee99a0', '#f5a97f', '#eed49f', '#a6da95', '#8bd5ca', '#91d7e3', '#8aadf4', '#c6a0f6', '#f5bde6'],
   },
   {
     variant: 'Mocha',
@@ -65,12 +56,9 @@ export function ColorPicker({ value, onChange, className, iconClassName }: Color
         <p className="mb-2 text-xs font-medium text-muted-foreground">
           {t('timetable.opt.presetColors')}
         </p>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {CATPPUCCIN_PALETTE.map(({ variant, colors }) => (
             <div key={variant}>
-              <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
-                {variant}
-              </p>
               <div className="grid grid-cols-10 gap-1.5">
                 {colors.map((c) => {
                   const selected = c.toLowerCase() === current;
