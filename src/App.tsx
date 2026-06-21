@@ -49,6 +49,7 @@ import PerformanceTest from "./pages/PerformanceTest";
 
 
 import { DevModeRoute } from "@/components/dev/DevModeRoute";
+import { CourseService } from "@/services/api/courseService";
 import { useState, useEffect, useCallback } from 'react';
 import { theme } from '@/lib/utils';
 import { useSwipeGesture } from "@/hooks/ui/use-swipe-gesture";
@@ -179,6 +180,14 @@ const AppContent = () => {
       unwatch();
       if (timer) clearTimeout(timer);
     };
+  }, []);
+
+  // 預先載入所有學期，讓「當前學期」可依資料庫的 start_date / end_date 判斷
+  // （開課/教學徽章需要：當前學期可能不在某課程的教學記錄中，故需完整學期清單）
+  useEffect(() => {
+    CourseService.getAllTerms().catch(() => {
+      // 失敗時 getCurrentTermCode 會自動退回月份推估，不影響其餘功能
+    });
   }, []);
 
   // 監聽滾動事件來關閉滑動提示

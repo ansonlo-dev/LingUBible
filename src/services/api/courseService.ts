@@ -1,6 +1,6 @@
 import { tablesDB, functions } from '@/lib/appwrite';
 import { Query } from 'appwrite';
-import { getCurrentTermCode } from '@/utils/dateUtils';
+import { getCurrentTermCode, setTermDates } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA, isReviewRetryFailGrade } from '@/utils/gradeUtils';
 import { extractInstructorNameForSorting } from '@/utils/textUtils';
 import { expandRecordsByInstructorName, splitInstructorNames, instructorNameMatches } from '@/utils/instructorNameUtils';
@@ -1727,7 +1727,10 @@ export class CourseService {
         )
       );
 
-      return responses.flatMap(res => res.rows as unknown as Term[]);
+      const terms = responses.flatMap(res => res.rows as unknown as Term[]);
+      // 以資料庫的實際學期日期更新「當前學期」判斷的快取（合併，不覆蓋既有資料）
+      setTermDates(terms);
+      return terms;
     } catch (error) {
       console.error('Error fetching terms by codes:', error);
       return [];
@@ -1967,7 +1970,10 @@ export class CourseService {
         ]
       );
 
-      return response.rows as unknown as Term[];
+      const terms = response.rows as unknown as Term[];
+      // 以資料庫的實際學期日期更新「當前學期」判斷的快取
+      setTermDates(terms);
+      return terms;
     } catch (error) {
       console.error('Error fetching terms:', error);
       throw new Error('Failed to fetch terms');
