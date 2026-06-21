@@ -468,9 +468,11 @@ export function TimetableGrid({
                         {block.section.courseTitle}
                       </div>
                     )}
-                    {/* Session type lives in the top-right badge; show only the venue here. */}
+                    {/* Session type lives in the top-right badge; show only the venue here.
+                        When the venue is the first line under the course title, give it a
+                        touch more breathing room than the default field gap. */}
                     {fields.venue && block.venues.length > 0 && (
-                      <div className={`${b.meta} leading-tight opacity-90 dark:opacity-100 ${b.gap} flex items-start gap-1`}>
+                      <div className={`${b.meta} leading-tight opacity-90 dark:opacity-100 ${fields.title ? (compact ? 'mt-1' : 'mt-1.5') : b.gap} flex items-start gap-1`}>
                         {showIcons && <MapPin className={`${iconSz} shrink-0 mt-[1px]`} />}
                         <span className="min-w-0">{block.venues.join(', ')}</span>
                       </div>
