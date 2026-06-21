@@ -5,8 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 type Tt = (key: string, params?: Record<string, string>) => string;
+
+// Chinese names for the campus buildings, shown after the English code in the
+// venue filter on zh sites (e.g. "LBY (林炳炎樓)").
+const BUILDING_NAMES: Record<string, { tc: string; sc: string }> = {
+  LBY: { tc: '林炳炎樓', sc: '林炳炎楼' },
+  LCH: { tc: '劉仲謙樓', sc: '刘仲谦楼' },
+  LKK: { tc: '梁銶琚樓', sc: '梁銶琚楼' },
+  LYH: { tc: '劉李婉嫻康樂樓', sc: '刘李婉娴康乐楼' },
+  MB: { tc: '李運強教學大樓', sc: '李运强教学大楼' },
+  SEK: { tc: '郭少明伉儷樓', sc: '郭少明伉俪楼' },
+  WYL: { tc: '黃玉蘭樓', sc: '黄玉兰楼' },
+};
 
 // ── Time filter ───────────────────────────────────────────────────────────
 export type TimeMode = 'off' | 'within' | 'exclude';
@@ -166,6 +179,7 @@ interface VenueFilterProps {
 }
 
 export function VenueFilter({ groups, value, onChange, t, className }: VenueFilterProps) {
+  const { language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -173,13 +187,27 @@ export function VenueFilter({ groups, value, onChange, t, className }: VenueFilt
   const selected = useMemo(() => new Set(value), [value]);
   const q = query.trim().toLowerCase();
 
+  // Chinese building name for the current language (undefined on the English site
+  // or for an unknown building code).
+  const buildingZh = (code: string): string | undefined => {
+    const n = BUILDING_NAMES[code.toUpperCase()];
+    if (!n) return undefined;
+    return language === 'zh-TW' ? n.tc : language === 'zh-CN' ? n.sc : undefined;
+  };
+
   // Apply the search filter to rooms; keep only buildings with surviving rooms.
+  // A building also matches by its Chinese name (e.g. typing "林炳炎" finds LBY).
   const shownGroups = useMemo(() => {
     if (!q) return groups;
+    const buildingMatches = (code: string) => {
+      if (code.toLowerCase().includes(q)) return true;
+      const n = BUILDING_NAMES[code.toUpperCase()];
+      return !!n && (n.tc.includes(q) || n.sc.includes(q));
+    };
     return groups
       .map((g) => ({
         building: g.building,
-        rooms: g.building.toLowerCase().includes(q)
+        rooms: buildingMatches(g.building)
           ? g.rooms
           : g.rooms.filter((r) => r.toLowerCase().includes(q)),
       }))
@@ -272,7 +300,10 @@ export function VenueFilter({ groups, value, onChange, t, className }: VenueFilt
                     disabled={!!q}
                     className="flex flex-1 items-center justify-between gap-2 text-left text-sm font-medium"
                   >
-                    <span>{g.building}</span>
+                    <span>
+                      {g.building}
+                      {buildingZh(g.building) ? ` (${buildingZh(g.building)})` : ''}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {selCount > 0 ? `${selCount}/${g.rooms.length}` : g.rooms.length}
                     </span>
