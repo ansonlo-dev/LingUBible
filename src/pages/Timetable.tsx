@@ -4,7 +4,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import {
   loadTimetableSections,
   findConflicts,
-  colorForIndex,
   DAY_ORDER,
   TERMS,
   type TimetableSection,
@@ -20,6 +19,7 @@ import {
 } from '@/components/features/timetable/TimetableGrid';
 import { Combobox, type ComboboxOption } from '@/components/features/timetable/Combobox';
 import { ColorPicker } from '@/components/features/timetable/ColorPicker';
+import { defaultCourseColor } from '@/components/features/timetable/palette';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -395,6 +395,19 @@ const Timetable = () => {
     resetSelection(loadSelectedIds(termId));
   }, [termId]);
 
+  // Track the live site theme so default course colours pick the contrasting
+  // Catppuccin variant (dark theme → Latte, light theme → Mocha) and re-colour
+  // if the user switches theme.
+  const [siteDark, setSiteDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
+  );
+  useEffect(() => {
+    const update = () => setSiteDark(document.documentElement.classList.contains('dark'));
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
   // Keyboard shortcuts: Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo.
   // Ignored while typing in an input/textarea so native text-undo still works.
   useEffect(() => {
@@ -564,10 +577,13 @@ const Timetable = () => {
     for (const id of selectedIds) {
       const s = sectionById.get(id);
       if (!s) continue;
-      map.set(id, exportOptions.customColors[s.courseCode] ?? colorForIndex(slots.get(s.courseCode)!));
+      map.set(
+        id,
+        exportOptions.customColors[s.courseCode] ?? defaultCourseColor(slots.get(s.courseCode)!, siteDark),
+      );
     }
     return map;
-  }, [selectedIds, sectionById, exportOptions.customColors]);
+  }, [selectedIds, sectionById, exportOptions.customColors, siteDark]);
 
   const setCourseColor = (courseCode: string, color: string) =>
     setOpt({ customColors: { ...exportOptions.customColors, [courseCode]: color } });

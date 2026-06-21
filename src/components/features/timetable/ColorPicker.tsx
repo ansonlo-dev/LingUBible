@@ -3,24 +3,7 @@ import { Palette, Check } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
-
-/**
- * Preset swatches from the Catppuccin palette (https://catppuccin.com/palette).
- * Two variants (Latte and Mocha), each with the same 10 distinct rainbow accents
- * in spectrum order, so most users can pick a pleasant colour with one tap. Power
- * users who want an exact colour still get the native colour picker below.
- * Order: red, maroon, peach, yellow, green, teal, sky, blue, mauve, pink.
- */
-export const CATPPUCCIN_PALETTE: { variant: string; colors: string[] }[] = [
-  {
-    variant: 'Latte',
-    colors: ['#d20f39', '#e64553', '#fe640b', '#df8e1d', '#40a02b', '#179299', '#04a5e5', '#1e66f5', '#8839ef', '#ea76cb'],
-  },
-  {
-    variant: 'Mocha',
-    colors: ['#f38ba8', '#eba0ac', '#fab387', '#f9e2af', '#a6e3a1', '#94e2d5', '#89dceb', '#89b4fa', '#cba6f7', '#f5c2e7'],
-  },
-];
+import { CATPPUCCIN_PALETTE } from './palette';
 
 interface ColorPickerProps {
   value: string;

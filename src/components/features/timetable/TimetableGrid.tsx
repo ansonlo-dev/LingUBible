@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Trash2, MapPin, GraduationCap, Clock } from 'lucide-react';
 import { DAY_ORDER, meetingsOverlap, type TimetableSection } from '@/services/timetableService';
 import { ColorPicker } from '@/components/features/timetable/ColorPicker';
+import { paletteTextColor } from '@/components/features/timetable/palette';
 
 export type DayFormat = 'short' | 'long' | 'zh';
 
@@ -123,6 +124,10 @@ function isDarkColor(hex: string): boolean {
 export function blockTextColor(bg: string, mode: TextColorMode): string {
   if (mode === 'white') return '#ffffff';
   if (mode === 'black') return '#000000';
+  // Dynamic: Catppuccin palette colours have a fixed, always-readable text
+  // colour (Latte → white, Mocha → black); custom colours fall back to luminance.
+  const forced = paletteTextColor(bg);
+  if (forced) return forced;
   return isDarkColor(bg) ? '#ffffff' : '#000000';
 }
 
