@@ -1111,6 +1111,427 @@ const Timetable = () => {
       ].filter(Boolean) as { label: string; sections: TimetableSection[]; conflicts: Set<string> }[])
     : [{ label: '', sections: selectedSections, conflicts: conflictIds }];
 
+  // Editable timetable title (used in both the mobile title row and, on desktop,
+  // the combined title + actions row).
+  const titleContent = editingTitle ? (
+    <Input
+      autoFocus
+      value={titleDraft}
+      onChange={(e) => setTitleDraft(e.target.value)}
+      onBlur={() => {
+        setCustomTitle(titleDraft.trim());
+        setEditingTitle(false);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          setCustomTitle(titleDraft.trim());
+          setEditingTitle(false);
+        } else if (e.key === 'Escape') {
+          setEditingTitle(false);
+        }
+      }}
+      className="h-9 max-w-xs text-center text-xl font-bold"
+    />
+  ) : (
+    <>
+      <h2 className="text-xl font-bold text-center">{displayTitle}</h2>
+      <button
+        onClick={() => {
+          setTitleDraft(displayTitle);
+          setEditingTitle(true);
+        }}
+        className="text-muted-foreground hover:text-foreground transition-colors"
+        title={t('timetable.editTitle')}
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+    </>
+  );
+
+  // Undo / redo / customize / export / clear. Rendered in the action row on
+  // mobile, but moved onto the title row on desktop so the filter dropdowns can
+  // use the full action row (see the lg: visibility toggles below).
+  const actionButtons = (
+    <>
+      {/* Undo / redo the selection. */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={undoSelection}
+        disabled={!canUndo}
+        title={t('timetable.undo')}
+      >
+        <Undo2 className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={redoSelection}
+        disabled={!canRedo}
+        title={t('timetable.redo')}
+      >
+        <Redo2 className="h-4 w-4" />
+      </Button>
+      {/* Timetable options — these update the on-screen preview instantly */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" title={t('timetable.customize')}>
+            <SlidersHorizontal className="h-4 w-4" />
+            {/* Label appears when the panel is hidden (the filters make room
+                on desktop); kept on mobile too where the row wraps. */}
+            <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
+              {t('timetable.customize')}
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          className="w-[580px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-gray-900 max-h-[85vh] overflow-y-auto timetable-scroll"
+        >
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.title')}</Label>
+              <OptionToggle
+                value={exportOptions.includeTitle ? 'on' : 'off'}
+                onChange={(v) => setOpt({ includeTitle: v === 'on' })}
+                options={[
+                  { value: 'on', label: t('timetable.opt.show') },
+                  { value: 'off', label: t('timetable.opt.hide') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.subGrid')}</Label>
+              <OptionToggle
+                value={exportOptions.showSubGrid ? 'on' : 'off'}
+                onChange={(v) => setOpt({ showSubGrid: v === 'on' })}
+                options={[
+                  { value: 'on', label: t('timetable.opt.show') },
+                  { value: 'off', label: t('timetable.opt.hide') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.hours')}</Label>
+              <OptionToggle
+                value={exportOptions.showHours ? 'on' : 'off'}
+                onChange={(v) => setOpt({ showHours: v === 'on' })}
+                options={[
+                  { value: 'on', label: t('timetable.opt.show') },
+                  { value: 'off', label: t('timetable.opt.hide') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.credits')}</Label>
+              <OptionToggle
+                value={exportOptions.showCredits ? 'on' : 'off'}
+                onChange={(v) => setOpt({ showCredits: v === 'on' })}
+                options={[
+                  { value: 'on', label: t('timetable.opt.show') },
+                  { value: 'off', label: t('timetable.opt.hide') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.timeFormat')}</Label>
+              <OptionToggle
+                value={exportOptions.timeFormat}
+                onChange={(v) => setOpt({ timeFormat: v })}
+                options={[
+                  { value: '24', label: t('timetable.opt.format24') },
+                  { value: '12', label: t('timetable.opt.format12') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.dayFormat')}</Label>
+              <OptionToggle
+                value={exportOptions.dayFormat}
+                onChange={(v) => setOpt({ dayFormat: v })}
+                options={[
+                  { value: 'short', label: 'MON' },
+                  { value: 'long', label: 'Monday' },
+                  { value: 'zh', label: '中文' },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.firstDay')}</Label>
+              <OptionToggle
+                value={exportOptions.firstDay}
+                onChange={(v) => setOpt({ firstDay: v })}
+                options={[
+                  { value: 'sun', label: t('timetable.opt.sunday') },
+                  { value: 'mon', label: t('timetable.opt.monday') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.timeRange')}</Label>
+              <OptionToggle
+                value={exportOptions.rangeMode}
+                onChange={(v) => setOpt({ rangeMode: v })}
+                options={[
+                  { value: 'auto', label: t('timetable.opt.rangeAuto') },
+                  { value: 'custom', label: t('timetable.opt.rangeCustom') },
+                ]}
+              />
+              {exportOptions.rangeMode === 'custom' && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Select
+                    value={String(exportOptions.startHour)}
+                    onValueChange={(v) => setOpt({ startHour: parseInt(v, 10) })}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
+                        <SelectItem key={h} value={String(h)} disabled={h >= exportOptions.endHour}>
+                          {`${String(h).padStart(2, '0')}:00`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-muted-foreground">–</span>
+                  <Select
+                    value={String(exportOptions.endHour)}
+                    onValueChange={(v) => setOpt({ endHour: parseInt(v, 10) })}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 17 }, (_, i) => i + 7).map((h) => (
+                        <SelectItem key={h} value={String(h)} disabled={h <= exportOptions.startHour}>
+                          {`${String(h).padStart(2, '0')}:00`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.textColor')}</Label>
+              <OptionToggle
+                value={exportOptions.textColor}
+                onChange={(v) => setOpt({ textColor: v })}
+                options={[
+                  { value: 'dynamic', label: t('timetable.opt.textAuto') },
+                  { value: 'white', label: t('timetable.opt.textWhite') },
+                  { value: 'black', label: t('timetable.opt.textBlack') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.icons')}</Label>
+              <OptionToggle
+                value={exportOptions.showIcons ? 'on' : 'off'}
+                onChange={(v) => setOpt({ showIcons: v === 'on' })}
+                options={[
+                  { value: 'on', label: t('timetable.opt.show') },
+                  { value: 'off', label: t('timetable.opt.hide') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1 col-span-2">
+              <Label className="text-xs">{t('timetable.opt.days')}</Label>
+              <div className="flex flex-wrap gap-1">
+                {(exportOptions.firstDay === 'sun'
+                  ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                  : WEEK_DAYS
+                ).map((d) => {
+                  const active = exportOptions.days.includes(d);
+                  const isWeekend = d === 'SAT' || d === 'SUN';
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() =>
+                        setOpt({
+                          days: active
+                            ? exportOptions.days.filter((x) => x !== d)
+                            : [...exportOptions.days, d],
+                          // Remember a manual weekend choice so it overrides
+                          // the lesson-based auto include/exclude.
+                          ...(isWeekend && {
+                            weekendInclude: { ...exportOptions.weekendInclude, [d]: !active },
+                          }),
+                        })
+                      }
+                      className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                        active
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-transparent text-muted-foreground hover:bg-accent'
+                      }`}
+                    >
+                      {DAY_PILL_LABEL[d]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-xs">{t('timetable.opt.fields')}</Label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { key: 'code', label: t('timetable.opt.fCode') },
+                  { key: 'title', label: t('timetable.opt.fTitle') },
+                  { key: 'type', label: t('timetable.opt.fType') },
+                  { key: 'number', label: t('timetable.opt.fNumber') },
+                  { key: 'venue', label: t('timetable.opt.fVenue') },
+                  { key: 'instructor', label: t('timetable.opt.fInstructor') },
+                  { key: 'time', label: t('timetable.opt.fTime') },
+                ] as { key: keyof BlockFields; label: string }[]).map((f) => (
+                  <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
+                    <Checkbox
+                      checked={exportOptions.fields[f.key]}
+                      onCheckedChange={(v) =>
+                        setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } })
+                      }
+                    />
+                    {f.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Export — the red button now carries its own options (theme,
+          resolution, file type); picking a file type runs the export. */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            size="sm"
+            disabled={exporting || selectedSections.length === 0}
+            title={t('timetable.export')}
+          >
+            {exporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {/* Label appears when the panel is hidden (extra room available). */}
+            <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
+              {t('timetable.export')}
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-80 bg-white dark:bg-gray-900 space-y-3">
+          <div className="space-y-1">
+            <Label className="text-sm">{t('timetable.opt.theme')}</Label>
+            <OptionToggle
+              value={exportOptions.theme}
+              onChange={(v) => setOpt({ theme: v })}
+              options={[
+                { value: 'light', label: t('timetable.opt.light') },
+                { value: 'dark', label: t('timetable.opt.dark') },
+              ]}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-sm">{t('timetable.opt.resolution')}</Label>
+            <OptionToggle
+              value={exportOptions.resolution}
+              onChange={(v) => setOpt({ resolution: v })}
+              options={[
+                { value: 'low', label: t('timetable.opt.resLow') },
+                { value: 'standard', label: t('timetable.opt.resStandard') },
+                { value: 'high', label: t('timetable.opt.resHigh') },
+              ]}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm">{t('timetable.opt.fileType')}</Label>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={exporting || selectedSections.length === 0}
+                onClick={() => requestExport('png')}
+              >
+                <ImageIcon className="h-4 w-4 mr-1" />
+                {t('timetable.exportPng')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={exporting || selectedSections.length === 0}
+                onClick={() => requestExport('pdf')}
+              >
+                <FileDown className="h-4 w-4 mr-1" />
+                {t('timetable.exportPdf')}
+              </Button>
+            </div>
+          </div>
+          {/* Calendar (.ics) — recurring weekly events over a date range.
+              Summer terms use each session's own range from the CSV. */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">{t('timetable.exportIcs')}</Label>
+            {isSummer ? (
+              <div className="space-y-0.5 text-[11px] text-muted-foreground">
+                {summerRanges[1]?.start && (
+                  <p>{summerLabel(1)}</p>
+                )}
+                {summerRanges[2]?.start && (
+                  <p>{summerLabel(2)}</p>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">{t('timetable.icsStart')}</Label>
+                  <Input
+                    type="date"
+                    value={exportOptions.icsStart}
+                    onChange={(e) => setOpt({ icsStart: e.target.value })}
+                    className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">{t('timetable.icsEnd')}</Label>
+                  <Input
+                    type="date"
+                    value={exportOptions.icsEnd}
+                    min={exportOptions.icsStart || undefined}
+                    onChange={(e) => setOpt({ icsEnd: e.target.value })}
+                    className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              disabled={
+                selectedSections.length === 0 ||
+                (!isSummer &&
+                  (!exportOptions.icsStart ||
+                    !exportOptions.icsEnd ||
+                    exportOptions.icsEnd < exportOptions.icsStart))
+              }
+              onClick={handleExportIcs}
+            >
+              <CalendarDays className="h-4 w-4 mr-1" />
+              {t('timetable.exportIcs')}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setConfirmClear(true)}
+        disabled={selectedSections.length === 0}
+        title={t('timetable.clearAll')}
+        className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </>
+  );
+
   return (
     <div className="mx-auto px-3 lg:px-4 pt-3 pb-8">
       {/* Header */}
@@ -1343,426 +1764,32 @@ const Timetable = () => {
                 </>
               )}
 
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-                {/* Undo / redo the selection (works whether the panel is shown or
-                    hidden, since this action row is always rendered). */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={undoSelection}
-                  disabled={!canUndo}
-                  title={t('timetable.undo')}
-                >
-                  <Undo2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={redoSelection}
-                  disabled={!canRedo}
-                  title={t('timetable.redo')}
-                >
-                  <Redo2 className="h-4 w-4" />
-                </Button>
-                {/* Timetable options — these update the on-screen preview instantly */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" title={t('timetable.customize')}>
-                      <SlidersHorizontal className="h-4 w-4" />
-                      {/* Label appears when the panel is hidden (the filters make room
-                          on desktop); kept on mobile too where the row wraps. */}
-                      <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
-                        {t('timetable.customize')}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="end"
-                    className="w-[580px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-gray-900 max-h-[85vh] overflow-y-auto timetable-scroll"
-                  >
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.title')}</Label>
-                        <OptionToggle
-                          value={exportOptions.includeTitle ? 'on' : 'off'}
-                          onChange={(v) => setOpt({ includeTitle: v === 'on' })}
-                          options={[
-                            { value: 'on', label: t('timetable.opt.show') },
-                            { value: 'off', label: t('timetable.opt.hide') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.subGrid')}</Label>
-                        <OptionToggle
-                          value={exportOptions.showSubGrid ? 'on' : 'off'}
-                          onChange={(v) => setOpt({ showSubGrid: v === 'on' })}
-                          options={[
-                            { value: 'on', label: t('timetable.opt.show') },
-                            { value: 'off', label: t('timetable.opt.hide') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.hours')}</Label>
-                        <OptionToggle
-                          value={exportOptions.showHours ? 'on' : 'off'}
-                          onChange={(v) => setOpt({ showHours: v === 'on' })}
-                          options={[
-                            { value: 'on', label: t('timetable.opt.show') },
-                            { value: 'off', label: t('timetable.opt.hide') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.credits')}</Label>
-                        <OptionToggle
-                          value={exportOptions.showCredits ? 'on' : 'off'}
-                          onChange={(v) => setOpt({ showCredits: v === 'on' })}
-                          options={[
-                            { value: 'on', label: t('timetable.opt.show') },
-                            { value: 'off', label: t('timetable.opt.hide') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.timeFormat')}</Label>
-                        <OptionToggle
-                          value={exportOptions.timeFormat}
-                          onChange={(v) => setOpt({ timeFormat: v })}
-                          options={[
-                            { value: '24', label: t('timetable.opt.format24') },
-                            { value: '12', label: t('timetable.opt.format12') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.dayFormat')}</Label>
-                        <OptionToggle
-                          value={exportOptions.dayFormat}
-                          onChange={(v) => setOpt({ dayFormat: v })}
-                          options={[
-                            { value: 'short', label: 'MON' },
-                            { value: 'long', label: 'Monday' },
-                            { value: 'zh', label: '中文' },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.firstDay')}</Label>
-                        <OptionToggle
-                          value={exportOptions.firstDay}
-                          onChange={(v) => setOpt({ firstDay: v })}
-                          options={[
-                            { value: 'sun', label: t('timetable.opt.sunday') },
-                            { value: 'mon', label: t('timetable.opt.monday') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.timeRange')}</Label>
-                        <OptionToggle
-                          value={exportOptions.rangeMode}
-                          onChange={(v) => setOpt({ rangeMode: v })}
-                          options={[
-                            { value: 'auto', label: t('timetable.opt.rangeAuto') },
-                            { value: 'custom', label: t('timetable.opt.rangeCustom') },
-                          ]}
-                        />
-                        {exportOptions.rangeMode === 'custom' && (
-                          <div className="flex items-center gap-2 pt-1">
-                            <Select
-                              value={String(exportOptions.startHour)}
-                              onValueChange={(v) => setOpt({ startHour: parseInt(v, 10) })}
-                            >
-                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
-                                  <SelectItem key={h} value={String(h)} disabled={h >= exportOptions.endHour}>
-                                    {`${String(h).padStart(2, '0')}:00`}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <span className="text-muted-foreground">–</span>
-                            <Select
-                              value={String(exportOptions.endHour)}
-                              onValueChange={(v) => setOpt({ endHour: parseInt(v, 10) })}
-                            >
-                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {Array.from({ length: 17 }, (_, i) => i + 7).map((h) => (
-                                  <SelectItem key={h} value={String(h)} disabled={h <= exportOptions.startHour}>
-                                    {`${String(h).padStart(2, '0')}:00`}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.textColor')}</Label>
-                        <OptionToggle
-                          value={exportOptions.textColor}
-                          onChange={(v) => setOpt({ textColor: v })}
-                          options={[
-                            { value: 'dynamic', label: t('timetable.opt.textAuto') },
-                            { value: 'white', label: t('timetable.opt.textWhite') },
-                            { value: 'black', label: t('timetable.opt.textBlack') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{t('timetable.opt.icons')}</Label>
-                        <OptionToggle
-                          value={exportOptions.showIcons ? 'on' : 'off'}
-                          onChange={(v) => setOpt({ showIcons: v === 'on' })}
-                          options={[
-                            { value: 'on', label: t('timetable.opt.show') },
-                            { value: 'off', label: t('timetable.opt.hide') },
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-1 col-span-2">
-                        <Label className="text-xs">{t('timetable.opt.days')}</Label>
-                        <div className="flex flex-wrap gap-1">
-                          {(exportOptions.firstDay === 'sun'
-                            ? ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-                            : WEEK_DAYS
-                          ).map((d) => {
-                            const active = exportOptions.days.includes(d);
-                            const isWeekend = d === 'SAT' || d === 'SUN';
-                            return (
-                              <button
-                                key={d}
-                                type="button"
-                                onClick={() =>
-                                  setOpt({
-                                    days: active
-                                      ? exportOptions.days.filter((x) => x !== d)
-                                      : [...exportOptions.days, d],
-                                    // Remember a manual weekend choice so it overrides
-                                    // the lesson-based auto include/exclude.
-                                    ...(isWeekend && {
-                                      weekendInclude: { ...exportOptions.weekendInclude, [d]: !active },
-                                    }),
-                                  })
-                                }
-                                className={`px-2 py-1 text-xs rounded-full border transition-colors ${
-                                  active
-                                    ? 'bg-primary text-white border-primary'
-                                    : 'bg-transparent text-muted-foreground hover:bg-accent'
-                                }`}
-                              >
-                                {DAY_PILL_LABEL[d]}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <div className="space-y-1.5 col-span-2">
-                        <Label className="text-xs">{t('timetable.opt.fields')}</Label>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {([
-                            { key: 'code', label: t('timetable.opt.fCode') },
-                            { key: 'title', label: t('timetable.opt.fTitle') },
-                            { key: 'type', label: t('timetable.opt.fType') },
-                            { key: 'number', label: t('timetable.opt.fNumber') },
-                            { key: 'venue', label: t('timetable.opt.fVenue') },
-                            { key: 'instructor', label: t('timetable.opt.fInstructor') },
-                            { key: 'time', label: t('timetable.opt.fTime') },
-                          ] as { key: keyof BlockFields; label: string }[]).map((f) => (
-                            <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
-                              <Checkbox
-                                checked={exportOptions.fields[f.key]}
-                                onCheckedChange={(v) =>
-                                  setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } })
-                                }
-                              />
-                              {f.label}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Export — the red button now carries its own options (theme,
-                    resolution, file type); picking a file type runs the export. */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      size="sm"
-                      disabled={exporting || selectedSections.length === 0}
-                      title={t('timetable.export')}
-                    >
-                      {exporting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                      {/* Label appears when the panel is hidden (extra room available). */}
-                      <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
-                        {t('timetable.export')}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-80 bg-white dark:bg-gray-900 space-y-3">
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.theme')}</Label>
-                      <OptionToggle
-                        value={exportOptions.theme}
-                        onChange={(v) => setOpt({ theme: v })}
-                        options={[
-                          { value: 'light', label: t('timetable.opt.light') },
-                          { value: 'dark', label: t('timetable.opt.dark') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-sm">{t('timetable.opt.resolution')}</Label>
-                      <OptionToggle
-                        value={exportOptions.resolution}
-                        onChange={(v) => setOpt({ resolution: v })}
-                        options={[
-                          { value: 'low', label: t('timetable.opt.resLow') },
-                          { value: 'standard', label: t('timetable.opt.resStandard') },
-                          { value: 'high', label: t('timetable.opt.resHigh') },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm">{t('timetable.opt.fileType')}</Label>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={exporting || selectedSections.length === 0}
-                          onClick={() => requestExport('png')}
-                        >
-                          <ImageIcon className="h-4 w-4 mr-1" />
-                          {t('timetable.exportPng')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={exporting || selectedSections.length === 0}
-                          onClick={() => requestExport('pdf')}
-                        >
-                          <FileDown className="h-4 w-4 mr-1" />
-                          {t('timetable.exportPdf')}
-                        </Button>
-                      </div>
-                    </div>
-                    {/* Calendar (.ics) — recurring weekly events over a date range.
-                        Summer terms use each session's own range from the CSV. */}
-                    <div className="space-y-1.5">
-                      <Label className="text-sm">{t('timetable.exportIcs')}</Label>
-                      {isSummer ? (
-                        <div className="space-y-0.5 text-[11px] text-muted-foreground">
-                          {summerRanges[1]?.start && (
-                            <p>{summerLabel(1)}</p>
-                          )}
-                          {summerRanges[2]?.start && (
-                            <p>{summerLabel(2)}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <div className="space-y-1">
-                            <Label className="text-[11px] text-muted-foreground">{t('timetable.icsStart')}</Label>
-                            <Input
-                              type="date"
-                              value={exportOptions.icsStart}
-                              onChange={(e) => setOpt({ icsStart: e.target.value })}
-                              className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-[11px] text-muted-foreground">{t('timetable.icsEnd')}</Label>
-                            <Input
-                              type="date"
-                              value={exportOptions.icsEnd}
-                              min={exportOptions.icsStart || undefined}
-                              onChange={(e) => setOpt({ icsEnd: e.target.value })}
-                              className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
-                            />
-                          </div>
-                        </div>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        disabled={
-                          selectedSections.length === 0 ||
-                          (!isSummer &&
-                            (!exportOptions.icsStart ||
-                              !exportOptions.icsEnd ||
-                              exportOptions.icsEnd < exportOptions.icsStart))
-                        }
-                        onClick={handleExportIcs}
-                      >
-                        <CalendarDays className="h-4 w-4 mr-1" />
-                        {t('timetable.exportIcs')}
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setConfirmClear(true)}
-                  disabled={selectedSections.length === 0}
-                  title={t('timetable.clearAll')}
-                  className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              {/* Actions: on mobile they sit in this action row; on desktop
+                  they move to the title row (below) so the filter dropdowns
+                  get the full action row. */}
+              <div className="ml-auto flex flex-wrap items-center gap-2 lg:hidden">
+                {actionButtons}
               </div>
             </div>
 
             {/* On-screen title + grid (reflects the timetable options live) */}
+            {/* Mobile/tablet: centered title only (actions stay in the action row). */}
             {exportOptions.includeTitle && (
-              <div className="flex items-center justify-center gap-2">
-                {editingTitle ? (
-                  <Input
-                    autoFocus
-                    value={titleDraft}
-                    onChange={(e) => setTitleDraft(e.target.value)}
-                    onBlur={() => {
-                      setCustomTitle(titleDraft.trim());
-                      setEditingTitle(false);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        setCustomTitle(titleDraft.trim());
-                        setEditingTitle(false);
-                      } else if (e.key === 'Escape') {
-                        setEditingTitle(false);
-                      }
-                    }}
-                    className="h-9 max-w-xs text-center text-xl font-bold"
-                  />
-                ) : (
-                  <>
-                    <h2 className="text-xl font-bold text-center">{displayTitle}</h2>
-                    <button
-                      onClick={() => {
-                        setTitleDraft(displayTitle);
-                        setEditingTitle(true);
-                      }}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      title={t('timetable.editTitle')}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                  </>
-                )}
+              <div className="flex items-center justify-center gap-2 lg:hidden">
+                {titleContent}
               </div>
             )}
+            {/* Desktop: title centered with the action buttons on the same row, so
+                the action row above is free for the full-width filter dropdowns. */}
+            <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <span aria-hidden />
+              <div className="flex items-center justify-center gap-2 min-h-9">
+                {exportOptions.includeTitle && titleContent}
+              </div>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {actionButtons}
+              </div>
+            </div>
             {isSummer ? (
               <div className="space-y-5">
                 <div className="space-y-2">
