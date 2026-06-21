@@ -825,6 +825,8 @@ export default {
   'timetable.conflictWarning': '部分已选班别有时间冲突（以红色标示）。',
   'timetable.selected': '已选择（{count}）',
   'timetable.clearAll': '全部清除',
+  'timetable.undo': '撤销',
+  'timetable.redo': '重做',
   'timetable.emptySelection': '尚未加入任何班别。搜索并加入班别以编排时间表。',
   'timetable.day.mon': '星期一',
   'timetable.day.tue': '星期二',

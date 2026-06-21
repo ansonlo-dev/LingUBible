@@ -755,6 +755,8 @@ export default {
   'timetable.conflictWarning': '部分已選班別有時間衝突（以紅色標示）。',
   'timetable.selected': '已選擇（{count}）',
   'timetable.clearAll': '全部清除',
+  'timetable.undo': '復原',
+  'timetable.redo': '重做',
   'timetable.emptySelection': '尚未加入任何班別。搜尋並加入班別以編排時間表。',
   'timetable.day.mon': '星期一',
   'timetable.day.tue': '星期二',

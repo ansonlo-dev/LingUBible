@@ -817,6 +817,8 @@ export default {
   'timetable.conflictWarning': 'Some selected sections have time conflicts (highlighted in red).',
   'timetable.selected': 'Selected ({count})',
   'timetable.clearAll': 'Clear all',
+  'timetable.undo': 'Undo',
+  'timetable.redo': 'Redo',
   'timetable.emptySelection': 'No sections added yet. Search and add sections to build your timetable.',
   'timetable.day.mon': 'Monday',
   'timetable.day.tue': 'Tuesday',

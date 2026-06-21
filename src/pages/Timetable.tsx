@@ -58,6 +58,8 @@ import {
   SlidersHorizontal,
   Pencil,
   ExternalLink,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -260,7 +262,49 @@ const Timetable = () => {
   const [type, setType] = useState('all');
   const [day, setDay] = useState('all');
 
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => loadSelectedIds(TERMS[0].id));
+  // Selection with undo/redo history (max 10 steps each way) so an accidental
+  // add/remove can be reverted. `past`/`future` hold prior/undone selections;
+  // `present` is the live selection used everywhere else.
+  const [selHistory, setSelHistory] = useState<{
+    past: string[][];
+    present: string[];
+    future: string[][];
+  }>(() => ({ past: [], present: loadSelectedIds(TERMS[0].id), future: [] }));
+  const selectedIds = selHistory.present;
+  const MAX_HISTORY = 10;
+  const sameIds = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((x, i) => x === b[i]);
+  // Record an undoable change to the selection.
+  const commitSelection = (updater: string[] | ((prev: string[]) => string[])) =>
+    setSelHistory((h) => {
+      const next = typeof updater === 'function' ? updater(h.present) : updater;
+      if (sameIds(next, h.present)) return h;
+      return { past: [...h.past, h.present].slice(-MAX_HISTORY), present: next, future: [] };
+    });
+  // Replace the selection without recording history (e.g. switching term).
+  const resetSelection = (ids: string[]) => setSelHistory({ past: [], present: ids, future: [] });
+  const undoSelection = () =>
+    setSelHistory((h) => {
+      if (h.past.length === 0) return h;
+      const prev = h.past[h.past.length - 1];
+      return {
+        past: h.past.slice(0, -1),
+        present: prev,
+        future: [h.present, ...h.future].slice(0, MAX_HISTORY),
+      };
+    });
+  const redoSelection = () =>
+    setSelHistory((h) => {
+      if (h.future.length === 0) return h;
+      const next = h.future[0];
+      return {
+        past: [...h.past, h.present].slice(-MAX_HISTORY),
+        present: next,
+        future: h.future.slice(1),
+      };
+    });
+  const canUndo = selHistory.past.length > 0;
+  const canRedo = selHistory.future.length > 0;
   // Tracks the term the current selection belongs to, so saves always target the
   // right term even when selectedIds updates lag a term switch by a render.
   const termIdRef = useRef(termId);
@@ -347,8 +391,29 @@ const Timetable = () => {
       firstTermLoad.current = false;
       return;
     }
-    setSelectedIds(loadSelectedIds(termId));
+    resetSelection(loadSelectedIds(termId));
   }, [termId]);
+
+  // Keyboard shortcuts: Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo.
+  // Ignored while typing in an input/textarea so native text-undo still works.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undoSelection();
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault();
+        redoSelection();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const dayLabels: Record<string, string> = {
     MON: t('timetable.day.mon'),
@@ -598,7 +663,7 @@ const Timetable = () => {
     instructor !== '' || type !== 'all' || day !== 'all';
 
   const toggleSection = (id: string) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    commitSelection((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const clearFilters = () => {
@@ -901,6 +966,26 @@ const Timetable = () => {
               )}
 
               <div className="ml-auto flex flex-wrap items-center gap-2">
+                {/* Undo / redo the selection (works whether the panel is shown or
+                    hidden, since this action row is always rendered). */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={undoSelection}
+                  disabled={!canUndo}
+                  title={t('timetable.undo')}
+                >
+                  <Undo2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={redoSelection}
+                  disabled={!canRedo}
+                  title={t('timetable.redo')}
+                >
+                  <Redo2 className="h-4 w-4" />
+                </Button>
                 {/* Timetable options — these update the on-screen preview instantly */}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -1227,7 +1312,7 @@ const Timetable = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setSelectedIds([])}
+                  onClick={() => commitSelection([])}
                   disabled={selectedSections.length === 0}
                   title={t('timetable.clearAll')}
                   className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"

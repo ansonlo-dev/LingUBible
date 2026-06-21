@@ -54,8 +54,8 @@ export default {
 					foreground: 'hsl(var(--accent-foreground))'
 				},
 				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+					DEFAULT: 'rgb(var(--popover))',
+					foreground: 'rgb(var(--popover-foreground))'
 				},
 				card: {
 					DEFAULT: 'rgb(var(--card))',
