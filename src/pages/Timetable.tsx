@@ -1160,7 +1160,7 @@ const Timetable = () => {
                 <button
                   type="button"
                   onClick={() => setChosenCollapsed((v) => !v)}
-                  className="sticky top-0 z-10 flex w-full items-center gap-1.5 bg-background/95 backdrop-blur px-1 py-1.5 text-sm font-medium"
+                  className="sticky top-0 z-10 flex w-full items-center gap-1.5 bg-background/[0.97] backdrop-blur-md px-1 py-1.5 text-sm font-medium"
                 >
                   {chosenCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   <span>{t('timetable.chosenSessions')}</span>
@@ -1180,7 +1180,7 @@ const Timetable = () => {
                 <button
                   type="button"
                   onClick={() => setAvailableCollapsed((v) => !v)}
-                  className="sticky top-0 z-10 flex w-full items-center gap-1.5 bg-background/95 backdrop-blur px-1 py-1.5 text-sm font-medium"
+                  className="sticky top-0 z-10 flex w-full items-center gap-1.5 bg-background/[0.97] backdrop-blur-md px-1 py-1.5 text-sm font-medium"
                 >
                   {availableCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   <span>{t('timetable.availableSessions')}</span>
