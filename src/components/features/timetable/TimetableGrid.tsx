@@ -120,7 +120,7 @@ function isDarkColor(hex: string): boolean {
 }
 
 /** Resolve the on-block text colour for a given background + mode. */
-function blockTextColor(bg: string, mode: TextColorMode): string {
+export function blockTextColor(bg: string, mode: TextColorMode): string {
   if (mode === 'white') return '#ffffff';
   if (mode === 'black') return '#000000';
   return isDarkColor(bg) ? '#ffffff' : '#000000';

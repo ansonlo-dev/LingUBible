@@ -12,6 +12,7 @@ import {
 import { buildTimetableIcs } from '@/services/timetableIcs';
 import {
   TimetableGrid,
+  blockTextColor,
   DEFAULT_BLOCK_FIELDS,
   type BlockFields,
   type DayFormat,
@@ -678,6 +679,11 @@ const Timetable = () => {
   const renderResultItem = (s: TimetableSection) => {
     const added = selectedSet.has(s.id);
     const color = colorMap.get(s.id);
+    // Pick the text colour by background lightness (same logic as the timetable
+    // blocks), so a light section colour gets dark text instead of unreadable white.
+    const fg = added ? blockTextColor(color || '', exportOptions.textColor) : undefined;
+    const lightBg = added && fg === '#000000';
+    const hoverOverlay = lightBg ? 'hover:bg-black/10' : 'hover:bg-white/20';
     // Combined session type + section number, matching the timetable blocks (e.g. "LEC1").
     const typeNumber = `${s.types.join('/')}${s.section}`;
     return (
@@ -695,16 +701,17 @@ const Timetable = () => {
         }}
         title={added ? t('timetable.remove') : t('timetable.add')}
         className={`relative rounded-lg border p-3 cursor-pointer transition-colors ${
-          added ? 'text-white border-transparent' : 'hover:bg-accent/40'
+          added ? 'border-transparent' : 'hover:bg-accent/40'
         }`}
-        style={added ? { backgroundColor: color } : undefined}
+        style={added ? { backgroundColor: color, color: fg } : undefined}
       >
         {/* Top-right: session type + number badge (same look as the timetable blocks) */}
         {typeNumber && (
           <div
             className={`absolute top-2 right-2 text-[10px] font-bold rounded px-1 py-0.5 leading-none ${
-              added ? 'bg-black/25 text-white' : 'bg-foreground/10 text-foreground'
+              added ? '' : 'bg-foreground/10 text-foreground'
             }`}
+            style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
           >
             {typeNumber}
           </div>
@@ -724,7 +731,7 @@ const Timetable = () => {
               title={t('timetable.openCourse')}
               aria-label={`${t('timetable.openCourse')}: ${s.courseCode}`}
               className={`-my-1.5 p-1.5 rounded shrink-0 transition-colors ${
-                added ? 'text-white/80 hover:bg-white/20' : 'text-muted-foreground hover:bg-foreground/10'
+                added ? `opacity-80 ${hoverOverlay}` : 'text-muted-foreground hover:bg-foreground/10'
               }`}
             >
               <ExternalLink className="h-3.5 w-3.5" />
@@ -732,7 +739,7 @@ const Timetable = () => {
           </div>
           <p className="text-sm truncate">{s.courseTitle}</p>
           {s.instructors.length > 0 && (
-            <div className={`mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
+            <div className={`mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs ${added ? 'opacity-80' : 'text-muted-foreground'}`}>
               {s.instructors.map((name) => (
                 <span key={name} className="inline-flex items-center gap-0.5">
                   <span className="truncate max-w-[160px]">{name}</span>
@@ -745,7 +752,7 @@ const Timetable = () => {
                     title={t('timetable.openInstructor')}
                     aria-label={`${t('timetable.openInstructor')}: ${name}`}
                     className={`-my-1.5 p-1.5 rounded shrink-0 transition-colors ${
-                      added ? 'text-white/80 hover:bg-white/20' : 'text-muted-foreground hover:bg-foreground/10'
+                      added ? `opacity-80 ${hoverOverlay}` : 'text-muted-foreground hover:bg-foreground/10'
                     }`}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -754,14 +761,14 @@ const Timetable = () => {
               ))}
             </div>
           )}
-          <p className={`text-[11px] mt-0.5 ${added ? 'text-white/80' : 'text-muted-foreground'}`}>
+          <p className={`text-[11px] mt-0.5 ${added ? 'opacity-80' : 'text-muted-foreground'}`}>
             {meetingSummary(s, dayLabels) || t('timetable.noSchedule')}
           </p>
         </div>
         {added && (
           <ColorPicker
             className="absolute bottom-2 right-2"
-            iconClassName="text-white/90"
+            iconClassName={lightBg ? 'text-black/80' : 'text-white/90'}
             value={color}
             onChange={(c) => setCourseColor(s.courseCode, c)}
           />
