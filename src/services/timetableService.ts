@@ -308,3 +308,76 @@ export function findConflicts(sections: TimetableSection[]): Set<string> {
   }
   return conflicting;
 }
+
+// ── Venue helpers ───────────────────────────────────────────────────────────
+// Venue codes are a building prefix + a room (e.g. "LKK306", "LKKG01", "MB202",
+// "LCHUG14"). Rooms may start with a floor code (B basement, LG lower-ground,
+// G ground, UG upper-ground) before the room number.
+
+const FLOOR_CODES = ['UG', 'LG', 'G', 'B'];
+
+/**
+ * Split a venue code into its building prefix and room part.
+ *   "LKK306"  → { building: "LKK", room: "306" }
+ *   "LKKG01"  → { building: "LKK", room: "G01" }
+ *   "LCHUG14" → { building: "LCH", room: "UG14" }
+ *   "MB202"   → { building: "MB",  room: "202" }   (B not stripped: too short)
+ */
+export function splitVenue(code: string): { building: string; room: string } {
+  const m = /^([A-Za-z]+)(.*)$/.exec((code || '').trim());
+  if (!m) return { building: '', room: (code || '').trim() };
+  let building = m[1].toUpperCase();
+  let room = m[2];
+  // A trailing floor code belongs to the room, not the building — but only move
+  // it if ≥2 building letters remain (so "MB202" stays MB+202, not M+B202).
+  for (const fc of FLOOR_CODES) {
+    if (building.length - fc.length >= 2 && building.endsWith(fc)) {
+      room = fc + room;
+      building = building.slice(0, -fc.length);
+      break;
+    }
+  }
+  return { building, room };
+}
+
+/** A natural sort key for a room: [floorRank, number, suffix]. */
+function roomSortKey(room: string): [number, number, string] {
+  const m = /^(UG|LG|G|B)?0*(\d+)?(.*)$/i.exec(room.trim());
+  const floor = (m?.[1] || '').toUpperCase();
+  const floorRank = floor === 'B' ? 0 : floor === 'LG' ? 1 : floor === 'G' ? 2 : floor === 'UG' ? 3 : 4;
+  const num = m?.[2] != null ? parseInt(m[2], 10) : -1;
+  return [floorRank, num, (m?.[3] || '').toUpperCase()];
+}
+
+/** True if a code looks like a real room (has a building prefix and a digit). */
+export function isRoomCode(code: string): boolean {
+  const { building, room } = splitVenue(code);
+  return building.length >= 2 && /\d/.test(room);
+}
+
+/** Extract individual room codes from a meeting's raw venue string. */
+export function parseVenueRooms(raw: string): string[] {
+  if (!raw) return [];
+  return raw.split(/[\/,;]+/).map((s) => s.trim()).filter(Boolean);
+}
+
+/** Group venue codes by building, rooms naturally ordered within each building. */
+export function groupVenues(codes: Iterable<string>): { building: string; rooms: string[] }[] {
+  const byBuilding = new Map<string, Set<string>>();
+  for (const code of codes) {
+    if (!isRoomCode(code)) continue;
+    const { building } = splitVenue(code);
+    if (!byBuilding.has(building)) byBuilding.set(building, new Set());
+    byBuilding.get(building)!.add(code);
+  }
+  return [...byBuilding.entries()]
+    .map(([building, set]) => ({
+      building,
+      rooms: [...set].sort((a, b) => {
+        const ka = roomSortKey(splitVenue(a).room);
+        const kb = roomSortKey(splitVenue(b).room);
+        return ka[0] - kb[0] || ka[1] - kb[1] || ka[2].localeCompare(kb[2]) || a.localeCompare(b);
+      }),
+    }))
+    .sort((a, b) => a.building.localeCompare(b.building));
+}

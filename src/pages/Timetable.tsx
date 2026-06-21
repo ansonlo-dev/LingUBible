@@ -5,10 +5,19 @@ import {
   loadTimetableSections,
   findConflicts,
   meetingsOverlap,
+  parseVenueRooms,
+  groupVenues,
   DAY_ORDER,
   TERMS,
   type TimetableSection,
 } from '@/services/timetableService';
+import {
+  TimeFilter,
+  VenueFilter,
+  EMPTY_TIME_FILTER,
+  isTimeFilterActive,
+  type TimeFilterValue,
+} from '@/components/features/timetable/TimeVenueFilters';
 import { buildTimetableIcs } from '@/services/timetableIcs';
 import { loadTimetableCatalog, normInstructorName, type TimetableCatalog } from '@/services/timetableCatalog';
 import {
@@ -265,7 +274,10 @@ const Timetable = () => {
   const [courseCode, setCourseCode] = useState('');
   const [instructor, setInstructor] = useState('');
   const [type, setType] = useState('all');
-  const [day, setDay] = useState('all');
+  // Time filter: multi-day + optional time-range (within / exclude). Venue
+  // filter: a set of selected room codes (empty = no restriction).
+  const [timeFilter, setTimeFilter] = useState<TimeFilterValue>(EMPTY_TIME_FILTER);
+  const [venueFilter, setVenueFilter] = useState<string[]>([]);
 
   // Selection with undo/redo history (max 10 steps each way) so an accidental
   // add/remove can be reverted. `past`/`future` hold prior/undone selections;
@@ -558,6 +570,20 @@ const Timetable = () => {
     return Array.from(set).sort();
   }, [allSections]);
 
+  // Days present in the data (in week order) — drives the Time filter's chips.
+  const availableDays = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of allSections) for (const m of s.meetings) set.add(m.day);
+    return DAY_ORDER.filter((d) => set.has(d));
+  }, [allSections]);
+
+  // Venue rooms grouped by building (rooms naturally ordered) for the Venue filter.
+  const venueGroups = useMemo(() => {
+    const codes = new Set<string>();
+    for (const s of allSections) for (const m of s.meetings) for (const r of parseVenueRooms(m.venue)) codes.add(r);
+    return groupVenues(codes);
+  }, [allSections]);
+
   // Extra multilingual search text per section (Chinese course title, instructor
   // Chinese names & nicknames), so the smart search box matches them too.
   const sectionSearchText = useMemo(() => {
@@ -577,12 +603,35 @@ const Timetable = () => {
 
   const filtered = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
+    // Pre-parse the time-range bounds once (minutes from midnight).
+    const toMin = (hhmm: string) => {
+      const [h, m] = hhmm.split(':').map((n) => parseInt(n, 10));
+      return Number.isNaN(h) ? null : h * 60 + (m || 0);
+    };
+    const timeActive = isTimeFilterActive(timeFilter);
+    const from = timeFilter.from ? toMin(timeFilter.from) : null;
+    const to = timeFilter.to ? toMin(timeFilter.to) : null;
+    const rangeOn = timeFilter.mode !== 'off' && from != null && to != null && from < to;
+    const venueSet = venueFilter.length ? new Set(venueFilter) : null;
     const result = allSections.filter((s) => {
       if (subjectArea !== 'all' && codePrefix(s.courseCode) !== subjectArea) return false;
       if (courseCode && s.courseCode !== courseCode) return false;
       if (instructor && !s.instructors.includes(instructor)) return false;
       if (type !== 'all' && !s.types.includes(type)) return false;
-      if (day !== 'all' && !s.meetings.some((m) => m.day === day)) return false;
+      // Day restriction: keep sections with a meeting on any selected day.
+      if (timeFilter.days.length && !s.meetings.some((m) => timeFilter.days.includes(m.day))) return false;
+      // Time-range restriction:
+      //  - within:  every meeting must fall entirely inside [from, to)
+      //  - exclude: no meeting may overlap [from, to)
+      if (timeActive && rangeOn) {
+        if (timeFilter.mode === 'within') {
+          if (!s.meetings.every((m) => m.startMinutes >= from! && m.endMinutes + 1 <= to!)) return false;
+        } else {
+          if (s.meetings.some((m) => m.startMinutes < to! && from! < m.endMinutes + 1)) return false;
+        }
+      }
+      // Venue restriction: keep sections with a meeting in a selected room.
+      if (venueSet && !s.meetings.some((m) => parseVenueRooms(m.venue).some((r) => venueSet.has(r)))) return false;
       if (term) {
         const haystack = `${s.courseCode} ${s.courseTitle} ${s.crn} ${s.instructors.join(' ')} ${sectionSearchText.get(s.id) ?? ''}`.toLowerCase();
         if (!haystack.includes(term)) return false;
@@ -602,7 +651,7 @@ const Timetable = () => {
       result.sort((a, b) => crnRank(a) - crnRank(b));
     }
     return result;
-  }, [allSections, debouncedSearch, subjectArea, courseCode, instructor, type, day, sectionSearchText]);
+  }, [allSections, debouncedSearch, subjectArea, courseCode, instructor, type, timeFilter, venueFilter, sectionSearchText]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const sectionById = useMemo(() => {
@@ -782,7 +831,7 @@ const Timetable = () => {
 
   const hasActiveFilters =
     searchTerm !== '' || subjectArea !== 'all' || courseCode !== '' ||
-    instructor !== '' || type !== 'all' || day !== 'all';
+    instructor !== '' || type !== 'all' || isTimeFilterActive(timeFilter) || venueFilter.length > 0;
 
   const toggleSection = (id: string) => {
     commitSelection((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -794,7 +843,8 @@ const Timetable = () => {
     setCourseCode('');
     setInstructor('');
     setType('all');
-    setDay('all');
+    setTimeFilter(EMPTY_TIME_FILTER);
+    setVenueFilter([]);
   };
 
   // True if adding this section would clash (time-overlap) with the current
@@ -1109,19 +1159,14 @@ const Timetable = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={day} onValueChange={setDay}>
-                    <SelectTrigger className="h-9 w-auto min-w-[100px]">
-                      <SelectValue placeholder={t('timetable.filter.day')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('timetable.filter.allDays')}</SelectItem>
-                      {DAY_ORDER.filter((d) => d !== 'SUN').map((d) => (
-                        <SelectItem key={d} value={d}>
-                          {dayLabels[d]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <TimeFilter
+                    value={timeFilter}
+                    onChange={setTimeFilter}
+                    availableDays={availableDays}
+                    dayLabels={dayLabels}
+                    t={t}
+                  />
+                  <VenueFilter groups={venueGroups} value={venueFilter} onChange={setVenueFilter} t={t} />
                   {hasActiveFilters && (
                     <Button
                       variant="ghost"
