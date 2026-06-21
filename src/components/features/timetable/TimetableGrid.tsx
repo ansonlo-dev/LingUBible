@@ -45,6 +45,10 @@ interface TimetableGridProps {
   showSubGrid?: boolean;
   /** Show per-day and weekly total hours in the header (default true). */
   showHours?: boolean;
+  /** Show the per-block credit badge + the total-credits count in the corner cell. */
+  showCredits?: boolean;
+  /** UPPER course code → credits (e.g. "3"). Used for the credit badges/total. */
+  creditsByCode?: Record<string, string>;
   /** Block text colour: 'dynamic' picks white/black per background luminance (default). */
   textColor?: TextColorMode;
   /** Show small leading icons (location / instructor / time) on the info rows. */
@@ -189,6 +193,8 @@ export function TimetableGrid({
   exportDark,
   showSubGrid = true,
   showHours = true,
+  showCredits = false,
+  creditsByCode,
   textColor = 'dynamic',
   showIcons = true,
   use24Hour = true,
@@ -278,6 +284,23 @@ export function TimetableGrid({
     return { visibleDays: visible, blocksByDay: byDay, minsByDay, weekMins };
   }, [sections, days, firstDay]);
 
+  // Total credits across the selected sections. Credits belong to a course, not
+  // a section, so a course counts once even when several of its sections (e.g. a
+  // lecture + its tutorial) are selected.
+  const totalCredits = useMemo(() => {
+    if (!showCredits || !creditsByCode) return 0;
+    const seen = new Set<string>();
+    let total = 0;
+    for (const s of sections) {
+      const code = s.courseCode.toUpperCase();
+      if (seen.has(code)) continue;
+      seen.add(code);
+      const c = parseFloat(creditsByCode[code] ?? '');
+      if (!Number.isNaN(c)) total += c;
+    }
+    return total;
+  }, [sections, showCredits, creditsByCode]);
+
   // Dynamic vertical range: span only the hours actually used by the selected
   // sections (rounded to whole hours). Falls back to a default when empty.
   const { startHour, endHour } = useMemo(() => {
@@ -343,10 +366,11 @@ export function TimetableGrid({
           style={{ gridTemplateColumns: `${TIME_COL}px repeat(${visibleDays.length}, minmax(0, 1fr))` }}
         >
           <div
-            className={`${sz.headerH} ${sz.hours} flex items-center justify-center text-muted-foreground`}
-            title="Total hours this week (including hidden days)"
+            className={`${sz.headerH} ${sz.hours} flex flex-col items-center justify-center leading-tight text-muted-foreground`}
+            title="Total hours / credits this week (including hidden days)"
           >
-            {showHours && weekMins > 0 ? formatHours(weekMins) : ''}
+            {showHours && weekMins > 0 && <span>{formatHours(weekMins)}</span>}
+            {showCredits && totalCredits > 0 && <span>{totalCredits} Cred</span>}
           </div>
           {visibleDays.map((day) => (
             <div
@@ -428,10 +452,22 @@ export function TimetableGrid({
                 const fg = blockTextColor(bg, textColor);
                 const badgeBg = fg === '#ffffff' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.4)';
                 const badgeText = `${fields.type ? block.type : ''}${fields.number ? block.section.section : ''}`;
+                // Credit badge sits left of the type/number badge, e.g. "3 Cred".
+                // "Cred" stays untranslated on purpose (same across all languages).
+                const creditVal = showCredits ? creditsByCode?.[block.section.courseCode.toUpperCase()] : undefined;
+                const creditText = creditVal ? `${creditVal} Cred` : '';
                 // Compact tier for short blocks so all fields (incl. the time)
                 // still fit without being clipped.
                 const compact = height < (forExport ? 150 : 84);
                 const b = blockSizes(compact);
+                // Reserve extra right padding on the code line when the credit
+                // badge widens the top-right badge row, so a long code won't slide
+                // under it.
+                const codePr = creditText
+                  ? forExport
+                    ? compact ? 'pr-[6.5rem]' : 'pr-[7.5rem]'
+                    : compact ? 'pr-[3.75rem]' : 'pr-[4.25rem]'
+                  : b.codePr;
                 return (
                   <div
                     key={`${block.section.id}-${idx}`}
@@ -449,17 +485,30 @@ export function TimetableGrid({
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
-                    {/* Session type + section number, e.g. "LEC9" / "TUT11" */}
-                    {badgeText && (
-                      <div
-                        className={`absolute top-1 right-1 ${b.badge} rounded px-1 py-0.5 leading-none`}
-                        style={{ backgroundColor: badgeBg, color: fg }}
-                      >
-                        {badgeText}
+                    {/* Top-right badges: credits (e.g. "3 Cred") then the session
+                        type + section number (e.g. "LEC9" / "TUT11"). */}
+                    {(creditText || badgeText) && (
+                      <div className="absolute top-1 right-1 flex items-center gap-1">
+                        {creditText && (
+                          <div
+                            className={`${b.badge} rounded px-1 py-0.5 leading-none whitespace-nowrap`}
+                            style={{ backgroundColor: badgeBg, color: fg }}
+                          >
+                            {creditText}
+                          </div>
+                        )}
+                        {badgeText && (
+                          <div
+                            className={`${b.badge} rounded px-1 py-0.5 leading-none`}
+                            style={{ backgroundColor: badgeBg, color: fg }}
+                          >
+                            {badgeText}
+                          </div>
+                        )}
                       </div>
                     )}
                     {fields.code && (
-                      <div className={`${b.code} leading-tight truncate ${b.codePr}`}>
+                      <div className={`${b.code} leading-tight truncate ${codePr}`}>
                         {block.section.courseCode}
                       </div>
                     )}

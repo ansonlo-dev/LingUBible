@@ -799,6 +799,7 @@ export default {
   'timetable.opt.title': '标题',
   'timetable.opt.subGrid': '半小时网格线',
   'timetable.opt.hours': '时数统计',
+  'timetable.opt.credits': '学分统计',
   'timetable.opt.icons': '图标',
   'timetable.opt.timeFormat': '时间格式',
   'timetable.opt.format24': '24 小时制',

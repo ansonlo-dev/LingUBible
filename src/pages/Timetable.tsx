@@ -89,6 +89,7 @@ interface ExportOptions {
   includeTitle: boolean;
   showSubGrid: boolean;
   showHours: boolean;
+  showCredits: boolean;
   timeFormat: '24' | '12';
   dayFormat: DayFormat;
   textColor: TextColorMode;
@@ -121,6 +122,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeTitle: true,
   showSubGrid: true,
   showHours: true,
+  showCredits: true,
   timeFormat: '24',
   dayFormat: 'short',
   textColor: 'dynamic',
@@ -142,6 +144,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
 const SESSION_TYPE_LABELS: Record<string, { 'zh-TW': string; 'zh-CN': string }> = {
   LEC: { 'zh-TW': '講課', 'zh-CN': '讲课' },
   TUT: { 'zh-TW': '導修', 'zh-CN': '导修' },
+  SEM: { 'zh-TW': '研討', 'zh-CN': '研讨' },
 };
 
 const WEEK_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -469,6 +472,18 @@ const Timetable = () => {
       active = false;
     };
   }, []);
+
+  // UPPER course code → credits, distilled from the same already-cached catalog
+  // (0 extra Appwrite reads). Drives the credit badges + total-credits count.
+  const creditsByCode = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (catalog) {
+      for (const [code, info] of Object.entries(catalog.courses)) {
+        if (info.credits) map[code] = info.credits;
+      }
+    }
+    return map;
+  }, [catalog]);
 
   // Persist the current term's selection whenever it changes.
   useEffect(() => {
@@ -942,6 +957,10 @@ const Timetable = () => {
     const conflicts = added ? conflictIds.has(s.id) : conflictsWithSelection(s);
     // Combined session type + section number, matching the timetable blocks (e.g. "LEC1").
     const typeNumber = `${s.types.join('/')}${s.section}`;
+    // Credit badge text (e.g. "3 Cred"); "Cred" stays untranslated. Gated by the
+    // same show-credits customize toggle as the timetable blocks.
+    const creditVal = exportOptions.showCredits ? creditsByCode[s.courseCode.toUpperCase()] : undefined;
+    const creditText = creditVal ? `${creditVal} Cred` : '';
     return (
       <div
         key={s.id}
@@ -961,9 +980,20 @@ const Timetable = () => {
         } ${added ? '' : 'hover:bg-accent/40'}`}
         style={added ? { backgroundColor: color, color: fg } : undefined}
       >
-        {/* Top-right badges: summer session (S1/S2) then session type + number. */}
-        {(typeNumber || (isSummer && s.summerSession)) && (
+        {/* Top-right badges: credits (e.g. "3 Cred"), then summer session (S1/S2),
+            then session type + number. */}
+        {(creditText || typeNumber || (isSummer && s.summerSession)) && (
           <div className="absolute top-2 right-2 flex items-center gap-1">
+            {creditText && (
+              <span
+                className={`text-[10px] font-bold rounded px-1 py-0.5 leading-none whitespace-nowrap ${
+                  added ? '' : 'bg-foreground/10 text-foreground'
+                }`}
+                style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
+              >
+                {creditText}
+              </span>
+            )}
             {isSummer && s.summerSession && (
               <span
                 className={`text-[10px] font-bold rounded px-1 py-0.5 leading-none ${
@@ -986,7 +1016,7 @@ const Timetable = () => {
             )}
           </div>
         )}
-        <div className="min-w-0 pr-12">
+        <div className={`min-w-0 ${creditText ? 'pr-[6.5rem]' : 'pr-12'}`}>
           {/* Course code + a dedicated link icon to the course page. The icon is the
               only link target (the text stays part of the add/remove card tap area);
               its padding gives a comfortable, accurate hit area on touch screens. */}
@@ -1055,6 +1085,8 @@ const Timetable = () => {
       colorMap={colorMap}
       showSubGrid={exportOptions.showSubGrid}
       showHours={exportOptions.showHours}
+      showCredits={exportOptions.showCredits}
+      creditsByCode={creditsByCode}
       textColor={exportOptions.textColor}
       showIcons={exportOptions.showIcons}
       use24Hour={exportOptions.timeFormat === '24'}
@@ -1376,6 +1408,17 @@ const Timetable = () => {
                         <OptionToggle
                           value={exportOptions.showHours ? 'on' : 'off'}
                           onChange={(v) => setOpt({ showHours: v === 'on' })}
+                          options={[
+                            { value: 'on', label: t('timetable.opt.show') },
+                            { value: 'off', label: t('timetable.opt.hide') },
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t('timetable.opt.credits')}</Label>
+                        <OptionToggle
+                          value={exportOptions.showCredits ? 'on' : 'off'}
+                          onChange={(v) => setOpt({ showCredits: v === 'on' })}
                           options={[
                             { value: 'on', label: t('timetable.opt.show') },
                             { value: 'off', label: t('timetable.opt.hide') },
@@ -1762,6 +1805,8 @@ const Timetable = () => {
                     exportDark={exportOptions.theme === 'dark'}
                     showSubGrid={exportOptions.showSubGrid}
                     showHours={exportOptions.showHours}
+                    showCredits={exportOptions.showCredits}
+                    creditsByCode={creditsByCode}
                     textColor={exportOptions.textColor}
                     showIcons={exportOptions.showIcons}
                     use24Hour={exportOptions.timeFormat === '24'}

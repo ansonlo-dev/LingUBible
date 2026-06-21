@@ -15,8 +15,8 @@ import { persistentCache } from '@/utils/persistentCache';
  * never "thousands of reads on every visit".
  */
 export interface TimetableCatalog {
-  /** UPPER course code → Chinese titles. */
-  courses: Record<string, { tc?: string; sc?: string }>;
+  /** UPPER course code → Chinese titles + credits. */
+  courses: Record<string, { tc?: string; sc?: string; credits?: string }>;
   /** Normalised English instructor name → Chinese names + nickname. */
   instructors: Record<string, { tc?: string; sc?: string; nickname?: string }>;
 }
@@ -47,8 +47,10 @@ export async function loadTimetableCatalog(): Promise<TimetableCatalog> {
       for (const c of courses) {
         const code = (c.course_code || '').toUpperCase();
         if (!code) continue;
-        if (c.course_title_tc || c.course_title_sc) {
-          catalog.courses[code] = { tc: c.course_title_tc, sc: c.course_title_sc };
+        // Credits come bundled in the same already-cached read (getCoursesWithStats
+        // selects `credits`), so the timetable gets them with 0 extra reads.
+        if (c.course_title_tc || c.course_title_sc || c.credits) {
+          catalog.courses[code] = { tc: c.course_title_tc, sc: c.course_title_sc, credits: c.credits };
         }
       }
       for (const i of instructors) {
