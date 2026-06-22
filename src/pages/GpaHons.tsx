@@ -58,6 +58,7 @@ import {
   ChevronDown,
   Maximize2,
   Minimize2,
+  Info,
 } from 'lucide-react';
 
 // ----------------------------------------------------------------------------
@@ -265,9 +266,10 @@ const GpaHons = () => {
   const [catalog, setCatalog] = useState<GpaCourseCatalog>({});
 
   const [targetKey, setTargetKey] = useState<HonoursKey>('first');
-  const [creditsPerTerm, setCreditsPerTerm] = useState('15');
-  const [remainingTermsInput, setRemainingTermsInput] = useState('');
+  const [remainingCreditsInput, setRemainingCreditsInput] = useState('');
   const [fullScale, setFullScale] = useState(false);
+  const [showHonours, setShowHonours] = useState(true);
+  const [showAwards, setShowAwards] = useState(true);
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
 
   const toggleYear = (year: number) =>
@@ -414,10 +416,12 @@ const GpaHons = () => {
   const nextTier = nextHonoursTier(cgpa);
 
   // ---- Target calculator -------------------------------------------------
-  const remainingTerms =
-    remainingTermsInput.trim() === '' ? autoRemainingTerms : Math.max(0, parseInt(remainingTermsInput, 10) || 0);
-  const perTerm = Math.max(0, parseFloat(creditsPerTerm) || 0);
-  const remainingCredits = remainingTerms * perTerm;
+  const DEFAULT_CREDITS_PER_TERM = 15;
+  const defaultRemainingCredits = autoRemainingTerms * DEFAULT_CREDITS_PER_TERM;
+  const remainingCredits =
+    remainingCreditsInput.trim() === ''
+      ? defaultRemainingCredits
+      : Math.max(0, parseInt(remainingCreditsInput, 10) || 0);
   const targetTier = HONOURS_TIERS.find((tr) => tr.key === targetKey)!;
   const calc = requiredRemainingAvg({ earnedPoints, earnedCredits, remainingCredits, targetCgpa: targetTier.cgpa });
 
@@ -444,12 +448,18 @@ const GpaHons = () => {
   return (
     <div className="mx-auto max-w-6xl px-3 lg:px-4 pt-3 pb-12">
       {/* Header */}
-      <div className="mb-4 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-4">
-        <div className="flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">{t('gpaHons.title')}</h1>
+      <div className="mb-4">
+        <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-4">
+          <div className="flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">{t('gpaHons.title')}</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">{t('gpaHons.subtitle')}</p>
         </div>
-        <p className="text-sm text-muted-foreground">{t('gpaHons.subtitle')}</p>
+        <div className="mt-2 flex items-center gap-1.5 rounded-md bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
+          <Info className="h-3.5 w-3.5 shrink-0" />
+          <span>{t('gpa.localOnlyNotice')}</span>
+        </div>
       </div>
 
       {/* Summary */}
@@ -484,38 +494,64 @@ const GpaHons = () => {
       {/* Chart */}
       <Card className="mb-4">
         <CardHeader className="px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="h-4 w-4" /> {t('gpa.trendTitle')}
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1.5 px-2 text-xs"
-              onClick={() => setFullScale((v) => !v)}
-            >
-              {fullScale ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              {fullScale ? t('gpa.scaleFull') : t('gpa.scaleAuto')}
-            </Button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <ChartToggle
+                active={showHonours}
+                color="#94a3b8"
+                label={t('gpa.honoursLines')}
+                onClick={() => setShowHonours((v) => !v)}
+              />
+              <ChartToggle
+                active={showAwards}
+                color="#f59e0b"
+                label={t('gpa.awardLines')}
+                onClick={() => setShowAwards((v) => !v)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-xs"
+                onClick={() => setFullScale((v) => !v)}
+              >
+                {fullScale ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                {fullScale ? t('gpa.scaleFull') : t('gpa.scaleAuto')}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-3 pb-3">
-          <GpaTrendChart data={chartData} labels={chartLabels} fullScale={fullScale} />
+          <GpaTrendChart
+            data={chartData}
+            labels={chartLabels}
+            fullScale={fullScale}
+            showHonours={showHonours}
+            showAwards={showAwards}
+          />
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
             <LegendDot color="#3b82f6" label={t('gpa.cumulativeGpa')} />
             <LegendDot color="#10b981" label={t('gpa.termGpa')} />
-            <LegendDot color="#f59e0b" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
-            <LegendDot color="#22d3ee" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
+            {showAwards && (
+              <>
+                <LegendDot color="#f59e0b" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
+                <LegendDot color="#22d3ee" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
+              </>
+            )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground">
-            <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
-            <span className="font-medium">{t('gpa.honoursLines')}:</span>
-            {HONOURS_TIERS.map((tr) => (
-              <span key={tr.key} className="whitespace-nowrap">
-                {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
-              </span>
-            ))}
-          </div>
+          {showHonours && (
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground">
+              <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
+              <span className="font-medium">{t('gpa.honoursLines')}:</span>
+              {HONOURS_TIERS.map((tr) => (
+                <span key={tr.key} className="whitespace-nowrap">
+                  {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -528,7 +564,7 @@ const GpaHons = () => {
         </CardHeader>
         <CardContent className="px-4 pb-4">
           <p className="mb-3 text-xs text-muted-foreground">{t('gpa.targetDesc')}</p>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">{t('gpa.targetClass')}</Label>
               <Select value={targetKey} onValueChange={(v) => setTargetKey(v as HonoursKey)}>
@@ -545,27 +581,17 @@ const GpaHons = () => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t('gpa.remainingTerms')}</Label>
+              <Label className="text-xs">{t('gpa.totalRemainingCredits')}</Label>
               <Input
-                type="number"
-                min={0}
+                inputMode="numeric"
                 className="h-9"
-                value={remainingTermsInput}
-                placeholder={String(autoRemainingTerms)}
-                onChange={(e) => setRemainingTermsInput(e.target.value)}
+                value={remainingCreditsInput}
+                placeholder={String(defaultRemainingCredits)}
+                onChange={(e) => setRemainingCreditsInput(e.target.value.replace(/[^0-9]/g, ''))}
               />
-              <p className="text-[11px] text-muted-foreground">{t('gpa.autoDetected', { n: autoRemainingTerms })}</p>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t('gpa.creditsPerTerm')}</Label>
-              <Input
-                type="number"
-                min={0}
-                className="h-9"
-                value={creditsPerTerm}
-                onChange={(e) => setCreditsPerTerm(e.target.value)}
-              />
-              <p className="text-[11px] text-muted-foreground">{t('gpa.remainingCreditsLabel', { n: remainingCredits })}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t('gpa.totalRemainingCreditsHint', { terms: autoRemainingTerms, n: defaultRemainingCredits })}
+              </p>
             </div>
           </div>
 
@@ -667,14 +693,14 @@ const GpaHons = () => {
               </div>
 
               {!collapsed && (
-                <CardContent className="space-y-3 p-2 sm:p-3">
-                  {yearTerms.map((term) => {
+                <CardContent className="p-0">
+                  {yearTerms.map((term, termIdx) => {
                     const s = statsByTermId.get(term.id)!;
                     return (
-                      <div key={term.id} className="rounded-lg border">
-                        <div className="flex items-center justify-between gap-2 border-b bg-muted/20 px-2 py-1.5 sm:px-3">
+                      <div key={term.id} className={cn('px-3 py-3', termIdx > 0 && 'border-t')}>
+                        <div className="mb-2 flex items-center justify-between gap-2">
                           <Select value={term.part} onValueChange={(v) => updateTermPart(term.id, v as TermPart)}>
-                            <SelectTrigger className="h-7 w-[120px] border-0 bg-transparent px-1 text-sm font-medium shadow-none focus:ring-0">
+                            <SelectTrigger className="h-8 w-[124px] border-0 bg-transparent px-1 text-sm font-semibold shadow-none focus:ring-0">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-white dark:bg-gray-900">
@@ -704,7 +730,7 @@ const GpaHons = () => {
                           </div>
                         </div>
 
-                        <div className="p-2">
+                        <div>
                           {/* column headers (desktop only) */}
                           <div className="mb-1 hidden grid-cols-[1fr_72px_112px_32px] gap-2 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
                             <span>{t('gpa.colCourse')}</span>
@@ -788,9 +814,16 @@ const GpaHons = () => {
                     );
                   })}
 
-                  <Button variant="outline" size="sm" className="w-full border-dashed" onClick={() => addTerm(year)}>
-                    <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
-                  </Button>
+                  <div className="border-t p-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-muted-foreground hover:text-foreground"
+                      onClick={() => addTerm(year)}
+                    >
+                      <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
+                    </Button>
+                  </div>
                 </CardContent>
               )}
             </Card>
@@ -817,6 +850,33 @@ function SummaryCard({ icon, label, children }: { icon: ReactNode; label: string
         <div className="mt-1.5 flex min-h-[32px] items-center">{children}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function ChartToggle({
+  active,
+  color,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  color: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors',
+        active ? 'bg-accent/60' : 'opacity-45 hover:opacity-80',
+      )}
+    >
+      <span className="inline-block h-0 w-4 shrink-0 border-t-2 border-dashed" style={{ borderColor: color }} />
+      {label}
+    </button>
   );
 }
 

@@ -36,6 +36,10 @@ interface GpaTrendChartProps {
   labels: GpaTrendLabels;
   /** When true, force the Y axis to span the full 0–4 range. */
   fullScale?: boolean;
+  /** Show the honours classification cut-off lines. */
+  showHonours?: boolean;
+  /** Show the Dean's / President's List lines. */
+  showAwards?: boolean;
 }
 
 // Series colours — bright enough to read on both light and dark backgrounds.
@@ -78,7 +82,7 @@ function CustomTooltip({ active, payload, label, labels }: any) {
   );
 }
 
-export function GpaTrendChart({ data, labels, fullScale }: GpaTrendChartProps) {
+export function GpaTrendChart({ data, labels, fullScale, showHonours = true, showAwards = true }: GpaTrendChartProps) {
   // Animate the lines drawing left-to-right ONLY on first mount.
   const [animate, setAnimate] = useState(true);
 
@@ -145,32 +149,37 @@ export function GpaTrendChart({ data, labels, fullScale }: GpaTrendChartProps) {
           <Tooltip content={<CustomTooltip labels={labels} />} />
 
           {/* Honours classification cut-offs — all one neutral colour */}
-          {HONOURS_TIERS.map((tier) => (
-            <ReferenceLine
-              key={tier.key}
-              y={tier.cgpa}
-              stroke={HONOURS_LINE}
-              strokeDasharray="5 5"
-              strokeOpacity={0.7}
-              label={refLabel(tier.cgpa, HONOURS_LINE)}
-            />
-          ))}
+          {showHonours &&
+            HONOURS_TIERS.map((tier) => (
+              <ReferenceLine
+                key={tier.key}
+                y={tier.cgpa}
+                stroke={HONOURS_LINE}
+                strokeDasharray="5 5"
+                strokeOpacity={0.7}
+                label={refLabel(tier.cgpa, HONOURS_LINE)}
+              />
+            ))}
 
           {/* Merit lists — one accent colour each */}
-          <ReferenceLine
-            y={AWARD_LINES.presidentsList}
-            stroke={AWARD_COLORS.presidentsList}
-            strokeDasharray="2 3"
-            strokeWidth={1.5}
-            label={refLabel(AWARD_LINES.presidentsList, AWARD_COLORS.presidentsList)}
-          />
-          <ReferenceLine
-            y={AWARD_LINES.deansList}
-            stroke={AWARD_COLORS.deansList}
-            strokeDasharray="2 3"
-            strokeWidth={1.5}
-            label={refLabel(AWARD_LINES.deansList, AWARD_COLORS.deansList)}
-          />
+          {showAwards && (
+            <ReferenceLine
+              y={AWARD_LINES.presidentsList}
+              stroke={AWARD_COLORS.presidentsList}
+              strokeDasharray="2 3"
+              strokeWidth={1.5}
+              label={refLabel(AWARD_LINES.presidentsList, AWARD_COLORS.presidentsList)}
+            />
+          )}
+          {showAwards && (
+            <ReferenceLine
+              y={AWARD_LINES.deansList}
+              stroke={AWARD_COLORS.deansList}
+              strokeDasharray="2 3"
+              strokeWidth={1.5}
+              label={refLabel(AWARD_LINES.deansList, AWARD_COLORS.deansList)}
+            />
+          )}
 
           {/* Cumulative GPA gradient fill */}
           <Area
