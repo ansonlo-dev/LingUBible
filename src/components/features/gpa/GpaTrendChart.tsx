@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -107,8 +107,25 @@ export function GpaTrendChart({ data, labels, fullScale, showHonours = true, sho
   const isDark = useIsDark();
   const axisColor = isDark ? '#d1d5db' : '#111827'; // gray-300 in dark, near-black in light
 
+  // Measure the chart width so we only rotate x-axis labels (to a full 90°)
+  // when keeping them horizontal would make them overlap.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const values = data.flatMap((d) => [d.termGpa, d.cgpa]).filter((v): v is number => v != null);
   const hasData = values.length > 0;
+
+  // ~52px is enough for a horizontal "22/23-T1" label; rotate to vertical only
+  // when the per-tick width drops below that.
+  const perTick = data.length > 0 ? Math.max(0, width - 52) / data.length : Infinity;
+  const rotate = width > 0 && perTick < 56;
 
   // Dynamic lower bound: when GPAs are clustered high, zoom in so the trend is
   // legible; capped at 3.0 so there's always at least a 1.0 window, and never
@@ -134,14 +151,14 @@ export function GpaTrendChart({ data, labels, fullScale, showHonours = true, sho
   });
 
   return (
-    <div className="relative w-full" style={{ height: 340 }}>
+    <div ref={wrapRef} className="relative w-full" style={{ height: 340 }}>
       {!hasData && (
         <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-muted-foreground pointer-events-none">
           {labels.empty}
         </div>
       )}
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 10, right: 40, left: -6, bottom: 28 }}>
+        <ComposedChart data={data} margin={{ top: 10, right: 40, left: -6, bottom: rotate ? 6 : 4 }}>
           <defs>
             <linearGradient id="gpaCgpaFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={SERIES.cgpa} stopOpacity={0.28} />
@@ -153,9 +170,10 @@ export function GpaTrendChart({ data, labels, fullScale, showHonours = true, sho
             dataKey="term"
             tick={{ fontSize: 11, fill: axisColor }}
             interval={0}
-            angle={-30}
-            textAnchor="end"
-            height={50}
+            angle={rotate ? -90 : 0}
+            textAnchor={rotate ? 'end' : 'middle'}
+            height={rotate ? 60 : 22}
+            tickMargin={8}
             tickLine={false}
             axisLine={{ stroke: '#94a3b8', strokeOpacity: 0.3 }}
           />

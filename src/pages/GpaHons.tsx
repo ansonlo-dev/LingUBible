@@ -13,6 +13,7 @@ import {
   requiredRemainingAvg,
   isGpaBearingGrade,
   isAwardDisqualifyingGrade,
+  MAX_GPA,
   type HonoursKey,
   type YearAwardKey,
 } from '@/utils/honours';
@@ -71,7 +72,7 @@ const MAX_TERMS_PER_YEAR = PART_OPTIONS.length;
 // 'other' kept in the ordering only so any legacy-saved term still sorts sanely.
 const PART_ORDER: Record<TermPart, number> = { term1: 0, term2: 1, summer: 2, other: 3 };
 // Short term codes for the trend chart's x-axis (e.g. "21/22-T1").
-const PART_XAXIS: Record<TermPart, string> = { term1: 'T1', term2: 'T2', summer: 'Su', other: 'T?' };
+const PART_XAXIS: Record<TermPart, string> = { term1: 'T1', term2: 'T2', summer: 'S', other: 'T?' };
 // Term names are not translated (used as-is across all languages).
 const PART_LABEL: Record<TermPart, string> = { term1: 'Term 1', term2: 'Term 2', summer: 'Summer Term', other: 'Other' };
 
@@ -221,12 +222,12 @@ function CourseSelect({ entry, catalog, onPick, placeholder, searchPlaceholder, 
         <Button
           variant="outline"
           role="combobox"
-          className="h-9 w-full min-w-0 justify-between font-normal"
+          className="grid h-9 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden font-normal"
         >
-          <span className={cn('min-w-0 flex-1 truncate text-left', !entry.code && 'text-muted-foreground')}>
+          <span className={cn('truncate text-left', !entry.code && 'text-muted-foreground')}>
             {entry.code ? display : placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(460px,92vw)] p-0 bg-white dark:bg-gray-900" align="start">
@@ -298,7 +299,7 @@ const GpaHons = () => {
   const [yearAcademic, setYearAcademicMap] = useState<Record<number, string>>(() => loadYearAcademic());
   const [catalog, setCatalog] = useState<GpaCourseCatalog>({});
 
-  const [targetKey, setTargetKey] = useState<HonoursKey>('first');
+  const [targetCgpaInput, setTargetCgpaInput] = useState('3.50');
   const [remainingCreditsInput, setRemainingCreditsInput] = useState('');
   const [fullScale, setFullScale] = useState(false);
   const [showHonours, setShowHonours] = useState(true);
@@ -375,11 +376,18 @@ const GpaHons = () => {
       return [...prev, { id: uid(), year, part, courses: [newCourse()] }];
     });
 
-  const addYear = () =>
-    setTerms((prev) => {
-      const maxYear = prev.reduce((m, tm) => Math.max(m, tm.year), 0);
-      return [...prev, { id: uid(), year: maxYear + 1, part: 'term1', courses: [newCourse()] }];
-    });
+  const addYear = () => {
+    const maxYear = terms.reduce((m, tm) => Math.max(m, tm.year), 0);
+    const newYear = maxYear + 1;
+    // Default the new year's academic year to the one right after the current
+    // last year's chosen academic year (e.g. last = 2022-2023 → new = 2023-2024).
+    if (maxYear > 0) {
+      const idx = ACADEMIC_YEARS.indexOf(academicForYear(maxYear));
+      const nextAy = idx >= 0 ? ACADEMIC_YEARS[Math.min(idx + 1, ACADEMIC_YEARS.length - 1)] : defaultAcademic(newYear);
+      setYearAcademic(newYear, nextAy);
+    }
+    setTerms((prev) => [...prev, { id: uid(), year: newYear, part: 'term1', courses: [newCourse()] }]);
+  };
 
   const removeTerm = (termId: string) => setTerms((prev) => prev.filter((tm) => tm.id !== termId));
   const removeYear = (year: number) => {
@@ -464,8 +472,10 @@ const GpaHons = () => {
     remainingCreditsInput.trim() === ''
       ? defaultRemainingCredits
       : Math.max(0, parseInt(remainingCreditsInput, 10) || 0);
-  const targetTier = HONOURS_TIERS.find((tr) => tr.key === targetKey)!;
-  const calc = requiredRemainingAvg({ earnedPoints, earnedCredits, remainingCredits, targetCgpa: targetTier.cgpa });
+  const targetCgpa = Math.min(MAX_GPA, Math.max(0, parseFloat(targetCgpaInput) || 0));
+  const targetClassKey = classifyHonours(targetCgpa);
+  const targetLabel = targetCgpa.toFixed(2);
+  const calc = requiredRemainingAvg({ earnedPoints, earnedCredits, remainingCredits, targetCgpa });
 
   const chartLabels = {
     termGpa: t('gpa.termGpa'),
@@ -600,25 +610,47 @@ const GpaHons = () => {
           <p className="mb-3 text-xs text-muted-foreground">{t('gpa.targetDesc')}</p>
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <Label className="shrink-0 text-sm">{t('gpa.targetClass')}</Label>
-              <Select value={targetKey} onValueChange={(v) => setTargetKey(v as HonoursKey)}>
-                <SelectTrigger className="h-9 w-[210px] max-w-[62%]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-900">
-                  {HONOURS_TARGETS.map((tr) => (
-                    <SelectItem key={tr.key} value={tr.key}>
-                      {t(`gpa.honours.${tr.key}`)} (≥{tr.cgpa.toFixed(2)})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="shrink-0 text-sm">{t('gpa.targetCgpa')}</Label>
+              <div className="flex items-center gap-2">
+                {targetClassKey ? (
+                  <Badge className={`${HONOURS_BADGE_COLORS[targetClassKey]} text-white hover:opacity-90`}>
+                    {t(`gpa.honours.${targetClassKey}`)}
+                  </Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{t('gpa.belowHonours')}</span>
+                )}
+                <Input
+                  inputMode="decimal"
+                  className="h-9 w-[88px] text-right tabular-nums"
+                  value={targetCgpaInput}
+                  onChange={(e) => setTargetCgpaInput(e.target.value.replace(/[^0-9.]/g, ''))}
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 text-xs text-muted-foreground">{t('gpa.quickSet')}:</span>
+              {HONOURS_TARGETS.map((tr) => {
+                const activeChip = Math.abs(targetCgpa - tr.cgpa) < 1e-9;
+                return (
+                  <button
+                    key={tr.key}
+                    type="button"
+                    onClick={() => setTargetCgpaInput(tr.cgpa.toFixed(2))}
+                    className={cn(
+                      'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
+                      activeChip ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent',
+                    )}
+                  >
+                    {t(`gpa.honours.${tr.key}`)} {tr.cgpa.toFixed(2)}
+                  </button>
+                );
+              })}
             </div>
             <div className="flex items-center justify-between gap-3">
               <Label className="shrink-0 text-sm">{t('gpa.totalRemainingCredits')}</Label>
               <Input
                 inputMode="numeric"
-                className="h-9 w-[210px] max-w-[62%]"
+                className="h-9 w-[160px] max-w-[55%]"
                 value={remainingCreditsInput}
                 placeholder={String(defaultRemainingCredits)}
                 onChange={(e) => setRemainingCreditsInput(e.target.value.replace(/[^0-9]/g, ''))}
@@ -630,7 +662,7 @@ const GpaHons = () => {
             {calc.status === 'feasible' && (
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-xl text-muted-foreground">
-                  {t('gpa.resultFeasiblePrefix', { target: t(`gpa.honours.${targetKey}`) })}
+                  {t('gpa.resultFeasiblePrefix', { target: targetLabel })}
                 </span>
                 <span className={`text-3xl font-bold tabular-nums ${requiredColor}`}>{calc.required.toFixed(3)}</span>
                 <span className="text-xl text-muted-foreground">{t('gpa.perRemainingCredit')}</span>
@@ -638,20 +670,20 @@ const GpaHons = () => {
             )}
             {calc.status === 'achieved' && (
               <p className="text-xl font-medium text-blue-600 dark:text-blue-400">
-                {t('gpa.resultAchieved', { target: t(`gpa.honours.${targetKey}`) })}
+                {t('gpa.resultAchieved', { target: targetLabel })}
               </p>
             )}
             {calc.status === 'impossible' && (
               <div className="flex flex-col gap-1.5">
                 <p className="text-xl font-medium text-foreground">
-                  {t('gpa.resultImpossible', { target: t(`gpa.honours.${targetKey}`) })}
+                  {t('gpa.resultImpossible', { target: targetLabel })}
                 </p>
                 <p className="text-base text-muted-foreground">{t('gpa.bestPossible', { gpa: calc.projectedCgpa.toFixed(3) })}</p>
               </div>
             )}
             {calc.status === 'noRemaining' && (
               <p className="text-xl text-muted-foreground">
-                {t('gpa.resultNoRemaining', { gpa: calc.projectedCgpa.toFixed(3), target: t(`gpa.honours.${targetKey}`) })}
+                {t('gpa.resultNoRemaining', { gpa: calc.projectedCgpa.toFixed(3), target: targetLabel })}
               </p>
             )}
           </div>
