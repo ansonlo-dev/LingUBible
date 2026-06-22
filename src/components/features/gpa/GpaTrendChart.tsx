@@ -24,6 +24,7 @@ export interface GpaTrendLabels {
   upperSecond: string;
   lowerSecond: string;
   third: string;
+  pass: string;
   deansList: string;
   presidentsList: string;
   empty: string;
@@ -45,6 +46,7 @@ const HONOURS_COLORS: Record<string, string> = {
   upperSecond: '#c2410c', // orange-700
   lowerSecond: '#a16207', // yellow-700
   third: '#525252', // neutral-600
+  pass: '#78716c', // stone-500
 };
 
 const AWARD_COLORS = {
@@ -94,7 +96,7 @@ export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
   });
 
   return (
-    <div className="relative w-full" style={{ height: 380 }}>
+    <div className="relative w-full" style={{ height: 340 }}>
       {!hasData && (
         <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-muted-foreground pointer-events-none">
           {labels.empty}
