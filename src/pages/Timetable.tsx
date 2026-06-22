@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
@@ -324,6 +325,31 @@ function meetingSummary(section: TimetableSection, dayLabels: Record<string, str
 const Timetable = () => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Detect whether we're running inside an installed PWA (standalone display
+  // mode). In a standalone PWA, `target="_blank"` on a same-origin link gets
+  // handed off to the OS browser, which re-launches the PWA at its start URL
+  // instead of jumping to the route — so for PWA users we navigate in-app via
+  // the router instead. In a normal browser tab we keep the open-in-new-tab
+  // behaviour. Detected once at mount.
+  const [isStandalonePWA] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true),
+  );
+
+  // Click handler for the "open course/instructor" link icons. In a PWA we
+  // intercept the click and route in-app (no reload); in a browser we let the
+  // native `target="_blank"` anchor open a new tab as usual.
+  const openInternalLink = (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    if (isStandalonePWA) {
+      e.preventDefault();
+      navigate(path);
+    }
+  };
 
   const [allSections, setAllSections] = useState<TimetableSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1087,7 +1113,7 @@ const Timetable = () => {
               href={`/courses/${s.courseCode}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => openInternalLink(e, `/courses/${s.courseCode}`)}
               onKeyDown={(e) => e.stopPropagation()}
               title={t('timetable.openCourse')}
               aria-label={`${t('timetable.openCourse')}: ${s.courseCode}`}
@@ -1108,7 +1134,7 @@ const Timetable = () => {
                     href={`/instructors/${encodeURIComponent(name)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => openInternalLink(e, `/instructors/${encodeURIComponent(name)}`)}
                     onKeyDown={(e) => e.stopPropagation()}
                     title={t('timetable.openInstructor')}
                     aria-label={`${t('timetable.openInstructor')}: ${name}`}
