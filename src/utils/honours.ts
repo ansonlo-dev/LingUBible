@@ -52,15 +52,19 @@ export const YEAR_AWARD = {
 
 /**
  * Letter grades that carry a numeric grade point and therefore count towards
- * the GPA. Pass/fail-style grades (P, Fail, S, U, AU, I, W, …) are excluded —
- * they appear on the transcript but do not affect the GPA.
+ * the GPA (Academic Regulations 18.2). F (Failure) counts as 0 and IS included
+ * in the GPA; the grades below are excluded from the GPA calculation entirely.
  */
 export const GPA_BEARING_GRADES = [
   'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F',
 ] as const;
 
-/** Non-GPA transcript grades (do not affect the GPA). */
-export const NON_GPA_GRADES = ['P', 'Fail', 'I', 'U', 'S', 'W', 'AU'] as const;
+/**
+ * Non-GPA transcript grades — "Not included in the calculation of grade point
+ * average" (Academic Regulations 18.2): I (Incomplete), M (Merit),
+ * VS (Very Satisfactory), S (Satisfactory), U (Unsatisfactory) and PASS / FAIL.
+ */
+export const NON_GPA_GRADES = ['I', 'M', 'VS', 'S', 'U', 'PASS', 'FAIL'] as const;
 
 /**
  * Grades that disqualify a student from the Dean's / President's List for that
