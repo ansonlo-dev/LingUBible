@@ -344,18 +344,21 @@ function CourseSelect({ entry, catalog, onPick, placeholder, searchPlaceholder, 
 // Page
 // ----------------------------------------------------------------------------
 
+// hover:bg-* matches the base so the Badge's default hover styling is a no-op
+// (these badges are non-interactive labels).
 const HONOURS_BADGE_COLORS: Record<HonoursKey, string> = {
-  first: 'bg-red-600',
-  upperSecond: 'bg-orange-600',
-  lowerSecond: 'bg-yellow-600',
-  third: 'bg-neutral-500',
-  pass: 'bg-stone-500',
+  first: 'bg-red-600 hover:bg-red-600',
+  upperSecond: 'bg-orange-600 hover:bg-orange-600',
+  lowerSecond: 'bg-yellow-600 hover:bg-yellow-600',
+  third: 'bg-neutral-500 hover:bg-neutral-500',
+  pass: 'bg-stone-500 hover:bg-stone-500',
 };
 
 // Match the chart legend colours: President's = amber, Dean's = cyan.
+// Black text in light theme, white in dark; no hover change.
 const AWARD_BADGE_COLORS: Record<YearAwardKey, string> = {
-  presidentsList: 'bg-[#f59e0b] text-black',
-  deansList: 'bg-[#22d3ee] text-black',
+  presidentsList: 'bg-[#f59e0b] text-black dark:text-white hover:bg-[#f59e0b]',
+  deansList: 'bg-[#22d3ee] text-black dark:text-white hover:bg-[#22d3ee]',
 };
 
 const GpaHons = () => {
@@ -497,15 +500,13 @@ const GpaHons = () => {
     return map;
   }, [terms]);
 
-  const { chartData, earnedPoints, earnedCredits, cgpa, autoRemainingTerms } = useMemo(() => {
+  const { chartData, earnedPoints, earnedCredits, cgpa } = useMemo(() => {
     let runPoints = 0;
     let runCredits = 0;
-    let remaining = 0;
     const data: GpaChartPoint[] = sortedTerms.map((term) => {
       const s = statsByTermId.get(term.id)!;
       runPoints += s.points;
       runCredits += s.gpaCredits;
-      if (s.gpa == null) remaining += 1;
       return {
         term: `${shortAcademic(academicForYear(term.year))}-${PART_XAXIS[term.part]}`,
         termGpa: s.gpa,
@@ -517,7 +518,6 @@ const GpaHons = () => {
       earnedPoints: runPoints,
       earnedCredits: runCredits,
       cgpa: runCredits > 0 ? runPoints / runCredits : null,
-      autoRemainingTerms: remaining,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedTerms, statsByTermId, yearAcademic]);
@@ -549,8 +549,9 @@ const GpaHons = () => {
   const currentClass = classifyHonours(cgpa);
 
   // ---- Target calculator -------------------------------------------------
-  const DEFAULT_CREDITS_PER_TERM = 15;
-  const defaultRemainingCredits = autoRemainingTerms * DEFAULT_CREDITS_PER_TERM;
+  // A typical undergraduate degree is ~120 credits, so default the remaining
+  // credits to 120 minus the GPA credits already earned.
+  const defaultRemainingCredits = Math.max(0, 120 - earnedCredits);
   const remainingCredits =
     remainingCreditsInput.trim() === ''
       ? defaultRemainingCredits
@@ -583,17 +584,15 @@ const GpaHons = () => {
   return (
     <div className="mx-auto max-w-6xl px-3 lg:px-4 pt-3 pb-12">
       {/* Header */}
-      <div className="mb-4">
-        <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold">{t('gpaHons.title')}</h1>
-          </div>
-          <p className="text-muted-foreground md:-translate-y-[3px]">{t('gpaHons.subtitle')}</p>
+      <div className="mb-4 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold">{t('gpaHons.title')}</h1>
         </div>
-        <div className="mt-2 flex items-center gap-1.5 rounded-md bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
+        <p className="text-muted-foreground md:-translate-y-[3px]">{t('gpaHons.subtitle')}</p>
+        <span className="flex items-center gap-1 text-xs text-muted-foreground md:ml-auto md:-translate-y-[3px]">
           <Info className="h-3.5 w-3.5 shrink-0" />
-          <span>{t('gpa.localOnlyNotice')}</span>
-        </div>
+          {t('gpa.localOnlyNotice')}
+        </span>
       </div>
 
       {/* Summary */}
@@ -603,7 +602,7 @@ const GpaHons = () => {
         </SummaryCard>
         <SummaryCard icon={<Award className="h-4 w-4" />} label={t('gpa.classification')}>
           {currentClass ? (
-            <Badge className={`${HONOURS_BADGE_COLORS[currentClass]} text-white hover:opacity-90`}>
+            <Badge className={`${HONOURS_BADGE_COLORS[currentClass]} text-white`}>
               {t(`gpa.honours.${currentClass}`)}
             </Badge>
           ) : (
@@ -636,15 +635,14 @@ const GpaHons = () => {
                 label={t('gpa.awardLines')}
                 onClick={() => setShowAwards((v) => !v)}
               />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 px-2 text-xs"
+              <button
+                type="button"
                 onClick={() => setFullScale((v) => !v)}
+                className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 {fullScale ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
                 {fullScale ? t('gpa.scaleFull') : t('gpa.scaleAuto')}
-              </Button>
+              </button>
             </div>
           </div>
         </CardHeader>
@@ -695,7 +693,7 @@ const GpaHons = () => {
               <Label className="shrink-0 text-sm">{t('gpa.targetCgpa')}</Label>
               <div className="flex items-center gap-2">
                 {targetClassKey ? (
-                  <Badge className={`${HONOURS_BADGE_COLORS[targetClassKey]} text-white hover:opacity-90`}>
+                  <Badge className={`${HONOURS_BADGE_COLORS[targetClassKey]} text-white`}>
                     {t(`gpa.honours.${targetClassKey}`)}
                   </Badge>
                 ) : (
@@ -856,7 +854,7 @@ const GpaHons = () => {
                     </SelectContent>
                   </Select>
                   {award && (
-                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0 hover:opacity-90`}>
+                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0`}>
                       {t(`gpa.${award}`)}
                     </Badge>
                   )}
@@ -1055,8 +1053,8 @@ function ChartToggle({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors',
-        active ? 'bg-accent/60' : 'opacity-45 hover:opacity-80',
+        'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors',
+        active ? 'bg-accent text-foreground' : 'bg-muted/60 text-muted-foreground opacity-70 hover:bg-muted hover:opacity-100',
       )}
     >
       <span className="inline-block h-0 w-4 shrink-0 border-t-2 border-dashed" style={{ borderColor: color }} />

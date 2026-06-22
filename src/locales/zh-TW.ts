@@ -682,7 +682,7 @@ export default {
   'gpa.scaleAuto': '自動縮放',
   'gpa.scaleFull': '完整 0–4',
   'gpa.awardLines': "Dean's / President's",
-  'gpa.localOnlyNotice': '你的資料只儲存在此瀏覽器,不會上傳或儲存到我們的資料庫。',
+  'gpa.localOnlyNotice': '只儲存在你的瀏覽器,不會上傳伺服器。',
   'gpa.honoursLines': '榮譽分界線',
   'gpa.chartEmpty': '加入有成績的課程即可顯示 GPA 趨勢。',
   'gpa.deansList': "Dean's List",

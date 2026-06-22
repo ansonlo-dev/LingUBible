@@ -744,7 +744,7 @@ export default {
   'gpa.scaleAuto': 'Auto scale',
   'gpa.scaleFull': 'Full 0–4',
   'gpa.awardLines': "Dean's / President's",
-  'gpa.localOnlyNotice': 'Your data is saved only in this browser — nothing is uploaded to or stored in our database.',
+  'gpa.localOnlyNotice': 'Saved in your browser only, not on our servers.',
   'gpa.honoursLines': 'Honours cut-offs',
   'gpa.chartEmpty': 'Add courses with grades to see your GPA trend.',
   'gpa.deansList': "Dean's List",

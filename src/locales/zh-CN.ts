@@ -752,7 +752,7 @@ export default {
   'gpa.scaleAuto': '自动缩放',
   'gpa.scaleFull': '完整 0–4',
   'gpa.awardLines': "Dean's / President's",
-  'gpa.localOnlyNotice': '你的数据只保存在此浏览器,不会上传或保存到我们的数据库。',
+  'gpa.localOnlyNotice': '只保存在你的浏览器,不会上传服务器。',
   'gpa.honoursLines': '荣誉分界线',
   'gpa.chartEmpty': '加入有成绩的课程即可显示 GPA 趋势。',
   'gpa.deansList': "Dean's List",
