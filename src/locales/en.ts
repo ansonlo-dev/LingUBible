@@ -769,6 +769,8 @@ export default {
   'gpa.resultNoRemaining': 'With no remaining credits, your final CGPA is {gpa}, below {target}.',
   'gpa.termsTitle': 'Your Terms',
   'gpa.reset': 'Reset',
+  'gpa.undo': 'Undo',
+  'gpa.redo': 'Redo',
   'gpa.resetConfirmTitle': 'Reset everything?',
   'gpa.resetConfirmDesc': 'This clears every course and grade you entered and restores a single empty term. This cannot be undone.',
   'gpa.academicYearLabel': 'Academic year',

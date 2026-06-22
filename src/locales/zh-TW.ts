@@ -707,6 +707,8 @@ export default {
   'gpa.resultNoRemaining': '沒有餘下學分,你的最終累積 GPA 為 {gpa},未達 {target}。',
   'gpa.termsTitle': '你的學期',
   'gpa.reset': '重設',
+  'gpa.undo': '復原',
+  'gpa.redo': '重做',
   'gpa.resetConfirmTitle': '重設全部?',
   'gpa.resetConfirmDesc': '這會清除你輸入的所有課程與成績,並還原為一個空白學期。此動作無法復原。',
   'gpa.academicYearLabel': '學年',

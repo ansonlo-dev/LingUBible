@@ -777,6 +777,8 @@ export default {
   'gpa.resultNoRemaining': '没有余下学分,你的最终累积 GPA 为 {gpa},未达 {target}。',
   'gpa.termsTitle': '你的学期',
   'gpa.reset': '重置',
+  'gpa.undo': '撤销',
+  'gpa.redo': '重做',
   'gpa.resetConfirmTitle': '重置全部?',
   'gpa.resetConfirmDesc': '这会清除你输入的所有课程与成绩,并还原为一个空白学期。此操作无法复原。',
   'gpa.academicYearLabel': '学年',

@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 import { getGPA } from '@/utils/gradeUtils';
 import {
   HONOURS_TIERS,
-  HONOURS_TARGETS,
   AWARD_LINES,
   GPA_BEARING_GRADES,
   NON_GPA_GRADES,
@@ -46,7 +45,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Calculator,
   Plus,
   Trash2,
   GraduationCap,
@@ -59,6 +57,8 @@ import {
   Maximize2,
   Minimize2,
   Info,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 
 // ----------------------------------------------------------------------------
@@ -77,7 +77,16 @@ const PART_XAXIS: Record<TermPart, string> = { term1: 'T1', term2: 'T2', summer:
 const PART_LABEL: Record<TermPart, string> = { term1: 'Term 1', term2: 'Term 2', summer: 'Summer Term', other: 'Other' };
 
 // Selectable academic years for each year block.
-const ACADEMIC_YEARS = ['2021-2022', '2022-2023', '2023-2024', '2024-2025', '2025-2026'];
+const ACADEMIC_YEARS = [
+  '2022-2023',
+  '2023-2024',
+  '2024-2025',
+  '2025-2026',
+  '2026-2027',
+  '2027-2028',
+  '2028-2029',
+  '2029-2030',
+];
 const defaultAcademic = (year: number) =>
   ACADEMIC_YEARS[Math.min(Math.max(year - 1, 0), ACADEMIC_YEARS.length - 1)];
 /** "2021-2022" → "21/22" for compact chart labels. */
@@ -132,6 +141,62 @@ function loadYearAcademic(): Record<number, string> {
     /* ignore corrupt storage */
   }
   return {};
+}
+
+/** The full editable document (terms + their academic-year labels). */
+interface Doc {
+  terms: TermData[];
+  yearAcademic: Record<number, string>;
+}
+
+const loadDoc = (): Doc => ({ terms: loadTerms(), yearAcademic: loadYearAcademic() });
+
+/**
+ * Undo/redo history for a single value. `set` records the previous value on an
+ * undo stack (clearing the redo stack); consecutive edits sharing a `tag` are
+ * coalesced into one history entry (so typing into a field is one undo step,
+ * not one per keystroke). Structural edits pass no tag and always push.
+ */
+function useHistory<T>(init: () => T) {
+  const [present, setPresent] = useState<T>(init);
+  const past = useRef<T[]>([]);
+  const future = useRef<T[]>([]);
+  const lastTag = useRef<string | null>(null);
+  const lastTime = useRef(0);
+
+  const set = (updater: (prev: T) => T, tag?: string, coalesce = false) => {
+    const next = updater(present);
+    if (Object.is(next, present)) return;
+    const now = Date.now();
+    const merge = coalesce && !!tag && tag === lastTag.current && now - lastTime.current < 1200;
+    if (!merge) {
+      past.current = [...past.current, present].slice(-100);
+      future.current = [];
+    }
+    lastTag.current = tag ?? null;
+    lastTime.current = now;
+    setPresent(next);
+  };
+
+  const undo = () => {
+    if (past.current.length === 0) return;
+    const prior = past.current[past.current.length - 1];
+    past.current = past.current.slice(0, -1);
+    future.current = [present, ...future.current];
+    lastTag.current = null;
+    setPresent(prior);
+  };
+
+  const redo = () => {
+    if (future.current.length === 0) return;
+    const next = future.current[0];
+    future.current = future.current.slice(1);
+    past.current = [...past.current, present];
+    lastTag.current = null;
+    setPresent(next);
+  };
+
+  return { present, set, undo, redo, canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
 }
 
 // ----------------------------------------------------------------------------
@@ -287,16 +352,17 @@ const HONOURS_BADGE_COLORS: Record<HonoursKey, string> = {
   pass: 'bg-stone-500',
 };
 
+// Match the chart legend colours: President's = amber, Dean's = cyan.
 const AWARD_BADGE_COLORS: Record<YearAwardKey, string> = {
-  presidentsList: 'bg-violet-600',
-  deansList: 'bg-cyan-600',
+  presidentsList: 'bg-[#f59e0b] text-black',
+  deansList: 'bg-[#22d3ee] text-black',
 };
 
 const GpaHons = () => {
   const { t, language } = useLanguage();
 
-  const [terms, setTerms] = useState<TermData[]>(() => loadTerms());
-  const [yearAcademic, setYearAcademicMap] = useState<Record<number, string>>(() => loadYearAcademic());
+  const { present: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory<Doc>(loadDoc);
+  const { terms, yearAcademic } = doc;
   const [catalog, setCatalog] = useState<GpaCourseCatalog>({});
 
   const [targetCgpaInput, setTargetCgpaInput] = useState('3.50');
@@ -325,24 +391,31 @@ const GpaHons = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ terms, yearAcademic }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(doc));
     } catch {
       /* ignore quota errors */
     }
-  }, [terms, yearAcademic]);
+  }, [doc]);
 
   const academicForYear = (year: number) => yearAcademic[year] ?? defaultAcademic(year);
-  const setYearAcademic = (year: number, value: string) =>
-    setYearAcademicMap((prev) => ({ ...prev, [year]: value }));
 
-  // ---- Mutations ---------------------------------------------------------
+  // ---- Mutations (all routed through history for undo/redo) ----------------
+  const updateTerms = (fn: (terms: TermData[]) => TermData[], tag?: string, coalesce = false) =>
+    setDoc((d) => ({ ...d, terms: fn(d.terms) }), tag, coalesce);
+
+  const setYearAcademic = (year: number, value: string) =>
+    setDoc((d) => ({ ...d, yearAcademic: { ...d.yearAcademic, [year]: value } }), `ay:${year}`, true);
+
   const updateCourse = (termId: string, courseId: string, patch: Partial<CourseEntry>) =>
-    setTerms((prev) =>
-      prev.map((term) =>
-        term.id !== termId
-          ? term
-          : { ...term, courses: term.courses.map((c) => (c.id === courseId ? { ...c, ...patch } : c)) },
-      ),
+    updateTerms(
+      (prev) =>
+        prev.map((term) =>
+          term.id !== termId
+            ? term
+            : { ...term, courses: term.courses.map((c) => (c.id === courseId ? { ...c, ...patch } : c)) },
+        ),
+      `edit:${courseId}:${Object.keys(patch).join(',')}`,
+      true,
     );
 
   const pickCourse = (
@@ -350,58 +423,68 @@ const GpaHons = () => {
     courseId: string,
     info: { code: string; title?: string; credits?: number },
   ) =>
-    updateCourse(termId, courseId, {
-      code: info.code,
-      title: info.title,
-      ...(info.credits != null ? { credits: String(info.credits) } : {}),
-    });
+    updateTerms(
+      (prev) =>
+        prev.map((term) =>
+          term.id !== termId
+            ? term
+            : {
+                ...term,
+                courses: term.courses.map((c) =>
+                  c.id === courseId
+                    ? { ...c, code: info.code, title: info.title, ...(info.credits != null ? { credits: String(info.credits) } : {}) }
+                    : c,
+                ),
+              },
+        ),
+      `pick:${courseId}`,
+    );
 
   const addCourse = (termId: string) =>
-    setTerms((prev) =>
+    updateTerms((prev) =>
       prev.map((term) => (term.id === termId ? { ...term, courses: [...term.courses, newCourse()] } : term)),
     );
 
   const removeCourse = (termId: string, courseId: string) =>
-    setTerms((prev) =>
+    updateTerms((prev) =>
       prev.map((term) =>
         term.id === termId ? { ...term, courses: term.courses.filter((c) => c.id !== courseId) } : term,
       ),
     );
 
   const addTerm = (year: number) =>
-    setTerms((prev) => {
+    updateTerms((prev) => {
       const used = new Set(prev.filter((tm) => tm.year === year).map((tm) => tm.part));
       if (used.size >= MAX_TERMS_PER_YEAR) return prev; // at most Term 1 / Term 2 / Summer
       const part = PART_OPTIONS.find((p) => !used.has(p)) ?? 'summer';
       return [...prev, { id: uid(), year, part, courses: [newCourse()] }];
     });
 
-  const addYear = () => {
-    const maxYear = terms.reduce((m, tm) => Math.max(m, tm.year), 0);
-    const newYear = maxYear + 1;
-    // Default the new year's academic year to the one right after the current
-    // last year's chosen academic year (e.g. last = 2022-2023 → new = 2023-2024).
-    if (maxYear > 0) {
-      const idx = ACADEMIC_YEARS.indexOf(academicForYear(maxYear));
+  // Default the new year's academic year to the one right after the current
+  // last year's chosen academic year (e.g. last = 2022-2023 → new = 2023-2024).
+  const addYear = () =>
+    setDoc((d) => {
+      const maxYear = d.terms.reduce((m, tm) => Math.max(m, tm.year), 0);
+      const newYear = maxYear + 1;
+      const lastAy = d.yearAcademic[maxYear] ?? defaultAcademic(maxYear);
+      const idx = ACADEMIC_YEARS.indexOf(lastAy);
       const nextAy = idx >= 0 ? ACADEMIC_YEARS[Math.min(idx + 1, ACADEMIC_YEARS.length - 1)] : defaultAcademic(newYear);
-      setYearAcademic(newYear, nextAy);
-    }
-    setTerms((prev) => [...prev, { id: uid(), year: newYear, part: 'term1', courses: [newCourse()] }]);
-  };
-
-  const removeTerm = (termId: string) => setTerms((prev) => prev.filter((tm) => tm.id !== termId));
-  const removeYear = (year: number) => {
-    setTerms((prev) => prev.filter((tm) => tm.year !== year));
-    setYearAcademicMap((prev) => {
-      const next = { ...prev };
-      delete next[year];
-      return next;
+      return {
+        terms: [...d.terms, { id: uid(), year: newYear, part: 'term1', courses: [newCourse()] }],
+        yearAcademic: maxYear > 0 ? { ...d.yearAcademic, [newYear]: nextAy } : d.yearAcademic,
+      };
     });
-  };
-  const resetAll = () => {
-    setTerms(defaultTerms());
-    setYearAcademicMap({});
-  };
+
+  const removeTerm = (termId: string) => updateTerms((prev) => prev.filter((tm) => tm.id !== termId));
+
+  const removeYear = (year: number) =>
+    setDoc((d) => {
+      const ya = { ...d.yearAcademic };
+      delete ya[year];
+      return { terms: d.terms.filter((tm) => tm.year !== year), yearAcademic: ya };
+    });
+
+  const resetAll = () => setDoc(() => ({ terms: defaultTerms(), yearAcademic: {} }));
 
   // ---- Derived -----------------------------------------------------------
   const sortedTerms = useMemo(
@@ -501,12 +584,11 @@ const GpaHons = () => {
     <div className="mx-auto max-w-6xl px-3 lg:px-4 pt-3 pb-12">
       {/* Header */}
       <div className="mb-4">
-        <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-4">
+        <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
           <div className="flex items-center gap-2">
-            <Calculator className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">{t('gpaHons.title')}</h1>
+            <h1 className="text-3xl font-bold">{t('gpaHons.title')}</h1>
           </div>
-          <p className="text-sm text-muted-foreground">{t('gpaHons.subtitle')}</p>
+          <p className="text-muted-foreground md:-translate-y-[3px]">{t('gpaHons.subtitle')}</p>
         </div>
         <div className="mt-2 flex items-center gap-1.5 rounded-md bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
           <Info className="h-3.5 w-3.5 shrink-0" />
@@ -623,13 +705,19 @@ const GpaHons = () => {
                   inputMode="decimal"
                   className="h-9 w-[88px] text-right tabular-nums"
                   value={targetCgpaInput}
-                  onChange={(e) => setTargetCgpaInput(e.target.value.replace(/[^0-9.]/g, ''))}
+                  onChange={(e) => {
+                    let v = e.target.value.replace(/[^0-9.]/g, '');
+                    const parts = v.split('.');
+                    if (parts.length > 2) v = `${parts[0]}.${parts.slice(1).join('')}`;
+                    if (parseFloat(v) > MAX_GPA) v = String(MAX_GPA); // clamp to 0–4
+                    setTargetCgpaInput(v);
+                  }}
                 />
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-0.5 text-xs text-muted-foreground">{t('gpa.quickSet')}:</span>
-              {HONOURS_TARGETS.map((tr) => {
+              {HONOURS_TIERS.map((tr) => {
                 const activeChip = Math.abs(targetCgpa - tr.cgpa) < 1e-9;
                 return (
                   <button
@@ -641,7 +729,7 @@ const GpaHons = () => {
                       activeChip ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent',
                     )}
                   >
-                    {t(`gpa.honours.${tr.key}`)} {tr.cgpa.toFixed(2)}
+                    {t(`gpa.honours.${tr.key}`)}
                   </button>
                 );
               })}
@@ -694,12 +782,33 @@ const GpaHons = () => {
       {/* Terms editor */}
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t('gpa.termsTitle')}</h2>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground">
-              <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.reset')}
-            </Button>
-          </AlertDialogTrigger>
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground"
+            disabled={!canUndo}
+            onClick={undo}
+            title={t('gpa.undo')}
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground"
+            disabled={!canRedo}
+            onClick={redo}
+            title={t('gpa.redo')}
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground">
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.reset')}
+              </Button>
+            </AlertDialogTrigger>
           <AlertDialogContent className="bg-white dark:bg-gray-900">
             <AlertDialogHeader>
               <AlertDialogTitle>{t('gpa.resetConfirmTitle')}</AlertDialogTitle>
@@ -710,7 +819,8 @@ const GpaHons = () => {
               <AlertDialogAction onClick={resetAll}>{t('gpa.reset')}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog>
+          </AlertDialog>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -746,7 +856,7 @@ const GpaHons = () => {
                     </SelectContent>
                   </Select>
                   {award && (
-                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0 text-white hover:opacity-90`}>
+                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0 hover:opacity-90`}>
                       {t(`gpa.${award}`)}
                     </Badge>
                   )}
