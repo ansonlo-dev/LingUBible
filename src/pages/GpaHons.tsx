@@ -70,6 +70,18 @@ const PART_OPTIONS: TermPart[] = ['term1', 'term2', 'summer'];
 const MAX_TERMS_PER_YEAR = PART_OPTIONS.length;
 // 'other' kept in the ordering only so any legacy-saved term still sorts sanely.
 const PART_ORDER: Record<TermPart, number> = { term1: 0, term2: 1, summer: 2, other: 3 };
+// Short term codes for the trend chart's x-axis (e.g. "21/22-T1").
+const PART_XAXIS: Record<TermPart, string> = { term1: 'T1', term2: 'T2', summer: 'Su', other: 'T?' };
+
+// Selectable academic years for each year block.
+const ACADEMIC_YEARS = ['2021-2022', '2022-2023', '2023-2024', '2024-2025', '2025-2026'];
+const defaultAcademic = (year: number) =>
+  ACADEMIC_YEARS[Math.min(Math.max(year - 1, 0), ACADEMIC_YEARS.length - 1)];
+/** "2021-2022" → "21/22" for compact chart labels. */
+const shortAcademic = (ay: string) => {
+  const m = /^(\d{4})-(\d{4})$/.exec(ay || '');
+  return m ? `${m[1].slice(2)}/${m[2].slice(2)}` : ay;
+};
 
 interface CourseEntry {
   id: string;
@@ -105,13 +117,13 @@ function loadTerms(): TermData[] {
   return defaultTerms();
 }
 
-/** Persisted custom academic-year names, keyed by academic-year number. */
-function loadYearNames(): Record<number, string> {
+/** Persisted academic-year choice per year block, keyed by year number. */
+function loadYearAcademic(): Record<number, string> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed?.yearNames && typeof parsed.yearNames === 'object') return parsed.yearNames;
+      if (parsed?.yearAcademic && typeof parsed.yearAcademic === 'object') return parsed.yearAcademic;
     }
   } catch {
     /* ignore corrupt storage */
@@ -279,7 +291,7 @@ const GpaHons = () => {
   const { t, language } = useLanguage();
 
   const [terms, setTerms] = useState<TermData[]>(() => loadTerms());
-  const [yearNames, setYearNames] = useState<Record<number, string>>(() => loadYearNames());
+  const [yearAcademic, setYearAcademicMap] = useState<Record<number, string>>(() => loadYearAcademic());
   const [catalog, setCatalog] = useState<GpaCourseCatalog>({});
 
   const [targetKey, setTargetKey] = useState<HonoursKey>('first');
@@ -308,14 +320,15 @@ const GpaHons = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ terms, yearNames }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ terms, yearAcademic }));
     } catch {
       /* ignore quota errors */
     }
-  }, [terms, yearNames]);
+  }, [terms, yearAcademic]);
 
-  const setYearName = (year: number, name: string) =>
-    setYearNames((prev) => ({ ...prev, [year]: name }));
+  const academicForYear = (year: number) => yearAcademic[year] ?? defaultAcademic(year);
+  const setYearAcademic = (year: number, value: string) =>
+    setYearAcademicMap((prev) => ({ ...prev, [year]: value }));
 
   // ---- Mutations ---------------------------------------------------------
   const updateCourse = (termId: string, courseId: string, patch: Partial<CourseEntry>) =>
@@ -350,9 +363,6 @@ const GpaHons = () => {
       ),
     );
 
-  const updateTermPart = (termId: string, part: TermPart) =>
-    setTerms((prev) => prev.map((term) => (term.id === termId ? { ...term, part } : term)));
-
   const addTerm = (year: number) =>
     setTerms((prev) => {
       const used = new Set(prev.filter((tm) => tm.year === year).map((tm) => tm.part));
@@ -370,7 +380,7 @@ const GpaHons = () => {
   const removeTerm = (termId: string) => setTerms((prev) => prev.filter((tm) => tm.id !== termId));
   const removeYear = (year: number) => {
     setTerms((prev) => prev.filter((tm) => tm.year !== year));
-    setYearNames((prev) => {
+    setYearAcademicMap((prev) => {
       const next = { ...prev };
       delete next[year];
       return next;
@@ -378,7 +388,7 @@ const GpaHons = () => {
   };
   const resetAll = () => {
     setTerms(defaultTerms());
-    setYearNames({});
+    setYearAcademicMap({});
   };
 
   // ---- Derived -----------------------------------------------------------
@@ -392,8 +402,6 @@ const GpaHons = () => {
     return map;
   }, [terms]);
 
-  const partShort = (p: TermPart) => t(`gpa.partShort.${p}`);
-
   const { chartData, earnedPoints, earnedCredits, cgpa, autoRemainingTerms } = useMemo(() => {
     let runPoints = 0;
     let runCredits = 0;
@@ -404,7 +412,7 @@ const GpaHons = () => {
       runCredits += s.gpaCredits;
       if (s.gpa == null) remaining += 1;
       return {
-        term: `Y${term.year}·${partShort(term.part)}`,
+        term: `${shortAcademic(academicForYear(term.year))}-${PART_XAXIS[term.part]}`,
         termGpa: s.gpa,
         cgpa: runCredits > 0 ? runPoints / runCredits : null,
       };
@@ -417,7 +425,7 @@ const GpaHons = () => {
       autoRemainingTerms: remaining,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedTerms, statsByTermId, language]);
+  }, [sortedTerms, statsByTermId, yearAcademic]);
 
   // Academic years (grouped, ordered)
   const years = useMemo(() => {
@@ -493,9 +501,9 @@ const GpaHons = () => {
       </div>
 
       {/* Summary */}
-      <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         <SummaryCard icon={<GraduationCap className="h-4 w-4" />} label={t('gpa.cumulativeGpa')}>
-          <span className="text-2xl font-bold tabular-nums">{cgpa != null ? cgpa.toFixed(3) : '—'}</span>
+          <span className="text-xl font-bold tabular-nums">{cgpa != null ? cgpa.toFixed(3) : '—'}</span>
         </SummaryCard>
         <SummaryCard icon={<Award className="h-4 w-4" />} label={t('gpa.classification')}>
           {currentClass ? (
@@ -507,7 +515,7 @@ const GpaHons = () => {
           )}
         </SummaryCard>
         <SummaryCard icon={<TrendingUp className="h-4 w-4" />} label={t('gpa.gpaCredits')}>
-          <span className="text-2xl font-bold tabular-nums">{earnedCredits || 0}</span>
+          <span className="text-xl font-bold tabular-nums">{earnedCredits || 0}</span>
         </SummaryCard>
       </div>
 
@@ -552,30 +560,26 @@ const GpaHons = () => {
             showHonours={showHonours}
             showAwards={showAwards}
           />
-          {/* Primary series — emphasised over the dashed reference lines */}
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+          {/* Primary series + merit lists on one row; series are emphasised */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <SeriesLegend color="#3b82f6" label={t('gpa.cumulativeGpa')} />
             <SeriesLegend color="#10b981" label={t('gpa.termGpa')} />
+            {showAwards && (
+              <>
+                <AwardLegend color="#f59e0b" label={t('gpa.presidentsList')} info={t('gpa.presidentsListReq')} />
+                <AwardLegend color="#22d3ee" label={t('gpa.deansList')} info={t('gpa.deansListReq')} />
+              </>
+            )}
           </div>
-          {(showAwards || showHonours) && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
-              {showAwards && (
-                <>
-                  <LegendDot color="#f59e0b" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
-                  <LegendDot color="#22d3ee" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
-                </>
-              )}
-              {showHonours && (
-                <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                  <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
-                  <span className="font-medium">{t('gpa.honoursLines')}:</span>
-                  {HONOURS_TIERS.map((tr) => (
-                    <span key={tr.key} className="whitespace-nowrap">
-                      {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
-                    </span>
-                  ))}
+          {showHonours && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground">
+              <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
+              <span className="font-medium">{t('gpa.honoursLines')}:</span>
+              {HONOURS_TIERS.map((tr) => (
+                <span key={tr.key} className="whitespace-nowrap">
+                  {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
                 </span>
-              )}
+              ))}
             </div>
           )}
         </CardContent>
@@ -600,7 +604,7 @@ const GpaHons = () => {
                 <SelectContent className="bg-white dark:bg-gray-900">
                   {HONOURS_TARGETS.map((tr) => (
                     <SelectItem key={tr.key} value={tr.key}>
-                      {t(`gpa.honours.${tr.key}`)} ({tr.cgpa.toFixed(2)})
+                      {t(`gpa.honours.${tr.key}`)} (≥{tr.cgpa.toFixed(2)})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -638,7 +642,7 @@ const GpaHons = () => {
             )}
             {calc.status === 'impossible' && (
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                <p className="text-sm font-medium text-foreground">
                   {t('gpa.resultImpossible', { target: t(`gpa.honours.${targetKey}`) })}
                 </p>
                 <p className="text-sm text-muted-foreground">{t('gpa.bestPossible', { gpa: calc.projectedCgpa.toFixed(3) })}</p>
@@ -683,25 +687,31 @@ const GpaHons = () => {
             <Card key={year} className="overflow-hidden">
               {/* Academic year header */}
               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b bg-muted/40 px-2 py-1.5 sm:px-3">
-                <div className="flex min-w-0 flex-1 items-center gap-1">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 shrink-0"
                     onClick={() => toggleYear(year)}
                     aria-expanded={!collapsed}
-                    title={t('gpa.academicYear', { n: year })}
+                    title={academicForYear(year)}
                   >
                     <ChevronDown
                       className={cn('h-4 w-4 text-muted-foreground transition-transform', collapsed && '-rotate-90')}
                     />
                   </Button>
-                  <Input
-                    value={yearNames[year] ?? t('gpa.academicYear', { n: year })}
-                    onChange={(e) => setYearName(year, e.target.value)}
-                    aria-label={t('gpa.yearNameLabel')}
-                    className="h-7 min-w-0 flex-1 border-0 bg-transparent px-1 font-semibold shadow-none focus-visible:bg-background focus-visible:ring-1 sm:max-w-[240px]"
-                  />
+                  <Select value={academicForYear(year)} onValueChange={(v) => setYearAcademic(year, v)}>
+                    <SelectTrigger className="h-7 w-[136px] shrink-0 text-sm font-semibold" aria-label={t('gpa.academicYearLabel')}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900">
+                      {ACADEMIC_YEARS.map((ay) => (
+                        <SelectItem key={ay} value={ay}>
+                          {ay}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {award && (
                     <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0 text-white hover:opacity-90`}>
                       {t(`gpa.${award}`)}
@@ -729,46 +739,39 @@ const GpaHons = () => {
               </div>
 
               {!collapsed && (
-                <CardContent className="p-0">
-                  {yearTerms.map((term, termIdx) => {
-                    const s = statsByTermId.get(term.id)!;
-                    return (
-                      <div key={term.id} className={cn('px-3 py-3', termIdx > 0 && 'border-t')}>
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <Select value={term.part} onValueChange={(v) => updateTermPart(term.id, v as TermPart)}>
-                            <SelectTrigger className="h-8 w-[124px] border-0 bg-transparent px-1 text-sm font-semibold shadow-none focus:ring-0">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-gray-900">
-                              {PART_OPTIONS.map((p) => (
-                                <SelectItem key={p} value={p}>
-                                  {t(`gpa.part.${p}`)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <div className="flex items-center gap-2">
-                            <span className="whitespace-nowrap text-xs text-muted-foreground">
-                              {t('gpa.termGpa')}:{' '}
-                              <span className="font-semibold tabular-nums text-foreground">
-                                {s.gpa != null ? s.gpa.toFixed(3) : '—'}
+                <CardContent className="p-3">
+                  {/* Term 1 (left) and Term 2 (right) share a row; Summer spans full width */}
+                  <div className="grid gap-2.5 md:grid-cols-2">
+                    {yearTerms.map((term) => {
+                      const s = statsByTermId.get(term.id)!;
+                      return (
+                        <div
+                          key={term.id}
+                          className={cn('rounded-lg bg-muted/40 p-2.5', term.part === 'summer' && 'md:col-span-2')}
+                        >
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold">{t(`gpa.part.${term.part}`)}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="whitespace-nowrap text-xs text-muted-foreground">
+                                {t('gpa.termGpa')}:{' '}
+                                <span className="font-semibold tabular-nums text-foreground">
+                                  {s.gpa != null ? s.gpa.toFixed(3) : '—'}
+                                </span>
                               </span>
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                              onClick={() => removeTerm(term.id)}
-                              title={t('gpa.removeTerm')}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                                onClick={() => removeTerm(term.id)}
+                                title={t('gpa.removeTerm')}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
 
-                        <div>
                           {/* column headers (desktop only) */}
-                          <div className="mb-1 hidden grid-cols-[1fr_72px_112px_32px] gap-2 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
+                          <div className="mb-1 hidden grid-cols-[1fr_52px_68px_28px] gap-1.5 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
                             <span>{t('gpa.colCourse')}</span>
                             <span>{t('gpa.colCredits')}</span>
                             <span>{t('gpa.colGrade')}</span>
@@ -778,7 +781,7 @@ const GpaHons = () => {
                             {term.courses.map((course) => (
                               <div
                                 key={course.id}
-                                className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[1fr_72px_112px_32px] sm:items-center sm:gap-2"
+                                className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[1fr_52px_68px_28px] sm:items-center sm:gap-1.5"
                               >
                                 <div className="min-w-0">
                                   <CourseSelect
@@ -790,15 +793,15 @@ const GpaHons = () => {
                                     useCustomLabel={(code) => t('gpa.useCustomCode', { code })}
                                   />
                                 </div>
-                                <div className="flex items-center gap-2 sm:contents">
+                                <div className="flex items-center gap-1.5 sm:contents">
                                   <Input
                                     inputMode="numeric"
                                     value={course.credits}
-                                    placeholder={t('gpa.colCredits')}
+                                    placeholder="—"
                                     onChange={(e) =>
                                       updateCourse(term.id, course.id, { credits: e.target.value.replace(/[^0-9]/g, '') })
                                     }
-                                    className="h-9 w-16 shrink-0 tabular-nums sm:w-auto"
+                                    className="h-9 w-14 shrink-0 px-2 tabular-nums sm:w-auto"
                                   />
                                   <Select
                                     value={course.grade || undefined}
@@ -806,8 +809,10 @@ const GpaHons = () => {
                                       updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })
                                     }
                                   >
-                                    <SelectTrigger className="h-9 min-w-0 flex-1 sm:flex-none">
-                                      <SelectValue placeholder={t('gpa.gradePlaceholder')} />
+                                    <SelectTrigger className="h-9 min-w-0 flex-1 px-2 sm:flex-none">
+                                      <span className={cn('truncate', !course.grade && 'text-muted-foreground')}>
+                                        {course.grade || t('gpa.gradePlaceholder')}
+                                      </span>
                                     </SelectTrigger>
                                     <SelectContent className="bg-white dark:bg-gray-900">
                                       <SelectGroup>
@@ -832,7 +837,7 @@ const GpaHons = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-9 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                                    className="h-9 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                                     onClick={() => removeCourse(term.id, course.id)}
                                     title={t('gpa.removeCourse')}
                                   >
@@ -846,21 +851,19 @@ const GpaHons = () => {
                             <Plus className="mr-1 h-3.5 w-3.5" /> {t('gpa.addCourse')}
                           </Button>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
 
                   {yearTerms.length < MAX_TERMS_PER_YEAR && (
-                    <div className="border-t p-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-muted-foreground hover:text-foreground"
-                        onClick={() => addTerm(year)}
-                      >
-                        <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2.5 w-full text-muted-foreground hover:text-foreground"
+                      onClick={() => addTerm(year)}
+                    >
+                      <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
+                    </Button>
                   )}
                 </CardContent>
               )}
@@ -881,11 +884,12 @@ const GpaHons = () => {
 function SummaryCard({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
     <Card>
-      <CardContent className="p-3">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {icon} {label}
-        </div>
-        <div className="mt-1.5 flex min-h-[32px] items-center">{children}</div>
+      <CardContent className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+          <span className="shrink-0 text-muted-foreground">{icon}</span>
+          <span className="truncate">{label}</span>
+        </span>
+        <span className="flex shrink-0 items-center">{children}</span>
       </CardContent>
     </Card>
   );
@@ -927,14 +931,21 @@ function SeriesLegend({ color, label }: { color: string; label: string }) {
   );
 }
 
-function LegendDot({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
+function AwardLegend({ color, label, info }: { color: string; label: string; info: string }) {
   return (
-    <span className="flex items-center gap-1.5">
-      <span
-        className="inline-block h-0 w-5 border-t-2"
-        style={{ borderColor: color, borderStyle: dashed ? 'dashed' : 'solid' }}
-      />
+    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+      <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: color }} />
       {label}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" className="text-muted-foreground hover:text-foreground" aria-label={label}>
+            <Info className="h-3.5 w-3.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 bg-white dark:bg-gray-900 text-xs leading-relaxed" align="start">
+          {info}
+        </PopoverContent>
+      </Popover>
     </span>
   );
 }

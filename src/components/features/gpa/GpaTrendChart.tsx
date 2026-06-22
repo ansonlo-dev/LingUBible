@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -57,6 +57,25 @@ const AWARD_COLORS = {
   deansList: '#22d3ee', // cyan-400
 };
 
+/** Reactively track the active theme so SVG axis text (which can't read CSS
+ *  variables) stays high-contrast: near-black in light mode, light-grey in dark. */
+function useIsDark() {
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
+  );
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.classList.contains('dark'));
+    window.addEventListener('themechange', update);
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => {
+      window.removeEventListener('themechange', update);
+      obs.disconnect();
+    };
+  }, []);
+  return isDark;
+}
+
 function CustomTooltip({ active, payload, label, labels }: any) {
   if (!active || !payload || payload.length === 0) return null;
   const cgpa = payload.find((p: any) => p.dataKey === 'cgpa')?.value;
@@ -85,6 +104,8 @@ function CustomTooltip({ active, payload, label, labels }: any) {
 export function GpaTrendChart({ data, labels, fullScale, showHonours = true, showAwards = true }: GpaTrendChartProps) {
   // Animate the lines drawing left-to-right ONLY on first mount.
   const [animate, setAnimate] = useState(true);
+  const isDark = useIsDark();
+  const axisColor = isDark ? '#d1d5db' : '#111827'; // gray-300 in dark, near-black in light
 
   const values = data.flatMap((d) => [d.termGpa, d.cgpa]).filter((v): v is number => v != null);
   const hasData = values.length > 0;
@@ -130,7 +151,7 @@ export function GpaTrendChart({ data, labels, fullScale, showHonours = true, sho
           <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.18} vertical={false} />
           <XAxis
             dataKey="term"
-            tick={{ fontSize: 11, fill: '#94a3b8' }}
+            tick={{ fontSize: 11, fill: axisColor }}
             interval={0}
             angle={-30}
             textAnchor="end"
@@ -141,7 +162,7 @@ export function GpaTrendChart({ data, labels, fullScale, showHonours = true, sho
           <YAxis
             domain={[lower, 4]}
             ticks={ticks}
-            tick={{ fontSize: 11, fill: '#94a3b8' }}
+            tick={{ fontSize: 11, fill: axisColor }}
             tickLine={false}
             axisLine={false}
             width={40}
