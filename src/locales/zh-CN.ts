@@ -739,6 +739,9 @@ export default {
   'sidebar.personal': '个人',
   'sidebar.tools': '工具',
   'nav.timetable': '时间表',
+  'nav.gpaHons': 'GPA及Hons',
+  'gpaHons.title': 'GPA及Hons',
+  'gpaHons.subtitle': '计算你的 GPA,并估算荣誉等级。',
   // 时间表规划工具
   'timetable.title': '时间表规划',
   'timetable.subtitle': '搜索授课记录，编排出满意的每周上课时间表。',

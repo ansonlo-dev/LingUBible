@@ -731,6 +731,9 @@ export default {
   'sidebar.personal': 'Personal',
   'sidebar.tools': 'Tools',
   'nav.timetable': 'Timetable',
+  'nav.gpaHons': 'GPA & Hons',
+  'gpaHons.title': 'GPA & Hons',
+  'gpaHons.subtitle': 'Calculate your GPA and estimate your honours classification.',
   // Timetable planner
   'timetable.title': 'Timetable Planner',
   'timetable.subtitle': 'Search teaching records and build a weekly class timetable you are happy with.',

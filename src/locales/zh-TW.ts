@@ -669,6 +669,9 @@ export default {
   'sidebar.personal': '個人',
   'sidebar.tools': '工具',
   'nav.timetable': '時間表',
+  'nav.gpaHons': 'GPA及Hons',
+  'gpaHons.title': 'GPA及Hons',
+  'gpaHons.subtitle': '計算你的 GPA,並估算榮譽等級。',
   // 時間表規劃工具
   'timetable.title': '時間表規劃',
   'timetable.subtitle': '搜尋授課紀錄，編排出滿意的每週上課時間表',
