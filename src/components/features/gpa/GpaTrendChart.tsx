@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
   ResponsiveContainer,
-  LineChart,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -33,25 +34,23 @@ export interface GpaTrendLabels {
 interface GpaTrendChartProps {
   data: GpaChartPoint[];
   labels: GpaTrendLabels;
+  /** When true, force the Y axis to span the full 0–4 range. */
+  fullScale?: boolean;
 }
 
-// Colours chosen to be legible in both light and dark themes.
+// Series colours — bright enough to read on both light and dark backgrounds.
 const SERIES = {
-  cgpa: '#2563eb', // blue-600
+  cgpa: '#3b82f6', // blue-500
   termGpa: '#10b981', // emerald-500
 };
 
-const HONOURS_COLORS: Record<string, string> = {
-  first: '#b91c1c', // red-700
-  upperSecond: '#c2410c', // orange-700
-  lowerSecond: '#a16207', // yellow-700
-  third: '#525252', // neutral-600
-  pass: '#78716c', // stone-500
-};
-
+// Reference lines use only THREE colours to avoid clutter: a single neutral
+// tone for every honours cut-off (the labels tell them apart) plus one accent
+// each for the two merit lists. All three read clearly in dark mode.
+const HONOURS_LINE = '#94a3b8'; // slate-400
 const AWARD_COLORS = {
-  presidentsList: '#7c3aed', // violet-600
-  deansList: '#0891b2', // cyan-600
+  presidentsList: '#f59e0b', // amber-500
+  deansList: '#22d3ee', // cyan-400
 };
 
 function CustomTooltip({ active, payload, label, labels }: any) {
@@ -79,20 +78,34 @@ function CustomTooltip({ active, payload, label, labels }: any) {
   );
 }
 
-export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
-  // Animate the lines drawing left-to-right ONLY on first mount. After the
-  // initial reveal we disable animation so editing data updates the chart
-  // smoothly instead of re-drawing from scratch every keystroke.
+export function GpaTrendChart({ data, labels, fullScale }: GpaTrendChartProps) {
+  // Animate the lines drawing left-to-right ONLY on first mount.
   const [animate, setAnimate] = useState(true);
 
-  const hasData = data.some((d) => d.cgpa != null || d.termGpa != null);
+  const values = data.flatMap((d) => [d.termGpa, d.cgpa]).filter((v): v is number => v != null);
+  const hasData = values.length > 0;
 
-  const refLineLabel = (text: string, value: number, color: string) => ({
-    value: `${text} ${value.toFixed(2)}`,
+  // Dynamic lower bound: when GPAs are clustered high, zoom in so the trend is
+  // legible; capped at 3.0 so there's always at least a 1.0 window, and never
+  // below 0. The user can override with the full-scale toggle.
+  let lower = 0;
+  if (!fullScale && hasData) {
+    const minVal = Math.min(...values);
+    lower = Math.min(3, Math.max(0, Math.floor((minVal - 0.5) * 2) / 2));
+  }
+  const span = 4 - lower;
+  const step = span <= 1 ? 0.25 : 0.5;
+  const ticks: number[] = [];
+  for (let v = lower; v <= 4 + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+
+  // Value-only labels keep the right margin compact so nothing overflows on
+  // mobile; the legend below the chart maps each colour to its name.
+  const refLabel = (value: number, color: string) => ({
+    value: value.toFixed(2),
     position: 'right' as const,
     fill: color,
     fontSize: 10,
-    fontWeight: 600,
+    fontWeight: 700,
   });
 
   return (
@@ -103,8 +116,14 @@ export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
         </div>
       )}
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 64, left: -8, bottom: 28 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.2} />
+        <ComposedChart data={data} margin={{ top: 10, right: 40, left: -6, bottom: 28 }}>
+          <defs>
+            <linearGradient id="gpaCgpaFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={SERIES.cgpa} stopOpacity={0.28} />
+              <stop offset="100%" stopColor={SERIES.cgpa} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.18} vertical={false} />
           <XAxis
             dataKey="term"
             tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -113,10 +132,11 @@ export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
             textAnchor="end"
             height={50}
             tickLine={false}
+            axisLine={{ stroke: '#94a3b8', strokeOpacity: 0.3 }}
           />
           <YAxis
-            domain={[0, 4]}
-            ticks={[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]}
+            domain={[lower, 4]}
+            ticks={ticks}
             tick={{ fontSize: 11, fill: '#94a3b8' }}
             tickLine={false}
             axisLine={false}
@@ -124,42 +144,52 @@ export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
           />
           <Tooltip content={<CustomTooltip labels={labels} />} />
 
-          {/* Honours classification cut-offs (dashed) */}
+          {/* Honours classification cut-offs — all one neutral colour */}
           {HONOURS_TIERS.map((tier) => (
             <ReferenceLine
               key={tier.key}
               y={tier.cgpa}
-              stroke={HONOURS_COLORS[tier.key]}
-              strokeDasharray="6 4"
-              strokeOpacity={0.85}
-              label={refLineLabel((labels as any)[tier.key], tier.cgpa, HONOURS_COLORS[tier.key])}
+              stroke={HONOURS_LINE}
+              strokeDasharray="5 5"
+              strokeOpacity={0.7}
+              label={refLabel(tier.cgpa, HONOURS_LINE)}
             />
           ))}
 
-          {/* Merit lists (distinct colours + dash pattern) */}
+          {/* Merit lists — one accent colour each */}
           <ReferenceLine
             y={AWARD_LINES.presidentsList}
             stroke={AWARD_COLORS.presidentsList}
-            strokeDasharray="2 4"
+            strokeDasharray="2 3"
             strokeWidth={1.5}
-            label={refLineLabel(labels.presidentsList, AWARD_LINES.presidentsList, AWARD_COLORS.presidentsList)}
+            label={refLabel(AWARD_LINES.presidentsList, AWARD_COLORS.presidentsList)}
           />
           <ReferenceLine
             y={AWARD_LINES.deansList}
             stroke={AWARD_COLORS.deansList}
-            strokeDasharray="2 4"
+            strokeDasharray="2 3"
             strokeWidth={1.5}
-            label={refLineLabel(labels.deansList, AWARD_LINES.deansList, AWARD_COLORS.deansList)}
+            label={refLabel(AWARD_LINES.deansList, AWARD_COLORS.deansList)}
           />
 
+          {/* Cumulative GPA gradient fill */}
+          <Area
+            type="monotone"
+            dataKey="cgpa"
+            stroke="none"
+            fill="url(#gpaCgpaFill)"
+            connectNulls
+            isAnimationActive={animate}
+            animationDuration={1600}
+            animationEasing="ease-out"
+          />
           {/* Term GPA */}
           <Line
             type="monotone"
             dataKey="termGpa"
-            name={labels.termGpa}
             stroke={SERIES.termGpa}
             strokeWidth={2}
-            dot={{ r: 3, fill: SERIES.termGpa }}
+            dot={{ r: 3, fill: SERIES.termGpa, strokeWidth: 0 }}
             activeDot={{ r: 5 }}
             connectNulls
             isAnimationActive={animate}
@@ -170,10 +200,9 @@ export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
           <Line
             type="monotone"
             dataKey="cgpa"
-            name={labels.cgpa}
             stroke={SERIES.cgpa}
             strokeWidth={3}
-            dot={{ r: 4, fill: SERIES.cgpa }}
+            dot={{ r: 3.5, fill: SERIES.cgpa, strokeWidth: 0 }}
             activeDot={{ r: 6 }}
             connectNulls
             isAnimationActive={animate}
@@ -181,7 +210,7 @@ export function GpaTrendChart({ data, labels }: GpaTrendChartProps) {
             animationEasing="ease-out"
             onAnimationEnd={() => setAnimate(false)}
           />
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

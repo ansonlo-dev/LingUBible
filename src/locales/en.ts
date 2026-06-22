@@ -743,6 +743,8 @@ export default {
   'gpa.nextMilestone': 'Next milestone',
   'gpa.topReached': 'Top tier reached 🎉',
   'gpa.trendTitle': 'GPA Trend',
+  'gpa.scaleAuto': 'Auto scale',
+  'gpa.scaleFull': 'Full 0–4',
   'gpa.honoursLines': 'Honours cut-offs',
   'gpa.chartEmpty': 'Add courses with grades to see your GPA trend.',
   'gpa.deansList': "Dean's List",

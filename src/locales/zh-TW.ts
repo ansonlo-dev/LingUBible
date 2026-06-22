@@ -681,6 +681,8 @@ export default {
   'gpa.nextMilestone': '下一目標',
   'gpa.topReached': '已達最高等級 🎉',
   'gpa.trendTitle': 'GPA 趨勢',
+  'gpa.scaleAuto': '自動縮放',
+  'gpa.scaleFull': '完整 0–4',
   'gpa.honoursLines': '榮譽分界線',
   'gpa.chartEmpty': '加入有成績的課程即可顯示 GPA 趨勢。',
   'gpa.deansList': '院長榮譽榜',

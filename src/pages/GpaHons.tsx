@@ -55,6 +55,9 @@ import {
   Award,
   RotateCcw,
   ChevronsUpDown,
+  ChevronDown,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 
 // ----------------------------------------------------------------------------
@@ -187,7 +190,7 @@ function CourseSelect({ entry, catalog, onPick, placeholder, searchPlaceholder, 
         <Button
           variant="outline"
           role="combobox"
-          className="h-9 w-full justify-between font-normal"
+          className="h-9 w-full min-w-0 justify-between font-normal"
         >
           <span className={cn('truncate', !entry.code && 'text-muted-foreground')}>{entry.code ? display : placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -218,7 +221,7 @@ function CourseSelect({ entry, catalog, onPick, placeholder, searchPlaceholder, 
                 <span className="font-mono font-medium">{info.code}</span>
                 <span className="text-muted-foreground"> - {info.title}</span>
               </span>
-              <Badge variant="secondary" className="shrink-0 text-[10px] tabular-nums">
+              <Badge className="shrink-0 border-transparent bg-primary text-primary-foreground text-[10px] tabular-nums">
                 {info.credits}
               </Badge>
             </button>
@@ -264,6 +267,15 @@ const GpaHons = () => {
   const [targetKey, setTargetKey] = useState<HonoursKey>('first');
   const [creditsPerTerm, setCreditsPerTerm] = useState('15');
   const [remainingTermsInput, setRemainingTermsInput] = useState('');
+  const [fullScale, setFullScale] = useState(false);
+  const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
+
+  const toggleYear = (year: number) =>
+    setCollapsedYears((prev) => {
+      const next = new Set(prev);
+      next.has(year) ? next.delete(year) : next.add(year);
+      return next;
+    });
 
   useEffect(() => {
     let cancelled = false;
@@ -472,18 +484,37 @@ const GpaHons = () => {
       {/* Chart */}
       <Card className="mb-4">
         <CardHeader className="px-4 py-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4" /> {t('gpa.trendTitle')}
-          </CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4" /> {t('gpa.trendTitle')}
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={() => setFullScale((v) => !v)}
+            >
+              {fullScale ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {fullScale ? t('gpa.scaleFull') : t('gpa.scaleAuto')}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="px-3 pb-3">
-          <GpaTrendChart data={chartData} labels={chartLabels} />
+          <GpaTrendChart data={chartData} labels={chartLabels} fullScale={fullScale} />
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-            <LegendDot color="#2563eb" label={t('gpa.cumulativeGpa')} />
+            <LegendDot color="#3b82f6" label={t('gpa.cumulativeGpa')} />
             <LegendDot color="#10b981" label={t('gpa.termGpa')} />
-            <LegendDot color="#b91c1c" dashed label={t('gpa.honoursLines')} />
-            <LegendDot color="#7c3aed" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
-            <LegendDot color="#0891b2" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
+            <LegendDot color="#f59e0b" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
+            <LegendDot color="#22d3ee" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground">
+            <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
+            <span className="font-medium">{t('gpa.honoursLines')}:</span>
+            {HONOURS_TIERS.map((tr) => (
+              <span key={tr.key} className="whitespace-nowrap">
+                {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
+              </span>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -593,161 +624,178 @@ const GpaHons = () => {
       </div>
 
       <div className="space-y-4">
-        {years.map(({ year, terms: yearTerms, yearGpa, loadCredits, award }) => (
-          <Card key={year} className="overflow-hidden">
-            {/* Academic year header */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-4 py-2.5">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">{t('gpa.academicYear', { n: year })}</span>
-                {award && (
-                  <Badge className={`${AWARD_BADGE_COLORS[award]} text-white hover:opacity-90`}>
-                    {t(`gpa.${award}`)}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-muted-foreground">
-                  {t('gpa.yearGpa')}:{' '}
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {yearGpa != null ? yearGpa.toFixed(3) : '—'}
-                  </span>
-                </span>
-                <span className="hidden text-muted-foreground sm:inline">
-                  {t('gpa.creditsShort', { n: loadCredits })}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                  onClick={() => removeYear(year)}
-                  title={t('gpa.removeYear')}
+        {years.map(({ year, terms: yearTerms, yearGpa, loadCredits, award }) => {
+          const collapsed = collapsedYears.has(year);
+          return (
+            <Card key={year} className="overflow-hidden">
+              {/* Academic year header */}
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b bg-muted/40 px-2 py-2 sm:px-4">
+                <button
+                  type="button"
+                  onClick={() => toggleYear(year)}
+                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-accent/50"
+                  aria-expanded={!collapsed}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                  <ChevronDown
+                    className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', collapsed && '-rotate-90')}
+                  />
+                  <span className="truncate font-semibold">{t('gpa.academicYear', { n: year })}</span>
+                  {award && (
+                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0 text-white hover:opacity-90`}>
+                      {t(`gpa.${award}`)}
+                    </Badge>
+                  )}
+                </button>
+                <div className="flex shrink-0 items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">
+                    {t('gpa.yearGpa')}:{' '}
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {yearGpa != null ? yearGpa.toFixed(3) : '—'}
+                    </span>
+                  </span>
+                  <span className="hidden text-muted-foreground sm:inline">{t('gpa.creditsShort', { n: loadCredits })}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive/10"
+                    onClick={() => removeYear(year)}
+                    title={t('gpa.removeYear')}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <CardContent className="space-y-3 p-3">
-              {yearTerms.map((term) => {
-                const s = statsByTermId.get(term.id)!;
-                return (
-                  <div key={term.id} className="rounded-lg border">
-                    <div className="flex items-center justify-between gap-2 border-b bg-muted/20 px-3 py-1.5">
-                      <Select value={term.part} onValueChange={(v) => updateTermPart(term.id, v as TermPart)}>
-                        <SelectTrigger className="h-7 w-[130px] border-0 bg-transparent px-1 text-sm font-medium shadow-none focus:ring-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white dark:bg-gray-900">
-                          {PART_OPTIONS.map((p) => (
-                            <SelectItem key={p} value={p}>
-                              {t(`gpa.part.${p}`)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {t('gpa.termGpa')}:{' '}
-                          <span className="font-semibold tabular-nums text-foreground">
-                            {s.gpa != null ? s.gpa.toFixed(3) : '—'}
-                          </span>
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeTerm(term.id)}
-                          title={t('gpa.removeTerm')}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="p-2">
-                      {/* header row (desktop) */}
-                      <div className="mb-1 hidden grid-cols-[1fr_72px_104px_32px] gap-2 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
-                        <span>{t('gpa.colCourse')}</span>
-                        <span>{t('gpa.colCredits')}</span>
-                        <span>{t('gpa.colGrade')}</span>
-                        <span />
-                      </div>
-                      <div className="space-y-1.5">
-                        {term.courses.map((course) => (
-                          <div
-                            key={course.id}
-                            className="grid grid-cols-[1fr_60px_auto] items-center gap-2 sm:grid-cols-[1fr_72px_104px_32px]"
-                          >
-                            <CourseSelect
-                              entry={course}
-                              catalog={catalog}
-                              onPick={(info) => pickCourse(term.id, course.id, info)}
-                              placeholder={t('gpa.coursePlaceholder')}
-                              searchPlaceholder={t('gpa.courseSearchPlaceholder')}
-                              useCustomLabel={(code) => t('gpa.useCustomCode', { code })}
-                            />
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.5"
-                              value={course.credits}
-                              placeholder="—"
-                              onChange={(e) => updateCourse(term.id, course.id, { credits: e.target.value })}
-                              className="h-9 tabular-nums"
-                            />
-                            <Select
-                              value={course.grade || undefined}
-                              onValueChange={(v) => updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder={t('gpa.gradePlaceholder')} />
-                              </SelectTrigger>
-                              <SelectContent className="bg-white dark:bg-gray-900">
-                                <SelectGroup>
-                                  <SelectItem value="__none__" className="text-muted-foreground">
-                                    {t('gpa.notGraded')}
-                                  </SelectItem>
-                                  <SelectLabel>{t('gpa.gpaGrades')}</SelectLabel>
-                                  {GPA_BEARING_GRADES.map((g) => (
-                                    <SelectItem key={g} value={g}>
-                                      {g} <span className="text-muted-foreground">({getGPA(g)?.toFixed(2)})</span>
-                                    </SelectItem>
-                                  ))}
-                                  <SelectLabel>{t('gpa.nonGpaGrades')}</SelectLabel>
-                                  {NON_GPA_GRADES.map((g) => (
-                                    <SelectItem key={g} value={g}>
-                                      {g}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
+              {!collapsed && (
+                <CardContent className="space-y-3 p-2 sm:p-3">
+                  {yearTerms.map((term) => {
+                    const s = statsByTermId.get(term.id)!;
+                    return (
+                      <div key={term.id} className="rounded-lg border">
+                        <div className="flex items-center justify-between gap-2 border-b bg-muted/20 px-2 py-1.5 sm:px-3">
+                          <Select value={term.part} onValueChange={(v) => updateTermPart(term.id, v as TermPart)}>
+                            <SelectTrigger className="h-7 w-[120px] border-0 bg-transparent px-1 text-sm font-medium shadow-none focus:ring-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-gray-900">
+                              {PART_OPTIONS.map((p) => (
+                                <SelectItem key={p} value={p}>
+                                  {t(`gpa.part.${p}`)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="flex items-center gap-2">
+                            <span className="whitespace-nowrap text-xs text-muted-foreground">
+                              {t('gpa.termGpa')}:{' '}
+                              <span className="font-semibold tabular-nums text-foreground">
+                                {s.gpa != null ? s.gpa.toFixed(3) : '—'}
+                              </span>
+                            </span>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                              onClick={() => removeCourse(term.id, course.id)}
-                              title={t('gpa.removeCourse')}
+                              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => removeTerm(term.id)}
+                              title={t('gpa.removeTerm')}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
-                        ))}
-                      </div>
-                      <Button variant="ghost" size="sm" className="mt-1.5 h-7 text-xs" onClick={() => addCourse(term.id)}>
-                        <Plus className="mr-1 h-3.5 w-3.5" /> {t('gpa.addCourse')}
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+                        </div>
 
-              <Button variant="outline" size="sm" className="w-full border-dashed" onClick={() => addTerm(year)}>
-                <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                        <div className="p-2">
+                          {/* column headers (desktop only) */}
+                          <div className="mb-1 hidden grid-cols-[1fr_72px_112px_32px] gap-2 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
+                            <span>{t('gpa.colCourse')}</span>
+                            <span>{t('gpa.colCredits')}</span>
+                            <span>{t('gpa.colGrade')}</span>
+                            <span />
+                          </div>
+                          <div className="space-y-2 sm:space-y-1.5">
+                            {term.courses.map((course) => (
+                              <div
+                                key={course.id}
+                                className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[1fr_72px_112px_32px] sm:items-center sm:gap-2"
+                              >
+                                <div className="min-w-0">
+                                  <CourseSelect
+                                    entry={course}
+                                    catalog={catalog}
+                                    onPick={(info) => pickCourse(term.id, course.id, info)}
+                                    placeholder={t('gpa.coursePlaceholder')}
+                                    searchPlaceholder={t('gpa.courseSearchPlaceholder')}
+                                    useCustomLabel={(code) => t('gpa.useCustomCode', { code })}
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 sm:contents">
+                                  <Input
+                                    inputMode="numeric"
+                                    value={course.credits}
+                                    placeholder={t('gpa.colCredits')}
+                                    onChange={(e) =>
+                                      updateCourse(term.id, course.id, { credits: e.target.value.replace(/[^0-9]/g, '') })
+                                    }
+                                    className="h-9 w-16 shrink-0 tabular-nums sm:w-auto"
+                                  />
+                                  <Select
+                                    value={course.grade || undefined}
+                                    onValueChange={(v) =>
+                                      updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })
+                                    }
+                                  >
+                                    <SelectTrigger className="h-9 min-w-0 flex-1 sm:flex-none">
+                                      <SelectValue placeholder={t('gpa.gradePlaceholder')} />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white dark:bg-gray-900">
+                                      <SelectGroup>
+                                        <SelectItem value="__none__" className="text-muted-foreground">
+                                          {t('gpa.notGraded')}
+                                        </SelectItem>
+                                        <SelectLabel>{t('gpa.gpaGrades')}</SelectLabel>
+                                        {GPA_BEARING_GRADES.map((g) => (
+                                          <SelectItem key={g} value={g}>
+                                            {g} <span className="text-muted-foreground">({getGPA(g)?.toFixed(2)})</span>
+                                          </SelectItem>
+                                        ))}
+                                        <SelectLabel>{t('gpa.nonGpaGrades')}</SelectLabel>
+                                        {NON_GPA_GRADES.map((g) => (
+                                          <SelectItem key={g} value={g}>
+                                            {g}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => removeCourse(term.id, course.id)}
+                                    title={t('gpa.removeCourse')}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <Button variant="ghost" size="sm" className="mt-1.5 h-7 text-xs" onClick={() => addCourse(term.id)}>
+                            <Plus className="mr-1 h-3.5 w-3.5" /> {t('gpa.addCourse')}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <Button variant="outline" size="sm" className="w-full border-dashed" onClick={() => addTerm(year)}>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
+                  </Button>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       <Button variant="outline" className="mt-4 w-full border-dashed" onClick={addYear}>

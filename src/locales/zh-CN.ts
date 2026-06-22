@@ -751,6 +751,8 @@ export default {
   'gpa.nextMilestone': '下一目标',
   'gpa.topReached': '已达最高等级 🎉',
   'gpa.trendTitle': 'GPA 趋势',
+  'gpa.scaleAuto': '自动缩放',
+  'gpa.scaleFull': '完整 0–4',
   'gpa.honoursLines': '荣誉分界线',
   'gpa.chartEmpty': '加入有成绩的课程即可显示 GPA 趋势。',
   'gpa.deansList': '院长荣誉榜',
