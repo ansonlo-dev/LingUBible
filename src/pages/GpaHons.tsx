@@ -9,7 +9,6 @@ import {
   GPA_BEARING_GRADES,
   NON_GPA_GRADES,
   classifyHonours,
-  nextHonoursTier,
   classifyYearAward,
   requiredRemainingAvg,
   isGpaBearingGrade,
@@ -66,7 +65,10 @@ import {
 // ----------------------------------------------------------------------------
 
 type TermPart = 'term1' | 'term2' | 'summer' | 'other';
-const PART_OPTIONS: TermPart[] = ['term1', 'term2', 'summer', 'other'];
+// Selectable term types — a year has at most these three terms (no "Other").
+const PART_OPTIONS: TermPart[] = ['term1', 'term2', 'summer'];
+const MAX_TERMS_PER_YEAR = PART_OPTIONS.length;
+// 'other' kept in the ordering only so any legacy-saved term still sorts sanely.
 const PART_ORDER: Record<TermPart, number> = { term1: 0, term2: 1, summer: 2, other: 3 };
 
 interface CourseEntry {
@@ -101,6 +103,20 @@ function loadTerms(): TermData[] {
     /* ignore corrupt storage */
   }
   return defaultTerms();
+}
+
+/** Persisted custom academic-year names, keyed by academic-year number. */
+function loadYearNames(): Record<number, string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.yearNames && typeof parsed.yearNames === 'object') return parsed.yearNames;
+    }
+  } catch {
+    /* ignore corrupt storage */
+  }
+  return {};
 }
 
 // ----------------------------------------------------------------------------
@@ -263,6 +279,7 @@ const GpaHons = () => {
   const { t, language } = useLanguage();
 
   const [terms, setTerms] = useState<TermData[]>(() => loadTerms());
+  const [yearNames, setYearNames] = useState<Record<number, string>>(() => loadYearNames());
   const [catalog, setCatalog] = useState<GpaCourseCatalog>({});
 
   const [targetKey, setTargetKey] = useState<HonoursKey>('first');
@@ -291,11 +308,14 @@ const GpaHons = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ terms }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ terms, yearNames }));
     } catch {
       /* ignore quota errors */
     }
-  }, [terms]);
+  }, [terms, yearNames]);
+
+  const setYearName = (year: number, name: string) =>
+    setYearNames((prev) => ({ ...prev, [year]: name }));
 
   // ---- Mutations ---------------------------------------------------------
   const updateCourse = (termId: string, courseId: string, patch: Partial<CourseEntry>) =>
@@ -335,8 +355,9 @@ const GpaHons = () => {
 
   const addTerm = (year: number) =>
     setTerms((prev) => {
-      const inYear = prev.filter((tm) => tm.year === year).length;
-      const part: TermPart = inYear === 0 ? 'term1' : inYear === 1 ? 'term2' : 'summer';
+      const used = new Set(prev.filter((tm) => tm.year === year).map((tm) => tm.part));
+      if (used.size >= MAX_TERMS_PER_YEAR) return prev; // at most Term 1 / Term 2 / Summer
+      const part = PART_OPTIONS.find((p) => !used.has(p)) ?? 'summer';
       return [...prev, { id: uid(), year, part, courses: [newCourse()] }];
     });
 
@@ -347,8 +368,18 @@ const GpaHons = () => {
     });
 
   const removeTerm = (termId: string) => setTerms((prev) => prev.filter((tm) => tm.id !== termId));
-  const removeYear = (year: number) => setTerms((prev) => prev.filter((tm) => tm.year !== year));
-  const resetAll = () => setTerms(defaultTerms());
+  const removeYear = (year: number) => {
+    setTerms((prev) => prev.filter((tm) => tm.year !== year));
+    setYearNames((prev) => {
+      const next = { ...prev };
+      delete next[year];
+      return next;
+    });
+  };
+  const resetAll = () => {
+    setTerms(defaultTerms());
+    setYearNames({});
+  };
 
   // ---- Derived -----------------------------------------------------------
   const sortedTerms = useMemo(
@@ -413,7 +444,6 @@ const GpaHons = () => {
   }, [sortedTerms, statsByTermId]);
 
   const currentClass = classifyHonours(cgpa);
-  const nextTier = nextHonoursTier(cgpa);
 
   // ---- Target calculator -------------------------------------------------
   const DEFAULT_CREDITS_PER_TERM = 15;
@@ -463,7 +493,7 @@ const GpaHons = () => {
       </div>
 
       {/* Summary */}
-      <div className="mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         <SummaryCard icon={<GraduationCap className="h-4 w-4" />} label={t('gpa.cumulativeGpa')}>
           <span className="text-2xl font-bold tabular-nums">{cgpa != null ? cgpa.toFixed(3) : '—'}</span>
         </SummaryCard>
@@ -479,20 +509,11 @@ const GpaHons = () => {
         <SummaryCard icon={<TrendingUp className="h-4 w-4" />} label={t('gpa.gpaCredits')}>
           <span className="text-2xl font-bold tabular-nums">{earnedCredits || 0}</span>
         </SummaryCard>
-        <SummaryCard icon={<Target className="h-4 w-4" />} label={t('gpa.nextMilestone')}>
-          {nextTier ? (
-            <span className="text-sm font-medium">
-              {t(`gpa.honours.${nextTier.key}`)}{' '}
-              <span className="text-muted-foreground tabular-nums">({nextTier.cgpa.toFixed(2)})</span>
-            </span>
-          ) : (
-            <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{t('gpa.topReached')}</span>
-          )}
-        </SummaryCard>
       </div>
 
+      <div className="mb-5 grid gap-4 lg:grid-cols-2 lg:items-start">
       {/* Chart */}
-      <Card className="mb-4">
+      <Card>
         <CardHeader className="px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -531,32 +552,37 @@ const GpaHons = () => {
             showHonours={showHonours}
             showAwards={showAwards}
           />
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-            <LegendDot color="#3b82f6" label={t('gpa.cumulativeGpa')} />
-            <LegendDot color="#10b981" label={t('gpa.termGpa')} />
-            {showAwards && (
-              <>
-                <LegendDot color="#f59e0b" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
-                <LegendDot color="#22d3ee" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
-              </>
-            )}
+          {/* Primary series — emphasised over the dashed reference lines */}
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            <SeriesLegend color="#3b82f6" label={t('gpa.cumulativeGpa')} />
+            <SeriesLegend color="#10b981" label={t('gpa.termGpa')} />
           </div>
-          {showHonours && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground">
-              <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
-              <span className="font-medium">{t('gpa.honoursLines')}:</span>
-              {HONOURS_TIERS.map((tr) => (
-                <span key={tr.key} className="whitespace-nowrap">
-                  {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
+          {(showAwards || showHonours) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
+              {showAwards && (
+                <>
+                  <LegendDot color="#f59e0b" dashed label={`${t('gpa.presidentsList')} ${AWARD_LINES.presidentsList.toFixed(2)}`} />
+                  <LegendDot color="#22d3ee" dashed label={`${t('gpa.deansList')} ${AWARD_LINES.deansList.toFixed(2)}`} />
+                </>
+              )}
+              {showHonours && (
+                <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                  <span className="inline-block h-0 w-5 shrink-0 border-t-2 border-dashed" style={{ borderColor: '#94a3b8' }} />
+                  <span className="font-medium">{t('gpa.honoursLines')}:</span>
+                  {HONOURS_TIERS.map((tr) => (
+                    <span key={tr.key} className="whitespace-nowrap">
+                      {t(`gpa.honours.${tr.key}`)} <span className="tabular-nums">{tr.cgpa.toFixed(2)}</span>
+                    </span>
+                  ))}
                 </span>
-              ))}
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Target calculator */}
-      <Card className="mb-5 border-primary/30">
+      <Card className="border-primary/30">
         <CardHeader className="px-4 py-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Target className="h-4 w-4" /> {t('gpa.targetTitle')}
@@ -626,6 +652,7 @@ const GpaHons = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Terms editor */}
       <div className="mb-2 flex items-center justify-between">
@@ -655,23 +682,32 @@ const GpaHons = () => {
           return (
             <Card key={year} className="overflow-hidden">
               {/* Academic year header */}
-              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b bg-muted/40 px-2 py-2 sm:px-4">
-                <button
-                  type="button"
-                  onClick={() => toggleYear(year)}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-accent/50"
-                  aria-expanded={!collapsed}
-                >
-                  <ChevronDown
-                    className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', collapsed && '-rotate-90')}
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b bg-muted/40 px-2 py-1.5 sm:px-3">
+                <div className="flex min-w-0 flex-1 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => toggleYear(year)}
+                    aria-expanded={!collapsed}
+                    title={t('gpa.academicYear', { n: year })}
+                  >
+                    <ChevronDown
+                      className={cn('h-4 w-4 text-muted-foreground transition-transform', collapsed && '-rotate-90')}
+                    />
+                  </Button>
+                  <Input
+                    value={yearNames[year] ?? t('gpa.academicYear', { n: year })}
+                    onChange={(e) => setYearName(year, e.target.value)}
+                    aria-label={t('gpa.yearNameLabel')}
+                    className="h-7 min-w-0 flex-1 border-0 bg-transparent px-1 font-semibold shadow-none focus-visible:bg-background focus-visible:ring-1 sm:max-w-[240px]"
                   />
-                  <span className="truncate font-semibold">{t('gpa.academicYear', { n: year })}</span>
                   {award && (
                     <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0 text-white hover:opacity-90`}>
                       {t(`gpa.${award}`)}
                     </Badge>
                   )}
-                </button>
+                </div>
                 <div className="flex shrink-0 items-center gap-2 text-sm">
                   <span className="text-muted-foreground">
                     {t('gpa.yearGpa')}:{' '}
@@ -814,16 +850,18 @@ const GpaHons = () => {
                     );
                   })}
 
-                  <div className="border-t p-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-muted-foreground hover:text-foreground"
-                      onClick={() => addTerm(year)}
-                    >
-                      <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
-                    </Button>
-                  </div>
+                  {yearTerms.length < MAX_TERMS_PER_YEAR && (
+                    <div className="border-t p-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-muted-foreground hover:text-foreground"
+                        onClick={() => addTerm(year)}
+                      >
+                        <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>
@@ -877,6 +915,15 @@ function ChartToggle({
       <span className="inline-block h-0 w-4 shrink-0 border-t-2 border-dashed" style={{ borderColor: color }} />
       {label}
     </button>
+  );
+}
+
+function SeriesLegend({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+      <span className="inline-block h-1.5 w-6 shrink-0 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
   );
 }
 
