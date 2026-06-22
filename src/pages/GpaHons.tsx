@@ -221,7 +221,9 @@ function CourseSelect({ entry, catalog, onPick, placeholder, searchPlaceholder, 
           role="combobox"
           className="h-9 w-full min-w-0 justify-between font-normal"
         >
-          <span className={cn('truncate', !entry.code && 'text-muted-foreground')}>{entry.code ? display : placeholder}</span>
+          <span className={cn('min-w-0 flex-1 truncate text-left', !entry.code && 'text-muted-foreground')}>
+            {entry.code ? display : placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -519,7 +521,7 @@ const GpaHons = () => {
         </SummaryCard>
       </div>
 
-      <div className="mb-5 grid gap-4 lg:grid-cols-2 lg:items-start">
+      <div className="mb-5 grid gap-4 lg:grid-cols-2 lg:items-stretch">
       {/* Chart */}
       <Card>
         <CardHeader className="px-4 py-3">
@@ -586,13 +588,13 @@ const GpaHons = () => {
       </Card>
 
       {/* Target calculator */}
-      <Card className="border-primary/30">
+      <Card className="flex flex-col border-primary/30">
         <CardHeader className="px-4 py-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Target className="h-4 w-4" /> {t('gpa.targetTitle')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 pb-4">
+        <CardContent className="flex flex-1 flex-col px-4 pb-4">
           <p className="mb-3 text-xs text-muted-foreground">{t('gpa.targetDesc')}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
@@ -625,7 +627,7 @@ const GpaHons = () => {
             </div>
           </div>
 
-          <div className="mt-4 rounded-lg border bg-muted/40 p-3">
+          <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg border bg-muted/40 p-3">
             {calc.status === 'feasible' && (
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-sm text-muted-foreground">
