@@ -72,6 +72,8 @@ const MAX_TERMS_PER_YEAR = PART_OPTIONS.length;
 const PART_ORDER: Record<TermPart, number> = { term1: 0, term2: 1, summer: 2, other: 3 };
 // Short term codes for the trend chart's x-axis (e.g. "21/22-T1").
 const PART_XAXIS: Record<TermPart, string> = { term1: 'T1', term2: 'T2', summer: 'Su', other: 'T?' };
+// Term names are not translated (used as-is across all languages).
+const PART_LABEL: Record<TermPart, string> = { term1: 'Term 1', term2: 'Term 2', summer: 'Summer Term', other: 'Other' };
 
 // Selectable academic years for each year block.
 const ACADEMIC_YEARS = ['2021-2022', '2022-2023', '2023-2024', '2024-2025', '2025-2026'];
@@ -596,11 +598,11 @@ const GpaHons = () => {
         </CardHeader>
         <CardContent className="flex flex-1 flex-col px-4 pb-4">
           <p className="mb-3 text-xs text-muted-foreground">{t('gpa.targetDesc')}</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label className="text-xs">{t('gpa.targetClass')}</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="shrink-0 text-sm">{t('gpa.targetClass')}</Label>
               <Select value={targetKey} onValueChange={(v) => setTargetKey(v as HonoursKey)}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 w-[210px] max-w-[62%]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-gray-900">
@@ -612,46 +614,43 @@ const GpaHons = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t('gpa.totalRemainingCredits')}</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="shrink-0 text-sm">{t('gpa.totalRemainingCredits')}</Label>
               <Input
                 inputMode="numeric"
-                className="h-9"
+                className="h-9 w-[210px] max-w-[62%]"
                 value={remainingCreditsInput}
                 placeholder={String(defaultRemainingCredits)}
                 onChange={(e) => setRemainingCreditsInput(e.target.value.replace(/[^0-9]/g, ''))}
               />
-              <p className="text-[11px] text-muted-foreground">
-                {t('gpa.totalRemainingCreditsHint', { terms: autoRemainingTerms, n: defaultRemainingCredits })}
-              </p>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg border bg-muted/40 p-3">
+          <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg border bg-muted/40 p-4">
             {calc.status === 'feasible' && (
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xl text-muted-foreground">
                   {t('gpa.resultFeasiblePrefix', { target: t(`gpa.honours.${targetKey}`) })}
                 </span>
                 <span className={`text-3xl font-bold tabular-nums ${requiredColor}`}>{calc.required.toFixed(3)}</span>
-                <span className="text-sm text-muted-foreground">{t('gpa.perRemainingCredit')}</span>
+                <span className="text-xl text-muted-foreground">{t('gpa.perRemainingCredit')}</span>
               </div>
             )}
             {calc.status === 'achieved' && (
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+              <p className="text-xl font-medium text-blue-600 dark:text-blue-400">
                 {t('gpa.resultAchieved', { target: t(`gpa.honours.${targetKey}`) })}
               </p>
             )}
             {calc.status === 'impossible' && (
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-foreground">
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xl font-medium text-foreground">
                   {t('gpa.resultImpossible', { target: t(`gpa.honours.${targetKey}`) })}
                 </p>
-                <p className="text-sm text-muted-foreground">{t('gpa.bestPossible', { gpa: calc.projectedCgpa.toFixed(3) })}</p>
+                <p className="text-base text-muted-foreground">{t('gpa.bestPossible', { gpa: calc.projectedCgpa.toFixed(3) })}</p>
               </div>
             )}
             {calc.status === 'noRemaining' && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xl text-muted-foreground">
                 {t('gpa.resultNoRemaining', { gpa: calc.projectedCgpa.toFixed(3), target: t(`gpa.honours.${targetKey}`) })}
               </p>
             )}
@@ -688,7 +687,7 @@ const GpaHons = () => {
           return (
             <Card key={year} className="overflow-hidden">
               {/* Academic year header */}
-              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b bg-muted/40 px-2 py-1.5 sm:px-3">
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 bg-muted/40 px-2 py-1.5 sm:px-3">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5">
                   <Button
                     variant="ghost"
@@ -752,7 +751,7 @@ const GpaHons = () => {
                           className={cn('rounded-lg bg-muted/40 p-2.5', term.part === 'summer' && 'md:col-span-2')}
                         >
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <span className="text-sm font-semibold">{t(`gpa.part.${term.part}`)}</span>
+                            <span className="text-sm font-semibold">{PART_LABEL[term.part]}</span>
                             <div className="flex items-center gap-2">
                               <span className="whitespace-nowrap text-xs text-muted-foreground">
                                 {t('gpa.termGpa')}:{' '}
@@ -773,7 +772,7 @@ const GpaHons = () => {
                           </div>
 
                           {/* column headers (desktop only) */}
-                          <div className="mb-1 hidden grid-cols-[1fr_52px_68px_28px] gap-1.5 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
+                          <div className="mb-1 hidden grid-cols-[minmax(0,1fr)_52px_68px_28px] gap-1.5 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
                             <span>{t('gpa.colCourse')}</span>
                             <span>{t('gpa.colCredits')}</span>
                             <span>{t('gpa.colGrade')}</span>
@@ -783,7 +782,7 @@ const GpaHons = () => {
                             {term.courses.map((course) => (
                               <div
                                 key={course.id}
-                                className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[1fr_52px_68px_28px] sm:items-center sm:gap-1.5"
+                                className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_52px_68px_28px] sm:items-center sm:gap-1.5"
                               >
                                 <div className="min-w-0">
                                   <CourseSelect
