@@ -354,11 +354,13 @@ const HONOURS_BADGE_COLORS: Record<HonoursKey, string> = {
   pass: 'bg-stone-500 hover:bg-stone-500',
 };
 
-// Match the chart legend colours: President's = amber, Dean's = cyan.
-// Black text in light theme, white in dark; no hover change.
+// Match the chart legend colours: President's = amber, Dean's = cyan. Black
+// text on the light fills in light theme; darker fills + white text in dark
+// theme for enough contrast. No hover change.
 const AWARD_BADGE_COLORS: Record<YearAwardKey, string> = {
-  presidentsList: 'bg-[#f59e0b] text-black dark:text-white hover:bg-[#f59e0b]',
-  deansList: 'bg-[#22d3ee] text-black dark:text-white hover:bg-[#22d3ee]',
+  presidentsList:
+    'bg-[#f59e0b] hover:bg-[#f59e0b] text-black dark:bg-[#b45309] dark:hover:bg-[#b45309] dark:text-white',
+  deansList: 'bg-[#22d3ee] hover:bg-[#22d3ee] text-black dark:bg-[#0e7490] dark:hover:bg-[#0e7490] dark:text-white',
 };
 
 const GpaHons = () => {
@@ -854,7 +856,7 @@ const GpaHons = () => {
                     </SelectContent>
                   </Select>
                   {award && (
-                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0`}>
+                    <Badge className={`${AWARD_BADGE_COLORS[award]} ml-1.5 shrink-0`}>
                       {t(`gpa.${award}`)}
                     </Badge>
                   )}

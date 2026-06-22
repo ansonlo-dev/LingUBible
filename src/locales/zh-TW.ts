@@ -671,7 +671,7 @@ export default {
   'nav.timetable': '時間表',
   'nav.gpaHons': 'GPA及Hons',
   'gpaHons.title': 'GPA及Hons',
-  'gpaHons.subtitle': '計算你的 GPA,並估算榮譽等級。',
+  'gpaHons.subtitle': '計算你的 GPA,並估算榮譽等級',
   // GPA及Hons 規劃工具
   'gpa.cumulativeGpa': '累積 GPA',
   'gpa.termGpa': '學期 GPA',
@@ -682,7 +682,7 @@ export default {
   'gpa.scaleAuto': '自動縮放',
   'gpa.scaleFull': '完整 0–4',
   'gpa.awardLines': "Dean's / President's",
-  'gpa.localOnlyNotice': '只儲存在你的瀏覽器,不會上傳伺服器。',
+  'gpa.localOnlyNotice': '只儲存在你的瀏覽器,不會上傳伺服器',
   'gpa.honoursLines': '榮譽分界線',
   'gpa.chartEmpty': '加入有成績的課程即可顯示 GPA 趨勢。',
   'gpa.deansList': "Dean's List",

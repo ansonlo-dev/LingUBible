@@ -741,7 +741,7 @@ export default {
   'nav.timetable': '时间表',
   'nav.gpaHons': 'GPA及Hons',
   'gpaHons.title': 'GPA及Hons',
-  'gpaHons.subtitle': '计算你的 GPA,并估算荣誉等级。',
+  'gpaHons.subtitle': '计算你的 GPA,并估算荣誉等级',
   // GPA及Hons 规划工具
   'gpa.cumulativeGpa': '累积 GPA',
   'gpa.termGpa': '学期 GPA',
@@ -752,7 +752,7 @@ export default {
   'gpa.scaleAuto': '自动缩放',
   'gpa.scaleFull': '完整 0–4',
   'gpa.awardLines': "Dean's / President's",
-  'gpa.localOnlyNotice': '只保存在你的浏览器,不会上传服务器。',
+  'gpa.localOnlyNotice': '只保存在你的浏览器,不会上传服务器',
   'gpa.honoursLines': '荣誉分界线',
   'gpa.chartEmpty': '加入有成绩的课程即可显示 GPA 趋势。',
   'gpa.deansList': "Dean's List",
