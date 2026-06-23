@@ -746,14 +746,16 @@ const GpaHons = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg border bg-muted/40 p-4">
+          <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg bg-muted/40 p-4">
             {calc.status === 'feasible' && (
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-xl text-muted-foreground">
-                  {t('gpa.resultFeasiblePrefix', { target: targetLabel })}
-                </span>
-                <span className={`text-3xl font-bold tabular-nums ${requiredColor}`}>{calc.required.toFixed(3)}</span>
-                <span className="text-xl text-muted-foreground">{t('gpa.perRemainingCredit')}</span>
+              <div className="space-y-1">
+                <p className="text-xl text-muted-foreground">{t('gpa.resultFeasibleLine1', { target: targetLabel })}</p>
+                <p className="text-xl text-muted-foreground">{t('gpa.resultFeasibleLine2')}</p>
+                <p className="text-xl text-muted-foreground">
+                  {t('gpa.resultFeasibleLine3')}{' '}
+                  <span className={`align-baseline text-3xl font-bold tabular-nums ${requiredColor}`}>{calc.required.toFixed(3)}</span>
+                  {language === 'en' ? '.' : '。'}
+                </p>
               </div>
             )}
             {calc.status === 'achieved' && (
