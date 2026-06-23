@@ -66,7 +66,7 @@ import {
   Image as ImageIcon,
   FileDown,
   Download,
-  TriangleAlert,
+  ClockAlert,
   Slash,
   Menu,
   ArrowLeft,
@@ -1673,14 +1673,17 @@ const Timetable = () => {
                 title={showConflicts ? t('timetable.hideConflicts') : t('timetable.showConflicts')}
                 className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
               >
-                {/* Combine triangle-alert with a slash (nested SVG) to convey
-                    the hidden state — see lucide.dev combining-icons guide. */}
+                {/* Combine clock-alert with a slash (nested SVG) to convey the
+                    hidden state — see lucide.dev combining-icons guide. The
+                    nested Slash fills the full 24×24 viewBox (h-full w-full,
+                    not h-5 w-5) so its corner-to-corner diagonal stays centred
+                    both horizontally and vertically over the clock-alert. */}
                 {showConflicts ? (
-                  <TriangleAlert className="h-5 w-5" />
+                  <ClockAlert className="h-5 w-5" />
                 ) : (
-                  <TriangleAlert className="h-5 w-5">
+                  <ClockAlert className="h-5 w-5">
                     <Slash className="h-full w-full" />
-                  </TriangleAlert>
+                  </ClockAlert>
                 )}
               </button>
               {/* Hide the panel. Hamburger + left arrow = collapse. */}
