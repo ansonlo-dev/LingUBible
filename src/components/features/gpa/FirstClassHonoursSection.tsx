@@ -82,6 +82,32 @@ const valueOf = (p: HonoursProgrammeStat, year: number, metric: Metric): number 
 const fmtMetric = (v: number | null | undefined, metric: Metric) =>
   v == null ? '—' : metric === 'rate' ? pct(v) : String(v);
 
+/**
+ * Wrap a programme name into lines that fit `maxChars` per line, so the y-axis
+ * shows the full name across multiple rows instead of truncating with "…".
+ * CJK has no spaces, so it wraps by character; Latin text wraps on word breaks.
+ */
+function wrapLabel(text: string, maxChars: number, cjk: boolean): string[] {
+  if (maxChars <= 0 || text.length <= maxChars) return [text];
+  if (cjk) {
+    const lines: string[] = [];
+    for (let i = 0; i < text.length; i += maxChars) lines.push(text.slice(i, i + maxChars));
+    return lines;
+  }
+  const lines: string[] = [];
+  let cur = '';
+  for (const word of text.split(' ')) {
+    if (!cur) cur = word;
+    else if ((cur + ' ' + word).length <= maxChars) cur += ' ' + word;
+    else {
+      lines.push(cur);
+      cur = word;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
 interface Row {
   name: string;
   full: string;
@@ -136,10 +162,6 @@ export function FirstClassHonoursSection() {
     return built;
   }, [metric, lang, sort, activeYears, sortYear]);
 
-  // Compact rows; height scales with how many cohorts are shown.
-  const perRow = activeYears.length * 12 + 12;
-  const chartHeight = rows.length * perRow + 36;
-
   // The programme-name axis must fit inside the chart on every width — on a
   // narrow phone a fixed 176px axis lets the (truncated) names spill past the
   // card's left edge. Track the real chart width and size the axis + truncation
@@ -165,6 +187,19 @@ export function FirstClassHonoursSection() {
   const charPx = lang === 'en' ? 6.2 : 12.5;
   const maxLabelChars = Math.max(5, Math.floor((yAxisWidth - 6) / charPx));
 
+  // Wrap each name and find the tallest label so rows can be sized to fit the
+  // wrapped lines (otherwise multi-line names overlap the neighbouring bars).
+  const LINE_H = 13;
+  const maxLabelLines = useMemo(() => {
+    let max = 1;
+    for (const r of rows) max = Math.max(max, wrapLabel(r.name, maxLabelChars, lang !== 'en').length);
+    return max;
+  }, [rows, maxLabelChars, lang]);
+
+  // Row height = whichever is taller, the cohort bars or the wrapped label.
+  const perRow = Math.max(activeYears.length * 12 + 12, maxLabelLines * LINE_H + 8);
+  const chartHeight = rows.length * perRow + 36;
+
   // Cap the hover tooltip to the space actually available to the right of the
   // y-axis. Otherwise a fixed-width box gets clamped to the plot's left edge by
   // recharts and overflows the right of the screen on a narrow phone.
@@ -172,11 +207,16 @@ export function FirstClassHonoursSection() {
     containerW > 0 ? Math.max(150, Math.min(280, containerW - yAxisWidth - 12)) : 280;
 
   const renderYTick = ({ x, y, payload }: any) => {
-    const label: string = payload.value;
-    const shown = label.length > maxLabelChars ? `${label.slice(0, maxLabelChars - 1)}…` : label;
+    const lines = wrapLabel(payload.value, maxLabelChars, lang !== 'en');
+    // Vertically centre the block of lines on the tick.
+    const firstDy = -((lines.length - 1) / 2) * LINE_H + 4;
     return (
-      <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fill={axisColor}>
-        {shown}
+      <text x={x} y={y} textAnchor="end" fontSize={11} fill={axisColor}>
+        {lines.map((ln, i) => (
+          <tspan key={i} x={x} dy={i === 0 ? firstDy : LINE_H}>
+            {ln}
+          </tspan>
+        ))}
       </text>
     );
   };
