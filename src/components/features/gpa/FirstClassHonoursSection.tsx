@@ -222,7 +222,9 @@ export function FirstClassHonoursSection() {
                     aria-pressed={on}
                     className={cn(
                       'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
-                      on ? 'border-transparent text-white' : 'border-border text-muted-foreground hover:bg-accent',
+                      on
+                        ? 'border-transparent text-white'
+                        : 'border-border text-muted-foreground hover:bg-primary/20 hover:text-foreground',
                     )}
                     style={on ? { backgroundColor: colorForYear(y) } : undefined}
                   >
@@ -235,7 +237,7 @@ export function FirstClassHonoursSection() {
             <button
               type="button"
               onClick={() => setSort((s) => (s === 'value' ? 'name' : 'value'))}
-              className="ml-auto flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="ml-auto flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary/15 hover:text-foreground"
             >
               {sort === 'value' ? <ArrowDownUp className="h-3.5 w-3.5" /> : <ArrowDownAZ className="h-3.5 w-3.5" />}
               {sort === 'value' ? t('gpa.honStats.sortValue', { year: String(sortYear) }) : t('gpa.honStats.sortName')}

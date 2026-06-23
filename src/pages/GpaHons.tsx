@@ -677,7 +677,7 @@ const GpaHons = () => {
               <button
                 type="button"
                 onClick={() => setFullScale((v) => !v)}
-                className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary/15 hover:text-foreground"
               >
                 {fullScale ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
                 {fullScale ? t('gpa.scaleFull') : t('gpa.scaleAuto')}
@@ -767,7 +767,9 @@ const GpaHons = () => {
                       onClick={() => setTargetCgpaInput(tr.cgpa.toFixed(2))}
                       className={cn(
                         'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
-                        activeChip ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent',
+                        activeChip
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border text-muted-foreground hover:bg-primary/20 hover:text-foreground',
                       )}
                     >
                       {t(`gpa.honours.${tr.key}`)}
@@ -832,7 +834,7 @@ const GpaHons = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground"
+            className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
             disabled={!canUndo}
             onClick={undo}
             title={t('gpa.undo')}
@@ -842,7 +844,7 @@ const GpaHons = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground"
+            className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
             disabled={!canRedo}
             onClick={redo}
             title={t('gpa.redo')}
@@ -851,7 +853,11 @@ const GpaHons = () => {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+              >
                 <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.reset')}
               </Button>
             </AlertDialogTrigger>
@@ -880,7 +886,7 @@ const GpaHons = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 shrink-0"
+                    className="h-7 w-7 shrink-0 hover:bg-primary/10 hover:text-foreground"
                     onClick={() => toggleYear(year)}
                     aria-expanded={!collapsed}
                     title={academicForYear(year)}
@@ -950,7 +956,7 @@ const GpaHons = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                                className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => removeTerm(term.id)}
                                 title={t('gpa.removeTerm')}
                               >
@@ -1026,7 +1032,7 @@ const GpaHons = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-9 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                    className="h-9 w-7 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                     onClick={() => removeCourse(term.id, course.id)}
                                     title={t('gpa.removeCourse')}
                                   >
@@ -1036,7 +1042,12 @@ const GpaHons = () => {
                               </div>
                             ))}
                           </div>
-                          <Button variant="ghost" size="sm" className="mt-1.5 h-7 text-xs" onClick={() => addCourse(term.id)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1.5 h-7 text-xs hover:bg-primary/10 hover:text-foreground"
+                            onClick={() => addCourse(term.id)}
+                          >
                             <Plus className="mr-1 h-3.5 w-3.5" /> {t('gpa.addCourse')}
                           </Button>
                         </div>
@@ -1048,7 +1059,7 @@ const GpaHons = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="mt-2.5 w-full text-muted-foreground hover:text-foreground"
+                      className="mt-2.5 w-full text-muted-foreground hover:bg-primary/10 hover:text-foreground"
                       onClick={() => addTerm(year)}
                     >
                       <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('gpa.addTerm')}
@@ -1061,7 +1072,11 @@ const GpaHons = () => {
         })}
       </div>
 
-      <Button variant="outline" className="mt-4 w-full border-dashed" onClick={addYear}>
+      <Button
+        variant="outline"
+        className="mt-4 w-full border-dashed hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
+        onClick={addYear}
+      >
         <Plus className="mr-1.5 h-4 w-4" /> {t('gpa.addYear')}
       </Button>
 
@@ -1112,7 +1127,9 @@ function ChartToggle({
       aria-pressed={active}
       className={cn(
         'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors',
-        active ? 'bg-accent text-foreground' : 'bg-muted/60 text-muted-foreground opacity-70 hover:bg-muted hover:opacity-100',
+        active
+          ? 'bg-primary/15 text-foreground ring-1 ring-inset ring-primary/40 hover:bg-primary/25'
+          : 'bg-muted text-muted-foreground hover:bg-primary/15 hover:text-foreground',
       )}
     >
       <span className="inline-block h-0 w-4 shrink-0 border-t-2 border-dashed" style={{ borderColor: color }} />
@@ -1205,7 +1222,7 @@ function SectionTabs<T extends string>({
               'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
               value === it.id
                 ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-muted/70 text-muted-foreground hover:bg-accent hover:text-foreground',
+                : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
             )}
           >
             {it.icon}
