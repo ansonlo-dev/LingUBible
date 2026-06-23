@@ -658,8 +658,7 @@ const GpaHons = () => {
         </span>
       </div>
 
-      {/* Tab switcher between the two sub-views. On the stats tab, the cohort
-          picker for the university-wide summary lives here, to the right. */}
+      {/* Tab switcher between the two sub-views */}
       <SectionTabs
         value={view}
         onChange={(v) => setView(v)}
@@ -667,30 +666,31 @@ const GpaHons = () => {
           { id: 'calculator', label: t('gpaHons.navCalc'), icon: <Calculator className="h-3.5 w-3.5" /> },
           { id: 'stats', label: t('gpaHons.navStats'), icon: <Trophy className="h-3.5 w-3.5" /> },
         ]}
-        right={
-          view === 'stats' ? (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
-              {HONOURS_YEARS_ASC.map((y) => (
-                <button
-                  key={y}
-                  type="button"
-                  onClick={() => setSummaryYear(y)}
-                  aria-pressed={summaryYear === y}
-                  className={cn(
-                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-                    summaryYear === y
-                      ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
-                      : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
-                  )}
-                >
-                  {y}
-                </button>
-              ))}
-            </div>
-          ) : null
-        }
       />
+
+      {/* Cohort picker for the stats tab's university-wide summary. Right-aligned
+          on its own row, and intentionally NOT sticky (scrolls with content). */}
+      {view === 'stats' && (
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
+          {HONOURS_YEARS_ASC.map((y) => (
+            <button
+              key={y}
+              type="button"
+              onClick={() => setSummaryYear(y)}
+              aria-pressed={summaryYear === y}
+              className={cn(
+                'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                summaryYear === y
+                  ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+                  : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
+              )}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Section 1 — GPA calculator & planner */}
       <section className={cn(view !== 'calculator' && 'hidden')}>
@@ -1253,12 +1253,10 @@ function SectionTabs<T extends string>({
   items,
   value,
   onChange,
-  right,
 }: {
   items: { id: T; label: string; icon: ReactNode }[];
   value: T;
   onChange: (id: T) => void;
-  right?: ReactNode;
 }) {
   const [top, setTop] = useState('var(--header-height)');
   const [topPx, setTopPx] = useState(0);
@@ -1310,27 +1308,24 @@ function SectionTabs<T extends string>({
       )}
       style={{ top }}
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div className="flex flex-1 gap-1.5 sm:flex-none">
-          {items.map((it) => (
-            <button
-              key={it.id}
-              type="button"
-              onClick={() => select(it.id)}
-              aria-current={value === it.id}
-              className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
-                value === it.id
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
-              )}
-            >
-              {it.icon}
-              {it.label}
-            </button>
-          ))}
-        </div>
-        {right && <div className="w-full sm:ml-auto sm:w-auto">{right}</div>}
+      <div className="flex gap-1.5">
+        {items.map((it) => (
+          <button
+            key={it.id}
+            type="button"
+            onClick={() => select(it.id)}
+            aria-current={value === it.id}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
+              value === it.id
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
+            )}
+          >
+            {it.icon}
+            {it.label}
+          </button>
+        ))}
       </div>
     </div>
   );
