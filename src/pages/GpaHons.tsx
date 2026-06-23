@@ -379,6 +379,10 @@ const GpaHons = () => {
   const [showHonours, setShowHonours] = useState(true);
   const [showAwards, setShowAwards] = useState(true);
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
+  // The two sub-views behave like sibling sub-pages of /gpa-hons: only the
+  // active one is rendered (no in-page scroll-to-section, which was unreliable
+  // on real mobile browsers / installed PWAs).
+  const [view, setView] = useState<'calculator' | 'stats'>('calculator');
 
   const toggleYear = (year: number) =>
     setCollapsedYears((prev) => {
@@ -600,16 +604,18 @@ const GpaHons = () => {
         </span>
       </div>
 
-      {/* In-page navigation between the two sections */}
-      <SectionNav
+      {/* Tab switcher between the two sub-views */}
+      <SectionTabs
+        value={view}
+        onChange={(v) => setView(v)}
         items={[
-          { id: 'gpa-calculator', label: t('gpaHons.navCalc'), icon: <Calculator className="h-3.5 w-3.5" /> },
-          { id: 'honours-stats', label: t('gpaHons.navStats'), icon: <Trophy className="h-3.5 w-3.5" /> },
+          { id: 'calculator', label: t('gpaHons.navCalc'), icon: <Calculator className="h-3.5 w-3.5" /> },
+          { id: 'stats', label: t('gpaHons.navStats'), icon: <Trophy className="h-3.5 w-3.5" /> },
         ]}
       />
 
       {/* Section 1 — GPA calculator & planner */}
-      <section id="gpa-calculator" style={{ scrollMarginTop: 'calc(var(--header-height) + 3.5rem)' }}>
+      <section className={cn(view !== 'calculator' && 'hidden')}>
         <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
           <Calculator className="h-5 w-5 text-primary" /> {t('gpaHons.sectionCalc')}
         </h2>
@@ -1048,10 +1054,14 @@ const GpaHons = () => {
         <p className="mt-5 text-center text-xs text-muted-foreground">{t('gpa.disclaimer')}</p>
       </section>
 
-      {/* Section 2 — University first-class honours statistics (static reference data) */}
-      <section id="honours-stats" style={{ scrollMarginTop: 'calc(var(--header-height) + 3.5rem)' }}>
-        <FirstClassHonoursSection />
-      </section>
+      {/* Section 2 — University first-class honours statistics (static reference
+          data). Only mounted while its tab is active so the page loads just the
+          content for the selected sub-view. */}
+      {view === 'stats' && (
+        <section>
+          <FirstClassHonoursSection />
+        </section>
+      )}
     </div>
   );
 };
@@ -1126,53 +1136,60 @@ function AwardLegend({ color, label, info }: { color: string; label: string; inf
 }
 
 /**
- * Sticky in-page navigation that scrolls between the page's sections and
- * highlights whichever one is currently in view (so the second section is
- * always discoverable without scrolling to the bottom).
+ * Sticky tab switcher between the page's two sub-views. Switching just toggles
+ * which view is rendered (the old scroll-to-section behaviour was unreliable on
+ * real mobile browsers / installed PWAs). The sticky `top` tracks the live
+ * header height — on mobile the header is `height: fit-content`, not the
+ * `--header-height` constant, so a hard-coded value left a visible gap.
  */
-function SectionNav({ items }: { items: { id: string; label: string; icon: ReactNode }[] }) {
-  const [active, setActive] = useState(items[0]?.id);
-  const ids = items.map((i) => i.id).join(',');
+function SectionTabs<T extends string>({
+  items,
+  value,
+  onChange,
+}: {
+  items: { id: T; label: string; icon: ReactNode }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  const [top, setTop] = useState('var(--header-height)');
 
   useEffect(() => {
-    const els = items
-      .map((it) => document.getElementById(it.id))
-      .filter((el): el is HTMLElement => !!el);
-    if (els.length === 0) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) setActive(visible[0].target.id);
-      },
-      { rootMargin: '-25% 0px -55% 0px', threshold: [0, 0.2, 0.5, 1] },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ids]);
+    const header = document.querySelector('.header-sticky') as HTMLElement | null;
+    if (!header) return;
+    const update = () => setTop(`${header.offsetHeight}px`);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(header);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
-  const go = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setActive(id);
+  const select = (id: T) => {
+    if (id !== value) {
+      onChange(id);
+      // Land at the top of the newly selected sub-view.
+      window.scrollTo({ top: 0 });
+    }
   };
 
   return (
     <div
-      className="sticky z-30 -mx-3 mb-4 border-b bg-background/85 px-3 py-2 backdrop-blur lg:-mx-4 lg:px-4"
-      style={{ top: 'var(--header-height)' }}
+      className="sticky z-30 -mx-3 mb-4 border-b bg-background/95 px-3 py-2 backdrop-blur lg:-mx-4 lg:px-4"
+      style={{ top }}
     >
       <div className="flex gap-1.5">
         {items.map((it) => (
           <button
             key={it.id}
             type="button"
-            onClick={() => go(it.id)}
-            aria-current={active === it.id}
+            onClick={() => select(it.id)}
+            aria-current={value === it.id}
             className={cn(
               'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
-              active === it.id
+              value === it.id
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'bg-muted/70 text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
