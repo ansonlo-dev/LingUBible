@@ -810,7 +810,7 @@ export default {
   'gpa.honStats.metricRate': 'Rate',
   'gpa.honStats.metricFirst': 'First-class',
   'gpa.honStats.metricTotal': 'Graduates',
-  'gpa.honStats.cohorts': 'Cohorts',
+  'gpa.honStats.cohorts': 'Years',
   'gpa.honStats.groupProgramme': 'Programme',
   'gpa.honStats.groupFaculty': 'Faculty / School',
   'gpa.honStats.uniAvg': '{year} university average ({value})',

@@ -818,7 +818,7 @@ export default {
   'gpa.honStats.metricRate': '比例',
   'gpa.honStats.metricFirst': '一级荣誉',
   'gpa.honStats.metricTotal': '毕业生',
-  'gpa.honStats.cohorts': '届别',
+  'gpa.honStats.cohorts': '年份',
   'gpa.honStats.groupProgramme': '课程',
   'gpa.honStats.groupFaculty': '学院',
   'gpa.honStats.uniAvg': '{year} 全校平均({value})',
