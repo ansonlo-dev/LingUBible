@@ -121,7 +121,9 @@ interface TermData {
 const STORAGE_KEY = 'gpa_planner_v2';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-const newCourse = (): CourseEntry => ({ id: uid(), code: '', credits: '', grade: '' });
+// Selectable credit values (integers 0–6 only). New courses default to 3 credits.
+const CREDIT_OPTIONS = ['0', '1', '2', '3', '4', '5', '6'];
+const newCourse = (): CourseEntry => ({ id: uid(), code: '', credits: '3', grade: '' });
 const defaultTerms = (): TermData[] => [{ id: uid(), year: 1, part: 'term1', courses: [newCourse()] }];
 
 function loadTerms(): TermData[] {
@@ -1024,15 +1026,23 @@ const GpaHons = () => {
                                   />
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1.5 sm:contents">
-                                  <Input
-                                    inputMode="numeric"
-                                    value={course.credits}
-                                    placeholder="—"
-                                    onChange={(e) =>
-                                      updateCourse(term.id, course.id, { credits: e.target.value.replace(/[^0-9]/g, '') })
-                                    }
-                                    className="h-9 w-14 shrink-0 px-2 text-center tabular-nums sm:w-auto"
-                                  />
+                                  <Select
+                                    value={course.credits || undefined}
+                                    onValueChange={(v) => updateCourse(term.id, course.id, { credits: v })}
+                                  >
+                                    <SelectTrigger className="h-9 w-14 min-w-0 shrink-0 justify-center px-2 tabular-nums sm:w-auto">
+                                      <span className={cn('truncate text-center', !course.credits && 'text-muted-foreground')}>
+                                        {course.credits || '—'}
+                                      </span>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white dark:bg-gray-900">
+                                      {CREDIT_OPTIONS.map((c) => (
+                                        <SelectItem key={c} value={c}>
+                                          {c}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                   <Select
                                     value={course.grade || undefined}
                                     onValueChange={(v) =>
