@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 import { getGPA } from '@/utils/gradeUtils';
@@ -379,10 +380,23 @@ const GpaHons = () => {
   const [showHonours, setShowHonours] = useState(true);
   const [showAwards, setShowAwards] = useState(true);
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
+
   // The two sub-views behave like sibling sub-pages of /gpa-hons: only the
   // active one is rendered (no in-page scroll-to-section, which was unreliable
-  // on real mobile browsers / installed PWAs).
-  const [view, setView] = useState<'calculator' | 'stats'>('calculator');
+  // on real mobile browsers / installed PWAs). The active view is reflected in
+  // the URL as `?tab=stats` so it survives refresh / can be linked & shared.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view: 'calculator' | 'stats' = searchParams.get('tab') === 'stats' ? 'stats' : 'calculator';
+  const setView = (next: 'calculator' | 'stats') =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === 'stats') params.set('tab', 'stats');
+        else params.delete('tab'); // calculator is the default → keep the URL clean
+        return params;
+      },
+      { replace: true },
+    );
 
   const toggleYear = (year: number) =>
     setCollapsedYears((prev) => {

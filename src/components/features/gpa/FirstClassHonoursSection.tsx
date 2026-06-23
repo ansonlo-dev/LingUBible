@@ -30,8 +30,8 @@ type Lang = 'en' | 'zh-TW' | 'zh-CN';
 const PALETTE = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899'];
 
 const YEARS_ASC = [...HONOURS_YEARS].sort((a, b) => a - b);
+const YEARS_DESC = [...YEARS_ASC].reverse(); // latest first (for the cohort-year selector)
 const LATEST_YEAR = YEARS_ASC[YEARS_ASC.length - 1];
-const PREV_YEAR = YEARS_ASC[YEARS_ASC.length - 2];
 
 /** Colour for a cohort: newest year → PALETTE[0], next → PALETTE[1], … */
 const colorForYear = (year: number) => {
@@ -100,6 +100,8 @@ export function FirstClassHonoursSection() {
   const [metric, setMetric] = useState<Metric>('rate');
   const [sort, setSort] = useState<SortMode>('value');
   const [selectedYears, setSelectedYears] = useState<Set<number>>(() => new Set(YEARS_ASC));
+  // Cohort year shown in the university-wide summary cards (single select).
+  const [summaryYear, setSummaryYear] = useState<number>(LATEST_YEAR);
 
   // Active cohorts in ascending order; never empty (last one can't be removed).
   const activeYears = useMemo(
@@ -165,31 +167,38 @@ export function FirstClassHonoursSection() {
     : [];
 
   return (
-    <div className="mt-8">
+    <div>
       <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
         <Trophy className="h-5 w-5 text-red-500" /> {t('gpa.honStats.title')}
       </h2>
 
-      {/* University-wide summary (latest cohort) */}
-      <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        <SummaryStat
-          icon={<Award className="h-4 w-4" />}
-          label={t('gpa.honStats.summaryRate')}
-          value={pct(HONOURS_SUMMARY[LATEST_YEAR]?.pct)}
-          prev={pct(HONOURS_SUMMARY[PREV_YEAR]?.pct)}
-        />
-        <SummaryStat
-          icon={<Medal className="h-4 w-4" />}
-          label={t('gpa.honStats.summaryFirst')}
-          value={String(HONOURS_SUMMARY[LATEST_YEAR]?.first ?? '—')}
-          prev={String(HONOURS_SUMMARY[PREV_YEAR]?.first ?? '—')}
-        />
-        <SummaryStat
-          icon={<GraduationCap className="h-4 w-4" />}
-          label={t('gpa.honStats.summaryGrads')}
-          value={String(HONOURS_SUMMARY[LATEST_YEAR]?.total ?? '—')}
-          prev={String(HONOURS_SUMMARY[PREV_YEAR]?.total ?? '—')}
-        />
+      {/* University-wide summary for the selected cohort */}
+      <div className="mb-4">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">{t('gpa.honStats.cohortYear')}</span>
+          <Segmented
+            options={YEARS_DESC.map((y) => ({ key: String(y), label: String(y) }))}
+            value={String(summaryYear)}
+            onChange={(v) => setSummaryYear(Number(v))}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          <SummaryStat
+            icon={<Award className="h-4 w-4" />}
+            label={t('gpa.honStats.summaryRate')}
+            value={pct(HONOURS_SUMMARY[summaryYear]?.pct)}
+          />
+          <SummaryStat
+            icon={<Medal className="h-4 w-4" />}
+            label={t('gpa.honStats.summaryFirst')}
+            value={String(HONOURS_SUMMARY[summaryYear]?.first ?? '—')}
+          />
+          <SummaryStat
+            icon={<GraduationCap className="h-4 w-4" />}
+            label={t('gpa.honStats.summaryGrads')}
+            value={String(HONOURS_SUMMARY[summaryYear]?.total ?? '—')}
+          />
+        </div>
       </div>
 
       <Card>
@@ -394,33 +403,25 @@ function Segmented<T extends string>({
   );
 }
 
+// Mirrors the calculator's SummaryCard layout: label on the left, value on the
+// right, on a single row.
 function SummaryStat({
   icon,
   label,
   value,
-  prev,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
-  prev?: string;
 }) {
   return (
     <Card>
-      <CardContent className="px-3 py-2.5">
-        <div className="flex items-center gap-1.5 text-sm font-semibold">
+      <CardContent className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
           <span className="shrink-0 text-muted-foreground">{icon}</span>
           <span className="truncate">{label}</span>
-        </div>
-        <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-2xl font-bold tabular-nums">{value}</span>
-          <span className="text-xs text-muted-foreground">{LATEST_YEAR}</span>
-          {prev != null && (
-            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-              {PREV_YEAR}: <span className="font-medium text-foreground/70">{prev}</span>
-            </span>
-          )}
-        </div>
+        </span>
+        <span className="shrink-0 text-xl font-bold tabular-nums">{value}</span>
       </CardContent>
     </Card>
   );
