@@ -56,6 +56,21 @@ function useIsDark() {
   return isDark;
 }
 
+/** Track whether the primary pointer is coarse (touch) so the chart tooltip can
+ *  switch to a click trigger and stop flashing on tap. */
+function useIsTouch() {
+  const [isTouch, setIsTouch] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsTouch(mq.matches);
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return isTouch;
+}
+
 /** Short, distinctive label for a programme in the active language. */
 function shortName(p: HonoursProgrammeStat, lang: Lang): string {
   if (lang === 'en') {
@@ -122,6 +137,7 @@ export function FirstClassHonoursSection() {
   const axisColor = isDark ? '#d1d5db' : '#111827';
   const labelColor = isDark ? '#cbd5e1' : '#475569';
 
+  const isTouch = useIsTouch();
   const [metric, setMetric] = useState<Metric>('rate');
   const [sort, setSort] = useState<SortMode>('value');
   const [selectedYears, setSelectedYears] = useState<Set<number>>(() => new Set(YEARS_ASC));
@@ -341,6 +357,11 @@ export function FirstClassHonoursSection() {
                   interval={0}
                 />
                 <Tooltip
+                  // On touch devices a hover trigger makes the tooltip flash
+                  // (it shows on touch then clears on release). Use click so a
+                  // tap shows it and it stays until the next tap; keep hover for
+                  // mouse pointers.
+                  trigger={isTouch ? 'click' : 'hover'}
                   cursor={{ fill: '#94a3b8', fillOpacity: 0.1 }}
                   allowEscapeViewBox={{ x: false, y: false }}
                   content={<HonoursTooltip metric={metric} activeYears={activeYears} t={t} maxWidth={tooltipMaxW} />}
