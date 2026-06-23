@@ -121,8 +121,8 @@ interface TermData {
 const STORAGE_KEY = 'gpa_planner_v2';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-// Selectable credit values (integers 0–6 only). New courses default to 3 credits.
-const CREDIT_OPTIONS = ['0', '1', '2', '3', '4', '5', '6'];
+// Selectable credit values (0 / 1 / 3 only). New courses default to 3 credits.
+const CREDIT_OPTIONS = ['0', '1', '3'];
 const newCourse = (): CourseEntry => ({ id: uid(), code: '', credits: '3', grade: '' });
 const defaultTerms = (): TermData[] => [{ id: uid(), year: 1, part: 'term1', courses: [newCourse()] }];
 
