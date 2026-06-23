@@ -295,7 +295,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       >
         {/* Logo 區域 - 在手機直向模式下隱藏 (因為顯示在 Header 中) */}
         {!isMobilePortrait && (
-          <div className={`${isCompact ? 'p-2 md:p-1 md:h-10' : 'p-4 md:p-2 md:h-12'} md:flex md:items-center ${isCompact ? 'mt-0' : 'mt-1'}`}>
+          <div className={`${isCompact ? 'p-2 md:px-2 md:py-1 md:h-10' : 'p-4 md:px-2 md:py-2 md:h-12'} md:flex md:items-center ${isCompact ? 'mt-2' : 'mt-4'}`}>
             {shouldShowText && (
               <Link 
                 to="/" 
@@ -309,7 +309,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
             {!shouldShowText && (
               <Link
                 to="/"
-                className="flex w-full items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
+                className="flex items-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
                 onClick={handleNavClick(true)}
               >
                 <BookOpen className="h-6 w-6" strokeWidth={2.5} />
@@ -345,7 +345,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <a
                             href={item.href}
                             className={`
-                              flex items-center ${!shouldShowText ? 'justify-center' : 'gap-2.5'} px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
                               ${item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -361,7 +361,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <Link
                             to={item.href}
                             className={`
-                              flex items-center ${!shouldShowText ? 'justify-center' : 'gap-2.5'} px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
                               ${item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -415,7 +415,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                       <Link
                         to={item.href}
                         className={`
-                          flex items-center ${!shouldShowText ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-md text-base font-bold transition-colors
+                          flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
                           ${item.current 
                             ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
                             : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
