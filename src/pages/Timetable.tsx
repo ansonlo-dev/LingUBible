@@ -1162,6 +1162,15 @@ const Timetable = () => {
             onChange={(c) => setCourseColor(s.courseCode, c)}
           />
         )}
+        {/* Time-clash marker — a red clock-alert in the bottom-right corner.
+            For added (coloured) cards the colour picker already sits there, so
+            nudge the icon to its left. */}
+        {conflicts && (
+          <ClockAlert
+            aria-hidden
+            className={`pointer-events-none absolute bottom-2 h-4 w-4 text-red-500 ${added ? 'right-9' : 'right-2'}`}
+          />
+        )}
       </div>
     );
   };
