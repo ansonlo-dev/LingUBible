@@ -743,8 +743,8 @@ export default {
   'gpaHons.title': 'GPA及Hons',
   'gpaHons.subtitle': '计算你的 GPA,并估算荣誉等级',
   'gpaHons.sectionCalc': 'GPA 计算器',
-  'gpaHons.navCalc': '计算器',
-  'gpaHons.navStats': '荣誉统计',
+  'gpaHons.navCalc': 'GPA 计算器',
+  'gpaHons.navStats': '一级荣誉统计',
   // GPA及Hons 规划工具
   'gpa.cumulativeGpa': '累积 GPA',
   'gpa.termGpa': '学期 GPA',

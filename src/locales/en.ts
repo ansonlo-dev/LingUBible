@@ -735,8 +735,8 @@ export default {
   'gpaHons.title': 'GPA & Hons',
   'gpaHons.subtitle': 'Calculate your GPA and estimate your honours classification.',
   'gpaHons.sectionCalc': 'GPA Calculator',
-  'gpaHons.navCalc': 'Calculator',
-  'gpaHons.navStats': 'Honours Stats',
+  'gpaHons.navCalc': 'GPA Calculator',
+  'gpaHons.navStats': 'First-Class Honours Stats',
   // GPA & Hons planner
   'gpa.cumulativeGpa': 'Cumulative GPA',
   'gpa.termGpa': 'Term GPA',

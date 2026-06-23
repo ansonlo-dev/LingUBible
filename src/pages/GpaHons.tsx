@@ -20,6 +20,7 @@ import {
 import { loadGpaCourseCatalog, type GpaCourseCatalog, type GpaCourseInfo } from '@/services/gpaCourseCatalog';
 import { GpaTrendChart, type GpaChartPoint } from '@/components/features/gpa/GpaTrendChart';
 import { FirstClassHonoursSection } from '@/components/features/gpa/FirstClassHonoursSection';
+import { HONOURS_YEARS } from '@/data/firstClassHonours';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +76,9 @@ const PART_OPTIONS: TermPart[] = ['term1', 'term2', 'summer'];
 const MAX_TERMS_PER_YEAR = PART_OPTIONS.length;
 // At most 8 academic years can be added.
 const MAX_YEARS = 8;
+// First-class honours cohort years (ascending) for the stats tab's cohort picker.
+const HONOURS_YEARS_ASC = [...HONOURS_YEARS].sort((a, b) => a - b);
+const LATEST_HONOURS_YEAR = HONOURS_YEARS_ASC[HONOURS_YEARS_ASC.length - 1];
 // Per-term course cap: 8 for Term 1 / Term 2, 2 for the Summer Term.
 const maxCoursesForPart = (part: TermPart) => (part === 'summer' ? 2 : 8);
 // 'other' kept in the ordering only so any legacy-saved term still sorts sanely.
@@ -122,7 +126,7 @@ const STORAGE_KEY = 'gpa_planner_v2';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 // Selectable credit values (0 / 1 / 3 only). New courses default to 3 credits.
-const CREDIT_OPTIONS = ['0', '1', '3'];
+const CREDIT_OPTIONS = ['0', '1', '3', '6'];
 const newCourse = (): CourseEntry => ({ id: uid(), code: '', credits: '3', grade: '' });
 const defaultTerms = (): TermData[] => [{ id: uid(), year: 1, part: 'term1', courses: [newCourse()] }];
 
@@ -386,6 +390,9 @@ const GpaHons = () => {
   const [showHonours, setShowHonours] = useState(true);
   const [showAwards, setShowAwards] = useState(true);
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
+  // Cohort year for the stats tab's university-wide summary cards. Lifted here so
+  // its picker can live in the sticky tab row, beside the "Honours Stats" tab.
+  const [summaryYear, setSummaryYear] = useState<number>(LATEST_HONOURS_YEAR);
 
   // The two sub-views behave like sibling sub-pages of /gpa-hons: only the
   // active one is rendered (no in-page scroll-to-section, which was unreliable
@@ -651,7 +658,8 @@ const GpaHons = () => {
         </span>
       </div>
 
-      {/* Tab switcher between the two sub-views */}
+      {/* Tab switcher between the two sub-views. On the stats tab, the cohort
+          picker for the university-wide summary lives here, to the right. */}
       <SectionTabs
         value={view}
         onChange={(v) => setView(v)}
@@ -659,14 +667,33 @@ const GpaHons = () => {
           { id: 'calculator', label: t('gpaHons.navCalc'), icon: <Calculator className="h-3.5 w-3.5" /> },
           { id: 'stats', label: t('gpaHons.navStats'), icon: <Trophy className="h-3.5 w-3.5" /> },
         ]}
+        right={
+          view === 'stats' ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
+              {HONOURS_YEARS_ASC.map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => setSummaryYear(y)}
+                  aria-pressed={summaryYear === y}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    summaryYear === y
+                      ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+                      : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
+                  )}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          ) : null
+        }
       />
 
       {/* Section 1 — GPA calculator & planner */}
       <section className={cn(view !== 'calculator' && 'hidden')}>
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-          <Calculator className="h-5 w-5 text-primary" /> {t('gpaHons.sectionCalc')}
-        </h2>
-
       {/* Summary */}
       <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         <SummaryCard icon={<GraduationCap className="h-4 w-4" />} label={t('gpa.cumulativeGpa')}>
@@ -1137,7 +1164,7 @@ const GpaHons = () => {
           content for the selected sub-view. */}
       {view === 'stats' && (
         <section>
-          <FirstClassHonoursSection />
+          <FirstClassHonoursSection summaryYear={summaryYear} onSummaryYearChange={setSummaryYear} />
         </section>
       )}
     </div>
@@ -1226,17 +1253,27 @@ function SectionTabs<T extends string>({
   items,
   value,
   onChange,
+  right,
 }: {
   items: { id: T; label: string; icon: ReactNode }[];
   value: T;
   onChange: (id: T) => void;
+  right?: ReactNode;
 }) {
   const [top, setTop] = useState('var(--header-height)');
+  const [topPx, setTopPx] = useState(0);
+  // Whether the bar is currently stuck to the top — used to show its bottom
+  // border only while sticky (it's borderless in its natural position).
+  const [stuck, setStuck] = useState(false);
+  const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const header = document.querySelector('.header-sticky') as HTMLElement | null;
     if (!header) return;
-    const update = () => setTop(`${header.offsetHeight}px`);
+    const update = () => {
+      setTop(`${header.offsetHeight}px`);
+      setTopPx(header.offsetHeight);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(header);
@@ -1247,6 +1284,17 @@ function SectionTabs<T extends string>({
     };
   }, []);
 
+  useEffect(() => {
+    const update = () => {
+      const el = barRef.current;
+      if (!el) return;
+      setStuck(el.getBoundingClientRect().top <= topPx + 0.5);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, [topPx]);
+
   // Scroll-to-top on switch is handled by the parent (after the view actually
   // changes) so it isn't disrupted by the page-height change.
   const select = (id: T) => {
@@ -1255,27 +1303,34 @@ function SectionTabs<T extends string>({
 
   return (
     <div
-      className="sticky z-30 -mx-3 mb-4 border-b bg-background/95 px-3 py-2 backdrop-blur lg:-mx-4 lg:px-4"
+      ref={barRef}
+      className={cn(
+        'sticky z-30 -mx-3 mb-4 bg-background/95 px-3 py-2 backdrop-blur transition-shadow lg:-mx-4 lg:px-4',
+        stuck && 'border-b',
+      )}
       style={{ top }}
     >
-      <div className="flex gap-1.5">
-        {items.map((it) => (
-          <button
-            key={it.id}
-            type="button"
-            onClick={() => select(it.id)}
-            aria-current={value === it.id}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
-              value === it.id
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
-            )}
-          >
-            {it.icon}
-            {it.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex flex-1 gap-1.5 sm:flex-none">
+          {items.map((it) => (
+            <button
+              key={it.id}
+              type="button"
+              onClick={() => select(it.id)}
+              aria-current={value === it.id}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
+                value === it.id
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
+              )}
+            >
+              {it.icon}
+              {it.label}
+            </button>
+          ))}
+        </div>
+        {right && <div className="sm:ml-auto">{right}</div>}
       </div>
     </div>
   );

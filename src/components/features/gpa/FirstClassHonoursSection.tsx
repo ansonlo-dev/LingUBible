@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, GraduationCap, Medal, Trophy, ArrowDownUp, ArrowDownAZ } from 'lucide-react';
+import { Award, GraduationCap, Medal, ArrowDownUp, ArrowDownAZ } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   HONOURS_PROGRAMME_STATS,
@@ -130,7 +130,15 @@ interface Row {
   [k: `y${number}`]: number | null | string | HonoursProgrammeStat;
 }
 
-export function FirstClassHonoursSection() {
+export function FirstClassHonoursSection({
+  summaryYear,
+  onSummaryYearChange,
+}: {
+  // Cohort year for the summary cards; controlled by the parent so its picker
+  // can live in the page's sticky tab row. Falls back to the latest cohort.
+  summaryYear?: number;
+  onSummaryYearChange?: (year: number) => void;
+} = {}) {
   const { t, language } = useLanguage();
   const lang = language as Lang;
   const isDark = useIsDark();
@@ -141,8 +149,9 @@ export function FirstClassHonoursSection() {
   const [metric, setMetric] = useState<Metric>('rate');
   const [sort, setSort] = useState<SortMode>('value');
   const [selectedYears, setSelectedYears] = useState<Set<number>>(() => new Set(YEARS_ASC));
-  // Cohort year shown in the university-wide summary cards (single select).
-  const [summaryYear, setSummaryYear] = useState<number>(LATEST_YEAR);
+  // Cohort year shown in the university-wide summary cards (controlled by parent;
+  // its picker lives in the page's sticky tab row). Falls back to the latest.
+  const cohortYear = summaryYear ?? LATEST_YEAR;
 
   // Active cohorts in ascending order; never empty (last one can't be removed).
   const activeYears = useMemo(
@@ -252,35 +261,23 @@ export function FirstClassHonoursSection() {
 
   return (
     <div>
-      <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-        <Trophy className="h-5 w-5 text-red-500" /> {t('gpa.honStats.title')}
-      </h2>
-
-      {/* University-wide summary for the selected cohort */}
+      {/* University-wide summary for the cohort selected in the tab row */}
       <div className="mb-4">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
-          <Segmented
-            options={YEARS_ASC.map((y) => ({ key: String(y), label: String(y) }))}
-            value={String(summaryYear)}
-            onChange={(v) => setSummaryYear(Number(v))}
-          />
-        </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <SummaryStat
             icon={<Award className="h-4 w-4" />}
             label={t('gpa.honStats.summaryRate')}
-            value={pct(HONOURS_SUMMARY[summaryYear]?.pct)}
+            value={pct(HONOURS_SUMMARY[cohortYear]?.pct)}
           />
           <SummaryStat
             icon={<Medal className="h-4 w-4" />}
             label={t('gpa.honStats.summaryFirst')}
-            value={String(HONOURS_SUMMARY[summaryYear]?.first ?? '—')}
+            value={String(HONOURS_SUMMARY[cohortYear]?.first ?? '—')}
           />
           <SummaryStat
             icon={<GraduationCap className="h-4 w-4" />}
             label={t('gpa.honStats.summaryGrads')}
-            value={String(HONOURS_SUMMARY[summaryYear]?.total ?? '—')}
+            value={String(HONOURS_SUMMARY[cohortYear]?.total ?? '—')}
           />
         </div>
       </div>

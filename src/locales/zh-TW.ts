@@ -673,8 +673,8 @@ export default {
   'gpaHons.title': 'GPA及Hons',
   'gpaHons.subtitle': '計算你的 GPA,並估算榮譽等級',
   'gpaHons.sectionCalc': 'GPA 計算機',
-  'gpaHons.navCalc': '計算機',
-  'gpaHons.navStats': '榮譽統計',
+  'gpaHons.navCalc': 'GPA 計算機',
+  'gpaHons.navStats': '一級榮譽統計',
   // GPA及Hons 規劃工具
   'gpa.cumulativeGpa': '累積 GPA',
   'gpa.termGpa': '學期 GPA',
