@@ -1330,7 +1330,7 @@ function SectionTabs<T extends string>({
             </button>
           ))}
         </div>
-        {right && <div className="sm:ml-auto">{right}</div>}
+        {right && <div className="w-full sm:ml-auto sm:w-auto">{right}</div>}
       </div>
     </div>
   );
