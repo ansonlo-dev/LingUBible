@@ -1275,7 +1275,8 @@ const Timetable = () => {
         </PopoverTrigger>
         <PopoverContent
           align="end"
-          className="w-[580px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-gray-900 max-h-[85vh] overflow-y-auto timetable-scroll"
+          collisionPadding={8}
+          className="w-[580px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-gray-900 max-h-[min(85vh,var(--radix-popover-content-available-height))] overflow-y-auto timetable-scroll"
         >
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             <div className="space-y-1">
@@ -1507,7 +1508,11 @@ const Timetable = () => {
             </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-80 bg-white dark:bg-gray-900 space-y-3">
+        <PopoverContent
+          align="end"
+          collisionPadding={8}
+          className="w-80 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-gray-900 space-y-3 max-h-[min(85vh,var(--radix-popover-content-available-height))] overflow-y-auto timetable-scroll"
+        >
           <div className="space-y-1">
             <Label className="text-sm">{t('timetable.opt.theme')}</Label>
             <OptionToggle
