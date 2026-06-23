@@ -12,7 +12,6 @@ import {
 } from 'recharts';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Award, GraduationCap, Medal, ArrowDownUp, ArrowDownAZ } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -137,12 +136,14 @@ interface Row {
 
 export function FirstClassHonoursSection({
   summaryYear,
-  onSummaryYearChange,
+  showChange = false,
 }: {
   // Cohort year for the summary cards; controlled by the parent so its picker
   // can live in the page's sticky tab row. Falls back to the latest cohort.
   summaryYear?: number;
-  onSummaryYearChange?: (year: number) => void;
+  // Whether to show year-on-year change on the summary cards (toggle lives in
+  // the parent's graduate-year row).
+  showChange?: boolean;
 } = {}) {
   const { t, language } = useLanguage();
   const lang = language as Lang;
@@ -155,9 +156,6 @@ export function FirstClassHonoursSection({
   const [sort, setSort] = useState<SortMode>('value');
   const [groupBy, setGroupBy] = useState<GroupBy>('programme');
   const [selectedYears, setSelectedYears] = useState<Set<number>>(() => new Set(YEARS_ASC));
-  // Whether the summary cards show the year-on-year change vs the previous
-  // graduate year (default off).
-  const [showChange, setShowChange] = useState(false);
   // Cohort year shown in the university-wide summary cards (controlled by parent;
   // its picker lives in the page's sticky tab row). Falls back to the latest.
   const cohortYear = summaryYear ?? LATEST_YEAR;
@@ -336,10 +334,6 @@ export function FirstClassHonoursSection({
     <div>
       {/* University-wide summary for the cohort selected in the tab row */}
       <div className="mb-4">
-        <label className="mb-2 flex items-center justify-end gap-2">
-          <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.showChange')}</span>
-          <Switch checked={showChange} onCheckedChange={setShowChange} aria-label={t('gpa.honStats.showChange')} />
-        </label>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <SummaryStat
             icon={<Award className="h-4 w-4" />}
@@ -602,9 +596,9 @@ function SummaryStat({
           <span className="shrink-0 text-muted-foreground">{icon}</span>
           <span className="truncate">{label}</span>
         </span>
-        <span className="flex shrink-0 flex-col items-end leading-tight">
-          <span className="text-xl font-bold tabular-nums">{value}</span>
+        <span className="flex shrink-0 items-center gap-1.5">
           {change}
+          <span className="text-xl font-bold tabular-nums">{value}</span>
         </span>
       </CardContent>
     </Card>

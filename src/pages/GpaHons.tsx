@@ -393,6 +393,9 @@ const GpaHons = () => {
   // Cohort year for the stats tab's university-wide summary cards. Lifted here so
   // its picker can live in the sticky tab row, beside the "Honours Stats" tab.
   const [summaryYear, setSummaryYear] = useState<number>(LATEST_HONOURS_YEAR);
+  // Whether the summary cards show year-on-year change (toggle sits in the same
+  // row as the graduate-year picker; default off).
+  const [showYoyChange, setShowYoyChange] = useState(false);
 
   // The two sub-views behave like sibling sub-pages of /gpa-hons: only the
   // active one is rendered (no in-page scroll-to-section, which was unreliable
@@ -689,6 +692,22 @@ const GpaHons = () => {
               {y}
             </button>
           ))}
+          {/* Year-on-year change toggle — clearly a button (filled when on) so
+              it's obviously interactive; pushed right on desktop. */}
+          <button
+            type="button"
+            onClick={() => setShowYoyChange((v) => !v)}
+            aria-pressed={showYoyChange}
+            className={cn(
+              'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors sm:ml-auto',
+              showYoyChange
+                ? 'border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+                : 'border-border text-muted-foreground hover:bg-primary/15 hover:text-foreground',
+            )}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            {t('gpa.honStats.showChange')}
+          </button>
         </div>
       )}
 
@@ -1164,7 +1183,7 @@ const GpaHons = () => {
           content for the selected sub-view. */}
       {view === 'stats' && (
         <section>
-          <FirstClassHonoursSection summaryYear={summaryYear} onSummaryYearChange={setSummaryYear} />
+          <FirstClassHonoursSection summaryYear={summaryYear} showChange={showYoyChange} />
         </section>
       )}
     </div>
