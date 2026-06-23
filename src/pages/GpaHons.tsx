@@ -18,6 +18,7 @@ import {
 } from '@/utils/honours';
 import { loadGpaCourseCatalog, type GpaCourseCatalog, type GpaCourseInfo } from '@/services/gpaCourseCatalog';
 import { GpaTrendChart, type GpaChartPoint } from '@/components/features/gpa/GpaTrendChart';
+import { FirstClassHonoursSection } from '@/components/features/gpa/FirstClassHonoursSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1027,6 +1028,9 @@ const GpaHons = () => {
       <Button variant="outline" className="mt-4 w-full border-dashed" onClick={addYear}>
         <Plus className="mr-1.5 h-4 w-4" /> {t('gpa.addYear')}
       </Button>
+
+      {/* University first-class honours statistics (static reference data) */}
+      <FirstClassHonoursSection />
 
       <p className="mt-5 text-center text-xs text-muted-foreground">{t('gpa.disclaimer')}</p>
     </div>
