@@ -815,7 +815,7 @@ export default {
   'gpa.honStats.sortValue': 'Sort: {year}',
   'gpa.honStats.sortName': 'Sort: A–Z',
   'gpa.honStats.tipCounts': '{first} / {total}',
-  'gpa.honStats.sources': 'Sources',
+  'gpa.honStats.sources': 'Sources: Graduate Lists',
   // Timetable planner
   'timetable.title': 'Timetable Planner',
   'timetable.subtitle': 'Search teaching records and build a weekly class timetable you are happy with.',

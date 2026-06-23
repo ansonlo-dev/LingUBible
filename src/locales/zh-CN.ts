@@ -823,7 +823,7 @@ export default {
   'gpa.honStats.sortValue': '排序:{year}',
   'gpa.honStats.sortName': '排序:名称',
   'gpa.honStats.tipCounts': '{first} / {total}',
-  'gpa.honStats.sources': '资料来源',
+  'gpa.honStats.sources': '资料来源:Graduate Lists',
   // 时间表规划工具
   'timetable.title': '时间表规划',
   'timetable.subtitle': '搜索授课记录，编排出满意的每周上课时间表。',

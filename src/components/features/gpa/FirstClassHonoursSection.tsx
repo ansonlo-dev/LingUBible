@@ -18,7 +18,6 @@ import {
   HONOURS_PROGRAMME_STATS,
   HONOURS_SUMMARY,
   HONOURS_YEARS,
-  HONOURS_SOURCES,
   type HonoursProgrammeStat,
 } from '@/data/firstClassHonours';
 
@@ -195,7 +194,10 @@ export function FirstClassHonoursSection() {
 
       <Card>
         <CardHeader className="gap-2 px-4 py-3">
-          <CardTitle className="text-base">{t('gpa.honStats.chartTitle')}</CardTitle>
+          <div className="flex items-baseline justify-between gap-3">
+            <CardTitle className="text-base">{t('gpa.honStats.chartTitle')}</CardTitle>
+            <span className="shrink-0 text-right text-xs text-muted-foreground">{t('gpa.honStats.sources')}</span>
+          </div>
           {/* Metric + cohort selection + sort, all on one row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <Segmented options={metricButtons} value={metric} onChange={setMetric} />
@@ -307,29 +309,6 @@ export function FirstClassHonoursSection() {
               ))}
             </div>
           )}
-
-          {/* Sources */}
-          <div className="mt-3 space-y-1 border-t pt-3">
-            <p className="text-[11px] font-medium text-muted-foreground">{t('gpa.honStats.sources')}</p>
-            {activeYears.map((y) => {
-              const src = HONOURS_SOURCES[y];
-              if (!src) return null;
-              // English UI shows only the English source title; zh UIs append the
-              // localized graduate-list name.
-              const localized = lang === 'zh-CN' ? src.sc : src.tc;
-              const label = lang === 'en' ? src.en : `${src.en} · ${localized}`;
-              return (
-                <p key={y} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span
-                    className="inline-block h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: colorForYear(y) }}
-                  />
-                  <span className="tabular-nums font-medium text-foreground/80">{y}</span>
-                  <span>· {label}</span>
-                </p>
-              );
-            })}
-          </div>
         </CardContent>
       </Card>
     </div>
