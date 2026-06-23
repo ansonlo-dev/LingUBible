@@ -79,6 +79,7 @@ import {
   ExternalLink,
   Undo2,
   Redo2,
+  Info,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'timetable.selectedSectionIds';
@@ -1644,6 +1645,10 @@ const Timetable = () => {
           <h1 className="text-3xl font-bold">{t('timetable.title')}</h1>
         </div>
         <p className="text-muted-foreground md:-translate-y-[3px]">{t('timetable.subtitle')}</p>
+        <span className="flex items-center gap-1 text-xs text-muted-foreground md:ml-auto md:-translate-y-[3px]">
+          <Info className="h-3.5 w-3.5 shrink-0" />
+          {t('gpa.localOnlyNotice')}
+        </span>
       </div>
 
       {loading && (
