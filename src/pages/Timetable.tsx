@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
 import {
   loadTimetableSections,
   findConflicts,
@@ -326,6 +327,10 @@ const Timetable = () => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+  // Mobile portrait gets a tighter layout: filter dropdowns fill each row and
+  // split it equally, and the action buttons (customize/export/delete) go
+  // icon-only.
+  const { isMobilePortrait } = useEnhancedResponsive();
 
   // Detect whether we're running inside an installed PWA (standalone display
   // mode). In a standalone PWA, `target="_blank"` on a same-origin link gets
@@ -482,21 +487,18 @@ const Timetable = () => {
   const setCustomTitle = (title: string) =>
     setCustomTitles((prev) => ({ ...prev, [termId]: title }));
 
-  // Collapsible filter/results panel (default expanded). Persisted across visits.
+  // Collapsible filter/results panel. On entry, default to *collapsed* when the
+  // newest term already has selected courses (land the user straight on their
+  // timetable); otherwise default to *expanded* so they can start adding. Same
+  // rule on mobile and desktop.
   const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('timetable.panelCollapsed') === '1';
+      const newestTermId = TERMS[TERMS.length - 1].id;
+      return loadSelectedIds(newestTermId).length > 0;
     } catch {
       return false;
     }
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem('timetable.panelCollapsed', panelCollapsed ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  }, [panelCollapsed]);
 
   // The results list no longer matches the timetable's height exactly. Instead it
   // gets a minimum height equal to the tallest it can be without forcing the page
@@ -1265,8 +1267,8 @@ const Timetable = () => {
           <Button variant="outline" size="sm" title={t('timetable.customize')}>
             <SlidersHorizontal className="h-4 w-4" />
             {/* Label appears when the panel is hidden (the filters make room
-                on desktop); kept on mobile too where the row wraps. */}
-            <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
+                on desktop). Always hidden on mobile portrait (icon-only). */}
+            <span className={`ml-1 ${isMobilePortrait ? 'hidden' : panelCollapsed ? '' : 'lg:hidden'}`}>
               {t('timetable.customize')}
             </span>
           </Button>
@@ -1498,8 +1500,9 @@ const Timetable = () => {
             ) : (
               <Download className="h-4 w-4" />
             )}
-            {/* Label appears when the panel is hidden (extra room available). */}
-            <span className={`ml-1 ${panelCollapsed ? '' : 'lg:hidden'}`}>
+            {/* Label appears when the panel is hidden (extra room available).
+                Always hidden on mobile portrait (icon-only). */}
+            <span className={`ml-1 ${isMobilePortrait ? 'hidden' : panelCollapsed ? '' : 'lg:hidden'}`}>
               {t('timetable.export')}
             </span>
           </Button>
@@ -1775,11 +1778,15 @@ const Timetable = () => {
                 </button>
               )}
 
-              {/* Filters (hidden while the results panel is collapsed) */}
+              {/* Filters (hidden while the results panel is collapsed). On
+                  mobile portrait they become a 2-column grid so each row fills
+                  the full width and splits it equally; on larger screens the
+                  wrapper is `display:contents` so the original flex-wrap row is
+                  untouched. */}
               {!panelCollapsed && (
-                <>
+                <div className={isMobilePortrait ? 'grid w-full grid-cols-2 gap-2' : 'contents'}>
                   <Select value={termId} onValueChange={setTermId}>
-                    <SelectTrigger className="h-9 w-auto min-w-[90px]">
+                    <SelectTrigger className={`h-9 ${isMobilePortrait ? 'w-full min-w-0' : 'w-auto min-w-[90px]'}`}>
                       {/* Show the picked term's short form (e.g. "2425-T1"). */}
                       <span className="truncate">{term.short}</span>
                     </SelectTrigger>
@@ -1798,7 +1805,7 @@ const Timetable = () => {
                       setCourseCode('');
                     }}
                   >
-                    <SelectTrigger className="h-9 w-auto min-w-[110px]">
+                    <SelectTrigger className={`h-9 ${isMobilePortrait ? 'w-full min-w-0' : 'w-auto min-w-[110px]'}`}>
                       {/* Trigger shows just the code (or "All subjects"); the full
                           English name only appears in the dropdown items. */}
                       <span className="truncate">
@@ -1821,7 +1828,7 @@ const Timetable = () => {
                     placeholder={t('timetable.filter.course')}
                     searchPlaceholder={t('timetable.filter.courseSearch')}
                     emptyText={t('timetable.noResults')}
-                    className="h-9 flex-1 min-w-[150px] max-w-[260px]"
+                    className={`h-9 ${isMobilePortrait ? 'w-full min-w-0 max-w-none' : 'flex-1 min-w-[150px] max-w-[260px]'}`}
                   />
                   <Combobox
                     options={instructorOptions}
@@ -1830,10 +1837,10 @@ const Timetable = () => {
                     placeholder={t('timetable.filter.instructor')}
                     searchPlaceholder={t('timetable.filter.instructorSearch')}
                     emptyText={t('timetable.noResults')}
-                    className="h-9 flex-1 min-w-[150px] max-w-[260px]"
+                    className={`h-9 ${isMobilePortrait ? 'w-full min-w-0 max-w-none' : 'flex-1 min-w-[150px] max-w-[260px]'}`}
                   />
                   <Select value={type} onValueChange={setType}>
-                    <SelectTrigger className="h-9 w-auto min-w-[100px]">
+                    <SelectTrigger className={`h-9 ${isMobilePortrait ? 'w-full min-w-0' : 'w-auto min-w-[100px]'}`}>
                       <SelectValue placeholder={t('timetable.filter.type')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1851,19 +1858,27 @@ const Timetable = () => {
                     availableDays={availableDays}
                     dayLabels={dayLabels}
                     t={t}
+                    className={isMobilePortrait ? 'w-full min-w-0' : undefined}
                   />
-                  <VenueFilter groups={venueGroups} value={venueFilter} onChange={setVenueFilter} t={t} />
+                  <VenueFilter
+                    groups={venueGroups}
+                    value={venueFilter}
+                    onChange={setVenueFilter}
+                    t={t}
+                    className={isMobilePortrait ? 'w-full min-w-0' : undefined}
+                  />
                   {hasActiveFilters && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={clearFilters}
                       title={t('timetable.clearFilters')}
+                      className={isMobilePortrait ? 'w-full min-w-0' : undefined}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   )}
-                </>
+                </div>
               )}
 
               {/* Actions: on mobile they sit in this action row; on desktop
