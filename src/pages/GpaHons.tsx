@@ -839,7 +839,7 @@ const GpaHons = () => {
             <Card key={year} className="overflow-hidden">
               {/* Academic year header */}
               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 bg-muted/40 px-2 py-1.5 sm:px-3">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -865,7 +865,7 @@ const GpaHons = () => {
                     </SelectContent>
                   </Select>
                   {award && (
-                    <Badge className={`${AWARD_BADGE_COLORS[award]} ml-1.5 shrink-0`}>
+                    <Badge className={`${AWARD_BADGE_COLORS[award]} shrink-0`}>
                       {t(`gpa.${award}`)}
                     </Badge>
                   )}
@@ -933,9 +933,9 @@ const GpaHons = () => {
                             {term.courses.map((course) => (
                               <div
                                 key={course.id}
-                                className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_52px_68px_28px] sm:items-center sm:gap-1.5"
+                                className="flex items-center gap-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_52px_68px_28px] sm:items-center sm:gap-1.5"
                               >
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <CourseSelect
                                     entry={course}
                                     catalog={catalog}
@@ -945,7 +945,7 @@ const GpaHons = () => {
                                     useCustomLabel={(code) => t('gpa.useCustomCode', { code })}
                                   />
                                 </div>
-                                <div className="flex items-center gap-1.5 sm:contents">
+                                <div className="flex shrink-0 items-center gap-1.5 sm:contents">
                                   <Input
                                     inputMode="numeric"
                                     value={course.credits}
@@ -961,7 +961,7 @@ const GpaHons = () => {
                                       updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })
                                     }
                                   >
-                                    <SelectTrigger className="h-9 min-w-0 flex-1 px-2 sm:flex-none">
+                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 px-2 sm:w-auto sm:flex-none">
                                       <span className={cn('truncate', !course.grade && 'text-muted-foreground')}>
                                         {course.grade || t('gpa.gradePlaceholder')}
                                       </span>
