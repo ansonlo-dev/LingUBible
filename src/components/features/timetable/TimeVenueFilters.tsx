@@ -79,7 +79,11 @@ export function TimeFilter({ value, onChange, availableDays, dayLabels, t, class
           <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[280px] p-3 bg-white dark:bg-gray-900">
+      <PopoverContent
+        align="start"
+        collisionPadding={8}
+        className="w-[280px] p-3 bg-white dark:bg-gray-900 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto timetable-scroll"
+      >
         <div className="space-y-3">
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t('timetable.filter.days')}</p>
@@ -250,7 +254,7 @@ export function VenueFilter({ groups, value, onChange, t, className }: VenueFilt
           <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[300px] p-0 bg-white dark:bg-gray-900">
+      <PopoverContent align="start" collisionPadding={8} className="w-[300px] p-0 bg-white dark:bg-gray-900">
         <div className="border-b p-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -262,7 +266,10 @@ export function VenueFilter({ groups, value, onChange, t, className }: VenueFilt
             />
           </div>
         </div>
-        <div className="max-h-[320px] overflow-y-auto p-1 timetable-scroll">
+        {/* Cap to the popover's available height (minus the search header) so
+            the room list never overflows the viewport — notably on mobile
+            landscape, where vertical space is tight. */}
+        <div className="max-h-[min(320px,calc(var(--radix-popover-content-available-height)-3.5rem))] overflow-y-auto p-1 timetable-scroll">
           {shownGroups.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">{t('timetable.noResults')}</p>
           )}
