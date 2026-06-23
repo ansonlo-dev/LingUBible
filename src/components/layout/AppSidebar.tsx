@@ -295,7 +295,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       >
         {/* Logo 區域 - 在手機直向模式下隱藏 (因為顯示在 Header 中) */}
         {!isMobilePortrait && (
-          <div className={`${isCompact ? 'p-2 md:p-1 md:h-12' : 'p-4 md:p-2 md:h-16'} md:flex md:items-center ${isCompact ? 'mt-0' : 'mt-2'}`}>
+          <div className={`${isCompact ? 'p-2 md:p-1 md:h-10' : 'p-4 md:p-2 md:h-12'} md:flex md:items-center ${isCompact ? 'mt-0' : 'mt-1'}`}>
             {shouldShowText && (
               <Link 
                 to="/" 
@@ -319,7 +319,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
         )}
 
         {/* 導航選單 */}
-        <nav className={`flex-1 p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : isCompact ? 'md:py-2' : 'md:py-4'}`}>
+        <nav className={`flex-1 p-4 md:px-2 ${!shouldShowText ? 'md:pt-0 md:pb-2' : isCompact ? 'md:pt-0 md:pb-2' : 'md:pt-1 md:pb-4'}`}>
           <div className={!shouldShowText ? 'space-y-3' : isCompact ? 'space-y-3' : 'space-y-5'}>
             {navigationGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
