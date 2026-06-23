@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Award, GraduationCap, Medal, ArrowDownUp, ArrowDownAZ } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -154,9 +155,14 @@ export function FirstClassHonoursSection({
   const [sort, setSort] = useState<SortMode>('value');
   const [groupBy, setGroupBy] = useState<GroupBy>('programme');
   const [selectedYears, setSelectedYears] = useState<Set<number>>(() => new Set(YEARS_ASC));
+  // Whether the summary cards show the year-on-year change vs the previous
+  // graduate year (default off).
+  const [showChange, setShowChange] = useState(false);
   // Cohort year shown in the university-wide summary cards (controlled by parent;
   // its picker lives in the page's sticky tab row). Falls back to the latest.
   const cohortYear = summaryYear ?? LATEST_YEAR;
+  // The graduate year immediately before the selected one (for the change), if any.
+  const prevCohortYear = YEARS_ASC[YEARS_ASC.indexOf(cohortYear) - 1];
 
   // Active cohorts in ascending order; never empty (last one can't be removed).
   const activeYears = useMemo(
@@ -297,6 +303,28 @@ export function FirstClassHonoursSection({
     { key: 'faculty', label: t('gpa.honStats.groupFaculty') },
   ];
 
+  // Year-on-year change badge for a summary card. `kind` controls formatting:
+  // a 'rate' shows the percentage-point difference (e.g. ▼0.9%), a 'count' the
+  // absolute difference (e.g. ▲10). Returns null when the toggle is off or the
+  // previous year is unavailable.
+  const summaryDelta = (curr?: number | null, prev?: number | null, kind: 'rate' | 'count' = 'count') => {
+    if (!showChange || curr == null || prev == null) return null;
+    const diff = curr - prev;
+    const flat = Math.abs(diff) < (kind === 'rate' ? 1e-9 : 0.5);
+    const text = kind === 'rate' ? `${Math.abs(diff * 100).toFixed(1)}%` : String(Math.abs(Math.round(diff)));
+    return (
+      <span
+        className={cn(
+          'flex items-center gap-0.5 text-xs font-medium tabular-nums',
+          flat ? 'text-muted-foreground' : diff > 0 ? 'text-emerald-500' : 'text-red-500',
+        )}
+      >
+        {flat ? '–' : diff > 0 ? '▲' : '▼'}
+        {flat ? '' : text}
+      </span>
+    );
+  };
+
   // One university-average line per selected cohort (rate mode only).
   const avgLines = isRate
     ? activeYears
@@ -308,21 +336,28 @@ export function FirstClassHonoursSection({
     <div>
       {/* University-wide summary for the cohort selected in the tab row */}
       <div className="mb-4">
+        <label className="mb-2 flex items-center justify-end gap-2">
+          <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.showChange')}</span>
+          <Switch checked={showChange} onCheckedChange={setShowChange} aria-label={t('gpa.honStats.showChange')} />
+        </label>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <SummaryStat
             icon={<Award className="h-4 w-4" />}
             label={t('gpa.honStats.summaryRate')}
             value={pct(HONOURS_SUMMARY[cohortYear]?.pct)}
+            change={summaryDelta(HONOURS_SUMMARY[cohortYear]?.pct, HONOURS_SUMMARY[prevCohortYear]?.pct, 'rate')}
           />
           <SummaryStat
             icon={<Medal className="h-4 w-4" />}
             label={t('gpa.honStats.summaryFirst')}
             value={String(HONOURS_SUMMARY[cohortYear]?.first ?? '—')}
+            change={summaryDelta(HONOURS_SUMMARY[cohortYear]?.first, HONOURS_SUMMARY[prevCohortYear]?.first, 'count')}
           />
           <SummaryStat
             icon={<GraduationCap className="h-4 w-4" />}
             label={t('gpa.honStats.summaryGrads')}
             value={String(HONOURS_SUMMARY[cohortYear]?.total ?? '—')}
+            change={summaryDelta(HONOURS_SUMMARY[cohortYear]?.total, HONOURS_SUMMARY[prevCohortYear]?.total, 'count')}
           />
         </div>
       </div>
@@ -553,10 +588,12 @@ function SummaryStat({
   icon,
   label,
   value,
+  change,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
+  change?: ReactNode;
 }) {
   return (
     <Card>
@@ -565,7 +602,10 @@ function SummaryStat({
           <span className="shrink-0 text-muted-foreground">{icon}</span>
           <span className="truncate">{label}</span>
         </span>
-        <span className="shrink-0 text-xl font-bold tabular-nums">{value}</span>
+        <span className="flex shrink-0 flex-col items-end leading-tight">
+          <span className="text-xl font-bold tabular-nums">{value}</span>
+          {change}
+        </span>
       </CardContent>
     </Card>
   );

@@ -811,6 +811,7 @@ export default {
   'gpa.honStats.metricFirst': 'First-class',
   'gpa.honStats.metricTotal': 'Graduates',
   'gpa.honStats.cohorts': 'Graduate Years',
+  'gpa.honStats.showChange': 'Year-on-year change',
   'gpa.honStats.groupProgramme': 'Programme',
   'gpa.honStats.groupFaculty': 'Faculty / School',
   'gpa.honStats.uniAvg': '{year} university average ({value})',
