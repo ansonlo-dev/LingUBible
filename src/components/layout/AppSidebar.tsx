@@ -320,12 +320,12 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
 
         {/* 導航選單 */}
         <nav className={`flex-1 p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : isCompact ? 'md:py-2' : 'md:py-4'}`}>
-          <div className={!shouldShowText ? 'space-y-3' : isCompact ? 'space-y-4' : 'space-y-8'}>
+          <div className={!shouldShowText ? 'space-y-3' : isCompact ? 'space-y-3' : 'space-y-5'}>
             {navigationGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
                 {/* 分組標題 - 只在有標題且顯示文字時顯示 */}
                 {group.label && shouldShowText && (
-                  <div className={isCompact ? 'mb-1' : 'mb-2'}>
+                  <div className={isCompact ? 'mb-1' : 'mb-1.5'}>
                     <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {group.label}
                     </h3>
@@ -333,11 +333,11 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                 )}
 
                 {/* 分組項目 */}
-                <ul className={!shouldShowText ? 'space-y-1' : isCompact ? 'space-y-1' : 'space-y-2'}>
+                <ul className={!shouldShowText ? 'space-y-1' : isCompact ? 'space-y-1' : 'space-y-1.5'}>
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isExternalOrHash = item.href.startsWith('#');
-                    const itemPy = !shouldShowText ? 'py-1.5' : isCompact ? 'py-1.5' : 'py-2';
+                    const itemPy = !shouldShowText ? 'py-1.5' : isCompact ? 'py-1.5' : 'py-1.5';
 
                     return (
                       <li key={item.name}>
@@ -345,7 +345,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <a
                             href={item.href}
                             className={`
-                              flex items-center gap-3 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
                               ${item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -361,7 +361,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <Link
                             to={item.href}
                             className={`
-                              flex items-center gap-3 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
                               ${item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'

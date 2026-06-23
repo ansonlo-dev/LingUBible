@@ -173,6 +173,15 @@ div[style*="position: fixed"][style*="right: 14px"] {
       overflow-x: hidden;
       transform: translateX(0);
       transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      /* 隱藏垂直捲軸（即使內容可捲動） */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .sidebar-container::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
     }
 
     /* Collapsed state - show only icons */

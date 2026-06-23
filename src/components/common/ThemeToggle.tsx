@@ -1,22 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Moon, Sun, Monitor } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Moon, Sun } from 'lucide-react';
 import { theme } from '@/lib/utils';
 
-// 主題類型
-type ThemeMode = 'light' | 'dark' | 'system';
+// 主題類型（只保留亮色與深色）
+type ThemeMode = 'light' | 'dark';
 
-// 主題切換函數
-function setTheme(mode: ThemeMode) {
+// 僅套用 dark class 與背景色（不儲存設定）
+function applyDarkClass(isDark: boolean) {
   const root = document.documentElement;
-  
-  // 保存主題設定
-  theme.set(mode);
-  
-  // 獲取實際應該應用的主題
-  const effectiveTheme = theme.getEffectiveTheme();
-  const isDark = effectiveTheme === 'dark';
-  
+
   if (isDark) {
     root.classList.add('dark');
     root.style.backgroundColor = 'rgb(0, 0, 0)';
@@ -32,53 +24,54 @@ function setTheme(mode: ThemeMode) {
   }
 }
 
+// 主題切換函數（儲存使用者明確選擇並套用）
+function setTheme(mode: ThemeMode) {
+  theme.set(mode);
+  applyDarkClass(mode === 'dark');
+}
+
 interface ThemeToggleProps {
   variant?: 'button' | 'toggle';
 }
 
 export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
-  // 獲取當前主題模式
+  // 當前要高亮的模式：已明確選擇則用該值，否則跟隨系統（首次訪問預設）
   const [currentMode, setCurrentMode] = useState<ThemeMode>(() => {
     const stored = theme.get();
-    return stored || 'system';
-  });
-
-  // 獲取當前實際的主題（用於顯示狀態）
-  const [isDark, setIsDark] = useState(() => {
-    return document.documentElement.classList.contains('dark');
+    if (stored === 'light' || stored === 'dark') return stored;
+    return theme.getEffectiveTheme();
   });
 
   useEffect(() => {
-    // 確保初始狀態與存儲的主題同步
-    const storedMode = theme.get() || 'system';
-    if (storedMode !== currentMode) {
-      setCurrentMode(storedMode);
-    }
-    
-    // 應用主題
-    setTheme(storedMode);
-    
-    // 監聽 dark class 變化
+    // 同步初始顯示狀態
+    const stored = theme.get();
+    setCurrentMode(stored === 'light' || stored === 'dark' ? stored : theme.getEffectiveTheme());
+
+    // 監聽 dark class 變化，保持高亮與實際主題同步
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
-          const newIsDark = document.documentElement.classList.contains('dark');
-          setIsDark(newIsDark);
+          const storedMode = theme.get();
+          if (storedMode === 'light' || storedMode === 'dark') {
+            setCurrentMode(storedMode);
+          } else {
+            setCurrentMode(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+          }
         }
       });
     });
-    
-    observer.observe(document.documentElement, { attributes: true });
-    
-    // 監聽系統主題變化（僅當設定為 system 時）
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    // 尚未明確選擇主題前，跟隨系統主題變化
     const unwatch = theme.watchSystemTheme((systemIsDark) => {
-      const currentStoredMode = theme.get() || 'system';
-      if (currentStoredMode === 'system') {
-        // 重新應用主題以反映系統變化
-        setTheme('system');
+      const storedMode = theme.get();
+      if (storedMode !== 'light' && storedMode !== 'dark') {
+        applyDarkClass(systemIsDark);
+        setCurrentMode(systemIsDark ? 'dark' : 'light');
       }
     });
-    
+
     return () => {
       observer.disconnect();
       unwatch();
@@ -93,12 +86,12 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
   if (variant === 'toggle') {
     return (
       <div className="w-full flex justify-center">
-        <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg w-fit min-w-[120px]">
+        <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg w-fit min-w-[88px]">
           <button
             onClick={() => handleThemeChange('light')}
             className={`flex items-center justify-center h-7 px-2 text-xs font-bold transition-all rounded-md flex-1 ${
               currentMode === 'light'
-                ? 'bg-primary text-primary-foreground shadow-sm' 
+                ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
             }`}
             aria-label="切換到亮色主題"
@@ -109,23 +102,12 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
             onClick={() => handleThemeChange('dark')}
             className={`flex items-center justify-center h-7 px-2 text-xs font-bold transition-all rounded-md flex-1 ${
               currentMode === 'dark'
-                ? 'bg-primary text-primary-foreground shadow-sm' 
+                ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
             }`}
             aria-label="切換到深色主題"
           >
             <Moon className="h-5 w-5 stroke-2" />
-          </button>
-          <button
-            onClick={() => handleThemeChange('system')}
-            className={`flex items-center justify-center h-7 px-2 text-xs font-bold transition-all rounded-md flex-1 ${
-              currentMode === 'system'
-                ? 'bg-primary text-primary-foreground shadow-sm' 
-                : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
-            }`}
-            aria-label="跟隨系統主題"
-          >
-            <Monitor className="h-5 w-5 stroke-2" />
           </button>
         </div>
       </div>
@@ -139,7 +121,7 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
           onClick={() => handleThemeChange('light')}
           className={`flex items-center justify-center h-6 w-full text-xs font-bold transition-all rounded-md ${
             currentMode === 'light'
-              ? 'bg-primary text-primary-foreground shadow-sm' 
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
           }`}
           aria-label="切換到亮色主題"
@@ -150,23 +132,12 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
           onClick={() => handleThemeChange('dark')}
           className={`flex items-center justify-center h-6 w-full text-xs font-bold transition-all rounded-md ${
             currentMode === 'dark'
-              ? 'bg-primary text-primary-foreground shadow-sm' 
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
           }`}
           aria-label="切換到深色主題"
         >
           <Moon className="h-4 w-4 stroke-2" />
-        </button>
-        <button
-          onClick={() => handleThemeChange('system')}
-          className={`flex items-center justify-center h-6 w-full text-xs font-bold transition-all rounded-md ${
-            currentMode === 'system'
-              ? 'bg-primary text-primary-foreground shadow-sm' 
-              : 'hover:bg-secondary dark:hover:bg-gray-700 text-muted-foreground hover:text-foreground'
-          }`}
-          aria-label="跟隨系統主題"
-        >
-          <Monitor className="h-4 w-4 stroke-2" />
         </button>
       </div>
     </div>
