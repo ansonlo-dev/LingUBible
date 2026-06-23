@@ -304,6 +304,6 @@ export const HONOURS_SUMMARY: Record<number, { total: number; first: number; pct
 
 /** Source document for each cohort, shown as a citation. */
 export const HONOURS_SOURCES: Record<number, { en: string; tc: string; sc: string }> = {
-  2024: { en: 'Graduate List 2025', tc: '2024年畢業生名單', sc: '2024年毕业生名单' },
+  2024: { en: 'Graduate List 2024', tc: '2024年畢業生名單', sc: '2024年毕业生名单' },
   2025: { en: 'Graduate List 2025', tc: '2025年畢業生名單', sc: '2025年毕业生名单' },
 };
