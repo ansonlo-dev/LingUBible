@@ -690,63 +690,70 @@ const GpaHons = () => {
         </CardHeader>
         <CardContent className="flex flex-1 flex-col px-4 pb-4">
           <p className="mb-3 text-xs text-muted-foreground">{t('gpa.targetDesc')}</p>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <Label className="shrink-0 text-sm">{t('gpa.targetCgpa')}</Label>
-              <div className="flex items-center gap-2">
-                {targetClassKey ? (
-                  <Badge className={`${HONOURS_BADGE_COLORS[targetClassKey]} text-white`}>
-                    {t(`gpa.honours.${targetClassKey}`)}
-                  </Badge>
-                ) : (
-                  <span className="text-xs text-muted-foreground">{t('gpa.belowHonours')}</span>
-                )}
+          <div className="rounded-lg border bg-card/40 p-3 sm:p-4">
+            <div className="space-y-3">
+              {/* Target cumulative GPA */}
+              <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2">
+                <Label className="text-sm font-medium">{t('gpa.targetCgpa')}</Label>
+                <div className="flex items-center justify-end gap-2">
+                  {targetClassKey ? (
+                    <Badge className={`${HONOURS_BADGE_COLORS[targetClassKey]} shrink-0 text-white`}>
+                      {t(`gpa.honours.${targetClassKey}`)}
+                    </Badge>
+                  ) : (
+                    <span className="shrink-0 text-xs text-muted-foreground">{t('gpa.belowHonours')}</span>
+                  )}
+                  <Input
+                    inputMode="decimal"
+                    className="h-9 w-24 text-right tabular-nums"
+                    value={targetCgpaInput}
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = v.split('.');
+                      if (parts.length > 2) v = `${parts[0]}.${parts.slice(1).join('')}`;
+                      if (parseFloat(v) > MAX_GPA) v = String(MAX_GPA); // clamp to 0–4
+                      setTargetCgpaInput(v);
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Quick set */}
+              <div className="flex flex-wrap items-center gap-1.5 border-t pt-3">
+                <span className="mr-0.5 text-xs font-medium text-muted-foreground">{t('gpa.quickSet')}</span>
+                {HONOURS_TIERS.map((tr) => {
+                  const activeChip = Math.abs(targetCgpa - tr.cgpa) < 1e-9;
+                  return (
+                    <button
+                      key={tr.key}
+                      type="button"
+                      onClick={() => setTargetCgpaInput(tr.cgpa.toFixed(2))}
+                      className={cn(
+                        'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
+                        activeChip ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent',
+                      )}
+                    >
+                      {t(`gpa.honours.${tr.key}`)}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Total remaining credits */}
+              <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 border-t pt-3">
+                <Label className="text-sm font-medium">{t('gpa.totalRemainingCredits')}</Label>
                 <Input
-                  inputMode="decimal"
-                  className="h-9 w-[88px] text-right tabular-nums"
-                  value={targetCgpaInput}
-                  onChange={(e) => {
-                    let v = e.target.value.replace(/[^0-9.]/g, '');
-                    const parts = v.split('.');
-                    if (parts.length > 2) v = `${parts[0]}.${parts.slice(1).join('')}`;
-                    if (parseFloat(v) > MAX_GPA) v = String(MAX_GPA); // clamp to 0–4
-                    setTargetCgpaInput(v);
-                  }}
+                  inputMode="numeric"
+                  className="h-9 w-24 text-right tabular-nums"
+                  value={remainingCreditsInput}
+                  placeholder={String(defaultRemainingCredits)}
+                  onChange={(e) => setRemainingCreditsInput(e.target.value.replace(/[^0-9]/g, ''))}
                 />
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-0.5 text-xs text-muted-foreground">{t('gpa.quickSet')}:</span>
-              {HONOURS_TIERS.map((tr) => {
-                const activeChip = Math.abs(targetCgpa - tr.cgpa) < 1e-9;
-                return (
-                  <button
-                    key={tr.key}
-                    type="button"
-                    onClick={() => setTargetCgpaInput(tr.cgpa.toFixed(2))}
-                    className={cn(
-                      'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
-                      activeChip ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent',
-                    )}
-                  >
-                    {t(`gpa.honours.${tr.key}`)}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <Label className="shrink-0 text-sm">{t('gpa.totalRemainingCredits')}</Label>
-              <Input
-                inputMode="numeric"
-                className="h-9 w-[160px] max-w-[55%]"
-                value={remainingCreditsInput}
-                placeholder={String(defaultRemainingCredits)}
-                onChange={(e) => setRemainingCreditsInput(e.target.value.replace(/[^0-9]/g, ''))}
-              />
-            </div>
           </div>
 
-          <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg bg-muted/40 p-4">
+          <div className="mt-4 flex flex-1 flex-col items-center justify-center rounded-lg bg-muted/40 p-4 text-center">
             {calc.status === 'feasible' && (
               <div className="space-y-1">
                 <p className="text-xl text-muted-foreground">{t('gpa.resultFeasibleLine1', { target: targetLabel })}</p>
@@ -754,7 +761,7 @@ const GpaHons = () => {
                 <p className="text-xl text-muted-foreground">
                   {t('gpa.resultFeasibleLine3')}{' '}
                   <span className={`align-baseline text-3xl font-bold tabular-nums ${requiredColor}`}>{calc.required.toFixed(3)}</span>
-                  {language === 'en' ? '.' : '。'}
+                  {language === 'en' ? '.' : ''}
                 </p>
               </div>
             )}
