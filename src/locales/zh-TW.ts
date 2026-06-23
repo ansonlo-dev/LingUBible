@@ -753,7 +753,7 @@ export default {
   'gpa.honStats.sortValue': '排序:{year}',
   'gpa.honStats.sortName': '排序:名稱',
   'gpa.honStats.tipCounts': '{first} / {total}',
-  'gpa.honStats.sources': '資料來源:Graduate Lists',
+  'gpa.honStats.sources': '資料來源: 畢業生名單',
   // 時間表規劃工具
   'timetable.title': '時間表規劃',
   'timetable.subtitle': '搜尋授課紀錄，編排出滿意的每週上課時間表',

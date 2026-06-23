@@ -1,6 +1,6 @@
 // Auto-generated from "Graduate Lists.xlsx" (Lingnan University first-class honours graduate statistics).
 // Static reference data — to add a future cohort, append the year to HONOURS_YEARS,
-// add its figures under each programme's `years`, and add HONOURS_SUMMARY / HONOURS_SOURCES entries.
+// add its figures under each programme's `years`, and add a HONOURS_SUMMARY entry.
 
 /** Cohorts present in the dataset, ascending. Add future years here. */
 export const HONOURS_YEARS = [2024, 2025] as const;
@@ -300,10 +300,4 @@ export const HONOURS_PROGRAMME_STATS: HonoursProgrammeStat[] = [
 export const HONOURS_SUMMARY: Record<number, { total: number; first: number; pct: number }> = {
   2024: { total: 770, first: 109, pct: 0.141558 },
   2025: { total: 900, first: 119, pct: 0.132222 },
-};
-
-/** Source document for each cohort, shown as a citation. */
-export const HONOURS_SOURCES: Record<number, { en: string; tc: string; sc: string }> = {
-  2024: { en: 'Graduate List 2024', tc: '2024年畢業生名單', sc: '2024年毕业生名单' },
-  2025: { en: 'Graduate List 2025', tc: '2025年畢業生名單', sc: '2025年毕业生名单' },
 };
