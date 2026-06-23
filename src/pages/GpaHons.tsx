@@ -923,7 +923,7 @@ const GpaHons = () => {
                           </div>
 
                           {/* column headers (desktop only) */}
-                          <div className="mb-1 hidden grid-cols-[minmax(0,1fr)_52px_68px_28px] gap-1.5 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
+                          <div className="mb-1 hidden grid-cols-[minmax(0,1fr)_52px_76px_28px] gap-1.5 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
                             <span>{t('gpa.colCourse')}</span>
                             <span>{t('gpa.colCredits')}</span>
                             <span>{t('gpa.colGrade')}</span>
@@ -933,7 +933,7 @@ const GpaHons = () => {
                             {term.courses.map((course) => (
                               <div
                                 key={course.id}
-                                className="flex items-center gap-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_52px_68px_28px] sm:items-center sm:gap-1.5"
+                                className="flex items-center gap-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_52px_76px_28px] sm:items-center sm:gap-1.5"
                               >
                                 <div className="min-w-0 flex-1">
                                   <CourseSelect
@@ -961,7 +961,7 @@ const GpaHons = () => {
                                       updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })
                                     }
                                   >
-                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 px-2 sm:w-full sm:flex-none">
+                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 px-2 sm:w-[76px] sm:flex-none">
                                       <span className={cn('truncate', !course.grade && 'text-muted-foreground')}>
                                         {course.grade || t('gpa.gradePlaceholder')}
                                       </span>
