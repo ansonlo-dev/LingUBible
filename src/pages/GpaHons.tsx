@@ -73,6 +73,10 @@ type TermPart = 'term1' | 'term2' | 'summer' | 'other';
 // Selectable term types — a year has at most these three terms (no "Other").
 const PART_OPTIONS: TermPart[] = ['term1', 'term2', 'summer'];
 const MAX_TERMS_PER_YEAR = PART_OPTIONS.length;
+// At most 8 academic years can be added.
+const MAX_YEARS = 8;
+// Per-term course cap: 8 for Term 1 / Term 2, 2 for the Summer Term.
+const maxCoursesForPart = (part: TermPart) => (part === 'summer' ? 2 : 8);
 // 'other' kept in the ordering only so any legacy-saved term still sorts sanely.
 const PART_ORDER: Record<TermPart, number> = { term1: 0, term2: 1, summer: 2, other: 3 };
 // Short term codes for the trend chart's x-axis (e.g. "21/22-T1").
@@ -482,7 +486,11 @@ const GpaHons = () => {
 
   const addCourse = (termId: string) =>
     updateTerms((prev) =>
-      prev.map((term) => (term.id === termId ? { ...term, courses: [...term.courses, newCourse()] } : term)),
+      prev.map((term) => {
+        if (term.id !== termId) return term;
+        if (term.courses.length >= maxCoursesForPart(term.part)) return term; // at cap
+        return { ...term, courses: [...term.courses, newCourse()] };
+      }),
     );
 
   const removeCourse = (termId: string, courseId: string) =>
@@ -505,6 +513,7 @@ const GpaHons = () => {
   const addYear = () =>
     setDoc((d) => {
       const maxYear = d.terms.reduce((m, tm) => Math.max(m, tm.year), 0);
+      if (maxYear >= MAX_YEARS) return d; // at most MAX_YEARS years
       const newYear = maxYear + 1;
       const lastAy = d.yearAcademic[maxYear] ?? defaultAcademic(maxYear);
       const idx = ACADEMIC_YEARS.indexOf(lastAy);
@@ -584,6 +593,14 @@ const GpaHons = () => {
   }, [sortedTerms, statsByTermId]);
 
   const currentClass = classifyHonours(cgpa);
+
+  // Academic years already assigned to a year block — used to disable them in
+  // every other block's dropdown so the same academic year can't be picked twice.
+  const usedAcademicYears = useMemo(
+    () => new Set(years.map(({ year }) => academicForYear(year))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [years, yearAcademic],
+  );
 
   // ---- Target calculator -------------------------------------------------
   // A typical undergraduate degree is ~120 credits, so default the remaining
@@ -915,7 +932,11 @@ const GpaHons = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-900">
                       {ACADEMIC_YEARS.map((ay) => (
-                        <SelectItem key={ay} value={ay}>
+                        <SelectItem
+                          key={ay}
+                          value={ay}
+                          disabled={ay !== academicForYear(year) && usedAcademicYears.has(ay)}
+                        >
                           {ay}
                         </SelectItem>
                       ))}
@@ -982,8 +1003,8 @@ const GpaHons = () => {
                           {/* column headers (desktop only) */}
                           <div className="mb-1 hidden grid-cols-[minmax(0,1fr)_52px_76px_28px] gap-1.5 px-1 text-[11px] font-medium text-muted-foreground sm:grid">
                             <span>{t('gpa.colCourse')}</span>
-                            <span>{t('gpa.colCredits')}</span>
-                            <span>{t('gpa.colGrade')}</span>
+                            <span className="text-center">{t('gpa.colCredits')}</span>
+                            <span className="text-center">{t('gpa.colGrade')}</span>
                             <span />
                           </div>
                           <div className="space-y-2 sm:space-y-1.5">
@@ -1010,7 +1031,7 @@ const GpaHons = () => {
                                     onChange={(e) =>
                                       updateCourse(term.id, course.id, { credits: e.target.value.replace(/[^0-9]/g, '') })
                                     }
-                                    className="h-9 w-14 shrink-0 px-2 tabular-nums sm:w-auto"
+                                    className="h-9 w-14 shrink-0 px-2 text-center tabular-nums sm:w-auto"
                                   />
                                   <Select
                                     value={course.grade || undefined}
@@ -1018,8 +1039,8 @@ const GpaHons = () => {
                                       updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })
                                     }
                                   >
-                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 px-2 sm:w-[76px] sm:flex-none">
-                                      <span className={cn('truncate', !course.grade && 'text-muted-foreground')}>
+                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 justify-center px-2 sm:w-[76px] sm:flex-none">
+                                      <span className={cn('truncate text-center', !course.grade && 'text-muted-foreground')}>
                                         {course.grade || t('gpa.gradePlaceholder')}
                                       </span>
                                     </SelectTrigger>
@@ -1056,14 +1077,16 @@ const GpaHons = () => {
                               </div>
                             ))}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="mt-1.5 h-7 text-xs hover:bg-primary/10 hover:text-foreground"
-                            onClick={() => addCourse(term.id)}
-                          >
-                            <Plus className="mr-1 h-3.5 w-3.5" /> {t('gpa.addCourse')}
-                          </Button>
+                          {term.courses.length < maxCoursesForPart(term.part) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-1.5 h-7 text-xs hover:bg-primary/10 hover:text-foreground"
+                              onClick={() => addCourse(term.id)}
+                            >
+                              <Plus className="mr-1 h-3.5 w-3.5" /> {t('gpa.addCourse')}
+                            </Button>
+                          )}
                         </div>
                       );
                     })}
@@ -1086,13 +1109,15 @@ const GpaHons = () => {
         })}
       </div>
 
-      <Button
-        variant="outline"
-        className="mt-4 w-full border-dashed hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
-        onClick={addYear}
-      >
-        <Plus className="mr-1.5 h-4 w-4" /> {t('gpa.addYear')}
-      </Button>
+      {years.length < MAX_YEARS && (
+        <Button
+          variant="outline"
+          className="mt-4 w-full border-dashed hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
+          onClick={addYear}
+        >
+          <Plus className="mr-1.5 h-4 w-4" /> {t('gpa.addYear')}
+        </Button>
+      )}
 
         <p className="mt-5 text-center text-xs text-muted-foreground">{t('gpa.disclaimer')}</p>
       </section>
