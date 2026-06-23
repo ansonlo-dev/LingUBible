@@ -671,7 +671,7 @@ const GpaHons = () => {
       {/* Cohort picker for the stats tab's university-wide summary. Right-aligned
           on its own row, and intentionally NOT sticky (scrolls with content). */}
       {view === 'stats' && (
-        <div className="mb-4 flex flex-wrap items-center justify-end gap-1.5">
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-1.5 sm:justify-start">
           <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
           {HONOURS_YEARS_ASC.map((y) => (
             <button
