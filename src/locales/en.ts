@@ -804,7 +804,7 @@ export default {
   'gpa.honStats.summaryRate': 'University first-class rate',
   'gpa.honStats.summaryFirst': 'First-class graduates',
   'gpa.honStats.summaryGrads': 'Total graduates',
-  'gpa.honStats.chartTitle': 'First-class results by programme',
+  'gpa.honStats.chartTitle': 'First-class results by UG programme',
   'gpa.honStats.metricRate': 'Rate',
   'gpa.honStats.metricFirst': 'First-class',
   'gpa.honStats.metricTotal': 'Graduates',

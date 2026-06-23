@@ -12,13 +12,12 @@ import {
 } from 'recharts';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, GraduationCap, Medal, Trophy, ArrowDownRight, ArrowUpRight, ArrowDownUp, ArrowDownAZ } from 'lucide-react';
+import { Award, GraduationCap, Medal, Trophy, ArrowDownUp, ArrowDownAZ } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   HONOURS_PROGRAMME_STATS,
   HONOURS_SUMMARY,
   HONOURS_YEARS,
-  HONOURS_RATE_HISTORY,
   HONOURS_SOURCES,
   type HonoursProgrammeStat,
 } from '@/data/firstClassHonours';
@@ -30,11 +29,9 @@ type Lang = 'en' | 'zh-TW' | 'zh-CN';
 // Categorical palette — the most recent cohort takes the brand red (emphasis),
 // earlier cohorts take cooler, harmonious hues. Index 0 = latest year.
 const PALETTE = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899'];
-const AVG_LINE = '#6366f1'; // indigo-500 — the university-average reference line
 
 const YEARS_ASC = [...HONOURS_YEARS].sort((a, b) => a - b);
 const LATEST_YEAR = YEARS_ASC[YEARS_ASC.length - 1];
-const PREV_YEAR = YEARS_ASC[YEARS_ASC.length - 2];
 
 /** Colour for a cohort: newest year → PALETTE[0], next → PALETTE[1], … */
 const colorForYear = (year: number) => {
@@ -160,7 +157,12 @@ export function FirstClassHonoursSection() {
     { key: 'total', label: t('gpa.honStats.metricTotal') },
   ];
 
-  const avgValue = isRate ? HONOURS_SUMMARY[sortYear]?.pct : null;
+  // One university-average line per selected cohort (rate mode only).
+  const avgLines = isRate
+    ? activeYears
+        .map((y) => ({ year: y, value: HONOURS_SUMMARY[y]?.pct }))
+        .filter((a): a is { year: number; value: number } => a.value != null)
+    : [];
 
   return (
     <div className="mt-8">
@@ -171,37 +173,32 @@ export function FirstClassHonoursSection() {
         <p className="text-xs text-muted-foreground">{t('gpa.honStats.subtitle')}</p>
       </div>
 
-      {/* University-wide summary (latest cohort, with year-over-year change) */}
+      {/* University-wide summary (latest cohort) */}
       <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         <SummaryStat
           icon={<Award className="h-4 w-4" />}
           label={t('gpa.honStats.summaryRate')}
           value={pct(HONOURS_SUMMARY[LATEST_YEAR]?.pct)}
-          delta={<Delta cur={HONOURS_SUMMARY[LATEST_YEAR]?.pct} prev={HONOURS_SUMMARY[PREV_YEAR]?.pct} kind="pp" />}
-          extra={<RateSparkline />}
         />
         <SummaryStat
           icon={<Medal className="h-4 w-4" />}
           label={t('gpa.honStats.summaryFirst')}
           value={String(HONOURS_SUMMARY[LATEST_YEAR]?.first ?? '—')}
-          delta={<Delta cur={HONOURS_SUMMARY[LATEST_YEAR]?.first} prev={HONOURS_SUMMARY[PREV_YEAR]?.first} kind="abs" />}
         />
         <SummaryStat
           icon={<GraduationCap className="h-4 w-4" />}
           label={t('gpa.honStats.summaryGrads')}
           value={String(HONOURS_SUMMARY[LATEST_YEAR]?.total ?? '—')}
-          delta={<Delta cur={HONOURS_SUMMARY[LATEST_YEAR]?.total} prev={HONOURS_SUMMARY[PREV_YEAR]?.total} kind="abs" />}
         />
       </div>
 
       <Card>
-        <CardHeader className="gap-3 px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle className="text-base">{t('gpa.honStats.chartTitle')}</CardTitle>
+        <CardHeader className="gap-2 px-4 py-3">
+          <CardTitle className="text-base">{t('gpa.honStats.chartTitle')}</CardTitle>
+          {/* Metric + cohort selection + sort, all on one row */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <Segmented options={metricButtons} value={metric} onChange={setMetric} />
-          </div>
-          {/* Year selection + sort */}
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <span className="h-5 w-px bg-border" aria-hidden />
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
               {YEARS_ASC.map((y) => {
@@ -227,7 +224,7 @@ export function FirstClassHonoursSection() {
             <button
               type="button"
               onClick={() => setSort((s) => (s === 'value' ? 'name' : 'value'))}
-              className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="ml-auto flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {sort === 'value' ? <ArrowDownUp className="h-3.5 w-3.5" /> : <ArrowDownAZ className="h-3.5 w-3.5" />}
               {sort === 'value' ? t('gpa.honStats.sortValue', { year: String(sortYear) }) : t('gpa.honStats.sortName')}
@@ -265,9 +262,15 @@ export function FirstClassHonoursSection() {
                   cursor={{ fill: '#94a3b8', fillOpacity: 0.1 }}
                   content={<HonoursTooltip metric={metric} activeYears={activeYears} t={t} />}
                 />
-                {avgValue != null && (
-                  <ReferenceLine x={avgValue} stroke={AVG_LINE} strokeDasharray="5 5" strokeWidth={1.5} />
-                )}
+                {avgLines.map((a) => (
+                  <ReferenceLine
+                    key={`avg-${a.year}`}
+                    x={a.value}
+                    stroke={colorForYear(a.year)}
+                    strokeDasharray="5 5"
+                    strokeWidth={1.5}
+                  />
+                ))}
                 {activeYears.map((y) => (
                   <Bar
                     key={y}
@@ -290,10 +293,17 @@ export function FirstClassHonoursSection() {
             </ResponsiveContainer>
           </div>
 
-          {avgValue != null && (
-            <div className="mt-1 flex items-center gap-1.5 px-2 text-[11px] text-muted-foreground">
-              <span className="inline-block h-0 w-5 border-t-2 border-dashed" style={{ borderColor: AVG_LINE }} />
-              {t('gpa.honStats.uniAvg', { year: String(sortYear), value: pct(avgValue) })}
+          {avgLines.length > 0 && (
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 px-2 text-[11px] text-muted-foreground">
+              {avgLines.map((a) => (
+                <span key={a.year} className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block h-0 w-5 border-t-2 border-dashed"
+                    style={{ borderColor: colorForYear(a.year) }}
+                  />
+                  {t('gpa.honStats.uniAvg', { year: String(a.year), value: pct(a.value) })}
+                </span>
+              ))}
             </div>
           )}
 
@@ -401,63 +411,7 @@ function Segmented<T extends string>({
   );
 }
 
-function Delta({ cur, prev, kind }: { cur?: number | null; prev?: number | null; kind: 'pp' | 'abs' }) {
-  if (cur == null || prev == null) return null;
-  const diff = cur - prev;
-  if (Math.abs(diff) < 1e-9) return <span className="text-xs text-muted-foreground">±0</span>;
-  const up = diff > 0;
-  const text = kind === 'pp' ? `${Math.abs(diff * 100).toFixed(1)}pp` : String(Math.abs(diff));
-  return (
-    <span className={cn('flex items-center gap-0.5 text-xs font-medium', up ? 'text-emerald-500' : 'text-red-500')}>
-      {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-      {text}
-    </span>
-  );
-}
-
-/** Tiny inline sparkline of the university first-class rate across history. */
-function RateSparkline() {
-  const pts = HONOURS_RATE_HISTORY;
-  if (pts.length < 2) return null;
-  const w = 72;
-  const h = 22;
-  const max = Math.max(...pts.map((d) => d.pct));
-  const min = Math.min(...pts.map((d) => d.pct));
-  const span = max - min || 1;
-  const coords = pts.map((d, i) => {
-    const x = (i / (pts.length - 1)) * (w - 4) + 2;
-    const y = h - 2 - ((d.pct - min) / span) * (h - 6);
-    return { x, y, d };
-  });
-  const path = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-  return (
-    <span className="flex items-center gap-1.5" title={pts.map((d) => `${d.year}: ${(d.pct * 100).toFixed(1)}%`).join('  ')}>
-      <svg width={w} height={h} className="overflow-visible">
-        <path d={path} fill="none" stroke="#ef4444" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-        {coords.map((c, i) => (
-          <circle key={i} cx={c.x} cy={c.y} r={i === coords.length - 1 ? 2.4 : 1.6} fill="#ef4444" />
-        ))}
-      </svg>
-      <span className="text-[10px] tabular-nums text-muted-foreground">
-        {pts[0].year}–{pts[pts.length - 1].year}
-      </span>
-    </span>
-  );
-}
-
-function SummaryStat({
-  icon,
-  label,
-  value,
-  delta,
-  extra,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  delta?: ReactNode;
-  extra?: ReactNode;
-}) {
+function SummaryStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <Card>
       <CardContent className="px-3 py-2.5">
@@ -468,9 +422,7 @@ function SummaryStat({
         <div className="mt-1 flex items-baseline gap-2">
           <span className="text-2xl font-bold tabular-nums">{value}</span>
           <span className="text-xs text-muted-foreground">{LATEST_YEAR}</span>
-          {delta}
         </div>
-        {extra && <div className="mt-1">{extra}</div>}
       </CardContent>
     </Card>
   );

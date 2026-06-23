@@ -742,7 +742,7 @@ export default {
   'gpa.honStats.summaryRate': '全校一級榮譽比例',
   'gpa.honStats.summaryFirst': '一級榮譽畢業生',
   'gpa.honStats.summaryGrads': '畢業生總數',
-  'gpa.honStats.chartTitle': '各課程一級榮譽成績',
+  'gpa.honStats.chartTitle': '各本科生課程一級榮譽統計',
   'gpa.honStats.metricRate': '比例',
   'gpa.honStats.metricFirst': '一級榮譽',
   'gpa.honStats.metricTotal': '畢業生',

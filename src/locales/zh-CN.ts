@@ -812,7 +812,7 @@ export default {
   'gpa.honStats.summaryRate': '全校一级荣誉比例',
   'gpa.honStats.summaryFirst': '一级荣誉毕业生',
   'gpa.honStats.summaryGrads': '毕业生总数',
-  'gpa.honStats.chartTitle': '各课程一级荣誉成绩',
+  'gpa.honStats.chartTitle': '各本科生课程一级荣誉统计',
   'gpa.honStats.metricRate': '比例',
   'gpa.honStats.metricFirst': '一级荣誉',
   'gpa.honStats.metricTotal': '毕业生',

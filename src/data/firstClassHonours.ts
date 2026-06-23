@@ -302,13 +302,6 @@ export const HONOURS_SUMMARY: Record<number, { total: number; first: number; pct
   2025: { total: 900, first: 119, pct: 0.132222 },
 };
 
-/** University-wide first-class rate over time (includes a historical 2013 baseline). */
-export const HONOURS_RATE_HISTORY: { year: number; pct: number }[] = [
-  { year: 2013, pct: 0.078 },
-  { year: 2024, pct: 0.141558 },
-  { year: 2025, pct: 0.132222 },
-];
-
 /** Source document for each cohort, shown as a citation. */
 export const HONOURS_SOURCES: Record<number, { en: string; tc: string; sc: string }> = {
   2024: { en: 'Graduate List 2025', tc: '2024年畢業生名單', sc: '2024年毕业生名单' },
