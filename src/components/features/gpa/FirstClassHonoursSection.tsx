@@ -392,9 +392,12 @@ function Segmented<T extends string>({
           aria-pressed={value === o.key}
           className={cn(
             'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+            // Note: --accent == --muted in this theme, so a hover:bg-accent would
+            // be invisible. Use a primary (brand red) tint instead — clearly
+            // visible and on-brand in both light and dark themes.
             value === o.key
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+              ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+              : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-foreground',
           )}
         >
           {o.label}
