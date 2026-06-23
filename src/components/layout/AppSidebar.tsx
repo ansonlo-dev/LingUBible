@@ -307,9 +307,9 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
               </Link>
             )}
             {!shouldShowText && (
-              <Link 
-                to="/" 
-                className="flex items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
+              <Link
+                to="/"
+                className="flex w-full items-center justify-center px-3 py-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"
                 onClick={handleNavClick(true)}
               >
                 <BookOpen className="h-6 w-6" strokeWidth={2.5} />
@@ -345,7 +345,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <a
                             href={item.href}
                             className={`
-                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              flex items-center ${!shouldShowText ? 'justify-center' : 'gap-2.5'} px-3 ${itemPy} rounded-md text-base font-bold transition-colors
                               ${item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -361,7 +361,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                           <Link
                             to={item.href}
                             className={`
-                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                              flex items-center ${!shouldShowText ? 'justify-center' : 'gap-2.5'} px-3 ${itemPy} rounded-md text-base font-bold transition-colors
                               ${item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -415,7 +415,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                       <Link
                         to={item.href}
                         className={`
-                          flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
+                          flex items-center ${!shouldShowText ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-md text-base font-bold transition-colors
                           ${item.current 
                             ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
                             : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
