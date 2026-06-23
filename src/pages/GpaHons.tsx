@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
@@ -397,6 +397,20 @@ const GpaHons = () => {
       },
       { replace: true },
     );
+
+  // On tab switch, jump to the top of the newly shown sub-view. Done after the
+  // DOM swaps (and synchronously before paint, so there's no visible flash) with
+  // an instant scroll — a smooth scroll would be stranded mid-animation when the
+  // long calculator view collapses and the page height changes underneath it.
+  // `html { scroll-behavior: smooth }` is overridden by passing behavior: 'auto'.
+  const didMountRef = useRef(false);
+  useLayoutEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return; // don't yank an initial / deep-linked load
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [view]);
 
   const toggleYear = (year: number) =>
     setCollapsedYears((prev) => {
@@ -1198,12 +1212,10 @@ function SectionTabs<T extends string>({
     };
   }, []);
 
+  // Scroll-to-top on switch is handled by the parent (after the view actually
+  // changes) so it isn't disrupted by the page-height change.
   const select = (id: T) => {
-    if (id !== value) {
-      onChange(id);
-      // Land at the top of the newly selected sub-view.
-      window.scrollTo({ top: 0 });
-    }
+    if (id !== value) onChange(id);
   };
 
   return (
