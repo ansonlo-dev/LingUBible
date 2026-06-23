@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -139,8 +139,31 @@ export function FirstClassHonoursSection() {
   // Compact rows; height scales with how many cohorts are shown.
   const perRow = activeYears.length * 12 + 12;
   const chartHeight = rows.length * perRow + 36;
-  const yAxisWidth = lang === 'en' ? 176 : 132;
-  const maxLabelChars = lang === 'en' ? 26 : 11;
+
+  // The programme-name axis must fit inside the chart on every width — on a
+  // narrow phone a fixed 176px axis lets the (truncated) names spill past the
+  // card's left edge. Track the real chart width and size the axis + truncation
+  // length to whatever space is actually available.
+  const chartWrapRef = useRef<HTMLDivElement>(null);
+  const [containerW, setContainerW] = useState(0);
+  useEffect(() => {
+    const el = chartWrapRef.current;
+    if (!el) return;
+    const update = () => setContainerW(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const maxYAxis = lang === 'en' ? 176 : 132;
+  // Cap to maxYAxis on desktop; on narrow screens take ~42% of the width so the
+  // bars still get room. Fall back to the cap until the first measurement.
+  const yAxisWidth = containerW > 0 ? Math.round(Math.min(maxYAxis, Math.max(84, containerW * 0.42))) : maxYAxis;
+  // Approx. glyph width at fontSize 11 (CJK glyphs are ~2× a Latin char). Derive
+  // the truncation length from the axis pixel budget so labels never overflow.
+  const charPx = lang === 'en' ? 6.2 : 12.5;
+  const maxLabelChars = Math.max(5, Math.floor((yAxisWidth - 6) / charPx));
 
   const renderYTick = ({ x, y, payload }: any) => {
     const label: string = payload.value;
@@ -245,7 +268,7 @@ export function FirstClassHonoursSection() {
           </div>
         </CardHeader>
         <CardContent className="px-2 pb-3 sm:px-3">
-          <div style={{ height: chartHeight }} className="w-full">
+          <div ref={chartWrapRef} style={{ height: chartHeight }} className="w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={rows}
