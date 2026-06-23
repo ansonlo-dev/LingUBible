@@ -59,10 +59,14 @@ export function Combobox({
       <PopoverContent
         className="w-[min(440px,90vw)] p-0 bg-white dark:bg-gray-900"
         align="start"
+        collisionPadding={8}
       >
         <Command className="bg-transparent">
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          {/* Cap the list to the popover's available height (minus the search
+              input) so it never overflows the viewport — notably on mobile
+              landscape, where vertical space is tight. */}
+          <CommandList className="max-h-[min(300px,calc(var(--radix-popover-content-available-height)-3.25rem))]">
             <CommandEmpty>{emptyText}</CommandEmpty>
             {value && (
               <CommandItem
