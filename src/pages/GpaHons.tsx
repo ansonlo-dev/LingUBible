@@ -605,7 +605,7 @@ const GpaHons = () => {
         <SummaryCard icon={<Award className="h-4 w-4" />} label={t('gpa.classification')}>
           {currentClass ? (
             <Badge className={`${HONOURS_BADGE_COLORS[currentClass]} text-white`}>
-              {t(`gpa.honours.${currentClass}`)}
+              {t(`gpa.honoursFull.${currentClass}`)}
             </Badge>
           ) : (
             <span className="text-sm text-muted-foreground">{t('gpa.belowHonours')}</span>
