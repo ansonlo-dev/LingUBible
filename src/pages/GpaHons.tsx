@@ -961,7 +961,7 @@ const GpaHons = () => {
                                       updateCourse(term.id, course.id, { grade: v === '__none__' ? '' : v })
                                     }
                                   >
-                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 px-2 sm:w-auto sm:flex-none">
+                                    <SelectTrigger className="h-9 w-16 min-w-0 shrink-0 px-2 sm:w-full sm:flex-none">
                                       <span className={cn('truncate', !course.grade && 'text-muted-foreground')}>
                                         {course.grade || t('gpa.gradePlaceholder')}
                                       </span>
