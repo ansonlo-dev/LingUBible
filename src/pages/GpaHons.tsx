@@ -60,6 +60,8 @@ import {
   Info,
   Undo2,
   Redo2,
+  Calculator,
+  Trophy,
 } from 'lucide-react';
 
 // ----------------------------------------------------------------------------
@@ -598,6 +600,20 @@ const GpaHons = () => {
         </span>
       </div>
 
+      {/* In-page navigation between the two sections */}
+      <SectionNav
+        items={[
+          { id: 'gpa-calculator', label: t('gpaHons.navCalc'), icon: <Calculator className="h-3.5 w-3.5" /> },
+          { id: 'honours-stats', label: t('gpaHons.navStats'), icon: <Trophy className="h-3.5 w-3.5" /> },
+        ]}
+      />
+
+      {/* Section 1 — GPA calculator & planner */}
+      <section id="gpa-calculator" style={{ scrollMarginTop: 'calc(var(--header-height) + 3.5rem)' }}>
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+          <Calculator className="h-5 w-5 text-primary" /> {t('gpaHons.sectionCalc')}
+        </h2>
+
       {/* Summary */}
       <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         <SummaryCard icon={<GraduationCap className="h-4 w-4" />} label={t('gpa.cumulativeGpa')}>
@@ -1029,10 +1045,13 @@ const GpaHons = () => {
         <Plus className="mr-1.5 h-4 w-4" /> {t('gpa.addYear')}
       </Button>
 
-      {/* University first-class honours statistics (static reference data) */}
-      <FirstClassHonoursSection />
+        <p className="mt-5 text-center text-xs text-muted-foreground">{t('gpa.disclaimer')}</p>
+      </section>
 
-      <p className="mt-5 text-center text-xs text-muted-foreground">{t('gpa.disclaimer')}</p>
+      {/* Section 2 — University first-class honours statistics (static reference data) */}
+      <section id="honours-stats" style={{ scrollMarginTop: 'calc(var(--header-height) + 3.5rem)' }}>
+        <FirstClassHonoursSection />
+      </section>
     </div>
   );
 };
@@ -1103,6 +1122,67 @@ function AwardLegend({ color, label, info }: { color: string; label: string; inf
         </PopoverContent>
       </Popover>
     </span>
+  );
+}
+
+/**
+ * Sticky in-page navigation that scrolls between the page's sections and
+ * highlights whichever one is currently in view (so the second section is
+ * always discoverable without scrolling to the bottom).
+ */
+function SectionNav({ items }: { items: { id: string; label: string; icon: ReactNode }[] }) {
+  const [active, setActive] = useState(items[0]?.id);
+  const ids = items.map((i) => i.id).join(',');
+
+  useEffect(() => {
+    const els = items
+      .map((it) => document.getElementById(it.id))
+      .filter((el): el is HTMLElement => !!el);
+    if (els.length === 0) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]) setActive(visible[0].target.id);
+      },
+      { rootMargin: '-25% 0px -55% 0px', threshold: [0, 0.2, 0.5, 1] },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ids]);
+
+  const go = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActive(id);
+  };
+
+  return (
+    <div
+      className="sticky z-30 -mx-3 mb-4 border-b bg-background/85 px-3 py-2 backdrop-blur lg:-mx-4 lg:px-4"
+      style={{ top: 'var(--header-height)' }}
+    >
+      <div className="flex gap-1.5">
+        {items.map((it) => (
+          <button
+            key={it.id}
+            type="button"
+            onClick={() => go(it.id)}
+            aria-current={active === it.id}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:text-sm',
+              active === it.id
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-muted/70 text-muted-foreground hover:bg-accent hover:text-foreground',
+            )}
+          >
+            {it.icon}
+            {it.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

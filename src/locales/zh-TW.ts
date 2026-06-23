@@ -672,6 +672,9 @@ export default {
   'nav.gpaHons': 'GPA及Hons',
   'gpaHons.title': 'GPA及Hons',
   'gpaHons.subtitle': '計算你的 GPA,並估算榮譽等級',
+  'gpaHons.sectionCalc': 'GPA 計算機',
+  'gpaHons.navCalc': '計算機',
+  'gpaHons.navStats': '榮譽統計',
   // GPA及Hons 規劃工具
   'gpa.cumulativeGpa': '累積 GPA',
   'gpa.termGpa': '學期 GPA',
@@ -738,7 +741,6 @@ export default {
   'gpa.addCourse': '新增課程',
   'gpa.disclaimer': '僅供參考。學分取自課程目錄,請務必對照正式成績單及你所屬課程的榮譽等級、院長/校長榮譽榜及學術規例核實。',
   'gpa.honStats.title': '一級榮譽畢業統計',
-  'gpa.honStats.subtitle': '按課程及屆別,看嶺南有多少學生以一級榮譽畢業。',
   'gpa.honStats.summaryRate': '全校一級榮譽比例',
   'gpa.honStats.summaryFirst': '一級榮譽畢業生',
   'gpa.honStats.summaryGrads': '畢業生總數',

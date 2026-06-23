@@ -32,6 +32,7 @@ const PALETTE = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899
 
 const YEARS_ASC = [...HONOURS_YEARS].sort((a, b) => a - b);
 const LATEST_YEAR = YEARS_ASC[YEARS_ASC.length - 1];
+const PREV_YEAR = YEARS_ASC[YEARS_ASC.length - 2];
 
 /** Colour for a cohort: newest year → PALETTE[0], next → PALETTE[1], … */
 const colorForYear = (year: number) => {
@@ -166,12 +167,9 @@ export function FirstClassHonoursSection() {
 
   return (
     <div className="mt-8">
-      <div className="mb-3 flex flex-col gap-0.5">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
-          <Trophy className="h-5 w-5 text-red-500" /> {t('gpa.honStats.title')}
-        </h2>
-        <p className="text-xs text-muted-foreground">{t('gpa.honStats.subtitle')}</p>
-      </div>
+      <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+        <Trophy className="h-5 w-5 text-red-500" /> {t('gpa.honStats.title')}
+      </h2>
 
       {/* University-wide summary (latest cohort) */}
       <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -179,16 +177,19 @@ export function FirstClassHonoursSection() {
           icon={<Award className="h-4 w-4" />}
           label={t('gpa.honStats.summaryRate')}
           value={pct(HONOURS_SUMMARY[LATEST_YEAR]?.pct)}
+          prev={pct(HONOURS_SUMMARY[PREV_YEAR]?.pct)}
         />
         <SummaryStat
           icon={<Medal className="h-4 w-4" />}
           label={t('gpa.honStats.summaryFirst')}
           value={String(HONOURS_SUMMARY[LATEST_YEAR]?.first ?? '—')}
+          prev={String(HONOURS_SUMMARY[PREV_YEAR]?.first ?? '—')}
         />
         <SummaryStat
           icon={<GraduationCap className="h-4 w-4" />}
           label={t('gpa.honStats.summaryGrads')}
           value={String(HONOURS_SUMMARY[LATEST_YEAR]?.total ?? '—')}
+          prev={String(HONOURS_SUMMARY[PREV_YEAR]?.total ?? '—')}
         />
       </div>
 
@@ -313,7 +314,10 @@ export function FirstClassHonoursSection() {
             {activeYears.map((y) => {
               const src = HONOURS_SOURCES[y];
               if (!src) return null;
+              // English UI shows only the English source title; zh UIs append the
+              // localized graduate-list name.
               const localized = lang === 'zh-CN' ? src.sc : src.tc;
+              const label = lang === 'en' ? src.en : `${src.en} · ${localized}`;
               return (
                 <p key={y} className="flex items-center gap-2 text-[11px] text-muted-foreground">
                   <span
@@ -321,7 +325,7 @@ export function FirstClassHonoursSection() {
                     style={{ backgroundColor: colorForYear(y) }}
                   />
                   <span className="tabular-nums font-medium text-foreground/80">{y}</span>
-                  <span>· {src.en} · {localized}</span>
+                  <span>· {label}</span>
                 </p>
               );
             })}
@@ -363,7 +367,7 @@ function HonoursTooltip({ active, payload, metric, activeYears, t }: any) {
                   )}
                 >
                   {diff > 0 ? '▲' : '▼'}
-                  {isRate ? `${Math.abs(diff * 100).toFixed(1)}pp` : Math.abs(diff)}
+                  {isRate ? `${Math.abs(diff * 100).toFixed(1)}%` : Math.abs(diff)}
                 </span>
               )}
               {s && (
@@ -411,7 +415,17 @@ function Segmented<T extends string>({
   );
 }
 
-function SummaryStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function SummaryStat({
+  icon,
+  label,
+  value,
+  prev,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  prev?: string;
+}) {
   return (
     <Card>
       <CardContent className="px-3 py-2.5">
@@ -422,6 +436,11 @@ function SummaryStat({ icon, label, value }: { icon: ReactNode; label: string; v
         <div className="mt-1 flex items-baseline gap-2">
           <span className="text-2xl font-bold tabular-nums">{value}</span>
           <span className="text-xs text-muted-foreground">{LATEST_YEAR}</span>
+          {prev != null && (
+            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+              {PREV_YEAR}: <span className="font-medium text-foreground/70">{prev}</span>
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

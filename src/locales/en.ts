@@ -734,6 +734,9 @@ export default {
   'nav.gpaHons': 'GPA & Hons',
   'gpaHons.title': 'GPA & Hons',
   'gpaHons.subtitle': 'Calculate your GPA and estimate your honours classification.',
+  'gpaHons.sectionCalc': 'GPA Calculator',
+  'gpaHons.navCalc': 'Calculator',
+  'gpaHons.navStats': 'Honours Stats',
   // GPA & Hons planner
   'gpa.cumulativeGpa': 'Cumulative GPA',
   'gpa.termGpa': 'Term GPA',
@@ -800,7 +803,6 @@ export default {
   'gpa.addCourse': 'Add course',
   'gpa.disclaimer': 'For reference only. Credits are looked up from the course catalog; always verify against your official transcript and your programme’s honours, Dean’s/President’s List and academic regulations.',
   'gpa.honStats.title': 'First-Class Honours Statistics',
-  'gpa.honStats.subtitle': 'How many Lingnan students graduate with First Class Honours, by programme and cohort.',
   'gpa.honStats.summaryRate': 'University first-class rate',
   'gpa.honStats.summaryFirst': 'First-class graduates',
   'gpa.honStats.summaryGrads': 'Total graduates',

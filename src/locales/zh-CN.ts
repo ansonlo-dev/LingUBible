@@ -742,6 +742,9 @@ export default {
   'nav.gpaHons': 'GPA及Hons',
   'gpaHons.title': 'GPA及Hons',
   'gpaHons.subtitle': '计算你的 GPA,并估算荣誉等级',
+  'gpaHons.sectionCalc': 'GPA 计算器',
+  'gpaHons.navCalc': '计算器',
+  'gpaHons.navStats': '荣誉统计',
   // GPA及Hons 规划工具
   'gpa.cumulativeGpa': '累积 GPA',
   'gpa.termGpa': '学期 GPA',
@@ -808,7 +811,6 @@ export default {
   'gpa.addCourse': '新增课程',
   'gpa.disclaimer': '仅供参考。学分取自课程目录,请务必对照正式成绩单及你所属课程的荣誉等级、院长/校长荣誉榜及学术规例核实。',
   'gpa.honStats.title': '一级荣誉毕业统计',
-  'gpa.honStats.subtitle': '按课程及届别,看岭南有多少学生以一级荣誉毕业。',
   'gpa.honStats.summaryRate': '全校一级荣誉比例',
   'gpa.honStats.summaryFirst': '一级荣誉毕业生',
   'gpa.honStats.summaryGrads': '毕业生总数',
