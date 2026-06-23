@@ -30,7 +30,6 @@ type Lang = 'en' | 'zh-TW' | 'zh-CN';
 const PALETTE = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899'];
 
 const YEARS_ASC = [...HONOURS_YEARS].sort((a, b) => a - b);
-const YEARS_DESC = [...YEARS_ASC].reverse(); // latest first (for the cohort-year selector)
 const LATEST_YEAR = YEARS_ASC[YEARS_ASC.length - 1];
 
 /** Colour for a cohort: newest year → PALETTE[0], next → PALETTE[1], … */
@@ -175,9 +174,9 @@ export function FirstClassHonoursSection() {
       {/* University-wide summary for the selected cohort */}
       <div className="mb-4">
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">{t('gpa.honStats.cohortYear')}</span>
+          <span className="text-sm font-medium text-muted-foreground">{t('gpa.honStats.cohorts')}</span>
           <Segmented
-            options={YEARS_DESC.map((y) => ({ key: String(y), label: String(y) }))}
+            options={YEARS_ASC.map((y) => ({ key: String(y), label: String(y) }))}
             value={String(summaryYear)}
             onChange={(v) => setSummaryYear(Number(v))}
           />
@@ -384,7 +383,7 @@ function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex rounded-lg bg-muted/60 p-0.5">
+    <div className="inline-flex gap-1">
       {options.map((o) => (
         <button
           key={o.key}
@@ -393,7 +392,9 @@ function Segmented<T extends string>({
           aria-pressed={value === o.key}
           className={cn(
             'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-            value === o.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+            value === o.key
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
           )}
         >
           {o.label}
