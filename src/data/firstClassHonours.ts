@@ -44,8 +44,8 @@ export const HONOURS_PROGRAMME_STATS: HonoursProgrammeStat[] = [
   },
   {
     en: "Bachelor of Arts (Honours) in Contemporary English Studies",
-    tc: "當代英語語言文學課程（榮譽）文學士",
-    sc: "当代英语语言文学课程（荣誉）文学士",
+    tc: "當代英語語言文學（榮譽）文學士",
+    sc: "当代英语语言文学（荣誉）文学士",
     years: {
       2024: { total: 29, first: 2, pct: 0.068966 },
       2025: { total: 24, first: 5, pct: 0.208333 },
@@ -143,8 +143,8 @@ export const HONOURS_PROGRAMME_STATS: HonoursProgrammeStat[] = [
   },
   {
     en: "Bachelor of Business Administration (Honours) in Finance",
-    tc: "工商管理（榮譽）學士 - 財務",
-    sc: "工商管理（荣誉）学士 - 财务",
+    tc: "工商管理（榮譽）學士 - 金融",
+    sc: "工商管理（荣誉）学士 - 金融",
     years: {
       2024: { total: 24, first: 6, pct: 0.25 },
       2025: { total: 37, first: 7, pct: 0.189189 },
@@ -233,8 +233,8 @@ export const HONOURS_PROGRAMME_STATS: HonoursProgrammeStat[] = [
   },
   {
     en: "Bachelor of Social Sciences (Honours) in International Economy and Politics",
-    tc: "社會科學（榮譽）學士 - 國際經濟與政治",
-    sc: "社会科学（荣誉）学士 - 国际经济与政治",
+    tc: "社會科學（榮譽）學士 - 國際經濟及政治",
+    sc: "社会科学（荣誉）学士 - 国际经济及政治",
     years: {
       2024: { total: 9, first: 0, pct: 0 },
       2025: { total: 4, first: 1, pct: 0.25 },
@@ -269,8 +269,8 @@ export const HONOURS_PROGRAMME_STATS: HonoursProgrammeStat[] = [
   },
   {
     en: "Bachelor of Social Sciences (Honours) in Social and Public Policy Studies",
-    tc: "社會科學（榮譽）學士 - 社會及公共政策研究",
-    sc: "社会科学（荣誉）学士 - 社会及公共政策研究",
+    tc: "社會科學（榮譽）學士 - 社會與公共政策研究",
+    sc: "社会科学（荣誉）学士 - 社会与公共政策研究",
     years: {
       2024: { total: 27, first: 6, pct: 0.222222 },
       2025: { total: 24, first: 3, pct: 0.125 },
@@ -295,6 +295,66 @@ export const HONOURS_PROGRAMME_STATS: HonoursProgrammeStat[] = [
     },
   },
 ];
+
+/**
+ * Faculty / School grouping. Keys match the `faculty.*` i18n keys so the UI can
+ * label each group via `t('faculty.<key>')`. The faculty assignment follows the
+ * university's published programme-to-faculty classification.
+ */
+export type HonoursFaculty =
+  | 'arts'
+  | 'business'
+  | 'socialSciences'
+  | 'interdisciplinaryStudies'
+  | 'dataScience';
+
+/** Display order for the faculty/school groups. */
+export const HONOURS_FACULTY_ORDER: HonoursFaculty[] = [
+  'arts',
+  'business',
+  'socialSciences',
+  'interdisciplinaryStudies',
+  'dataScience',
+];
+
+/** Programme (`en` name) → faculty/school it belongs to. */
+export const PROGRAMME_FACULTY: Record<string, HonoursFaculty> = {
+  // Faculty of Arts
+  "Bachelor of Arts (Honours) in Animation and Digital Arts": 'arts',
+  "Bachelor of Arts (Honours) in Chinese": 'arts',
+  "Bachelor of Arts (Honours) in Contemporary English Studies": 'arts',
+  "Bachelor of Arts (Honours) in Creative Media Industries": 'arts',
+  "Bachelor of Arts (Honours) in Cultural Studies": 'arts',
+  "Bachelor of Arts (Honours) in Global Liberal Arts": 'arts',
+  "Bachelor of Arts (Honours) in History": 'arts',
+  "Bachelor of Arts (Honours) in Philosophy": 'arts',
+  "Bachelor of Arts (Honours) in Translation": 'arts',
+  "Bachelor of Arts (Honours) in Visual Studies": 'arts',
+  // Faculty of Business
+  "Bachelor of Business Administration (Honours) in Accounting": 'business',
+  "Bachelor of Business Administration (Honours) in e-Business": 'business',
+  "Bachelor of Business Administration (Honours) in Finance": 'business',
+  "Bachelor of Business Administration (Honours) in Human Resource Management": 'business',
+  "Bachelor of Business Administration (Honours) in Marketing": 'business',
+  "Bachelor of Business Administration (Honours) in Risk and Insurance Management": 'business',
+  // Faculty of Social Sciences
+  "Bachelor of Business Administration (Honours) in Digital Business": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Business Psychology": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Economics": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Government and International Affairs": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Health and Social Services Management": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in International Economy and Politics": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Political Science": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Psychology": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Social and Public Policy Studies": 'socialSciences',
+  "Bachelor of Social Sciences (Honours) in Sociology": 'socialSciences',
+  // Wu Jieh Yee School of Interdisciplinary Studies
+  "Bachelor of Liberal Arts (Honours) in Global Development and Sustainability": 'interdisciplinaryStudies',
+  "Bachelor of Social Sciences (Honours) in Public Management and Smart Governance": 'interdisciplinaryStudies',
+  "Bachelor of Social Sciences (Honours) in Sports Coaching and Event Management": 'interdisciplinaryStudies',
+  // School of Data Science
+  "Bachelor of Science (Honours) in Data Science": 'dataScience',
+};
 
 /** University-wide totals per cohort. */
 export const HONOURS_SUMMARY: Record<number, { total: number; first: number; pct: number }> = {

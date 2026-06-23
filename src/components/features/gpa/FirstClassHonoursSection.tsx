@@ -18,11 +18,15 @@ import {
   HONOURS_PROGRAMME_STATS,
   HONOURS_SUMMARY,
   HONOURS_YEARS,
+  HONOURS_FACULTY_ORDER,
+  PROGRAMME_FACULTY,
   type HonoursProgrammeStat,
+  type YearStat,
 } from '@/data/firstClassHonours';
 
 type Metric = 'rate' | 'first' | 'total';
 type SortMode = 'value' | 'name';
+type GroupBy = 'programme' | 'faculty';
 type Lang = 'en' | 'zh-TW' | 'zh-CN';
 
 // Categorical palette — the most recent cohort takes the brand red (emphasis),
@@ -89,8 +93,8 @@ const fullName = (p: HonoursProgrammeStat, lang: Lang) =>
 
 const pct = (v: number | null | undefined) => (v == null ? '—' : `${(v * 100).toFixed(1)}%`);
 
-const valueOf = (p: HonoursProgrammeStat, year: number, metric: Metric): number | null => {
-  const s = p.years[year];
+const valueOf = (years: Record<number, YearStat>, year: number, metric: Metric): number | null => {
+  const s = years[year];
   if (!s) return null;
   return metric === 'rate' ? s.pct : metric === 'first' ? s.first : s.total;
 };
@@ -126,8 +130,8 @@ function wrapLabel(text: string, maxChars: number, cjk: boolean): string[] {
 interface Row {
   name: string;
   full: string;
-  p: HonoursProgrammeStat;
-  [k: `y${number}`]: number | null | string | HonoursProgrammeStat;
+  years: Record<number, YearStat>;
+  [k: `y${number}`]: number | null | string | Record<number, YearStat>;
 }
 
 export function FirstClassHonoursSection({
@@ -148,6 +152,7 @@ export function FirstClassHonoursSection({
   const isTouch = useIsTouch();
   const [metric, setMetric] = useState<Metric>('rate');
   const [sort, setSort] = useState<SortMode>('value');
+  const [groupBy, setGroupBy] = useState<GroupBy>('programme');
   const [selectedYears, setSelectedYears] = useState<Set<number>>(() => new Set(YEARS_ASC));
   // Cohort year shown in the university-wide summary cards (controlled by parent;
   // its picker lives in the page's sticky tab row). Falls back to the latest.
@@ -173,10 +178,46 @@ export function FirstClassHonoursSection({
 
   const isRate = metric === 'rate';
 
+  // Source entries for the chart: either each programme, or programmes summed
+  // into their faculty/school. Faculty figures are aggregated per cohort (total
+  // and first-class summed; rate recomputed as first/total).
+  const entries = useMemo<{ name: string; full: string; years: Record<number, YearStat> }[]>(() => {
+    if (groupBy === 'faculty') {
+      return HONOURS_FACULTY_ORDER.map((fac) => {
+        const members = HONOURS_PROGRAMME_STATS.filter((p) => PROGRAMME_FACULTY[p.en] === fac);
+        const years: Record<number, YearStat> = {};
+        for (const y of YEARS_ASC) {
+          let total = 0;
+          let first = 0;
+          let hasData = false;
+          for (const m of members) {
+            const s = m.years[y];
+            if (!s) continue;
+            if (s.total != null) {
+              total += s.total;
+              hasData = true;
+            }
+            if (s.first != null) first += s.first;
+          }
+          years[y] = hasData
+            ? { total, first, pct: total > 0 ? first / total : null }
+            : { total: null, first: null, pct: null };
+        }
+        const label = t(`faculty.${fac}`);
+        return { name: label, full: label, years };
+      });
+    }
+    return HONOURS_PROGRAMME_STATS.map((p) => ({
+      name: shortName(p, lang),
+      full: fullName(p, lang),
+      years: p.years,
+    }));
+  }, [groupBy, lang, t]);
+
   const rows = useMemo<Row[]>(() => {
-    const built = HONOURS_PROGRAMME_STATS.map((p) => {
-      const row: Row = { name: shortName(p, lang), full: fullName(p, lang), p };
-      for (const y of activeYears) row[`y${y}`] = valueOf(p, y, metric);
+    const built = entries.map((e) => {
+      const row: Row = { name: e.name, full: e.full, years: e.years };
+      for (const y of activeYears) row[`y${y}`] = valueOf(e.years, y, metric);
       return row;
     });
     if (sort === 'name') {
@@ -185,7 +226,7 @@ export function FirstClassHonoursSection({
       built.sort((a, b) => ((b[`y${sortYear}`] as number | null) ?? -1) - ((a[`y${sortYear}`] as number | null) ?? -1));
     }
     return built;
-  }, [metric, lang, sort, activeYears, sortYear]);
+  }, [entries, metric, lang, sort, activeYears, sortYear]);
 
   // The programme-name axis must fit inside the chart on every width — on a
   // narrow phone a fixed 176px axis lets the (truncated) names spill past the
@@ -251,6 +292,10 @@ export function FirstClassHonoursSection({
     { key: 'first', label: t('gpa.honStats.metricFirst') },
     { key: 'total', label: t('gpa.honStats.metricTotal') },
   ];
+  const groupButtons: { key: GroupBy; label: string }[] = [
+    { key: 'programme', label: t('gpa.honStats.groupProgramme') },
+    { key: 'faculty', label: t('gpa.honStats.groupFaculty') },
+  ];
 
   // One university-average line per selected cohort (rate mode only).
   const avgLines = isRate
@@ -288,8 +333,10 @@ export function FirstClassHonoursSection({
             <CardTitle className="text-base">{t('gpa.honStats.chartTitle')}</CardTitle>
             <span className="shrink-0 text-right text-xs text-muted-foreground">{t('gpa.honStats.sources')}</span>
           </div>
-          {/* Metric + cohort selection + sort, all on one row */}
+          {/* Group-by + metric + cohort selection + sort, all on one row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <Segmented options={groupButtons} value={groupBy} onChange={setGroupBy} />
+            <span className="h-5 w-px bg-border" aria-hidden />
             <Segmented options={metricButtons} value={metric} onChange={setMetric} />
             <span className="h-5 w-px bg-border" aria-hidden />
             <div className="flex flex-wrap items-center gap-1.5">
@@ -419,7 +466,7 @@ export function FirstClassHonoursSection({
 function HonoursTooltip({ active, payload, metric, activeYears, t, maxWidth }: any) {
   if (!active || !payload || payload.length === 0) return null;
   const row: Row = payload[0].payload;
-  const p = row.p;
+  const years = row.years;
   const isRate = metric === 'rate';
   return (
     <div
@@ -429,10 +476,10 @@ function HonoursTooltip({ active, payload, metric, activeYears, t, maxWidth }: a
       <div className="mb-1.5 font-semibold leading-snug">{row.full}</div>
       <div className="space-y-1">
         {activeYears.map((y: number, i: number) => {
-          const s = p.years[y];
-          const val = valueOf(p, y, metric);
+          const s = years[y];
+          const val = valueOf(years, y, metric);
           const prevY = activeYears[i - 1];
-          const prevVal = prevY != null ? valueOf(p, prevY, metric) : null;
+          const prevVal = prevY != null ? valueOf(years, prevY, metric) : null;
           const diff = val != null && prevVal != null ? val - prevVal : null;
           return (
             <div key={y} className="flex items-center gap-2">

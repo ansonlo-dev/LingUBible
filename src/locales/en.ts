@@ -811,6 +811,8 @@ export default {
   'gpa.honStats.metricFirst': 'First-class',
   'gpa.honStats.metricTotal': 'Graduates',
   'gpa.honStats.cohorts': 'Cohorts',
+  'gpa.honStats.groupProgramme': 'Programme',
+  'gpa.honStats.groupFaculty': 'Faculty / School',
   'gpa.honStats.uniAvg': '{year} university average ({value})',
   'gpa.honStats.sortValue': 'Sort: {year}',
   'gpa.honStats.sortName': 'Sort: A–Z',
