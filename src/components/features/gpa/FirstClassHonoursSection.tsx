@@ -165,6 +165,12 @@ export function FirstClassHonoursSection() {
   const charPx = lang === 'en' ? 6.2 : 12.5;
   const maxLabelChars = Math.max(5, Math.floor((yAxisWidth - 6) / charPx));
 
+  // Cap the hover tooltip to the space actually available to the right of the
+  // y-axis. Otherwise a fixed-width box gets clamped to the plot's left edge by
+  // recharts and overflows the right of the screen on a narrow phone.
+  const tooltipMaxW =
+    containerW > 0 ? Math.max(150, Math.min(280, containerW - yAxisWidth - 12)) : 280;
+
   const renderYTick = ({ x, y, payload }: any) => {
     const label: string = payload.value;
     const shown = label.length > maxLabelChars ? `${label.slice(0, maxLabelChars - 1)}…` : label;
@@ -296,7 +302,8 @@ export function FirstClassHonoursSection() {
                 />
                 <Tooltip
                   cursor={{ fill: '#94a3b8', fillOpacity: 0.1 }}
-                  content={<HonoursTooltip metric={metric} activeYears={activeYears} t={t} />}
+                  allowEscapeViewBox={{ x: false, y: false }}
+                  content={<HonoursTooltip metric={metric} activeYears={activeYears} t={t} maxWidth={tooltipMaxW} />}
                 />
                 {avgLines.map((a) => (
                   <ReferenceLine
@@ -351,13 +358,16 @@ export function FirstClassHonoursSection() {
 // ----------------------------------------------------------------------------
 // Tooltip — shows every active cohort plus year-over-year change.
 // ----------------------------------------------------------------------------
-function HonoursTooltip({ active, payload, metric, activeYears, t }: any) {
+function HonoursTooltip({ active, payload, metric, activeYears, t, maxWidth }: any) {
   if (!active || !payload || payload.length === 0) return null;
   const row: Row = payload[0].payload;
   const p = row.p;
   const isRate = metric === 'rate';
   return (
-    <div className="max-w-[280px] rounded-lg border bg-white px-3 py-2 text-sm shadow-md dark:bg-gray-900">
+    <div
+      className="rounded-lg border bg-white px-3 py-2 text-sm shadow-md dark:bg-gray-900"
+      style={{ maxWidth: maxWidth ?? 280 }}
+    >
       <div className="mb-1.5 font-semibold leading-snug">{row.full}</div>
       <div className="space-y-1">
         {activeYears.map((y: number, i: number) => {
