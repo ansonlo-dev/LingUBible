@@ -66,8 +66,8 @@ import {
   Image as ImageIcon,
   FileDown,
   Download,
-  Eye,
-  EyeOff,
+  TriangleAlert,
+  Slash,
   Menu,
   ArrowLeft,
   ArrowRight,
@@ -1673,7 +1673,15 @@ const Timetable = () => {
                 title={showConflicts ? t('timetable.hideConflicts') : t('timetable.showConflicts')}
                 className="flex h-9 shrink-0 items-center text-muted-foreground hover:text-foreground transition-colors"
               >
-                {showConflicts ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                {/* Combine triangle-alert with a slash (nested SVG) to convey
+                    the hidden state — see lucide.dev combining-icons guide. */}
+                {showConflicts ? (
+                  <TriangleAlert className="h-5 w-5" />
+                ) : (
+                  <TriangleAlert className="h-5 w-5">
+                    <Slash className="h-full w-full" />
+                  </TriangleAlert>
+                )}
               </button>
               {/* Hide the panel. Hamburger + left arrow = collapse. */}
               <button
