@@ -1637,6 +1637,25 @@ const Timetable = () => {
     </>
   );
 
+  // Year / term dropdown. Rendered in a couple of places (above the search box
+  // on mobile portrait, and in the action row otherwise) and kept visible even
+  // when the panel is collapsed, so it lives here as a small helper.
+  const renderTermSelect = (triggerClassName: string) => (
+    <Select value={termId} onValueChange={setTermId}>
+      <SelectTrigger className={`h-9 ${triggerClassName}`}>
+        {/* Show the picked term's short form (e.g. "2425-T1"). */}
+        <span className="truncate">{term.short}</span>
+      </SelectTrigger>
+      <SelectContent>
+        {termsNewestFirst.map((tm) => (
+          <SelectItem key={tm.id} value={tm.id}>
+            {tm.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <div className="mx-auto px-3 lg:px-4 pt-3 pb-8">
       {/* Header */}
@@ -1676,6 +1695,9 @@ const Timetable = () => {
         >
           {/* Left: smart search + results (filters live in the action row) */}
           <div className={`flex flex-col gap-3 min-h-0 ${panelCollapsed ? 'hidden' : ''}`}>
+            {/* Mobile portrait only: the year dropdown sits above the search box.
+                On larger screens it lives in the action row instead. */}
+            {isMobilePortrait && renderTermSelect('w-full min-w-0')}
             {/* Free-text search + conflict toggle + hide-panel button */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -1797,6 +1819,13 @@ const Timetable = () => {
                 </button>
               )}
 
+              {/* Year dropdown — always visible, even when the panel is
+                  collapsed. On mobile portrait (when the panel is open) it's
+                  shown above the search box instead, so hide this copy there to
+                  avoid a duplicate. */}
+              {!(isMobilePortrait && !panelCollapsed) &&
+                renderTermSelect('w-auto min-w-[90px]')}
+
               {/* Filters (hidden while the results panel is collapsed). On
                   mobile portrait they become a 2-column grid so each row fills
                   the full width and splits it equally; on larger screens the
@@ -1804,19 +1833,6 @@ const Timetable = () => {
                   untouched. */}
               {!panelCollapsed && (
                 <div className={isMobilePortrait ? 'grid w-full grid-cols-2 gap-2' : 'contents'}>
-                  <Select value={termId} onValueChange={setTermId}>
-                    <SelectTrigger className={`h-9 ${isMobilePortrait ? 'w-full min-w-0' : 'w-auto min-w-[90px]'}`}>
-                      {/* Show the picked term's short form (e.g. "2425-T1"). */}
-                      <span className="truncate">{term.short}</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {termsNewestFirst.map((tm) => (
-                        <SelectItem key={tm.id} value={tm.id}>
-                          {tm.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <Select
                     value={subjectArea}
                     onValueChange={(v) => {
