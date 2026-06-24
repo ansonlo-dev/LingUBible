@@ -667,9 +667,9 @@ function MonthView({
   weekdayShort,
   isMobile,
 }: MonthViewProps) {
-  const laneH = 22;
-  const headerH = 26;
-  const overflowH = 18;
+  const laneH = 28;
+  const headerH = 30;
+  const overflowH = 20;
   const cellMinH = headerH + maxLanes * laneH + overflowH + 6;
 
   return (
@@ -679,7 +679,7 @@ function MonthView({
         {weeks[0].map((d, i) => (
           <div
             key={i}
-            className="px-1 py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-muted-foreground sm:text-xs"
+            className="px-1 py-1.5 text-center text-xs font-bold uppercase tracking-wide text-muted-foreground sm:text-sm"
           >
             {weekdayShort(d)}
           </div>
@@ -713,8 +713,9 @@ function MonthView({
                     onClick={() => onSelectDay(d)}
                     style={{ minHeight: cellMinH }}
                     className={cn(
-                      'group flex flex-col items-start border-b border-r text-left transition-colors last:border-r-0',
-                      di === 6 && 'border-r-0',
+                      // Keep every column's right border (incl. SAT) so the divider
+                      // is present at the panel seam while paging between months.
+                      'group flex flex-col items-start border-b border-r text-left transition-colors',
                       // Background priority: selected fill > in/out of month > hover.
                       isSelected
                         ? 'bg-primary/10'
@@ -725,7 +726,7 @@ function MonthView({
                   >
                     <span
                       className={cn(
-                        'm-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold',
+                        'm-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold',
                         isToday
                           ? 'bg-primary text-primary-foreground'
                           : 'text-foreground',
@@ -765,7 +766,7 @@ function MonthView({
                       }}
                       title={titleOf(p.event)}
                       className={cn(
-                        'pointer-events-auto mx-0.5 flex items-center overflow-hidden rounded px-1.5 text-left text-[10px] font-semibold leading-tight shadow-sm transition-transform hover:brightness-110 active:scale-[0.98] sm:text-[11px]',
+                        'pointer-events-auto mx-0.5 flex items-center overflow-hidden rounded px-1.5 text-left text-xs font-semibold leading-tight shadow-sm transition-transform hover:brightness-110 active:scale-[0.98] sm:text-sm',
                         st.bar,
                         p.clippedLeft && 'rounded-l-none',
                         p.clippedRight && 'rounded-r-none'
@@ -789,7 +790,7 @@ function MonthView({
                         ev.stopPropagation();
                         onSelectDay(week[c]);
                       }}
-                      className="pointer-events-auto mx-0.5 truncate rounded px-1 text-left text-[10px] font-bold text-muted-foreground hover:text-foreground"
+                      className="pointer-events-auto mx-0.5 truncate rounded px-1 text-left text-xs font-bold text-muted-foreground hover:text-foreground"
                       style={{ gridColumn: `${c + 1} / ${c + 2}`, gridRow: maxLanes + 1 }}
                     >
                       +{count}
@@ -832,7 +833,7 @@ function StripView({
 }: StripViewProps) {
   const positioned = layoutStrip(days, ACADEMIC_EVENTS);
   const laneCount = positioned.reduce((m, p) => Math.max(m, p.lane + 1), 0);
-  const laneH = 30;
+  const laneH = 36;
   const gridMinH = Math.max(laneCount, 4) * laneH + 8;
   const cols = days.length;
 
@@ -855,11 +856,11 @@ function StripView({
                 type="button"
                 onClick={() => onSelectDay(d)}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 border-r py-2 transition-colors last:border-r-0',
+                  'flex flex-col items-center gap-0.5 border-r py-2 transition-colors',
                   isSelected ? 'bg-primary/10' : 'hover:bg-accent/40'
                 )}
               >
-                <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   {weekdayShort(d)}
                 </span>
                 <span
@@ -890,7 +891,7 @@ function StripView({
             style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
           >
             {days.map((_, i) => (
-              <div key={i} className="border-r last:border-r-0" />
+              <div key={i} className="border-r" />
             ))}
           </div>
 
@@ -916,7 +917,7 @@ function StripView({
                     onClick={() => onSelectEvent(p.event)}
                     title={titleOf(p.event)}
                     className={cn(
-                      'mx-0.5 flex items-center overflow-hidden rounded-md px-2 text-left text-xs font-semibold shadow-sm transition-transform hover:brightness-110 active:scale-[0.98]',
+                      'mx-0.5 flex items-center overflow-hidden rounded-md px-2.5 text-left text-sm font-semibold shadow-sm transition-transform hover:brightness-110 active:scale-[0.98]',
                       st.bar,
                       p.clippedLeft && 'rounded-l-none',
                       p.clippedRight && 'rounded-r-none'
