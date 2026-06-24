@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { DocumentHead } from '@/components/common/DocumentHead';
@@ -141,6 +142,43 @@ function layoutStrip(days: Date[], events: AcademicEvent[]): PositionedEvent[] {
 // ────────────────────────────── View types ────────────────────────────────
 type ViewMode = 'day3' | 'week' | 'month';
 
+interface RangeData {
+  weeks: Date[][]; // month view
+  stripDays: Date[]; // week / 3-day view
+}
+
+// Shift an anchor date by one page in the given view.
+function shiftDate(view: ViewMode, date: Date, dir: -1 | 1): Date {
+  if (view === 'month') return addMonths(date, dir);
+  if (view === 'week') return addDays(date, dir * 7);
+  return addDays(date, dir * 3);
+}
+
+// Day range shown for a view anchored at `date`. Month view always renders 6
+// weeks so every month panel is the same height (no jump while paging).
+function computeRange(view: ViewMode, date: Date): RangeData {
+  if (view === 'month') {
+    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+    const gridStart = startOfWeekSun(monthStart);
+    const weeks: Date[][] = [];
+    let cursor = gridStart;
+    for (let w = 0; w < 6; w++) {
+      const row: Date[] = [];
+      for (let i = 0; i < 7; i++) {
+        row.push(cursor);
+        cursor = addDays(cursor, 1);
+      }
+      weeks.push(row);
+    }
+    return { weeks, stripDays: [] };
+  }
+  if (view === 'week') {
+    const start = startOfWeekSun(date);
+    return { weeks: [], stripDays: Array.from({ length: 7 }, (_, i) => addDays(start, i)) };
+  }
+  return { weeks: [], stripDays: Array.from({ length: 3 }, (_, i) => addDays(date, i)) };
+}
+
 export default function Calendar() {
   const { t, language } = useLanguage();
   const { isMobile } = useResponsive();
@@ -158,47 +196,59 @@ export default function Calendar() {
 
   const locale = language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US';
 
-  // ── Visible day range for the active view ─────────────────────────────────
-  const { weeks, stripDays } = useMemo(() => {
-    if (view === 'month') {
-      const monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
-      const gridStart = startOfWeekSun(monthStart);
-      const out: Date[][] = [];
-      let cursor = gridStart;
-      // 6 weeks covers any month layout.
-      for (let w = 0; w < 6; w++) {
-        const row: Date[] = [];
-        for (let i = 0; i < 7; i++) {
-          row.push(cursor);
-          cursor = addDays(cursor, 1);
-        }
-        out.push(row);
-        // Stop after we've passed the month end and completed the week.
-        if (row[6].getMonth() !== refDate.getMonth() && w >= 3) break;
-      }
-      return { weeks: out, stripDays: [] as Date[] };
+  // ── Carousel panels ───────────────────────────────────────────────────────
+  // We render the previous, current and next periods side by side in a track so
+  // adjacent events are already visible while paging/dragging (no blank panel).
+  // The track sits at translateX(-100%) showing the centre panel.
+  const prevDate = useMemo(() => shiftDate(view, refDate, -1), [view, refDate]);
+  const nextDate = useMemo(() => shiftDate(view, refDate, 1), [view, refDate]);
+  const centerRange = useMemo(() => computeRange(view, refDate), [view, refDate]);
+  const stripDays = centerRange.stripDays;
+
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const animatingRef = useRef(false);
+
+  // Page to the previous/next period: animate the track, then swap the centre
+  // (data + position together, via flushSync, so there's no flash).
+  const page = (dir: -1 | 1) => {
+    const track = trackRef.current;
+    if (!track || animatingRef.current) {
+      setRefDate((p) => shiftDate(view, p, dir));
+      return;
     }
-    if (view === 'week') {
-      const start = startOfWeekSun(refDate);
-      return { weeks: [], stripDays: Array.from({ length: 7 }, (_, i) => addDays(start, i)) };
-    }
-    // day3
-    return { weeks: [], stripDays: Array.from({ length: 3 }, (_, i) => addDays(refDate, i)) };
+    animatingRef.current = true;
+    track.style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
+    track.style.transform = dir === 1 ? 'translateX(-200%)' : 'translateX(0%)';
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      track.removeEventListener('transitionend', done);
+      track.style.transition = 'none';
+      flushSync(() => setRefDate((p) => shiftDate(view, p, dir)));
+      track.style.transform = 'translateX(-100%)';
+      requestAnimationFrame(() => {
+        animatingRef.current = false;
+      });
+    };
+    track.addEventListener('transitionend', done);
+    window.setTimeout(done, 380); // fallback if transitionend doesn't fire
+  };
+  const pageRef = useRef(page);
+  pageRef.current = page;
+
+  // Keep the track parked on the centre panel after any non-animated change
+  // (initial mount, view switch, Today/jump). Skipped mid-animation, where
+  // `page` resets the position itself. Layout effect → applied before paint.
+  useLayoutEffect(() => {
+    if (animatingRef.current) return;
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(-100%)';
   }, [view, refDate]);
 
-  // ── Navigation ────────────────────────────────────────────────────────────
-  // `anim` re-keys the calendar surface so a slide-in animation replays on each
-  // page change (dir: 1 = forward/next slides in from right, -1 = back).
-  const [anim, setAnim] = useState<{ key: number; dir: -1 | 0 | 1 }>({ key: 0, dir: 0 });
-
-  const navigate = (dir: -1 | 1) => {
-    setAnim((a) => ({ key: a.key + 1, dir }));
-    setRefDate((prev) => {
-      if (view === 'month') return addMonths(prev, dir);
-      if (view === 'week') return addDays(prev, dir * 7);
-      return addDays(prev, dir * 3);
-    });
-  };
   // Left / right arrow keys page the calendar (desktop). Ignored while typing
   // in a form field or when a modifier key is held.
   useEffect(() => {
@@ -216,47 +266,34 @@ export default function Calendar() {
       }
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        navigate(-1);
+        pageRef.current(-1);
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        navigate(1);
+        pageRef.current(1);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-    // `navigate` closes over `view`, so re-subscribe when the view changes.
-  }, [view]);
+  }, []);
 
-  // Touch drag (mobile): the calendar content follows the finger in real time so
-  // it's obvious the calendar can be dragged. Released past a threshold pages to
-  // the previous/next period; otherwise it springs back. Implemented with native
-  // listeners (non-passive touchmove) and direct DOM writes on `trackRef` to keep
-  // the drag smooth without a re-render per frame.
-  const surfaceRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
-
+  // Touch drag (mobile): the track follows the finger in real time, revealing the
+  // adjacent period (with its events) as you drag. Released past a threshold pages
+  // over; otherwise it springs back. Native non-passive listeners + direct DOM
+  // writes keep it smooth without a re-render per frame.
   useEffect(() => {
     const surface = surfaceRef.current;
     if (!surface) return;
 
     let startX = 0;
     let startY = 0;
-    let decided = false; // axis decided yet?
-    let locked = false; // committed to a horizontal drag
-    let active = false; // a single-finger gesture is in progress
+    let decided = false;
+    let locked = false;
+    let active = false;
 
     const widthOf = () => surface.clientWidth || window.innerWidth;
-    const setTrack = (x: number | null, animate: boolean) => {
-      const track = trackRef.current;
-      if (!track) return;
-      track.style.transition = animate ? 'transform 0.22s cubic-bezier(0.22,1,0.36,1)' : 'none';
-      track.style.transform = x === null ? '' : `translateX(${x}px)`;
-    };
 
     const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) {
+      if (e.touches.length !== 1 || animatingRef.current) {
         active = false;
         return;
       }
@@ -276,8 +313,6 @@ export default function Calendar() {
       if (!decided) {
         if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
         decided = true;
-        // Engage horizontal drag only when the motion is clearly horizontal,
-        // otherwise leave the gesture to normal vertical scrolling.
         if (Math.abs(dx) > Math.abs(dy)) {
           locked = true;
         } else {
@@ -287,7 +322,11 @@ export default function Calendar() {
       }
       if (locked) {
         e.preventDefault(); // stop the page from scrolling while dragging
-        setTrack(dx, false);
+        const track = trackRef.current;
+        if (track) {
+          track.style.transition = 'none';
+          track.style.transform = `translateX(calc(-100% + ${dx}px))`;
+        }
       }
     };
 
@@ -301,14 +340,13 @@ export default function Calendar() {
       const t = e.changedTouches[0];
       const dx = t.clientX - startX;
       const threshold = Math.min(72, widthOf() * 0.22);
+      const track = trackRef.current;
       if (Math.abs(dx) >= threshold) {
-        // Commit: clear the drag transform and let the keyed slide-in play.
-        setTrack(null, false);
-        navigateRef.current(dx < 0 ? 1 : -1);
-      } else {
+        pageRef.current(dx < 0 ? 1 : -1);
+      } else if (track) {
         // Spring back to centre.
-        setTrack(0, true);
-        window.setTimeout(() => setTrack(null, false), 240);
+        track.style.transition = 'transform 0.24s cubic-bezier(0.22,1,0.36,1)';
+        track.style.transform = 'translateX(-100%)';
       }
     };
 
@@ -379,26 +417,24 @@ export default function Calendar() {
   const maxLanesMonth = isMobile ? 2 : 3;
 
   return (
-    <div className="mx-auto max-w-6xl px-3 lg:px-4 pt-3 pb-12">
+    <div className="mx-auto px-3 lg:px-4 pt-3 pb-8">
       <DocumentHead title={`${t('calendar.title')} ${ACADEMIC_YEAR_LABEL}`} />
 
       {/* Header */}
       <div className="mb-4 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <h1 className="text-2xl font-bold sm:text-3xl">{t('calendar.title')}</h1>
-          <span className="whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground sm:text-sm">
-            {ACADEMIC_YEAR_LABEL}
-          </span>
         </div>
         <p className="text-sm text-muted-foreground sm:text-base md:-translate-y-[3px]">
           {t('calendar.subtitle')}
         </p>
       </div>
 
-      {/* Toolbar */}
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        {/* Nav row: Today + prev/next on the left, month/range title on the right */}
-        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-1.5">
+      {/* Toolbar — mobile: stacked rows; desktop: 3-column grid so the range
+          title sits centred over the calendar (above the WED column). */}
+      <div className="mb-3 flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:items-center sm:gap-3">
+        {/* Nav row: Today + prev/next on the left, range title on the right (mobile only) */}
+        <div className="flex items-center justify-between gap-2 sm:justify-self-start sm:gap-1.5">
           <div className="flex items-center gap-1.5">
             <Button variant="outline" size="sm" onClick={goToday} className="h-8">
               {t('calendar.today')}
@@ -408,7 +444,7 @@ export default function Calendar() {
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    onClick={() => navigate(-1)}
+                    onClick={() => page(-1)}
                     aria-label={t('calendar.prev')}
                     className="flex h-8 w-8 items-center justify-center rounded-l-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
@@ -424,7 +460,7 @@ export default function Calendar() {
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    onClick={() => navigate(1)}
+                    onClick={() => page(1)}
                     aria-label={t('calendar.next')}
                     className="flex h-8 w-8 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
@@ -437,13 +473,19 @@ export default function Calendar() {
               </Tooltip>
             </div>
           </div>
-          <h2 className="min-w-0 truncate text-right text-base font-bold sm:ml-1 sm:text-left sm:text-lg">
+          {/* Mobile title (right of the nav buttons) */}
+          <h2 className="min-w-0 truncate text-right text-base font-bold sm:hidden">
             {rangeTitle}
           </h2>
         </div>
 
+        {/* Desktop title — centred over the calendar */}
+        <h2 className="hidden truncate text-center text-lg font-bold sm:block sm:justify-self-center">
+          {rangeTitle}
+        </h2>
+
         {/* View switcher — full-width segmented control on mobile, compact on desktop */}
-        <div className="flex w-full items-center gap-1 rounded-lg border bg-card p-1 sm:w-auto">
+        <div className="flex w-full items-center gap-1 rounded-lg border bg-card p-1 sm:w-auto sm:justify-self-end">
           {([
             { id: 'day3', label: t('calendar.view.day3'), icon: Columns3 },
             { id: 'week', label: t('calendar.view.week'), icon: CalendarRange },
@@ -480,44 +522,44 @@ export default function Calendar() {
         data-no-sidebar-swipe
         className="overflow-hidden rounded-xl border bg-card shadow-sm"
       >
-        {/* Drag track: transformed in real time while the finger is down. */}
-        <div ref={trackRef} className="touch-pan-y will-change-transform">
-        {/* Keyed wrapper: remounts on navigation so the slide-in animation replays. */}
-        <div
-          key={anim.key}
-          className={cn(
-            anim.dir === 1 && 'cal-slide-next',
-            anim.dir === -1 && 'cal-slide-prev'
-          )}
-        >
-        {view === 'month' ? (
-          <MonthView
-            weeks={weeks}
-            refMonth={refDate.getMonth()}
-            today={today}
-            selectedDate={selectedDate}
-            maxLanes={maxLanesMonth}
-            onSelectDay={setSelectedDate}
-            onSelectEvent={(e) => setSelectedDate(eventStart(e))}
-            titleOf={titleOf}
-            weekdayShort={weekdayShort}
-            isMobile={isMobile}
-          />
-        ) : (
-          <StripView
-            days={stripDays}
-            today={today}
-            selectedDate={selectedDate}
-            onSelectDay={setSelectedDate}
-            onSelectEvent={(e) => setSelectedDate(eventStart(e))}
-            titleOf={titleOf}
-            weekdayShort={weekdayShort}
-            locale={locale}
-            allDayLabel={t('calendar.allDay')}
-            emptyLabel={t('calendar.noEvents')}
-          />
-        )}
-        </div>
+        {/* Carousel track: previous | current | next panels, each full-width.
+            Positioned at translateX(-100%) (managed via ref, never the style
+            prop) so the centre panel shows and adjacent ones are pre-rendered. */}
+        <div ref={trackRef} className="flex w-full touch-pan-y will-change-transform">
+          {[prevDate, refDate, nextDate].map((panelDate, idx) => {
+            const range = computeRange(view, panelDate);
+            return (
+              <div key={idx} className="w-full flex-shrink-0">
+                {view === 'month' ? (
+                  <MonthView
+                    weeks={range.weeks}
+                    refMonth={panelDate.getMonth()}
+                    today={today}
+                    selectedDate={selectedDate}
+                    maxLanes={maxLanesMonth}
+                    onSelectDay={setSelectedDate}
+                    onSelectEvent={(e) => setSelectedDate(eventStart(e))}
+                    titleOf={titleOf}
+                    weekdayShort={weekdayShort}
+                    isMobile={isMobile}
+                  />
+                ) : (
+                  <StripView
+                    days={range.stripDays}
+                    today={today}
+                    selectedDate={selectedDate}
+                    onSelectDay={setSelectedDate}
+                    onSelectEvent={(e) => setSelectedDate(eventStart(e))}
+                    titleOf={titleOf}
+                    weekdayShort={weekdayShort}
+                    locale={locale}
+                    allDayLabel={t('calendar.allDay')}
+                    emptyLabel={t('calendar.noEvents')}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

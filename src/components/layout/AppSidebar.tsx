@@ -261,8 +261,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       label: t('sidebar.tools'),
       items: [
         { name: t('nav.timetable'), href: '/timetable', icon: CalendarClock, current: location.pathname === '/timetable' },
-        { name: t('nav.gpaHons'), href: '/gpa-hons', icon: Calculator, current: location.pathname === '/gpa-hons' },
-        { name: t('nav.calendar'), href: '/calendar', icon: CalendarDays, current: location.pathname === '/calendar' }
+        { name: t('nav.calendar'), href: '/calendar', icon: CalendarDays, current: location.pathname === '/calendar' },
+        { name: t('nav.gpaHons'), href: '/gpa-hons', icon: Calculator, current: location.pathname === '/gpa-hons' }
       ]
     },
     // My Reviews、Favorites 和 Settings 分組（僅在用戶登入時顯示）
