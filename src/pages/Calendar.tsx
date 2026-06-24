@@ -4,6 +4,7 @@ import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { DocumentHead } from '@/components/common/DocumentHead';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   CalendarDays,
   ChevronLeft,
@@ -186,7 +187,12 @@ export default function Calendar() {
   }, [view, refDate]);
 
   // ── Navigation ────────────────────────────────────────────────────────────
+  // `anim` re-keys the calendar surface so a slide-in animation replays on each
+  // page change (dir: 1 = forward/next slides in from right, -1 = back).
+  const [anim, setAnim] = useState<{ key: number; dir: -1 | 0 | 1 }>({ key: 0, dir: 0 });
+
   const navigate = (dir: -1 | 1) => {
+    setAnim((a) => ({ key: a.key + 1, dir }));
     setRefDate((prev) => {
       if (view === 'month') return addMonths(prev, dir);
       if (view === 'week') return addDays(prev, dir * 7);
@@ -260,10 +266,16 @@ export default function Calendar() {
     const a = days[0];
     const b = days[days.length - 1];
     const sameMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+    // Mobile: drop the year to avoid truncation in the narrow toolbar.
+    if (isMobile) {
+      const fmt = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' });
+      const fmtDay = new Intl.DateTimeFormat(locale, { day: 'numeric' });
+      return sameMonth ? `${fmt.format(a)} – ${fmtDay.format(b)}` : `${fmt.format(a)} – ${fmt.format(b)}`;
+    }
     const fmtFull = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' });
     const fmtDay = new Intl.DateTimeFormat(locale, { day: 'numeric' });
     return sameMonth ? `${fmtFull.format(a)} – ${fmtDay.format(b)}` : `${fmtFull.format(a)} – ${fmtFull.format(b)}`;
-  }, [view, refDate, stripDays, locale]);
+  }, [view, refDate, stripDays, locale, isMobile]);
 
   // ── Selected day's events (detail panel) ──────────────────────────────────
   const selectedEvents = useMemo(() => {
@@ -295,14 +307,15 @@ export default function Calendar() {
 
       {/* Header */}
       <div className="mb-4 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-7 w-7 text-primary" />
-          <h1 className="text-3xl font-bold">{t('calendar.title')}</h1>
-          <span className="rounded-md bg-muted px-2 py-0.5 text-sm font-semibold text-muted-foreground">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <h1 className="text-2xl font-bold sm:text-3xl">{t('calendar.title')}</h1>
+          <span className="whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground sm:text-sm">
             {ACADEMIC_YEAR_LABEL}
           </span>
         </div>
-        <p className="text-muted-foreground md:-translate-y-[3px]">{t('calendar.subtitle')}</p>
+        <p className="text-sm text-muted-foreground sm:text-base md:-translate-y-[3px]">
+          {t('calendar.subtitle')}
+        </p>
       </div>
 
       {/* Toolbar */}
@@ -314,26 +327,40 @@ export default function Calendar() {
               {t('calendar.today')}
             </Button>
             <div className="flex items-center rounded-md border">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                aria-label={t('calendar.prev')}
-                className="flex h-8 w-8 items-center justify-center rounded-l-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    aria-label={t('calendar.prev')}
+                    className="flex h-8 w-8 items-center justify-center rounded-l-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('calendar.prev')} <kbd className="ml-1 font-mono">←</kbd>
+                </TooltipContent>
+              </Tooltip>
               <div className="h-5 w-px bg-border" />
-              <button
-                type="button"
-                onClick={() => navigate(1)}
-                aria-label={t('calendar.next')}
-                className="flex h-8 w-8 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => navigate(1)}
+                    aria-label={t('calendar.next')}
+                    className="flex h-8 w-8 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('calendar.next')} <kbd className="ml-1 font-mono">→</kbd>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
-          <h2 className="truncate text-right text-base font-bold sm:ml-1 sm:text-left sm:text-lg">
+          <h2 className="min-w-0 truncate text-right text-base font-bold sm:ml-1 sm:text-left sm:text-lg">
             {rangeTitle}
           </h2>
         </div>
@@ -374,6 +401,14 @@ export default function Calendar() {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
+        {/* Keyed wrapper: remounts on navigation so the slide-in animation replays. */}
+        <div
+          key={anim.key}
+          className={cn(
+            anim.dir === 1 && 'cal-slide-next',
+            anim.dir === -1 && 'cal-slide-prev'
+          )}
+        >
         {view === 'month' ? (
           <MonthView
             weeks={weeks}
@@ -401,6 +436,7 @@ export default function Calendar() {
             emptyLabel={t('calendar.noEvents')}
           />
         )}
+        </div>
       </div>
 
       {/* Bottom row: selected-day detail + legend */}
@@ -568,9 +604,10 @@ function MonthView({
                         'm-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold',
                         isToday
                           ? 'bg-primary text-primary-foreground'
-                          : inMonth
-                          ? 'text-foreground'
-                          : 'text-muted-foreground/40'
+                          : 'text-foreground',
+                        // Out-of-month days are dimmed via element opacity (the
+                        // theme's colour tokens don't support the /alpha modifier).
+                        !inMonth && !isToday && 'opacity-30'
                       )}
                     >
                       {d.getDate()}

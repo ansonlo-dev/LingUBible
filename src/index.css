@@ -3617,3 +3617,34 @@ button[role="tab"].favorites-tab-trigger.flex.items-center.gap-2[data-state="act
     }
   }
 }
+
+/* Academic calendar: slide-in animation when paging between periods, so
+ * navigation reads as a horizontal scroll rather than an instant jump. */
+@keyframes cal-slide-in-from-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes cal-slide-in-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.cal-slide-next {
+  animation: cal-slide-in-from-right 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cal-slide-prev {
+  animation: cal-slide-in-from-left 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal-slide-next,
+  .cal-slide-prev {
+    animation: none;
+  }
+}
