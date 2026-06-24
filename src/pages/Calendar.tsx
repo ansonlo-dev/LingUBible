@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { DocumentHead } from '@/components/common/DocumentHead';
@@ -193,6 +193,34 @@ export default function Calendar() {
       return addDays(prev, dir * 3);
     });
   };
+  // Left / right arrow keys page the calendar (desktop). Ignored while typing
+  // in a form field or when a modifier key is held.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      if (
+        el &&
+        (el.tagName === 'INPUT' ||
+          el.tagName === 'TEXTAREA' ||
+          el.tagName === 'SELECT' ||
+          el.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigate(1);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // `navigate` closes over `view`, so re-subscribe when the view changes.
+  }, [view]);
+
   const goToday = () => {
     setRefDate(today);
     setSelectedDate(today);
@@ -616,35 +644,42 @@ function StripView({
 
   return (
     <div>
-      {/* Column headers */}
-      <div className="grid border-b" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}>
-        {days.map((d, i) => {
-          const isToday = isSameDay(d, today);
-          const isSelected = isSameDay(d, selectedDate);
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onSelectDay(d)}
-              className={cn(
-                'flex flex-col items-center gap-0.5 border-r py-2 transition-colors last:border-r-0',
-                isSelected ? 'bg-primary/10' : 'hover:bg-accent/40'
-              )}
-            >
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                {weekdayShort(d)}
-              </span>
-              <span
+      {/* Column headers — shares the same left gutter as the body so the
+          day columns line up exactly with the event grid below. */}
+      <div className="flex border-b">
+        <div className="w-12 flex-shrink-0 border-r sm:w-16" />
+        <div
+          className="grid flex-1"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
+        >
+          {days.map((d, i) => {
+            const isToday = isSameDay(d, today);
+            const isSelected = isSameDay(d, selectedDate);
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onSelectDay(d)}
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-base font-bold',
-                  isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                  'flex flex-col items-center gap-0.5 border-r py-2 transition-colors last:border-r-0',
+                  isSelected ? 'bg-primary/10' : 'hover:bg-accent/40'
                 )}
               >
-                {d.getDate()}
-              </span>
-            </button>
-          );
-        })}
+                <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  {weekdayShort(d)}
+                </span>
+                <span
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-full text-base font-bold',
+                    isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                  )}
+                >
+                  {d.getDate()}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* All-day events area */}
