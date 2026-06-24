@@ -184,27 +184,10 @@ const MyReviews = () => {
 
   // Helper function for mobile two-tap functionality
   const handleMobileTwoTap = (key: string, action: () => void) => {
-    if (!isMobile) {
-      // Desktop: apply filter immediately
-      action();
-      return;
-    }
-
-    // Mobile: require two taps
-    const currentCount = mobileTapCounts[key] || 0;
-    const newCount = currentCount + 1;
-    
-    setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
-
-    if (newCount === 1) {
-      // First tap: show tooltip
-      setMobileTapStates(prev => ({ ...prev, [key]: true }));
-    } else if (newCount === 2) {
-      // Second tap: apply filter and hide tooltip
-      action();
-      setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
-      setMobileTapStates(prev => ({ ...prev, [key]: false }));
-    }
+    // Both desktop and mobile: a single click/tap applies the filter directly.
+    // The mobile popup is suppressed via the ResponsiveTooltip `disableMobilePopup` prop,
+    // so no tooltip appears after the filter is applied.
+    action();
   };
 
 
@@ -802,6 +785,7 @@ const MyReviews = () => {
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`term-mobile-${reviewInfo.term.term_code}-${reviewInfo.review.$id}`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by timeout
@@ -834,6 +818,7 @@ const MyReviews = () => {
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
                             clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                            disableMobilePopup={true}
                             open={isMobile ? mobileTapStates[`lang-mobile-${reviewInfo.review.review_language || 'en'}-${reviewInfo.review.$id}`] : undefined}
                             onOpenChange={isMobile ? () => {
                               // Tooltip state managed by timeout
@@ -892,6 +877,7 @@ const MyReviews = () => {
                           content={t('filter.clickToFilterByTerm', { term: reviewInfo.term.name })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`term-desktop-${reviewInfo.term.term_code}-${reviewInfo.review.$id}`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by timeout
@@ -924,6 +910,7 @@ const MyReviews = () => {
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
                             clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                            disableMobilePopup={true}
                             open={isMobile ? mobileTapStates[`lang-desktop-${reviewInfo.review.review_language || 'en'}-${reviewInfo.review.$id}`] : undefined}
                             onOpenChange={isMobile ? () => {
                               // Tooltip state managed by timeout
@@ -963,6 +950,7 @@ const MyReviews = () => {
                             size="md"
                             showTooltip={true}
                             hasClickAction={true}
+                            disableMobilePopup={true}
                             isPending={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}-${reviewInfo.review.$id}`] : false}
                             mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${reviewInfo.review.course_final_grade}-${reviewInfo.review.$id}`] : undefined}
                             onMobileTooltipChange={isMobile ? () => {
@@ -1169,6 +1157,7 @@ const MyReviews = () => {
                                       content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
                                       hasClickAction={true}
                                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                      disableMobilePopup={true}
                                       open={isMobile ? mobileTapStates[`session-desktop-${instructorDetail.instructor_name}-${instructorDetail.session_type}-${reviewInfo.review.$id}`] : undefined}
                                       onOpenChange={isMobile ? () => {
                                         // Tooltip state managed by timeout
@@ -1205,6 +1194,7 @@ const MyReviews = () => {
                                             content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                             hasClickAction={true}
                                             clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                            disableMobilePopup={true}
                                             open={isMobile ? mobileTapStates[`teaching-desktop-${instructorDetail.instructor_name}-${teachingLanguage}-${reviewInfo.review.$id}`] : undefined}
                                             onOpenChange={isMobile ? () => {
                                               // Tooltip state managed by timeout
@@ -1251,6 +1241,7 @@ const MyReviews = () => {
                                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructorDetail.session_type.toLowerCase()}`) })}
                                     hasClickAction={true}
                                     clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                    disableMobilePopup={true}
                                     open={isMobile ? mobileTapStates[`session-mobile-${instructorDetail.instructor_name}-${instructorDetail.session_type}-${reviewInfo.review.$id}`] : undefined}
                                     onOpenChange={isMobile ? () => {
                                       // Tooltip state managed by timeout
@@ -1287,6 +1278,7 @@ const MyReviews = () => {
                                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                           hasClickAction={true}
                                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                          disableMobilePopup={true}
                                           open={isMobile ? mobileTapStates[`teaching-mobile-${instructorDetail.instructor_name}-${teachingLanguage}-${reviewInfo.review.$id}`] : undefined}
                                           onOpenChange={isMobile ? () => {
                                             // Tooltip state managed by timeout
@@ -1403,6 +1395,7 @@ const MyReviews = () => {
                                       content={t('filter.clickToFilterByServiceLearning', { type: instructorDetail.service_learning_type === 'compulsory' ? t('review.compulsory') : t('review.optional') })}
                                       hasClickAction={true}
                                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                                      disableMobilePopup={true}
                                       open={isMobile ? mobileTapStates[`service-${instructorDetail.instructor_name}-${instructorDetail.service_learning_type}-${reviewInfo.review.$id}`] : undefined}
                                       onOpenChange={isMobile ? () => {
                                         // Tooltip state managed by timeout
