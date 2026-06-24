@@ -512,29 +512,27 @@ const Courses = () => {
   };
 
   const handleTeachingLanguageClick = (languages: string[]) => {
-    // 合併現有的教學語言篩選與新點擊的語言
+    // 合併現有的教學語言篩選與新點擊的語言，並同步更新下拉選單與網址參數
     const currentLanguages = new Set(filters.teachingLanguage);
     languages.forEach(lang => currentLanguages.add(lang));
-    
-    // 更新篩選器
-    setFilters(prev => ({
-      ...prev,
+
+    handleFiltersChange({
+      ...filters,
       teachingLanguage: Array.from(currentLanguages),
       currentPage: 1 // 重置到第一頁
-    }));
+    });
   };
 
   const handleServiceLearningClick = (types: ('compulsory' | 'optional')[]) => {
-    // 合併現有的服務學習篩選與新點擊的類型
+    // 合併現有的服務學習篩選與新點擊的類型，並同步更新下拉選單與網址參數
     const currentTypes = new Set(filters.serviceLearning);
     types.forEach(type => currentTypes.add(type));
-    
-    // 更新篩選器
-    setFilters(prev => ({
-      ...prev,
+
+    handleFiltersChange({
+      ...filters,
       serviceLearning: Array.from(currentTypes),
       currentPage: 1 // 重置到第一頁
-    }));
+    });
   };
 
   const handlePageChange = (page: number) => {

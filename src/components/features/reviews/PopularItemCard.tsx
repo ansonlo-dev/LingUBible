@@ -196,75 +196,43 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const handleTeachingLanguageClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
-    
-    if (isMobile) {
-      if (props.enableTwoTapMode) {
-        // Mobile/tablet with two-tap mode enabled: require 2 taps to apply filter (catalog pages)
-        const newTapCount = teachingLanguageTapCount + 1;
-        setTeachingLanguageTapCount(newTapCount);
-        
-        if (teachingLanguageTimeoutRef.current) {
-          clearTimeout(teachingLanguageTimeoutRef.current);
-        }
-        
-        if (newTapCount === 1) {
-          // First tap: show tooltip
-          setTeachingLanguageTooltipOpen(true);
-          teachingLanguageTimeoutRef.current = setTimeout(() => {
-            setTeachingLanguageTapCount(0);
-            setTeachingLanguageTooltipOpen(false);
-          }, 3000);
-        } else if (newTapCount === 2) {
-          // Second tap: apply filter and close tooltip
-          if (props.onTeachingLanguageClick && props.teachingLanguages) {
-            props.onTeachingLanguageClick(props.teachingLanguages);
-          }
-          setTeachingLanguageTapCount(0);
-          setTeachingLanguageTooltipOpen(false);
-        }
-      } else {
-        // Mobile without two-tap mode (main page): first tap shows tooltip, no filter application
-        setTeachingLanguageTooltipOpen(true);
+
+    if (props.enableTwoTapMode) {
+      // Catalog pages: a single click/tap applies the filter directly (desktop & mobile).
+      // The mobile popup is suppressed via ResponsiveTooltip `disableMobilePopup`;
+      // the desktop hover tooltip is preserved.
+      if (props.onTeachingLanguageClick && props.teachingLanguages) {
+        props.onTeachingLanguageClick(props.teachingLanguages);
       }
+      return;
     }
-    // Desktop: do nothing on click (hover tooltip handles this)
+
+    // Main/landing page (no filter to apply): first tap shows the info tooltip on mobile.
+    if (isMobile) {
+      setTeachingLanguageTooltipOpen(true);
+    }
+    // Desktop: hover tooltip handles display.
   };
 
   const handleServiceLearningClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
-    
-    if (isMobile) {
-      if (props.enableTwoTapMode) {
-        // Mobile/tablet with two-tap mode enabled: require 2 taps to apply filter (catalog pages)
-        const newTapCount = serviceLearningTapCount + 1;
-        setServiceLearningTapCount(newTapCount);
-        
-        if (serviceLearningTimeoutRef.current) {
-          clearTimeout(serviceLearningTimeoutRef.current);
-        }
-        
-        if (newTapCount === 1) {
-          // First tap: show tooltip
-          setServiceLearningTooltipOpen(true);
-          serviceLearningTimeoutRef.current = setTimeout(() => {
-            setServiceLearningTapCount(0);
-            setServiceLearningTooltipOpen(false);
-          }, 3000);
-        } else if (newTapCount === 2) {
-          // Second tap: apply filter and close tooltip
-          if (props.onServiceLearningClick && props.serviceLearningTypes) {
-            props.onServiceLearningClick(props.serviceLearningTypes);
-          }
-          setServiceLearningTapCount(0);
-          setServiceLearningTooltipOpen(false);
-        }
-      } else {
-        // Mobile without two-tap mode (main page): first tap shows tooltip, no filter application
-        setServiceLearningTooltipOpen(true);
+
+    if (props.enableTwoTapMode) {
+      // Catalog pages: a single click/tap applies the filter directly (desktop & mobile).
+      // The mobile popup is suppressed via ResponsiveTooltip `disableMobilePopup`;
+      // the desktop hover tooltip is preserved.
+      if (props.onServiceLearningClick && props.serviceLearningTypes) {
+        props.onServiceLearningClick(props.serviceLearningTypes);
       }
+      return;
     }
-    // Desktop: do nothing on click (hover tooltip handles this)
+
+    // Main/landing page (no filter to apply): first tap shows the info tooltip on mobile.
+    if (isMobile) {
+      setServiceLearningTooltipOpen(true);
+    }
+    // Desktop: hover tooltip handles display.
   };
 
   // Reset functions for when tooltip is closed externally
@@ -683,11 +651,12 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                               }
                               showCloseButton={true}
                               onReset={resetTeachingLanguageState}
+                              disableMobilePopup={props.enableTwoTapMode}
                               open={isMobile ? teachingLanguageTooltipOpen : undefined}
                               onOpenChange={isMobile ? setTeachingLanguageTooltipOpen : undefined}
                             >
-                              <span 
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 cursor-help hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200"
+                              <span
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 shrink-0 ${props.enableTwoTapMode ? 'cursor-pointer' : 'cursor-help'} hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-105 transition-all duration-200`}
                                 onClick={handleTeachingLanguageClick}
                               >
                                 <div className="flex items-center gap-1">
@@ -724,11 +693,12 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                               }
                               showCloseButton={true}
                               onReset={resetServiceLearningState}
+                              disableMobilePopup={props.enableTwoTapMode}
                               open={isMobile ? serviceLearningTooltipOpen : undefined}
                               onOpenChange={isMobile ? setServiceLearningTooltipOpen : undefined}
                             >
-                              <span 
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 cursor-help hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200"
+                              <span
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 shrink-0 ${props.enableTwoTapMode ? 'cursor-pointer' : 'cursor-help'} hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:scale-105 transition-all duration-200`}
                                 onClick={handleServiceLearningClick}
                               >
                                 <div className="flex items-center gap-1">
