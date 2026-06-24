@@ -472,12 +472,38 @@ export default function Calendar() {
       }
     };
 
+    // ── Horizontal wheel / trackpad scroll (desktop) → page prev/next. ──
+    let wheelAccum = 0;
+    let wheelCooldown = false;
+    let wheelResetTimer: ReturnType<typeof setTimeout> | undefined;
+    const onWheel = (e: WheelEvent) => {
+      // Only react to predominantly-horizontal scrolling; leave vertical alone.
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault(); // also blocks the browser's swipe-to-go-back gesture
+      if (animatingRef.current || wheelCooldown) return;
+      wheelAccum += e.deltaX;
+      clearTimeout(wheelResetTimer);
+      wheelResetTimer = setTimeout(() => {
+        wheelAccum = 0;
+      }, 180);
+      if (Math.abs(wheelAccum) >= 60) {
+        const dir = wheelAccum > 0 ? 1 : -1; // scroll right → next
+        wheelAccum = 0;
+        wheelCooldown = true;
+        setTimeout(() => {
+          wheelCooldown = false;
+        }, 500);
+        pageRef.current(dir);
+      }
+    };
+
     surface.addEventListener('touchstart', onStart, { passive: true });
     surface.addEventListener('touchmove', onMove, { passive: false });
     surface.addEventListener('touchend', onEnd, { passive: true });
     surface.addEventListener('touchcancel', onEnd, { passive: true });
     surface.addEventListener('mousedown', onMouseDown);
     surface.addEventListener('click', onClickCapture, true);
+    surface.addEventListener('wheel', onWheel, { passive: false });
     return () => {
       surface.removeEventListener('touchstart', onStart);
       surface.removeEventListener('touchmove', onMove);
@@ -485,6 +511,8 @@ export default function Calendar() {
       surface.removeEventListener('touchcancel', onEnd);
       surface.removeEventListener('mousedown', onMouseDown);
       surface.removeEventListener('click', onClickCapture, true);
+      surface.removeEventListener('wheel', onWheel);
+      clearTimeout(wheelResetTimer);
       endMouseTracking();
     };
   }, []);
