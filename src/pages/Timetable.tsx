@@ -1863,7 +1863,7 @@ const Timetable = () => {
                     placeholder={t('timetable.filter.course')}
                     searchPlaceholder={t('timetable.filter.courseSearch')}
                     emptyText={t('timetable.noResults')}
-                    className={`h-9 ${isMobilePortrait ? 'w-full min-w-0 max-w-none' : 'flex-1 min-w-[150px] max-w-[260px]'}`}
+                    className={`h-9 px-3 ${isMobilePortrait ? 'w-full min-w-0 max-w-none' : 'flex-1 min-w-[150px] max-w-[260px]'}`}
                   />
                   <Combobox
                     options={instructorOptions}
@@ -1872,7 +1872,7 @@ const Timetable = () => {
                     placeholder={t('timetable.filter.instructor')}
                     searchPlaceholder={t('timetable.filter.instructorSearch')}
                     emptyText={t('timetable.noResults')}
-                    className={`h-9 ${isMobilePortrait ? 'w-full min-w-0 max-w-none' : 'flex-1 min-w-[150px] max-w-[260px]'}`}
+                    className={`h-9 px-3 ${isMobilePortrait ? 'w-full min-w-0 max-w-none' : 'flex-1 min-w-[150px] max-w-[260px]'}`}
                   />
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger className={`h-9 ${isMobilePortrait ? 'w-full min-w-0' : 'w-auto min-w-[100px]'}`}>
@@ -1893,14 +1893,14 @@ const Timetable = () => {
                     availableDays={availableDays}
                     dayLabels={dayLabels}
                     t={t}
-                    className={isMobilePortrait ? 'w-full min-w-0' : undefined}
+                    className={`px-3 ${isMobilePortrait ? 'w-full min-w-0' : ''}`}
                   />
                   <VenueFilter
                     groups={venueGroups}
                     value={venueFilter}
                     onChange={setVenueFilter}
                     t={t}
-                    className={isMobilePortrait ? 'w-full min-w-0' : undefined}
+                    className={`px-3 ${isMobilePortrait ? 'w-full min-w-0' : ''}`}
                   />
                   {hasActiveFilters && (
                     <Button
