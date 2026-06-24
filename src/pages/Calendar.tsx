@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
@@ -86,8 +86,49 @@ const CATEGORY_STYLES: Record<
   },
 };
 
+// Raw colours (Tailwind 500/600) for building two-tone striped fills for events
+// that belong to two categories at once.
+const CATEGORY_HEX: Record<CalendarCategory, string> = {
+  term: '#dc2626',
+  exam: '#f59e0b',
+  holiday: '#8b5cf6',
+  addDrop: '#10b981',
+  registration: '#0ea5e9',
+  deadline: '#f97316',
+  event: '#64748b',
+};
+
+// Diagonal two-tone stripes for a dual-category event (e.g. event + holiday).
+const stripeBackground = (c1: CalendarCategory, c2: CalendarCategory): string => {
+  const a = CATEGORY_HEX[c1];
+  const b = CATEGORY_HEX[c2];
+  return `repeating-linear-gradient(45deg, ${a} 0, ${a} 9px, ${b} 9px, ${b} 18px)`;
+};
+
+// Background style for an event bar: solid (handled by className) or, when the
+// event has a second category, a striped gradient that overlays the solid fill.
+const eventBarStyle = (e: AcademicEvent): CSSProperties =>
+  e.category2 ? { backgroundImage: stripeBackground(e.category, e.category2) } : {};
+
 const eventStart = (e: AcademicEvent) => parseISO(e.start);
 const eventEnd = (e: AcademicEvent) => parseISO(e.end ?? e.start);
+
+// Most events overlapping on any single day across the whole calendar — i.e. the
+// most lanes any week can ever need. Used to keep every month the same (compact)
+// height instead of always reserving the per-view maximum. (HK has no DST, so
+// adding a fixed day in ms keeps each step on local midnight.)
+const MAX_DAILY_OVERLAP = (() => {
+  const counts = new Map<number, number>();
+  for (const e of ACADEMIC_EVENTS) {
+    const end = eventEnd(e).getTime();
+    for (let d = eventStart(e).getTime(); d <= end; d += 86400000) {
+      counts.set(d, (counts.get(d) || 0) + 1);
+    }
+  }
+  let max = 1;
+  for (const v of counts.values()) max = Math.max(max, v);
+  return max;
+})();
 
 // ────────────────────────────── Layout (lanes) ─────────────────────────────
 interface PositionedEvent {
@@ -350,15 +391,101 @@ export default function Calendar() {
       }
     };
 
+    // ── Mouse drag (desktop) — mirrors the touch drag. ──
+    let mDown = false;
+    let mDecided = false;
+    let mLocked = false;
+    let mMoved = false;
+    let mStartX = 0;
+    let mStartY = 0;
+    let suppressClick = false; // swallow the click that follows a drag
+
+    const endMouseTracking = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      document.body.style.userSelect = '';
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0 || animatingRef.current) return;
+      mDown = true;
+      mDecided = false;
+      mLocked = false;
+      mMoved = false;
+      suppressClick = false;
+      mStartX = e.clientX;
+      mStartY = e.clientY;
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!mDown) return;
+      const dx = e.clientX - mStartX;
+      const dy = e.clientY - mStartY;
+      if (!mDecided) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        mDecided = true;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          mLocked = true;
+          document.body.style.userSelect = 'none'; // avoid text selection while dragging
+        } else {
+          mDown = false;
+          endMouseTracking();
+          return;
+        }
+      }
+      if (mLocked) {
+        e.preventDefault();
+        mMoved = true;
+        const track = trackRef.current;
+        if (track) {
+          track.style.transition = 'none';
+          track.style.transform = `translateX(calc(-100% + ${dx}px))`;
+        }
+      }
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      const wasLocked = mLocked;
+      mDown = false;
+      mLocked = false;
+      endMouseTracking();
+      if (!wasLocked) return;
+      const dx = e.clientX - mStartX;
+      const threshold = Math.min(72, widthOf() * 0.22);
+      const track = trackRef.current;
+      if (Math.abs(dx) >= threshold) {
+        pageRef.current(dx < 0 ? 1 : -1);
+      } else if (track) {
+        track.style.transition = 'transform 0.24s cubic-bezier(0.22,1,0.36,1)';
+        track.style.transform = 'translateX(-100%)';
+      }
+      if (mMoved) suppressClick = true;
+    };
+
+    const onClickCapture = (e: MouseEvent) => {
+      if (suppressClick) {
+        suppressClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
     surface.addEventListener('touchstart', onStart, { passive: true });
     surface.addEventListener('touchmove', onMove, { passive: false });
     surface.addEventListener('touchend', onEnd, { passive: true });
     surface.addEventListener('touchcancel', onEnd, { passive: true });
+    surface.addEventListener('mousedown', onMouseDown);
+    surface.addEventListener('click', onClickCapture, true);
     return () => {
       surface.removeEventListener('touchstart', onStart);
       surface.removeEventListener('touchmove', onMove);
       surface.removeEventListener('touchend', onEnd);
       surface.removeEventListener('touchcancel', onEnd);
+      surface.removeEventListener('mousedown', onMouseDown);
+      surface.removeEventListener('click', onClickCapture, true);
+      endMouseTracking();
     };
   }, []);
 
@@ -525,7 +652,10 @@ export default function Calendar() {
         {/* Carousel track: previous | current | next panels, each full-width.
             Positioned at translateX(-100%) (managed via ref, never the style
             prop) so the centre panel shows and adjacent ones are pre-rendered. */}
-        <div ref={trackRef} className="flex w-full touch-pan-y will-change-transform">
+        <div
+          ref={trackRef}
+          className="flex w-full touch-pan-y select-none will-change-transform sm:cursor-grab sm:active:cursor-grabbing"
+        >
           {[prevDate, refDate, nextDate].map((panelDate, idx) => {
             const range = computeRange(view, panelDate);
             return (
@@ -593,7 +723,10 @@ export default function Calendar() {
                     key={e.id}
                     className="flex items-start gap-3 rounded-lg border bg-background/60 p-3"
                   >
-                    <span className={cn('mt-1 h-3 w-3 flex-shrink-0 rounded-full', st.dot)} />
+                    <span
+                      className={cn('mt-1 h-3 w-3 flex-shrink-0 rounded-full', !e.category2 && st.dot)}
+                      style={e.category2 ? { backgroundImage: stripeBackground(e.category, e.category2) } : undefined}
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold leading-snug">{titleOf(e)}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -606,6 +739,16 @@ export default function Calendar() {
                         >
                           {t(`calendar.cat.${e.category}`)}
                         </span>
+                        {e.category2 && (
+                          <span
+                            className={cn(
+                              'rounded px-1.5 py-0.5 font-semibold',
+                              CATEGORY_STYLES[e.category2].soft
+                            )}
+                          >
+                            {t(`calendar.cat.${e.category2}`)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -670,7 +813,13 @@ function MonthView({
   const laneH = 28;
   const headerH = 30;
   const overflowH = 20;
-  const cellMinH = headerH + maxLanes * laneH + overflowH + 6;
+
+  const weekLayouts = weeks.map((week) => layoutStrip(week, ACADEMIC_EVENTS));
+  // All months share one height. Mobile keeps the full reserve; desktop trims to
+  // the lanes the calendar actually ever needs, so cells aren't needlessly tall.
+  const rowLanes = isMobile ? maxLanes : Math.min(maxLanes, MAX_DAILY_OVERLAP);
+  const reserveOverflow = isMobile ? true : MAX_DAILY_OVERLAP > maxLanes;
+  const cellMinH = headerH + rowLanes * laneH + (reserveOverflow ? overflowH : 0) + 6;
 
   return (
     <div>
@@ -688,7 +837,7 @@ function MonthView({
 
       {/* Week rows */}
       {weeks.map((week, wi) => {
-        const positioned = layoutStrip(week, ACADEMIC_EVENTS);
+        const positioned = weekLayouts[wi];
         const visible = positioned.filter((p) => p.lane < maxLanes);
         // Overflow count per column.
         const overflowPerCol = new Array(7).fill(0);
@@ -774,6 +923,7 @@ function MonthView({
                       style={{
                         gridColumn: `${p.startCol + 1} / ${p.endCol + 2}`,
                         gridRow: p.lane + 1,
+                        ...eventBarStyle(p.event),
                       }}
                     >
                       <span className="truncate">{titleOf(p.event)}</span>
@@ -925,6 +1075,7 @@ function StripView({
                     style={{
                       gridColumn: `${p.startCol + 1} / ${p.endCol + 2}`,
                       gridRow: p.lane + 1,
+                      ...eventBarStyle(p.event),
                     }}
                   >
                     <span className="truncate">{titleOf(p.event)}</span>

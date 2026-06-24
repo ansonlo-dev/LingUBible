@@ -730,7 +730,7 @@ export default {
   'sidebar.browse': 'Browse',
   'sidebar.personal': 'Personal',
   'sidebar.tools': 'Tools',
-  'nav.timetable': 'Timetable',
+  'nav.timetable': 'Lesson Planner',
   'nav.gpaHons': 'GPA & Hons',
   'nav.calendar': 'Calendar',
   // Academic calendar page
@@ -849,7 +849,7 @@ export default {
   'gpa.honStats.tipCounts': '{first} / {total}',
   'gpa.honStats.sources': 'Sources: Graduate Lists',
   // Timetable planner
-  'timetable.title': 'Timetable Planner',
+  'timetable.title': 'Lesson Planner',
   'timetable.subtitle': 'Search teaching records and build a weekly class timetable you are happy with.',
   'timetable.loading': 'Loading teaching records…',
   'timetable.error': 'Could not load timetable data.',

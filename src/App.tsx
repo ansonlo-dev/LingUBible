@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -59,6 +59,13 @@ import { swipeHintCookie } from '@/lib/cookies';
 import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
+
+// The Lesson Planner used to live at /timetable. Redirect old links (preserving
+// any shared ?query state) to the new path.
+const LegacyTimetableRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/lesson-planner${location.search}${location.hash}`} replace />;
+};
 
 
 
@@ -636,7 +643,9 @@ const RouterContent = ({
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/courses/:courseCode" element={<CourseDetail />} />
                     <Route path="/instructors" element={<InstructorsList />} />
-                    <Route path="/timetable" element={<Timetable />} />
+                    <Route path="/lesson-planner" element={<Timetable />} />
+                    {/* Legacy path → keep old links (incl. shared ?query) working */}
+                    <Route path="/timetable" element={<LegacyTimetableRedirect />} />
                     <Route path="/gpa-hons" element={<GpaHons />} />
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/instructors/:instructorName" element={<Lecturers />} />

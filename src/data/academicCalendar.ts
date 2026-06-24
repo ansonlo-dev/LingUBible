@@ -17,6 +17,10 @@ export interface AcademicEvent {
   start: string; // inclusive
   end?: string; // inclusive; absent → single day
   category: CalendarCategory;
+  // Optional second category for events that belong to two groups at once (e.g.
+  // Congregation is an event AND a class-suspension holiday). Rendered as a
+  // two-tone striped bar instead of being duplicated.
+  category2?: CalendarCategory;
   title: string; // English
   title_tc: string; // Traditional Chinese
   title_sc: string; // Simplified Chinese
@@ -176,6 +180,7 @@ export const ACADEMIC_EVENTS: AcademicEvent[] = [
     start: '2026-12-01',
     end: '2026-12-02',
     category: 'event',
+    category2: 'holiday', // a ceremony (event) that also suspends classes (holiday)
     title: 'Congregation (classes suspended)',
     title_tc: '畢業典禮（停課）',
     title_sc: '毕业典礼（停课）',

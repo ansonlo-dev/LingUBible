@@ -260,7 +260,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     {
       label: t('sidebar.tools'),
       items: [
-        { name: t('nav.timetable'), href: '/timetable', icon: BookCheck, current: location.pathname === '/timetable' },
+        { name: t('nav.timetable'), href: '/lesson-planner', icon: BookCheck, current: location.pathname === '/lesson-planner' },
         { name: t('nav.calendar'), href: '/calendar', icon: CalendarRange, current: location.pathname === '/calendar' },
         { name: t('nav.gpaHons'), href: '/gpa-hons', icon: Calculator, current: location.pathname === '/gpa-hons' }
       ]
