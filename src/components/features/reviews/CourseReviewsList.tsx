@@ -170,27 +170,10 @@ export const CourseReviewsList = ({
 
   // Handle mobile two-tap functionality (same pattern as MyReviews.tsx)
   const handleMobileTwoTap = (key: string, action: () => void) => {
-    if (!isMobile) {
-      // Desktop: apply filter immediately
-      action();
-      return;
-    }
-
-    // Mobile: require two taps
-    const currentCount = mobileTapCounts[key] || 0;
-    const newCount = currentCount + 1;
-    
-    setMobileTapCounts(prev => ({ ...prev, [key]: newCount }));
-
-    if (newCount === 1) {
-      // First tap: show tooltip
-      setMobileTapStates(prev => ({ ...prev, [key]: true }));
-    } else if (newCount === 2) {
-      // Second tap: apply filter and hide tooltip
-      action();
-      setMobileTapCounts(prev => ({ ...prev, [key]: 0 }));
-      setMobileTapStates(prev => ({ ...prev, [key]: false }));
-    }
+    // Both desktop and mobile: a single click/tap applies the filter directly.
+    // The mobile popup is suppressed via the ResponsiveTooltip `disableMobilePopup` prop,
+    // so no tooltip appears after the filter is applied.
+    action();
   };
   
   // Collect full params (course+term+instructor+sessionType) for each review's instructor details
@@ -655,6 +638,7 @@ export const CourseReviewsList = ({
         content={t('filter.clickToFilterRequirement', { requirement: label })}
         hasClickAction={true}
         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+        disableMobilePopup={true}
         open={isMobile ? mobileTapStates[key] : undefined}
         onOpenChange={isMobile ? () => {
           // Tooltip state managed by handleMobileTwoTap
@@ -797,6 +781,7 @@ export const CourseReviewsList = ({
                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                     hasClickAction={true}
                     clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                    disableMobilePopup={true}
                     open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-desktop`] : undefined}
                     onOpenChange={isMobile ? () => {
                       // Tooltip state managed by handleMobileTwoTap
@@ -848,6 +833,7 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-desktop`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
@@ -889,6 +875,7 @@ export const CourseReviewsList = ({
                   content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${instructor.session_type.toLowerCase()}`) })}
                   hasClickAction={true}
                   clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                  disableMobilePopup={true}
                   open={isMobile ? mobileTapStates[`session-${instructor.instructor_name}-${instructor.session_type}-${reviewId}-mobile`] : undefined}
                   onOpenChange={isMobile ? () => {
                     // Tooltip state managed by handleMobileTwoTap
@@ -940,6 +927,7 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        disableMobilePopup={true}
                         open={isMobile ? mobileTapStates[`teaching-lang-${instructor.instructor_name}-${teachingLanguage}-${reviewId}-mobile`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
@@ -1076,6 +1064,7 @@ export const CourseReviewsList = ({
                       })}
                       hasClickAction={true}
                       clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                      disableMobilePopup={true}
                       open={isMobile ? mobileTapStates[`service-learning-${instructor.instructor_name}-${instructor.service_learning_type}-${reviewId}`] : undefined}
                       onOpenChange={isMobile ? () => {
                         // Tooltip state managed by handleMobileTwoTap
@@ -1336,6 +1325,7 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        disableMobilePopup={true}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-hideheader-1`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
@@ -1371,6 +1361,7 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-hideheader-1`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
@@ -1411,6 +1402,7 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        disableMobilePopup={true}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-hideheader-2`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
@@ -1446,6 +1438,7 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-hideheader-2`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
@@ -1488,6 +1481,7 @@ export const CourseReviewsList = ({
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
+                          disableMobilePopup={true}
                           isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : false}
                           mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : undefined}
                           onMobileTooltipChange={isMobile ? () => {
@@ -1714,6 +1708,7 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        disableMobilePopup={true}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-card-1`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
@@ -1749,6 +1744,7 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-card-1`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
@@ -1789,6 +1785,7 @@ export const CourseReviewsList = ({
                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                         hasClickAction={true}
                         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                        disableMobilePopup={true}
                         open={isMobile ? mobileTapStates[`term-${term.term_code}-${review.$id}-card-2`] : undefined}
                         onOpenChange={isMobile ? () => {
                           // Tooltip state managed by handleMobileTwoTap
@@ -1824,6 +1821,7 @@ export const CourseReviewsList = ({
                           content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(review.review_language) })}
                           hasClickAction={true}
                           clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={true}
                           open={isMobile ? mobileTapStates[`review-lang-${review.review_language}-${review.$id}-card-2`] : undefined}
                           onOpenChange={isMobile ? () => {
                             // Tooltip state managed by handleMobileTwoTap
@@ -1866,6 +1864,7 @@ export const CourseReviewsList = ({
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
+                          disableMobilePopup={true}
                           isPending={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : false}
                           mobileTooltipOpen={isMobile ? mobileTapStates[`grade-${review.course_final_grade}-${review.$id}`] : undefined}
                           onMobileTooltipChange={isMobile ? () => {

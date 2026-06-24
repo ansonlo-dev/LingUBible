@@ -13,6 +13,7 @@ interface GradeBadgeProps {
   isPending?: boolean;
   mobileTooltipOpen?: boolean;
   onMobileTooltipChange?: (open: boolean) => void;
+  disableMobilePopup?: boolean;
 }
 
 export const GradeBadge = forwardRef<HTMLDivElement, GradeBadgeProps>(({ 
@@ -23,7 +24,8 @@ export const GradeBadge = forwardRef<HTMLDivElement, GradeBadgeProps>(({
   hasClickAction = false,
   isPending = false,
   mobileTooltipOpen,
-  onMobileTooltipChange
+  onMobileTooltipChange,
+  disableMobilePopup = false
 }, ref) => {
   const { t } = useLanguage();
   
@@ -188,6 +190,7 @@ export const GradeBadge = forwardRef<HTMLDivElement, GradeBadgeProps>(({
         hasClickAction={hasClickAction}
         clickActionText={hasClickAction ? t('tooltip.clickAgainToFilter') : undefined}
         isPending={isPending}
+        disableMobilePopup={disableMobilePopup}
         open={mobileTooltipOpen}
         onOpenChange={onMobileTooltipChange}
       >

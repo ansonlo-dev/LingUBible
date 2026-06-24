@@ -1211,6 +1211,7 @@ const Lecturers = () => {
         content={t('filter.clickToFilterRequirement', { requirement: label })}
         hasClickAction={true}
         clickActionText={t('tooltip.clickAgainToFilter')}
+        disableMobilePopup={true}
         onFirstTap={() => {
           console.log('📋 Course Requirement Badge: First tap - setting pending filter');
           setPendingRequirementFilter({ filterKey, value });
@@ -1231,7 +1232,7 @@ const Lecturers = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (!isMobile) {
+            {
               // Desktop: apply filter immediately
               const filterValue = value ? 'has' : 'no';
               setRequirementsFilters(prev => ({
@@ -3404,6 +3405,7 @@ const Lecturers = () => {
                           content={t('filter.clickToFilterByTerm', { term: getTermName(reviewInfo.term.name, t) })}
                           hasClickAction={true}
                           clickActionText={t('tooltip.clickAgainToFilter')}
+                          disableMobilePopup={true}
                           onFirstTap={() => {
                             console.log('📅 Term Badge (Lecturers): First tap - setting pending filter');
                             setPendingTermFilter(reviewInfo.term.term_code);
@@ -3423,7 +3425,7 @@ const Lecturers = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (!isMobile) {
+                              {
                                 // Desktop: apply filter immediately
                                 handleFiltersChange({
                                   ...filters,
@@ -3441,6 +3443,7 @@ const Lecturers = () => {
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
                             clickActionText={t('tooltip.clickAgainToFilter')}
+                            disableMobilePopup={true}
                             onFirstTap={() => {
                               console.log('🌐 Review Language Badge (Lecturers): First tap - setting pending filter');
                               setPendingReviewLanguageFilter(reviewInfo.review.review_language!);
@@ -3460,7 +3463,7 @@ const Lecturers = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (!isMobile) {
+                                {
                                   // Desktop: apply filter immediately
                                   const reviewLanguage = reviewInfo.review.review_language || 'en';
                                   handleFiltersChange({
@@ -3485,6 +3488,7 @@ const Lecturers = () => {
                           content={t('filter.clickToFilterByTerm', { term: getTermName(reviewInfo.term.name, t) })}
                           hasClickAction={true}
                           clickActionText={t('tooltip.clickAgainToFilter')}
+                          disableMobilePopup={true}
                           onFirstTap={() => {
                             console.log('📅 Term Badge (Lecturers): First tap - setting pending filter');
                             setPendingTermFilter(reviewInfo.term.term_code);
@@ -3504,7 +3508,7 @@ const Lecturers = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (!isMobile) {
+                              {
                                 // Desktop: apply filter immediately
                                 handleFiltersChange({
                                   ...filters,
@@ -3522,6 +3526,7 @@ const Lecturers = () => {
                             content={t('filter.clickToFilterByLanguage', { language: getLanguageDisplayName(reviewInfo.review.review_language || 'en') })}
                             hasClickAction={true}
                             clickActionText={t('tooltip.clickAgainToFilter')}
+                            disableMobilePopup={true}
                             onFirstTap={() => {
                               console.log('📅 Language Badge (Lecturers): First tap - setting pending filter');
                               setPendingReviewLanguageFilter(reviewInfo.review.review_language || 'en');
@@ -3541,7 +3546,7 @@ const Lecturers = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (!isMobile) {
+                                {
                                   // Desktop: apply filter immediately
                                   handleFiltersChange({
                                     ...filters,
@@ -3564,6 +3569,7 @@ const Lecturers = () => {
                           size="md"
                           showTooltip={true}
                           hasClickAction={true}
+                          disableMobilePopup={true}
                           isPending={pendingGradeFilter === (reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade)}
                           onFirstTap={() => {
                             const normalizedGrade = reviewInfo.review.course_final_grade === '-1' ? 'N/A' : reviewInfo.review.course_final_grade;
@@ -3797,6 +3803,7 @@ const Lecturers = () => {
                                       content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
+                                      disableMobilePopup={true}
                                       onFirstTap={() => {
                                         console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
                                         setPendingSessionTypeFilter(currentInstructorDetail.session_type);
@@ -3821,7 +3828,7 @@ const Lecturers = () => {
                                             : ''
                                         }`}
                                         onClick={() => {
-                                          if (!isMobile) {
+                                          {
                                             // Desktop: apply filter immediately
                                             const newFilters = { ...filters };
                                             const sessionType = currentInstructorDetail.session_type;
@@ -3854,6 +3861,7 @@ const Lecturers = () => {
                                             content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                             hasClickAction={true}
                                             clickActionText={t('tooltip.clickAgainToFilter')}
+                                            disableMobilePopup={true}
                                             showCloseButton={true}
                                             onReset={() => {
                                               const uniqueLanguageKey = `review-${reviewInfo.review.$id}-${currentInstructorDetail.instructor_name.replace(/\s+/g, '-')}-${teachingLanguage}`;
@@ -3871,62 +3879,10 @@ const Lecturers = () => {
                                             <span 
                                               className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full"
                                               onClick={(e) => {
-                                                const uniqueLanguageKey = `review-${reviewInfo.review.$id}-${currentInstructorDetail.instructor_name.replace(/\s+/g, '-')}-${teachingLanguage}`;
                                                 e.stopPropagation();
                                                 e.preventDefault();
-                                                
-                                                if (isMobile) {
-                                                  // Mobile/tablet: require 2 taps to apply filter
-                                                  const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
-                                                  const newTapCount = currentTapCount + 1;
-                                                  
-                                                  setTeachingLanguageTapCounts(prev => ({
-                                                    ...prev,
-                                                    [teachingLanguage]: newTapCount
-                                                  }));
-                                                  
-                                                  // Clear existing timeout
-                                                  if (teachingLanguageTimeouts[teachingLanguage]) {
-                                                    clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
-                                                  }
-                                                  
-                                                  if (newTapCount === 1) {
-                                                    // First tap: show tooltip
-                                                    setTeachingLanguageTooltipStates(prev => ({
-                                                      ...prev,
-                                                      [uniqueLanguageKey]: true
-                                                    }));
-                                                    
-                                                    // Set timeout to reset
-                                                    const timeoutId = setTimeout(() => {
-                                                      setTeachingLanguageTapCounts(prev => ({
-                                                        ...prev,
-                                                        [teachingLanguage]: 0
-                                                      }));
-                                                      setTeachingLanguageTooltipStates(prev => ({
-                                                        ...prev,
-                                                        [uniqueLanguageKey]: false
-                                                      }));
-                                                      setTeachingLanguageTimeouts(prev => {
-                                                        const newTimeouts = { ...prev };
-                                                        delete newTimeouts[teachingLanguage];
-                                                        return newTimeouts;
-                                                      });
-                                                    }, 3000);
-                                                    
-                                                    setTeachingLanguageTimeouts(prev => ({
-                                                      ...prev,
-                                                      [teachingLanguage]: timeoutId
-                                                    }));
-                                                  } else if (newTapCount === 2) {
-                                                    // Second tap: apply filter and close tooltip
-                                                    applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                    resetTeachingLanguageTooltipState(uniqueLanguageKey);
-                                                  }
-                                                } else {
-                                                  // Desktop: 1 tap to apply filter
-                                                  applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                }
+                                                // Single tap/click applies the filter directly (no mobile two-tap popup)
+                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
                                               }}
                                             >
                                               <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
@@ -3946,6 +3902,7 @@ const Lecturers = () => {
                                     content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${currentInstructorDetail.session_type.toLowerCase()}`) })}
                                     hasClickAction={true}
                                     clickActionText={t('tooltip.clickAgainToFilter')}
+                                    disableMobilePopup={true}
                                     onFirstTap={() => {
                                       console.log('📚 Session Type Badge (Lecturers): First tap - setting pending filter');
                                       setPendingSessionTypeFilter(currentInstructorDetail.session_type);
@@ -3970,7 +3927,7 @@ const Lecturers = () => {
                                           : ''
                                       }`}
                                       onClick={() => {
-                                        if (!isMobile) {
+                                        {
                                           // Desktop: apply filter immediately
                                           const newFilters = { ...filters };
                                           const sessionType = currentInstructorDetail.session_type;
@@ -4003,6 +3960,7 @@ const Lecturers = () => {
                                           content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                           hasClickAction={true}
                                           clickActionText={t('tooltip.clickAgainToFilter')}
+                                          disableMobilePopup={true}
                                           showCloseButton={true}
                                           onReset={() => {
                                             const uniqueLanguageKey = `review-mobile-${reviewInfo.review.$id}-${currentInstructorDetail.instructor_name.replace(/\s+/g, '-')}-${teachingLanguage}`;
@@ -4020,62 +3978,10 @@ const Lecturers = () => {
                                           <span 
                                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-orange-100 dark:hover:bg-orange-900/50 max-w-full truncate"
                                             onClick={(e) => {
-                                              const uniqueLanguageKey = `review-mobile-${reviewInfo.review.$id}-${currentInstructorDetail.instructor_name.replace(/\s+/g, '-')}-${teachingLanguage}`;
                                               e.stopPropagation();
                                               e.preventDefault();
-                                              
-                                              if (isMobile) {
-                                                // Mobile/tablet: require 2 taps to apply filter
-                                                const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
-                                                const newTapCount = currentTapCount + 1;
-                                                
-                                                setTeachingLanguageTapCounts(prev => ({
-                                                  ...prev,
-                                                  [teachingLanguage]: newTapCount
-                                                }));
-                                                
-                                                // Clear existing timeout
-                                                if (teachingLanguageTimeouts[teachingLanguage]) {
-                                                  clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
-                                                }
-                                                
-                                                if (newTapCount === 1) {
-                                                  // First tap: show tooltip
-                                                  setTeachingLanguageTooltipStates(prev => ({
-                                                    ...prev,
-                                                    [uniqueLanguageKey]: true
-                                                  }));
-                                                  
-                                                  // Set timeout to reset
-                                                  const timeoutId = setTimeout(() => {
-                                                    setTeachingLanguageTapCounts(prev => ({
-                                                      ...prev,
-                                                      [teachingLanguage]: 0
-                                                    }));
-                                                    setTeachingLanguageTooltipStates(prev => ({
-                                                      ...prev,
-                                                      [uniqueLanguageKey]: false
-                                                    }));
-                                                    setTeachingLanguageTimeouts(prev => {
-                                                      const newTimeouts = { ...prev };
-                                                      delete newTimeouts[teachingLanguage];
-                                                      return newTimeouts;
-                                                    });
-                                                  }, 3000);
-                                                  
-                                                  setTeachingLanguageTimeouts(prev => ({
-                                                    ...prev,
-                                                    [teachingLanguage]: timeoutId
-                                                  }));
-                                                } else if (newTapCount === 2) {
-                                                  // Second tap: apply filter and close tooltip
-                                                  applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                  resetTeachingLanguageTooltipState(uniqueLanguageKey);
-                                                }
-                                              } else {
-                                                // Desktop: 1 tap to apply filter
-                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                              }
+                                              // Single tap/click applies the filter directly (no mobile two-tap popup)
+                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
                                             }}
                                           >
                                             <span className="truncate">{getTeachingLanguageName(teachingLanguage, t)}</span>
@@ -4187,6 +4093,7 @@ const Lecturers = () => {
                                         })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         onFirstTap={() => {
                                           console.log('📋 Service Learning Badge (Lecturers): First tap - setting pending filter');
                                           setPendingServiceLearningFilter(currentInstructorDetail.service_learning_type);
@@ -4211,7 +4118,7 @@ const Lecturers = () => {
                                           onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            if (!isMobile) {
+                                            {
                                               // Desktop: apply filter immediately
                                               handleFiltersChange({
                                                 ...filters,
@@ -4483,6 +4390,7 @@ const Lecturers = () => {
                                               })}
                                               hasClickAction={true}
                                               clickActionText={t('tooltip.clickAgainToFilter')}
+                                              disableMobilePopup={true}
                                               onFirstTap={() => {
                                                 console.log('📋 Service Learning Badge (Lecturers Other): First tap - setting pending filter');
                                                 setPendingServiceLearningFilter(instructor.service_learning_type);
@@ -4507,7 +4415,7 @@ const Lecturers = () => {
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   e.stopPropagation();
-                                                  if (!isMobile) {
+                                                  {
                                                     // Desktop: apply filter immediately
                                                     handleFiltersChange({
                                                       ...filters,
