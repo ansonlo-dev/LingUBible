@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail, BookText, CalendarClock, Calculator } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail, BookText, CalendarClock, Calculator, CalendarDays } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
@@ -261,7 +261,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       label: t('sidebar.tools'),
       items: [
         { name: t('nav.timetable'), href: '/timetable', icon: CalendarClock, current: location.pathname === '/timetable' },
-        { name: t('nav.gpaHons'), href: '/gpa-hons', icon: Calculator, current: location.pathname === '/gpa-hons' }
+        { name: t('nav.gpaHons'), href: '/gpa-hons', icon: Calculator, current: location.pathname === '/gpa-hons' },
+        { name: t('nav.calendar'), href: '/calendar', icon: CalendarDays, current: location.pathname === '/calendar' }
       ]
     },
     // My Reviews、Favorites 和 Settings 分組（僅在用戶登入時顯示）
