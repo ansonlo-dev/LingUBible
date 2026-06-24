@@ -3668,7 +3668,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <Badge 
                                   key={label}
                                   variant={value ? "default" : "secondary"}
-                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 hover:!bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 hover:!bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+                                  className={`text-xs shrink-0 ${value ? 'bg-green-100 hover:!bg-green-100 dark:hover:!bg-green-900/20 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 hover:!bg-gray-100 dark:hover:!bg-gray-800 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
                                 >
                                   {value ? (
                                     <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
