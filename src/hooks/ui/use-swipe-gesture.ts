@@ -46,6 +46,13 @@ export function useSwipeGesture(options: SwipeGestureOptions = {}) {
     // triggers the sidebar or the browser back gesture.
     if (document.querySelector('.pdf-viewer-portal')) return;
 
+    // Areas that handle their own horizontal drag (e.g. the calendar) opt out of
+    // the sidebar swipe so dragging within them doesn't open/close the sidebar.
+    const swipeTarget = e.target as HTMLElement | null;
+    if (swipeTarget && typeof swipeTarget.closest === 'function' && swipeTarget.closest('[data-no-sidebar-swipe]')) {
+      return;
+    }
+
     // 重置狀態
     isScrolling.current = false;
     isValidSwipeStart.current = false;

@@ -227,25 +227,102 @@ export default function Calendar() {
     // `navigate` closes over `view`, so re-subscribe when the view changes.
   }, [view]);
 
-  // Touch swipe (mobile): swipe left → next period, swipe right → previous.
-  // A second navigation method alongside the on-screen arrow buttons.
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches[0];
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    const start = touchStartRef.current;
-    touchStartRef.current = null;
-    if (!start) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    // Require a clearly horizontal swipe so vertical scrolling isn't hijacked.
-    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      navigate(dx < 0 ? 1 : -1);
-    }
-  };
+  // Touch drag (mobile): the calendar content follows the finger in real time so
+  // it's obvious the calendar can be dragged. Released past a threshold pages to
+  // the previous/next period; otherwise it springs back. Implemented with native
+  // listeners (non-passive touchmove) and direct DOM writes on `trackRef` to keep
+  // the drag smooth without a re-render per frame.
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+
+    let startX = 0;
+    let startY = 0;
+    let decided = false; // axis decided yet?
+    let locked = false; // committed to a horizontal drag
+    let active = false; // a single-finger gesture is in progress
+
+    const widthOf = () => surface.clientWidth || window.innerWidth;
+    const setTrack = (x: number | null, animate: boolean) => {
+      const track = trackRef.current;
+      if (!track) return;
+      track.style.transition = animate ? 'transform 0.22s cubic-bezier(0.22,1,0.36,1)' : 'none';
+      track.style.transform = x === null ? '' : `translateX(${x}px)`;
+    };
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) {
+        active = false;
+        return;
+      }
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      decided = false;
+      locked = false;
+      active = true;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (!active) return;
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (!decided) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        decided = true;
+        // Engage horizontal drag only when the motion is clearly horizontal,
+        // otherwise leave the gesture to normal vertical scrolling.
+        if (Math.abs(dx) > Math.abs(dy)) {
+          locked = true;
+        } else {
+          active = false;
+          return;
+        }
+      }
+      if (locked) {
+        e.preventDefault(); // stop the page from scrolling while dragging
+        setTrack(dx, false);
+      }
+    };
+
+    const onEnd = (e: TouchEvent) => {
+      if (!active || !locked) {
+        active = false;
+        return;
+      }
+      active = false;
+      locked = false;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const threshold = Math.min(72, widthOf() * 0.22);
+      if (Math.abs(dx) >= threshold) {
+        // Commit: clear the drag transform and let the keyed slide-in play.
+        setTrack(null, false);
+        navigateRef.current(dx < 0 ? 1 : -1);
+      } else {
+        // Spring back to centre.
+        setTrack(0, true);
+        window.setTimeout(() => setTrack(null, false), 240);
+      }
+    };
+
+    surface.addEventListener('touchstart', onStart, { passive: true });
+    surface.addEventListener('touchmove', onMove, { passive: false });
+    surface.addEventListener('touchend', onEnd, { passive: true });
+    surface.addEventListener('touchcancel', onEnd, { passive: true });
+    return () => {
+      surface.removeEventListener('touchstart', onStart);
+      surface.removeEventListener('touchmove', onMove);
+      surface.removeEventListener('touchend', onEnd);
+      surface.removeEventListener('touchcancel', onEnd);
+    };
+  }, []);
 
   const goToday = () => {
     setRefDate(today);
@@ -395,12 +472,16 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Calendar surface */}
+      {/* Calendar surface. `data-no-sidebar-swipe` tells the global swipe-to-open
+          gesture to ignore touches starting here, so dragging the calendar back
+          to a previous period never opens the sidebar. */}
       <div
+        ref={surfaceRef}
+        data-no-sidebar-swipe
         className="overflow-hidden rounded-xl border bg-card shadow-sm"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
       >
+        {/* Drag track: transformed in real time while the finger is down. */}
+        <div ref={trackRef} className="touch-pan-y will-change-transform">
         {/* Keyed wrapper: remounts on navigation so the slide-in animation replays. */}
         <div
           key={anim.key}
@@ -436,6 +517,7 @@ export default function Calendar() {
             emptyLabel={t('calendar.noEvents')}
           />
         )}
+        </div>
         </div>
       </div>
 
