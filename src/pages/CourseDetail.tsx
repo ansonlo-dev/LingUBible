@@ -2786,7 +2786,12 @@ const CourseDetail = () => {
                               terms: []
                             };
                           }
-                          acc[instructorName].terms.push(info.term);
+                          // 同一講師在同一學期可能同時有「獨自授課」與「與他人合教」兩筆記錄
+                          // （合教記錄經 expandRecordsByInstructorName 展開後也會列在該講師名下），
+                          // 會造成學期徽章重複，故依 term_code 去重。
+                          if (!acc[instructorName].terms.some(t => t.term_code === info.term.term_code)) {
+                            acc[instructorName].terms.push(info.term);
+                          }
                           return acc;
                         }, {} as Record<string, { instructor: any; terms: any[] }>)
                     )
@@ -2987,7 +2992,12 @@ const CourseDetail = () => {
                               terms: []
                             };
                           }
-                          acc[instructorName].terms.push(info.term);
+                          // 同一講師在同一學期可能同時有「獨自授課」與「與他人合教」兩筆記錄
+                          // （合教記錄經 expandRecordsByInstructorName 展開後也會列在該講師名下），
+                          // 會造成學期徽章重複，故依 term_code 去重。
+                          if (!acc[instructorName].terms.some(t => t.term_code === info.term.term_code)) {
+                            acc[instructorName].terms.push(info.term);
+                          }
                           return acc;
                         }, {} as Record<string, { instructor: any; terms: any[] }>)
                     )
@@ -3196,7 +3206,12 @@ const CourseDetail = () => {
                               terms: []
                             };
                           }
-                          acc[instructorName].terms.push(info.term);
+                          // 同一講師在同一學期可能同時有「獨自授課」與「與他人合教」兩筆記錄
+                          // （合教記錄經 expandRecordsByInstructorName 展開後也會列在該講師名下），
+                          // 會造成學期徽章重複，故依 term_code 去重。
+                          if (!acc[instructorName].terms.some(t => t.term_code === info.term.term_code)) {
+                            acc[instructorName].terms.push(info.term);
+                          }
                           return acc;
                         }, {} as Record<string, { instructor: any; terms: any[] }>)
                     )
@@ -3405,7 +3420,12 @@ const CourseDetail = () => {
                               terms: []
                             };
                           }
-                          acc[instructorName].terms.push(info.term);
+                          // 同一講師在同一學期可能同時有「獨自授課」與「與他人合教」兩筆記錄
+                          // （合教記錄經 expandRecordsByInstructorName 展開後也會列在該講師名下），
+                          // 會造成學期徽章重複，故依 term_code 去重。
+                          if (!acc[instructorName].terms.some(t => t.term_code === info.term.term_code)) {
+                            acc[instructorName].terms.push(info.term);
+                          }
                           return acc;
                         }, {} as Record<string, { instructor: any; terms: any[] }>)
                     )
