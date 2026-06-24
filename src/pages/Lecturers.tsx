@@ -748,16 +748,6 @@ const Lecturers = () => {
 
   // Term badge click handler for teaching records
   const handleTermBadgeClick = (termCode: string) => {
-    if (isMobile) {
-      if (pendingTermFilter !== termCode) {
-        setPendingTermFilter(termCode);
-        return; // Only set pending on first tap, do not apply filter
-      } else if (pendingTermFilter === termCode) {
-        setPendingTermFilter(null);
-        // Continue to apply filter below
-      }
-    }
-    
     const currentValues = Array.isArray(selectedTermFilter) ? selectedTermFilter : (selectedTermFilter === 'all' ? [] : [selectedTermFilter]);
     const isSelected = currentValues.includes(termCode);
     
@@ -2611,19 +2601,10 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTermFilter(term.term_code);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTermFilter(null);
-                                          handleTermBadgeClick(term.term_code);
-                                        }}
                                       >
                                         <button
                                           onClick={() => {
-                                            if (!isMobile) {
-                                              handleTermBadgeClick(term.term_code);
-                                            }
+                                            handleTermBadgeClick(term.term_code);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
@@ -2666,62 +2647,10 @@ const Lecturers = () => {
                                       >
                                         <button
                                           onClick={(e) => {
-                                            const uniqueLanguageKey = `${term.term_code}-${courseCode.replace(/[^A-Z0-9]/g, '-')}-${teachingLanguage}`;
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            
-                                            if (isMobile) {
-                                              // Mobile/tablet: require 2 taps to apply filter
-                                              const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
-                                              const newTapCount = currentTapCount + 1;
-                                              
-                                              setTeachingLanguageTapCounts(prev => ({
-                                                ...prev,
-                                                [teachingLanguage]: newTapCount
-                                              }));
-                                              
-                                              // Clear existing timeout
-                                              if (teachingLanguageTimeouts[teachingLanguage]) {
-                                                clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
-                                              }
-                                              
-                                              if (newTapCount === 1) {
-                                                // First tap: show tooltip
-                                                setTeachingLanguageTooltipStates(prev => ({
-                                                  ...prev,
-                                                  [uniqueLanguageKey]: true
-                                                }));
-                                                
-                                                // Set timeout to reset
-                                                const timeoutId = setTimeout(() => {
-                                                  setTeachingLanguageTapCounts(prev => ({
-                                                    ...prev,
-                                                    [teachingLanguage]: 0
-                                                  }));
-                                                  setTeachingLanguageTooltipStates(prev => ({
-                                                    ...prev,
-                                                    [uniqueLanguageKey]: false
-                                                  }));
-                                                  setTeachingLanguageTimeouts(prev => {
-                                                    const newTimeouts = { ...prev };
-                                                    delete newTimeouts[teachingLanguage];
-                                                    return newTimeouts;
-                                                  });
-                                                }, 3000);
-                                                
-                                                setTeachingLanguageTimeouts(prev => ({
-                                                  ...prev,
-                                                  [teachingLanguage]: timeoutId
-                                                }));
-                                              } else if (newTapCount === 2) {
-                                                // Second tap: apply filter and close tooltip
-                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                resetTeachingLanguageTooltipState(uniqueLanguageKey);
-                                              }
-                                            } else {
-                                              // Desktop: 1 tap to apply filter
-                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                            }
+                                            // Single tap/click applies the filter directly (no mobile two-tap popup)
+                                            applyTeachingRecordsLanguageFilter(teachingLanguage);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
@@ -2743,19 +2672,10 @@ const Lecturers = () => {
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
-                                      onFirstTap={() => {
-                                        setPendingTermFilter(term.term_code);
-                                      }}
-                                      onSecondTap={() => {
-                                        setPendingTermFilter(null);
-                                        handleTermBadgeClick(term.term_code);
-                                      }}
                                     >
                                       <button
                                         onClick={() => {
-                                          if (!isMobile) {
-                                            handleTermBadgeClick(term.term_code);
-                                          }
+                                          handleTermBadgeClick(term.term_code);
                                         }}
                                         className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                           (() => {
@@ -2880,19 +2800,10 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTermFilter(term.term_code);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTermFilter(null);
-                                          handleTermBadgeClick(term.term_code);
-                                        }}
                                       >
                                         <button
                                           onClick={() => {
-                                            if (!isMobile) {
-                                              handleTermBadgeClick(term.term_code);
-                                            }
+                                            handleTermBadgeClick(term.term_code);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
@@ -2935,62 +2846,10 @@ const Lecturers = () => {
                                       >
                                         <button
                                           onClick={(e) => {
-                                            const uniqueLanguageKey = `${term.term_code}-${courseCode.replace(/[^A-Z0-9]/g, '-')}-${teachingLanguage}`;
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            
-                                            if (isMobile) {
-                                              // Mobile/tablet: require 2 taps to apply filter
-                                              const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
-                                              const newTapCount = currentTapCount + 1;
-                                              
-                                              setTeachingLanguageTapCounts(prev => ({
-                                                ...prev,
-                                                [teachingLanguage]: newTapCount
-                                              }));
-                                              
-                                              // Clear existing timeout
-                                              if (teachingLanguageTimeouts[teachingLanguage]) {
-                                                clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
-                                              }
-                                              
-                                              if (newTapCount === 1) {
-                                                // First tap: show tooltip
-                                                setTeachingLanguageTooltipStates(prev => ({
-                                                  ...prev,
-                                                  [uniqueLanguageKey]: true
-                                                }));
-                                                
-                                                // Set timeout to reset
-                                                const timeoutId = setTimeout(() => {
-                                                  setTeachingLanguageTapCounts(prev => ({
-                                                    ...prev,
-                                                    [teachingLanguage]: 0
-                                                  }));
-                                                  setTeachingLanguageTooltipStates(prev => ({
-                                                    ...prev,
-                                                    [uniqueLanguageKey]: false
-                                                  }));
-                                                  setTeachingLanguageTimeouts(prev => {
-                                                    const newTimeouts = { ...prev };
-                                                    delete newTimeouts[teachingLanguage];
-                                                    return newTimeouts;
-                                                  });
-                                                }, 3000);
-                                                
-                                                setTeachingLanguageTimeouts(prev => ({
-                                                  ...prev,
-                                                  [teachingLanguage]: timeoutId
-                                                }));
-                                              } else if (newTapCount === 2) {
-                                                // Second tap: apply filter and close tooltip
-                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                resetTeachingLanguageTooltipState(uniqueLanguageKey);
-                                              }
-                                            } else {
-                                              // Desktop: 1 tap to apply filter
-                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                            }
+                                            // Single tap/click applies the filter directly (no mobile two-tap popup)
+                                            applyTeachingRecordsLanguageFilter(teachingLanguage);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
@@ -3012,19 +2871,10 @@ const Lecturers = () => {
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
-                                      onFirstTap={() => {
-                                        setPendingTermFilter(term.term_code);
-                                      }}
-                                      onSecondTap={() => {
-                                        setPendingTermFilter(null);
-                                        handleTermBadgeClick(term.term_code);
-                                      }}
                                     >
                                       <button
                                         onClick={() => {
-                                          if (!isMobile) {
-                                            handleTermBadgeClick(term.term_code);
-                                          }
+                                          handleTermBadgeClick(term.term_code);
                                         }}
                                         className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                           (() => {
@@ -3149,19 +2999,10 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTermFilter(term.term_code);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTermFilter(null);
-                                          handleTermBadgeClick(term.term_code);
-                                        }}
                                       >
                                         <button
                                           onClick={() => {
-                                            if (!isMobile) {
-                                              handleTermBadgeClick(term.term_code);
-                                            }
+                                            handleTermBadgeClick(term.term_code);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
@@ -3204,62 +3045,10 @@ const Lecturers = () => {
                                       >
                                         <button
                                           onClick={(e) => {
-                                            const uniqueLanguageKey = `${term.term_code}-${courseCode.replace(/[^A-Z0-9]/g, '-')}-${teachingLanguage}`;
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            
-                                            if (isMobile) {
-                                              // Mobile/tablet: require 2 taps to apply filter
-                                              const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
-                                              const newTapCount = currentTapCount + 1;
-                                              
-                                              setTeachingLanguageTapCounts(prev => ({
-                                                ...prev,
-                                                [teachingLanguage]: newTapCount
-                                              }));
-                                              
-                                              // Clear existing timeout
-                                              if (teachingLanguageTimeouts[teachingLanguage]) {
-                                                clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
-                                              }
-                                              
-                                              if (newTapCount === 1) {
-                                                // First tap: show tooltip
-                                                setTeachingLanguageTooltipStates(prev => ({
-                                                  ...prev,
-                                                  [uniqueLanguageKey]: true
-                                                }));
-                                                
-                                                // Set timeout to reset
-                                                const timeoutId = setTimeout(() => {
-                                                  setTeachingLanguageTapCounts(prev => ({
-                                                    ...prev,
-                                                    [teachingLanguage]: 0
-                                                  }));
-                                                  setTeachingLanguageTooltipStates(prev => ({
-                                                    ...prev,
-                                                    [uniqueLanguageKey]: false
-                                                  }));
-                                                  setTeachingLanguageTimeouts(prev => {
-                                                    const newTimeouts = { ...prev };
-                                                    delete newTimeouts[teachingLanguage];
-                                                    return newTimeouts;
-                                                  });
-                                                }, 3000);
-                                                
-                                                setTeachingLanguageTimeouts(prev => ({
-                                                  ...prev,
-                                                  [teachingLanguage]: timeoutId
-                                                }));
-                                              } else if (newTapCount === 2) {
-                                                // Second tap: apply filter and close tooltip
-                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                resetTeachingLanguageTooltipState(uniqueLanguageKey);
-                                              }
-                                            } else {
-                                              // Desktop: 1 tap to apply filter
-                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                            }
+                                            // Single tap/click applies the filter directly (no mobile two-tap popup)
+                                            applyTeachingRecordsLanguageFilter(teachingLanguage);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
@@ -3281,19 +3070,10 @@ const Lecturers = () => {
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
-                                      onFirstTap={() => {
-                                        setPendingTermFilter(term.term_code);
-                                      }}
-                                      onSecondTap={() => {
-                                        setPendingTermFilter(null);
-                                        handleTermBadgeClick(term.term_code);
-                                      }}
                                     >
                                       <button
                                         onClick={() => {
-                                          if (!isMobile) {
-                                            handleTermBadgeClick(term.term_code);
-                                          }
+                                          handleTermBadgeClick(term.term_code);
                                         }}
                                         className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                           (() => {
@@ -3418,19 +3198,10 @@ const Lecturers = () => {
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
-                                        onFirstTap={() => {
-                                          setPendingTermFilter(term.term_code);
-                                        }}
-                                        onSecondTap={() => {
-                                          setPendingTermFilter(null);
-                                          handleTermBadgeClick(term.term_code);
-                                        }}
                                       >
                                         <button
                                           onClick={() => {
-                                            if (!isMobile) {
-                                              handleTermBadgeClick(term.term_code);
-                                            }
+                                            handleTermBadgeClick(term.term_code);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 ${
                                             (() => {
@@ -3473,62 +3244,10 @@ const Lecturers = () => {
                                       >
                                         <button
                                           onClick={(e) => {
-                                            const uniqueLanguageKey = `${term.term_code}-${courseCode.replace(/[^A-Z0-9]/g, '-')}-${teachingLanguage}`;
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            
-                                            if (isMobile) {
-                                              // Mobile/tablet: require 2 taps to apply filter
-                                              const currentTapCount = teachingLanguageTapCounts[teachingLanguage] || 0;
-                                              const newTapCount = currentTapCount + 1;
-                                              
-                                              setTeachingLanguageTapCounts(prev => ({
-                                                ...prev,
-                                                [teachingLanguage]: newTapCount
-                                              }));
-                                              
-                                              // Clear existing timeout
-                                              if (teachingLanguageTimeouts[teachingLanguage]) {
-                                                clearTimeout(teachingLanguageTimeouts[teachingLanguage]);
-                                              }
-                                              
-                                              if (newTapCount === 1) {
-                                                // First tap: show tooltip
-                                                setTeachingLanguageTooltipStates(prev => ({
-                                                  ...prev,
-                                                  [uniqueLanguageKey]: true
-                                                }));
-                                                
-                                                // Set timeout to reset
-                                                const timeoutId = setTimeout(() => {
-                                                  setTeachingLanguageTapCounts(prev => ({
-                                                    ...prev,
-                                                    [teachingLanguage]: 0
-                                                  }));
-                                                  setTeachingLanguageTooltipStates(prev => ({
-                                                    ...prev,
-                                                    [uniqueLanguageKey]: false
-                                                  }));
-                                                  setTeachingLanguageTimeouts(prev => {
-                                                    const newTimeouts = { ...prev };
-                                                    delete newTimeouts[teachingLanguage];
-                                                    return newTimeouts;
-                                                  });
-                                                }, 3000);
-                                                
-                                                setTeachingLanguageTimeouts(prev => ({
-                                                  ...prev,
-                                                  [teachingLanguage]: timeoutId
-                                                }));
-                                              } else if (newTapCount === 2) {
-                                                // Second tap: apply filter and close tooltip
-                                                applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                                resetTeachingLanguageTooltipState(uniqueLanguageKey);
-                                              }
-                                            } else {
-                                              // Desktop: 1 tap to apply filter
-                                              applyTeachingRecordsLanguageFilter(teachingLanguage);
-                                            }
+                                            // Single tap/click applies the filter directly (no mobile two-tap popup)
+                                            applyTeachingRecordsLanguageFilter(teachingLanguage);
                                           }}
                                           className={`px-2 py-1 text-xs transition-colors border-0 font-mono ${
                                             (() => {
@@ -3550,19 +3269,10 @@ const Lecturers = () => {
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
-                                      onFirstTap={() => {
-                                        setPendingTermFilter(term.term_code);
-                                      }}
-                                      onSecondTap={() => {
-                                        setPendingTermFilter(null);
-                                        handleTermBadgeClick(term.term_code);
-                                      }}
                                     >
                                       <button
                                         onClick={() => {
-                                          if (!isMobile) {
-                                            handleTermBadgeClick(term.term_code);
-                                          }
+                                          handleTermBadgeClick(term.term_code);
                                         }}
                                         className={`px-2 py-1 text-xs rounded-md transition-colors border ${
                                           (() => {
