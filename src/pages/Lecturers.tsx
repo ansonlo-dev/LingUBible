@@ -2599,6 +2599,7 @@ const Lecturers = () => {
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
@@ -2629,6 +2630,7 @@ const Lecturers = () => {
                                           if (el) tooltipRefs.current[`lang-${uniqueLanguageKey}`] = el;
                                         }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                         showCloseButton={true}
@@ -2670,6 +2672,7 @@ const Lecturers = () => {
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                      disableMobilePopup={true}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
                                     >
@@ -2798,6 +2801,7 @@ const Lecturers = () => {
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
@@ -2828,6 +2832,7 @@ const Lecturers = () => {
                                           if (el) tooltipRefs.current[`lang-${uniqueLanguageKey}`] = el;
                                         }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                         showCloseButton={true}
@@ -2869,6 +2874,7 @@ const Lecturers = () => {
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                      disableMobilePopup={true}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
                                     >
@@ -2997,6 +3003,7 @@ const Lecturers = () => {
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
@@ -3027,6 +3034,7 @@ const Lecturers = () => {
                                           if (el) tooltipRefs.current[`lang-${uniqueLanguageKey}`] = el;
                                         }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                         showCloseButton={true}
@@ -3068,6 +3076,7 @@ const Lecturers = () => {
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                      disableMobilePopup={true}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
                                     >
@@ -3196,6 +3205,7 @@ const Lecturers = () => {
                                       {/* Term part (left side) */}
                                       <ResponsiveTooltip
                                         content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                       >
@@ -3226,6 +3236,7 @@ const Lecturers = () => {
                                           if (el) tooltipRefs.current[`lang-${uniqueLanguageKey}`] = el;
                                         }}
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) || teachingLanguage })}
+                                        disableMobilePopup={true}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
                                         showCloseButton={true}
@@ -3267,6 +3278,7 @@ const Lecturers = () => {
                                     // Fallback to term-only badge if no teaching language
                                     <ResponsiveTooltip
                                       content={t('filter.clickToFilterByTerm', { term: getTermName(term.name, t) })}
+                                      disableMobilePopup={true}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
                                     >

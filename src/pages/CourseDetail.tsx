@@ -2863,6 +2863,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                         onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                         onReset={() => resetTermTooltipState(term.term_code)}
@@ -2896,6 +2897,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? (() => {
                                           const uniqueLanguageKey = `${term.term_code}-${instructorName.replace(/\s+/g, '-')}-${teachingLanguage}`;
                                           return teachingLanguageTooltipStates[uniqueLanguageKey] || false;
@@ -2938,6 +2940,7 @@ const CourseDetail = () => {
                                       content={t('filter.clickToFilterByTerm', { term: term.name })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
+                                      disableMobilePopup={true}
                                     >
                                       <button
                                         onClick={() => handleTermBadgeClick(term.term_code)}
@@ -3061,6 +3064,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                         onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                         onReset={() => resetTermTooltipState(term.term_code)}
@@ -3094,6 +3098,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? (() => {
                                           const uniqueLanguageKey = `${term.term_code}-${instructorName.replace(/\s+/g, '-')}-${teachingLanguage}`;
                                           return teachingLanguageTooltipStates[uniqueLanguageKey] || false;
@@ -3139,6 +3144,7 @@ const CourseDetail = () => {
                                       content={t('filter.clickToFilterByTerm', { term: term.name })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
+                                      disableMobilePopup={true}
                                       open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                       onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                       onReset={() => resetTermTooltipState(term.term_code)}
@@ -3267,6 +3273,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                         onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                         onReset={() => resetTermTooltipState(term.term_code)}
@@ -3300,6 +3307,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? (() => {
                                           const uniqueLanguageKey = `${term.term_code}-${instructorName.replace(/\s+/g, '-')}-${teachingLanguage}`;
                                           return teachingLanguageTooltipStates[uniqueLanguageKey] || false;
@@ -3345,6 +3353,7 @@ const CourseDetail = () => {
                                       content={t('filter.clickToFilterByTerm', { term: term.name })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
+                                      disableMobilePopup={true}
                                       open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                       onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                       onReset={() => resetTermTooltipState(term.term_code)}
@@ -3473,6 +3482,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTerm', { term: term.name })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                         onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                         onReset={() => resetTermTooltipState(term.term_code)}
@@ -3506,6 +3516,7 @@ const CourseDetail = () => {
                                         content={t('filter.clickToFilterByTeachingLanguage', { language: getTeachingLanguageName(teachingLanguage, t) })}
                                         hasClickAction={true}
                                         clickActionText={t('tooltip.clickAgainToFilter')}
+                                        disableMobilePopup={true}
                                         open={isMobile ? (() => {
                                           const uniqueLanguageKey = `${term.term_code}-${instructorName.replace(/\s+/g, '-')}-${teachingLanguage}`;
                                           return teachingLanguageTooltipStates[uniqueLanguageKey] || false;
@@ -3551,6 +3562,7 @@ const CourseDetail = () => {
                                       content={t('filter.clickToFilterByTerm', { term: term.name })}
                                       hasClickAction={true}
                                       clickActionText={t('tooltip.clickAgainToFilter')}
+                                      disableMobilePopup={true}
                                       open={isMobile ? termTooltipStates[term.term_code] || false : undefined}
                                       onOpenChange={isMobile ? (open) => setTermTooltipStates(prev => ({ ...prev, [term.term_code]: open })) : undefined}
                                       onReset={() => resetTermTooltipState(term.term_code)}

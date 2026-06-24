@@ -22,6 +22,7 @@ interface ResponsiveTooltipProps {
   onSecondTap?: () => void;
   showCloseButton?: boolean; // New prop to control close button visibility
   onReset?: () => void; // Add reset callback for when tooltip is closed externally
+  disableMobilePopup?: boolean; // On mobile, skip the popup entirely (tap fires the click directly); desktop hover tooltip is kept
   // Controlled mode props for mobile
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -44,6 +45,7 @@ export const ResponsiveTooltip = React.forwardRef<HTMLElement, ResponsiveTooltip
   onSecondTap,
   showCloseButton = false,
   onReset,
+  disableMobilePopup = false,
   open,
   onOpenChange,
 }, forwardedRef) => {
@@ -253,6 +255,14 @@ export const ResponsiveTooltip = React.forwardRef<HTMLElement, ResponsiveTooltip
 
   // For mobile devices, use controlled tooltip with tap behavior
   if (isMobile) {
+    // When the mobile popup is disabled, render the trigger directly so a single
+    // tap fires its onClick (applying the filter) without ever opening a tooltip.
+    // The desktop hover tooltip below is unaffected.
+    if (disableMobilePopup) {
+      return React.isValidElement(children)
+        ? React.cloneElement(children as React.ReactElement, { ref: setTriggerRef })
+        : <>{children}</>;
+    }
     return (
       <TooltipProvider>
         <Tooltip 
