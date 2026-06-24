@@ -4945,6 +4945,19 @@ export class CourseService {
   }
 
   /**
+   * 將課程代碼的「結尾字母」轉為小寫，使其與 courses 表的正規寫法一致。
+   * teaching_records 有時以大寫結尾字母儲存（如 "HST3398I"），但 courses 表使用
+   * 小寫結尾字母（如 "HST3398i"）。前綴與數字維持原樣，只轉換結尾的字母區段。
+   * 注意：結尾為 'X' 的代碼屬於特殊（合併/跨班）寫法，維持原樣不轉換。
+   */
+  private static normalizeCourseCodeSuffix(courseCode: string): string {
+    if (!courseCode) return courseCode;
+    return courseCode.replace(/^([A-Za-z]+\d+)([A-Za-z]+)$/, (_, base, suffix) =>
+      suffix.toUpperCase() === 'X' ? base + suffix : base + suffix.toLowerCase()
+    );
+  }
+
+  /**
    * 獲取講師教學課程（超級優化版本）
    * 批量獲取所有相關課程和學期信息，大幅減少 API 調用
    */
@@ -4968,15 +4981,22 @@ export class CourseService {
       // 獲取所有唯一的課程代碼和學期代碼
       const uniqueCourseCodes = [...new Set(teachingRecords.map(record => record.course_code))];
       const uniqueTermCodes = [...new Set(teachingRecords.map(record => record.term_code))];
-      
+
+      // Appwrite 的 equal 查詢區分大小寫；teaching_records 可能用大寫結尾字母（"HST3398I"），
+      // 而 courses 表用小寫（"HST3398i"）。故同時查詢原始代碼與結尾字母轉小寫的變體，
+      // 確保能命中課程列，避免找不到課程而以代碼充當標題。
+      const courseCodeQueryValues = [...new Set(
+        uniqueCourseCodes.flatMap(code => [code, this.normalizeCourseCodeSuffix(code)])
+      )];
+
       // 並行批量獲取所有課程和學期信息
       const [coursesResponse, termsResponse] = await Promise.all([
         tablesDB.listRows(
           this.DATABASE_ID,
           this.COURSES_COLLECTION_ID,
           [
-            Query.equal('course_code', uniqueCourseCodes),
-            Query.limit(uniqueCourseCodes.length),
+            Query.equal('course_code', courseCodeQueryValues),
+            Query.limit(courseCodeQueryValues.length),
             Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
           ]
         ),
@@ -4996,9 +5016,10 @@ export class CourseService {
       const termsMap = new Map<string, Term>();
       
       (coursesResponse.rows as unknown as Course[]).forEach(course => {
-        coursesMap.set(course.course_code, course);
+        // 以小寫全碼建立映射，做不分大小寫比對
+        coursesMap.set(course.course_code.toLowerCase(), course);
       });
-      
+
       (termsResponse.rows as unknown as Term[]).forEach(term => {
         termsMap.set(term.term_code, term);
       });
@@ -5006,20 +5027,22 @@ export class CourseService {
       // 組合教學課程信息
       const teachingCourses = teachingRecords
         .map((record) => {
-          const course = coursesMap.get(record.course_code);
+          const course = coursesMap.get(record.course_code.toLowerCase());
           const term = termsMap.get(record.term_code);
 
           // Handle missing courses by creating a fallback course object
           let finalCourse = course;
           if (!course) {
+            // 即使課程缺漏，也以結尾字母小寫的正規寫法呈現代碼（如 "HST3398i"）
+            const displayCourseCode = this.normalizeCourseCodeSuffix(record.course_code);
             console.warn(`CourseService: Creating fallback course for missing course_code: "${record.course_code}" for instructor "${instructorName}" teaching courses`);
-            
+
             // Create fallback course object
             finalCourse = {
-              $id: `fallback_${record.course_code}`,
-              course_code: record.course_code,
-              course_title: record.course_code, // Use course code as title
-              course_title_zh: record.course_code, // Use course code as Chinese title
+              $id: `fallback_${displayCourseCode}`,
+              course_code: displayCourseCode,
+              course_title: displayCourseCode, // Use course code as title
+              course_title_zh: displayCourseCode, // Use course code as Chinese title
               department: 'Unknown', // Default department
               department_zh: '未知', // Default Chinese department
               credits: "3", // Default credits
