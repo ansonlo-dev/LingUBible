@@ -29,7 +29,7 @@ import { PopularItemCard } from '@/components/features/reviews/PopularItemCard';
 import { AdvancedInstructorFilters, InstructorFilters } from '@/components/features/reviews/AdvancedInstructorFilters';
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import { translateDepartmentName, extractInstructorNameForSorting, extractUniqueDepartmentsFromInstructors, doesInstructorBelongToDepartment } from '@/utils/textUtils';
+import { translateDepartmentName, extractInstructorNameForSorting, extractUniqueDepartmentsFromInstructors, doesInstructorBelongToDepartment, splitInstructorDepartments, getFacultiesForMultiDepartment } from '@/utils/textUtils';
 import { InstructorGrid } from '@/components/responsive';
 import { LoadingProgress } from '@/components/ui/loading-progress';
 
@@ -483,6 +483,32 @@ const InstructorsList = () => {
     handleFiltersChange(newFilters);
   };
 
+  // 點擊講師卡片的部門徽章：把該講師的部門加入上方部門篩選
+  const handleDepartmentClick = (department: string) => {
+    const current = new Set(filters.department);
+    splitInstructorDepartments(department).forEach(dept => current.add(dept));
+    handleFiltersChange({
+      ...filters,
+      department: Array.from(current),
+      currentPage: 1
+    });
+  };
+
+  // 點擊講師卡片的學院徽章：把該學院底下所有(目錄中存在的)部門加入上方部門篩選
+  const handleFacultyClick = (facultyKey: string) => {
+    const deptsInFaculty = availableDepartments.filter(dept =>
+      getFacultiesForMultiDepartment(dept).includes(facultyKey)
+    );
+    if (deptsInFaculty.length === 0) return;
+    const current = new Set(filters.department);
+    deptsInFaculty.forEach(dept => current.add(dept));
+    handleFiltersChange({
+      ...filters,
+      department: Array.from(current),
+      currentPage: 1
+    });
+  };
+
   // 頂部區域組件，與課程頁面保持一致
   const HeaderSection = () => (
     <div className="text-center">
@@ -641,6 +667,8 @@ const InstructorsList = () => {
                     teachingLanguages={instructor.teachingLanguages}
                     currentTermTeachingLanguage={instructor.currentTermTeachingLanguage}
                     onTeachingLanguageClick={handleTeachingLanguageClick}
+                    onDepartmentClick={handleDepartmentClick}
+                    onFacultyClick={handleFacultyClick}
                     enableTwoTapMode={true}
                   />
                 ))}

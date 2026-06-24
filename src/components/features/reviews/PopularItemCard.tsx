@@ -41,6 +41,9 @@ interface PopularCourseCardProps {
   onTeachingLanguageClick?: (languages: string[]) => void;
   // 新增：服務學習點擊回調
   onServiceLearningClick?: (types: ('compulsory' | 'optional')[]) => void;
+  // 新增：部門/學院徽章點擊回調（目錄頁面套用對應篩選）
+  onDepartmentClick?: (department: string) => void;
+  onFacultyClick?: (facultyKey: string) => void;
   // 控制是否啟用雙擊模式（目錄頁面使用，主頁不使用）
   enableTwoTapMode?: boolean;
 }
@@ -66,6 +69,9 @@ interface PopularInstructorCardProps {
   onFavoriteToggle?: (newState: boolean) => void;
   // 新增：教學語言點擊回調
   onTeachingLanguageClick?: (languages: string[]) => void;
+  // 新增：部門/學院徽章點擊回調（目錄頁面套用對應篩選）
+  onDepartmentClick?: (department: string) => void;
+  onFacultyClick?: (facultyKey: string) => void;
   // 控制是否啟用雙擊模式（目錄頁面使用，主頁不使用）
   enableTwoTapMode?: boolean;
 }
@@ -150,47 +156,44 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
   const handleDepartmentBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault(); // Prevent link navigation
-    
-    if (isMobile) {
-      if (props.enableTwoTapMode) {
-        // Mobile/tablet with two-tap mode enabled: require 2 taps to navigate (catalog pages)
-        const newTapCount = departmentTapCount + 1;
-        setDepartmentTapCount(newTapCount);
-        
-        if (departmentTimeoutRef.current) {
-          clearTimeout(departmentTimeoutRef.current);
-        }
-        
-        if (newTapCount === 1) {
-          // First tap: show tooltip
-          setDepartmentTooltipOpen(true);
-          departmentTimeoutRef.current = setTimeout(() => {
-            setDepartmentTapCount(0);
-            setDepartmentTooltipOpen(false);
-          }, 3000);
-        } else if (newTapCount === 2) {
-          // Second tap: navigate
-          const searchParams = new URLSearchParams();
-          const rawDepartmentName = extractRawDepartmentName(props.department);
-          
-          if (props.type === 'course') {
-            // For course cards, navigate to courses catalog with subject area filter
-            searchParams.set('subjectArea', rawDepartmentName);
-            navigate(`/courses?${searchParams.toString()}`);
-          } else {
-            // For instructor cards, navigate to instructors catalog with department filter
-            searchParams.set('department', rawDepartmentName);
-            navigate(`/instructors?${searchParams.toString()}`);
-          }
-          setDepartmentTapCount(0);
-          setDepartmentTooltipOpen(false);
-        }
-      } else {
-        // Mobile without two-tap mode (main page): first tap shows tooltip, no navigation
-        setDepartmentTooltipOpen(true);
+
+    if (props.enableTwoTapMode) {
+      // Catalog pages: a single click/tap applies the filter directly (desktop & mobile).
+      // The mobile popup is suppressed via ResponsiveTooltip `disableMobilePopup`;
+      // the desktop hover tooltip is preserved.
+      if (props.onDepartmentClick) {
+        props.onDepartmentClick(props.department);
+        return;
       }
+      // Fallback (no in-page handler provided): navigate to the catalog with the filter.
+      const searchParams = new URLSearchParams();
+      const rawDepartmentName = extractRawDepartmentName(props.department);
+      if (props.type === 'course') {
+        searchParams.set('subjectArea', rawDepartmentName);
+        navigate(`/courses?${searchParams.toString()}`);
+      } else {
+        searchParams.set('department', rawDepartmentName);
+        navigate(`/instructors?${searchParams.toString()}`);
+      }
+      return;
     }
-    // Desktop: do nothing on click (hover tooltip handles this)
+
+    // Main/landing page (no filter to apply): first tap shows the info tooltip on mobile.
+    if (isMobile) {
+      setDepartmentTooltipOpen(true);
+    }
+    // Desktop: hover tooltip handles display.
+  };
+
+  const handleFacultyBadgeClick = (facultyKey: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent link navigation
+
+    if (props.enableTwoTapMode && props.onFacultyClick) {
+      // Catalog pages: a single click/tap selects every department in this faculty.
+      props.onFacultyClick(facultyKey);
+    }
+    // Main/landing page: faculty badge is non-interactive (rendered as a plain span).
   };
 
   const handleTeachingLanguageClick = (e: React.MouseEvent) => {
@@ -843,27 +846,45 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                   <div className={`${currentLanguage === 'en' ? 'flex flex-col items-start gap-1.5' : 'flex flex-wrap items-center gap-1 sm:gap-1.5'} min-w-0 w-full`} style={{ minHeight: '2rem' }} data-badge-container>
                     {/* Faculty Badge(s) - Support multi-department */}
                     {getFacultiesForMultiDepartment(props.department).map((facultyKey, index) => (
-                      <span 
-                        key={facultyKey}
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0"
-                      >
-                        {t(facultyKey)}
-                      </span>
+                      (props.enableTwoTapMode && props.onFacultyClick) ? (
+                        <ResponsiveTooltip
+                          key={facultyKey}
+                          content={t('filter.clickToFilterFaculty')}
+                          hasClickAction={true}
+                          clickActionText={(isMobile && props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
+                          disableMobilePopup={props.enableTwoTapMode}
+                        >
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                            onClick={(e) => handleFacultyBadgeClick(facultyKey, e)}
+                          >
+                            {t(facultyKey)}
+                          </span>
+                        </ResponsiveTooltip>
+                      ) : (
+                        <span
+                          key={facultyKey}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 shrink-0"
+                        >
+                          {t(facultyKey)}
+                        </span>
+                      )
                     ))}
                     {/* Department Badge */}
                     {props.department && translateDepartmentName(props.department, t) && (
                       props.enableTwoTapMode ? (
-                        <ResponsiveTooltip 
+                        <ResponsiveTooltip
                           content={t('filter.clickToFilterDepartment')}
                           hasClickAction={true}
-                          clickActionText={(props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
+                          clickActionText={(isMobile && props.enableTwoTapMode) ? t('tooltip.clickAgainToFilter') : undefined}
                           showCloseButton={true}
                           onReset={resetDepartmentState}
+                          disableMobilePopup={props.enableTwoTapMode}
                           open={isMobile ? departmentTooltipOpen : undefined}
                           onOpenChange={isMobile ? setDepartmentTooltipOpen : undefined}
                         >
-                          <span 
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-help transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:hover:bg-gray-700 shrink-0 max-w-full"
                             onClick={handleDepartmentBadgeClick}
                           >
                             <span className="break-words hyphens-auto">
