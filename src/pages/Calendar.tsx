@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { DocumentHead } from '@/components/common/DocumentHead';
@@ -221,6 +221,26 @@ export default function Calendar() {
     // `navigate` closes over `view`, so re-subscribe when the view changes.
   }, [view]);
 
+  // Touch swipe (mobile): swipe left → next period, swipe right → previous.
+  // A second navigation method alongside the on-screen arrow buttons.
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Require a clearly horizontal swipe so vertical scrolling isn't hijacked.
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      navigate(dx < 0 ? 1 : -1);
+    }
+  };
+
   const goToday = () => {
     setRefDate(today);
     setSelectedDate(today);
@@ -287,34 +307,39 @@ export default function Calendar() {
 
       {/* Toolbar */}
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={goToday} className="h-8">
-            {t('calendar.today')}
-          </Button>
-          <div className="flex items-center rounded-md border">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              aria-label={t('calendar.prev')}
-              className="flex h-8 w-8 items-center justify-center rounded-l-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className="h-5 w-px bg-border" />
-            <button
-              type="button"
-              onClick={() => navigate(1)}
-              aria-label={t('calendar.next')}
-              className="flex h-8 w-8 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+        {/* Nav row: Today + prev/next on the left, month/range title on the right */}
+        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" onClick={goToday} className="h-8">
+              {t('calendar.today')}
+            </Button>
+            <div className="flex items-center rounded-md border">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                aria-label={t('calendar.prev')}
+                className="flex h-8 w-8 items-center justify-center rounded-l-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="h-5 w-px bg-border" />
+              <button
+                type="button"
+                onClick={() => navigate(1)}
+                aria-label={t('calendar.next')}
+                className="flex h-8 w-8 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          <h2 className="ml-1 text-base font-bold sm:text-lg">{rangeTitle}</h2>
+          <h2 className="truncate text-right text-base font-bold sm:ml-1 sm:text-left sm:text-lg">
+            {rangeTitle}
+          </h2>
         </div>
 
-        {/* View switcher */}
-        <div className="flex items-center gap-1 self-start rounded-lg border bg-card p-1 sm:self-auto">
+        {/* View switcher — full-width segmented control on mobile, compact on desktop */}
+        <div className="flex w-full items-center gap-1 rounded-lg border bg-card p-1 sm:w-auto">
           {([
             { id: 'day3', label: t('calendar.view.day3'), icon: Columns3 },
             { id: 'week', label: t('calendar.view.week'), icon: CalendarRange },
@@ -329,13 +354,13 @@ export default function Calendar() {
                 onClick={() => setView(v.id)}
                 aria-pressed={active}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-colors',
+                  'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors sm:flex-none sm:py-1',
                   active
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 flex-shrink-0" />
                 <span>{v.label}</span>
               </button>
             );
@@ -344,7 +369,11 @@ export default function Calendar() {
       </div>
 
       {/* Calendar surface */}
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div
+        className="overflow-hidden rounded-xl border bg-card shadow-sm"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         {view === 'month' ? (
           <MonthView
             weeks={weeks}
@@ -526,8 +555,12 @@ function MonthView({
                     className={cn(
                       'group flex flex-col items-start border-b border-r text-left transition-colors last:border-r-0',
                       di === 6 && 'border-r-0',
-                      inMonth ? 'bg-card' : 'bg-muted/30',
-                      isSelected ? 'ring-2 ring-inset ring-primary' : 'hover:bg-accent/40'
+                      // Background priority: selected fill > in/out of month > hover.
+                      isSelected
+                        ? 'bg-primary/10'
+                        : inMonth
+                        ? 'bg-card hover:bg-accent/40'
+                        : 'bg-muted/30 hover:bg-accent/40'
                     )}
                   >
                     <span
@@ -537,7 +570,7 @@ function MonthView({
                           ? 'bg-primary text-primary-foreground'
                           : inMonth
                           ? 'text-foreground'
-                          : 'text-muted-foreground'
+                          : 'text-muted-foreground/40'
                       )}
                     >
                       {d.getDate()}
