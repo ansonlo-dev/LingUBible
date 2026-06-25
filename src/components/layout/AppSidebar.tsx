@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwitcher';
 import { useState, useEffect, useRef } from 'react';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
 // 自定義 Home 圖示組件
 const HomeIcon = ({ className }: { className?: string }) => (
@@ -342,39 +343,44 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
 
                     return (
                       <li key={item.name}>
-                        {isExternalOrHash ? (
-                          <a
-                            href={item.href}
-                            className={`
-                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
-                              ${item.current
-                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                                : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                              }
-                            `}
-                            onClick={handleNavClick(false)}
-                            title={!shouldShowText ? item.name : undefined}
-                          >
-                            <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
-                            {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
-                          </a>
-                        ) : (
-                          <Link
-                            to={item.href}
-                            className={`
-                              flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
-                              ${item.current
-                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                                : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                              }
-                            `}
-                            onClick={handleNavClick(false)}
-                            title={!shouldShowText ? item.name : undefined}
-                          >
-                            <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
-                            {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
-                          </Link>
-                        )}
+                        <ResponsiveTooltip
+                          content={item.name}
+                          side="right"
+                          disabled={shouldShowText}
+                          delayDuration={150}
+                        >
+                          {isExternalOrHash ? (
+                            <a
+                              href={item.href}
+                              className={`
+                                flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                                ${item.current
+                                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                  : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                                }
+                              `}
+                              onClick={handleNavClick(false)}
+                            >
+                              <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
+                              {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
+                            </a>
+                          ) : (
+                            <Link
+                              to={item.href}
+                              className={`
+                                flex items-center gap-2.5 px-3 ${itemPy} rounded-md text-base font-bold transition-colors
+                                ${item.current
+                                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                  : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                                }
+                              `}
+                              onClick={handleNavClick(false)}
+                            >
+                              <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
+                              {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
+                            </Link>
+                          )}
+                        </ResponsiveTooltip>
                       </li>
                     );
                   })}
@@ -413,21 +419,27 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
                   
                   return (
                     <li key={item.name}>
-                      <Link
-                        to={item.href}
-                        className={`
-                          flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
-                          ${item.current 
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                            : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                          }
-                        `}
-                        onClick={handleNavClick(false)}
-                        title={!shouldShowText ? item.name : undefined}
+                      <ResponsiveTooltip
+                        content={item.name}
+                        side="right"
+                        disabled={shouldShowText}
+                        delayDuration={150}
                       >
-                        <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
-                        {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
-                      </Link>
+                        <Link
+                          to={item.href}
+                          className={`
+                            flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors
+                            ${item.current
+                              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                              : 'text-gray-800 dark:text-white hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                            }
+                          `}
+                          onClick={handleNavClick(false)}
+                        >
+                          <Icon className="h-6 w-6 flex-shrink-0 text-gray-800 dark:text-white" />
+                          {shouldShowText && <span className="text-gray-800 dark:text-white font-bold whitespace-nowrap min-w-0 flex-1">{item.name}</span>}
+                        </Link>
+                      </ResponsiveTooltip>
                     </li>
                   );
                 })}
