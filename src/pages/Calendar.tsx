@@ -750,7 +750,7 @@ export default function Calendar() {
       {/* Bottom row: selected-day detail + legend */}
       <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
         {/* Selected day detail */}
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-xl bg-card p-4">
           <div className="mb-3 flex items-baseline justify-between gap-2">
             <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {t('calendar.selectedDay')}
@@ -775,7 +775,7 @@ export default function Calendar() {
                 return (
                   <li
                     key={e.id}
-                    className="flex items-start gap-3 rounded-lg border bg-background/60 p-3"
+                    className="flex items-start gap-3 rounded-lg bg-background/60 p-3"
                   >
                     <span
                       className={cn('mt-1 h-3 w-3 flex-shrink-0 rounded-full', !e.category2 && st.dot)}
@@ -813,7 +813,7 @@ export default function Calendar() {
         </div>
 
         {/* Legend */}
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-xl bg-card p-4">
           <div className="mb-3 flex items-center gap-1.5">
             <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {t('calendar.legend')}
