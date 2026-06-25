@@ -60,11 +60,11 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 
-// The Lesson Planner used to live at /timetable. Redirect old links (preserving
-// any shared ?query state) to the new path.
+// The Lesson Planner used to live at /timetable and /lesson-planner. Redirect old
+// links (preserving any shared ?query state) to the current /planner path.
 const LegacyTimetableRedirect = () => {
   const location = useLocation();
-  return <Navigate to={`/lesson-planner${location.search}${location.hash}`} replace />;
+  return <Navigate to={`/planner${location.search}${location.hash}`} replace />;
 };
 
 
@@ -643,8 +643,9 @@ const RouterContent = ({
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/courses/:courseCode" element={<CourseDetail />} />
                     <Route path="/instructors" element={<InstructorsList />} />
-                    <Route path="/lesson-planner" element={<Timetable />} />
-                    {/* Legacy path → keep old links (incl. shared ?query) working */}
+                    <Route path="/planner" element={<Timetable />} />
+                    {/* Legacy paths → keep old links (incl. shared ?query) working */}
+                    <Route path="/lesson-planner" element={<LegacyTimetableRedirect />} />
                     <Route path="/timetable" element={<LegacyTimetableRedirect />} />
                     <Route path="/gpa-hons" element={<GpaHons />} />
                     <Route path="/calendar" element={<Calendar />} />

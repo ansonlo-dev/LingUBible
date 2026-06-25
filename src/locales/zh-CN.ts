@@ -738,7 +738,7 @@ export default {
   'sidebar.browse': '浏览',
   'sidebar.personal': '个人',
   'sidebar.tools': '工具',
-  'nav.timetable': '课堂规划',
+  'nav.timetable': '规划',
   'nav.gpaHons': 'GPA及Hons',
   'nav.calendar': '校历',
   // 校历页面

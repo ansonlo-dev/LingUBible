@@ -730,7 +730,7 @@ export default {
   'sidebar.browse': 'Browse',
   'sidebar.personal': 'Personal',
   'sidebar.tools': 'Tools',
-  'nav.timetable': 'Lesson Planner',
+  'nav.timetable': 'Planner',
   'nav.gpaHons': 'GPA & Hons',
   'nav.calendar': 'Calendar',
   // Academic calendar page

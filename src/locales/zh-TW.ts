@@ -668,7 +668,7 @@ export default {
   'sidebar.browse': '瀏覽',
   'sidebar.personal': '個人',
   'sidebar.tools': '工具',
-  'nav.timetable': '課堂規劃',
+  'nav.timetable': '規劃',
   'nav.gpaHons': 'GPA及Hons',
   'nav.calendar': '校曆',
   // 校曆頁面

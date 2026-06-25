@@ -39,7 +39,10 @@ export const TERMS: TimetableTerm[] = [
   { id: '2024-25-s', name: '2024–25 Summer Term', short: '2425-S', csvUrl: '/data/2024-S.csv', summer: true },
   { id: '2025-26-t1', name: '2025–26 Term 1', short: '2526-T1', csvUrl: '/data/2025-T1.csv' },
   { id: '2025-26-t2', name: '2025–26 Term 2', short: '2526-T2', csvUrl: '/data/2025-T2.csv' },
-  { id: '2025-26-s', name: '2025–26 Summer Term', short: '2526-S', csvUrl: '/data/2025-S.csv', summer: true }
+  { id: '2025-26-s', name: '2025–26 Summer Term', short: '2526-S', csvUrl: '/data/2025-S.csv', summer: true },
+  { id: '2026-27-t1', name: '2026–27 Term 1', short: '2627-T1', csvUrl: '/data/2026-T1.csv' },
+  { id: '2026-27-t2', name: '2026–27 Term 2', short: '2627-T2', csvUrl: '/data/2026-T2.csv' }
+
 ];
 
 /** A single scheduled meeting (one day/time/venue) of a section. */
