@@ -358,6 +358,11 @@ const Timetable = () => {
   };
 
   const [allSections, setAllSections] = useState<TimetableSection[]>([]);
+  // The term `allSections` currently holds data for. Section ids (CRNs) are
+  // reused across terms, so until this matches the selected term the grid must
+  // not map the (already-switched) selection through the previous term's data —
+  // doing so briefly renders a wrong timetable. See `sectionsReady` below.
+  const [loadedTermId, setLoadedTermId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -529,12 +534,16 @@ const Timetable = () => {
 
   useEffect(() => {
     let active = true;
+    const loadingTermId = term.id;
     setLoading(true);
     loadTimetableSections(term.csvUrl)
       .then((sections) => {
         if (!active) return;
         // Drop sections with no scheduled meeting (e.g. PRJ) — not useful here.
         setAllSections(sections.filter((s) => s.meetings.length > 0));
+        // Tag the loaded data with its term so the grid only renders once the
+        // selection and the section data refer to the same term.
+        setLoadedTermId(loadingTermId);
         setError(null);
       })
       .catch((err) => {
@@ -1656,6 +1665,13 @@ const Timetable = () => {
     </Select>
   );
 
+  // True once the loaded section data belongs to the currently-selected term.
+  // While a term switch is in flight (new selection, old section data still in
+  // memory) this is false, so we keep the spinner up instead of flashing a
+  // wrong timetable built from the previous term's reused CRNs.
+  const sectionsReady = loadedTermId === termId;
+  const showSpinner = loading || (!error && !sectionsReady);
+
   return (
     <div className="mx-auto px-3 lg:px-4 pt-3 pb-8">
       {/* Header */}
@@ -1670,7 +1686,7 @@ const Timetable = () => {
         </span>
       </div>
 
-      {loading && (
+      {showSpinner && (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span>{t('timetable.loading')}</span>
@@ -1687,7 +1703,7 @@ const Timetable = () => {
         </Card>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && sectionsReady && (
         <div
           className={`grid grid-cols-1 gap-3 items-stretch ${
             panelCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(280px,340px)_1fr]'
