@@ -180,6 +180,22 @@ function layoutStrip(days: Date[], events: AcademicEvent[]): PositionedEvent[] {
   return positioned;
 }
 
+// Render a legend label, breaking an "A / B" label at the slash (keeping each
+// side unbroken) so it wraps as "Holiday /" + "Class Suspended" rather than
+// mid-phrase. Labels without a slash render as-is.
+const renderLegendLabel = (label: string) => {
+  const idx = label.indexOf('/');
+  if (idx === -1) return label;
+  const head = label.slice(0, idx + 1).trim();
+  const tail = label.slice(idx + 1).trim();
+  return (
+    <>
+      <span className="whitespace-nowrap">{head}</span>{' '}
+      <span className="whitespace-nowrap">{tail}</span>
+    </>
+  );
+};
+
 // ────────────────────────────── View types ────────────────────────────────
 type ViewMode = 'day3' | 'week' | 'month';
 
@@ -803,11 +819,16 @@ export default function Calendar() {
               {t('calendar.legend')}
             </h3>
           </div>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {/* Every item reserves the same (two-line) height so the colour
+              squares sit at an even vertical rhythm; each square is centred
+              against its label, landing between the two lines when it wraps. */}
+          <ul className="grid grid-cols-2 gap-x-4">
             {CATEGORY_ORDER.map((cat) => (
-              <li key={cat} className="flex items-start gap-2 text-sm">
-                <span className={cn('mt-1 h-3 w-3 flex-shrink-0 rounded-sm', CATEGORY_STYLES[cat].dot)} />
-                <span className="min-w-0 text-foreground">{t(`calendar.cat.${cat}`)}</span>
+              <li key={cat} className="flex min-h-[2.5rem] items-center gap-2 text-sm">
+                <span className={cn('h-3 w-3 flex-shrink-0 rounded-sm', CATEGORY_STYLES[cat].dot)} />
+                <span className="min-w-0 leading-snug text-foreground">
+                  {renderLegendLabel(t(`calendar.cat.${cat}`))}
+                </span>
               </li>
             ))}
           </ul>
