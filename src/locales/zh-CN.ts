@@ -761,6 +761,7 @@ export default {
   'calendar.upcoming': '即将到来',
   'calendar.legend': '图例',
   'calendar.jumpToStart': '跳至开学',
+  'calendar.termStart': '学期开始',
   'calendar.weekOf': '{date} 当周',
   // 活动分类
   'calendar.cat.term': '学期开始／结束',

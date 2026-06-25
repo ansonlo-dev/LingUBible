@@ -753,6 +753,7 @@ export default {
   'calendar.upcoming': 'Upcoming',
   'calendar.legend': 'Legend',
   'calendar.jumpToStart': 'Jump to term start',
+  'calendar.termStart': 'Term Start',
   'calendar.weekOf': 'Week of {date}',
   // Event categories
   'calendar.cat.term': 'Term Begin / End',

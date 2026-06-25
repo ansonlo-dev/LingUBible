@@ -691,6 +691,7 @@ export default {
   'calendar.upcoming': '即將到來',
   'calendar.legend': '圖例',
   'calendar.jumpToStart': '跳至開學',
+  'calendar.termStart': '學期開始',
   'calendar.weekOf': '{date} 當週',
   // 活動分類
   'calendar.cat.term': '學期開始／結束',

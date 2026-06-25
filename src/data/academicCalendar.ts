@@ -42,6 +42,9 @@ export const ACADEMIC_YEAR_LABEL = '2026-27';
 // First day of Term 1 — used as the calendar's default landing month.
 export const TERM_START_DATE = '2026-09-01';
 
+// First day of Term 2 — the "term start" jump target once Term 1 is under way.
+export const TERM_2_START_DATE = '2027-01-08';
+
 export const ACADEMIC_EVENTS: AcademicEvent[] = [
   // ───────────────────────── AUG 2026 ─────────────────────────
   {

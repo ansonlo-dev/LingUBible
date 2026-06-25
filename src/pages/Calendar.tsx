@@ -20,6 +20,7 @@ import {
   ACADEMIC_YEAR_LABEL,
   CATEGORY_ORDER,
   TERM_START_DATE,
+  TERM_2_START_DATE,
   type AcademicEvent,
   type CalendarCategory,
 } from '@/data/academicCalendar';
@@ -522,7 +523,9 @@ export default function Calendar() {
     setSelectedDate(today);
   };
   const jumpToStart = () => {
-    const ts = parseISO(TERM_START_DATE);
+    // Before Term 2 begins → jump to Term 1 start; otherwise → Term 2 start.
+    const term2Start = parseISO(TERM_2_START_DATE);
+    const ts = today < term2Start ? parseISO(TERM_START_DATE) : term2Start;
     setRefDate(view === 'month' ? new Date(ts.getFullYear(), ts.getMonth(), 1) : ts);
     setSelectedDate(ts);
   };
@@ -598,7 +601,12 @@ export default function Calendar() {
             <Button variant="outline" size="sm" onClick={goToday} className="h-8">
               {t('calendar.today')}
             </Button>
-            <div className="flex items-center rounded-md border">
+            <Button variant="outline" size="sm" onClick={jumpToStart} className="h-8">
+              <CalendarDays className="mr-1.5 h-4 w-4" />
+              {t('calendar.termStart')}
+            </Button>
+            {/* Prev/next arrows — desktop only; on mobile users swipe to page. */}
+            <div className="hidden items-center rounded-md border sm:flex">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -644,7 +652,7 @@ export default function Calendar() {
         </h2>
 
         {/* View switcher — full-width segmented control on mobile, compact on desktop */}
-        <div className="flex w-full items-center gap-1 rounded-lg border bg-card p-1 sm:w-auto sm:justify-self-end">
+        <div className="flex w-full items-center gap-1 rounded-lg bg-card p-1 sm:w-auto sm:justify-self-end">
           {([
             { id: 'day3', label: t('calendar.view.day3'), icon: Columns3 },
             { id: 'week', label: t('calendar.view.week'), icon: CalendarRange },
@@ -793,23 +801,18 @@ export default function Calendar() {
         {/* Legend */}
         <div className="rounded-xl border bg-card p-4">
           <div className="mb-3 flex items-center gap-1.5">
-            <Info className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {t('calendar.legend')}
             </h3>
           </div>
-          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
             {CATEGORY_ORDER.map((cat) => (
               <li key={cat} className="flex items-center gap-2 text-sm">
                 <span className={cn('h-3 w-3 flex-shrink-0 rounded-sm', CATEGORY_STYLES[cat].dot)} />
-                <span className="text-foreground">{t(`calendar.cat.${cat}`)}</span>
+                <span className="min-w-0 truncate text-foreground">{t(`calendar.cat.${cat}`)}</span>
               </li>
             ))}
           </ul>
-          <Button variant="outline" size="sm" onClick={jumpToStart} className="mt-4 w-full">
-            <CalendarDays className="mr-1.5 h-4 w-4" />
-            {t('calendar.jumpToStart')}
-          </Button>
         </div>
       </div>
     </div>
