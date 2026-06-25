@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   CalendarRange,
@@ -232,7 +231,7 @@ export default function Calendar() {
     return today < termStart ? termStart : today;
   }, [today]);
 
-  const [view, setView] = useState<ViewMode>(() => (isMobile ? 'day3' : 'month'));
+  const [view, setView] = useState<ViewMode>('month');
   const [refDate, setRefDate] = useState<Date>(initialRef);
   const [selectedDate, setSelectedDate] = useState<Date>(initialRef);
 
@@ -602,7 +601,6 @@ export default function Calendar() {
               {t('calendar.today')}
             </Button>
             <Button variant="outline" size="sm" onClick={jumpToStart} className="h-8">
-              <CalendarDays className="mr-1.5 h-4 w-4" />
               {t('calendar.termStart')}
             </Button>
             {/* Prev/next arrows — desktop only; on mobile users swipe to page. */}
@@ -807,9 +805,9 @@ export default function Calendar() {
           </div>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
             {CATEGORY_ORDER.map((cat) => (
-              <li key={cat} className="flex items-center gap-2 text-sm">
-                <span className={cn('h-3 w-3 flex-shrink-0 rounded-sm', CATEGORY_STYLES[cat].dot)} />
-                <span className="min-w-0 truncate text-foreground">{t(`calendar.cat.${cat}`)}</span>
+              <li key={cat} className="flex items-start gap-2 text-sm">
+                <span className={cn('mt-1 h-3 w-3 flex-shrink-0 rounded-sm', CATEGORY_STYLES[cat].dot)} />
+                <span className="min-w-0 text-foreground">{t(`calendar.cat.${cat}`)}</span>
               </li>
             ))}
           </ul>

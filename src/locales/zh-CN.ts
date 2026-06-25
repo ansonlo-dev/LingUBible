@@ -744,7 +744,7 @@ export default {
   // 校历页面
   'calendar.title': '校历',
   'calendar.subtitle': '岭南大学学年的重要日期与活动',
-  'calendar.referenceNotice': '仅供参考,最新版本请以官方校历为准',
+  'calendar.referenceNotice': '仅供参考,以官方校历为准',
   'calendar.today': '今天',
   'calendar.view.day3': '三天',
   'calendar.view.week': '周',

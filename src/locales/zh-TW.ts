@@ -674,7 +674,7 @@ export default {
   // 校曆頁面
   'calendar.title': '校曆',
   'calendar.subtitle': '嶺南大學學年的重要日期與活動',
-  'calendar.referenceNotice': '僅供參考,最新版本請以官方校曆為準',
+  'calendar.referenceNotice': '僅供參考,以官方校曆為準',
   'calendar.today': '今天',
   'calendar.view.day3': '三天',
   'calendar.view.week': '週',
