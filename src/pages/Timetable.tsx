@@ -589,16 +589,17 @@ const Timetable = () => {
     saveSelectedIds(termIdRef.current, selectedIds);
   }, [selectedIds]);
 
-  // When the term changes, load that term's last-saved selection (empty if none).
-  // Skip the very first run — the initial term is already loaded in useState above.
-  const firstTermLoad = useRef(true);
-  useEffect(() => {
-    if (firstTermLoad.current) {
-      firstTermLoad.current = false;
-      return;
-    }
-    resetSelection(loadSelectedIds(termId));
-  }, [termId]);
+  // Switch term. The term id and its last-saved selection are updated together in
+  // the same commit (synchronously, not via a [termId] effect): section ids (CRNs)
+  // are reused across terms, so a render where the new term is selected but the
+  // old selection is still present would briefly map the old CRNs onto the new
+  // term's data — flashing courses the user never chose. Keeping them in lockstep
+  // (plus the `sectionsReady` gate for the data load) prevents that.
+  const handleTermChange = (nextTermId: string) => {
+    if (nextTermId === termId) return;
+    setTermId(nextTermId);
+    resetSelection(loadSelectedIds(nextTermId));
+  };
 
   // Track the live site theme so default course colours pick the contrasting
   // Catppuccin variant (dark theme → Latte, light theme → Mocha) and re-colour
@@ -1650,7 +1651,7 @@ const Timetable = () => {
   // on mobile portrait, and in the action row otherwise) and kept visible even
   // when the panel is collapsed, so it lives here as a small helper.
   const renderTermSelect = (triggerClassName: string) => (
-    <Select value={termId} onValueChange={setTermId}>
+    <Select value={termId} onValueChange={handleTermChange}>
       <SelectTrigger className={`h-9 ${triggerClassName}`}>
         {/* Show the picked term's short form (e.g. "2425-T1"). */}
         <span className="truncate">{term.short}</span>
