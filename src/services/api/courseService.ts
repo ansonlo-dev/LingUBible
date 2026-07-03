@@ -288,6 +288,53 @@ export class CourseService {
   private static readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5分鐘緩存
   private static inFlightRequests = new Map<string, Promise<any>>();
 
+  // 講師評論查詢的伺服器端預過濾支援旗標：Query.contains 對字串做子字串比對，
+  // 可把「全表掃描後在客戶端過濾」變成「只讀取該講師相關的評論列」。
+  // 若後端不支援（舊版 / 欄位限制），第一次失敗後記住並改走共享快取的全掃描路徑。
+  private static reviewsContainsSupported = true;
+
+  // 共享的 reviews 全表掃描被動快取（僅講師頁的後備路徑使用；純被動 TTL，無背景刷新）。
+  // 讓同一會話內連續瀏覽多個講師頁只需掃描一次，而非每頁一次。
+  private static allReviewsScanCache: { data: Review[]; expiry: number } | null = null;
+  private static allReviewsScanInflight: Promise<Review[]> | null = null;
+  private static readonly ALL_REVIEWS_SCAN_TTL = 3 * 60 * 1000; // 3 分鐘被動快取
+
+  /** 建立 / 更新 / 刪除評論後清除共享掃描快取，讓本人立即看到變更 */
+  private static clearReviewsScanCache(): void {
+    this.allReviewsScanCache = null;
+  }
+
+  private static async getAllReviewsScanned(): Promise<Review[]> {
+    const now = Date.now();
+    if (this.allReviewsScanCache && this.allReviewsScanCache.expiry > now) {
+      return this.allReviewsScanCache.data;
+    }
+    if (this.allReviewsScanInflight) return this.allReviewsScanInflight;
+
+    this.allReviewsScanInflight = (async () => {
+      try {
+        const response = await tablesDB.listRows(
+          this.DATABASE_ID,
+          this.REVIEWS_COLLECTION_ID,
+          [
+            Query.orderDesc('$createdAt'),
+            Query.limit(this.MAX_REVIEWS_LIMIT),
+            Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
+                         'course_workload', 'course_difficulties', 'course_usefulness',
+                         'course_final_grade', 'course_comments', 'instructor_details', 'review_language', 'submitted_at', '$createdAt'])
+          ]
+        );
+        const rows = response.rows as unknown as Review[];
+        this.allReviewsScanCache = { data: rows, expiry: Date.now() + this.ALL_REVIEWS_SCAN_TTL };
+        return rows;
+      } finally {
+        this.allReviewsScanInflight = null;
+      }
+    })();
+
+    return this.allReviewsScanInflight;
+  }
+
   /**
    * 嘗試解析 instructor_details JSON，失敗時自動修復常見問題（字串值中的未逸出控制字元）
    */
@@ -443,7 +490,20 @@ export class CourseService {
    * 🚀 OPTIMIZATION: 高效統計方法 - 只計算數量，不載入完整數據
    * 專為主頁統計設計，避免載入大量不必要的數據
    */
-  
+
+  /**
+   * 只取 total 的計數查詢：limit(1) + select(['$id'])，回傳 response.total。
+   * 一次呼叫僅讀取 1 列文件，取代「撈整批列回來在客戶端數」的統計方式。
+   */
+  private static async countRowsTotal(tableId: string, queries: string[] = []): Promise<number> {
+    const response = await tablesDB.listRows(
+      this.DATABASE_ID,
+      tableId,
+      [...queries, Query.limit(1), Query.select(['$id'])]
+    );
+    return response.total;
+  }
+
   // 快速計算有評論的課程數量（不載入完整課程數據）
   static async getCoursesWithReviewsCount(): Promise<number> {
     const cacheKey = 'coursesWithReviewsCount';
@@ -643,7 +703,13 @@ export class CourseService {
       if (import.meta.env.DEV) {
         console.log('🔄 getMainPageStatsOptimized: Loading fresh data...');
       }
-      // 並行執行所有統計查詢
+      // 並行執行所有統計查詢。
+      // 🚀 計數全面改用 response.total（每項僅 1 列讀取）：
+      //  - 有評論課程數 = courses.stats_review_count > 0（反正規化欄位，與課程列表頁同一資料來源）
+      //  - 有評論講師數 = instructors.stats_review_count > 0
+      //  - 講師總數 = instructors 的 total（不再抓回整批講師列）
+      // 只有「30 天內活動」仍需掃描近 30 天評論（列數 = 實際近期評論數，量小）。
+      // 若查詢失敗（例如欄位尚未部署），退回原本的評論全掃描統計。
       const [
         coursesWithReviewsCount,
         instructorsWithReviewsCount,
@@ -651,16 +717,29 @@ export class CourseService {
         reviewsCount,
         recentActivityStats
       ] = await Promise.all([
-        this.getCoursesWithReviewsCount(),
-        this.getInstructorsWithReviewsCount(),
-        this.getAllInstructors().then(instructors => instructors.length),
+        this.countRowsTotal(this.COURSES_COLLECTION_ID, [Query.greaterThan('stats_review_count', 0)])
+          .catch(() => this.getCoursesWithReviewsCount()),
+        this.countRowsTotal(this.INSTRUCTORS_COLLECTION_ID, [Query.greaterThan('stats_review_count', 0)])
+          .catch(() => this.getInstructorsWithReviewsCount()),
+        this.countRowsTotal(this.INSTRUCTORS_COLLECTION_ID)
+          .catch(() => this.getAllInstructors().then(instructors => instructors.length)),
         this.getReviewsCount(),
         this.getRecentActivityStats()
       ]);
 
+      // 後備：反正規化欄位尚未回填（明明有評論但計數為 0）時，退回評論掃描統計
+      const [finalCoursesWithReviews, finalInstructorsWithReviews] = await Promise.all([
+        coursesWithReviewsCount === 0 && reviewsCount > 0
+          ? this.getCoursesWithReviewsCount()
+          : Promise.resolve(coursesWithReviewsCount),
+        instructorsWithReviewsCount === 0 && reviewsCount > 0
+          ? this.getInstructorsWithReviewsCount()
+          : Promise.resolve(instructorsWithReviewsCount)
+      ]);
+
       const result = {
-        coursesWithReviewsCount,
-        instructorsWithReviewsCount,
+        coursesWithReviewsCount: finalCoursesWithReviews,
+        instructorsWithReviewsCount: finalInstructorsWithReviews,
         instructorsCount,
         reviewsCount,
         ...recentActivityStats
@@ -710,88 +789,76 @@ export class CourseService {
     }
 
     try {
-      // 🚀 FIXED: 使用分批處理避免URL過長問題
-      console.log(`🔍 getBatchFavoriteCoursesData: Processing ${courseCodes.length} favorite courses`);
-      
-      let coursesArray: Course[] = [];
-      
-      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
-      const batchSize = 200;
-      const courseBatches = [];
-      for (let i = 0; i < courseCodes.length; i += batchSize) {
-        courseBatches.push(courseCodes.slice(i, i + batchSize));
+      // 🚀 統計 / 教學語言 / 服務學習 / 當前學期開設狀態已全部反正規化到 course 文件
+      //（與課程列表頁同一資料來源），收藏頁不再掃描 reviews / teaching_records：
+      // 每次載入 = 收藏數量的課程列讀取，甚至 0 次（命中課程目錄的持久化快取時）。
+      const requested = new Set(courseCodes);
+      let coursesArray: CourseWithStats[] = [];
+
+      // 若課程目錄快取已存在（例如剛逛過課程列表頁），直接重用，0 次讀取
+      const catalogCache = this.getPersistentCached<CourseWithStats[]>(PERSISTENT_CACHE_KEYS.ALL_COURSES_WITH_STATS);
+      if (catalogCache && catalogCache.length > 0) {
+        coursesArray = catalogCache.filter(c => requested.has(c.course_code));
       }
-      
-      console.log(`🔍 getBatchFavoriteCoursesData: Processing ${courseBatches.length} course batches`);
-      
-      // 並行處理所有批次
-      const courseBatchPromises = courseBatches.map(batch =>
-        tablesDB.listRows(
-          this.DATABASE_ID,
-          this.COURSES_COLLECTION_ID,
-          [
-            Query.equal('course_code', batch),
-            Query.limit(batch.length),
-            Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department'])
-          ]
-        )
-      );
-      
-      const coursesBatchResults = await Promise.all(courseBatchPromises);
-      
-      // 合併所有批次結果
-      coursesBatchResults.forEach(result => {
-        coursesArray.push(...(result.rows as unknown as Course[]));
-      });
-      
-      console.log(`✅ getBatchFavoriteCoursesData: Loaded ${coursesArray.length} courses from batches`);
-      
-      // 並行獲取所有需要的數據
-      const [
-        statsMap,
-        teachingLanguagesMap,
-        currentTermLanguagesMap,
-        serviceLearningTypesMap,
-        currentTermServiceLearningMap,
-        currentTermOfferedCourses
-      ] = await Promise.all([
-        // 獲取所有課程統計
-        this.getBatchCourseDetailedStats(courseCodes),
-        // 獲取教學語言
-        this.getBatchCourseTeachingLanguages(courseCodes),
-        // 獲取當前學期教學語言
-        this.getBatchCourseCurrentTermTeachingLanguages(courseCodes),
-        // 獲取服務學習類型
-        this.getBatchCourseServiceLearning(courseCodes),
-        // 獲取當前學期服務學習
-        this.getBatchCourseCurrentTermServiceLearning(courseCodes),
-        // 獲取當前學期開設狀態
-        this.getCoursesOfferedInTermBatch(getCurrentTermCode(), courseCodes)
-      ]);
+
+      // 快取未命中或缺少部分課程時，只針對缺少的代碼發出批次查詢
+      const foundCodes = new Set(coursesArray.map(c => c.course_code));
+      const missingCodes = courseCodes.filter(code => !foundCodes.has(code));
+      if (missingCodes.length > 0) {
+        // 單一批次查詢 courses 表（含反正規化欄位），分批避免 URL 過長
+        const batchSize = 100;
+        const courseBatches: string[][] = [];
+        for (let i = 0; i < missingCodes.length; i += batchSize) {
+          courseBatches.push(missingCodes.slice(i, i + batchSize));
+        }
+
+        const coursesBatchResults = await Promise.all(courseBatches.map(batch =>
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.COURSES_COLLECTION_ID,
+            [
+              Query.equal('course_code', batch),
+              Query.limit(batch.length),
+              Query.select(['$id', 'course_code', 'course_title', 'course_title_tc', 'course_title_sc', 'department',
+                'stats_review_count', 'stats_avg_rating', 'stats_student_count', 'stats_avg_workload', 'stats_avg_difficulty', 'stats_avg_usefulness', 'stats_avg_gpa', 'stats_avg_gpa_count',
+                'teaching_languages', 'current_term_teaching_language', 'service_learning_types', 'current_term_service_learning', 'current_term_offered'])
+            ]
+          )
+        ));
+
+        coursesArray = coursesArray.concat(coursesBatchResults.flatMap(res => (res.rows as unknown as Course[]).map(course => {
+          const teaching = this.extractDenormalizedTeachingData(course);
+          return {
+            ...course,
+            ...this.extractDenormalizedStats(course),
+            teachingLanguages: teaching.teachingLanguages,
+            currentTermTeachingLanguage: teaching.currentTermTeachingLanguage,
+            serviceLearningTypes: teaching.serviceLearningTypes,
+            currentTermServiceLearning: teaching.currentTermServiceLearning,
+            isOfferedInCurrentTerm: course.current_term_offered ?? false
+          } as CourseWithStats;
+        })));
+      }
 
       const result = new Map();
 
       coursesArray.forEach(course => {
-        const stats = statsMap.get(course.course_code) || {
-          reviewCount: 0,
-          averageRating: 0,
-          studentCount: 0,
-          averageWorkload: -1,
-          averageDifficulty: -1,
-          averageUsefulness: -1,
-          averageGPA: 0,
-          averageGPACount: 0
-        };
-
         result.set(course.course_code, {
           course,
-          stats,
-          teachingLanguages: teachingLanguagesMap.get(course.course_code) || [],
-          currentTermTeachingLanguage: currentTermLanguagesMap.get(course.course_code) || null,
-          serviceLearningTypes: serviceLearningTypesMap.get(course.course_code) || [],
-          currentTermServiceLearning: currentTermServiceLearningMap.get(course.course_code) || null,
-          // 🐛 FIX: Convert course code to lowercase for case-insensitive comparison
-          isOfferedInCurrentTerm: currentTermOfferedCourses.has(course.course_code.toLowerCase())
+          stats: {
+            reviewCount: course.reviewCount,
+            averageRating: course.averageRating,
+            studentCount: course.studentCount,
+            averageWorkload: course.averageWorkload,
+            averageDifficulty: course.averageDifficulty,
+            averageUsefulness: course.averageUsefulness,
+            averageGPA: course.averageGPA
+          },
+          teachingLanguages: course.teachingLanguages || [],
+          currentTermTeachingLanguage: course.currentTermTeachingLanguage ?? null,
+          serviceLearningTypes: course.serviceLearningTypes || [],
+          currentTermServiceLearning: course.currentTermServiceLearning ?? null,
+          isOfferedInCurrentTerm: course.isOfferedInCurrentTerm
         });
       });
 
@@ -823,82 +890,63 @@ export class CourseService {
     }
 
     try {
-      // 🚀 FIXED: 使用分批處理避免URL過長問題
-      console.log(`🔍 getBatchFavoriteInstructorsData: Processing ${instructorNames.length} favorite instructors`);
-      
-      let instructorsArray: Instructor[] = [];
-      
-      // 🚀 ULTRA OPTIMIZATION: 大幅增加批次大小以減少HTTP請求數量
-      const batchSize = 200;
-      const instructorBatches = [];
-      for (let i = 0; i < instructorNames.length; i += batchSize) {
-        instructorBatches.push(instructorNames.slice(i, i + batchSize));
+      // 🚀 統計 / 教學語言 / 當前學期任教狀態已全部反正規化到 instructor 文件
+      //（與講師列表頁同一資料來源），收藏頁不再掃描 reviews / teaching_records：
+      // 每次載入 = 收藏數量的講師列讀取，甚至 0 次（命中講師目錄的持久化快取時）。
+      const requested = new Set(instructorNames);
+      let instructorsArray: InstructorWithDetailedStats[] = [];
+
+      // 若講師目錄快取已存在（例如剛逛過講師列表頁），直接重用，0 次讀取
+      const catalogCache = this.getPersistentCached<InstructorWithDetailedStats[]>(PERSISTENT_CACHE_KEYS.ALL_INSTRUCTORS_WITH_DETAILED_STATS);
+      if (catalogCache && catalogCache.length > 0) {
+        instructorsArray = catalogCache.filter(i => requested.has(i.name));
       }
-      
-      console.log(`🔍 getBatchFavoriteInstructorsData: Processing ${instructorBatches.length} instructor batches`);
-      
-      // 並行處理所有批次
-      const instructorBatchPromises = instructorBatches.map(batch =>
-        tablesDB.listRows(
-          this.DATABASE_ID,
-          this.INSTRUCTORS_COLLECTION_ID,
-          [
-            Query.equal('name', batch),
-            Query.limit(batch.length),
-            Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department'])
-          ]
-        )
-      );
-      
-      const instructorsBatchResults = await Promise.all(instructorBatchPromises);
-      
-      // 合佶所有批次結果
-      instructorsBatchResults.forEach(result => {
-        instructorsArray.push(...(result.rows as unknown as Instructor[]));
-      });
-      
-      console.log(`✅ getBatchFavoriteInstructorsData: Loaded ${instructorsArray.length} instructors from batches`);
-      
-      // 並行獲取所有需要的數據
-      const [
-        statsMap,
-        instructorsWithGPA,
-        teachingLanguagesMap,
-        currentTermLanguagesMap,
-        currentTermTeachingInstructors
-      ] = await Promise.all([
-        // 獲取講師詳細統計
-        this.getBatchInstructorDetailedStats(instructorNames),
-        // 獲取包含GPA的講師統計
-        this.getAllInstructorsWithDetailedStats().then(allInstructors => 
-          new Map(allInstructors.map(inst => [inst.name, inst.averageGPA]))
-        ),
-        // 獲取教學語言
-        this.getBatchInstructorTeachingLanguages(instructorNames),
-        // 獲取當前學期教學語言
-        this.getBatchInstructorCurrentTermTeachingLanguages(instructorNames),
-        // 獲取當前學期教學狀態
-        this.getInstructorsTeachingInTermBatch(getCurrentTermCode(), instructorNames)
-      ]);
+
+      // 快取未命中或缺少部分講師時，只針對缺少的姓名發出批次查詢
+      const foundNames = new Set(instructorsArray.map(i => i.name));
+      const missingNames = instructorNames.filter(name => !foundNames.has(name));
+      if (missingNames.length > 0) {
+        // 單一批次查詢 instructors 表（含反正規化欄位），分批避免 URL 過長
+        const batchSize = 100;
+        const instructorBatches: string[][] = [];
+        for (let i = 0; i < missingNames.length; i += batchSize) {
+          instructorBatches.push(missingNames.slice(i, i + batchSize));
+        }
+
+        const instructorsBatchResults = await Promise.all(instructorBatches.map(batch =>
+          tablesDB.listRows(
+            this.DATABASE_ID,
+            this.INSTRUCTORS_COLLECTION_ID,
+            [
+              Query.equal('name', batch),
+              Query.limit(batch.length),
+              Query.select(['$id', 'name', 'name_tc', 'name_sc', 'title', 'nickname', 'email', 'department',
+                'stats_review_count', 'stats_avg_gpa', 'stats_avg_gpa_count', 'stats_teaching_score', 'stats_grading_fairness',
+                'teaching_languages', 'current_term_teaching_language', 'is_teaching_in_current_term'])
+            ]
+          )
+        ));
+
+        instructorsArray = instructorsArray.concat(instructorsBatchResults.flatMap(res => (res.rows as unknown as Instructor[]).map(instructor => ({
+          ...instructor,
+          ...this.extractDenormalizedInstructorStats(instructor)
+        }) as InstructorWithDetailedStats)));
+      }
 
       const result = new Map();
 
       instructorsArray.forEach(instructor => {
-        const stats = statsMap.get(instructor.name) || {
-          reviewCount: 0,
-          teachingScore: 0,
-          gradingFairness: 0
-        };
-
         result.set(instructor.name, {
           instructor,
           stats: {
-            ...stats,
-            averageGPA: instructorsWithGPA.get(instructor.name) || 0
+            reviewCount: instructor.reviewCount,
+            teachingScore: instructor.teachingScore,
+            gradingFairness: instructor.gradingFairness,
+            averageGPA: instructor.averageGPA || 0
           },
-          teachingLanguages: teachingLanguagesMap.get(instructor.name) || [],
-          currentTermTeachingLanguage: currentTermLanguagesMap.get(instructor.name) || null,
-          isTeachingInCurrentTerm: currentTermTeachingInstructors.has(instructor.name)
+          teachingLanguages: instructor.teachingLanguages || [],
+          currentTermTeachingLanguage: instructor.currentTermTeachingLanguage ?? null,
+          isTeachingInCurrentTerm: instructor.isTeachingInCurrentTerm ?? false
         });
       });
 
@@ -1332,6 +1380,13 @@ export class CourseService {
    */
   static async getCourseByCode(courseCode: string): Promise<Course | null> {
     try {
+      // 課程主檔只在資料匯入時變動：被動 TTL 快取讓同一會話內重訪詳情頁不再重複讀取
+      const cacheKey = `course_by_code_${courseCode}`;
+      const cached = this.getCached<Course>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.COURSES_COLLECTION_ID,
@@ -1342,7 +1397,11 @@ export class CourseService {
         ]
       );
 
-      return response.rows.length > 0 ? response.rows[0] as unknown as Course : null;
+      const course = response.rows.length > 0 ? response.rows[0] as unknown as Course : null;
+      if (course) {
+        this.setCached(cacheKey, course, 10 * 60 * 1000); // 10 分鐘快取
+      }
+      return course;
     } catch (error) {
       console.error('Error fetching course by code:', error);
       return null;
@@ -1614,6 +1673,13 @@ export class CourseService {
    */
   static async getInstructorByName(name: string): Promise<Instructor | null> {
     try {
+      // 講師主檔只在資料匯入時變動：被動 TTL 快取讓同一會話內重訪詳情頁不再重複讀取
+      const cacheKey = `instructor_by_name_${name}`;
+      const cached = this.getCached<Instructor>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.INSTRUCTORS_COLLECTION_ID,
@@ -1624,7 +1690,11 @@ export class CourseService {
         ]
       );
 
-      return response.rows.length > 0 ? response.rows[0] as unknown as Instructor : null;
+      const instructor = response.rows.length > 0 ? response.rows[0] as unknown as Instructor : null;
+      if (instructor) {
+        this.setCached(cacheKey, instructor, 10 * 60 * 1000); // 10 分鐘快取
+      }
+      return instructor;
     } catch (error) {
       console.error('Error fetching instructor by name:', error);
       return null;
@@ -1679,6 +1749,16 @@ export class CourseService {
         return cached;
       }
 
+      // 若整批學期已在快取（terms 表是完整清單），直接從中查找，0 次讀取
+      const allTermsCached = this.getPersistentCached<Term[]>('all_terms');
+      if (allTermsCached && allTermsCached.length > 0) {
+        const found = allTermsCached.find(t => t.term_code === termCode) ?? null;
+        if (found) {
+          this.setCached(cacheKey, found, 30 * 60 * 1000);
+        }
+        return found;
+      }
+
       const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TERMS_COLLECTION_ID,
@@ -1706,6 +1786,16 @@ export class CourseService {
     try {
       const uniqueCodes = [...new Set(termCodes)].filter(Boolean);
       if (uniqueCodes.length === 0) return [];
+
+      // 若整批學期已在快取（terms 表是完整清單），直接從中過濾，0 次讀取；
+      // 快取中沒有的代碼等同查詢無結果（呼叫端本就有 fallback 處理）。
+      const allTermsCached = this.getPersistentCached<Term[]>('all_terms');
+      if (allTermsCached && allTermsCached.length > 0) {
+        const wanted = new Set(uniqueCodes);
+        const termsFromCache = allTermsCached.filter(t => wanted.has(t.term_code));
+        setTermDates(termsFromCache);
+        return termsFromCache;
+      }
 
       const CHUNK_SIZE = 100;
       const chunks: string[][] = [];
@@ -1944,6 +2034,7 @@ export class CourseService {
 
       // 清除該課程相關快取，讓新評論立即顯示
       this.clearCourseCache(reviewData.course_code);
+      this.clearReviewsScanCache();
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）
       this.triggerCourseStatsRecompute(reviewData.course_code);
@@ -1961,6 +2052,15 @@ export class CourseService {
    */
   static async getAllTerms(): Promise<Term[]> {
     try {
+      // 學期資料只在資料匯入時變動：被動雙層快取（記憶體 + 持久化）省下每次
+      // 進入課程 / 講師列表頁的整批 terms 讀取。快取命中仍需回填學期日期快取。
+      const cacheKey = 'all_terms';
+      const cached = this.getPersistentCached<Term[]>(cacheKey);
+      if (cached && cached.length > 0) {
+        setTermDates(cached);
+        return cached;
+      }
+
       const response = await tablesDB.listRows(
         this.DATABASE_ID,
         this.TERMS_COLLECTION_ID,
@@ -1976,6 +2076,7 @@ export class CourseService {
       terms.sort((a, b) => compareTermCodesDesc(a.term_code, b.term_code));
       // 以資料庫的實際學期日期更新「當前學期」判斷的快取
       setTermDates(terms);
+      this.setPersistentCached(cacheKey, terms, 30 * 60 * 1000, PERSISTENT_CACHE_TTL.STATS_DATA);
       return terms;
     } catch (error) {
       console.error('Error fetching terms:', error);
@@ -2045,29 +2146,45 @@ export class CourseService {
    */
   static async getInstructorReviewsFromDetails(instructorName: string, language?: string): Promise<InstructorReviewFromDetails[]> {
     try {
-      // 獲取所有評論，使用優化的限制和欄位選擇
-      const queries = [
-        Query.orderDesc('$createdAt'),
-        Query.limit(this.MAX_REVIEWS_LIMIT), // 使用常數限制
-        Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
-                     'course_workload', 'course_difficulties', 'course_usefulness',
-                     'course_final_grade', 'course_comments', 'instructor_details', 'review_language', 'submitted_at', '$createdAt'])
-      ];
-      
-      // Add language filter if specified
-      if (language) {
-        queries.push(Query.equal('review_language', language));
-      }
-      
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.REVIEWS_COLLECTION_ID,
-        queries
-      );
+      // 🚀 優先用伺服器端 contains 預過濾（instructor_details JSON 內含講師姓名），
+      // 只讀取該講師相關的評論列（超集），取代整張 reviews 表的掃描；
+      // 後備路徑改讀共享被動快取，同一會話瀏覽多個講師頁也只掃描一次。
+      let allReviews: Review[] | null = null;
 
-      const allReviews = response.rows as unknown as Review[];
-      
-      // 過濾包含該講師的評論
+      if (this.reviewsContainsSupported && instructorName && instructorName.trim()) {
+        try {
+          const queries = [
+            Query.contains('instructor_details', instructorName.trim()),
+            Query.orderDesc('$createdAt'),
+            Query.limit(this.MAX_REVIEWS_LIMIT),
+            Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
+                         'course_workload', 'course_difficulties', 'course_usefulness',
+                         'course_final_grade', 'course_comments', 'instructor_details', 'review_language', 'submitted_at', '$createdAt'])
+          ];
+          if (language) {
+            queries.push(Query.equal('review_language', language));
+          }
+          const response = await tablesDB.listRows(
+            this.DATABASE_ID,
+            this.REVIEWS_COLLECTION_ID,
+            queries
+          );
+          allReviews = response.rows as unknown as Review[];
+        } catch (containsError) {
+          // 後端不支援 contains 時記住，之後直接走共享快取路徑，不再重試
+          this.reviewsContainsSupported = false;
+          console.warn('Query.contains on instructor_details not supported; falling back to shared full scan:', containsError);
+        }
+      }
+
+      if (allReviews === null) {
+        allReviews = await this.getAllReviewsScanned();
+        if (language) {
+          allReviews = allReviews.filter(review => review.review_language === language);
+        }
+      }
+
+      // 過濾包含該講師的評論（contains 為子字串超集，仍需精確比對）
       const instructorReviews = allReviews.filter(review => {
         const instructorDetails = this.tryParseInstructorDetails(review.instructor_details);
         return instructorDetails !== null && instructorDetails.some(detail => instructorNameMatches(detail.instructor_name, instructorName));
@@ -2638,6 +2755,7 @@ export class CourseService {
       // 清除該課程相關快取，讓刪除立即反映
       if (courseCodeToRecompute) {
         this.clearCourseCache(courseCodeToRecompute);
+        this.clearReviewsScanCache();
       }
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）
@@ -2665,6 +2783,7 @@ export class CourseService {
 
       // 清除該課程相關快取，讓更新立即反映
       this.clearCourseCache((response as unknown as Review).course_code);
+      this.clearReviewsScanCache();
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）。course_code 取自更新後的完整文件
       this.triggerCourseStatsRecompute((response as unknown as Review).course_code);
@@ -4201,123 +4320,30 @@ export class CourseService {
   static async getCoursesOfferedInTermBatch(termCode: string, courseCodes?: string[]): Promise<Set<string>> {
     try {
       const cacheKey = `courses_offered_in_term_${termCode}`;
-      
-      // 🔄 TEMPORARY: Clear cache for this fix to take effect immediately
-      // Remove this after the fix is deployed and tested
-      if (termCode === '2022-S') {
-        console.log(`🔄 Clearing cache for ${termCode} to apply query limit fix...`);
-        this.cache.delete(cacheKey);
-      }
-      
-      // 檢查緩存
-      const cached = this.getCached<Set<string>>(cacheKey);
-      if (cached) {
-        return cached;
-      }
 
-      // 🐛 FIX: Use a much higher limit for term-specific queries to avoid missing courses
-      // 2022-S and other comprehensive terms may have >500 teaching records
-      // We need to get ALL courses offered in a term, not just the first 500 records
-      const TERM_QUERY_LIMIT = 5000; // Increased from 500 to handle comprehensive terms
-      
-      const queries = [
-        Query.equal('term_code', termCode),
-        Query.limit(TERM_QUERY_LIMIT),
-        Query.select(['course_code'])
-      ];
-
-      // 🚀 修復：如果有特定課程代碼且數量太多，分批查詢避免URL過長
-      if (courseCodes && courseCodes.length > 0) {
-        const BATCH_SIZE = 50; // 限制每批查詢的課程數量
-        
-        if (courseCodes.length <= BATCH_SIZE) {
-          // 小批量，直接查詢
-          queries.push(Query.equal('course_code', courseCodes));
-          
-          const response = await tablesDB.listRows(
-            this.DATABASE_ID,
-            this.TEACHING_RECORDS_COLLECTION_ID,
-            queries
-          );
-          
-          const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
-          const offeredCourses = new Set(teachingRecords.map(record => record.course_code.toLowerCase()));
-          
-          this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000);
-          return offeredCourses;
-        } else {
-          // 大批量，分批處理
-          console.log(`📊 Processing ${courseCodes.length} courses in batches for term ${termCode}`);
-          
-          let allOfferedCourses = new Set<string>();
-          const batches = [];
-          
-          for (let i = 0; i < courseCodes.length; i += BATCH_SIZE) {
-            batches.push(courseCodes.slice(i, i + BATCH_SIZE));
+      // 🚀 改讀共享的 teaching_records 被動快取（同頁面的篩選器 / 講師對照等
+      // 已載入同一份資料），不再對每個學期各發一次 term 查詢。
+      // 🐛 保留大小寫修復：course codes 統一轉小寫比對
+      //（teaching_records 可能用大寫結尾字母 "CHI4342A"，courses 表為 "CHI4342a"）。
+      let offeredCourses = this.getCached<Set<string>>(cacheKey);
+      if (!offeredCourses) {
+        const allRecords = await this.getAllTeachingRecordsRaw();
+        offeredCourses = new Set<string>();
+        for (const record of allRecords) {
+          if (record.term_code === termCode && record.course_code) {
+            offeredCourses.add(record.course_code.toLowerCase());
           }
-
-          const batchPromises = batches.map(async (batch, index) => {
-            try {
-              const batchQueries = [
-                Query.equal('term_code', termCode),
-                Query.equal('course_code', batch),
-                Query.limit(TERM_QUERY_LIMIT),
-                Query.select(['course_code'])
-              ];
-
-              const response = await tablesDB.listRows(
-                this.DATABASE_ID,
-                this.TEACHING_RECORDS_COLLECTION_ID,
-                batchQueries
-              );
-
-              const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
-              console.log(`✅ Term batch ${index + 1}/${batches.length}: Found ${teachingRecords.length} records`);
-              
-              return teachingRecords.map(record => record.course_code.toLowerCase());
-            } catch (error) {
-              console.error(`❌ Error in term batch ${index + 1}:`, error);
-              return [];
-            }
-          });
-
-          const batchResults = await Promise.all(batchPromises);
-          
-          batchResults.forEach(batchCourses => {
-            batchCourses.forEach(course => allOfferedCourses.add(course));
-          });
-
-          console.log(`✅ Term ${termCode}: Processed ${batches.length} batches, found ${allOfferedCourses.size} offered courses`);
-          
-          this.setCached(cacheKey, allOfferedCourses, 10 * 60 * 1000);
-          return allOfferedCourses;
         }
+        // 緩存結果（較長時間，因為學期數據相對穩定）
+        this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000); // 10分鐘緩存
       }
 
-      // 沒有特定課程代碼，查詢所有課程
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        queries
-      );
-
-      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'course_code'>[];
-      
-      // 🐛 FIX: Convert course codes to lowercase to handle case sensitivity issues
-      // Teaching records may have uppercase suffixes (e.g., "CHI4342A") while courses database has lowercase (e.g., "CHI4342a")
-      const offeredCourses = new Set(teachingRecords.map(record => record.course_code.toLowerCase()));
-
-      // Debug logging to help identify potential issues with large terms
-      console.log(`📊 Term ${termCode}: Found ${teachingRecords.length} teaching records, ${offeredCourses.size} unique courses`);
-      
-      // Warn if we hit the query limit (potential data truncation)
-      if (teachingRecords.length >= TERM_QUERY_LIMIT) {
-        console.warn(`⚠️  Term ${termCode} may have more data - hit query limit of ${TERM_QUERY_LIMIT} records!`);
+      // 若指定了課程清單，僅回傳交集（快取仍保存整個學期的集合以供重用）
+      if (courseCodes && courseCodes.length > 0) {
+        const wanted = new Set(courseCodes.map(code => code.toLowerCase()));
+        return new Set([...offeredCourses].filter(code => wanted.has(code)));
       }
 
-      // 緩存結果（較長時間，因為學期數據相對穩定）
-      this.setCached(cacheKey, offeredCourses, 10 * 60 * 1000); // 10分鐘緩存
-      
       return offeredCourses;
     } catch (error) {
       console.error('Error fetching courses offered in term (batch):', error);
@@ -4375,36 +4401,24 @@ export class CourseService {
   static async getAllTermsCoursesOfferedBatch(termCodes?: string[]): Promise<Map<string, Set<string>>> {
     try {
       const cacheKey = `all_terms_courses_offered_${termCodes?.join('_') || 'all'}`;
-      
+
       // 檢查緩存
       const cached = this.getCached<Map<string, Set<string>>>(cacheKey);
       if (cached) {
         return cached;
       }
 
-      // 獲取教學記錄
-      const queries = [
-        Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
-        Query.select(['term_code', 'course_code'])
-      ];
+      // 🚀 改讀共享的 teaching_records 被動快取（課程頁的其他聚合已載入同一份資料），
+      // 不再另外發出一次 10000 筆上限的全表查詢。
+      const allRecords = await this.getAllTeachingRecordsRaw();
+      const termFilter = termCodes && termCodes.length > 0 ? new Set(termCodes) : null;
 
-      // 如果提供了特定學期代碼，則只查詢這些學期
-      if (termCodes && termCodes.length > 0) {
-        queries.push(Query.equal('term_code', termCodes));
-      }
-
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.TEACHING_RECORDS_COLLECTION_ID,
-        queries
-      );
-
-      const teachingRecords = response.rows as unknown as Pick<TeachingRecord, 'term_code' | 'course_code'>[];
-      
       // 按學期分組課程
       const termCoursesMap = new Map<string, Set<string>>();
-      
-      for (const record of teachingRecords) {
+
+      for (const record of allRecords) {
+        if (!record.term_code || !record.course_code) continue;
+        if (termFilter && !termFilter.has(record.term_code)) continue;
         if (!termCoursesMap.has(record.term_code)) {
           termCoursesMap.set(record.term_code, new Set());
         }
@@ -4433,7 +4447,9 @@ export class CourseService {
    */
   private static teachingRecordsRawCache: { data: TeachingRawRecord[]; expiry: number } | null = null;
   private static teachingRecordsRawInflight: Promise<TeachingRawRecord[]> | null = null;
-  private static readonly TEACHING_RAW_TTL = 3 * 60 * 1000; // 3 分鐘被動快取
+  // 教學記錄僅在資料匯入時變動；15 分鐘與其他衍生快取（10~15 分鐘）對齊，
+  // 減少同一會話內的重複全表掃描。純被動 TTL，無背景刷新。
+  private static readonly TEACHING_RAW_TTL = 15 * 60 * 1000; // 15 分鐘被動快取
 
   static async getAllTeachingRecordsRaw(): Promise<TeachingRawRecord[]> {
     const now = Date.now();

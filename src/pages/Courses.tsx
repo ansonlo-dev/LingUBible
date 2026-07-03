@@ -127,7 +127,8 @@ const Courses = () => {
         
         try {
           // 只獲取講師基本信息，不載入課程關聯
-          const allInstructors = await CourseService.getAllInstructors();
+          // 改用帶持久化快取的講師目錄（欄位為超集），避免每次進課程頁都重新讀取整批講師列
+          const allInstructors = await CourseService.getAllInstructorsWithDetailedStats();
           
           // 建立基本的名稱映射
           allInstructors.forEach(instructor => {

@@ -1410,7 +1410,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const loadCourses = async () => {
       try {
         setCoursesLoading(true);
-        const coursesData = await CourseService.getAllCourses();
+        // 改用帶持久化快取的課程目錄（欄位為 getAllCourses 的超集、同樣依課程代碼排序），
+        // 避免每次打開寫評價頁都重新讀取整批課程列
+        const coursesData = await CourseService.getCoursesWithStats();
         setCourses(coursesData);
         
         // If preselected course code is provided, set it
