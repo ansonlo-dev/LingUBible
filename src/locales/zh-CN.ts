@@ -1546,6 +1546,7 @@ export default {
   'kofi.supportProject': '支持这个项目',
   'common.backToHome': '返回首页',
   'common.lastUpdated': '最后更新',
+  'common.dataUpdatedOn': '数据更新日期：{date}',
   'common.user': '用户',
   'common.language': '语言',
   'common.installing': '安装中...',

@@ -1500,6 +1500,7 @@ export default {
   'kofi.supportProject': '支持這個專案',
   'common.backToHome': '返回首頁',
   'common.lastUpdated': '最後更新',
+  'common.dataUpdatedOn': '資料更新日期：{date}',
   'common.user': '用戶',
   'common.language': '語言',
   'common.installing': '安裝中...',

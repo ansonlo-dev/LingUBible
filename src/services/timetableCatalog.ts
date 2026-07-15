@@ -21,6 +21,10 @@ export interface TimetableCatalog {
   instructors: Record<string, { tc?: string; sc?: string; nickname?: string }>;
 }
 
+// When the underlying class-timetable source data was last refreshed. Shown on
+// the planner page — update whenever the data is re-imported.
+export const TIMETABLE_DATA_UPDATED = '2026/07/15';
+
 // v2: added per-course `credits` to the distilled catalog. Bumping the key
 // invalidates the old (creditless) cached copy so it re-distills.
 const CATALOG_KEY = 'timetable_catalog_v2';

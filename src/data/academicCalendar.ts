@@ -45,6 +45,10 @@ export const CATEGORY_ORDER: CalendarCategory[] = [
 
 export const ACADEMIC_YEAR_LABEL = '2026-27';
 
+// When this file's event data was last refreshed from the Registry's calendar
+// pages. Shown on the calendar page — update whenever the data is re-imported.
+export const CALENDAR_DATA_UPDATED = '2026/07/15';
+
 // First day of Term 1 — used as the calendar's default landing month.
 export const TERM_START_DATE = '2026-09-01';
 

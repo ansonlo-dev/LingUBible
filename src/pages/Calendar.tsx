@@ -13,10 +13,12 @@ import {
   Columns3,
   Grid3x3,
   Info,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ACADEMIC_EVENTS,
   ACADEMIC_YEAR_LABEL,
+  CALENDAR_DATA_UPDATED,
   CATEGORY_ORDER,
   TERM_START_DATE,
   TERM_2_START_DATE,
@@ -610,10 +612,16 @@ export default function Calendar() {
         <p className="text-sm text-muted-foreground sm:text-base md:-translate-y-[3px]">
           {t('calendar.subtitle')}
         </p>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground md:ml-auto md:-translate-y-[3px]">
-          <Info className="h-3.5 w-3.5 shrink-0" />
-          {t('calendar.referenceNotice')}
-        </span>
+        <div className="flex flex-col gap-0.5 md:ml-auto md:items-end md:-translate-y-[3px]">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            {t('calendar.referenceNotice')}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+            {t('common.dataUpdatedOn', { date: CALENDAR_DATA_UPDATED })}
+          </span>
+        </div>
       </div>
 
       {/* Toolbar — mobile: stacked rows; desktop: 3-column grid so the range

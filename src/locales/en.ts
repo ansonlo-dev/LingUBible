@@ -1562,6 +1562,7 @@ export default {
   'kofi.supportProject': 'Support this project',
   'common.backToHome': 'Back to Home',
   'common.lastUpdated': 'Last updated',
+  'common.dataUpdatedOn': 'Data updated: {date}',
   'common.user': 'User',
   'common.language': 'Language',
   'common.installing': 'Installing...',

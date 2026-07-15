@@ -21,7 +21,7 @@ import {
   type TimeFilterValue,
 } from '@/components/features/timetable/TimeVenueFilters';
 import { buildTimetableIcs } from '@/services/timetableIcs';
-import { loadTimetableCatalog, normInstructorName, type TimetableCatalog } from '@/services/timetableCatalog';
+import { loadTimetableCatalog, normInstructorName, TIMETABLE_DATA_UPDATED, type TimetableCatalog } from '@/services/timetableCatalog';
 import {
   TimetableGrid,
   blockTextColor,
@@ -78,6 +78,7 @@ import {
   ChevronDown,
   ChevronRight,
   SlidersHorizontal,
+  RefreshCw,
   Pencil,
   ExternalLink,
   Undo2,
@@ -1750,10 +1751,16 @@ const Timetable = () => {
           <h1 className="text-3xl font-bold">{t('timetable.title')}</h1>
         </div>
         <p className="text-muted-foreground md:-translate-y-[3px]">{t('timetable.subtitle')}</p>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground md:ml-auto md:-translate-y-[3px]">
-          <Info className="h-3.5 w-3.5 shrink-0" />
-          {t('gpa.localOnlyNotice')}
-        </span>
+        <div className="flex flex-col gap-0.5 md:ml-auto md:items-end md:-translate-y-[3px]">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            {t('gpa.localOnlyNotice')}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+            {t('common.dataUpdatedOn', { date: TIMETABLE_DATA_UPDATED })}
+          </span>
+        </div>
       </div>
 
       {showSpinner && (
