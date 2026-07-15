@@ -45,6 +45,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format as formatDate, parseISO } from 'date-fns';
+import { enUS, zhTW, zhCN } from 'date-fns/locale';
 import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
@@ -145,6 +148,61 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   icsStart: '',
   icsEnd: '',
 };
+
+// date-fns locales per site language, for the .ics date pickers.
+const DATE_PICKER_LOCALES = { en: enUS, 'zh-TW': zhTW, 'zh-CN': zhCN } as const;
+
+/** Localized date field (calendar popover) for the .ics export range. Replaces a
+ *  native `<input type="date">`, whose "年/月/日" placeholder follows the browser
+ *  locale and can't be translated to match the site language. */
+function DatePickerField({
+  value,
+  onChange,
+  min,
+  placeholder,
+  language,
+}: {
+  /** "YYYY-MM-DD" or '' when unset. */
+  value: string;
+  onChange: (v: string) => void;
+  /** Earliest selectable date ("YYYY-MM-DD"). */
+  min?: string;
+  placeholder: string;
+  language: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const locale = DATE_PICKER_LOCALES[language] ?? enUS;
+  const selected = value ? parseISO(value) : undefined;
+  const minDate = min ? parseISO(min) : undefined;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={`h-8 w-full justify-start px-2 text-xs font-normal ${value ? '' : 'text-muted-foreground'}`}
+        >
+          <CalendarDays className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">
+            {selected ? formatDate(selected, 'PPP', { locale }) : placeholder}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start" collisionPadding={8}>
+        <Calendar
+          mode="single"
+          selected={selected}
+          defaultMonth={selected ?? minDate}
+          disabled={minDate ? { before: minDate } : undefined}
+          locale={locale}
+          onSelect={(d) => {
+            if (d) onChange(formatDate(d, 'yyyy-MM-dd'));
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 const SESSION_TYPE_LABELS: Record<string, { 'zh-TW': string; 'zh-CN': string }> = {
   LEC: { 'zh-TW': '講課', 'zh-CN': '讲课' },
@@ -1607,21 +1665,21 @@ const Timetable = () => {
               <div className="grid grid-cols-2 gap-1.5">
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">{t('timetable.icsStart')}</Label>
-                  <Input
-                    type="date"
+                  <DatePickerField
                     value={exportOptions.icsStart}
-                    onChange={(e) => setOpt({ icsStart: e.target.value })}
-                    className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                    onChange={(v) => setOpt({ icsStart: v })}
+                    placeholder={t('timetable.pickDate')}
+                    language={language}
                   />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">{t('timetable.icsEnd')}</Label>
-                  <Input
-                    type="date"
+                  <DatePickerField
                     value={exportOptions.icsEnd}
+                    onChange={(v) => setOpt({ icsEnd: v })}
                     min={exportOptions.icsStart || undefined}
-                    onChange={(e) => setOpt({ icsEnd: e.target.value })}
-                    className="h-8 px-2 [color-scheme:light] dark:[color-scheme:dark]"
+                    placeholder={t('timetable.pickDate')}
+                    language={language}
                   />
                 </div>
               </div>

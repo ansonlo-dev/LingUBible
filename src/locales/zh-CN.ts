@@ -909,6 +909,7 @@ export default {
   'timetable.exportPdf': '导出 PDF',
   'timetable.exportIcs': '导出 .ics(日历)',
   'timetable.icsStart': '开始日期',
+  'timetable.pickDate': '选择日期',
   'timetable.icsEnd': '结束日期',
   'timetable.exportError': '导出失败，请再试一次。',
   'timetable.customize': '自定义',

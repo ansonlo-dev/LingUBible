@@ -901,6 +901,7 @@ export default {
   'timetable.exportPdf': 'Export PDF',
   'timetable.exportIcs': 'Export .ics (calendar)',
   'timetable.icsStart': 'Start date',
+  'timetable.pickDate': 'Pick a date',
   'timetable.icsEnd': 'End date',
   'timetable.exportError': 'Export failed. Please try again.',
   'timetable.customize': 'Customize',

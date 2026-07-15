@@ -839,6 +839,7 @@ export default {
   'timetable.exportPdf': '匯出 PDF',
   'timetable.exportIcs': '匯出 .ics(日曆)',
   'timetable.icsStart': '開始日期',
+  'timetable.pickDate': '選擇日期',
   'timetable.icsEnd': '結束日期',
   'timetable.exportError': '匯出失敗，請再試一次。',
   'timetable.customize': '自訂',
