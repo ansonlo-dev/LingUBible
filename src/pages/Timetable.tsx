@@ -1349,28 +1349,6 @@ const Timetable = () => {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t('timetable.opt.credits')}</Label>
-              <OptionToggle
-                value={exportOptions.showCredits ? 'on' : 'off'}
-                onChange={(v) => setOpt({ showCredits: v === 'on' })}
-                options={[
-                  { value: 'on', label: t('timetable.opt.show') },
-                  { value: 'off', label: t('timetable.opt.hide') },
-                ]}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t('timetable.opt.crn')}</Label>
-              <OptionToggle
-                value={exportOptions.showCrn ? 'on' : 'off'}
-                onChange={(v) => setOpt({ showCrn: v === 'on' })}
-                options={[
-                  { value: 'on', label: t('timetable.opt.show') },
-                  { value: 'off', label: t('timetable.opt.hide') },
-                ]}
-              />
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs">{t('timetable.opt.timeFormat')}</Label>
               <OptionToggle
                 value={exportOptions.timeFormat}
@@ -1509,25 +1487,38 @@ const Timetable = () => {
             <div className="space-y-1.5 col-span-2">
               <Label className="text-xs">{t('timetable.opt.fields')}</Label>
               <div className="grid grid-cols-4 gap-1.5">
+                {/* `credits` / `crn` are page-level toggles (showCredits / showCrn),
+                    not BlockFields keys — they live here so all show/hide choices
+                    share one compact checkbox grid. */}
                 {([
                   { key: 'code', label: t('timetable.opt.fCode') },
                   { key: 'title', label: t('timetable.opt.fTitle') },
+                  { key: 'credits', label: t('timetable.opt.fCredits') },
+                  { key: 'crn', label: t('timetable.opt.crn') },
                   { key: 'type', label: t('timetable.opt.fType') },
                   { key: 'number', label: t('timetable.opt.fNumber') },
                   { key: 'venue', label: t('timetable.opt.fVenue') },
                   { key: 'instructor', label: t('timetable.opt.fInstructor') },
                   { key: 'time', label: t('timetable.opt.fTime') },
-                ] as { key: keyof BlockFields; label: string }[]).map((f) => (
-                  <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
-                    <Checkbox
-                      checked={exportOptions.fields[f.key]}
-                      onCheckedChange={(v) =>
-                        setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } })
-                      }
-                    />
-                    {f.label}
-                  </label>
-                ))}
+                ] as { key: keyof BlockFields | 'credits' | 'crn'; label: string }[]).map((f) => {
+                  const checked =
+                    f.key === 'credits'
+                      ? exportOptions.showCredits
+                      : f.key === 'crn'
+                        ? exportOptions.showCrn
+                        : exportOptions.fields[f.key];
+                  const onChange = (v: boolean | 'indeterminate') => {
+                    if (f.key === 'credits') setOpt({ showCredits: !!v });
+                    else if (f.key === 'crn') setOpt({ showCrn: !!v });
+                    else setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } });
+                  };
+                  return (
+                    <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer">
+                      <Checkbox checked={checked} onCheckedChange={onChange} />
+                      {f.label}
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>
