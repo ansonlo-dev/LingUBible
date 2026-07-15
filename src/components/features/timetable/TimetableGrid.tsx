@@ -342,11 +342,11 @@ export function TimetableGrid({
   const blockSizes = (compact: boolean) =>
     forExport
       ? compact
-        ? { code: 'text-[15px] font-extrabold', title: 'text-[14px] font-bold', meta: 'text-[12px] font-semibold', pad: 'px-2 py-1', badge: 'text-[11px] font-bold', gap: 'mt-0.5', clamp: 'line-clamp-1', codePr: 'pr-12' }
-        : { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', badge: 'text-[13px] font-bold', gap: 'mt-1', clamp: 'line-clamp-2', codePr: 'pr-14' }
+        ? { code: 'text-[15px] font-extrabold', title: 'text-[14px] font-bold', meta: 'text-[12px] font-semibold', pad: 'px-2 py-1', badge: 'text-[11px] font-bold', gap: 'mt-0.5', clamp: 'line-clamp-1' }
+        : { code: 'text-[20px] font-extrabold', title: 'text-[17px] font-bold', meta: 'text-[15px] font-semibold', pad: 'px-2.5 py-2', badge: 'text-[13px] font-bold', gap: 'mt-1', clamp: 'line-clamp-2' }
       : compact
-        ? { code: 'text-[12px] font-bold', title: 'text-[11px] font-semibold', meta: 'text-[10px] font-medium', pad: 'px-1.5 py-0.5', badge: 'text-[9px] font-bold', gap: 'mt-0', clamp: 'line-clamp-1', codePr: 'pr-8' }
-        : { code: 'text-[15px] font-bold', title: 'text-[14px] font-semibold', meta: 'text-[12px] font-medium', pad: 'px-2 py-1.5', badge: 'text-[10px] font-bold', gap: 'mt-1', clamp: 'line-clamp-2', codePr: 'pr-9' };
+        ? { code: 'text-[12px] font-bold', title: 'text-[11px] font-semibold', meta: 'text-[10px] font-medium', pad: 'px-1.5 py-0.5', badge: 'text-[9px] font-bold', gap: 'mt-0', clamp: 'line-clamp-1' }
+        : { code: 'text-[15px] font-bold', title: 'text-[14px] font-semibold', meta: 'text-[12px] font-medium', pad: 'px-2 py-1.5', badge: 'text-[10px] font-bold', gap: 'mt-1', clamp: 'line-clamp-2' };
   const iconSz = forExport ? 'h-4 w-4' : 'h-3 w-3';
   const hours: number[] = [];
   for (let h = startHour; h <= endHour; h++) hours.push(h);
@@ -465,19 +465,6 @@ export function TimetableGrid({
                 // still fit without being clipped.
                 const compact = height < (forExport ? 150 : 84);
                 const b = blockSizes(compact);
-                // Reserve extra right padding on the code line when the credit/CRN
-                // badges widen the top-right badge row, so a long code won't slide
-                // under them.
-                const extraBadges = (creditText ? 1 : 0) + (crnText ? 1 : 0);
-                const codePr = extraBadges === 2
-                  ? forExport
-                    ? compact ? 'pr-[9.5rem]' : 'pr-[11rem]'
-                    : compact ? 'pr-[5.5rem]' : 'pr-[6.25rem]'
-                  : extraBadges === 1
-                    ? forExport
-                      ? compact ? 'pr-[6.5rem]' : 'pr-[7.5rem]'
-                      : compact ? 'pr-[3.75rem]' : 'pr-[4.25rem]'
-                    : b.codePr;
                 return (
                   <div
                     key={`${block.section.id}-${idx}`}
@@ -495,49 +482,50 @@ export function TimetableGrid({
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
-                    {/* Top-right badges: credits (e.g. "3 Cr"), then CRN (e.g. "#52"),
-                        then the session type + section number (e.g. "LEC9" / "TUT11"). */}
-                    {(creditText || crnText || badgeText) && (
-                      <div className="absolute top-1 right-1 flex items-center gap-1">
-                        {creditText && (
-                          <div
-                            className={`${b.badge} rounded px-1 py-0.5 leading-none whitespace-nowrap`}
-                            style={{ backgroundColor: badgeBg, color: fg }}
-                          >
-                            {creditText}
+                    {/* First row: course code + badges (credits "3 Cr", CRN "#52",
+                        session type + section number "LEC1"). Both live in normal
+                        flow — when the block is too narrow for code + all badges on
+                        one line, the badges wrap below instead of covering the code,
+                        so the code is always shown in full. */}
+                    {(fields.code || creditText || crnText || badgeText) && (
+                      <div className="flex flex-wrap items-center justify-between gap-x-1 gap-y-0.5">
+                        {fields.code && (
+                          <div className={`${b.code} leading-tight whitespace-nowrap`}>
+                            {block.section.courseCode}
                           </div>
                         )}
-                        {crnText && (
-                          <div
-                            className={`${b.badge} rounded px-1 py-0.5 leading-none whitespace-nowrap`}
-                            style={{ backgroundColor: badgeBg, color: fg }}
-                          >
-                            {crnText}
-                          </div>
-                        )}
-                        {badgeText && (
-                          <div
-                            className={`${b.badge} rounded px-1 py-0.5 leading-none`}
-                            style={{ backgroundColor: badgeBg, color: fg }}
-                          >
-                            {badgeText}
+                        {(creditText || crnText || badgeText) && (
+                          <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
+                            {creditText && (
+                              <div
+                                className={`${b.badge} rounded px-1 py-0.5 leading-none whitespace-nowrap`}
+                                style={{ backgroundColor: badgeBg, color: fg }}
+                              >
+                                {creditText}
+                              </div>
+                            )}
+                            {crnText && (
+                              <div
+                                className={`${b.badge} rounded px-1 py-0.5 leading-none whitespace-nowrap`}
+                                style={{ backgroundColor: badgeBg, color: fg }}
+                              >
+                                {crnText}
+                              </div>
+                            )}
+                            {badgeText && (
+                              <div
+                                className={`${b.badge} rounded px-1 py-0.5 leading-none`}
+                                style={{ backgroundColor: badgeBg, color: fg }}
+                              >
+                                {badgeText}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
                     )}
-                    {fields.code ? (
-                      <div className={`${b.code} leading-tight truncate ${codePr}`}>
-                        {block.section.courseCode}
-                      </div>
-                    ) : (creditText || crnText || badgeText) ? (
-                      // Course code hidden: keep its first-row space so the title
-                      // (now the first line) doesn't slide under the top-right badges.
-                      <div className={`${b.code} leading-tight`} aria-hidden>
-                        &nbsp;
-                      </div>
-                    ) : null}
                     {fields.title && (
-                      <div className={`${b.title} leading-tight opacity-95 dark:opacity-100 ${b.clamp}`}>
+                      <div className={`${b.title} leading-tight opacity-95 dark:opacity-100 ${b.clamp} break-words [overflow-wrap:anywhere]`}>
                         {block.section.courseTitle}
                       </div>
                     )}

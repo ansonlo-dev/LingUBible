@@ -1436,17 +1436,6 @@ const Timetable = () => {
                 ]}
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t('timetable.opt.icons')}</Label>
-              <OptionToggle
-                value={exportOptions.showIcons ? 'on' : 'off'}
-                onChange={(v) => setOpt({ showIcons: v === 'on' })}
-                options={[
-                  { value: 'on', label: t('timetable.opt.show') },
-                  { value: 'off', label: t('timetable.opt.hide') },
-                ]}
-              />
-            </div>
             <div className="space-y-1 col-span-2">
               <Label className="text-xs">{t('timetable.opt.days')}</Label>
               <div className="flex flex-wrap gap-1">
@@ -1487,9 +1476,9 @@ const Timetable = () => {
             <div className="space-y-1.5 col-span-2">
               <Label className="text-xs">{t('timetable.opt.fields')}</Label>
               <div className="grid grid-cols-4 gap-1.5">
-                {/* `credits` / `crn` are page-level toggles (showCredits / showCrn),
-                    not BlockFields keys — they live here so all show/hide choices
-                    share one compact checkbox grid. */}
+                {/* `credits` / `crn` / `icons` are page-level toggles (showCredits /
+                    showCrn / showIcons), not BlockFields keys — they live here so
+                    all show/hide choices share one compact checkbox grid. */}
                 {([
                   { key: 'code', label: t('timetable.opt.fCode') },
                   { key: 'title', label: t('timetable.opt.fTitle') },
@@ -1500,16 +1489,20 @@ const Timetable = () => {
                   { key: 'venue', label: t('timetable.opt.fVenue') },
                   { key: 'instructor', label: t('timetable.opt.fInstructor') },
                   { key: 'time', label: t('timetable.opt.fTime') },
-                ] as { key: keyof BlockFields | 'credits' | 'crn'; label: string }[]).map((f) => {
+                  { key: 'icons', label: t('timetable.opt.icons') },
+                ] as { key: keyof BlockFields | 'credits' | 'crn' | 'icons'; label: string }[]).map((f) => {
                   const checked =
                     f.key === 'credits'
                       ? exportOptions.showCredits
                       : f.key === 'crn'
                         ? exportOptions.showCrn
-                        : exportOptions.fields[f.key];
+                        : f.key === 'icons'
+                          ? exportOptions.showIcons
+                          : exportOptions.fields[f.key];
                   const onChange = (v: boolean | 'indeterminate') => {
                     if (f.key === 'credits') setOpt({ showCredits: !!v });
                     else if (f.key === 'crn') setOpt({ showCrn: !!v });
+                    else if (f.key === 'icons') setOpt({ showIcons: !!v });
                     else setOpt({ fields: { ...exportOptions.fields, [f.key]: !!v } });
                   };
                   return (
