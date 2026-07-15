@@ -43,6 +43,21 @@ export const ProgressBarForm: React.FC<ProgressBarFormProps> = ({
   const progressContainerRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  // 能到達第 N 步代表前面步驟都已通過（含外部還原草稿直接跳到較後步驟），一律解鎖 0..currentStep
+  useEffect(() => {
+    setUnlockedSteps(prev => {
+      let changed = false;
+      const next = new Set(prev);
+      for (let i = 0; i <= currentStep; i++) {
+        if (!next.has(i)) {
+          next.add(i);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [currentStep]);
+
   // Scroll current step into view
   useEffect(() => {
     if (progressContainerRef.current && stepRefs.current[currentStep]) {

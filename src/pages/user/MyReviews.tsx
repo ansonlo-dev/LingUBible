@@ -1106,6 +1106,23 @@ const MyReviews = () => {
 
                   {/* Service learning is now displayed per instructor in the instructor details section */}
 
+                  {/* 僅課程評論（尚未評講師）：提示可補評 */}
+                  {reviewInfo.instructorDetails.length === 0 && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                      <span className="text-sm text-muted-foreground">
+                        {t('myReviews.noInstructorEvaluations')}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 w-fit"
+                        onClick={() => handleEditReview(reviewInfo.review.$id, reviewInfo.review.course_code)}
+                      >
+                        {t('myReviews.addInstructorEvaluation')}
+                      </Button>
+                    </div>
+                  )}
+
                   {/* 講師評分 */}
                   {reviewInfo.instructorDetails.length > 0 && (
                     <div className="space-y-3">
@@ -1328,7 +1345,7 @@ const MyReviews = () => {
                                         </span>
                                       ) : instructorDetail.teaching === -1 ? (
                                         <span className="text-muted-foreground">
-                                          {t('review.notApplicable')}
+                                          {instructorDetail.not_attended ? t('review.notAttended') : t('review.notApplicable')}
                                         </span>
                                       ) : (
                                         <StarRating rating={instructorDetail.teaching} showValue size="sm" showTooltip ratingType="teaching" />

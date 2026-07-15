@@ -75,6 +75,14 @@ import { getTeachingLanguageName, extractInstructorNameForSorting, getInstructor
 import { splitInstructorNames, instructorNameMatches } from '@/utils/instructorNameUtils';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 import { ProgressBarForm } from '@/components/ui/progress-bar-form';
+import {
+  getReviewDraftKey,
+  loadReviewDraft,
+  saveReviewDraft,
+  clearReviewDraft,
+  draftHasContent,
+  ReviewDraft,
+} from '@/utils/reviewDraft';
 import { VotingButtons } from '@/components/ui/voting-buttons';
 
 interface ReviewSubmissionFormProps {
@@ -100,7 +108,19 @@ interface InstructorEvaluation {
   hasServiceLearning: boolean;
   serviceLearningType: 'compulsory' | 'optional';
   serviceLearningDescription: string;
+  // 未出席課堂：教學評分存 -1（既有統計/顯示視同 N/A），另以 not_attended 旗標區分顯示
+  notAttended: boolean;
 }
+
+// 草稿內容比較（忽略步驟位置與由教學記錄自動推導的服務學習欄位，避免誤判為使用者修改）
+const serializeDraftForComparison = (draft: Omit<ReviewDraft, 'version' | 'savedAt'>): string =>
+  JSON.stringify({
+    ...draft,
+    currentStep: 0,
+    instructorEvaluations: draft.instructorEvaluations.map(
+      ({ hasServiceLearning, serviceLearningType, ...rest }) => rest
+    ),
+  });
 
 // 新增 StarRating 組件
 interface FormStarRatingProps {
@@ -110,9 +130,13 @@ interface FormStarRatingProps {
   type?: 'workload' | 'difficulty' | 'usefulness' | 'teaching' | 'grading';
   t: (key: string) => string;
   required?: boolean;
+  // 「未出席課堂」：僅教學評分使用；啟用時評分固定為 -1、星星停用
+  showNotAttended?: boolean;
+  notAttended?: boolean;
+  onNotAttendedChange?: (notAttended: boolean) => void;
 }
 
-const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t, required = false }) => {
+const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange, label, type = 'teaching', t, required = false, showNotAttended = false, notAttended = false, onNotAttendedChange }) => {
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -203,6 +227,27 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
 
   const displayRating = hoveredRating !== null ? hoveredRating : (rating ?? 0);
   const isNotApplicable = rating === -1;
+
+  // N/A 與「未出席課堂」互斥：兩者的評分都是 -1，以 notAttended 旗標區分
+  const handleNaClick = () => {
+    if (notAttended) {
+      onNotAttendedChange?.(false);
+      onRatingChange(-1);
+    } else {
+      onRatingChange(rating === -1 ? null : -1);
+    }
+  };
+  const handleNotAttendedClick = () => {
+    if (!onNotAttendedChange) return;
+    if (notAttended) {
+      onNotAttendedChange(false);
+      onRatingChange(null);
+    } else {
+      onNotAttendedChange(true);
+      onRatingChange(-1);
+    }
+  };
+  const naButtonActive = rating === -1 && !notAttended;
   // "Not rated" only when there's no committed rating AND no live hover preview.
   // On hover (desktop), we show the description for the value under the cursor
   // even before the user clicks. Mobile has no hover, so this is unaffected.
@@ -308,23 +353,42 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
           size="sm"
           className={cn(
             "text-xs px-2 py-1 h-6 border transition-colors flex-shrink-0",
-            rating === -1 
-              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+            naButtonActive
+              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
               : "border-border hover:bg-accent hover:text-accent-foreground"
           )}
-          onClick={() => onRatingChange(rating === -1 ? null : -1)}
+          onClick={handleNaClick}
         >
           {t('review.notApplicable')}
         </Button>
-        
+
+        {/* 未出席課堂 Button */}
+        {showNotAttended && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={cn(
+              "text-xs px-2 py-1 h-6 border transition-colors flex-shrink-0",
+              notAttended
+                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                : "border-border hover:bg-accent hover:text-accent-foreground"
+            )}
+            onClick={handleNotAttendedClick}
+          >
+            {t('review.notAttended')}
+          </Button>
+        )}
+
         {/* Star Rating with Hover Effects */}
         {renderStarRow()}
 
         {/* Description on same line for desktop */}
         <div className="flex-1 min-w-0">
           <span className="text-sm text-muted-foreground">
-            {isNotRated ? t('review.rating.notRated') : 
-             isNotApplicable ? '' : 
+            {isNotRated ? t('review.rating.notRated') :
+             notAttended ? t('review.notAttendedDescription') :
+             isNotApplicable ? '' :
              `${displayRating}/5 - ${getDescription(displayRating)}`}
           </span>
         </div>
@@ -335,7 +399,7 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
         <Label className="text-sm font-bold">
           {label} {required && <span className="text-red-500">*</span>}
         </Label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* N/A Button */}
           <Button
             type="button"
@@ -343,23 +407,42 @@ const FormStarRating: React.FC<FormStarRatingProps> = ({ rating, onRatingChange,
             size="sm"
             className={cn(
               "text-xs px-2 py-1 h-6 border transition-colors",
-              rating === -1 
-                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+              naButtonActive
+                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
                 : "border-border hover:bg-accent hover:text-accent-foreground"
             )}
-            onClick={() => onRatingChange(rating === -1 ? null : -1)}
+            onClick={handleNaClick}
           >
             {t('review.notApplicable')}
           </Button>
-          
+
+          {/* 未出席課堂 Button */}
+          {showNotAttended && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={cn(
+                "text-xs px-2 py-1 h-6 border transition-colors",
+                notAttended
+                  ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                  : "border-border hover:bg-accent hover:text-accent-foreground"
+              )}
+              onClick={handleNotAttendedClick}
+            >
+              {t('review.notAttended')}
+            </Button>
+          )}
+
           {/* Star Rating with Hover Effects */}
           {renderStarRow()}
         </div>
 
         {/* Mobile: Description on new line */}
         <div className="text-sm text-muted-foreground">
-          {isNotRated ? t('review.rating.notRated') : 
-           isNotApplicable ? '' : 
+          {isNotRated ? t('review.rating.notRated') :
+           notAttended ? t('review.notAttendedDescription') :
+           isNotApplicable ? '' :
            `${displayRating}/5 - ${getDescription(displayRating)}`}
         </div>
       </div>
@@ -453,6 +536,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   // Progress bar form state
   const [currentStep, setCurrentStep] = useState<number>(0);
 
+  // 草稿（自動儲存）狀態：
+  // - restoredDraftRef 記錄還原時的課程/學期，讓載入 effect 不把還原值當成「使用者換課程/學期」而清空
+  // - pendingRestoreStepRef 待資料載入完成後再跳回離開時的步驟
+  const [draftRestored, setDraftRestored] = useState<boolean>(false);
+  const [draftRestoredAt, setDraftRestoredAt] = useState<string>('');
+  const restoredDraftRef = useRef<{ course: string; term: string } | null>(null);
+  const pendingRestoreStepRef = useRef<number | null>(null);
+  const draftRestoreAttemptedRef = useRef<boolean>(false);
+  const draftClearedRef = useRef<boolean>(false);
+  // 編輯模式：伺服器版本快照，內容相同時不寫草稿（避免每次編輯都出現還原橫幅）
+  const populatedSnapshotRef = useRef<string | null>(null);
+
   // Step validation functions
   const validateCourseSelectionStep = () => {
     // Basic validation: course and term must be selected
@@ -465,35 +560,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       return false;
     }
     
-    // Check instructor selection based on available instructor types
-    const lectureInstructors = availableInstructors.filter(record => record.session_type === 'Lecture');
-    const tutorialInstructors = availableInstructors.filter(record => record.session_type === 'Tutorial');
-    
-    const hasLectureInstructors = lectureInstructors.length > 0;
-    const hasTutorialInstructors = tutorialInstructors.length > 0;
-    
-    const selectedLectureInstructors = selectedInstructors.filter(key => key.endsWith('|Lecture'));
-    const selectedTutorialInstructors = selectedInstructors.filter(key => key.endsWith('|Tutorial'));
-
-    // 共同授課的場次會有多位講課/導修導師（teaching_records 合併列在資料層已展開成個別講師），
-    // 使用者可自行複選任意位，但每種可選的場次類型至少要選一位。
-    // If both lecture and tutorial instructors are available, user must select at least one from each
-    if (hasLectureInstructors && hasTutorialInstructors) {
-      return selectedLectureInstructors.length > 0 && selectedTutorialInstructors.length > 0;
+    // 講師選擇改為「選填」：可先只評課程（instructor_details 存空陣列），
+    // 之後隨時於「我的評論 → 編輯」補評講師，降低一次寫完全部的門檻。
+    // 從講師頁進入時例外：預選講師必須保持選取（該選項在 UI 亦已鎖定不可取消）。
+    if (originPage === 'instructor' && preSelectedInstructor) {
+      return selectedInstructors.some(instructorKey =>
+        instructorNameMatches(instructorKey.split('|')[0], preSelectedInstructor)
+      );
     }
 
-    // If only lecture instructors are available, user must select at least one lecture instructor
-    if (hasLectureInstructors && !hasTutorialInstructors) {
-      return selectedLectureInstructors.length > 0;
-    }
-    
-    // If only tutorial instructors are available, user must select at least one tutorial instructor
-    if (!hasLectureInstructors && hasTutorialInstructors) {
-      return selectedTutorialInstructors.length > 0;
-    }
-    
-    // If no instructors are available, validation fails
-    return false;
+    return true;
   };
 
   const validateCourseReviewStep = () => {
@@ -1331,13 +1407,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     
     // Store the instructor data for later use when instructors are loaded
     const instructorDataRef = { current: null as InstructorDetail[] | null };
-    
+
+    // 供草稿快照/覆蓋使用的伺服器版本資料
+    let serverEvaluations: InstructorEvaluation[] = [];
+    let serverInstructorKeys: string[] = [];
+
     // Parse and set instructor evaluations if available
     if (reviewData.instructor_details) {
       try {
         const instructorDetails = JSON.parse(reviewData.instructor_details) as InstructorDetail[];
         instructorDataRef.current = instructorDetails;
-        
+
         const evaluations: InstructorEvaluation[] = instructorDetails.map(detail => ({
           instructorName: detail.instructor_name,
           sessionType: detail.session_type,
@@ -1356,17 +1436,63 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           hasServiceLearning: detail.has_service_learning ?? false,
           serviceLearningType: detail.service_learning_type ?? 'compulsory',
           serviceLearningDescription: detail.service_learning_description ?? '',
+          notAttended: detail.not_attended ?? false,
         }));
         setInstructorEvaluations(evaluations);
-        
+
         // Extract instructor keys for selection (format: instructorName|sessionType)
         const instructorKeys = instructorDetails.map(detail => `${detail.instructor_name}|${detail.session_type}`);
         setSelectedInstructors(instructorKeys);
+
+        serverEvaluations = evaluations;
+        serverInstructorKeys = instructorKeys;
       } catch (error) {
         console.error('Failed to parse instructor details:', error);
       }
     }
-    
+
+    // —— 草稿：記錄伺服器版本快照；若這筆評論有未提交的編輯草稿且內容不同，覆蓋還原 ——
+    const serverContent = {
+      selectedCourse: reviewData.course_code,
+      selectedTerm: reviewData.term_code,
+      selectedInstructors: serverInstructorKeys,
+      workload: reviewData.course_workload || 0,
+      difficulty: reviewData.course_difficulties || 0,
+      usefulness: reviewData.course_usefulness || 0,
+      grade: reviewData.course_final_grade || '',
+      courseComments: reviewData.course_comments || '',
+      isAnonymous: reviewData.is_anon || false,
+      reviewLanguage: reviewData.review_language || 'en',
+      instructorEvaluations: serverEvaluations,
+      currentStep: 0,
+    };
+    populatedSnapshotRef.current = serializeDraftForComparison(serverContent);
+
+    if (user?.$id) {
+      const editDraftKey = getReviewDraftKey(user.$id, reviewData.$id);
+      const editDraft = loadReviewDraft(editDraftKey);
+      if (editDraft) {
+        if (serializeDraftForComparison(editDraft) === populatedSnapshotRef.current) {
+          // 草稿與伺服器版本相同，直接清掉即可
+          clearReviewDraft(editDraftKey);
+        } else {
+          setSelectedTerm(editDraft.selectedTerm || reviewData.term_code);
+          setWorkload(editDraft.workload);
+          setDifficulty(editDraft.difficulty);
+          setUsefulness(editDraft.usefulness);
+          setGrade(editDraft.grade);
+          setCourseComments(editDraft.courseComments);
+          setIsAnonymous(editDraft.isAnonymous);
+          setReviewLanguage(editDraft.reviewLanguage);
+          setSelectedInstructors(editDraft.selectedInstructors);
+          setInstructorEvaluations(editDraft.instructorEvaluations);
+          pendingRestoreStepRef.current = editDraft.currentStep;
+          setDraftRestored(true);
+          setDraftRestoredAt(editDraft.savedAt);
+        }
+      }
+    }
+
     // Don't turn off the flag automatically - let the instructor loading useEffect handle it
   };
 
@@ -1404,6 +1530,128 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
     loadEditData();
   }, [editReviewId]); // Remove dependencies that could cause re-execution
+
+  // —— 草稿：新評論進入表單時一次性還原（重新整理/誤觸離開後不需重寫）——
+  useEffect(() => {
+    if (editReviewId || !user?.$id || draftRestoreAttemptedRef.current) return;
+    draftRestoreAttemptedRef.current = true;
+
+    // 從講師頁進入的預選流程不還原草稿，避免與預選/鎖定邏輯互相干擾
+    const locationState = location.state as { preSelectedInstructor?: string } | null;
+    if (locationState?.preSelectedInstructor) return;
+
+    const draft = loadReviewDraft(getReviewDraftKey(user.$id));
+    if (!draft || !draft.selectedCourse) return;
+    // 指定課程進入時，只還原同一課程的草稿
+    if (preselectedCourseCode && draft.selectedCourse.toLowerCase() !== preselectedCourseCode.toLowerCase()) return;
+
+    restoredDraftRef.current = { course: draft.selectedCourse, term: draft.selectedTerm };
+    setSelectedCourse(draft.selectedCourse);
+    setSelectedTerm(draft.selectedTerm);
+    setSelectedInstructors(draft.selectedInstructors);
+    setInstructorEvaluations(draft.instructorEvaluations);
+    setWorkload(draft.workload);
+    setDifficulty(draft.difficulty);
+    setUsefulness(draft.usefulness);
+    setGrade(draft.grade);
+    setCourseComments(draft.courseComments);
+    setIsAnonymous(draft.isAnonymous);
+    setReviewLanguage(draft.reviewLanguage);
+    pendingRestoreStepRef.current = draft.currentStep;
+    setDraftRestored(true);
+    setDraftRestoredAt(draft.savedAt);
+  }, [editReviewId, user?.$id, preselectedCourseCode, location.state]);
+
+  // —— 草稿：資料載入完成後跳回離開時的步驟 ——
+  useEffect(() => {
+    const pendingStep = pendingRestoreStepRef.current;
+    if (pendingStep === null) return;
+    if (!selectedCourse || !selectedTerm) {
+      pendingRestoreStepRef.current = null;
+      return;
+    }
+    if (termsLoading || instructorsLoading || loadingEditData || isPopulatingEditData) return;
+    // 有選講師時，等講師評分物件建立完成再跳，確保步驟總數正確
+    if (selectedInstructors.length > 0 && instructorEvaluations.length === 0) return;
+
+    const hasLectureStep = instructorEvaluations.some(evaluation => evaluation.sessionType === 'Lecture');
+    const hasTutorialStep = instructorEvaluations.some(evaluation => evaluation.sessionType === 'Tutorial');
+    const otherSessionSteps = instructorEvaluations.filter(
+      evaluation => evaluation.sessionType !== 'Lecture' && evaluation.sessionType !== 'Tutorial'
+    ).length;
+    // 課程選擇 + 課程評價 + 講師步驟 + 設定 + 預覽
+    const totalSteps = 2 + (hasLectureStep ? 1 : 0) + (hasTutorialStep ? 1 : 0) + otherSessionSteps + 2;
+    setCurrentStep(Math.max(0, Math.min(pendingStep, totalSteps - 1)));
+    pendingRestoreStepRef.current = null;
+  }, [selectedCourse, selectedTerm, termsLoading, instructorsLoading, loadingEditData, isPopulatingEditData, selectedInstructors, instructorEvaluations]);
+
+  // —— 草稿：輸入變動時 debounce 自動儲存（純被動 localStorage，無任何背景輪詢）——
+  useEffect(() => {
+    if (!user?.$id || submitting || draftClearedRef.current) return;
+    if (editReviewId && (loadingEditData || isPopulatingEditData)) return;
+    if (!editReviewId && !draftRestoreAttemptedRef.current) return; // 先嘗試還原再開始儲存
+    if (!selectedCourse) return;
+
+    const draftContent = {
+      selectedCourse,
+      selectedTerm,
+      selectedInstructors,
+      workload,
+      difficulty,
+      usefulness,
+      grade,
+      courseComments,
+      isAnonymous,
+      reviewLanguage,
+      instructorEvaluations,
+      currentStep,
+    };
+
+    if (!draftHasContent(draftContent)) return;
+    // 編輯模式：與伺服器版本相同就不存（避免每次打開編輯都出現還原提示）
+    if (editReviewId && populatedSnapshotRef.current !== null &&
+        serializeDraftForComparison(draftContent) === populatedSnapshotRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      saveReviewDraft(getReviewDraftKey(user.$id, editReviewId), draftContent);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [user?.$id, editReviewId, submitting, loadingEditData, isPopulatingEditData, selectedCourse, selectedTerm, selectedInstructors, workload, difficulty, usefulness, grade, courseComments, isAnonymous, reviewLanguage, instructorEvaluations, currentStep]);
+
+  // 捨棄草稿：清除儲存並還原為初始（新評論）或伺服器版本（編輯）
+  const handleDiscardDraft = () => {
+    if (user?.$id) {
+      clearReviewDraft(getReviewDraftKey(user.$id, editReviewId));
+    }
+    pendingRestoreStepRef.current = null;
+    setDraftRestored(false);
+    setDraftRestoredAt('');
+
+    if (editReviewId && editingReview) {
+      populatedSnapshotRef.current = null;
+      populateFormWithReviewData(editingReview);
+      setCurrentStep(0);
+      return;
+    }
+
+    restoredDraftRef.current = null;
+    if (!preselectedCourseCode) {
+      setSelectedCourse('');
+    }
+    setSelectedTerm('');
+    setSelectedInstructors([]);
+    setInstructorEvaluations([]);
+    setWorkload(null);
+    setDifficulty(null);
+    setUsefulness(null);
+    setGrade('');
+    setCourseComments('');
+    setIsAnonymous(true);
+    setReviewLanguage('en');
+    setCurrentStep(0);
+  };
 
   // Load courses on component mount
   useEffect(() => {
@@ -1506,9 +1754,16 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         const sortedTerms = validTerms.sort((a, b) => b.term_code.localeCompare(a.term_code));
         setTerms(sortedTerms);
         
+        // 使用者換到別的課程時，剛還原的草稿脈絡即失效，恢復一般清空行為
+        if (restoredDraftRef.current && restoredDraftRef.current.course !== selectedCourse) {
+          restoredDraftRef.current = null;
+        }
+        const isRestoredDraftCourse = restoredDraftRef.current?.course === selectedCourse;
+
         // Clear selected term and instructors when course changes (but not during edit data population)
         // Also don't clear if we're in edit mode and already have selections
-        if (!isPopulatingEditData && (!editReviewId || (!selectedTerm && selectedInstructors.length === 0))) {
+        // 草稿還原的課程也不清空（還原值不是「使用者剛換課程」）
+        if (!isPopulatingEditData && !isRestoredDraftCourse && (!editReviewId || (!selectedTerm && selectedInstructors.length === 0))) {
           // Auto-select term if there's only one option available
           if (sortedTerms.length === 1) {
             setSelectedTerm(sortedTerms[0].term_code);
@@ -1534,7 +1789,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
 
   // Clear instructors when term changes
   useEffect(() => {
-    if (!isPopulatingEditData && (!editReviewId || selectedInstructors.length === 0)) {
+    // 草稿還原的學期不觸發清空（還原值不是「使用者剛換學期」）
+    const isRestoredDraftTerm = !!selectedTerm && restoredDraftRef.current?.term === selectedTerm;
+    if (!isPopulatingEditData && !isRestoredDraftTerm && (!editReviewId || selectedInstructors.length === 0)) {
       setSelectedInstructors([]);
       setInstructorEvaluations([]); // Also clear instructor evaluations
     }
@@ -1672,6 +1929,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         hasServiceLearning: false,
         serviceLearningType: 'compulsory',
         serviceLearningDescription: '',
+        notAttended: false,
       };
       });
     });
@@ -1700,14 +1958,20 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           evaluation => evaluation.instructorName === instructorName && evaluation.sessionType === sessionType
         );
       });
-      
+
       if (allInstructorsHaveEvaluations) {
         setTimeout(() => {
           setIsPopulatingEditData(false);
         }, 100);
       }
+    } else if (isPopulatingEditData && selectedCourse && selectedInstructors.length === 0) {
+      // 「僅課程」評論（instructor_details 為空）沒有講師評分可等待，
+      // 直接關閉旗標，否則後續選講師時建立評分的 effect 會被永久擋住。
+      setTimeout(() => {
+        setIsPopulatingEditData(false);
+      }, 100);
     }
-  }, [isPopulatingEditData, selectedInstructors, instructorEvaluations]);
+  }, [isPopulatingEditData, selectedInstructors, instructorEvaluations, selectedCourse]);
 
   // Track when user enters preview step to set timestamp
   useEffect(() => {
@@ -1995,8 +2259,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   }, [originPage, preSelectedInstructor, toast, t]);
 
   const validateForm = useCallback(async (): Promise<boolean> => {
-    // 檢查基本選擇
-    if (!selectedCourse || !selectedTerm || selectedInstructors.length === 0) {
+    // 檢查基本選擇（講師為選填：未選講師時提交「僅課程」評論，之後可編輯補評）
+    if (!selectedCourse || !selectedTerm) {
       toast({
         title: t('common.error'),
         description: t('review.fillAllFields'),
@@ -2230,7 +2494,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         instructor_name: evaluation.instructorName,
         session_type: evaluation.sessionType,
         grading: evaluation.gradingScore === null ? null : evaluation.gradingScore,
-        teaching: evaluation.teachingScore,
+        // 未出席課堂：教學評分一律存 -1（既有統計/顯示自動視為 N/A），以 not_attended 區分
+        teaching: evaluation.notAttended ? -1 : evaluation.teachingScore,
+        not_attended: evaluation.notAttended,
         has_midterm: evaluation.hasMidterm,
         has_final: evaluation.hasFinal,
         has_quiz: evaluation.hasQuiz,
@@ -2307,6 +2573,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         
         // Update existing review
         await CourseService.updateReview(editReviewId, reviewData);
+        // 提交成功即清除草稿，並停止後續的自動儲存
+        draftClearedRef.current = true;
+        if (user?.$id) clearReviewDraft(getReviewDraftKey(user.$id, editReviewId));
         toast({
           title: t('common.success'),
           description: t('review.updateSuccess'),
@@ -2318,6 +2587,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // Create new review
         const result = await CourseService.createReview(reviewData);
         console.log('✅ Review created successfully:', result);
+        // 提交成功即清除草稿，並停止後續的自動儲存
+        draftClearedRef.current = true;
+        if (user?.$id) clearReviewDraft(getReviewDraftKey(user.$id));
         toast({
           title: t('common.success'),
           description: t('review.submitSuccess'),
@@ -2417,6 +2689,32 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         </p>
       </div>
 
+      {/* 草稿還原提示：可一鍵捨棄回到初始/伺服器版本 */}
+      {draftRestored && (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+          <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 min-w-0">
+            <Clock className="h-4 w-4 shrink-0" />
+            <span>
+              {t('review.draftRestored')}
+              {draftRestoredAt && (
+                <span className="text-blue-600/80 dark:text-blue-300/80">
+                  {' '}({formatDateTimeUTC8(draftRestoredAt)})
+                </span>
+              )}
+            </span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={handleDiscardDraft}
+          >
+            {t('review.discardDraft')}
+          </Button>
+        </div>
+      )}
+
       {/* Progress Bar Form */}
       <ProgressBarForm
         steps={(() => {
@@ -2478,9 +2776,17 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                 <div className="space-y-2 md:space-y-0">
                   <div className="md:flex md:items-start md:gap-4">
                     <Label className="md:min-w-[120px] md:flex-shrink-0 md:pt-2 font-bold">
-                      {t('review.selectInstructor')} <span className="text-red-500">*</span>
+                      {t('review.selectInstructor')}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        ({t('review.optionalField')})
+                      </span>
                     </Label>
-                    <div className="md:flex-1">
+                    <div className="md:flex-1 space-y-2">
+                      {selectedCourse && selectedTerm && !instructorsLoading && availableInstructors.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          {t('review.instructorsOptionalHint')}
+                        </div>
+                      )}
                       {(!selectedCourse || !selectedTerm) ? (
                         <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md">
                           {t('review.selectCourseAndTermFirst')}
@@ -2760,10 +3066,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           
           // Statically add lecture and tutorial steps if teaching records exist
           const instructorSteps = [];
-          
-          // Check if there are lecture teaching records
-          const hasLectureRecords = availableInstructors.some(record => record.session_type === 'Lecture');
-          const hasTutorialRecords = availableInstructors.some(record => record.session_type === 'Tutorial');
+
+          // 依「已選講師」決定是否出現講課/導修評價步驟（講師為選填，未選則直接跳到設定）
+          const hasLectureRecords = instructorEvaluations.some(evaluation => evaluation.sessionType === 'Lecture');
+          const hasTutorialRecords = instructorEvaluations.some(evaluation => evaluation.sessionType === 'Tutorial');
           
           // Add lecture step if lecture records exist
           if (hasLectureRecords) {
@@ -2823,7 +3129,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           
                           <div className="space-y-4">
                             <div className="space-y-1">
-                              <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
+                              <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required showNotAttended notAttended={evaluation.notAttended} onNotAttendedChange={(value) => updateInstructorEvaluation(idx, 'notAttended', value)} />
                             </div>
 
                             <div className="space-y-1">
@@ -3003,7 +3309,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                           
                           <div className="space-y-4">
                             <div className="space-y-1">
-                              <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
+                              <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required showNotAttended notAttended={evaluation.notAttended} onNotAttendedChange={(value) => updateInstructorEvaluation(idx, 'notAttended', value)} />
                             </div>
 
                             <div className="space-y-1">
@@ -3156,7 +3462,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                     <div className="space-y-4">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground md:hidden">{t('review.teachingScoreDescription')}</p>
-                        <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required />
+                        <FormStarRating rating={evaluation.teachingScore} onRatingChange={(rating) => updateInstructorEvaluation(idx, 'teachingScore', rating)} label={t('review.teachingScore')} type="teaching" t={t} required showNotAttended notAttended={evaluation.notAttended} onNotAttendedChange={(value) => updateInstructorEvaluation(idx, 'notAttended', value)} />
                       </div>
 
                       <div className="space-y-1">
@@ -3529,6 +3835,14 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                   </div>
                 )}
 
+                {/* 未評講師：說明可稍後補評 */}
+                {(!instructorEvaluations || instructorEvaluations.length === 0) && (
+                  <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50 text-sm text-muted-foreground">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{t('review.noInstructorEvaluationsNotice')}</span>
+                  </div>
+                )}
+
                 {/* 講師評估 */}
                 {instructorEvaluations && instructorEvaluations.length > 0 && (
                   <div className="space-y-4">
@@ -3633,7 +3947,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                                 <span className="hidden md:inline">{t('review.teachingQuality')}</span>
                               </span>
                               <div className="flex items-center justify-center md:ml-1">
-                                {instructor.teachingScore === null ? (
+                                {instructor.notAttended ? (
+                                  <span className="text-muted-foreground text-sm">{t('review.notAttended')}</span>
+                                ) : instructor.teachingScore === null ? (
                                   <span className="text-muted-foreground text-sm">{t('review.notApplicable')}</span>
                                 ) : (
                                   <UIStarRating rating={instructor.teachingScore} size="sm" showValue={true} showTooltip={true} ratingType="teaching" />

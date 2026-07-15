@@ -217,6 +217,8 @@ export interface InstructorDetail {
   has_service_learning: boolean;
   service_learning_type: 'compulsory' | 'optional';
   service_learning_description: string;
+  // 未出席課堂（teaching 同時存 -1，舊資料/未更新的顯示點自動視為 N/A）
+  not_attended?: boolean;
 }
 
 export interface InstructorTeachingCourse {

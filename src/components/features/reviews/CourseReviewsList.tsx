@@ -974,7 +974,7 @@ export const CourseReviewsList = ({
                       </span>
                     ) : instructor.teaching === -1 ? (
                       <span className="text-muted-foreground">
-                        {t('review.notApplicable')}
+                        {instructor.not_attended ? t('review.notAttended') : t('review.notApplicable')}
                       </span>
                     ) : (
                       <StarRating rating={instructor.teaching} showValue size="sm" showTooltip ratingType="teaching" />
