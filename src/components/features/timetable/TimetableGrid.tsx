@@ -49,6 +49,8 @@ interface TimetableGridProps {
   showCredits?: boolean;
   /** UPPER course code → credits (e.g. "3"). Used for the credit badges/total. */
   creditsByCode?: Record<string, string>;
+  /** Show the per-block CRN badge (e.g. "#52"), right of the credit badge. */
+  showCrn?: boolean;
   /** Block text colour: 'dynamic' picks white/black per background luminance (default). */
   textColor?: TextColorMode;
   /** Show small leading icons (location / instructor / time) on the info rows. */
@@ -195,6 +197,7 @@ export function TimetableGrid({
   showHours = true,
   showCredits = false,
   creditsByCode,
+  showCrn = false,
   textColor = 'dynamic',
   showIcons = true,
   use24Hour = true,
@@ -370,7 +373,7 @@ export function TimetableGrid({
             title="Total hours / credits this week (including hidden days)"
           >
             {showHours && weekMins > 0 && <span>{formatHours(weekMins)}</span>}
-            {showCredits && totalCredits > 0 && <span>{totalCredits} Cred</span>}
+            {showCredits && totalCredits > 0 && <span>{totalCredits} Cr</span>}
           </div>
           {visibleDays.map((day) => (
             <div
@@ -452,22 +455,29 @@ export function TimetableGrid({
                 const fg = blockTextColor(bg, textColor);
                 const badgeBg = fg === '#ffffff' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.4)';
                 const badgeText = `${fields.type ? block.type : ''}${fields.number ? block.section.section : ''}`;
-                // Credit badge sits left of the type/number badge, e.g. "3 Cred".
-                // "Cred" stays untranslated on purpose (same across all languages).
+                // Credit badge sits left of the CRN + type/number badges, e.g. "3 Cr".
+                // "Cr" stays untranslated on purpose (same across all languages).
                 const creditVal = showCredits ? creditsByCode?.[block.section.courseCode.toUpperCase()] : undefined;
-                const creditText = creditVal ? `${creditVal} Cred` : '';
+                const creditText = creditVal ? `${creditVal} Cr` : '';
+                // CRN badge (e.g. "#52") sits between the credit and type/number badges.
+                const crnText = showCrn && block.section.crn ? `#${block.section.crn}` : '';
                 // Compact tier for short blocks so all fields (incl. the time)
                 // still fit without being clipped.
                 const compact = height < (forExport ? 150 : 84);
                 const b = blockSizes(compact);
-                // Reserve extra right padding on the code line when the credit
-                // badge widens the top-right badge row, so a long code won't slide
-                // under it.
-                const codePr = creditText
+                // Reserve extra right padding on the code line when the credit/CRN
+                // badges widen the top-right badge row, so a long code won't slide
+                // under them.
+                const extraBadges = (creditText ? 1 : 0) + (crnText ? 1 : 0);
+                const codePr = extraBadges === 2
                   ? forExport
-                    ? compact ? 'pr-[6.5rem]' : 'pr-[7.5rem]'
-                    : compact ? 'pr-[3.75rem]' : 'pr-[4.25rem]'
-                  : b.codePr;
+                    ? compact ? 'pr-[9.5rem]' : 'pr-[11rem]'
+                    : compact ? 'pr-[5.5rem]' : 'pr-[6.25rem]'
+                  : extraBadges === 1
+                    ? forExport
+                      ? compact ? 'pr-[6.5rem]' : 'pr-[7.5rem]'
+                      : compact ? 'pr-[3.75rem]' : 'pr-[4.25rem]'
+                    : b.codePr;
                 return (
                   <div
                     key={`${block.section.id}-${idx}`}
@@ -485,9 +495,9 @@ export function TimetableGrid({
                     }}
                     title={`${block.section.courseCode} (${block.type}) · ${block.section.courseTitle}\n${formatTime(block.start, use24Hour)} - ${formatTime(block.end, use24Hour)}${block.venues.length ? ` · ${block.venues.join(', ')}` : ''}\n${block.section.instructors.join(', ')}`}
                   >
-                    {/* Top-right badges: credits (e.g. "3 Cred") then the session
-                        type + section number (e.g. "LEC9" / "TUT11"). */}
-                    {(creditText || badgeText) && (
+                    {/* Top-right badges: credits (e.g. "3 Cr"), then CRN (e.g. "#52"),
+                        then the session type + section number (e.g. "LEC9" / "TUT11"). */}
+                    {(creditText || crnText || badgeText) && (
                       <div className="absolute top-1 right-1 flex items-center gap-1">
                         {creditText && (
                           <div
@@ -495,6 +505,14 @@ export function TimetableGrid({
                             style={{ backgroundColor: badgeBg, color: fg }}
                           >
                             {creditText}
+                          </div>
+                        )}
+                        {crnText && (
+                          <div
+                            className={`${b.badge} rounded px-1 py-0.5 leading-none whitespace-nowrap`}
+                            style={{ backgroundColor: badgeBg, color: fg }}
+                          >
+                            {crnText}
                           </div>
                         )}
                         {badgeText && (
@@ -511,7 +529,7 @@ export function TimetableGrid({
                       <div className={`${b.code} leading-tight truncate ${codePr}`}>
                         {block.section.courseCode}
                       </div>
-                    ) : (creditText || badgeText) ? (
+                    ) : (creditText || crnText || badgeText) ? (
                       // Course code hidden: keep its first-row space so the title
                       // (now the first line) doesn't slide under the top-right badges.
                       <div className={`${b.code} leading-tight`} aria-hidden>

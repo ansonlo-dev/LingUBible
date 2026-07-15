@@ -914,6 +914,7 @@ export default {
   'timetable.opt.subGrid': 'Half-hour gridlines',
   'timetable.opt.hours': 'Hours count',
   'timetable.opt.credits': 'Credits count',
+  'timetable.opt.crn': 'CRN',
   'timetable.opt.icons': 'Icons',
   'timetable.opt.timeFormat': 'Time format',
   'timetable.opt.format24': '24-hour',

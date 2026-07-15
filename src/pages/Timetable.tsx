@@ -93,6 +93,7 @@ interface ExportOptions {
   showSubGrid: boolean;
   showHours: boolean;
   showCredits: boolean;
+  showCrn: boolean;
   timeFormat: '24' | '12';
   dayFormat: DayFormat;
   textColor: TextColorMode;
@@ -126,6 +127,7 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   showSubGrid: true,
   showHours: true,
   showCredits: true,
+  showCrn: true,
   timeFormat: '24',
   dayFormat: 'short',
   textColor: 'dynamic',
@@ -1057,10 +1059,13 @@ const Timetable = () => {
     const conflicts = added ? conflictIds.has(s.id) : conflictsWithSelection(s);
     // Combined session type + section number, matching the timetable blocks (e.g. "LEC1").
     const typeNumber = `${s.types.join('/')}${s.section}`;
-    // Credit badge text (e.g. "3 Cred"); "Cred" stays untranslated. Gated by the
+    // Credit badge text (e.g. "3 Cr"); "Cr" stays untranslated. Gated by the
     // same show-credits customize toggle as the timetable blocks.
     const creditVal = exportOptions.showCredits ? creditsByCode[s.courseCode.toUpperCase()] : undefined;
-    const creditText = creditVal ? `${creditVal} Cred` : '';
+    const creditText = creditVal ? `${creditVal} Cr` : '';
+    // CRN badge (e.g. "#52"), right of the credit badge; same customize toggle
+    // as the timetable blocks.
+    const crnText = exportOptions.showCrn && s.crn ? `#${s.crn}` : '';
     return (
       <div
         key={s.id}
@@ -1080,9 +1085,9 @@ const Timetable = () => {
         } ${added ? '' : 'hover:bg-accent/40'}`}
         style={added ? { backgroundColor: color, color: fg } : undefined}
       >
-        {/* Top-right badges: credits (e.g. "3 Cred"), then summer session (S1/S2),
-            then session type + number. */}
-        {(creditText || typeNumber || (isSummer && s.summerSession)) && (
+        {/* Top-right badges: credits (e.g. "3 Cr"), then CRN (e.g. "#52"), then
+            summer session (S1/S2), then session type + number. */}
+        {(creditText || crnText || typeNumber || (isSummer && s.summerSession)) && (
           <div className="absolute top-2 right-2 flex items-center gap-1">
             {creditText && (
               <span
@@ -1092,6 +1097,16 @@ const Timetable = () => {
                 style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
               >
                 {creditText}
+              </span>
+            )}
+            {crnText && (
+              <span
+                className={`text-[10px] font-bold rounded px-1 py-0.5 leading-none whitespace-nowrap ${
+                  added ? '' : 'bg-foreground/10 text-foreground'
+                }`}
+                style={added ? { backgroundColor: lightBg ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.28)' } : undefined}
+              >
+                {crnText}
               </span>
             )}
             {isSummer && s.summerSession && (
@@ -1116,7 +1131,7 @@ const Timetable = () => {
             )}
           </div>
         )}
-        <div className={`min-w-0 ${creditText ? 'pr-[6.5rem]' : 'pr-12'}`}>
+        <div className={`min-w-0 ${creditText && crnText ? 'pr-[9rem]' : creditText || crnText ? 'pr-[6.5rem]' : 'pr-12'}`}>
           {/* Course code + a dedicated link icon to the course page. The icon is the
               only link target (the text stays part of the add/remove card tap area);
               its padding gives a comfortable, accurate hit area on touch screens. */}
@@ -1196,6 +1211,7 @@ const Timetable = () => {
       showHours={exportOptions.showHours}
       showCredits={exportOptions.showCredits}
       creditsByCode={creditsByCode}
+      showCrn={exportOptions.showCrn}
       textColor={exportOptions.textColor}
       showIcons={exportOptions.showIcons}
       use24Hour={exportOptions.timeFormat === '24'}
@@ -1337,6 +1353,17 @@ const Timetable = () => {
               <OptionToggle
                 value={exportOptions.showCredits ? 'on' : 'off'}
                 onChange={(v) => setOpt({ showCredits: v === 'on' })}
+                options={[
+                  { value: 'on', label: t('timetable.opt.show') },
+                  { value: 'off', label: t('timetable.opt.hide') },
+                ]}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('timetable.opt.crn')}</Label>
+              <OptionToggle
+                value={exportOptions.showCrn ? 'on' : 'off'}
+                onChange={(v) => setOpt({ showCrn: v === 'on' })}
                 options={[
                   { value: 'on', label: t('timetable.opt.show') },
                   { value: 'off', label: t('timetable.opt.hide') },
@@ -2003,6 +2030,7 @@ const Timetable = () => {
                     showHours={exportOptions.showHours}
                     showCredits={exportOptions.showCredits}
                     creditsByCode={creditsByCode}
+                    showCrn={exportOptions.showCrn}
                     textColor={exportOptions.textColor}
                     showIcons={exportOptions.showIcons}
                     use24Hour={exportOptions.timeFormat === '24'}

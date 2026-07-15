@@ -852,6 +852,7 @@ export default {
   'timetable.opt.subGrid': '半小時格線',
   'timetable.opt.hours': '時數統計',
   'timetable.opt.credits': '學分統計',
+  'timetable.opt.crn': 'CRN 編號',
   'timetable.opt.icons': '圖示',
   'timetable.opt.timeFormat': '時間格式',
   'timetable.opt.format24': '24 小時制',
