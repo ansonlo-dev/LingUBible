@@ -770,6 +770,8 @@ export default {
   'calendar.cat.addDrop': '加退选期',
   'calendar.cat.registration': '注册',
   'calendar.cat.deadline': '截止日期',
+  'calendar.cat.assessment': '成绩／复核',
+  'calendar.cat.graduation': '毕业',
   'calendar.cat.event': '活动',
   'gpaHons.title': 'GPA及Hons',
   'gpaHons.subtitle': '计算你的 GPA,并估算荣誉等级',

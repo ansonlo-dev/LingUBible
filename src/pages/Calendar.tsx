@@ -79,6 +79,16 @@ const CATEGORY_STYLES: Record<
     dot: 'bg-orange-500',
     soft: 'bg-orange-100 text-orange-900 dark:bg-orange-950/70 dark:text-orange-200',
   },
+  assessment: {
+    bar: 'bg-teal-500 text-white dark:bg-teal-600',
+    dot: 'bg-teal-500',
+    soft: 'bg-teal-100 text-teal-900 dark:bg-teal-950/70 dark:text-teal-200',
+  },
+  graduation: {
+    bar: 'bg-indigo-500 text-white dark:bg-indigo-600',
+    dot: 'bg-indigo-500',
+    soft: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-200',
+  },
   event: {
     bar: 'bg-slate-500 text-white dark:bg-slate-600',
     dot: 'bg-slate-500',
@@ -95,6 +105,8 @@ const CATEGORY_HEX: Record<CalendarCategory, string> = {
   addDrop: '#10b981',
   registration: '#0ea5e9',
   deadline: '#f97316',
+  assessment: '#14b8a6',
+  graduation: '#6366f1',
   event: '#64748b',
 };
 
@@ -241,11 +253,8 @@ export default function Calendar() {
   const { isMobile } = useResponsive();
 
   const today = useMemo(() => startOfDay(new Date()), []);
-  // Land on the academic-year start if today is before it; otherwise on today.
-  const initialRef = useMemo(() => {
-    const termStart = parseISO(TERM_START_DATE);
-    return today < termStart ? termStart : today;
-  }, [today]);
+  // Always land on today; the "term start" button jumps to the term instead.
+  const initialRef = today;
 
   const [view, setView] = useState<ViewMode>('month');
   const [refDate, setRefDate] = useState<Date>(initialRef);

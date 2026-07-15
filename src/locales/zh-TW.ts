@@ -700,6 +700,8 @@ export default {
   'calendar.cat.addDrop': '加退選期',
   'calendar.cat.registration': '註冊',
   'calendar.cat.deadline': '截止日期',
+  'calendar.cat.assessment': '成績／覆核',
+  'calendar.cat.graduation': '畢業',
   'calendar.cat.event': '活動',
   'gpaHons.title': 'GPA及Hons',
   'gpaHons.subtitle': '計算你的 GPA,並估算榮譽等級',

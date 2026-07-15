@@ -762,6 +762,8 @@ export default {
   'calendar.cat.addDrop': 'Add / Drop Period',
   'calendar.cat.registration': 'Registration',
   'calendar.cat.deadline': 'Deadline',
+  'calendar.cat.assessment': 'Grades / Appeals',
+  'calendar.cat.graduation': 'Graduation',
   'calendar.cat.event': 'Event',
   'gpaHons.title': 'GPA & Hons',
   'gpaHons.subtitle': 'Calculate your GPA and estimate your honours classification.',

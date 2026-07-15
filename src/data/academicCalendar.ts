@@ -1,5 +1,7 @@
 // Academic Calendar 2026-27 (Lingnan University)
-// Source: official ACADEMIC CALENDAR 2026-27 PDF.
+// Sources: official ACADEMIC CALENDAR 2026-27 PDF, plus the Registry
+// "Important Dates" page (https://www.ln.edu.hk/reg/undergraduate-programmes/important-dates)
+// for course-registration, assessment (grades/appeals) and graduation dates.
 // Events are all-day / multi-day. Dates are ISO "YYYY-MM-DD" (local, HK time).
 // `end` is inclusive; omit it for single-day events.
 
@@ -10,6 +12,8 @@ export type CalendarCategory =
   | 'addDrop' // Add/drop, change of course sections period
   | 'registration' // Registration windows
   | 'deadline' // Payment / submission / late-registration deadlines
+  | 'assessment' // Exam timetable publication, grade release, appeals, DAP meetings
+  | 'graduation' // Graduation evaluation cut-offs, info release, degree conferment
   | 'event'; // Senate meetings, orientation, congregation, major events
 
 export interface AcademicEvent {
@@ -34,6 +38,8 @@ export const CATEGORY_ORDER: CalendarCategory[] = [
   'addDrop',
   'registration',
   'deadline',
+  'assessment',
+  'graduation',
   'event',
 ];
 
@@ -399,6 +405,310 @@ export const ACADEMIC_EVENTS: AcademicEvent[] = [
     title: 'Academic Year 2026-27 ends',
     title_tc: '2026-27 學年結束',
     title_sc: '2026-27 学年结束',
+  },
+
+  // ──────────────── Course registration (Registry "Important Dates") ────────────────
+  {
+    id: 'reg-current-2023',
+    start: '2026-07-21',
+    category: 'registration',
+    title: 'Online registration for current students, Terms 1 & 2 2026-27 (2023 intake or before)',
+    title_tc: '在學學生網上註冊選課(2026-27 兩學期;2023 年或以前入學)',
+    title_sc: '在校学生网上注册选课(2026-27 两学期;2023 年或以前入学)',
+  },
+  {
+    id: 'reg-current-2024',
+    start: '2026-07-22',
+    category: 'registration',
+    title: 'Online registration for current students, Terms 1 & 2 2026-27 (2024 intake)',
+    title_tc: '在學學生網上註冊選課(2026-27 兩學期;2024 年入學)',
+    title_sc: '在校学生网上注册选课(2026-27 两学期;2024 年入学)',
+  },
+  {
+    id: 'reg-current-2025',
+    start: '2026-07-23',
+    category: 'registration',
+    title: 'Online registration for current students, Terms 1 & 2 2026-27 (2025 intake)',
+    title_tc: '在學學生網上註冊選課(2026-27 兩學期;2025 年入學)',
+    title_sc: '在校学生网上注册选课(2026-27 两学期;2025 年入学)',
+  },
+
+  // ──────────── Assessment: Term 1 2025-26 (Registry "Important Dates") ────────────
+  {
+    id: 'assess-t1-2526-timetable',
+    start: '2025-10-28',
+    category: 'assessment',
+    title: 'Publication of examination timetable (Term 1, 2025-26)',
+    title_tc: '公布考試時間表(2025-26 第一學期)',
+    title_sc: '公布考试时间表(2025-26 第一学期)',
+  },
+  {
+    id: 'assess-t1-2526-grades',
+    start: '2026-01-13',
+    category: 'assessment',
+    title: 'Release of grades, GPAs, academic probation & preliminary discontinuation/graduation information (Term 1, 2025-26)',
+    title_tc: '公布成績、GPA、留校察看及初步退學／畢業資訊(2025-26 第一學期)',
+    title_sc: '公布成绩、GPA、留校察看及初步退学／毕业资讯(2025-26 第一学期)',
+  },
+  {
+    id: 'assess-t1-2526-appeals',
+    start: '2026-01-13',
+    end: '2026-01-27',
+    category: 'assessment',
+    title: 'Appeals for review of grades and reassessment (Term 1, 2025-26)',
+    title_tc: '成績覆核及重新評核申請(2025-26 第一學期)',
+    title_sc: '成绩复核及重新评核申请(2025-26 第一学期)',
+  },
+  {
+    id: 'assess-t1-2526-confirmed',
+    start: '2026-01-30',
+    category: 'assessment',
+    title: 'Release of confirmed discontinuation & graduation information (Term 1, 2025-26)',
+    title_tc: '公布確定退學及畢業資訊(2025-26 第一學期)',
+    title_sc: '公布确定退学及毕业资讯(2025-26 第一学期)',
+  },
+  {
+    id: 'assess-t1-2526-disc-appeals',
+    start: '2026-01-30',
+    end: '2026-02-06',
+    category: 'assessment',
+    title: 'Appeals against the discontinuation of studies (Term 1, 2025-26)',
+    title_tc: '退學決定上訴(2025-26 第一學期)',
+    title_sc: '退学决定上诉(2025-26 第一学期)',
+  },
+  {
+    id: 'assess-t1-2526-dap',
+    start: '2026-03-02',
+    category: 'assessment',
+    title: 'Discontinuation Appeals Panel (DAP) meeting (Term 1, 2025-26)',
+    title_tc: '退學上訴委員會(DAP)會議(2025-26 第一學期)',
+    title_sc: '退学上诉委员会(DAP)会议(2025-26 第一学期)',
+  },
+
+  // ──────────── Assessment: Term 2 2025-26 (Registry "Important Dates") ────────────
+  {
+    id: 'assess-t2-2526-timetable',
+    start: '2026-03-17',
+    category: 'assessment',
+    title: 'Publication of examination timetable (Term 2, 2025-26)',
+    title_tc: '公布考試時間表(2025-26 第二學期)',
+    title_sc: '公布考试时间表(2025-26 第二学期)',
+  },
+  {
+    id: 'assess-t2-2526-grades',
+    start: '2026-06-03',
+    category: 'assessment',
+    title: 'Release of grades, GPAs, academic probation & preliminary discontinuation/graduation information (Term 2, 2025-26)',
+    title_tc: '公布成績、GPA、留校察看及初步退學／畢業資訊(2025-26 第二學期)',
+    title_sc: '公布成绩、GPA、留校察看及初步退学／毕业资讯(2025-26 第二学期)',
+  },
+  {
+    id: 'assess-t2-2526-appeals',
+    start: '2026-06-03',
+    end: '2026-06-17',
+    category: 'assessment',
+    title: 'Appeals for review of grades and reassessment (Term 2, 2025-26)',
+    title_tc: '成績覆核及重新評核申請(2025-26 第二學期)',
+    title_sc: '成绩复核及重新评核申请(2025-26 第二学期)',
+  },
+  {
+    id: 'assess-t2-2526-confirmed',
+    start: '2026-06-25',
+    category: 'assessment',
+    title: 'Release of confirmed discontinuation & graduation information (Term 2, 2025-26)',
+    title_tc: '公布確定退學及畢業資訊(2025-26 第二學期)',
+    title_sc: '公布确定退学及毕业资讯(2025-26 第二学期)',
+  },
+  {
+    id: 'assess-t2-2526-disc-appeals',
+    start: '2026-06-26',
+    end: '2026-07-02',
+    category: 'assessment',
+    title: 'Appeals against the discontinuation of studies (Term 2, 2025-26)',
+    title_tc: '退學決定上訴(2025-26 第二學期)',
+    title_sc: '退学决定上诉(2025-26 第二学期)',
+  },
+  {
+    id: 'assess-t2-2526-dap',
+    start: '2026-07-22',
+    category: 'assessment',
+    title: 'Discontinuation Appeals Panel (DAP) meeting (Term 2, 2025-26)',
+    title_tc: '退學上訴委員會(DAP)會議(2025-26 第二學期)',
+    title_sc: '退学上诉委员会(DAP)会议(2025-26 第二学期)',
+  },
+
+  // ────────── Assessment: Summer Term 2025-26 (Registry "Important Dates") ──────────
+  // Summer-term examinations (if any) are arranged directly by the course-offering
+  // units, so there is no fixed exam period to show here.
+  {
+    id: 'assess-su-2526-grades',
+    start: '2026-07-20',
+    category: 'assessment',
+    title: 'Release of grades, GPAs, academic probation & preliminary discontinuation/graduation information (Summer Term, 2025-26)',
+    title_tc: '公布成績、GPA、留校察看及初步退學／畢業資訊(2025-26 夏季學期)',
+    title_sc: '公布成绩、GPA、留校察看及初步退学／毕业资讯(2025-26 夏季学期)',
+  },
+  {
+    id: 'assess-su-2526-appeals',
+    start: '2026-07-20',
+    end: '2026-08-03',
+    category: 'assessment',
+    title: 'Appeals for review of grades and reassessment (Summer Term, 2025-26)',
+    title_tc: '成績覆核及重新評核申請(2025-26 夏季學期)',
+    title_sc: '成绩复核及重新评核申请(2025-26 夏季学期)',
+  },
+  {
+    id: 'assess-su-2526-confirmed',
+    start: '2026-08-05',
+    category: 'assessment',
+    title: 'Release of confirmed discontinuation & graduation information (Summer Term, 2025-26)',
+    title_tc: '公布確定退學及畢業資訊(2025-26 夏季學期)',
+    title_sc: '公布确定退学及毕业资讯(2025-26 夏季学期)',
+  },
+  {
+    id: 'assess-su-2526-disc-appeals',
+    start: '2026-08-06',
+    end: '2026-08-12',
+    category: 'assessment',
+    title: 'Appeals against the discontinuation of studies (Summer Term, 2025-26)',
+    title_tc: '退學決定上訴(2025-26 夏季學期)',
+    title_sc: '退学决定上诉(2025-26 夏季学期)',
+  },
+  {
+    id: 'assess-su-2526-dap',
+    start: '2026-08-25',
+    category: 'assessment',
+    title: 'Discontinuation Appeals Panel (DAP) meeting (Summer Term, 2025-26)',
+    title_tc: '退學上訴委員會(DAP)會議(2025-26 夏季學期)',
+    title_sc: '退学上诉委员会(DAP)会议(2025-26 夏季学期)',
+  },
+
+  // ────────── Graduation & degree conferment 2025-26 (Registry "Important Dates") ──────────
+  // Cut-off dates are also the deadline for updating English/Chinese names for
+  // graduation certificates. The "release of graduation information" dates for the
+  // 1st–3rd exercises coincide with the confirmed discontinuation/graduation
+  // releases above, so they are not duplicated here.
+  {
+    id: 'grad-2526-cutoff-1',
+    start: '2026-01-05',
+    category: 'graduation',
+    title: 'Cut-off date for graduation evaluation — 1st conferment exercise, 2025-26 (Term 1 graduates)',
+    title_tc: '畢業評估截止日 — 2025-26 第一次學位頒授(第一學期畢業)',
+    title_sc: '毕业评估截止日 — 2025-26 第一次学位颁授(第一学期毕业)',
+  },
+  {
+    id: 'grad-2526-confer-1',
+    start: '2026-03-31',
+    category: 'graduation',
+    title: 'Degree conferment & issuance of graduation certificates — 1st conferment exercise, 2025-26',
+    title_tc: '學位頒授及發出畢業證書 — 2025-26 第一次學位頒授',
+    title_sc: '学位颁授及发出毕业证书 — 2025-26 第一次学位颁授',
+  },
+  {
+    id: 'grad-2526-cutoff-2',
+    start: '2026-05-26',
+    category: 'graduation',
+    title: 'Cut-off date for graduation evaluation — 2nd conferment exercise, 2025-26 (Term 2 graduates)',
+    title_tc: '畢業評估截止日 — 2025-26 第二次學位頒授(第二學期畢業)',
+    title_sc: '毕业评估截止日 — 2025-26 第二次学位颁授(第二学期毕业)',
+  },
+  {
+    id: 'grad-2526-confer-2',
+    start: '2026-07-31',
+    category: 'graduation',
+    title: 'Degree conferment & issuance of graduation certificates — 2nd conferment exercise, 2025-26',
+    title_tc: '學位頒授及發出畢業證書 — 2025-26 第二次學位頒授',
+    title_sc: '学位颁授及发出毕业证书 — 2025-26 第二次学位颁授',
+  },
+  {
+    id: 'grad-2526-cutoff-3',
+    start: '2026-07-13',
+    category: 'graduation',
+    title: 'Cut-off date for graduation evaluation — 3rd conferment exercise, 2025-26 (Summer Term graduates)',
+    title_tc: '畢業評估截止日 — 2025-26 第三次學位頒授(夏季學期畢業)',
+    title_sc: '毕业评估截止日 — 2025-26 第三次学位颁授(夏季学期毕业)',
+  },
+  {
+    id: 'grad-2526-confer-3',
+    start: '2026-08-31',
+    category: 'graduation',
+    title: 'Degree conferment & issuance of graduation certificates — 3rd conferment exercise, 2025-26',
+    title_tc: '學位頒授及發出畢業證書 — 2025-26 第三次學位頒授',
+    title_sc: '学位颁授及发出毕业证书 — 2025-26 第三次学位颁授',
+  },
+  {
+    id: 'grad-2526-cutoff-4',
+    start: '2026-09-10',
+    category: 'graduation',
+    title: 'Cut-off date for graduation evaluation — 4th conferment exercise, 2025-26 (Summer Term graduates)',
+    title_tc: '畢業評估截止日 — 2025-26 第四次學位頒授(夏季學期畢業)',
+    title_sc: '毕业评估截止日 — 2025-26 第四次学位颁授(夏季学期毕业)',
+  },
+  {
+    id: 'grad-2526-release-4',
+    start: '2026-10-06',
+    category: 'graduation',
+    title: 'Release of graduation information — 4th conferment exercise, 2025-26',
+    title_tc: '公布畢業資訊 — 2025-26 第四次學位頒授',
+    title_sc: '公布毕业资讯 — 2025-26 第四次学位颁授',
+  },
+  {
+    id: 'grad-2526-confer-4',
+    start: '2026-11-15',
+    category: 'graduation',
+    title: 'Degree conferment & issuance of graduation certificates — 4th conferment exercise, 2025-26',
+    title_tc: '學位頒授及發出畢業證書 — 2025-26 第四次學位頒授',
+    title_sc: '学位颁授及发出毕业证书 — 2025-26 第四次学位颁授',
+  },
+
+  // ────────── Graduation & degree conferment 2026-27 (Registry "Important Dates") ──────────
+  {
+    id: 'grad-2627-cutoff-1',
+    start: '2027-01-04',
+    category: 'graduation',
+    title: 'Cut-off date for graduation evaluation — 1st conferment exercise, 2026-27 (Term 1 graduates)',
+    title_tc: '畢業評估截止日 — 2026-27 第一次學位頒授(第一學期畢業)',
+    title_sc: '毕业评估截止日 — 2026-27 第一次学位颁授(第一学期毕业)',
+  },
+  {
+    id: 'grad-2627-release-1',
+    start: '2027-02-02',
+    category: 'graduation',
+    title: 'Release of graduation information — 1st conferment exercise, 2026-27',
+    title_tc: '公布畢業資訊 — 2026-27 第一次學位頒授',
+    title_sc: '公布毕业资讯 — 2026-27 第一次学位颁授',
+  },
+  {
+    id: 'grad-2627-confer-1',
+    start: '2027-03-31',
+    category: 'graduation',
+    title: 'Degree conferment & issuance of graduation certificates — 1st conferment exercise, 2026-27',
+    title_tc: '學位頒授及發出畢業證書 — 2026-27 第一次學位頒授',
+    title_sc: '学位颁授及发出毕业证书 — 2026-27 第一次学位颁授',
+  },
+  {
+    id: 'grad-2627-cutoff-2',
+    start: '2027-05-25',
+    category: 'graduation',
+    title: 'Cut-off date for graduation evaluation — 2nd conferment exercise, 2026-27 (Term 2 graduates)',
+    title_tc: '畢業評估截止日 — 2026-27 第二次學位頒授(第二學期畢業)',
+    title_sc: '毕业评估截止日 — 2026-27 第二次学位颁授(第二学期毕业)',
+  },
+  {
+    id: 'grad-2627-release-2',
+    start: '2027-06-29',
+    category: 'graduation',
+    title: 'Release of graduation information — 2nd conferment exercise, 2026-27',
+    title_tc: '公布畢業資訊 — 2026-27 第二次學位頒授',
+    title_sc: '公布毕业资讯 — 2026-27 第二次学位颁授',
+  },
+  {
+    id: 'grad-2627-confer-2',
+    start: '2027-07-31',
+    category: 'graduation',
+    title: 'Degree conferment & issuance of graduation certificates — 2nd conferment exercise, 2026-27',
+    title_tc: '學位頒授及發出畢業證書 — 2026-27 第二次學位頒授',
+    title_sc: '学位颁授及发出毕业证书 — 2026-27 第二次学位颁授',
   },
 
   // ─────────────────── Hong Kong general (public) holidays ───────────────────
