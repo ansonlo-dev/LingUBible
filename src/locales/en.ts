@@ -736,7 +736,7 @@ export default {
   // Academic calendar page
   'calendar.title': 'Academic Calendar',
   'calendar.subtitle': 'Key dates and events for the Lingnan academic year.',
-  'calendar.referenceNotice': 'For reference only — see official calendar.',
+  'calendar.referenceNotice': 'For reference only.',
   'calendar.today': 'Today',
   'calendar.view.day3': '3 Days',
   'calendar.view.week': 'Week',
