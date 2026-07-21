@@ -97,25 +97,13 @@ export function AdvancedInstructorFilters({
   // 🚀 使用 deferred value 來讓計算不阻塞 UI
   const deferredInstructors = useDeferredValue(instructors);
 
-  // Load available terms
+  // Load available terms (lightweight — dedicated terms collection, not a teaching_records scan)
   useEffect(() => {
     const loadAvailableTerms = async () => {
       try {
         setTermsLoading(true);
-        
-        // 🚀 優化：使用預加載的教學記錄數據
-        console.log('🚀 Loading instructor terms with preloaded teaching records...');
-        
-        // 並行加載學期和教學記錄數據
-        const [terms, termInstructorsMap] = await Promise.all([
-          CourseService.getAllTerms(),
-          CourseService.getAllTermsInstructorsTeachingBatch()
-        ]);
-        
+        const terms = await CourseService.getAllTerms();
         setAvailableTerms(terms);
-        setTermInstructorsMap(termInstructorsMap);
-        
-        console.log('✅ Instructor terms and teaching data loaded successfully');
       } catch (error) {
         console.error('Error loading instructor terms:', error);
       } finally {
@@ -125,6 +113,17 @@ export function AdvancedInstructorFilters({
 
     loadAvailableTerms();
   }, []);
+
+  // 🚀 惰性載入每學期任教講師數（teaching_records 全表掃描）：只在使用者第一次打開
+  // 「授課學期」下拉選單時才觸發，避免每次渲染篩選列都付出全表掃描成本。
+  const [termInstructorsMapRequested, setTermInstructorsMapRequested] = useState(false);
+  const handleTeachingTermDropdownOpenChange = (open: boolean) => {
+    if (!open || termInstructorsMapRequested) return;
+    setTermInstructorsMapRequested(true);
+    CourseService.getAllTermsInstructorsTeachingBatch()
+      .then(setTermInstructorsMap)
+      .catch(error => console.error('Error loading term instructor counts:', error));
+  };
 
   const updateFilters = (updates: Partial<InstructorFilters>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -571,6 +570,7 @@ export function AdvancedInstructorFilters({
             }))}
             selectedValues={filters.teachingTerm}
             onSelectionChange={(values) => updateFilters({ teachingTerm: values })}
+            onOpenChange={handleTeachingTermDropdownOpenChange}
             placeholder={t('filter.allTerms')}
             totalCount={totalInstructors}
             className="flex-1 h-10 text-sm"

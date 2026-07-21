@@ -74,6 +74,9 @@ const Courses = () => {
   // 講師搜尋相關狀態
   const [instructorCourseMap, setInstructorCourseMap] = useState<Map<string, Set<string>>>(new Map());
   const [instructorDataLoaded, setInstructorDataLoaded] = useState(false);
+  // 講師-課程對照表（全表掃描）只在使用者實際輸入搜尋字串時才建立一次，避免每次訪問
+  // 課程列表頁都付出全表掃描成本（多數訪客從不使用講師姓名搜尋）
+  const [instructorCourseMapRequested, setInstructorCourseMapRequested] = useState(false);
 
   // 使用防抖來優化搜尋性能
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
@@ -147,36 +150,7 @@ const Courses = () => {
           });
           
           console.log('✅ Basic instructor mapping initialized with', instructorMap.size, 'entries');
-
-          // 🚀 在後台用「單次掃描」建立完整的講師-課程映射（取代全學期掃描 + 50 次 N+1 查詢）
-          setTimeout(async () => {
-            try {
-              console.log('🔄 Building comprehensive instructor-course mapping (single scan)...');
-              const nameToCourses = await CourseService.getInstructorCourseCodesMap();
-
-              // 為所有講師的所有名稱變體填入課程集合
-              allInstructors.forEach(instructor => {
-                const courses = nameToCourses.get(instructor.name);
-                if (!courses || courses.size === 0) return;
-                const nameKeys = [
-                  instructor.name?.toLowerCase(),
-                  instructor.name_tc?.toLowerCase(),
-                  instructor.name_sc?.toLowerCase()
-                ].filter(Boolean) as string[];
-                nameKeys.forEach(nameKey => {
-                  const existing = instructorMap.get(nameKey) || new Set<string>();
-                  courses.forEach(c => existing.add(c));
-                  instructorMap.set(nameKey, existing);
-                });
-              });
-
-              setInstructorCourseMap(new Map(instructorMap));
-              console.log('✅ Background instructor mapping completed (single scan, all instructors)');
-            } catch (error) {
-              console.warn('Background instructor mapping failed:', error);
-            }
-          }, 2000); // 2秒後開始後台處理
-
+          // 完整的講師-課程對照表（全表掃描）改為惰性載入，見下方依 debouncedSearchTerm 觸發的 effect。
         } catch (error) {
           console.warn('Failed to initialize instructor mapping:', error);
           console.log('✅ Using empty instructor mapping');
@@ -192,6 +166,49 @@ const Courses = () => {
 
     initializeOptimizations();
   }, []);
+
+  // 🚀 講師-課程對照表（teaching_records 全表掃描）惰性載入：只在使用者第一次輸入
+  // 搜尋字串時才建立一次（用「單次掃描」取代全學期掃描 + 50 次 N+1 查詢），
+  // 避免多數從不使用講師姓名搜尋的訪客也付出全表掃描成本。
+  useEffect(() => {
+    if (instructorCourseMapRequested || !debouncedSearchTerm.trim()) return;
+    setInstructorCourseMapRequested(true);
+
+    (async () => {
+      try {
+        console.log('🔄 Building comprehensive instructor-course mapping (single scan, triggered by search)...');
+        const [allInstructors, nameToCourses] = await Promise.all([
+          CourseService.getAllInstructorsWithDetailedStats(),
+          CourseService.getInstructorCourseCodesMap(),
+        ]);
+
+        const instructorMap = new Map<string, Set<string>>();
+        allInstructors.forEach(instructor => {
+          const courses = nameToCourses.get(instructor.name);
+          if (!courses || courses.size === 0) return;
+          const nameKeys = [
+            instructor.name?.toLowerCase(),
+            instructor.name_tc?.toLowerCase(),
+            instructor.name_sc?.toLowerCase()
+          ].filter(Boolean) as string[];
+          nameKeys.forEach(nameKey => {
+            const existing = instructorMap.get(nameKey) || new Set<string>();
+            courses.forEach(c => existing.add(c));
+            instructorMap.set(nameKey, existing);
+          });
+        });
+
+        setInstructorCourseMap(prev => {
+          const merged = new Map(prev);
+          instructorMap.forEach((courses, nameKey) => merged.set(nameKey, courses));
+          return merged;
+        });
+        console.log('✅ Instructor-course mapping completed (single scan, all instructors)');
+      } catch (error) {
+        console.warn('Instructor-course mapping failed:', error);
+      }
+    })();
+  }, [debouncedSearchTerm, instructorCourseMapRequested]);
 
   // 當學期篩選條件改變時，非同步檢查課程是否在該學期開設
   useEffect(() => {

@@ -55,6 +55,9 @@ interface MultiSelectDropdownProps {
   maxHeight?: string;
   disabled?: boolean;
   totalCount?: number;
+  // Fires when the dropdown opens/closes. Lets callers lazily load option data
+  // (e.g. counts backed by an expensive query) only when the user actually opens it.
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function MultiSelectDropdown({
@@ -66,7 +69,8 @@ export function MultiSelectDropdown({
   showCounts = true,
   maxHeight = "max-h-64",
   disabled = false,
-  totalCount
+  totalCount,
+  onOpenChange
 }: MultiSelectDropdownProps) {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
@@ -308,7 +312,7 @@ export function MultiSelectDropdown({
         onValueChange={() => {}} // Controlled by checkbox interactions
         disabled={disabled}
         open={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={(open) => { setIsOpen(open); onOpenChange?.(open); }}
       >
         <SelectTrigger 
           className="w-full h-8 min-w-0"

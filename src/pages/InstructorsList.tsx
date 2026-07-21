@@ -518,22 +518,6 @@ const InstructorsList = () => {
     </div>
   );
 
-  // 組件載入時初始化性能優化
-  useEffect(() => {
-    const initializePerformanceOptimizations = async () => {
-      try {
-        // 🚀 預加載所有教學記錄以實現零延遲篩選
-        console.log('🚀 Preloading teaching records for instructor filtering...');
-        await CourseService.getAllTermsInstructorsTeachingBatch();
-        console.log('✅ Teaching records preloaded for instructors');
-      } catch (error) {
-        console.error('❌ Error preloading teaching records for instructors:', error);
-      }
-    };
-
-    initializePerformanceOptimizations();
-  }, []);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">

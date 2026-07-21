@@ -295,6 +295,9 @@ export class CourseService {
   // 若後端不支援（舊版 / 欄位限制），第一次失敗後記住並改走共享快取的全掃描路徑。
   private static reviewsContainsSupported = true;
 
+  // 同上，用於 teaching_records.instructor_name 的伺服器端預過濾（見 getInstructorTeachingRecords）。
+  private static teachingRecordsContainsSupported = true;
+
   // 共享的 reviews 全表掃描被動快取（僅講師頁的後備路徑使用；純被動 TTL，無背景刷新）。
   // 讓同一會話內連續瀏覽多個講師頁只需掃描一次，而非每頁一次。
   private static allReviewsScanCache: { data: Review[]; expiry: number } | null = null;
@@ -1904,23 +1907,52 @@ export class CourseService {
         return cached;
       }
 
-      // 合併講師列無法用 Query.equal 精確比對，改由已展開的共享快取做 client-side 比對：
-      // getAllTeachingRecordsRaw() 已把 "A / B" 展開成個別列，因此這裡用 === 即可命中
-      // 共同授課的個別講師，且不額外發出查詢（沿用被動快取，符合配額限制）。
-      const rawRecords = await this.getAllTeachingRecordsRaw();
-      const teachingRecords = rawRecords
-        .filter(record => record.instructor_name === instructorName)
-        .map(record => ({
-          $id: record.$id,
-          course_code: record.course_code,
-          term_code: record.term_code,
-          instructor_name: record.instructor_name,
-          session_type: record.session_type,
-          service_learning: record.service_learning,
-          teaching_language: record.teaching_language,
-          $createdAt: record.$createdAt,
-          $updatedAt: record.$createdAt,
-        })) as unknown as TeachingRecord[];
+      // 🚀 優先用伺服器端 contains 預過濾 instructor_name（合併格式 "A / B" 仍會因子字串
+      // 命中而回傳，屬超集），只讀取該講師相關的教學記錄列，取代整張表的全掃描；
+      // 後備路徑改讀共享被動快取（getAllTeachingRecordsRaw，同一會話多講師頁只掃描一次）。
+      let matched: TeachingRecord[] | null = null;
+
+      if (this.teachingRecordsContainsSupported && instructorName && instructorName.trim()) {
+        try {
+          const response = await tablesDB.listRows(
+            this.DATABASE_ID,
+            this.TEACHING_RECORDS_COLLECTION_ID,
+            [
+              Query.contains('instructor_name', instructorName.trim()),
+              Query.orderAsc('$createdAt'),
+              Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
+              Query.select(['course_code', 'term_code', 'instructor_name', 'session_type', 'service_learning', 'teaching_language', '$createdAt'])
+            ]
+          );
+          matched = (response.rows as unknown as TeachingRecord[])
+            .filter(record => instructorNameMatches(record.instructor_name, instructorName))
+            .map(record => ({ ...record, instructor_name: instructorName }));
+        } catch (containsError) {
+          // 後端不支援 contains 時記住，之後直接走共享快取路徑，不再重試
+          this.teachingRecordsContainsSupported = false;
+          console.warn('Query.contains on teaching_records.instructor_name not supported; falling back to shared full scan:', containsError);
+        }
+      }
+
+      if (matched === null) {
+        // 合併講師列無法用 Query.equal 精確比對，改由已展開的共享快取做 client-side 比對：
+        // getAllTeachingRecordsRaw() 已把 "A / B" 展開成個別列，因此這裡用 === 即可命中
+        // 共同授課的個別講師，且不額外發出查詢（沿用被動快取，符合配額限制）。
+        const rawRecords = await this.getAllTeachingRecordsRaw();
+        matched = rawRecords.filter(record => record.instructor_name === instructorName) as unknown as TeachingRecord[];
+      }
+
+      const teachingRecords = matched.map(record => ({
+        $id: record.$id,
+        course_code: record.course_code,
+        term_code: record.term_code,
+        instructor_name: record.instructor_name,
+        session_type: record.session_type,
+        service_learning: record.service_learning,
+        teaching_language: record.teaching_language,
+        $createdAt: record.$createdAt,
+        $updatedAt: record.$createdAt,
+      })) as unknown as TeachingRecord[];
       this.setCached(cacheKey, teachingRecords, 10 * 60 * 1000); // 10 分鐘快取
       return teachingRecords;
     } catch (error) {
@@ -6937,18 +6969,27 @@ export class CourseService {
       const uniqueInstructorNames = [...new Set(instructorDetails.map(detail => detail.instructorName))];
       const uniqueSessionTypes = [...new Set(instructorDetails.map(detail => detail.sessionType))];
 
-      // 合併講師列以個別講師比對：改用已展開的共享快取（每列一位講師），
-      // 以 course|term|instructor|session 複合鍵查表（不額外查詢）
-      const courseSet = new Set(uniqueCourseCodes);
       const termSet = new Set(uniqueTermCodes);
       const nameSet = new Set(uniqueInstructorNames);
       const sessionSet = new Set(uniqueSessionTypes);
-      const rawRecords = await this.getAllTeachingRecordsRaw();
+
+      // 🚀 以 course_code 伺服器端精確過濾（絕大多數呼叫端只涉及單一課程，如課程頁的評論
+      // 列表）取代整張 teaching_records 表的全掃描；合併講師列（"A / B"）在此展開成個別列。
+      const response = await tablesDB.listRows(
+        this.DATABASE_ID,
+        this.TEACHING_RECORDS_COLLECTION_ID,
+        [
+          Query.equal('course_code', uniqueCourseCodes),
+          Query.limit(this.MAX_TEACHING_RECORDS_LIMIT),
+          Query.select(['course_code', 'term_code', 'instructor_name', 'session_type', 'teaching_language'])
+        ]
+      );
+      const rawRecords = expandRecordsByInstructorName(response.rows as unknown as TeachingRawRecord[]);
 
       // Create a map for quick lookup by composite key
       const recordsMap = new Map<string, string>();
       rawRecords.forEach(record => {
-        if (!courseSet.has(record.course_code) || !termSet.has(record.term_code) ||
+        if (!termSet.has(record.term_code) ||
             !nameSet.has(record.instructor_name) || !sessionSet.has(record.session_type)) {
           return;
         }

@@ -113,37 +113,29 @@ export function AdvancedCourseFilters({
   const [availableTerms, setAvailableTerms] = useState<Term[]>([]);
   const [termsLoading, setTermsLoading] = useState(true);
   const [termCoursesMap, setTermCoursesMap] = useState<Map<string, Set<string>>>(new Map());
-  
+  // 每學期開課數（teaching_records 全表掃描）只在使用者實際打開學期下拉選單時才載入一次，
+  // 避免每次渲染篩選列都付出全表掃描成本（多數訪客從不打開這個下拉選單）。
+  const [termCoursesMapRequested, setTermCoursesMapRequested] = useState(false);
+
   // 🚀 使用 deferred value 來讓計算不阻塞 UI
   const deferredCourses = useDeferredValue(courses);
   const [isCountsLoading, setIsCountsLoading] = useState(false);
 
-  // Load available terms
+  // Load available terms (lightweight — dedicated terms collection, not a teaching_records scan)
   useEffect(() => {
     const loadAvailableTerms = async () => {
       try {
         setTermsLoading(true);
-        
-        // 🚀 優化：使用預加載的教學記錄數據
-        console.log('🚀 Loading terms with preloaded teaching records...');
-        
-        // 並行加載學期和教學記錄數據
-        const [terms, termCoursesMap] = await Promise.all([
-          CourseService.getAllTerms(),
-          CourseService.getAllTermsCoursesOfferedBatch()
-        ]);
-        
+        const terms = await CourseService.getAllTerms();
+
         // Sort terms by start_date (most recent first)
         const sortedTerms = terms.sort((a, b) => {
           const dateA = new Date(a.start_date);
           const dateB = new Date(b.start_date);
           return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
         });
-        
+
         setAvailableTerms(sortedTerms);
-        setTermCoursesMap(termCoursesMap);
-        
-        console.log('✅ Terms and teaching data loaded successfully');
       } catch (error) {
         console.error('Error loading terms:', error);
       } finally {
@@ -153,6 +145,15 @@ export function AdvancedCourseFilters({
 
     loadAvailableTerms();
   }, []);
+
+  // 🚀 惰性載入每學期開課數：只在使用者第一次打開「開設學期」下拉選單時才觸發
+  const handleTermDropdownOpenChange = (open: boolean) => {
+    if (!open || termCoursesMapRequested) return;
+    setTermCoursesMapRequested(true);
+    CourseService.getAllTermsCoursesOfferedBatch()
+      .then(setTermCoursesMap)
+      .catch(error => console.error('Error loading term course counts:', error));
+  };
 
   const updateFilters = (updates: Partial<CourseFilters>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -452,6 +453,7 @@ export function AdvancedCourseFilters({
             }))}
             selectedValues={filters.offeredTerm}
             onSelectionChange={(values) => updateFilters({ offeredTerm: values })}
+            onOpenChange={handleTermDropdownOpenChange}
             placeholder={t('filter.allTerms')}
             totalCount={totalCourses}
             className="flex-1 h-10 text-sm"
