@@ -170,14 +170,14 @@
             "logging": true,
             "events": [],
             "schedule": "0 3 * * *",
-            "timeout": 300,
+            "timeout": 600,
             "commands": "bun install",
             "scopes": [
                 "databases.read",
                 "databases.write"
             ],
-            "buildSpecification": "s-1vcpu-512mb",
-            "runtimeSpecification": "s-1vcpu-512mb",
+            "buildSpecification": "s-4vcpu-4gb",
+            "runtimeSpecification": "s-4vcpu-4gb",
             "deploymentRetention": 0
         }
     ],

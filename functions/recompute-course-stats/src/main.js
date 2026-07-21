@@ -6,6 +6,24 @@ const COURSES_COLLECTION_ID = 'courses';
 const TEACHING_RECORDS_COLLECTION_ID = 'teaching_records';
 const INSTRUCTORS_COLLECTION_ID = 'instructors';
 const PAGE_LIMIT = 1000;
+// updateDocument 呼叫序列執行時，每則約 300~400ms 網路往返；courses(~1090)+instructors(~757)
+// 合計近 1850 則會遠遠超過 300 秒函數逾時（實測 schedule 全量重算連續多日 100% 逾時失敗）。
+// 以有限並行度批次執行，把總時長壓到並行度分之一，同時避免對 Appwrite API 造成瞬間洪峰。
+const UPDATE_CONCURRENCY = 25;
+
+// 以固定並行度執行一批非同步工作，行為近似「worker pool」：任何一個工作拋出例外
+// 都不影響其他工作繼續執行（呼叫端已用 try/catch 包住每個 fn 呼叫）。
+async function runWithConcurrency(items, limit, fn) {
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < items.length) {
+      const i = cursor++;
+      await fn(items[i], i);
+    }
+  };
+  const workers = Array.from({ length: Math.min(limit, items.length) }, worker);
+  await Promise.all(workers);
+}
 
 // 合併講師姓名（teaching_records.instructor_name 可能為 "A / B" 共同授課格式）拆成個別姓名。
 // 與前端 src/utils/instructorNameUtils.ts 的 splitInstructorNames 保持一致。
@@ -382,7 +400,7 @@ async function recomputeAll(databases, log, diag) {
   let updated = 0;
   let failed = 0;
   const sampleErrors = [];
-  for (const course of courses) {
+  await runWithConcurrency(courses, UPDATE_CONCURRENCY, async (course) => {
     const reviews = reviewsByCourse.get(course.course_code) || [];
     const teachingRows = teachingByCourse.get(course.course_code) || [];
     const stats = computeStats(reviews);
@@ -394,12 +412,12 @@ async function recomputeAll(databases, log, diag) {
       failed++;
       if (sampleErrors.length < 5) sampleErrors.push(`${course.course_code}(${course.$id}): ${e.message}`);
     }
-  }
+  });
 
   diag.stage = 'updating_instructors';
   let instructorsUpdated = 0;
   let instructorsFailed = 0;
-  for (const instructor of instructors) {
+  await runWithConcurrency(instructors, UPDATE_CONCURRENCY, async (instructor) => {
     const reviewStats = finalizeInstructorReviewStats(instructorReviewAgg.get(instructor.name));
     const teachingFields = computeInstructorTeachingFields(teachingByInstructor.get(instructor.name) || [], currentTermCode);
     try {
@@ -409,7 +427,7 @@ async function recomputeAll(databases, log, diag) {
       instructorsFailed++;
       if (sampleErrors.length < 10) sampleErrors.push(`instructor ${instructor.name}(${instructor.$id}): ${e.message}`);
     }
-  }
+  });
 
   diag.stage = 'done';
   return {
@@ -483,7 +501,7 @@ async function recomputeInstructors(databases, log, diag) {
   let updated = 0;
   let failed = 0;
   const sampleErrors = [];
-  for (const instructor of instructors) {
+  await runWithConcurrency(instructors, UPDATE_CONCURRENCY, async (instructor) => {
     const reviewStats = finalizeInstructorReviewStats(instructorReviewAgg.get(instructor.name));
     const teachingFields = computeInstructorTeachingFields(teachingByInstructor.get(instructor.name) || [], currentTermCode);
     try {
@@ -493,7 +511,7 @@ async function recomputeInstructors(databases, log, diag) {
       failed++;
       if (sampleErrors.length < 10) sampleErrors.push(`instructor ${instructor.name}(${instructor.$id}): ${e.message}`);
     }
-  }
+  });
   diag.stage = 'done';
   return { updated, failed, totalInstructors: instructors.length, totalReviews, totalTeaching, sampleErrors };
 }
