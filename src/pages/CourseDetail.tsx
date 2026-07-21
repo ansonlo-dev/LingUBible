@@ -1653,13 +1653,11 @@ const CourseDetail = () => {
   // Resolve the latest course syllabus PDF for the header button.
   // Bucket: course_syllabus; filenames look like CDS2004-202601.pdf — among all
   // files for this course we pick the one with the largest numeric suffix.
-  // The bucket read permission is restricted to authenticated users, so we only
-  // attempt to list it when logged in. Guests always see the button (it opens a
-  // login prompt) and never trigger a guaranteed 401.
+  // The bucket allows public read, so this runs for guests too.
   useEffect(() => {
     const courseCode = course?.course_code;
     setSyllabusFile(null);
-    if (!courseCode || !user) {
+    if (!courseCode) {
       setSyllabusLoading(false);
       return;
     }
@@ -1700,15 +1698,10 @@ const CourseDetail = () => {
     })();
 
     return () => { cancelled = true; };
-  }, [course?.course_code, user]);
+  }, [course?.course_code]);
 
-  // Open the syllabus PDF — but only for logged-in (verified) users. Guests get
-  // a prompt explaining it's restricted material that requires an account.
+  // Open the syllabus PDF. Available to guests and logged-in users alike.
   const handleViewSyllabus = () => {
-    if (!user) {
-      promptLogin();
-      return;
-    }
     if (!syllabusFile) return;
     setPdfViewer({
       src: storage.getFileView({ bucketId: 'course_syllabus', fileId: syllabusFile.id }).toString(),
@@ -1717,10 +1710,9 @@ const CourseDetail = () => {
     });
   };
 
-  // The syllabus button is always rendered. For guests it's enabled (clicking
-  // opens the login prompt). For logged-in users it's disabled while we resolve
-  // the file or when the course has no syllabus on record.
-  const syllabusButtonDisabled = !!user && (syllabusLoading || !syllabusFile);
+  // The syllabus button is disabled while we resolve the file or when the
+  // course has no syllabus on record.
+  const syllabusButtonDisabled = syllabusLoading || !syllabusFile;
 
   // A review can only be written for a course that has actually been taught at
   // least once. While teaching records are still loading we keep the button
@@ -1966,7 +1958,7 @@ const CourseDetail = () => {
                     onClick={handleViewSyllabus}
                     disabled={syllabusButtonDisabled}
                   >
-                    {user && syllabusLoading ? (
+                    {syllabusLoading ? (
                       <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     ) : (
                       <FileText className="h-4 w-4 mr-1.5" />
@@ -2070,7 +2062,7 @@ const CourseDetail = () => {
                 onClick={handleViewSyllabus}
                 disabled={syllabusButtonDisabled}
               >
-                {user && syllabusLoading ? (
+                {syllabusLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <FileText className="h-4 w-4 mr-2" />
