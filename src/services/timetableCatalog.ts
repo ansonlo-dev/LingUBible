@@ -23,7 +23,7 @@ export interface TimetableCatalog {
 
 // When the underlying class-timetable source data was last refreshed. Shown on
 // the planner page — update whenever the data is re-imported.
-export const TIMETABLE_DATA_UPDATED = '2026/07/20';
+export const TIMETABLE_DATA_UPDATED = '2026/07/22';
 
 // v2: added per-course `credits` to the distilled catalog. Bumping the key
 // invalidates the old (creditless) cached copy so it re-distills.
