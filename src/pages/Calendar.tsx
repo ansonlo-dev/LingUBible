@@ -56,20 +56,28 @@ const CATEGORY_STYLES: Record<
     dot: 'bg-red-600',
     soft: 'bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-200',
   },
+  // `exam` uses a single yellow-600 shade in both themes (like `term`'s
+  // red-600): yellow-500 reads too light on a dark surface, and yellow-600 is
+  // the only stop far enough (OKLab ΔE) from both neighbours — red (term) and
+  // violet (holiday) — to stay tell-apart-able; picked over amber, which sat
+  // only ~2 ΔE from deadline's orange.
   exam: {
-    bar: 'bg-amber-500 text-white dark:bg-amber-600',
-    dot: 'bg-amber-500',
-    soft: 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-200',
+    bar: 'bg-yellow-600 text-white dark:bg-yellow-600',
+    dot: 'bg-yellow-600',
+    soft: 'bg-yellow-100 text-yellow-900 dark:bg-yellow-950/70 dark:text-yellow-200',
   },
   holiday: {
     bar: 'bg-violet-500 text-white dark:bg-violet-600',
     dot: 'bg-violet-500',
     soft: 'bg-violet-100 text-violet-900 dark:bg-violet-950/70 dark:text-violet-200',
   },
+  // addDrop/assessment/hostel were emerald/teal/cyan — three adjacent hues on
+  // the wheel that read as "the same green" at a glance. Spread across
+  // lime/green/teal instead so each sits in a different hue band.
   addDrop: {
-    bar: 'bg-emerald-500 text-white dark:bg-emerald-600',
-    dot: 'bg-emerald-500',
-    soft: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200',
+    bar: 'bg-lime-500 text-white dark:bg-lime-600',
+    dot: 'bg-lime-500',
+    soft: 'bg-lime-100 text-lime-900 dark:bg-lime-950/70 dark:text-lime-200',
   },
   registration: {
     bar: 'bg-sky-500 text-white dark:bg-sky-600',
@@ -82,34 +90,49 @@ const CATEGORY_STYLES: Record<
     soft: 'bg-orange-100 text-orange-900 dark:bg-orange-950/70 dark:text-orange-200',
   },
   assessment: {
-    bar: 'bg-teal-500 text-white dark:bg-teal-600',
-    dot: 'bg-teal-500',
-    soft: 'bg-teal-100 text-teal-900 dark:bg-teal-950/70 dark:text-teal-200',
+    bar: 'bg-green-500 text-white dark:bg-green-600',
+    dot: 'bg-green-500',
+    soft: 'bg-green-100 text-green-900 dark:bg-green-950/70 dark:text-green-200',
   },
   graduation: {
     bar: 'bg-indigo-500 text-white dark:bg-indigo-600',
     dot: 'bg-indigo-500',
     soft: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-200',
   },
+  // Deliberately neutral/desaturated — the catch-all "other" bucket, kept
+  // achromatic on purpose so it never competes with the 9 colour-coded groups.
   event: {
     bar: 'bg-slate-500 text-white dark:bg-slate-600',
     dot: 'bg-slate-500',
     soft: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100',
   },
+  hostel: {
+    bar: 'bg-teal-500 text-white dark:bg-teal-600',
+    dot: 'bg-teal-500',
+    soft: 'bg-teal-100 text-teal-900 dark:bg-teal-950/70 dark:text-teal-200',
+  },
 };
 
-// Raw colours (Tailwind 500/600) for building two-tone striped fills for events
-// that belong to two categories at once.
+// Raw colours (Tailwind 500/600, matching CATEGORY_STYLES) for building
+// two-tone striped fills for events that belong to two categories at once.
+// This 10-hue set was chosen and verified with the data-viz skill's
+// palette validator (OKLab ΔE under simulated colour-vision deficiency +
+// normal vision) rather than picked by eye — see the inline notes above for
+// the two adjacent pairs that drove the choices (exam vs term/holiday,
+// addDrop/assessment/hostel's green cluster). `event`'s slate is
+// intentionally desaturated (it's the neutral "other" bucket) and is exempt
+// from the chroma check that applies to the other 9.
 const CATEGORY_HEX: Record<CalendarCategory, string> = {
   term: '#dc2626',
-  exam: '#f59e0b',
+  exam: '#ca8a04',
   holiday: '#8b5cf6',
-  addDrop: '#10b981',
+  addDrop: '#84cc16',
   registration: '#0ea5e9',
   deadline: '#f97316',
-  assessment: '#14b8a6',
+  assessment: '#22c55e',
   graduation: '#6366f1',
   event: '#64748b',
+  hostel: '#14b8a6',
 };
 
 // Diagonal two-tone stripes for a dual-category event (e.g. event + holiday).
@@ -261,6 +284,36 @@ export default function Calendar() {
   const [view, setView] = useState<ViewMode>('month');
   const [refDate, setRefDate] = useState<Date>(initialRef);
   const [selectedDate, setSelectedDate] = useState<Date>(initialRef);
+
+  // ── Legend filter (show/hide categories) ──────────────────────────────────
+  // Empty set = nothing hidden = every category shown (the default). Toggling
+  // a legend chip adds/removes it here rather than tracking a "visible" set,
+  // so newly-added categories are visible by default without extra wiring.
+  const [hiddenCategories, setHiddenCategories] = useState<Set<CalendarCategory>>(
+    () => new Set()
+  );
+  const toggleCategory = (cat: CalendarCategory) => {
+    setHiddenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
+  const showAllCategories = () => setHiddenCategories(new Set());
+  const hasHiddenCategories = hiddenCategories.size > 0;
+
+  // An event with a second category (e.g. Congregation = event + holiday)
+  // stays visible as long as at least one of its two categories is on.
+  const visibleEvents = useMemo(
+    () =>
+      ACADEMIC_EVENTS.filter(
+        (e) =>
+          !hiddenCategories.has(e.category) ||
+          (e.category2 !== undefined && !hiddenCategories.has(e.category2))
+      ),
+    [hiddenCategories]
+  );
 
   const locale = language === 'zh-TW' ? 'zh-TW' : language === 'zh-CN' ? 'zh-CN' : 'en-US';
 
@@ -578,12 +631,14 @@ export default function Calendar() {
 
   // ── Selected day's events (detail panel) ──────────────────────────────────
   const selectedEvents = useMemo(() => {
-    return ACADEMIC_EVENTS.filter((e) => {
-      const s = eventStart(e);
-      const en = eventEnd(e);
-      return selectedDate >= startOfDay(s) && selectedDate <= startOfDay(en);
-    }).sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
-  }, [selectedDate]);
+    return visibleEvents
+      .filter((e) => {
+        const s = eventStart(e);
+        const en = eventEnd(e);
+        return selectedDate >= startOfDay(s) && selectedDate <= startOfDay(en);
+      })
+      .sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
+  }, [selectedDate, visibleEvents]);
 
   const titleOf = (e: AcademicEvent) =>
     language === 'zh-TW' ? e.title_tc : language === 'zh-CN' ? e.title_sc : e.title;
@@ -734,6 +789,7 @@ export default function Calendar() {
                 {view === 'month' ? (
                   <MonthView
                     weeks={range.weeks}
+                    events={visibleEvents}
                     refMonth={panelDate.getMonth()}
                     today={today}
                     selectedDate={selectedDate}
@@ -747,6 +803,7 @@ export default function Calendar() {
                 ) : (
                   <StripView
                     days={range.stripDays}
+                    events={visibleEvents}
                     today={today}
                     selectedDate={selectedDate}
                     onSelectDay={setSelectedDate}
@@ -829,25 +886,59 @@ export default function Calendar() {
           )}
         </div>
 
-        {/* Legend */}
+        {/* Legend — each chip toggles that category's visibility on the
+            calendar (and in the selected-day panel); "Show all" clears every
+            toggle back to the default (nothing hidden). */}
         <div className="rounded-xl bg-card p-4">
-          <div className="mb-3 flex items-center gap-1.5">
+          <div className="mb-3 flex items-center justify-between gap-1.5">
             <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {t('calendar.legend')}
             </h3>
+            <button
+              type="button"
+              onClick={showAllCategories}
+              disabled={!hasHiddenCategories}
+              className="text-xs font-semibold text-primary transition-opacity hover:underline disabled:pointer-events-none disabled:opacity-40"
+            >
+              {t('calendar.legend.showAll')}
+            </button>
           </div>
           {/* Every item reserves the same (two-line) height so the colour
               squares sit at an even vertical rhythm; each square is centred
               against its label, landing between the two lines when it wraps. */}
           <ul className="grid grid-cols-2 gap-x-4">
-            {CATEGORY_ORDER.map((cat) => (
-              <li key={cat} className="flex min-h-[2.5rem] items-center gap-2 text-sm">
-                <span className={cn('h-3 w-3 flex-shrink-0 rounded-sm', CATEGORY_STYLES[cat].dot)} />
-                <span className="min-w-0 leading-snug text-foreground">
-                  {renderLegendLabel(t(`calendar.cat.${cat}`))}
-                </span>
-              </li>
-            ))}
+            {CATEGORY_ORDER.map((cat) => {
+              const isHidden = hiddenCategories.has(cat);
+              return (
+                <li key={cat}>
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(cat)}
+                    aria-pressed={!isHidden}
+                    title={t('calendar.legend.toggleHint')}
+                    className={cn(
+                      'flex min-h-[2.5rem] w-full items-center gap-2 rounded-md px-1 text-left text-sm transition-opacity hover:bg-accent/40',
+                      isHidden ? 'opacity-40' : 'opacity-100'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'h-3 w-3 flex-shrink-0 rounded-sm',
+                        isHidden ? 'bg-muted-foreground/40' : CATEGORY_STYLES[cat].dot
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'min-w-0 leading-snug',
+                        isHidden ? 'text-muted-foreground line-through' : 'text-foreground'
+                      )}
+                    >
+                      {renderLegendLabel(t(`calendar.cat.${cat}`))}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -858,6 +949,7 @@ export default function Calendar() {
 // ────────────────────────────── Month view ────────────────────────────────
 interface MonthViewProps {
   weeks: Date[][];
+  events: AcademicEvent[];
   refMonth: number;
   today: Date;
   selectedDate: Date;
@@ -871,6 +963,7 @@ interface MonthViewProps {
 
 function MonthView({
   weeks,
+  events,
   refMonth,
   today,
   selectedDate,
@@ -885,7 +978,7 @@ function MonthView({
   const headerH = 30;
   const overflowH = 20;
 
-  const weekLayouts = weeks.map((week) => layoutStrip(week, ACADEMIC_EVENTS));
+  const weekLayouts = weeks.map((week) => layoutStrip(week, events));
   // All months share one height. Mobile keeps the full reserve; desktop trims to
   // the lanes the calendar actually ever needs, so cells aren't needlessly tall.
   const rowLanes = isMobile ? maxLanes : Math.min(maxLanes, MAX_DAILY_OVERLAP);
@@ -1030,6 +1123,7 @@ function MonthView({
 // ────────────────────────────── Strip view (week / 3-day) ──────────────────
 interface StripViewProps {
   days: Date[];
+  events: AcademicEvent[];
   today: Date;
   selectedDate: Date;
   onSelectDay: (d: Date) => void;
@@ -1043,6 +1137,7 @@ interface StripViewProps {
 
 function StripView({
   days,
+  events,
   today,
   selectedDate,
   onSelectDay,
@@ -1052,7 +1147,7 @@ function StripView({
   allDayLabel,
   emptyLabel,
 }: StripViewProps) {
-  const positioned = layoutStrip(days, ACADEMIC_EVENTS);
+  const positioned = layoutStrip(days, events);
   const laneCount = positioned.reduce((m, p) => Math.max(m, p.lane + 1), 0);
   const laneH = 36;
   const gridMinH = Math.max(laneCount, 4) * laneH + 8;
