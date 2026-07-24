@@ -21,6 +21,7 @@ import {
   type TimeFilterValue,
 } from '@/components/features/timetable/TimeVenueFilters';
 import { buildTimetableIcs } from '@/services/timetableIcs';
+import { TERM_START_DATE, TERM_END_DATE, TERM_2_START_DATE, TERM_2_END_DATE } from '@/data/academicCalendar';
 import { loadTimetableCatalog, normInstructorName, TIMETABLE_DATA_UPDATED, type TimetableCatalog } from '@/services/timetableCatalog';
 import {
   TimetableGrid,
@@ -148,6 +149,15 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   theme: 'light',
   icsStart: '',
   icsEnd: '',
+};
+
+// Known term class-period bounds, used to default the .ics export range so
+// users don't have to look up and type the dates themselves. Only the terms
+// we have official start/end dates for are listed; other terms fall back to
+// manual entry.
+const TERM_DATE_RANGES: Record<string, { start: string; end: string }> = {
+  '2026-27-t1': { start: TERM_START_DATE, end: TERM_END_DATE },
+  '2026-27-t2': { start: TERM_2_START_DATE, end: TERM_2_END_DATE },
 };
 
 // date-fns locales per site language, for the .ics date pickers.
@@ -553,6 +563,18 @@ const Timetable = () => {
   }, [customTitles]);
   const setCustomTitle = (title: string) =>
     setCustomTitles((prev) => ({ ...prev, [termId]: title }));
+
+  // Default the .ics export range to the term's known official dates (currently
+  // 2026-27 Term 1 & 2), so most users never need to open the date pickers.
+  useEffect(() => {
+    const preset = TERM_DATE_RANGES[termId];
+    if (!preset) return;
+    setExportOptions((prev) =>
+      prev.icsStart === preset.start && prev.icsEnd === preset.end
+        ? prev
+        : { ...prev, icsStart: preset.start, icsEnd: preset.end },
+    );
+  }, [termId]);
 
   // Collapsible filter/results panel. On entry, default to *collapsed* when the
   // newest term already has selected courses (land the user straight on their

@@ -14,7 +14,8 @@ export type CalendarCategory =
   | 'deadline' // Payment / submission / late-registration deadlines
   | 'assessment' // Exam timetable publication, grade release, appeals, DAP meetings
   | 'graduation' // Graduation evaluation cut-offs, info release, degree conferment
-  | 'event'; // Senate meetings, orientation, congregation, major events
+  | 'event' // Senate meetings, orientation, congregation, major events
+  | 'hostel'; // Hostel application, room assignment, check-in, residential terms
 
 export interface AcademicEvent {
   id: string;
@@ -41,19 +42,24 @@ export const CATEGORY_ORDER: CalendarCategory[] = [
   'assessment',
   'graduation',
   'event',
+  'hostel',
 ];
 
 export const ACADEMIC_YEAR_LABEL = '2026-27';
 
 // When this file's event data was last refreshed from the Registry's calendar
 // pages. Shown on the calendar page — update whenever the data is re-imported.
-export const CALENDAR_DATA_UPDATED = '2026/07/15';
+export const CALENDAR_DATA_UPDATED = '2026/07/24';
 
 // First day of Term 1 — used as the calendar's default landing month.
 export const TERM_START_DATE = '2026-09-01';
+// Last day of Term 1 UG classes — see the `term1-end` event below.
+export const TERM_END_DATE = '2026-11-30';
 
 // First day of Term 2 — the "term start" jump target once Term 1 is under way.
 export const TERM_2_START_DATE = '2027-01-08';
+// Last day of Term 2 UG classes — see the `term2-end` event below.
+export const TERM_2_END_DATE = '2027-04-20';
 
 export const ACADEMIC_EVENTS: AcademicEvent[] = [
   // ───────────────────────── AUG 2026 ─────────────────────────
@@ -853,5 +859,186 @@ export const ACADEMIC_EVENTS: AcademicEvent[] = [
     title: 'Hong Kong Special Administrative Region Establishment Day',
     title_tc: '香港特別行政區成立紀念日',
     title_sc: '香港特别行政区成立纪念日',
+  },
+
+  // ─── OSA: Reporting, NSO & Hostel — new & current students (2026-27) ───
+  // Sources: OSA "Important Dates" page, OSA "Reporting and Hostel Check-in"
+  // page, and the "Student Hostel Application Roadmap for New Students
+  // (2026-27)" / "Student Hostel Room Allocation for Term One... (Current
+  // Students)" documents. Hostel-specific submission/payment/move-out
+  // deadlines carry BOTH `category: 'deadline'` and `category2: 'hostel'`
+  // (same two-tone-stripe pattern as Congregation's event+holiday, below)
+  // so they read as deadlines while still tagging their hostel origin; all
+  // other hostel milestones use plain `hostel`.
+  {
+    id: 'online-reporting-start-nonjupas',
+    start: '2026-07-13',
+    category: 'event',
+    title: 'First day for Online Reporting Days for new UG students (except JUPAS-admitted)',
+    title_tc: '新生網上報到首日（非聯招取錄學生）',
+    title_sc: '新生网上报到首日（非联招录取学生）',
+  },
+  {
+    id: 'hostel-pref-selffunded-2026',
+    start: '2026-07-26',
+    category: 'deadline',
+    category2: 'hostel',
+    title: 'Deadline to submit hostel & room type preferences — self-funded new UG students',
+    title_tc: '自資新生遞交宿舍及房型意向截止日',
+    title_sc: '自资新生递交宿舍及房型意向截止日',
+  },
+  {
+    id: 'hostel-fee-note-current-2026',
+    start: '2026-08-03',
+    category: 'hostel',
+    title: 'Hostel fee note prepared by Finance Office — current students (Term One)',
+    title_tc: '財務處備妥在學學生第一學期宿費單',
+    title_sc: '财务处备妥在校学生第一学期宿费单',
+  },
+  {
+    id: 'hostel-result-nonlocal-self-2026',
+    start: '2026-08-05',
+    category: 'hostel',
+    title: 'Hostel room assignment result released — UGC-funded non-local & self-funded new UG students',
+    title_tc: '非本地資助及自資新生宿舍分配結果公布',
+    title_sc: '非本地资助及自资新生宿舍分配结果公布',
+  },
+  {
+    id: 'hostel-notif-local-2026',
+    start: '2026-08-07',
+    end: '2026-08-10',
+    category: 'hostel',
+    title: 'Email notification with hostel fee payment & preference-submission instructions sent — UGC-funded local new UG students',
+    title_tc: '本地資助新生 — 電郵通知宿舍繳費及選宿意向遞交指示',
+    title_sc: '本地资助新生 — 电邮通知宿舍缴费及选宿意向递交指示',
+  },
+  {
+    id: 'hostel-pref-local-2026',
+    start: '2026-08-12',
+    category: 'deadline',
+    category2: 'hostel',
+    title: 'Deadline to submit hostel & room type preferences — UGC-funded local new UG students',
+    title_tc: '本地資助新生遞交宿舍及房型意向截止日',
+    title_sc: '本地资助新生递交宿舍及房型意向截止日',
+  },
+  {
+    id: 'hostel-checkin-nonlocal-early-2026',
+    start: '2026-08-17',
+    category: 'hostel',
+    title: 'Early hostel check-in begins — UGC-funded non-local & self-funded non-local new UG students',
+    title_tc: '非本地資助及自資非本地新生提早宿舍登記入住開始',
+    title_sc: '非本地资助及自资非本地新生提早宿舍登记入住开始',
+  },
+  {
+    id: 'inperson-reporting-2026',
+    start: '2026-08-17',
+    end: '2026-08-21',
+    category: 'event',
+    title: 'In-person Reporting (original-document verification) — new UG students',
+    title_tc: '新生親身報到（文件正本核實）',
+    title_sc: '新生亲身报到（文件正本核实）',
+  },
+  {
+    id: 'hostel-result-local-2026',
+    start: '2026-08-20',
+    category: 'hostel',
+    title: 'Hostel room assignment result released — UGC-funded local new UG students',
+    title_tc: '本地資助新生宿舍分配結果公布',
+    title_sc: '本地资助新生宿舍分配结果公布',
+  },
+  {
+    id: 'hostel-fee-new-2026',
+    start: '2026-08-20',
+    category: 'deadline',
+    category2: 'hostel',
+    title: 'Deadline to settle hostel fee & deposit (Term One) — new UG students',
+    title_tc: '新生繳交第一學期宿費及按金截止日',
+    title_sc: '新生缴交第一学期宿费及按金截止日',
+  },
+  {
+    id: 'hostel-fee-current-2026',
+    start: '2026-08-21',
+    category: 'deadline',
+    category2: 'hostel',
+    title: 'Deadline to settle hostel fee (Term One) — current students',
+    title_tc: '在學學生繳交第一學期宿費截止日',
+    title_sc: '在校学生缴交第一学期宿费截止日',
+  },
+  {
+    id: 'residential-term1-2627',
+    start: '2026-08-24',
+    end: '2027-01-03',
+    category: 'hostel',
+    title: 'Residential Term One 2026-27',
+    title_tc: '2026-27 第一學期住宿期',
+    title_sc: '2026-27 第一学期住宿期',
+  },
+  {
+    id: 'hostel-checkin-local-2026',
+    start: '2026-08-24',
+    category: 'hostel',
+    title: 'Hostel check-in begins — UGC-funded local & self-funded local new UG students',
+    title_tc: '本地資助及自資本地新生宿舍登記入住開始',
+    title_sc: '本地资助及自资本地新生宿舍登记入住开始',
+  },
+  {
+    id: 'hostel-checkin-current-2026',
+    start: '2026-08-24',
+    category: 'hostel',
+    title: 'Hostel check-in begins (from 14:00) — current students',
+    title_tc: '在學學生宿舍登記入住開始（下午2時起）',
+    title_sc: '在校学生宿舍登记入住开始（下午2时起）',
+  },
+  {
+    id: 'nso-contingency',
+    start: '2026-08-25',
+    category: 'event',
+    title: 'Contingency day for New Student Orientation',
+    title_tc: '新生迎新活動後備日',
+    title_sc: '新生迎新活动后备日',
+  },
+  {
+    id: 'hostel-room-swap-announce-2026',
+    start: '2026-09-01',
+    end: '2026-09-07',
+    category: 'hostel',
+    title: 'Official Room Swapping application details to be announced (approx.)',
+    title_tc: '正式宿舍調房申請詳情將公布（約）',
+    title_sc: '正式宿舍调房申请详情将公布（约）',
+  },
+  {
+    id: 'nso-carnival',
+    start: '2026-09-03',
+    category: 'event',
+    title: 'New Student Orientation Campus Life Carnival',
+    title_tc: '新生迎新活動 — 校園生活嘉年華',
+    title_sc: '新生迎新活动 — 校园生活嘉年华',
+  },
+  {
+    id: 'term-break-2627',
+    start: '2026-12-20',
+    end: '2027-01-07',
+    category: 'holiday',
+    title: 'Term Break (hostels will not close during term break)',
+    title_tc: '學期假期（宿舍不會關閉）',
+    title_sc: '学期假期（宿舍不会关闭）',
+  },
+  {
+    id: 'residential-term2-2627',
+    start: '2027-01-04',
+    end: '2027-05-14',
+    category: 'hostel',
+    title: 'Residential Term Two 2026-27',
+    title_tc: '2026-27 第二學期住宿期',
+    title_sc: '2026-27 第二学期住宿期',
+  },
+  {
+    id: 'hostel-moveout-2027',
+    start: '2027-05-14',
+    category: 'deadline',
+    category2: 'hostel',
+    title: 'Deadline to move out from hostels (by noon) — end of Residential Term',
+    title_tc: '住宿期結束 — 中午前遷出宿舍截止日',
+    title_sc: '住宿期结束 — 中午前迁出宿舍截止日',
   },
 ];
