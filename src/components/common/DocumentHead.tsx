@@ -90,7 +90,9 @@ export function DocumentHead({ title, description, keywords, ogImage, noIndex }:
 
     lastUpdateRef.current = updateKey;
 
-    const { canonicalUrl, seoData, structuredData, localeCode, noIndex } = memoizedData;
+    // 這裡不能再叫 noIndex：上面的 updateKey 用到同名的 prop，
+    // 同一個 block 內再宣告 const noIndex 會讓整段落入 TDZ（整站白畫面）。
+    const { canonicalUrl, seoData, structuredData, localeCode, noIndex: shouldNoIndex } = memoizedData;
 
     // 設置頁面標題（只在真正改變時）
     if (document.title !== seoData.title) {
@@ -164,7 +166,7 @@ export function DocumentHead({ title, description, keywords, ogImage, noIndex }:
     document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link => link.remove());
 
     // 私人／功能性頁面不應進入索引
-    updateMetaTag('meta[name="robots"]', noIndex ? 'noindex, follow' : 'index, follow');
+    updateMetaTag('meta[name="robots"]', shouldNoIndex ? 'noindex, follow' : 'index, follow');
 
     // 設置 PWA 應用標題
     updateMetaTag('meta[name="apple-mobile-web-app-title"]', SEO_CONFIG.SITE_NAME);
