@@ -26,6 +26,11 @@ const ENDPOINT = (process.env.VITE_APPWRITE_ENDPOINT || 'https://appwrite.lingub
 const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID || '6a1097400037a55f6472';
 const DATABASE_ID = 'lingubible';
 const EMIT_FLAT_HTML = process.env.SEO_EMIT_FLAT_HTML === '1';
+// Appwrite Sites 的邊緣派送在 2098 個檔案時連續失敗（Edge distribution failed 0/6），
+// 240 個檔案時正常。因此預設只預渲染「有評價」的課程與講師頁，把檔案數壓在千位以下；
+// 其餘頁面仍會列在 sitemap，靠 Google 執行 JS 取得內容。
+// 可用 SEO_PRERENDER_SCOPE=all（全部）或 none（只出 sitemap）覆寫。
+const PRERENDER_SCOPE = process.env.SEO_PRERENDER_SCOPE || 'reviewed';
 const OG_IMAGE = `${SITE_URL}/meta-image.png`;
 const TODAY = new Date().toISOString().slice(0, 10);
 
@@ -413,6 +418,7 @@ function buildCoursePage(course, instructors) {
 
   return {
     route,
+    reviewCount: reviews,
     priority: reviews > 0 ? '0.8' : '0.6',
     changefreq: 'weekly',
     lastmod: lastmod(course),
@@ -496,6 +502,7 @@ function buildInstructorPage(instructor, courses) {
 
   return {
     route,
+    reviewCount: reviews,
     priority: reviews > 0 ? '0.7' : '0.5',
     changefreq: 'weekly',
     lastmod: lastmod(instructor),
@@ -642,8 +649,16 @@ async function main() {
     )
   );
 
-  const allPages = [...staticPages, ...coursePages, ...instructorPages];
-  for (const page of allPages) await writePage(templates, page);
+  const detailPages = [...coursePages, ...instructorPages];
+  const prerendered =
+    PRERENDER_SCOPE === 'none'
+      ? []
+      : PRERENDER_SCOPE === 'all'
+        ? detailPages
+        : detailPages.filter((p) => p.reviewCount > 0);
+
+  const pagesToWrite = [...staticPages, ...prerendered];
+  for (const page of pagesToWrite) await writePage(templates, page);
 
   await writeFile(path.join(OUT_DIR, 'sitemap-pages.xml'), sitemapXml(staticPages), 'utf8');
   if (coursePages.length) {
@@ -660,9 +675,13 @@ async function main() {
   ].filter(Boolean);
   await writeFile(path.join(OUT_DIR, 'sitemap.xml'), sitemapIndexXml(children), 'utf8');
 
+  const prerenderedCourses = prerendered.filter((p) => p.route.startsWith('/courses/')).length;
+  const prerenderedInstructors = prerendered.filter((p) => p.route.startsWith('/instructors/')).length;
   console.log(
-    `✅ 已產生 ${allPages.length} 個預渲染頁面（靜態 ${staticPages.length}、課程 ${coursePages.length}、講師 ${instructorPages.length}）`
+    `✅ 預渲染 ${pagesToWrite.length} 頁（範圍 ${PRERENDER_SCOPE}：靜態 ${staticPages.length}、` +
+      `課程 ${prerenderedCourses}/${coursePages.length}、講師 ${prerenderedInstructors}/${instructorPages.length}）`
   );
+  console.log(`✅ sitemap 收錄 ${staticPages.length + detailPages.length} 條網址`);
   console.log(`✅ sitemap 索引：${SITE_URL}/sitemap.xml（${children.join(', ')}）`);
 }
 
