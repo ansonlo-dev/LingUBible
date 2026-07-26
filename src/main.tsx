@@ -15,7 +15,12 @@ window.addEventListener('vite:preloadError', () => {
 // 🚀 啟動數據預載入系統，提供超快首次載入體驗
 initializeDataPreloading();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+// scripts/generate-seo.mjs 會把純文字的 SEO 預渲染內容寫進 #root（給爬蟲讀原始 HTML）。
+// React 要等首次 commit 才會清掉它，因此在掛載前先自行移除，順便清掉它注入的 <style>。
+const rootElement = document.getElementById('root')!;
+if (rootElement.firstChild) rootElement.replaceChildren();
+
+ReactDOM.createRoot(rootElement).render(
   <LanguageProvider>
     <AuthProvider>
       <React.StrictMode>

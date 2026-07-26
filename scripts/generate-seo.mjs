@@ -300,8 +300,13 @@ function buildHtml(template, page) {
   return html;
 }
 
+// 預渲染區塊預設 display:none：它只是給「不執行 JS 的爬蟲」讀原始 HTML 用的，
+// 真人使用者若看得到，就會在 React 掛載前先看到一頁純文字（黑底白字的「假空白頁」），
+// 等 bundle 載完才突然換成正式畫面。原始 HTML 仍含全部文字，Google 首輪抓取照樣讀得到；
+// 沒有 JS 的訪客則由 <noscript> 覆蓋規則把內容顯示出來。
 const PRERENDER_STYLE =
-  '<style>.prerender{max-width:52rem;margin:0 auto;padding:2rem 1.25rem;font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}.prerender h1{font-size:1.6rem;margin:0 0 .5rem}.prerender h2{font-size:1.15rem;margin:1.5rem 0 .5rem}.prerender a{color:inherit}.prerender ul{padding-left:1.25rem}.prerender .muted{opacity:.75;font-size:.9rem}</style>';
+  '<style>.prerender{display:none;max-width:52rem;margin:0 auto;padding:2rem 1.25rem;font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}.prerender h1{font-size:1.6rem;margin:0 0 .5rem}.prerender h2{font-size:1.15rem;margin:1.5rem 0 .5rem}.prerender a{color:inherit}.prerender ul{padding-left:1.25rem}.prerender .muted{opacity:.75;font-size:.9rem}</style>' +
+  '<noscript><style>.prerender{display:block}</style></noscript>';
 
 function contentBlock(inner) {
   return `${PRERENDER_STYLE}<div class="prerender">${inner}</div>`;
