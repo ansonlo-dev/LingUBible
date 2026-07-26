@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, BookText, Users, ArrowLeft, RefreshCw } from "lucide-react";
 import { Error404Animation } from "@/components/features/animations/Error404Animation";
+import { DocumentHead } from "@/components/common/DocumentHead";
 
 const NotFound = () => {
   const location = useLocation();
@@ -47,6 +48,9 @@ const NotFound = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+      {/* 靜態代管對任何不存在的路徑都回 200 + SPA 外殼，Google 會判為「軟性 404」；
+          唯一能修正的方式是在渲染後標上 noindex。 */}
+      <DocumentHead title={`404 - ${t('404.title')} | LingUBible`} noIndex />
       <div className="max-w-4xl w-full">
         {/* 主要 404 內容 */}
         <div className="text-center mb-12">

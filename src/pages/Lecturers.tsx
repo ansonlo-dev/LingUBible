@@ -1616,6 +1616,8 @@ const Lecturers = () => {
   if (error) {
     return (
       <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6">
+        {/* 講師不存在時是軟性 404（靜態代管仍回 200），標上 noindex */}
+        <DocumentHead title={`${instructorName || ''} - ${t('pages.lecturers.loadFailed')} | LingUBible`} noIndex />
         <div className="flex justify-center items-center min-h-[calc(100vh-12rem)]">
           <Card className="max-w-md w-full">
             <CardHeader className="text-center">

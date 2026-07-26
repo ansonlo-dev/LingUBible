@@ -16,6 +16,8 @@ interface DocumentHeadProps {
   description?: string;
   keywords?: string;
   ogImage?: string;
+  /** 找不到內容的頁面（軟性 404）用：靜態代管無法回傳 404 狀態碼，只能靠 noindex */
+  noIndex?: boolean;
 }
 
 // App.tsx 會全域掛一個沒有 props 的 DocumentHead，而課程／講師頁另外掛一個帶
@@ -24,11 +26,11 @@ interface DocumentHeadProps {
 // 全域實例在有人認領時直接跳過。
 let pageLevelHeadClaims = 0;
 
-export function DocumentHead({ title, description, keywords, ogImage }: DocumentHeadProps) {
+export function DocumentHead({ title, description, keywords, ogImage, noIndex }: DocumentHeadProps) {
   const { language } = useLanguage();
   const location = useLocation();
   const lastUpdateRef = useRef<string>('');
-  const isPageLevel = Boolean(title || description || keywords || ogImage);
+  const isPageLevel = Boolean(title || description || keywords || ogImage || noIndex);
 
   useEffect(() => {
     if (!isPageLevel) return;
@@ -59,10 +61,10 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
       pageType,
       seoData,
       structuredData,
-      noIndex: isNoIndexPath(location.pathname),
+      noIndex: Boolean(noIndex) || isNoIndexPath(location.pathname),
       localeCode: getLocaleCode(language as SupportedLanguage)
     };
-  }, [language, location.pathname, title, description, keywords, ogImage]);
+  }, [language, location.pathname, title, description, keywords, ogImage, noIndex]);
 
   useEffect(() => {
     // 頁面級實例已接手時，全域實例不要覆寫
@@ -77,7 +79,8 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
       title,
       description,
       keywords,
-      ogImage
+      ogImage,
+      noIndex
     });
 
     // 如果內容沒有改變，跳過更新
@@ -188,7 +191,7 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
 
     updateStructuredData();
 
-  }, [memoizedData, language, location.pathname, title, description, keywords, ogImage]);
+  }, [memoizedData, language, location.pathname, title, description, keywords, ogImage, noIndex]);
 
   return null; // 這個組件不渲染任何內容
 } 
