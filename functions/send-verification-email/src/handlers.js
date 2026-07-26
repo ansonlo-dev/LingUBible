@@ -1128,7 +1128,7 @@ async function sendContactEmail(name, email, type, message, language, theme = 'l
     log('📧 發送聯絡表單郵件請求');
     const { data, error: resendError } = await resend.emails.send({
       from: 'LingUBible Contact Form <noreply@lingubible.com>',
-      to: ['contact@lingubible.com'],
+      to: ['support@lingubible.com'],
       replyTo: [email],
       subject: template.subject,
       html: template.html,
